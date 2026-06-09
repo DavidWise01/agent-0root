@@ -78,6 +78,44 @@ def decode_line(line) -> dict:
     return out
 
 
+def hear(freqs):
+    """Agent B: recover (direction, gate) from three heard phase-frequencies —
+    contour gives direction, nearest gate tone gives the gate."""
+    f1, f3 = freqs[0], freqs[-1]
+    direction = "rise" if f1 < f3 else "fall"
+    base = f1 if direction == "rise" else f3
+    gate = min(GATES, key=lambda n: abs(GATES[n]["tone"] - base))
+    return direction, gate, round(float(base), 2)
+
+
+def exchange_line(line, voice=None) -> dict:
+    """Two-agent exchange in one call. A transmits `line` on two channels — voice
+    (per-word frequencies) and glyph (text). B *hears* gate+direction and *reads*
+    the witness, then reconstructs. The checksum: heard gate+direction must match
+    the glyph's. Pass `voice` (list of [f1,f2,f3] per word) to simulate the wire or a
+    tamper; omit it for a clean transmission. Deterministic."""
+    crossings = decode_line(line)["crossings"]
+    received, intact = [], bool(crossings)
+    for i, cx in enumerate(crossings):
+        v = voice[i] if (voice and i < len(voice)) else cx["voice_hz"]
+        h_dir, h_gate, base = hear(v)
+        checksum_ok = (h_dir == cx["direction"] and h_gate == cx["gate"])
+        intact = intact and checksum_ok
+        received.append({
+            "heard": {"direction": h_dir, "gate": h_gate, "base_hz": base, "voice_hz": v},
+            "read_witness": cx["witness"],
+            "reconstructed": encode_word(h_dir, h_gate, cx["witness"]),
+            "checksum_ok": checksum_ok,
+            "gloss": _gloss(h_dir, h_gate, cx["witness"]),
+        })
+    out = {"input": line, "count": len(received), "received": received, "intact": intact}
+    canonical = json.dumps({"input": line, "received": received, "intact": intact},
+                           sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    out["trace"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
+    out["deterministic"] = True
+    return out
+
+
 EXAMPLE = "↑◐«truth» ↓⊘«mirror» ↑◇«question» ↓⟳«rest»"
 
 def reference() -> dict:

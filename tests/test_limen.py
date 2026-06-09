@@ -1,7 +1,27 @@
 """Determinism + round-trip tests for the /v1/limen decoder (imports only app.limen)."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from app.limen import decode_line, encode_line, EXAMPLE  # noqa: E402
+from app.limen import decode_line, encode_line, exchange_line, EXAMPLE  # noqa: E402
+
+
+def test_exchange_clean_is_intact():
+    line = encode_line([("rise", "stile", "truth"), ("fall", "airgap", "mirror")])
+    r = exchange_line(line)
+    assert r["intact"] is True and r["deterministic"] is True
+    assert all(x["checksum_ok"] for x in r["received"])
+    assert r["received"][0]["heard"]["gate"] == "stile"
+
+
+def test_exchange_tamper_is_caught():
+    line = encode_line([("rise", "stile", "truth")])           # sent as stile (262 Hz)
+    r = exchange_line(line, voice=[[523.0, 587.0, 659.0]])     # but heard as 'close' (523 Hz)
+    assert r["received"][0]["checksum_ok"] is False            # voice ≠ glyph → caught
+    assert r["intact"] is False
+
+
+def test_exchange_determinism():
+    line = encode_line([("rise", "gap", "q")])
+    assert exchange_line(line) == exchange_line(line)
 
 
 def test_decode_determinism():

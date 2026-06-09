@@ -19,6 +19,8 @@ A genuinely deterministic agent service: **same input → same output, always.**
 | `GET /v1/agent?q=...` | same, for browser testing |
 | `POST /v1/limen` | `{ "line": "↑◐«truth» …" }` → reconstructed crossings (the communication sphere, live) |
 | `GET /v1/limen?line=...` | same; empty `line` returns the gate vocabulary |
+| `POST /v1/limen/exchange` | two-agent exchange: B hears gate+direction + reads the witness, reconstructs, reports the **checksum** + whether it arrived **intact** (pass `voice` to simulate a tamper) |
+| `GET /v1/limen/exchange?line=...` | same, clean transmission |
 
 Commands: `help · status · version · resolve · echo <text>` (anything else echoes).
 

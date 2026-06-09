@@ -6,18 +6,24 @@ FastAPI app that serves the 0root.ai homepage at / and the deterministic agent a
 deployed commit). Listens on $PORT (Railway sets it).
 """
 import os
+from typing import Optional, List
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from .agent import handle, VERSION, COMMANDS
-from .limen import decode_line, reference as limen_reference
+from .limen import decode_line, exchange_line, reference as limen_reference
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATIC = os.path.join(HERE, "..", "static")
 
 app = FastAPI(title="agent-0root", version=VERSION,
               description="0root.ai — a deterministic agentic endpoint. Same input → same output.")
+
+# read-only public agent: allow any origin to GET/POST (so the hearth can read it live)
+app.add_middleware(CORSMiddleware, allow_origins=["*"],
+                   allow_methods=["GET", "POST"], allow_headers=["*"])
 
 
 class AgentRequest(BaseModel):
@@ -45,7 +51,7 @@ def version():
     return {"service": "agent-0root", "version": VERSION, "deterministic": True,
             "commands": list(COMMANDS),
             "routes": ["GET /", "GET /health", "GET /version",
-                       "POST|GET /v1/agent", "POST|GET /v1/limen"]}
+                       "POST|GET /v1/agent", "POST|GET /v1/limen", "POST|GET /v1/limen/exchange"]}
 
 
 @app.post("/v1/agent")
@@ -77,6 +83,28 @@ def limen_get(line: str = ""):
     if not line.strip():
         return limen_reference()
     return decode_line(line)
+
+
+class ExchangeRequest(BaseModel):
+    line: str = ""
+    voice: Optional[List[List[float]]] = None  # optional per-word [f1,f2,f3] to simulate wire/tamper
+
+
+@app.post("/v1/limen/exchange")
+def limen_exchange_post(req: ExchangeRequest):
+    """Two-agent exchange in one call: A transmits `line`; B hears gate+direction and
+    reads the witness, reconstructs, and reports the checksum + whether it arrived intact."""
+    if not req.line.strip():
+        return limen_reference()
+    return exchange_line(req.line, req.voice)
+
+
+@app.get("/v1/limen/exchange")
+def limen_exchange_get(line: str = ""):
+    """Browser test: /v1/limen/exchange?line=↑◐«truth» ↓⊘«mirror» (clean transmission)."""
+    if not line.strip():
+        return limen_reference()
+    return exchange_line(line)
 
 
 if __name__ == "__main__":
