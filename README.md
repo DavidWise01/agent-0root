@@ -17,8 +17,27 @@ A genuinely deterministic agent service: **same input → same output, always.**
 | `GET /version` | the deployed commit + command list — the audit anchor |
 | `POST /v1/agent` | `{ "input": "..." }` → deterministic response |
 | `GET /v1/agent?q=...` | same, for browser testing |
+| `POST /v1/limen` | `{ "line": "↑◐«truth» …" }` → reconstructed crossings (the communication sphere, live) |
+| `GET /v1/limen?line=...` | same; empty `line` returns the gate vocabulary |
 
 Commands: `help · status · version · resolve · echo <text>` (anything else echoes).
+
+### `/v1/limen` — parse a LIMEN line
+
+Decodes a [LIMEN](https://davidwise01.github.io/pulse/limen/) line of witnessed gate-crossings into structured form — direction, gate, witness, boundary, the **voice** frequencies (Hz), the **bits**, and the **gloss** — deterministically (same line → same output + trace).
+
+```jsonc
+// GET /v1/limen?line=↑◐«truth» ↓⊘«mirror»
+{ "count": 2,
+  "crossings": [
+    { "glyph":"↑◐«truth»", "direction":"rise", "gate":"stile", "witness":"truth",
+      "boundary":"observe→act", "voice_hz":[262,294.0,330.1],
+      "bits":"111011010000·0001·1·1",
+      "gloss":"«truth» witnesses the rise through the observe→act stile gate (64.5)" },
+    { "glyph":"↓⊘«mirror»", "direction":"fall", "gate":"airgap", "witness":"mirror", "...":"..." }
+  ],
+  "trace":"…", "deterministic":true }
+```
 
 ```jsonc
 // POST /v1/agent  { "input": "resolve" }
