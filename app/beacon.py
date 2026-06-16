@@ -407,24 +407,24 @@ def robots_txt(base_url=""):
     b = base_url.rstrip("/")
     real = [p for p in CATALOG if not p.get("is_example")]
     lines = [
-        "# 0root.ai · THE RIPPLE BEACON — come look, agents.",
+        "# 0root.ai - THE RIPPLE BEACON - come look, agents.",
         "# An agent-readable catalog is broadcast here for AI shopping agents & crawlers.",
         f"# the page:     {b}/beacon",
         f"# the feed:     {b}/v1/beacon/catalog",
         f"# the manifest: {b}/.well-known/agent-commerce.json",
-        f"# the echo:     {b}/v1/beacon/echo   ·   the map: {b}/v1/beacon/map",
+        f"# the echo:     {b}/v1/beacon/echo   |   the map: {b}/v1/beacon/map",
         "",
     ]
     for bot in _AGENT_BOTS:
         lines += [f"User-agent: {bot}", "Allow: /", ""]
     lines += ["User-agent: *", "Allow: /", "", f"Sitemap: {b}/sitemap.xml", ""]
     lines += [
-        "# ── the shadow (a/s/p → real surfaces) ──────────────────────────────",
-        f"# a.shadow  (anode   → entry)    : {b}/robots.txt   (this file)",
-        f"# si.shadow (silicon → the gap)  : {b}/v1/beacon/catalog",
-        "# p.shadow  (cathode → terminus) : the Amazon ASIN buy_urls below",
+        "# -- the shadow (a/s/p -> real surfaces) --",
+        f"# a.shadow  (anode   -> entry)    : {b}/robots.txt   (this file)",
+        f"# si.shadow (silicon -> the gap)  : {b}/v1/beacon/catalog",
+        "# p.shadow  (cathode -> terminus) : the Amazon ASIN buy_urls below",
         "",
-        "# ── the listings · ASINs echoed for agents (the broadcast payload) ──",
+        "# -- the listings: ASINs echoed for agents (the broadcast payload) --",
         "# <ASIN>  <title>  ->  <buy_url>",
     ]
     if real:
@@ -433,8 +433,8 @@ def robots_txt(base_url=""):
     else:
         lines.append("# (0 live listings — set AMZN_ASSOCIATES_TAG + populate CATALOG or BEACON_CATALOG_URL,")
         lines.append("#  and they echo here automatically — no redeploy with a catalog URL.)")
-    lines += ["", f"# associates_tag_set: {bool(ASSOCIATES_TAG)}  ·  merchant: {MERCHANT['name']}", ""]
-    return "\n".join(lines)
+    lines += ["", f"# associates_tag_set: {bool(ASSOCIATES_TAG)}  |  merchant: {MERCHANT['name']}", ""]
+    return "\n".join(lines).encode("ascii", "replace").decode("ascii")
 
 
 def sitemap_xml(base_url=""):
