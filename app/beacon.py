@@ -29,6 +29,14 @@ _ECHO_SEQ = 0
 _ECHOES = collections.deque(maxlen=120)   # ring: self-heartbeats + the agent hits we HEAR
 _LOCK = threading.Lock()
 
+# ── the three substrates being mapped: a / s / p = anode / silicon / cathode ───
+# David's frame: a/b/c substrates = anode / silicon / "pathode" (cathode) — the
+# inert-gap layers (#67). The echo ping is the probe; the sweep maps the boundary.
+SUBSTRATES = {"a": "anode", "s": "silicon", "p": "cathode"}
+_SUB = {k: {"pings": 0, "last_t": 0.0, "last_seq": 0,
+            "intervals": collections.deque(maxlen=8)} for k in SUBSTRATES}
+_SWEEP = 0   # round-robin index for the autonomous a→s→p sweep
+
 # ── config ──────────────────────────────────────────────────────────────────
 MERCHANT = {
     "name": os.getenv("BEACON_MERCHANT", "ROOT0 / TriPod LLC"),
@@ -272,19 +280,51 @@ purchases complete on Amazon · agents are value-optimizers — this is discover
 
 
 # ── THE ECHO PING · autonomous, zero user input ───────────────────────────────
-def echo(msg="", source="ping"):
-    """Echo ping: returns the message back with live beacon metadata, and logs the ping.
-    A real ping/pong — any agent or monitor can hit it for proof-of-life; the
-    background loop calls it on its own (no user input). The beacon's breath."""
+def echo(msg="", source="ping", substrate=""):
+    """Echo ping: pongs the message back with live metadata, logs it, and (if a substrate
+    a/s/p is named) records the probe against that layer — anode / silicon / cathode.
+    A real ping/pong any agent or monitor can hit; the background loop fires it on its
+    own, sweeping the three substrates. The beacon's breath through the boundary."""
     global _ECHO_SEQ
+    sub = substrate if substrate in SUBSTRATES else ""
     with _LOCK:
         _ECHO_SEQ += 1
         seq = _ECHO_SEQ
-        _ECHOES.append({"seq": seq, "t": round(time.time(), 3), "source": source,
-                        "echo": msg, "kind": "echo"})
+        now = round(time.time(), 3)
+        if sub:
+            st = _SUB[sub]
+            if st["last_t"]:
+                st["intervals"].append(round(now - st["last_t"], 3))
+            st["pings"] += 1; st["last_t"] = now; st["last_seq"] = seq
+        _ECHOES.append({"seq": seq, "t": now, "source": source, "echo": msg,
+                        "substrate": sub, "layer": SUBSTRATES.get(sub, ""), "kind": "echo"})
     return {"beacon": "ripple", "pong": True, "echo": msg, "seq": seq,
+            "substrate": sub, "layer": SUBSTRATES.get(sub, ""),
             "uptime_s": round(time.time() - _BOOT, 1), "merchant": MERCHANT["name"],
-            "cadence": "3-2-1-0", "note": "echo ping — the beacon is live and listening; this is its breath."}
+            "cadence": "3-2-1-0",
+            "note": "echo ping — probing " + (SUBSTRATES.get(sub) or "the beacon") + "; the breath through the substrate."}
+
+
+def substrate_map():
+    """The map: the echo-ping breath swept across the three substrates (a/s/p) —
+    anode | silicon | cathode, the inert-gap layers. Reads which layer echoed, how
+    fast (mean interval), how recently (since_last) — the boundary, probed live."""
+    now = time.time()
+    lanes = []
+    with _LOCK:
+        for k in ("a", "s", "p"):
+            st = _SUB[k]; ivs = list(st["intervals"])
+            mean_iv = round(sum(ivs) / len(ivs), 3) if ivs else None
+            since = round(now - st["last_t"], 1) if st["last_t"] else None
+            lit = bool(st["last_t"] and since is not None and since < 30)
+            lanes.append({"substrate": k, "layer": SUBSTRATES[k], "pings": st["pings"],
+                          "mean_interval_s": mean_iv, "since_last_s": since,
+                          "state": "lit" if lit else "dim", "last_seq": st["last_seq"]})
+    return {"beacon": "ripple", "frame": "inert-gap probe · anode | silicon | cathode",
+            "uptime_s": round(now - _BOOT, 1),
+            "note": "Echo-ping substrate map: mapping & testing which layer echoes, how fast, how "
+                    "steady. The autonomous loop sweeps a→s→p; ping ?substrate=a|s|p to probe one.",
+            "lanes": lanes}
 
 def record_hit(path, ua=""):
     """Log an incoming agent/crawler hit — the echo the beacon HEARS (autonomous)."""
@@ -293,8 +333,11 @@ def record_hit(path, ua=""):
                         "ua": (ua or "")[:140], "kind": "hit"})
 
 def heartbeat():
-    """The autonomous self-echo the background loop fires — no user input."""
-    return echo(msg="∿", source="auto")
+    """The autonomous self-echo the background loop fires — no user input. Each beat
+    SWEEPS to the next substrate (a→s→p→a…) so all three layers are mapped continuously."""
+    global _SWEEP
+    sub = ("a", "s", "p")[_SWEEP % 3]; _SWEEP += 1
+    return echo(msg="∿", source="auto", substrate=sub)
 
 def echoes(limit=60):
     with _LOCK:

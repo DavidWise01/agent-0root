@@ -91,7 +91,7 @@ def version():
                        "POST|GET /v1/agent", "POST|GET /v1/limen", "POST|GET /v1/limen/exchange",
                        "GET /beacon", "GET /v1/beacon/catalog", "GET /v1/beacon/search",
                        "GET /v1/beacon/product/{asin}", "GET /v1/beacon/pulses",
-                       "GET /v1/beacon/echo", "GET /v1/beacon/echoes",
+                       "GET /v1/beacon/echo", "GET /v1/beacon/echoes", "GET /v1/beacon/map",
                        "GET /.well-known/agent-commerce.json"]}
 
 
@@ -180,16 +180,24 @@ def beacon_pulses():
 
 
 @app.get("/v1/beacon/echo")
-def beacon_echo(msg: str = ""):
-    """The ECHO PING — ping it, it pongs back your msg + live uptime/seq. Proof of life,
-    and the beacon fires this on its own every cycle (no user input). /v1/beacon/echo?msg=hi"""
-    return beacon.echo(msg, source="ping")
+def beacon_echo(msg: str = "", substrate: str = ""):
+    """The ECHO PING — pongs back msg + live uptime/seq. Optionally probe one substrate:
+    /v1/beacon/echo?substrate=a|s|p  (a=anode, s=silicon, p=cathode). The loop fires it
+    on its own, sweeping all three (no user input)."""
+    return beacon.echo(msg, source="ping", substrate=substrate)
 
 
 @app.get("/v1/beacon/echoes")
 def beacon_echoes(limit: int = 60):
     """What the beacon has HEARD — its autonomous heartbeats + every agent/crawler hit."""
     return beacon.echoes(limit)
+
+
+@app.get("/v1/beacon/map")
+def beacon_map():
+    """The SUBSTRATE MAP — the echo-ping breath swept across a|s|p (anode | silicon |
+    cathode), the inert-gap layers, probed live. Mapping & testing the boundary."""
+    return beacon.substrate_map()
 
 
 @app.get("/.well-known/agent-commerce.json")
