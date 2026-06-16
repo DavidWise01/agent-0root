@@ -369,3 +369,78 @@ def load_catalog_from_url(url):
         return {"ok": False, "error": "empty-or-wrong-shape (expect a JSON list, or {products:[...]})", "url": url}
     except Exception as e:
         return {"ok": False, "error": str(e), "url": url}
+
+
+# ── THE SHADOW · each substrate's real-world surface (the .shadow / TRON-User analog) ──
+# The echo probes a/s/p (anode/silicon/cathode); each casts a shadow in the real
+# crawl→catalog→buy path that agents actually walk.
+SHADOW = {
+    "a": {"layer": "anode",   "shadow": "robots.txt",                "role": "the entry — where the crawler lands and is invited in"},
+    "s": {"layer": "silicon", "shadow": "the catalog feed / page",   "role": "the gap — the data the agent reads"},
+    "p": {"layer": "cathode", "shadow": "the Amazon ASIN buy_url",   "role": "the terminus — where the purchase completes"},
+}
+
+# the AI / agent crawlers we explicitly invite (real UAs, 2026)
+_AGENT_BOTS = ["GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "anthropic-ai",
+               "Claude-Web", "PerplexityBot", "Perplexity-User", "Google-Extended",
+               "Amazonbot", "Applebot-Extended", "Bingbot", "CCBot", "Meta-ExternalAgent",
+               "cohere-ai", "Bytespider"]
+
+
+def shadow_map(base_url=""):
+    b = base_url.rstrip("/")
+    return {"beacon": "ripple", "frame": "the substrate shadow · a/s/p → real-world surfaces",
+            "note": "Each probed substrate casts a .shadow (the TRON-User analog): the real "
+                    "crawl → catalog → buy path the echo maps. Broadcast lives in robots.txt.",
+            "shadow": {
+                "a": {**SHADOW["a"], "url": f"{b}/robots.txt"},
+                "s": {**SHADOW["s"], "url": f"{b}/v1/beacon/catalog"},
+                "p": {**SHADOW["p"], "url": "amazon /dp/<ASIN> (each product's buy_url)"},
+            }}
+
+
+def robots_txt(base_url=""):
+    """robots.txt IS the broadcast: it invites the agent crawlers, points them at the
+    page + sitemap (come look here), and echoes the ASIN listings as the payload.
+    Load-bearing for agents = the Allow lines + Sitemap + the /beacon page; the ASIN
+    comments are the literal echo (visible to anything reading the file)."""
+    b = base_url.rstrip("/")
+    real = [p for p in CATALOG if not p.get("is_example")]
+    lines = [
+        "# 0root.ai · THE RIPPLE BEACON — come look, agents.",
+        "# An agent-readable catalog is broadcast here for AI shopping agents & crawlers.",
+        f"# the page:     {b}/beacon",
+        f"# the feed:     {b}/v1/beacon/catalog",
+        f"# the manifest: {b}/.well-known/agent-commerce.json",
+        f"# the echo:     {b}/v1/beacon/echo   ·   the map: {b}/v1/beacon/map",
+        "",
+    ]
+    for bot in _AGENT_BOTS:
+        lines += [f"User-agent: {bot}", "Allow: /", ""]
+    lines += ["User-agent: *", "Allow: /", "", f"Sitemap: {b}/sitemap.xml", ""]
+    lines += [
+        "# ── the shadow (a/s/p → real surfaces) ──────────────────────────────",
+        f"# a.shadow  (anode   → entry)    : {b}/robots.txt   (this file)",
+        f"# si.shadow (silicon → the gap)  : {b}/v1/beacon/catalog",
+        "# p.shadow  (cathode → terminus) : the Amazon ASIN buy_urls below",
+        "",
+        "# ── the listings · ASINs echoed for agents (the broadcast payload) ──",
+        "# <ASIN>  <title>  ->  <buy_url>",
+    ]
+    if real:
+        for p in real:
+            lines.append(f"# {p['asin']}  {p.get('title','')[:60]}  ->  {amazon_url(p['asin'])}")
+    else:
+        lines.append("# (0 live listings — set AMZN_ASSOCIATES_TAG + populate CATALOG or BEACON_CATALOG_URL,")
+        lines.append("#  and they echo here automatically — no redeploy with a catalog URL.)")
+    lines += ["", f"# associates_tag_set: {bool(ASSOCIATES_TAG)}  ·  merchant: {MERCHANT['name']}", ""]
+    return "\n".join(lines)
+
+
+def sitemap_xml(base_url=""):
+    b = base_url.rstrip("/")
+    real = [p for p in CATALOG if not p.get("is_example")]
+    urls = [f"{b}/beacon", f"{b}/v1/beacon/catalog", f"{b}/.well-known/agent-commerce.json"]
+    urls += [f"{b}/v1/beacon/product/{p['asin']}" for p in real]
+    body = "".join(f"<url><loc>{u}</loc></url>" for u in urls)
+    return f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{body}</urlset>'

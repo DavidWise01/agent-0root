@@ -8,7 +8,7 @@ deployed commit). Listens on $PORT (Railway sets it).
 import os, asyncio
 from typing import Optional, List
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, PlainTextResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -92,6 +92,7 @@ def version():
                        "GET /beacon", "GET /v1/beacon/catalog", "GET /v1/beacon/search",
                        "GET /v1/beacon/product/{asin}", "GET /v1/beacon/pulses",
                        "GET /v1/beacon/echo", "GET /v1/beacon/echoes", "GET /v1/beacon/map",
+                       "GET /v1/beacon/shadow", "GET /robots.txt", "GET /sitemap.xml",
                        "GET /.well-known/agent-commerce.json"]}
 
 
@@ -204,6 +205,27 @@ def beacon_map():
 def beacon_manifest(request: Request):
     """A self-describing discovery manifest pointing agents at the beacon surfaces."""
     return beacon.manifest(str(request.base_url))
+
+
+@app.get("/v1/beacon/shadow")
+def beacon_shadow(request: Request):
+    """The substrate SHADOW — a/s/p mapped to their real-world surfaces (robots.txt /
+    catalog / Amazon ASIN buy_url): the crawl→catalog→buy path the echo probes."""
+    return beacon.shadow_map(str(request.base_url))
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots(request: Request):
+    """THE BROADCAST — invites the agent crawlers, points them at the page + sitemap,
+    and echoes the ASIN listings. robots.txt is what every bot reads first; this is it
+    telling them to come look here. (a.shadow of the substrate echo.)"""
+    return beacon.robots_txt(str(request.base_url))
+
+
+@app.get("/sitemap.xml")
+def sitemap(request: Request):
+    """The sitemap robots.txt points to — the beacon's pages for crawlers to index."""
+    return Response(beacon.sitemap_xml(str(request.base_url)), media_type="application/xml")
 
 
 if __name__ == "__main__":
