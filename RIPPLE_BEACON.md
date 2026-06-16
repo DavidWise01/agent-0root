@@ -18,6 +18,16 @@ offer is broadcast as a beacon ping, the same pattern as `pulse/beacons.html`.
 | `GET /.well-known/agent-commerce.json` | agents | a self-describing discovery manifest pointing at the above |
 | `mcp_server.py` (optional) | MCP-native agents | `search_products` / `get_product` MCP tools |
 
+## Autonomy — it runs itself (no user input)
+
+Once deployed, the beacon operates with **zero ongoing input**:
+- **Echo ping** — `GET /v1/beacon/echo?msg=hi` pongs your message back with live `uptime`/`seq`. Proof-of-life any agent or monitor can hit.
+- **Autonomous heartbeat** — a background loop fires `echo()` on its own every `BEACON_ECHO_INTERVAL` seconds (default 300). The beacon breathes by itself.
+- **It hears its echoes** — middleware logs every incoming hit to a beacon surface (which agent/crawler, when). `GET /v1/beacon/echoes` shows the heartbeats + the agent traffic heard. That's your live "are agents finding me" signal, automatic.
+- **Zero-code catalog** — set `BEACON_CATALOG_URL` to a JSON you control (a hosted file / a published sheet). The loop pulls it on boot and every cycle, so catalog updates need **no code edit and no redeploy** — you edit the source, the beacon updates itself.
+
+The one thing that is *not* zero-input by nature: **what products to broadcast.** I can't invent your ASINs or scrape Amazon (blocked, ToS-hazardous). But pointing `BEACON_CATALOG_URL` at a sheet you maintain makes even that hands-off after the one-time pointer.
+
 ## To use it
 
 1. **Get an Amazon Associates tag** (the sanctioned way to put Amazon links off-Amazon with tracking). Set it: `AMZN_ASSOCIATES_TAG=your-tag-20`.

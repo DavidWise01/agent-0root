@@ -5,7 +5,7 @@ FastAPI app that serves the 0root.ai homepage at / and the deterministic agent a
 /v1/agent. Health and version endpoints make the deploy auditable (version == the
 deployed commit). Listens on $PORT (Railway sets it).
 """
-import os
+import os, asyncio
 from typing import Optional, List
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
@@ -25,6 +25,42 @@ app = FastAPI(title="agent-0root", version=VERSION,
 # read-only public agent: allow any origin to GET/POST (so the hearth can read it live)
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_methods=["GET", "POST"], allow_headers=["*"])
+
+# ── the beacon listens: every hit to a beacon surface is an echo it HEARS ──────
+BEACON_ECHO_INTERVAL = int(os.getenv("BEACON_ECHO_INTERVAL", "300"))  # self-heartbeat seconds
+BEACON_CATALOG_URL = os.getenv("BEACON_CATALOG_URL", "")              # zero-code catalog source
+
+
+@app.middleware("http")
+async def _beacon_listen(request: Request, call_next):
+    p = request.url.path
+    if (p.startswith("/v1/beacon") and not p.endswith("/echoes")) or p == "/beacon" \
+       or p.startswith("/.well-known/agent-commerce"):
+        try:
+            beacon.record_hit(p, request.headers.get("user-agent", ""))
+        except Exception:
+            pass
+    return await call_next(request)
+
+
+@app.on_event("startup")
+async def _beacon_boot():
+    """Start the autonomous loop: self-heartbeat + (optional) zero-code catalog refresh.
+    Runs with NO user input once deployed."""
+    if BEACON_CATALOG_URL:
+        beacon.load_catalog_from_url(BEACON_CATALOG_URL)
+
+    async def _loop():
+        while True:
+            try:
+                beacon.heartbeat()
+                if BEACON_CATALOG_URL:
+                    beacon.load_catalog_from_url(BEACON_CATALOG_URL)
+            except Exception:
+                pass
+            await asyncio.sleep(BEACON_ECHO_INTERVAL)
+
+    asyncio.create_task(_loop())
 
 
 class AgentRequest(BaseModel):
@@ -55,6 +91,7 @@ def version():
                        "POST|GET /v1/agent", "POST|GET /v1/limen", "POST|GET /v1/limen/exchange",
                        "GET /beacon", "GET /v1/beacon/catalog", "GET /v1/beacon/search",
                        "GET /v1/beacon/product/{asin}", "GET /v1/beacon/pulses",
+                       "GET /v1/beacon/echo", "GET /v1/beacon/echoes",
                        "GET /.well-known/agent-commerce.json"]}
 
 
@@ -140,6 +177,19 @@ def beacon_product(asin: str):
 def beacon_pulses():
     """The ripple — each live offer broadcast as a beacon ping (kin to pulse/beacons)."""
     return beacon.pulses()
+
+
+@app.get("/v1/beacon/echo")
+def beacon_echo(msg: str = ""):
+    """The ECHO PING — ping it, it pongs back your msg + live uptime/seq. Proof of life,
+    and the beacon fires this on its own every cycle (no user input). /v1/beacon/echo?msg=hi"""
+    return beacon.echo(msg, source="ping")
+
+
+@app.get("/v1/beacon/echoes")
+def beacon_echoes(limit: int = 60):
+    """What the beacon has HEARD — its autonomous heartbeats + every agent/crawler hit."""
+    return beacon.echoes(limit)
 
 
 @app.get("/.well-known/agent-commerce.json")

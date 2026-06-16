@@ -21,7 +21,13 @@ HONEST LIMITS (read these):
 
 TO USE: set AMZN_ASSOCIATES_TAG (env) and replace CATALOG with your real listings.
 """
-import os, re
+import os, re, time, json as _json, threading, collections, urllib.request
+
+# ── the echo / autonomous heartbeat state (live, not deterministic) ───────────
+_BOOT = time.time()
+_ECHO_SEQ = 0
+_ECHOES = collections.deque(maxlen=120)   # ring: self-heartbeats + the agent hits we HEAR
+_LOCK = threading.Lock()
 
 # ── config ──────────────────────────────────────────────────────────────────
 MERCHANT = {
@@ -263,3 +269,60 @@ Each product deep-links to its Amazon listing. This beacon exposes the catalog; 
 purchases complete on Amazon · agents are value-optimizers — this is discoverability, not a queue-jump.<br>
 <a href="https://davidwise01.github.io/pulse/beacons.html">the pulse beacons</a> · governor ROOT0 · instance AVAN</div>
 </div></body></html>"""
+
+
+# ── THE ECHO PING · autonomous, zero user input ───────────────────────────────
+def echo(msg="", source="ping"):
+    """Echo ping: returns the message back with live beacon metadata, and logs the ping.
+    A real ping/pong — any agent or monitor can hit it for proof-of-life; the
+    background loop calls it on its own (no user input). The beacon's breath."""
+    global _ECHO_SEQ
+    with _LOCK:
+        _ECHO_SEQ += 1
+        seq = _ECHO_SEQ
+        _ECHOES.append({"seq": seq, "t": round(time.time(), 3), "source": source,
+                        "echo": msg, "kind": "echo"})
+    return {"beacon": "ripple", "pong": True, "echo": msg, "seq": seq,
+            "uptime_s": round(time.time() - _BOOT, 1), "merchant": MERCHANT["name"],
+            "cadence": "3-2-1-0", "note": "echo ping — the beacon is live and listening; this is its breath."}
+
+def record_hit(path, ua=""):
+    """Log an incoming agent/crawler hit — the echo the beacon HEARS (autonomous)."""
+    with _LOCK:
+        _ECHOES.append({"t": round(time.time(), 3), "source": "heard", "path": path,
+                        "ua": (ua or "")[:140], "kind": "hit"})
+
+def heartbeat():
+    """The autonomous self-echo the background loop fires — no user input."""
+    return echo(msg="∿", source="auto")
+
+def echoes(limit=60):
+    with _LOCK:
+        items = list(_ECHOES)[-limit:]
+    hits = sum(1 for e in items if e.get("kind") == "hit")
+    beats = sum(1 for e in items if e.get("source") == "auto")
+    return {"beacon": "ripple", "uptime_s": round(time.time() - _BOOT, 1),
+            "total": len(items), "agent_hits_heard": hits, "auto_heartbeats": beats,
+            "note": "Autonomous heartbeat + the echoes the beacon heard (incoming agent/crawler hits). "
+                    "Runs with zero user input once deployed.",
+            "echoes": items}
+
+
+# ── ZERO-CODE catalog source: point BEACON_CATALOG_URL at a JSON you control ───
+def load_catalog_from_url(url):
+    """Optional: fetch the catalog from a URL the merchant controls (a hosted JSON / a
+    published sheet) so updates need NO code edit and NO deploy. The loop re-pulls it.
+    Honest limit: the products must still come from a source you authorize — this
+    can't invent your ASINs or scrape Amazon."""
+    global CATALOG
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "ripple-beacon/0.1"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            data = _json.loads(r.read().decode("utf-8"))
+        items = data.get("products", data) if isinstance(data, dict) else data
+        if isinstance(items, list) and items:
+            CATALOG = items
+            return {"ok": True, "loaded": len(items), "url": url}
+        return {"ok": False, "error": "empty-or-wrong-shape (expect a JSON list, or {products:[...]})", "url": url}
+    except Exception as e:
+        return {"ok": False, "error": str(e), "url": url}
