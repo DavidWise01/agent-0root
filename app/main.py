@@ -77,6 +77,15 @@ def home():
                          "try": "/v1/agent?q=resolve"})
 
 
+@app.get("/witness.png")
+def witness():
+    """The hero sentinel image, served to the homepage."""
+    img = os.path.join(STATIC, "witness.png")
+    if os.path.exists(img):
+        return FileResponse(img, media_type="image/png")
+    return JSONResponse({"error": "not found"}, status_code=404)
+
+
 @app.get("/health")
 def health():
     return {"ok": True, "version": VERSION}
