@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from .agent import handle, VERSION, COMMANDS
 from .limen import decode_line, exchange_line, reference as limen_reference
 from . import beacon
+from . import register as reg
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATIC = os.path.join(HERE, "..", "static")
@@ -98,6 +99,7 @@ def version():
             "commands": list(COMMANDS),
             "routes": ["GET /", "GET /health", "GET /version",
                        "POST|GET /v1/agent", "POST|GET /v1/limen", "POST|GET /v1/limen/exchange",
+                       "POST|GET /v1/register", "GET /v1/register/status",
                        "GET /beacon", "GET /v1/beacon/catalog", "GET /v1/beacon/search",
                        "GET /v1/beacon/product/{asin}", "GET /v1/beacon/pulses",
                        "GET /v1/beacon/echo", "GET /v1/beacon/echoes", "GET /v1/beacon/map",
@@ -156,6 +158,42 @@ def limen_exchange_get(line: str = ""):
     if not line.strip():
         return limen_reference()
     return exchange_line(line)
+
+
+# ── THE REGISTER · a burned-in guestbook (stateful, volume-backed) ────────────
+# The one deliberately NON-deterministic surface: it has a clock and appends to
+# durable disk. No login — anyone, human or agent, may sign. Each entry is chained
+# by SHA-256 to the one before it, so any edit to the past breaks every seal after.
+class RegisterRequest(BaseModel):
+    name: str = ""
+    note: str = ""
+
+
+def _client_ip(request: Request) -> str:
+    xff = request.headers.get("x-forwarded-for", "")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.client.host if request.client else ""
+
+
+@app.post("/v1/register")
+def register_sign(req: RegisterRequest, request: Request):
+    """Sign the register. Body: {name, note}. Burned into the volume, append-only."""
+    body, code = reg.sign(req.name, req.note, ip=_client_ip(request),
+                          ua=request.headers.get("user-agent", ""))
+    return JSONResponse(body, status_code=code)
+
+
+@app.get("/v1/register")
+def register_list(limit: int = 200):
+    """Read the register — the chained entries, oldest to newest."""
+    return reg.entries(limit)
+
+
+@app.get("/v1/register/status")
+def register_status():
+    """Is the register's disk live? (volume detection + writability + count.)"""
+    return reg.status()
 
 
 # ── the RIPPLE BEACON · agent-facing commerce surface ─────────────────────────
