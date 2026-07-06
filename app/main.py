@@ -212,8 +212,9 @@ def _kit_path():
         m = reg.mount()
         if m:
             dst = os.path.join(m, KIT_NAME)
-            if not os.path.exists(dst) and os.path.exists(KIT_BUNDLED):
-                shutil.copy2(KIT_BUNDLED, dst)          # burn it onto the volume, once
+            if os.path.exists(KIT_BUNDLED) and (
+                not os.path.exists(dst) or os.path.getsize(dst) != os.path.getsize(KIT_BUNDLED)):
+                shutil.copy2(KIT_BUNDLED, dst)          # place/refresh on the volume when the bundle changes
             if os.path.exists(dst):
                 return dst
     except Exception:
