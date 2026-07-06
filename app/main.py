@@ -5,7 +5,7 @@ FastAPI app that serves the 0root.ai homepage at / and the deterministic agent a
 /v1/agent. Health and version endpoints make the deploy auditable (version == the
 deployed commit). Listens on $PORT (Railway sets it).
 """
-import os, asyncio
+import os, asyncio, shutil, hashlib
 from typing import Optional, List
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, PlainTextResponse, Response
@@ -100,6 +100,7 @@ def version():
             "routes": ["GET /", "GET /health", "GET /version",
                        "POST|GET /v1/agent", "POST|GET /v1/limen", "POST|GET /v1/limen/exchange",
                        "POST|GET /v1/register", "GET /v1/register/status",
+                       "GET /kit", "GET /v1/kit", "GET /v1/kit/status",
                        "GET /beacon", "GET /v1/beacon/catalog", "GET /v1/beacon/search",
                        "GET /v1/beacon/product/{asin}", "GET /v1/beacon/pulses",
                        "GET /v1/beacon/echo", "GET /v1/beacon/echoes", "GET /v1/beacon/map",
@@ -194,6 +195,60 @@ def register_list(limit: int = 200):
 def register_status():
     """Is the register's disk live? (volume detection + writability + count.)"""
     return reg.status()
+
+
+# ── THE FUSION KIT · a shareable download, mirrored onto the durable volume ────
+# The runnable WikiText-103 kit (zip). Bundled with the app, and on first request
+# copied ONCE onto the mounted volume (reg.mount()) so it lives on durable disk;
+# then served publicly, no login. Guarded — a missing volume never crashes it.
+KIT_NAME = "transformer-fusion-kit.zip"
+KIT_BUNDLED = os.path.join(STATIC, KIT_NAME)
+
+
+def _kit_path():
+    """Prefer the copy on the durable volume; place it there once, lazily. Fall back
+    to the bundled static copy if the volume is unavailable."""
+    try:
+        m = reg.mount()
+        if m:
+            dst = os.path.join(m, KIT_NAME)
+            if not os.path.exists(dst) and os.path.exists(KIT_BUNDLED):
+                shutil.copy2(KIT_BUNDLED, dst)          # burn it onto the volume, once
+            if os.path.exists(dst):
+                return dst
+    except Exception:
+        pass
+    return KIT_BUNDLED if os.path.exists(KIT_BUNDLED) else None
+
+
+def _kit_sha(p):
+    try:
+        return hashlib.sha256(open(p, "rb").read()).hexdigest()
+    except Exception:
+        return None
+
+
+@app.get("/kit")
+@app.get("/v1/kit")
+def kit_download():
+    """THE FUSION KIT — download the runnable WikiText-103 kit (zip), served off the
+    durable volume. Public, no login."""
+    p = _kit_path()
+    if p and os.path.exists(p):
+        return FileResponse(p, media_type="application/zip", filename=KIT_NAME)
+    return JSONResponse({"error": "the kit is not available right now"}, status_code=404)
+
+
+@app.get("/v1/kit/status")
+def kit_status():
+    """Where the kit lives (volume vs bundle), its size, and its sha256 — auditable."""
+    p = _kit_path()
+    m = reg.mount()
+    on_vol = bool(m and p and os.path.abspath(p).startswith(os.path.abspath(m)))
+    return {"available": bool(p), "on_volume": on_vol, "mount": m, "path": p,
+            "name": KIT_NAME,
+            "bytes": (os.path.getsize(p) if p and os.path.exists(p) else 0),
+            "sha256": _kit_sha(p) if p else None}
 
 
 # ── the RIPPLE BEACON · agent-facing commerce surface ─────────────────────────
