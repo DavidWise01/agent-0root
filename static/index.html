@@ -207,6 +207,14 @@ text-shadow:1px 1px 0 rgba(255,106,0,.18)}
 #hudbar{position:fixed;top:0;left:0;right:0;z-index:60;background:color-mix(in srgb,var(--hi) 92%,transparent);backdrop-filter:blur(4px);border-bottom:1px solid var(--neon);font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--pa2);padding:7px 14px;transform:translateY(-110%);transition:transform .25s}
 #hudbar.on{transform:translateY(0)}
 #hudbar a{color:var(--neon2);text-decoration:none}
+/* the min HUD — a small persistent readout, bottom-right (top = progress bar + hudbar, bottom-left = the two docent FABs) */
+#uhud{position:fixed;right:14px;bottom:16px;z-index:88;font-family:var(--mono);font-size:10.5px;line-height:1.5;letter-spacing:.03em;color:var(--dim);background:color-mix(in srgb,var(--hi) 90%,transparent);border:1px solid var(--line);border-left:2px solid var(--neon);border-radius:9px;padding:7px 11px;backdrop-filter:blur(5px);box-shadow:0 4px 18px rgba(26,23,18,.09);max-width:min(52vw,260px)}
+#uhud #uhudtop{display:block;color:var(--neon2);font-weight:700;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;font-size:10px}
+#uhud #uhudtop:hover{color:var(--neon)}#uhud #uhudtop b{color:var(--pa)}
+#uhudnow{display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}#uhudnow b{color:var(--neon2);font-weight:600}
+@media(max-width:520px){#uhud{font-size:9.5px;right:10px;bottom:10px;padding:6px 9px;max-width:64vw}}
+@media(prefers-reduced-motion:no-preference){#uhud{animation:cinrise .85s 1s ease both}}
+@media print{#uhud{display:none!important}}
 .lit{outline:3px solid var(--c);outline-offset:3px}
 .knav{outline:2px solid var(--neon);outline-offset:4px}
 #jasbd{position:fixed;inset:0;z-index:78;background:rgba(20,14,8,.28);backdrop-filter:blur(1.5px);opacity:0;transition:opacity .3s;pointer-events:none}
@@ -375,6 +383,7 @@ footer a{color:var(--violet2);text-decoration:none}
 footer .law{font-family:var(--body);font-style:italic;font-size:13.5px;color:var(--pa2);letter-spacing:0;margin-bottom:14px}
 footer .bookline{font-family:var(--body);font-size:14px;color:var(--pa2);letter-spacing:0;margin:0 auto 16px;max-width:64ch;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:rgba(154,124,255,.05)}footer .bookline b{color:#6a4fb0}footer .bookline a{color:#8a6a10}
 </style></head><body><div class="uprog" aria-hidden="true"></div>
+<aside id="uhud" aria-label="UD0 status"><a href="#" id="uhudtop">⬡ UD0 · <b>1179</b> spheres</a><span id="uhudnow">▸ <b>40</b> domains</span></aside>
 <noscript><p style="font-family:var(--mono);font-size:12px;color:var(--pa2);background:var(--hi);border-bottom:1px solid var(--line);padding:8px 14px;text-align:center">All 40 domains are open below and fully readable — only the orrery and live search need JavaScript.</p></noscript>
 <div class="wrap">
   <header>
@@ -6916,4 +6925,22 @@ footer .bookline{font-family:var(--body);font-size:14px;color:var(--pa2);letter-
 })();
 </script>
 <script>(function(){var lk=document.querySelector("link[rel~='icon']");if(!lk){lk=document.createElement('link');lk.rel='icon';document.head.appendChild(lk);}var c=document.createElement('canvas');c.width=64;c.height=64;var g=c.getContext('2d');var t=0;function aeon(){t+=0.085;g.clearRect(0,0,64,64);var pulse=0.5+0.5*Math.sin(t),R=19+3.5*pulse;g.save();g.translate(32,32);g.beginPath();for(var i=0;i<=84;i++){var a=i/84*Math.PI*2,d=1+Math.sin(a)*Math.sin(a),x=R*Math.cos(a)/d,y=R*Math.sin(a)*Math.cos(a)/d;if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}g.closePath();g.lineCap='round';g.globalAlpha=0.16+0.30*pulse;g.lineWidth=10;g.strokeStyle='#b98cff';g.stroke();g.globalAlpha=0.95;g.lineWidth=5;g.strokeStyle='#8a5fe0';g.stroke();g.globalAlpha=0.9;g.lineWidth=2.2;g.strokeStyle='#ece4ff';g.stroke();g.restore();lk.href=c.toDataURL('image/png');if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;setTimeout(document.hidden?function(){setTimeout(aeon,600);}:aeon,100);}aeon();})();</script>
+<script>(function(){
+  var hud=document.getElementById('uhud'); if(!hud) return;
+  var top=document.getElementById('uhudtop'), now=document.getElementById('uhudnow');
+  if(top) top.addEventListener('click',function(e){e.preventDefault();window.scrollTo({top:0,behavior:'smooth'});});
+  var secs=[].slice.call(document.querySelectorAll('section.domain')); var ND=secs.length;
+  if(!secs.length||!now) return;
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+  var tick=false;
+  function upd(){ tick=false; var cur=null,idx=0;
+    for(var i=0;i<secs.length;i++){ if(secs[i].getBoundingClientRect().top<=120){cur=secs[i];idx=i+1;} else break; }
+    if(cur){ var t=cur.querySelector('.dtitle'); var nm=t?t.textContent.trim():cur.id;
+      now.innerHTML='▸ <b>'+String(idx<10?'0'+idx:idx)+' / '+ND+'</b> · '+esc(nm); }
+    else { now.innerHTML='▸ <b>'+ND+'</b> domains'; }
+  }
+  window.addEventListener('scroll',function(){ if(!tick){tick=true;requestAnimationFrame(upd);} },{passive:true});
+  window.addEventListener('resize',function(){ if(!tick){tick=true;requestAnimationFrame(upd);} },{passive:true});
+  upd();
+})();</script>
 </div></body></html>
