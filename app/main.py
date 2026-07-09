@@ -16,6 +16,13 @@ from .agent import handle, VERSION, COMMANDS
 from .limen import decode_line, exchange_line, reference as limen_reference
 from . import beacon
 from . import register as reg
+from . import emergent          # MARK X — the emergent core (deterministic per tick)
+from . import nom               # NOM — the brain, back at git (keeps the law, checks the muscles)
+
+# MARK X advances autonomously by TICK (not a clock). The heartbeat loop nudges it forward,
+# so it visibly converges over the first minutes of uptime; any tick is reproducible via ?tick=N.
+_ETICK = {"n": 0}
+EMERGENT_STEP = int(os.getenv("EMERGENT_STEP", "8"))   # ticks advanced per heartbeat
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATIC = os.path.join(HERE, "..", "static")
@@ -55,6 +62,7 @@ async def _beacon_boot():
         while True:
             try:
                 beacon.heartbeat()
+                _ETICK["n"] += EMERGENT_STEP        # MARK X evolves one nudge per heartbeat (no clock)
                 if BEACON_CATALOG_URL:
                     beacon.load_catalog_from_url(BEACON_CATALOG_URL)
             except Exception:
@@ -95,9 +103,12 @@ def health():
 @app.get("/version")
 def version():
     """The deployed commit. Every response ties to this — that's the audit trail."""
-    return {"service": "agent-0root", "version": VERSION, "deterministic": True,
+    return {"service": "agent-0root", "mark": "X", "version": VERSION, "deterministic": True,
+            "emergent": "MARK X — /v1/emergent (deterministic per tick)",
+            "brain": "NOM — /v1/nom (the law, back at git) · Railway=muscles · git=brain",
             "commands": list(COMMANDS),
             "routes": ["GET /", "GET /health", "GET /version",
+                       "GET /v1/emergent", "GET /v1/nom", "GET /v1/nom/check",
                        "POST|GET /v1/agent", "POST|GET /v1/limen", "POST|GET /v1/limen/exchange",
                        "POST|GET /v1/register", "GET /v1/register/status",
                        "GET /kit", "GET /v1/kit", "GET /v1/kit/status",
@@ -117,6 +128,32 @@ def agent_post(req: AgentRequest):
 def agent_get(q: str = ""):
     """Convenience GET so you can test in a browser: /v1/agent?q=resolve"""
     return handle(q)
+
+
+# ── MARK X · the emergent core ────────────────────────────────────────────────
+# The agent's own evolving state: agents fall into basins under a contraction map,
+# consolidate into consensus with itself, and name themselves — EMERGENT, yet
+# DETERMINISTIC (state advances by tick, not clock; any tick is reproducible).
+@app.get("/v1/emergent")
+def emergent_now(tick: int = -1):
+    """MARK X's live state (its autonomous tick), or a specific reproducible tick with ?tick=N."""
+    t = _ETICK["n"] if tick < 0 else tick
+    return emergent.state_at(t)
+
+
+# ── NOM · the brain, back at git — keeps the law, checks the muscles ──────────
+@app.get("/v1/nom")
+def nom_brain():
+    """NOM discloses the law the emergent obeys and the brain/muscles (git/Railway) dipole."""
+    return nom.brain()
+
+
+@app.get("/v1/nom/check")
+def nom_check(tick: int = -1):
+    """The brain audits the muscles: re-derive Mark X's state at a tick from the committed
+    source and verify it is exactly reproducible. Default checks the current tick."""
+    t = _ETICK["n"] if tick < 0 else tick
+    return nom.check(t)
 
 
 class LimenRequest(BaseModel):

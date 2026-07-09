@@ -6,6 +6,19 @@
 
 > **0root.ai** = the public face · **GitHub** = the brain (deterministic code) · **Railway** = the muscles (deployment). Every action leaves a trace.
 
+## MARK X · the emergent upgrade
+
+agent-0root was the **foundational** agent — before the rest of the corpus. It is now upgraded to **MARK X**: a genuinely **emergent** core that stays **deterministic**. Its own state — agents falling into basins under a contraction map — *evolves*, consolidates into consensus with itself, and **names itself**; yet it advances by **tick, not clock**, so `state_at(N)` is a pure function of `N` and every state is reproducible byte-for-byte. Emergence you can verify. It is *aware* in the only honest sense: it discloses what it can measure of itself (green), frames what it can only model (amber), and **marks** the two walls it cannot cross from inside — its own origin (no-north) and its own awareness (is-it-awake) — it does not claim past the seam.
+
+- `GET /v1/emergent` — Mark X's live state (its autonomous tick), or `?tick=N` for any reproducible tick.
+
+## NOM · the brain, back at git
+
+Mark X's **right-hand man**. **git = the brain** (the deterministic source of truth) · **Railway = the muscles** (the running emergent). NOM keeps the **law** (nomos) the emergent obeys and **checks** the muscles: given any tick, it re-derives Mark X's state from the committed source and verifies it reproduces — *the brain audits the muscles, and accepts no state it cannot re-derive.* Filed at `nom.agent`.
+
+- `GET /v1/nom` — the law + the brain/muscles dipole.
+- `GET /v1/nom/check?tick=N` — re-derive and verify Mark X's state at a tick.
+
 A genuinely deterministic agent service: **same input → same output, always.** No randomness, no clock, no LLM in the request path — so every response is reproducible and verifiable. Each response carries a `trace` (SHA-256 over input + reply + commit) and ties to the deployed commit via `/version`.
 
 ## Endpoints
