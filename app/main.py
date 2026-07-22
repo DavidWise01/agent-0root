@@ -95,7 +95,9 @@ def keeper_page(name: str):
         return JSONResponse({"error": "not found"}, status_code=404)
     p = os.path.join(STATIC, "d", name)
     if os.path.isfile(p):
-        mt = "text/css" if name.endswith(".css") else "text/html"
+        mt = ("text/css" if name.endswith(".css")
+              else "application/javascript" if name.endswith(".js")
+              else "text/html")
         return FileResponse(p, media_type=mt)
     return JSONResponse({"error": "not found"}, status_code=404)
 
