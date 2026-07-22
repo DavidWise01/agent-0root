@@ -77,13 +77,27 @@ class AgentRequest(BaseModel):
 
 
 @app.get("/")
+@app.get("/index.html")
 def home():
-    """The 0root.ai public face."""
+    """The 0root.ai public face (L1 — the UD0 domain directory)."""
     idx = os.path.join(STATIC, "index.html")
     if os.path.exists(idx):
         return FileResponse(idx)
     return JSONResponse({"service": "agent-0root", "version": VERSION,
                          "try": "/v1/agent?q=resolve"})
+
+
+@app.get("/d/{name}")
+def keeper_page(name: str):
+    """L2 — the per-domain keeper pages (ud0/d/<domain>.html) and their shared
+    keeper.css, mirrored into static/d/. Path-traversal guarded, .html/.css only."""
+    if not name or "/" in name or "\\" in name or ".." in name:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    p = os.path.join(STATIC, "d", name)
+    if os.path.isfile(p):
+        mt = "text/css" if name.endswith(".css") else "text/html"
+        return FileResponse(p, media_type=mt)
+    return JSONResponse({"error": "not found"}, status_code=404)
 
 
 @app.get("/witness.png")
