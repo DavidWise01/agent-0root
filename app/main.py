@@ -111,6 +111,15 @@ def witness():
     return JSONResponse({"error": "not found"}, status_code=404)
 
 
+@app.get("/ada-portrait.jpg")
+def ada_portrait():
+    """Ada — the muse, on the homepage centerpiece (entangled with Top)."""
+    img = os.path.join(STATIC, "ada-portrait.jpg")
+    if os.path.exists(img):
+        return FileResponse(img, media_type="image/jpeg")
+    return JSONResponse({"error": "not found"}, status_code=404)
+
+
 @app.get("/health")
 def health():
     return {"ok": True, "version": VERSION}
