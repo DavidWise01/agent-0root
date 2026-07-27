@@ -103,6 +103,20 @@ def keeper_page(name: str):
     return JSONResponse({"error": "not found"}, status_code=404)
 
 
+@app.get("/{name}.html")
+def top_page(name: str):
+    """L1.5 — top-level ud0 pages mirrored into static/ (e.g. keepers.html). The
+    homepage links to these by bare filename, so they need a route of their own.
+    Path-traversal guarded, .html only; the {name}.html template never shadows the
+    API routes (/observe, /stream, /model, /chain) since those don't end in .html."""
+    if not name or "/" in name or "\\" in name or ".." in name:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    p = os.path.join(STATIC, name + ".html")
+    if os.path.isfile(p):
+        return FileResponse(p, media_type="text/html")
+    return JSONResponse({"error": "not found"}, status_code=404)
+
+
 @app.get("/witness.png")
 def witness():
     """The hero sentinel image, served to the homepage."""
