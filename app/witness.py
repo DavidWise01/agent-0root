@@ -37,6 +37,13 @@ _model = {
 # SSE client queues (the down-channel)
 _clients = set()
 
+# the sealed chain itself — every link kept so the phone can RE-VERIFY it in-browser.
+# Each link stores the exact canonical input string that was hashed, so the client can
+# recompute sha256(prev + "|" + input)[:12] and confirm it equals seal. Bounded (the
+# model is a live tunnel that resets on redeploy, not a database).
+_chain = []
+_CHAIN_MAX = 500
+
 
 def _welford(s, x):
     s["n"] = s.get("n", 0) + 1
@@ -54,12 +61,30 @@ def _sd(s):
 
 
 def _seal(payload):
-    h = hashlib.sha256(
-        (_model["chainHead"] + "|" + json.dumps(payload, sort_keys=True, separators=(",", ":"))).encode("utf-8")
-    ).hexdigest()[:12]
+    inp = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    prev = _model["chainHead"]
+    h = hashlib.sha256((prev + "|" + inp).encode("utf-8")).hexdigest()[:12]
     _model["chainHead"] = h
     _model["chainLen"] += 1
+    _chain.append({"seq": _model["chainLen"], "prev": prev, "input": inp, "seal": h})
+    if len(_chain) > _CHAIN_MAX:
+        del _chain[0:len(_chain) - _CHAIN_MAX]
     return h
+
+
+def chain_dump(limit: int = 500) -> dict:
+    """The ordered sealed links, so the phone can recompute each SHA-256 and prove the
+    chain is intact in-browser. Returns at most the last `limit` links (bounded memory);
+    the client verifies internal linkage + that the final seal equals the live head."""
+    links = _chain[-limit:] if limit else list(_chain)
+    return {
+        "genesis": "tunnel00000000",
+        "head": _model["chainHead"],
+        "len": _model["chainLen"],
+        "returned": len(links),
+        "truncated": len(links) < _model["chainLen"],
+        "links": links,
+    }
 
 
 def learn(ev: dict) -> str:

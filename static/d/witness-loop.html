@@ -47,8 +47,10 @@
       <button class="go" id="connect">connect tunnel</button>
       <button id="probe">run capability sweep</button>
       <button id="ping">ping ×5 (timing)</button>
+      <button id="verify">verify seal chain</button>
     </div>
     <p class="note"><span class="dot" id="lamp"></span><span id="status">idle — enter server origin and connect</span></p>
+    <p class="note" id="cv">seal chain not yet verified — connect, sweep, then re-hash it here in-browser</p>
   </div>
 
   <div class="card">
@@ -126,6 +128,38 @@ async function sweep(){
 
 async function pingN(n){ for(let i=0;i<n;i++){ await observe({kind:'ping',value:1}); await new Promise(r=>setTimeout(r,200)); } }
 
+// ---------- verify the seal chain IN-BROWSER: re-hash every link the server sealed ----------
+// The server stores each link's exact hashed input, so we can recompute sha256(prev+'|'+input)[:12]
+// locally and confirm it equals the seal, that each link tethers to the one before it, and that
+// the final seal equals the live model head. Turns "chain sealed" from a claim into a checked fact.
+async function sha12(str){
+  const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,12);
+}
+async function verifyChain(){
+  if(!base){ setStatus('connect first',false); return; }
+  $('cv').textContent='re-hashing the seal chain…';
+  try{
+    const j=await (await fetch(base+'/chain')).json();
+    const links=j.links||[];
+    if(!links.length){ $('cv').textContent='seal chain empty — run a capability sweep first'; return; }
+    let ok=0, badSeal=0, badLink=0;
+    for(let i=0;i<links.length;i++){
+      const L=links[i];
+      const reSeal=(await sha12(L.prev+'|'+L.input))===L.seal;
+      const reLink=(i===0)? true : (L.prev===links[i-1].seal);
+      if(reSeal&&reLink) ok++; else { if(!reSeal) badSeal++; if(!reLink) badLink++; }
+    }
+    const headOk=links[links.length-1].seal===j.head;
+    const intact=(ok===links.length)&&headOk;
+    $('cv').innerHTML='<span class="verdict '+(intact?'v-lit':'v-usr')+'">'+(intact?'CHAIN INTACT':'BREAK FOUND')+'</span> '
+      +ok+'/'+links.length+' links re-hashed in-browser'
+      +(j.truncated?' (last '+j.returned+' of '+j.len+')':'')
+      +(headOk?' · head matches live model':' · head MISMATCH')
+      +(badSeal?' · '+badSeal+' bad seal':'')+(badLink?' · '+badLink+' broken link':'');
+  }catch(err){ $('cv').textContent='verify failed: '+err.message; }
+}
+
 // ---------- render the learned model ----------
 const VC={ 'LIT granted':'v-lit', 'POLICY':'v-pol', 'USER':'v-usr' };
 function vclass(v){ if(!v) return 'v-non'; if(v.startsWith('LIT'))return 'v-lit'; if(v.startsWith('POLICY'))return 'v-pol'; if(v.startsWith('USER'))return 'v-usr'; return 'v-non'; }
@@ -147,5 +181,6 @@ function render(m){
 $('connect').onclick=connect;
 $('probe').onclick=sweep;
 $('ping').onclick=()=>pingN(5);
+$('verify').onclick=verifyChain;
 </script>
 </body></html>

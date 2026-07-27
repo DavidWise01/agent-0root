@@ -449,6 +449,17 @@ async def witness_model():
     return JSONResponse(wloop.snapshot())
 
 
+@app.get("/chain")
+async def witness_chain(limit: int = 500):
+    """The ordered sealed links, so the phone can recompute each SHA-256 in-browser
+    and prove the tunnel's hash chain is intact — the witness verifying itself."""
+    try:
+        limit = max(1, min(int(limit), 500))
+    except (TypeError, ValueError):
+        limit = 500
+    return JSONResponse(wloop.chain_dump(limit))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
