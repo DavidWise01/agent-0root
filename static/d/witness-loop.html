@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Witness Loop · tunnel learner</title>
+<style>
+  :root{--bg:#06070b;--card:#0e1119;--ink:#e8ecf4;--dim:#7b8398;--line:#1b2130;
+        --lit:#4fd1a5;--amber:#e0a339;--dark:#8a5cf0;--hi:#f0b132;--acc:#5ad0ff;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 ui-monospace,Menlo,monospace}
+  header{position:sticky;top:0;background:rgba(6,7,11,.94);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:14px 16px;z-index:5}
+  header h1{margin:0;font-size:16px}header h1 b{color:var(--hi)}
+  header p{margin:4px 0 0;color:var(--dim);font-size:12px}
+  main{max-width:720px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+  h2{font-size:14px;margin:0 0 10px;color:var(--acc)}
+  input,button{font:inherit}
+  input{background:#0a0d15;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:9px 12px;width:100%}
+  button{background:#151b29;color:var(--ink);border:1px solid var(--line);border-radius:9px;
+    padding:10px 14px;cursor:pointer;margin:6px 6px 0 0}
+  button.go{border-color:var(--acc);color:var(--acc)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#555;margin-right:6px}
+  .dot.on{background:var(--lit);box-shadow:0 0 8px var(--lit)}
+  .grid{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;font-size:13px;align-items:center}
+  .grid .k{color:var(--dim)}.grid .v{text-align:right}
+  .verdict{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
+  .v-lit{background:rgba(79,209,165,.15);color:var(--lit)}
+  .v-pol{background:rgba(138,92,240,.16);color:var(--dark)}
+  .v-usr{background:rgba(224,163,57,.15);color:var(--amber)}
+  .v-non{background:#1a2030;color:var(--dim)}
+  pre{background:#04050a;border-radius:10px;padding:12px;font-size:11px;overflow:auto;color:var(--dim);max-height:200px}
+  .note{color:var(--dim);font-size:12px;margin:8px 0}
+  .big{font-size:22px;color:var(--hi)}
+</style></head>
+<body>
+<header>
+  <h1><b>Witness Loop</b> · learning the tunnel</h1>
+  <p>The phone probes its own capabilities and reports each outcome up the HTTPS tunnel.
+     The server learns the pattern and streams its model back. No sensor data leaves — only <em>whether and how fast</em> each gate answered.</p>
+</header>
+<main>
+  <div class="card">
+    <h2>connection</h2>
+    <input id="url" value="https://0root.ai" placeholder="https://your-server-origin (blank = same origin)">
+    <div style="margin-top:8px">
+      <button class="go" id="connect">connect tunnel</button>
+      <button id="probe">run capability sweep</button>
+      <button id="ping">ping ×5 (timing)</button>
+    </div>
+    <p class="note"><span class="dot" id="lamp"></span><span id="status">idle — enter server origin and connect</span></p>
+  </div>
+
+  <div class="card">
+    <h2>what the server has learned about THIS tunnel</h2>
+    <div class="grid" id="caps"></div>
+    <div style="margin-top:12px" class="grid">
+      <div class="k">observations</div><div class="v big" id="obs">0</div><div></div>
+      <div class="k">request rhythm (ms)</div><div class="v" id="arr">—</div><div></div>
+      <div class="k">round-trip (ms)</div><div class="v" id="rtt">—</div><div></div>
+      <div class="k">chain sealed</div><div class="v" id="chain">—</div><div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>raw model stream</h2>
+    <pre id="raw">waiting for /stream…</pre>
+  </div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+let base='';           // server origin
+let es=null;
+
+function origin(){ const u=$('url').value.trim(); return u || location.origin; }
+function setStatus(t,on){ $('status').textContent=t; $('lamp').className='dot'+(on?' on':''); }
+
+// ---------- down-channel: subscribe to the learned model ----------
+function connect(){
+  base=origin();
+  if(es) es.close();
+  try{
+    es=new EventSource(base+'/stream');
+    es.onopen=()=>setStatus('tunnel open — receiving learned model from '+base,true);
+    es.onmessage=e=>{ try{ render(JSON.parse(e.data)); }catch(err){} };
+    es.onerror=()=>setStatus('stream error — is the server up + CORS/HTTPS ok? '+base,false);
+  }catch(err){ setStatus('connect failed: '+err.message,false); }
+}
+
+// ---------- up-channel: report an observation ----------
+async function observe(ev){
+  try{
+    const t0=performance.now();
+    const r=await fetch(base+'/observe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(ev)});
+    const rtt=performance.now()-t0;
+    // report the round-trip itself as another tunnel observation (meta!)
+    if(ev.kind!=='rtt'){ fetch(base+'/observe',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({kind:'rtt',value:Math.round(rtt)})}); }
+    return await r.json();
+  }catch(err){ setStatus('observe failed: '+err.message,false); }
+}
+
+// ---------- the capability sweep: probe each gate, TIME the outcome, report it ----------
+const PROBES={
+  clipboard: async()=>{ await navigator.clipboard.readText(); },
+  camera:    async()=>{ const s=await navigator.mediaDevices.getUserMedia({video:true}); s.getTracks().forEach(t=>t.stop()); },
+  mic:       async()=>{ const s=await navigator.mediaDevices.getUserMedia({audio:true}); s.getTracks().forEach(t=>t.stop()); },
+  geo:       async()=>{ await new Promise((ok,no)=>navigator.geolocation.getCurrentPosition(ok,no,{timeout:8000})); },
+  motion:    async()=>{ if(DeviceMotionEvent.requestPermission){const p=await DeviceMotionEvent.requestPermission(); if(p!=='granted') throw new Error('denied');} },
+  notify:    async()=>{ const p=await Notification.requestPermission(); if(p!=='granted') throw new Error(p); },
+};
+async function sweep(){
+  if(!base){ setStatus('connect first',false); return; }
+  for(const [cap,fn] of Object.entries(PROBES)){
+    const t0=performance.now();
+    try{ await fn(); const ms=performance.now()-t0;
+      await observe({cap,outcome:'granted',ms:Math.round(ms)});
+    }catch(err){ const ms=performance.now()-t0;
+      await observe({cap,outcome:'refused',ms:Math.round(ms)});
+    }
+    await new Promise(r=>setTimeout(r,120)); // let each seal land
+  }
+  setStatus('sweep complete — server classified each gate by response timing',true);
+}
+
+async function pingN(n){ for(let i=0;i<n;i++){ await observe({kind:'ping',value:1}); await new Promise(r=>setTimeout(r,200)); } }
+
+// ---------- render the learned model ----------
+const VC={ 'LIT granted':'v-lit', 'POLICY':'v-pol', 'USER':'v-usr' };
+function vclass(v){ if(!v) return 'v-non'; if(v.startsWith('LIT'))return 'v-lit'; if(v.startsWith('POLICY'))return 'v-pol'; if(v.startsWith('USER'))return 'v-usr'; return 'v-non'; }
+function render(m){
+  $('obs').textContent=m.observations;
+  $('arr').textContent=m.arrival_ms? m.arrival_ms.mean+' ± '+m.arrival_ms.sd : '—';
+  $('rtt').textContent=(m.kinds&&m.kinds.rtt)? m.kinds.rtt.mean+' ± '+m.kinds.rtt.sd+' (n='+m.kinds.rtt.n+')' : '—';
+  $('chain').textContent=m.chain? m.chain.head+' ('+m.chain.len+')' : '—';
+  const rows=[];
+  for(const [cap,c] of Object.entries(m.caps||{})){
+    const v=c.verdict||'';
+    rows.push(`<div class="k">${cap}</div><div class="v">${c.granted}✓ / ${c.refused}✕</div>
+      <div><span class="verdict ${vclass(v)}">${v||'—'}</span></div>`);
+  }
+  $('caps').innerHTML=rows.join('')||'<div class="k" style="grid-column:1/4;color:var(--dim)">run a sweep to populate</div>';
+  $('raw').textContent=JSON.stringify(m,null,1);
+}
+
+$('connect').onclick=connect;
+$('probe').onclick=sweep;
+$('ping').onclick=()=>pingN(5);
+</script>
+</body></html>

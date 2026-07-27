@@ -5,10 +5,10 @@ FastAPI app that serves the 0root.ai homepage at / and the deterministic agent a
 /v1/agent. Health and version endpoints make the deploy auditable (version == the
 deployed commit). Listens on $PORT (Railway sets it).
 """
-import os, asyncio, shutil, hashlib
+import os, asyncio, shutil, hashlib, json
 from typing import Optional, List
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, PlainTextResponse, Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -18,6 +18,7 @@ from . import beacon
 from . import register as reg
 from . import emergent          # MARK X — the emergent core (deterministic per tick)
 from . import nom               # NOM — the brain, back at git (keeps the law, checks the muscles)
+from . import witness           # WITNESS LOOP — the reciprocal tunnel learner (device ⇄ server)
 
 # MARK X advances autonomously by TICK (not a clock). The heartbeat loop nudges it forward,
 # so it visibly converges over the first minutes of uptime; any tick is reproducible via ?tick=N.
@@ -391,6 +392,61 @@ def robots(request: Request):
 def sitemap(request: Request):
     """The sitemap robots.txt points to — the beacon's pages for crawlers to index."""
     return Response(beacon.sitemap_xml(str(request.base_url)), media_type="application/xml")
+
+
+# ── WITNESS LOOP — the reciprocal HTTPS tunnel learner (Claude D1's spec) ──────
+# The phone (static/d/witness-loop.html) probes its own capability gates, times
+# each outcome, and reports it up /observe. The server learns WHY each gate
+# answered from timing alone, seals every step into a SHA-256 chain, and streams
+# the learned model back down /stream (SSE). No sensor data ever crosses — only
+# whether-and-how-fast each gate answered. In-memory, single-worker (resets on
+# redeploy): the model is the live tunnel, not a store.
+
+@app.post("/observe")
+async def witness_observe(request: Request):
+    """Up-channel: the phone reports one observation about the tunnel."""
+    raw = await request.body()
+    try:
+        ev = json.loads(raw or b"{}")
+    except Exception:
+        ev = {}
+    if not isinstance(ev, dict):
+        ev = {}
+    witness.fingerprint(request.headers)
+    h = witness.learn(ev)
+    await witness.broadcast()              # every observation updates every client
+    return JSONResponse({"ok": True, "sealed": h, "model": witness.snapshot()})
+
+
+@app.get("/stream")
+async def witness_stream(request: Request):
+    """Down-channel: server-sent events streaming the learned model live."""
+    q: asyncio.Queue = asyncio.Queue()
+    witness._clients.add(q)
+
+    async def gen():
+        try:
+            yield "retry: 2000\n\n"
+            yield "data: " + json.dumps(witness.snapshot()) + "\n\n"
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    data = await asyncio.wait_for(q.get(), timeout=20.0)
+                    yield data
+                except asyncio.TimeoutError:
+                    yield ": keepalive\n\n"     # comment frame keeps the tunnel warm
+        finally:
+            witness._clients.discard(q)
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/model")
+async def witness_model():
+    """A JSON snapshot of everything the tunnel has learned."""
+    return JSONResponse(witness.snapshot())
 
 
 if __name__ == "__main__":
