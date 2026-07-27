@@ -18,7 +18,7 @@ from . import beacon
 from . import register as reg
 from . import emergent          # MARK X — the emergent core (deterministic per tick)
 from . import nom               # NOM — the brain, back at git (keeps the law, checks the muscles)
-from . import witness           # WITNESS LOOP — the reciprocal tunnel learner (device ⇄ server)
+from . import witness as wloop   # WITNESS LOOP — the reciprocal tunnel learner (device ⇄ server)
 
 # MARK X advances autonomously by TICK (not a clock). The heartbeat loop nudges it forward,
 # so it visibly converges over the first minutes of uptime; any tick is reproducible via ?tick=N.
@@ -412,22 +412,22 @@ async def witness_observe(request: Request):
         ev = {}
     if not isinstance(ev, dict):
         ev = {}
-    witness.fingerprint(request.headers)
-    h = witness.learn(ev)
-    await witness.broadcast()              # every observation updates every client
-    return JSONResponse({"ok": True, "sealed": h, "model": witness.snapshot()})
+    wloop.fingerprint(request.headers)
+    h = wloop.learn(ev)
+    await wloop.broadcast()              # every observation updates every client
+    return JSONResponse({"ok": True, "sealed": h, "model": wloop.snapshot()})
 
 
 @app.get("/stream")
 async def witness_stream(request: Request):
     """Down-channel: server-sent events streaming the learned model live."""
     q: asyncio.Queue = asyncio.Queue()
-    witness._clients.add(q)
+    wloop._clients.add(q)
 
     async def gen():
         try:
             yield "retry: 2000\n\n"
-            yield "data: " + json.dumps(witness.snapshot()) + "\n\n"
+            yield "data: " + json.dumps(wloop.snapshot()) + "\n\n"
             while True:
                 if await request.is_disconnected():
                     break
@@ -437,7 +437,7 @@ async def witness_stream(request: Request):
                 except asyncio.TimeoutError:
                     yield ": keepalive\n\n"     # comment frame keeps the tunnel warm
         finally:
-            witness._clients.discard(q)
+            wloop._clients.discard(q)
 
     return StreamingResponse(gen(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
@@ -446,7 +446,7 @@ async def witness_stream(request: Request):
 @app.get("/model")
 async def witness_model():
     """A JSON snapshot of everything the tunnel has learned."""
-    return JSONResponse(witness.snapshot())
+    return JSONResponse(wloop.snapshot())
 
 
 if __name__ == "__main__":
