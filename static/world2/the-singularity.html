@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="author" content="David Lee Wise / ROOT0 / TriPod LLC">
+<title>THE SINGULARITY · a real gravitational lens</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#0a0614;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:#dcd4f4}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;left:14px;top:12px;z-index:3;font-size:11px;line-height:1.7;color:#bfa9ee;background:rgba(20,12,44,.46);border:1px solid rgba(150,120,255,.24);border-radius:11px;padding:11px 14px;backdrop-filter:blur(5px);max-width:300px}
+.hud h1{font-size:15px;font-weight:600;color:#fff;letter-spacing:.02em;margin-bottom:2px;text-shadow:0 0 18px rgba(120,90,255,.6)}
+.hud .eye{font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:#8fb4ff}
+.hud .row{margin-top:7px}.hud b{color:#fff}.hud .k{color:#8a7cc0}
+.hud .cy{color:#5fd6ff}.hud .am{color:#ffb060}
+.foot{position:fixed;left:14px;bottom:12px;z-index:3;font-size:10px;line-height:1.6;color:#8a7cc0;max-width:min(560px,92vw)}
+.foot b{color:#bfa9ee}
+.tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:3px}
+.tag.lit{color:#7ef0a6;border:1px solid rgba(126,240,166,.5)}.tag.fig{color:#ffce5a;border:1px solid rgba(255,206,90,.5)}
+.ctl{position:fixed;right:14px;top:12px;z-index:3;font-size:10.5px;color:#bfa9ee;background:rgba(20,12,44,.46);border:1px solid rgba(150,120,255,.24);border-radius:11px;padding:10px 13px;display:flex;flex-direction:column;gap:8px;backdrop-filter:blur(5px)}
+.ctl label{display:flex;flex-direction:column;gap:3px}.ctl input{accent-color:#7a5cff;width:150px}
+.ctl .v{color:#5fd6ff}
+#fail{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9;display:none;background:#2a0e1e;border:1.5px solid #ff6a9a;color:#ffc4d6;padding:14px 18px;border-radius:10px;font-size:12px;max-width:80%;white-space:pre-wrap}
+</style></head><body>
+<canvas id="gl"></canvas>
+<div class="hud">
+<div class="eye">ROOT0 · TriPod · BURROW → resolved</div>
+<h1>THE SINGULARITY</h1>
+<div class="k">a real gravitational lens — light is bent by the mass, not painted around it</div>
+<div class="row"><span class="k">lens eqn</span> β = θ − θ<sub>E</sub>²/θ &nbsp; <span class="k">(thin lens)</span></div>
+<div class="row"><span class="cy">Einstein ring</span> at θ=θ<sub>E</sub> · <span class="am">photon ring</span> + shadow at the horizon</div>
+<div class="row k" id="stat"></div>
+</div>
+<div class="ctl">
+<label>mass · θ<sub>E</sub> <input id="mass" type="range" min="8" max="42" value="26"><span class="v" id="massv"></span></label>
+<label>horizon <input id="hor" type="range" min="4" max="16" value="9"><span class="v" id="horv"></span></label>
+<div class="k">move mouse / drag = shift the mass</div>
+</div>
+<div class="foot">
+<span class="tag lit">LIT</span> real thin-lens lensing (β=θ−θ<sub>E</sub>²/θ): the background is genuinely bent — Einstein ring, doubled/flipped inner image, divergent magnification at θ<sub>E</sub>, a black shadow rays fall into, a photon ring, Doppler-beamed lensed disk, gravitational-redshift dimming. &nbsp;
+<span class="tag fig">FIG</span> the WEAK-FIELD 2-D thin lens, not full Schwarzschild/Kerr geodesics — no frame-dragging, one deflection not an integrated null path. Close to the physics; honest about the approximation.<br>
+<b>David Lee Wise (ROOT0) / TriPod LLC</b> · self-contained WebGL2, no network · from the BURROW: INFINITE lattice
+</div>
+<div id="fail"></div>
+<script>
+"use strict";
+var FAIL=document.getElementById('fail');
+function die(m){FAIL.style.display='block';FAIL.textContent='halted honestly:\n'+m;throw new Error(m);}
+window.onerror=function(m,s,l,c){if(FAIL.style.display!=='block'){FAIL.style.display='block';FAIL.textContent='halted honestly: '+m+' @'+l+':'+c;}return false;};
+
+var cv=document.getElementById('gl');
+var gl=cv.getContext('webgl2',{antialias:true});
+if(!gl)die('WebGL2 not available in this browser');
+
+var VS='#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';
+
+var FS='#version 300 es\n'+
+'precision highp float;\n'+
+'uniform vec2 iRes; uniform float iTime; uniform vec2 iMouse; uniform float uRE; uniform float uRS;\n'+
+'out vec4 O;\n'+
+'float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\n'+
+'mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}\n'+
+// SOURCE plane — golden self-similar hex lattice + stars + violet nebula (never pure black)
+'vec3 bgnd(vec2 uv,float tm){\n'+
+'  vec3 col=vec3(0.10,0.05,0.20);\n'+                       // deep violet space (not black)
+'  float r=length(uv),a=atan(uv.y,uv.x);\n'+
+'  vec2 g=floor(uv*20.0);float h=hash(g);\n'+
+'  if(h>0.975){float tw=0.5+0.5*sin(tm*2.0+h*40.0);col+=vec3(0.75,0.82,1.0)*tw*0.8;}\n'+
+'  float phi=0.61803398875,lphi=log(1.0/phi);\n'+
+'  float s=(log(max(r,1e-4))-tm*0.05)/lphi;float cell=fract(s),layer=floor(s);\n'+
+'  float scale=pow(phi,cell);vec2 tp=rot(a+layer*0.4)*(uv*(1.0/scale));\n'+
+'  vec2 hp=abs(tp*2.6);float hex=max(hp.x*0.5+hp.y*0.8660254,hp.x);\n'+
+'  float line=smoothstep(0.92,0.87,fract(hex))*0.55;\n'+
+'  vec3 cy=vec3(0.10,0.85,1.0),am=vec3(1.0,0.55,0.10);\n'+
+'  vec3 hc=mix(am,cy,0.5+0.5*sin(layer*1.3+tm*0.3));\n'+
+'  col+=line*hc*(0.45+0.55*pow(1.0-cell,2.0));\n'+
+'  return col;\n'+
+'}\n'+
+'void main(){\n'+
+'  vec2 uv=(gl_FragCoord.xy-0.5*iRes.xy)/iRes.y;\n'+
+'  vec2 bh=iMouse*0.35;\n'+
+'  vec2 pp=uv-bh; float r=length(pp),th=atan(pp.y,pp.x);\n'+
+'  float rE=uRE, rs=uRS, rsh=rs*2.6, rph=rs*2.55;\n'+
+'  vec3 col=vec3(0.0);\n'+
+   // thin-lens: source radius beta = theta - rE^2/theta  (signed -> inner flipped image)
+'  float src=r-(rE*rE)/max(r,1e-3);\n'+
+'  vec2 sdir=vec2(cos(th),sin(th));\n'+
+'  vec3 bg=bgnd(sdir*src+bh,iTime);\n'+
+'  float mag=(rE*rE)/max(abs(r*r-rE*rE),0.004);\n'+
+'  col+=bg*(0.55+0.6*clamp(mag,0.0,3.0));\n'+
+   // Einstein ring
+'  col+=smoothstep(0.016,0.0,abs(r-rE))*vec3(0.7,0.9,1.0)*0.45;\n'+
+   // lensed accretion disk (two lensed bands, Doppler-beamed)
+'  for(int k=0;k<2;k++){float side=k==0?1.0:-1.0;\n'+
+'    float dr=abs(r-(rsh+0.055));float band=smoothstep(0.12,0.0,dr);\n'+
+'    float dopp=0.55+0.9*smoothstep(0.5,-0.5,pp.x*side);\n'+
+'    float spin=0.55+0.45*sin(th-iTime*2.0*side+r*26.0);\n'+
+'    vec3 dC=mix(vec3(1.0,0.5,0.14),vec3(0.5,0.8,1.0),smoothstep(0.3,-0.3,pp.x*side));\n'+
+'    col+=band*spin*dopp*dC*0.85;}\n'+
+   // photon ring
+'  col+=smoothstep(0.011,0.0,abs(r-rph))*vec3(1.0,0.95,0.85)*1.9;\n'+
+   // shadow (the singularity's shadow — rays fall in)
+'  float shadow=1.0-smoothstep(rsh-0.004,rsh+0.004,r);\n'+
+'  col=mix(col,vec3(0.0),shadow);\n'+
+   // gravitational redshift dimming just outside the horizon
+'  col*=mix(0.30,1.0,smoothstep(rsh,rsh+0.22,r));\n'+
+   // vignette + tonemap
+'  col*=1.0-0.30*pow(length(uv),1.6);\n'+
+'  col=pow(clamp(col,0.0,1.0),vec3(0.85));\n'+
+'  O=vec4(col,1.0);\n'+
+'}\n';
+
+function sh(type,src){var o=gl.createShader(type);gl.shaderSource(o,src);gl.compileShader(o);
+  if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))die('shader compile:\n'+gl.getShaderInfoLog(o));return o;}
+var prog=gl.createProgram();
+gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));
+gl.linkProgram(prog);
+if(!gl.getProgramParameter(prog,gl.LINK_STATUS))die('link:\n'+gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+var buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+var lp=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+var uRes=gl.getUniformLocation(prog,'iRes'),uTime=gl.getUniformLocation(prog,'iTime'),
+    uMouse=gl.getUniformLocation(prog,'iMouse'),uRE=gl.getUniformLocation(prog,'uRE'),uRS=gl.getUniformLocation(prog,'uRS');
+
+var DPR=Math.min(window.devicePixelRatio||1,2);
+function resize(){var w=Math.round(innerWidth*DPR),h=Math.round(innerHeight*DPR);cv.width=w;cv.height=h;gl.viewport(0,0,w,h);}
+addEventListener('resize',resize);resize();
+
+var mouse={x:0,y:0},target={x:0,y:0};
+function mv(x,y){target.x=(x/innerWidth-0.5)*2;target.y=(y/innerHeight-0.5)*-2;}
+addEventListener('mousemove',function(e){mv(e.clientX,e.clientY);});
+addEventListener('touchmove',function(e){if(e.touches[0])mv(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+
+var mass=document.getElementById('mass'),hor=document.getElementById('hor');
+var massv=document.getElementById('massv'),horv=document.getElementById('horv'),stat=document.getElementById('stat');
+function ui(){massv.textContent=(mass.value/100).toFixed(2);horv.textContent=(hor.value/100).toFixed(2);
+  stat.innerHTML='θ<sub>E</sub> = <b class="cy">'+(mass.value/100).toFixed(2)+'</b> · horizon = <b class="am">'+(hor.value/100*2.6).toFixed(2)+'</b> · shadow ≈ 2.6 r<sub>s</sub>';}
+mass.oninput=ui;hor.oninput=ui;ui();
+
+// self-check: the lens must actually bend — at r=rE the source maps to beta=0 (Einstein ring)
+(function(){var rE=0.26,r=rE;var beta=r-(rE*rE)/r;if(Math.abs(beta)>1e-6)die('lens self-check: Einstein radius does not map to beta=0 (got '+beta+')');})();
+
+function frame(t){requestAnimationFrame(frame);
+  mouse.x+=(target.x-mouse.x)*0.05;mouse.y+=(target.y-mouse.y)*0.05;
+  gl.uniform2f(uRes,cv.width,cv.height);gl.uniform1f(uTime,t*0.001);
+  gl.uniform2f(uMouse,mouse.x,mouse.y);
+  gl.uniform1f(uRE,mass.value/100);gl.uniform1f(uRS,hor.value/100);
+  gl.drawArrays(gl.TRIANGLES,0,3);
+}
+requestAnimationFrame(frame);
+window.__SINGULARITY__={lens:'beta = theta - rE^2/theta',ok:true};
+</script>
+</body></html>

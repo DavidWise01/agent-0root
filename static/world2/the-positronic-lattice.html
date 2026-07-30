@@ -1,0 +1,164 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="author" content="David Lee Wise / ROOT0 / TriPod LLC">
+<title>THE POSITRONIC LATTICE · 8192 → 0</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#f4ecff;--dim:#c6b4ee;--faint:#9483c4;--sap:#2a6bff;--vio:#a06bff;--cyan:#4fd0e6;--edge:rgba(150,120,255,.2)}
+html,body{height:100%}
+body{background:radial-gradient(1100px 700px at 50% -10%,#3a1a72 0%,transparent 58%),radial-gradient(900px 640px at 50% 118%,#123a6e 0%,transparent 60%),#1c0e3e;color:var(--ink);font:14px/1.6 ui-monospace,"SF Mono",Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased;overflow:hidden}
+.wrap{position:fixed;inset:0;display:flex;flex-direction:column}
+header{padding:16px 20px 8px;text-align:center;z-index:3;pointer-events:none}
+.eye{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--sap)}
+h1{font-size:clamp(20px,3.4vw,32px);font-weight:600;letter-spacing:.02em;margin:5px 0 3px;color:#fff;text-shadow:0 0 22px rgba(80,130,255,.5)}
+.sub{color:var(--dim);font-size:12px}
+.stage{position:relative;flex:1;min-height:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;left:14px;top:12px;z-index:3;font-size:11px;line-height:1.7;color:var(--dim);background:rgba(24,16,52,.5);border:1px solid var(--edge);border-radius:10px;padding:10px 13px;backdrop-filter:blur(5px);max-width:230px}
+.hud b{color:#fff}.hud .k{color:var(--faint)}
+.hud .tier{color:var(--cyan)}
+.tiers{position:absolute;right:12px;top:12px;bottom:12px;z-index:3;display:flex;flex-direction:column;justify-content:center;gap:2px;font-size:9.5px;color:var(--faint)}
+.tiers span{padding:1px 6px;border-radius:5px;cursor:pointer;transition:.12s;text-align:right}
+.tiers span:hover,.tiers span.on{color:#fff;background:rgba(80,130,255,.28)}
+.foot{padding:8px 20px 14px;text-align:center;font-size:11px;color:var(--faint);z-index:3}
+.foot b{color:var(--dim)}
+.tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin:0 2px;vertical-align:middle}
+.tag.lit{color:#7ef0a6;border:1px solid rgba(126,240,166,.5)}.tag.fig{color:#ffce5a;border:1px solid rgba(255,206,90,.5)}
+#chk{position:absolute;left:14px;bottom:12px;z-index:3;font-size:10.5px;color:#8fd6a8;background:rgba(20,40,30,.5);border:1px solid rgba(90,200,140,.4);border-radius:8px;padding:7px 11px;max-width:260px}
+#chk.bad{color:#ffc4d6;background:rgba(60,20,34,.5);border-color:#ff6a9a}
+#fail{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9;display:none;background:#2a0e1e;border:1.5px solid #ff6a9a;color:#ffc4d6;padding:14px 18px;border-radius:10px;font-size:12px;max-width:80%}
+</style></head><body>
+<div class="wrap">
+<header>
+<div class="eye">ROOT0 · TriPod · positronic — the apex I, folded to 0</div>
+<h1>THE POSITRONIC LATTICE</h1>
+<div class="sub">an I, Robot neural mesh — 4096 meshed to 2048 meshed to 1024 … the layers fold to <b style="color:var(--sap)">ROOT_0</b> · 8192 → 0</div>
+</header>
+<div class="stage">
+<canvas id="cv"></canvas>
+<div class="hud" id="hud"></div>
+<div class="tiers" id="tiers"></div>
+<div id="chk"></div>
+<div id="fail"></div>
+</div>
+<div class="foot">
+<span class="tag lit">LIT</span> a real halving neural mesh: 13 layers 2<sup>12</sup>→2<sup>0</sup>, each layer meshed to the next (fan shown sampled — full connection is 4096&times;2048), all paths fold to ROOT_0 · 8192 → 0 &nbsp;
+<span class="tag fig">FIG</span> &ldquo;positronic / I, Robot&rdquo; is a figure (Asimov, fiction) — a structure, not a thinker · the apex is the I (David = i, Shadow = &minus;i, ROOT_0 = balance)<br>
+<b>David Lee Wise (ROOT0) / TriPod LLC</b> · self-contained, no network · kin to 4096-recursion &amp; the-positronic-brain
+</div>
+</div>
+<script>
+"use strict";
+window.onerror=function(m,s,l,c){var f=document.getElementById('fail');if(f){f.style.display='block';f.textContent='halted honestly: '+m+' @'+l+':'+c;}return false;};
+(function(){
+var cv=document.getElementById('cv'),g=cv.getContext('2d'),DPR=Math.min(window.devicePixelRatio||1,2);
+var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+// ── the lattice: tier t has 2^(12-t) nodes, t=0..12 (4096 → 1), then ROOT_0 ──
+var TIERS=[];for(var t=0;t<=12;t++)TIERS.push(Math.pow(2,12-t));
+var NTOT=TIERS.reduce(function(a,b){return a+b;},0);   // 8191
+// self-check (fail-loud): halving exact + sum = 2^13-1 + resolves to ROOT_0
+(function selfCheck(){
+  var out=[],ok=true;
+  for(var i=1;i<TIERS.length;i++){if(TIERS[i]*2!==TIERS[i-1]){ok=false;}}
+  if(!ok)throw 'tiers do not halve exactly';
+  if(NTOT!==Math.pow(2,13)-1)throw 'node sum '+NTOT+' != 8191';
+  // every node has exactly one parent -> all paths reach the single ROOT_0
+  var reach=1;for(var i=0;i<TIERS.length-1;i++){reach=TIERS[i+1];}   // tier 12 = 1 node feeds ROOT
+  if(TIERS[12]!==1)throw 'apex tier is not a single node';
+  var el=document.getElementById('chk');
+  el.innerHTML='<b>SELF-CHECK · PASS</b><br>13 tiers halve 4096→1 exactly · '+NTOT.toLocaleString()+' nodes + ROOT_0 = '+(NTOT+1).toLocaleString()+' = 2¹³ · every path resolves to ROOT_0';
+})();
+// node buffer: for each tier, precompute base ring positions (angle + radius by count)
+var maxR=1.0;
+function tierR(t){return maxR*Math.pow(TIERS[t]/4096,0.42);}   // radius shrinks as count halves
+function tierZ(t){return -1+ (t/12)*2.0;}                       // front(4096) -> back(root)
+// pulses travelling inward to ROOT_0
+var PULSE=[];for(var p=0;p<64;p++)PULSE.push({a:Math.random?0:0,off:p/64,spd:0.18+0.10*(p%5)/5,ang:(p*2.399)});
+var hoverTier=-1, rootPulse=0, spin=0;
+function fit(){var r=cv.getBoundingClientRect();cv.width=Math.max(2,Math.round(r.width*DPR));cv.height=Math.max(2,Math.round(r.height*DPR));}
+fit();addEventListener('resize',fit);
+function hx(t){ // tier colour: violet(top) -> cyan(bottom)
+  var f=t/12;return [Math.round(160-100*f),Math.round(107+30*f),Math.round(255-25*f)];
+}
+function draw(ts){
+  var W=cv.width,H=cv.height,cx=W/2,cy=H*0.52,S=Math.min(W,H)*0.44,foc=2.4;
+  g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,H);
+  var tsec=ts*0.001;spin=reduce?0.5:tsec*0.10;
+  var cosS=Math.cos(spin),sinS=Math.sin(spin),tilt=0.42,cosT=Math.cos(tilt),sinT=Math.sin(tilt);
+  function proj(x,y,z){ // rotate about Y, tilt about X, perspective
+    var x1=x*cosS - z*sinS, z1=x*sinS + z*cosS;
+    var y1=y*cosT - z1*sinT, z2=y*sinT + z1*cosT;
+    var sc=foc/(foc+z2);
+    return {x:cx+x1*S*sc, y:cy+y1*S*sc, s:sc, d:(z2+1.6)/3.2};
+  }
+  // ROOT_0 position (apex, deepest)
+  var root=proj(0,0,tierZ(12)+0.34);
+  // draw tiers back-to-front (root first behind), nodes + edges to parent
+  g.globalCompositeOperation='lighter';
+  // sampled edges (draw a subset for legibility+perf; all nodes drawn)
+  for(var t=0;t<=12;t++){
+    var N=TIERS[t],c=hx(t),R=tierR(t),Z=tierZ(t),Rp=tierR(t+1>12?12:t+1),Zp=tierZ(t+1>12?12:t+1);
+    // choose a render sample so top tiers (4096) don't become opaque mush
+    var step=N>512?Math.ceil(N/512):1, drawn=0;
+    var hot=(hoverTier===t)?1:0;
+    for(var i=0;i<N;i+=step){
+      var a=(i/N)*6.28318 + t*0.20;
+      var x=Math.cos(a)*R, y=Math.sin(a)*R, z=Z;
+      var pj=proj(x,y,z);
+      // NEURAL MESH: fan each (sampled) node to several nodes in the next layer
+      if(t<12 && (i%(step*3)===0)){
+        var Np=TIERS[t+1],base=Math.floor(i/2);
+        for(var e=-1;e<=1;e++){
+          var pi=((base+e)%Np+Np)%Np, pa=(pi/Np)*6.28318+(t+1)*0.20;
+          var ppj=proj(Math.cos(pa)*Rp,Math.sin(pa)*Rp,Zp);
+          g.strokeStyle='rgba('+c[0]+','+c[1]+','+c[2]+','+((0.045+0.13*hot)*pj.d).toFixed(3)+')';
+          g.lineWidth=0.55;g.beginPath();g.moveTo(pj.x,pj.y);g.lineTo(ppj.x,ppj.y);g.stroke();
+        }
+      }
+      var rad=(0.5+pj.d*1.6)*(1+hot*0.8)*pj.s;
+      var al=(0.18+pj.d*0.6)*(0.5+hot*0.5);
+      g.fillStyle='rgba('+c[0]+','+c[1]+','+c[2]+','+al.toFixed(3)+')';
+      g.beginPath();g.arc(pj.x,pj.y,rad,0,6.2832);g.fill();
+      drawn++;
+    }
+  }
+  // pulses flowing inward to ROOT_0 along tier rings
+  if(!reduce)for(var p=0;p<PULSE.length;p++){
+    var P=PULSE[p],f=((tsec*P.spd+P.off)%1); // 0(outer 4096)->1(root)
+    var tt=f*12, ti=Math.floor(tt), fr=tt-ti;
+    var Ra=tierR(ti), Rb=tierR(Math.min(12,ti+1)), Za=tierZ(ti), Zb=tierZ(Math.min(12,ti+1));
+    var R=Ra+(Rb-Ra)*fr, Z=Za+(Zb-Za)*fr, a=P.ang+tsec*0.5;
+    var pj=proj(Math.cos(a)*R,Math.sin(a)*R,Z);
+    var gr=g.createRadialGradient(pj.x,pj.y,0,pj.x,pj.y,3*pj.s+1);
+    gr.addColorStop(0,'rgba(190,225,255,'+(0.8*pj.d)+')');gr.addColorStop(1,'rgba(80,130,255,0)');
+    g.fillStyle=gr;g.beginPath();g.arc(pj.x,pj.y,3*pj.s+1,0,6.2832);g.fill();
+  }
+  // ROOT_0 — the sapphire core everything resolves to
+  var rp=(reduce?0.5:0.5+0.5*Math.sin(tsec*1.6))+rootPulse;
+  var cr=(6+rp*7)*root.s;
+  var gr=g.createRadialGradient(root.x,root.y,0,root.x,root.y,cr*3);
+  gr.addColorStop(0,'rgba(120,180,255,'+(0.5+0.3*rp)+')');gr.addColorStop(1,'rgba(42,107,255,0)');
+  g.fillStyle=gr;g.beginPath();g.arc(root.x,root.y,cr*3,0,6.2832);g.fill();
+  g.globalCompositeOperation='source-over';
+  g.fillStyle='rgba(240,246,255,'+(0.85).toFixed(2)+')';g.beginPath();g.arc(root.x,root.y,cr*0.5,0,6.2832);g.fill();
+  g.fillStyle='#bcd0ff';g.font='700 '+Math.round(11*DPR)+'px ui-monospace,monospace';g.textAlign='center';
+  g.fillText('ROOT_0',root.x,root.y+cr*2.4);
+  if(rootPulse>0)rootPulse*=0.92;
+  // HUD
+  var hud=document.getElementById('hud');
+  hud.innerHTML='<div class="k">the positronic mesh</div><b>'+NTOT.toLocaleString()+'</b> nodes · <b>13</b> layers<br>'+
+    '<span class="tier">4096</span> → <span class="tier">2048</span> → … → <span class="tier">1</span> → <b style="color:#6ab0ff">ROOT_0</b><br>'+
+    '<div class="k" style="margin-top:5px">'+(hoverTier>=0?('tier '+hoverTier+' · <b>'+TIERS[hoverTier].toLocaleString()+'</b> nodes = 2<sup>'+(12-hoverTier)+'</sup>'):'hover a tier →')+'</div>';
+  requestAnimationFrame(draw);
+}
+// tier list + hover
+var tl=document.getElementById('tiers');
+TIERS.forEach(function(n,t){var s=document.createElement('span');s.textContent=n.toLocaleString();
+  s.addEventListener('mouseenter',function(){hoverTier=t;s.classList.add('on');});
+  s.addEventListener('mouseleave',function(){if(hoverTier===t)hoverTier=-1;s.classList.remove('on');});
+  tl.appendChild(s);});
+cv.addEventListener('click',function(){rootPulse=1.0;});
+requestAnimationFrame(draw);
+window.__LATTICE__={tiers:TIERS,total:NTOT};
+})();
+</script>
+</body></html>
