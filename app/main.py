@@ -117,6 +117,32 @@ def top_page(name: str):
     return JSONResponse({"error": "not found"}, status_code=404)
 
 
+@app.get("/world2")
+@app.get("/world2/")
+def world2_home():
+    """WORLD II · THE FOLD — the second world's hub (static/world2/index.html)."""
+    idx = os.path.join(STATIC, "world2", "index.html")
+    if os.path.isfile(idx):
+        return FileResponse(idx, media_type="text/html")
+    return JSONResponse({"error": "not found"}, status_code=404)
+
+
+@app.get("/world2/{name}")
+def world2_page(name: str):
+    """WORLD II pages (the-singularity.html, the-positronic-lattice.html, …).
+    Path-traversal guarded; .html/.css/.js/.json only."""
+    if not name or "/" in name or "\\" in name or ".." in name:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    p = os.path.join(STATIC, "world2", name)
+    if os.path.isfile(p):
+        mt = ("text/css" if name.endswith(".css")
+              else "application/javascript" if name.endswith(".js")
+              else "application/json" if name.endswith(".json")
+              else "text/html")
+        return FileResponse(p, media_type=mt)
+    return JSONResponse({"error": "not found"}, status_code=404)
+
+
 @app.get("/witness.png")
 def witness():
     """The hero sentinel image, served to the homepage."""
