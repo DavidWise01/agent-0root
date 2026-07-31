@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BASE + 1 · which witness is unforgeable</title>
+<style>
+  :root{ --bg:#06070b; --text:#dbe2ef; --dim:#5b6675; --line:#1a2030;
+    --violet:#8b5cf6; --yes:#22c55e; --warn:#f59e0b; --no:#ef4444; --gold:#fbbf24; --blue:#38bdf8; --cyan:#22d3ee; --pink:#ec4899; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);overflow:hidden;
+    font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+  #wrap{position:relative;width:100vw;height:100vh;display:flex;flex-direction:column}
+  header{padding:9px 16px 5px;text-align:center;flex:0 0 auto}
+  h1{margin:0;font-size:13px;letter-spacing:.12em;color:#c7d2fe;font-weight:600}
+  .s{font-size:9.5px;color:var(--dim);margin:2px auto 0;max-width:960px}.s b{color:#9fb0c8}
+  #stage{position:relative;flex:1 1 auto;min-height:0;display:flex}
+  #grid{flex:1 1 56%;position:relative;display:flex;align-items:center;justify-content:center;min-width:0}
+  canvas{max-width:100%;max-height:100%}
+  #side{flex:1 1 44%;border-left:1px solid var(--line);background:#070910;padding:12px 14px;overflow-y:auto;min-width:320px;font-size:11px;line-height:1.6}
+  #side h3{margin:0 0 6px;font-size:11px;color:#c7d2fe;letter-spacing:.05em}
+  .verdict{font-size:13px;font-weight:700;letter-spacing:.05em;margin:6px 0}
+  .field{color:var(--yes)}.notfield{color:var(--no)}
+  .kv{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #11151f;padding:3px 0}.kv b{color:#dbe2ef}
+  .sec{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
+  .rail{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  .rb{font-size:9.5px;padding:3px 7px;border-radius:5px;border:1px solid var(--line);cursor:pointer}
+  .rb.prime{border-color:#1d3a2a;color:var(--yes)}.rb.comp{border-color:#3a2415;color:var(--warn)}
+  .rb.sel{background:#161b27;outline:1px solid var(--violet)}
+  .controls{flex:0 0 auto;display:flex;gap:10px 16px;align-items:center;justify-content:center;padding:9px 14px;border-top:1px solid var(--line);background:#080a10}
+  .ctl{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim)}.ctl b{color:var(--text)}
+  input[type=range]{accent-color:var(--violet);width:200px}
+  .big{font-size:20px;font-weight:700}
+  .lab{color:var(--dim);font-size:9px;letter-spacing:.06em;margin-top:6px}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE SHORTCUT</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div id="wrap">
+  <header>
+    <h1>BASE + 1 · which witness is unforgeable</h1>
+    <div class="s">A register of base <b>N</b> uses symbols 0…N−1; the witness sits at the <b>+1</b> exterior position. The witness is <b>unforgeable iff N+1 is prime</b> (then Z/(N+1)ℤ is a field — no zero-divisors, so no two register elements can multiply to a counterfeit null). The grid is the mod-(N+1) multiplication table; <span style="color:#ef4444">red cells</span> are products that hit 0 from non-zero inputs — forged nulls. A clean field has none. This is Lemma 257 §4, generalized.</div>
+  </header>
+  <div id="stage">
+    <div id="grid"><canvas id="c" width="560" height="560"></canvas></div>
+    <div id="side"></div>
+  </div>
+  <div class="controls">
+    <div class="ctl"><b>base N</b><input type="range" id="n" min="2" max="32" value="10"><span id="nv" class="big">10</span></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const cvs=$('c'),ctx=cvs.getContext('2d'),side=$('side');
+function isPrime(n){if(n<2)return false;for(let i=2;i*i<=n;i++)if(n%i===0)return false;return true;}
+function factor(n){const f={};let d=2,m=n;while(d*d<=m){while(m%d===0){f[d]=(f[d]||0)+1;m/=d;}d++;}if(m>1)f[m]=(f[m]||0)+1;return f;}
+function factorStr(n){const f=factor(n);return Object.entries(f).map(([p,e])=>e>1?`${p}^${e}`:`${p}`).join(' × ')||`${n}`;}
+function zeroDivs(m){const zd=new Set();for(let a=1;a<m;a++)for(let b=1;b<m;b++)if((a*b)%m===0){zd.add(a);break;}return [...zd].sort((x,y)=>x-y);}
+
+let N=10;
+function draw(){
+  const M=N+1;                 // witness modulus
+  const field=isPrime(M);
+  const size=560, pad=46, cell=(size-pad*2)/M;
+  ctx.clearRect(0,0,size,size);
+  // forged-null cells (a*b ≡ 0, a,b≠0)
+  let forged=0;
+  for(let a=0;a<M;a++)for(let b=0;b<M;b++){
+    const v=(a*b)%M, x=pad+b*cell, y=pad+a*cell;
+    let col;
+    if(a===0||b===0){ col='rgba(40,48,64,.5)'; }            // trivial (involves the null itself)
+    else if(v===0){ col='rgba(239,68,68,.75)'; forged++; }   // FORGED null
+    else { const g=Math.min(1,v/M); col=`rgba(${40+80*g},${60+120*g},${90+140*g},.5)`; }
+    ctx.fillStyle=col; ctx.fillRect(x+0.5,y+0.5,cell-1,cell-1);
+  }
+  // axis labels
+  ctx.fillStyle='#5b6675';ctx.font=`${Math.min(11,cell*0.5)}px JetBrains Mono,monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<M;i++){ const lab=i===N?'W':i;
+    ctx.fillStyle=i===N?'#c7a3ff':'#5b6675';
+    ctx.fillText(lab, pad+i*cell+cell/2, pad-14);
+    ctx.fillText(lab, pad-16, pad+i*cell+cell/2); }
+  // witness row/col highlight (the +1 position = index N)
+  ctx.strokeStyle=field?'rgba(34,197,94,.8)':'rgba(239,68,68,.7)';ctx.lineWidth=2;
+  ctx.strokeRect(pad+N*cell+0.5, pad+0.5, cell-1, M*cell-1);
+  ctx.strokeRect(pad+0.5, pad+N*cell+0.5, M*cell-1, cell-1);
+  // title
+  ctx.fillStyle='#9fb0c8';ctx.font='12px JetBrains Mono,monospace';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillText(`× table mod ${M}   (W = witness, index ${N})`, size/2, size-16);
+
+  // side panel
+  const M_prime=field, zd=zeroDivs(M);
+  side.innerHTML=`<h3>BASE ${N} &nbsp;→&nbsp; witness at +1 = position ${N}, modulus ${M}</h3>`+
+    `<div class="verdict ${field?'field':'notfield'}">${field?'✓ WITNESS UNFORGEABLE':'✗ WITNESS FORGEABLE'}</div>`+
+    `<div class="kv"><span>register base N</span><b>${N} = ${factorStr(N)} ${isPrime(N)?'(prime)':'(composite)'}</b></div>`+
+    `<div class="kv"><span>witness modulus N+1</span><b>${M} = ${factorStr(M)} ${M_prime?'(prime)':'(composite)'}</b></div>`+
+    `<div class="kv"><span>Z/${M}ℤ is a field?</span><b style="color:${field?'#22c55e':'#ef4444'}">${field?'yes':'no'}</b></div>`+
+    `<div class="kv"><span>forged-null products</span><b style="color:${forged?'#ef4444':'#22c55e'}">${forged}</b></div>`+
+    `<div class="kv"><span>zero-divisors</span><b>${zd.length?zd.slice(0,8).join(', ')+(zd.length>8?'…':''):'none'}</b></div>`+
+    `<div class="sec"><b>reading</b><br><span style="color:#8a93a8;font-size:10px">${
+      field
+      ? `N+1 = ${M} is prime, so every non-zero element is invertible and no two of them multiply to 0. The null can only be reached as itself — the witness cannot be counterfeited from inside the register. This is the clean +1 (the 256→257 case, one level here).`
+      : `N+1 = ${M} factors as ${factorStr(M)}, so non-zero elements collide to 0 (e.g. the red cells). The register can manufacture a fake null — a counterfeit witness. The +1 landed on a composite; spend it and the boundary leaks.`
+    }</span></div>`+
+    `<div class="sec"><b>the +1 is not monotonic — pick a base:</b>`+
+    `<div class="rail" id="rail"></div></div>`+
+    `<div class="lab">green = N+1 prime (field witness) · amber = N+1 composite (forgeable)</div>`;
+  // rail of bases
+  const rail=$('rail');
+  let html='';
+  for(let n=2;n<=32;n++){ const ok=isPrime(n+1); html+=`<span class="rb ${ok?'prime':'comp'} ${n===N?'sel':''}" data-n="${n}">${n}→${n+1}</span>`; }
+  rail.innerHTML=html;
+  rail.querySelectorAll('.rb').forEach(el=>el.onclick=()=>{N=+el.dataset.n;$('n').value=N;$('nv').textContent=N;draw();});
+}
+$('n').oninput=e=>{N=+e.target.value;$('nv').textContent=N;draw();};
+draw();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SHORTCUT &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

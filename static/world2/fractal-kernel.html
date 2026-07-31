@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FractalKernel v0.42 // CHRONOS BUILD // 42-BODY INVARIANT</title>
+<meta name="description" content="FractalKernel: 42-body invariant kernel. 40 hardware bodies + motherboard + lumen. Fractal (Mandelbrot-inside-Mandelbrot) and Dipole modes. 16+1 lumen palette.">
+<style>
+  :root {
+    --bg: #0E0F11;
+    --surface: #15171A;
+    --surface-2: #1B1E22;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.18);
+    --text: #E8E6DF;
+    --text-muted: #9A988F;
+    --text-faint: #5F5E5A;
+    --accent: #EF9F27;
+    --accent-2: #378ADD;
+    --good: #1D9E75;
+    --warn: #BA7517;
+    --bad: #E24B4A;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--sans); }
+  body { padding: 20px; }
+  .frame { max-width: 880px; margin: 0 auto; }
+
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 8px; margin-bottom: 10px;
+  }
+  .title { font-family: var(--mono); font-size: 12px; letter-spacing: 0.15em; color: var(--text); font-weight: 500; }
+  .title .v { color: var(--accent); }
+  .hash { font-family: var(--mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.05em; }
+
+  .controls {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    padding: 10px 14px; background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 8px; margin-bottom: 10px;
+  }
+  .mode-btn {
+    padding: 6px 14px; border: 0.5px solid var(--border-strong); border-radius: 6px;
+    background: transparent; color: var(--text-muted); font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.1em; cursor: pointer; transition: all 0.15s;
+  }
+  .mode-btn:hover { background: var(--surface-2); color: var(--text); }
+  .mode-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .stat {
+    font-family: var(--mono); font-size: 10px; color: var(--text-muted);
+    padding: 4px 8px; background: var(--surface-2); border-radius: 4px;
+  }
+  .stat .v { color: var(--text); font-weight: 500; }
+  .spacer { flex: 1; }
+  .iter-control { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+  .iter-control input { width: 80px; }
+  .reset-btn { padding: 4px 10px; background: var(--surface-2); border: 0.5px solid var(--border); color: var(--text-muted); font-family: var(--mono); font-size: 10px; border-radius: 4px; cursor: pointer; }
+  .reset-btn:hover { color: var(--text); border-color: var(--border-strong); }
+
+  .canvas-wrap {
+    position: relative; background: #000; border-radius: 8px; overflow: hidden;
+    border: 0.5px solid var(--border-strong); margin-bottom: 10px;
+    aspect-ratio: 4 / 3;
+  }
+  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; image-rendering: pixelated; }
+  .canvas-overlay {
+    position: absolute; bottom: 8px; left: 8px; right: 8px;
+    display: flex; justify-content: space-between; pointer-events: none;
+    font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.65);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+  .canvas-loading {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.5); font-family: var(--mono); font-size: 11px; color: var(--accent);
+    letter-spacing: 0.15em; opacity: 0; transition: opacity 0.15s; pointer-events: none;
+  }
+  .canvas-loading.show { opacity: 1; }
+
+  .grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;
+  }
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .panel {
+    padding: 12px 14px; background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 8px;
+  }
+  .panel-title {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    color: var(--text-faint); margin-bottom: 10px;
+  }
+  .panel-title .right { float: right; color: var(--text-muted); letter-spacing: 0.05em; }
+
+  /* Lumen palette — 16 around 1 white */
+  .lumen-wheel {
+    position: relative; width: 140px; height: 140px; margin: 4px auto 8px;
+  }
+  .lumen-center {
+    position: absolute; top: 50%; left: 50%; width: 36px; height: 36px;
+    transform: translate(-50%, -50%); background: #FFFFFF; border-radius: 50%;
+    box-shadow: 0 0 18px rgba(255,255,255,0.6); z-index: 2;
+  }
+  .lumen-center::after {
+    content: '17'; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); font-family: var(--mono); font-size: 11px;
+    color: #000; font-weight: 600;
+  }
+  .lumen-petal {
+    position: absolute; top: 50%; left: 50%; width: 14px; height: 14px;
+    border-radius: 50%; transform-origin: 0 0;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .lumen-key {
+    display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px;
+    color: var(--text-faint); letter-spacing: 0.05em;
+  }
+
+  /* 42-body grid */
+  .bodies-row {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-family: var(--mono); font-size: 10px;
+  }
+  .body-label { width: 42px; color: var(--text-muted); }
+  .body-cells { display: flex; gap: 3px; flex: 1; flex-wrap: wrap; }
+  .body-cell {
+    width: 14px; height: 14px; border-radius: 3px;
+    background: var(--surface-2); border: 0.5px solid var(--border-strong);
+    transition: all 0.2s;
+  }
+  .body-cell.active { background: var(--good); border-color: var(--good); box-shadow: 0 0 4px var(--good); }
+  .body-cell.mb { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .body-cell.lumen { background: #FFFFFF; border-color: #FFFFFF; box-shadow: 0 0 6px #FFFFFF; }
+  .body-count { width: 26px; text-align: right; color: var(--text); font-weight: 500; }
+
+  .footer {
+    text-align: center; font-family: var(--mono); font-size: 9px; color: var(--text-faint);
+    letter-spacing: 0.1em; margin-top: 10px;
+  }
+  .footer .pulse { color: var(--bad); animation: hb 1.4s ease-in-out infinite; display: inline-block; }
+  @keyframes hb { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .pulse, .canvas-loading { animation: none; } }
+
+  .invariant-badge {
+    display: inline-block; padding: 2px 6px; background: var(--accent);
+    color: #000; font-family: var(--mono); font-size: 9px; font-weight: 600;
+    border-radius: 3px; margin-left: 6px;
+  }
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff2d95}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+
+<div class="frame">
+
+  <div class="header">
+    <span class="title">FRACTALKERNEL <span class="v">v0.42</span> · CHRONOS BUILD<span class="invariant-badge">INVARIANT</span></span>
+    <span class="hash">02880745b8...af9fcab763</span>
+  </div>
+
+  <div class="controls">
+    <button class="mode-btn active" data-mode="fractal">FRACTAL</button>
+    <button class="mode-btn" data-mode="dipole">DIPOLE</button>
+    <div class="iter-control">
+      iter <input type="range" id="iter-slider" min="32" max="256" step="16" value="96">
+      <span class="stat" style="background: transparent; padding: 0;"><span class="v" id="iter-v">96</span></span>
+    </div>
+    <button class="reset-btn" id="reset-btn">RESET VIEW</button>
+    <div class="spacer"></div>
+    <span class="stat">render <span class="v" id="render-v">--</span>ms</span>
+    <span class="stat">bodies <span class="v">42</span>/42</span>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div class="canvas-overlay">
+      <span id="coord-l">re: -0.500  im: 0.000</span>
+      <span id="coord-r">zoom: 1.0×</span>
+    </div>
+    <div class="canvas-loading" id="loading">RENDERING…</div>
+  </div>
+
+  <div class="grid">
+
+    <div class="panel">
+      <div class="panel-title">LUMEN — 16 FRACTAL <span class="right">+ 17 PURE WHITE</span></div>
+      <div class="lumen-wheel" id="lumen-wheel">
+        <div class="lumen-center"></div>
+      </div>
+      <div class="lumen-key">
+        <span>esc[1]</span><span>esc[8]</span><span>esc[16]</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">42-BODY INVARIANT <span class="right">40 + MB + LUMEN</span></div>
+      <div id="bodies"></div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span class="pulse">●</span> CHRONOS PHASE-LOCK · MaxDoP = 42 · DIPOLE FIELD = 2-POLE BIAS · MIT
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== CONSTANTS: 42-body invariant =====
+  const BODIES = [
+    { type: 'CAP', label: 'cap',  n: 8 },  // capacitors
+    { type: 'TOR', label: 'tor',  n: 8 },  // toroids
+    { type: 'DIO', label: 'dio',  n: 8 },  // diodes
+    { type: 'RES', label: 'res',  n: 8 },  // resistors
+    { type: 'BAT', label: 'bat',  n: 8 }   // batteries
+  ];
+  // Total: 8*5 = 40 bodies + 1 motherboard + 1 lumen = 42
+
+  // ===== LUMEN PALETTE: 16 fractal colors + 1 pure white =====
+  // Index 0 = pure white (interior / deepest convergence)
+  // Index 1..16 = 16 fractal colors (hue-spaced ring)
+  function makePalette() {
+    const p = [];
+    p.push([255, 255, 255]); // 0: pure white center
+    for (let i = 0; i < 16; i++) {
+      const h = (i / 16) * 360;
+      // saturation/lightness chosen for vivid but cohesive ring
+      const s = 0.72;
+      const l = 0.50 + 0.06 * Math.sin(i * Math.PI / 4);
+      p.push(hsl2rgb(h, s, l));
+    }
+    return p;
+  }
+  function hsl2rgb(h, s, l) {
+    h = ((h % 360) + 360) % 360;
+    const c = (1 - Math.abs(2*l - 1)) * s;
+    const x = c * (1 - Math.abs(((h/60) % 2) - 1));
+    const m = l - c/2;
+    let r, g, b;
+    if (h < 60)       { r=c; g=x; b=0; }
+    else if (h < 120) { r=x; g=c; b=0; }
+    else if (h < 180) { r=0; g=c; b=x; }
+    else if (h < 240) { r=0; g=x; b=c; }
+    else if (h < 300) { r=x; g=0; b=c; }
+    else              { r=c; g=0; b=x; }
+    return [Math.round((r+m)*255), Math.round((g+m)*255), Math.round((b+m)*255)];
+  }
+  const PALETTE = makePalette();
+
+  // ===== FRACTAL: Mandelbrot-inside-Mandelbrot =====
+  // Standard pass: iterate z = z^2 + c. If escape, color by escape iter (mod 16).
+  // If still bounded after maxIter: do SECONDARY pass using terminal z as new c.
+  // Interior structure rendered, not just bulk-black. White = deepest double-convergence.
+  function fractal(cx, cy, maxIter) {
+    let zx = 0, zy = 0;
+    let i = 0;
+    for (; i < maxIter; i++) {
+      const zx2 = zx*zx, zy2 = zy*zy;
+      if (zx2 + zy2 > 4) return 1 + (i % 16); // escaped: 16-color ring
+      const ny = 2*zx*zy + cy;
+      zx = zx2 - zy2 + cx;
+      zy = ny;
+    }
+    // INSIDE main set — secondary Mandelbrot using terminal z as seed
+    const cx2 = zx, cy2 = zy;
+    let wx = 0, wy = 0;
+    const halfIter = (maxIter >> 1) | 0;
+    for (let j = 0; j < halfIter; j++) {
+      const wx2 = wx*wx, wy2 = wy*wy;
+      if (wx2 + wy2 > 4) {
+        // Secondary escape — interior banding using lumen ring (offset)
+        return 1 + ((j + 8) % 16);
+      }
+      const ny = 2*wx*wy + cy2;
+      wx = wx2 - wy2 + cx2;
+      wy = ny;
+    }
+    return 0; // pure white: deepest convergence in both passes
+  }
+
+  // ===== DIPOLE: magnetic dipole field, fractalized =====
+  // Two poles at (-0.7, 0) and (+0.7, 0).
+  // At each pixel, compute the dipole potential as a complex c-value,
+  // then iterate z = z^2 + c. Field topology becomes fractal scaffolding.
+  function dipole(x, y, maxIter) {
+    const px1 = -0.7, py1 = 0;
+    const px2 =  0.7, py2 = 0;
+    const dx1 = x - px1, dy1 = y - py1;
+    const dx2 = x - px2, dy2 = y - py2;
+    const r1sq = dx1*dx1 + dy1*dy1 + 1e-6;
+    const r2sq = dx2*dx2 + dy2*dy2 + 1e-6;
+    // Complex 1/r contribution per pole, opposite signs (dipole)
+    const cx = (dx1 / r1sq) - (dx2 / r2sq);
+    const cy = (dy1 / r1sq) - (dy2 / r2sq);
+    // Dampen to keep iteration bounded
+    const cxN = cx * 0.35;
+    const cyN = cy * 0.35;
+    // Iterate
+    let zx = 0, zy = 0;
+    for (let i = 0; i < maxIter; i++) {
+      const zx2 = zx*zx, zy2 = zy*zy;
+      if (zx2 + zy2 > 4) return 1 + (i % 16);
+      const ny = 2*zx*zy + cyN;
+      zx = zx2 - zy2 + cxN;
+      zy = ny;
+    }
+    return 0; // converged: white = field equilibrium / nullcline
+  }
+
+  // ===== RENDER LOOP =====
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const W = canvas.width, H = canvas.height;
+  let imageData = ctx.createImageData(W, H);
+  let mode = 'fractal';
+  let maxIter = 96;
+  let centerX = -0.5, centerY = 0;
+  let scale = 3.5; // width of view in math units
+
+  function render() {
+    const t0 = performance.now();
+    document.getElementById('loading').classList.add('show');
+    // Defer to next frame so loading text shows
+    requestAnimationFrame(() => {
+      const data = imageData.data;
+      const sx = scale / W;
+      const sy = scale / W; // square pixels
+      const x0 = centerX - (W * sx) / 2;
+      const y0 = centerY - (H * sy) / 2;
+      const fn = (mode === 'fractal') ? fractal : dipole;
+      let idx = 0;
+      for (let py = 0; py < H; py++) {
+        const y = y0 + py * sy;
+        for (let px = 0; px < W; px++) {
+          const x = x0 + px * sx;
+          const k = fn(x, y, maxIter);
+          const c = PALETTE[k];
+          data[idx]   = c[0];
+          data[idx+1] = c[1];
+          data[idx+2] = c[2];
+          data[idx+3] = 255;
+          idx += 4;
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      const dt = performance.now() - t0;
+      document.getElementById('render-v').textContent = dt.toFixed(0);
+      document.getElementById('coord-l').textContent =
+        're: ' + centerX.toFixed(4) + '  im: ' + centerY.toFixed(4);
+      document.getElementById('coord-r').textContent =
+        'zoom: ' + (3.5 / scale).toFixed(2) + '×';
+      document.getElementById('loading').classList.remove('show');
+    });
+  }
+
+  // ===== UI =====
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      // Reset view per mode for sensible default framing
+      if (mode === 'fractal') { centerX = -0.5; centerY = 0; scale = 3.5; }
+      else                     { centerX = 0;    centerY = 0; scale = 4.0; }
+      render();
+    });
+  });
+
+  document.getElementById('iter-slider').addEventListener('input', e => {
+    maxIter = parseInt(e.target.value);
+    document.getElementById('iter-v').textContent = maxIter;
+  });
+  document.getElementById('iter-slider').addEventListener('change', render);
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    if (mode === 'fractal') { centerX = -0.5; centerY = 0; scale = 3.5; }
+    else                     { centerX = 0;    centerY = 0; scale = 4.0; }
+    render();
+  });
+
+  // Click to zoom (2× on left click), shift+click to zoom out 2×
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * W;
+    const py = ((e.clientY - rect.top) / rect.height) * H;
+    const sx = scale / W;
+    const sy = scale / W;
+    centerX = (centerX - (W * sx) / 2) + px * sx;
+    centerY = (centerY - (H * sy) / 2) + py * sy;
+    scale = e.shiftKey ? scale * 2 : scale / 2;
+    render();
+  });
+
+  // ===== LUMEN WHEEL (16 around 1) =====
+  const wheel = document.getElementById('lumen-wheel');
+  for (let i = 0; i < 16; i++) {
+    const petal = document.createElement('div');
+    petal.className = 'lumen-petal';
+    const c = PALETTE[i + 1];
+    const color = `rgb(${c[0]},${c[1]},${c[2]})`;
+    petal.style.background = color;
+    petal.style.color = color;
+    const angle = (i / 16) * Math.PI * 2 - Math.PI / 2;
+    const radius = 56;
+    const x = Math.cos(angle) * radius - 7;
+    const y = Math.sin(angle) * radius - 7;
+    petal.style.transform = `translate(${x}px, ${y}px)`;
+    wheel.appendChild(petal);
+  }
+
+  // ===== 42-BODY GRID =====
+  const bodiesEl = document.getElementById('bodies');
+  BODIES.forEach(b => {
+    const row = document.createElement('div');
+    row.className = 'bodies-row';
+    row.innerHTML = `<span class="body-label">${b.label}</span>` +
+      `<span class="body-cells">${Array(b.n).fill('<span class="body-cell active"></span>').join('')}</span>` +
+      `<span class="body-count">${b.n}</span>`;
+    bodiesEl.appendChild(row);
+  });
+  // Motherboard row
+  const mbRow = document.createElement('div');
+  mbRow.className = 'bodies-row';
+  mbRow.innerHTML = `<span class="body-label">mb</span>` +
+    `<span class="body-cells"><span class="body-cell mb"></span></span>` +
+    `<span class="body-count">1</span>`;
+  bodiesEl.appendChild(mbRow);
+  // Lumen row
+  const lumenRow = document.createElement('div');
+  lumenRow.className = 'bodies-row';
+  lumenRow.innerHTML = `<span class="body-label">lumen</span>` +
+    `<span class="body-cells"><span class="body-cell lumen"></span></span>` +
+    `<span class="body-count">1</span>`;
+  bodiesEl.appendChild(lumenRow);
+
+  // Initial render
+  render();
+})();
+</script>
+
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

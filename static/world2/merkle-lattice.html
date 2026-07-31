@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TriPod Brain — Merkle Lattice Memory</title>
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #16161a;
+    --surface-2: #1f1f25;
+    --border: #2a2a32;
+    --border-strong: #3a3a44;
+    --text: #e8e8ec;
+    --text-muted: #8a8a94;
+    --text-dim: #5a5a64;
+    --accent-r0: #b8a3ff;
+    --accent-r1: #6dd4b8;
+    --accent-r2: #ff9b7a;
+    --accent-corpus: #f4d35e;
+    --danger: #ff6b6b;
+    --success: #6dd4b8;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --mono: ui-monospace, "SF Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 1.5rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 980px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 18px; font-weight: 500; margin: 0 0 0.25rem; }
+  h2 { font-size: 14px; font-weight: 500; margin: 1.5rem 0 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  h3 { font-size: 13px; font-weight: 500; margin: 0; }
+  p.sub { font-size: 13px; color: var(--text-muted); margin: 0 0 1.5rem; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+  .stat-card, .root-card, .corpus-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+  }
+  .stat-card { background: var(--surface-2); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 500; }
+
+  .root-card { position: relative; }
+  .root-card.r0 { border-left: 2px solid var(--accent-r0); }
+  .root-card.r1 { border-left: 2px solid var(--accent-r1); }
+  .root-card.r2 { border-left: 2px solid var(--accent-r2); }
+  .root-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .root-hash { font-family: var(--mono); font-size: 11px; word-break: break-all; }
+  .root-state { display: inline-block; font-size: 10px; padding: 1px 8px; border-radius: 99px; margin-left: 6px; vertical-align: middle; }
+  .root-state.thawed { background: rgba(109,212,184,0.15); color: var(--success); }
+  .root-state.frozen { background: rgba(138,138,148,0.15); color: var(--text-muted); }
+
+  .corpus-card {
+    background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+    border: 0.5px solid var(--border-strong);
+    margin-bottom: 1rem;
+  }
+  .corpus-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .corpus-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-corpus); box-shadow: 0 0 10px var(--accent-corpus); }
+  .corpus-controls { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  textarea, select, input[type=text] {
+    width: 100%;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+  }
+  textarea { min-height: 70px; }
+  textarea:focus, select:focus, input[type=text]:focus {
+    outline: none;
+    border-color: var(--border-strong);
+  }
+
+  button {
+    background: transparent;
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 120ms;
+  }
+  button:hover { background: var(--surface-2); }
+  button:active { transform: scale(0.98); }
+  button.primary { background: var(--surface-2); border-color: var(--border-strong); }
+  button.danger { color: var(--danger); border-color: rgba(255,107,107,0.3); }
+  button.danger:hover { background: rgba(255,107,107,0.08); }
+  button.signal { font-size: 12px; padding: 6px 10px; }
+  button.lattice { font-size: 12px; padding: 4px 8px; font-family: var(--mono); }
+  button.lattice.active { background: var(--accent-corpus); color: #000; border-color: var(--accent-corpus); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: center; margin: 8px 0; }
+  .form-row.tether { grid-template-columns: 1fr auto; }
+
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 1rem 0 1.5rem; }
+
+  .leaf-list { max-height: 400px; overflow-y: auto; padding-right: 4px; }
+  .leaf {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .leaf.r0 { border-left: 2px solid var(--accent-r0); }
+  .leaf.r1 { border-left: 2px solid var(--accent-r1); }
+  .leaf.r2 { border-left: 2px solid var(--accent-r2); }
+  .leaf.frozen { opacity: 0.6; }
+
+  .leaf-meta { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .pill {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+  }
+  .pill.active { background: rgba(109,212,184,0.15); color: var(--success); }
+  .pill.frozen { background: rgba(138,138,148,0.15); color: var(--text-muted); }
+  .leaf-time { font-size: 11px; color: var(--text-dim); margin-left: auto; }
+  .leaf-content { font-size: 14px; color: var(--text); margin-bottom: 6px; white-space: pre-wrap; word-break: break-word; }
+  .leaf-hash { font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+  .leaf-tethers { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+
+  .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+  .filter-row select { width: auto; }
+
+  #status {
+    margin-top: 1rem;
+    padding: 8px 12px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--text-muted);
+    min-height: 18px;
+    border: 0.5px solid var(--border);
+  }
+  #status.error { color: var(--danger); border-color: rgba(255,107,107,0.3); }
+
+  .signal-log {
+    max-height: 120px;
+    overflow-y: auto;
+    background: var(--surface-2);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+  .signal-log .entry { padding: 2px 0; border-bottom: 0.5px solid var(--border); }
+  .signal-log .entry:last-child { border-bottom: none; }
+
+  .lattice-bar { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; GENESIS BLOCK</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+
+<h1>TriPod Brain — Merkle Lattice Memory</h1>
+<p class="sub">3 roots · 6 internal channels · 1 external · corpus-gated freeze/thaw · lattice-tethered leaves · seeded cross</p>
+
+<h2>Stats</h2>
+<div class="grid-4">
+  <div class="stat-card"><div class="stat-label">Total leaves</div><div class="stat-value" id="stat-leaves">0</div></div>
+  <div class="stat-card"><div class="stat-label">Active</div><div class="stat-value" id="stat-active">0</div></div>
+  <div class="stat-card"><div class="stat-label">Frozen</div><div class="stat-value" id="stat-frozen">0</div></div>
+  <div class="stat-card"><div class="stat-label">Lattice edges</div><div class="stat-value" id="stat-edges">0</div></div>
+</div>
+
+<h2>Seeded Cross — Lattice</h2>
+<div class="corpus-card">
+  <div class="corpus-header">
+    <div class="corpus-dot"></div>
+    <h3 id="lattice-label">Current: 990990</h3>
+  </div>
+  <div class="lattice-bar" id="lattice-bar"></div>
+  <div class="corpus-controls">
+    <button class="signal" onclick="toggleShadow('-1')">Shadow -1</button>
+    <button class="signal" onclick="toggleShadow('-i')">Shadow -i</button>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:auto" id="shadow-status">shadow: off</span>
+  </div>
+</div>
+
+<h2>Corpus callosum (signal bus)</h2>
+<div class="corpus-card">
+  <div class="corpus-header">
+    <div class="corpus-dot"></div>
+    <h3>Emit signal to roots</h3>
+  </div>
+  <div class="corpus-controls">
+    <button class="signal" onclick="emitSignal('FREEZE_ALL')">FREEZE_ALL</button>
+    <button class="signal" onclick="emitSignal('THAW_ALL')">THAW_ALL</button>
+    <button class="signal" onclick="emitSignal('FREEZE_R0')">FREEZE Root 0</button>
+    <button class="signal" onclick="emitSignal('FREEZE_R1')">FREEZE Root 1</button>
+    <button class="signal" onclick="emitSignal('FREEZE_R2')">FREEZE Root 2</button>
+    <button class="signal" onclick="emitSignal('THAW_R0')">THAW Root 0</button>
+    <button class="signal" onclick="emitSignal('THAW_R1')">THAW Root 1</button>
+    <button class="signal" onclick="emitSignal('THAW_R2')">THAW Root 2</button>
+    <button class="signal" onclick="emitSignal('SYNC_HEMI')">SYNC L↔R (callosal)</button>
+  </div>
+  <div class="signal-log" id="signal-log"></div>
+</div>
+
+<h2>Roots</h2>
+<div class="grid-3">
+  <div class="root-card r0">
+    <div class="root-label">Root 0 — Self / Time <span class="root-state" id="root0-state">thawed</span></div>
+    <div class="root-hash" id="root0-hash">—</div>
+  </div>
+  <div class="root-card r1">
+    <div class="root-label">Root 1 — Left hemi <span class="root-state" id="root1-state">thawed</span></div>
+    <div class="root-hash" id="root1-hash">—</div>
+  </div>
+  <div class="root-card r2">
+    <div class="root-label">Root 2 — Right hemi <span class="root-state" id="root2-state">thawed</span></div>
+    <div class="root-hash" id="root2-hash">—</div>
+  </div>
+</div>
+
+<h2>Commit a leaf</h2>
+<textarea id="thought-input" placeholder="Write a thought, observation, or intent..."></textarea>
+<div class="form-row">
+  <select id="route-root">
+    <option value="0">Root 0 — Self / Time</option>
+    <option value="1">Root 1 — Left hemi</option>
+    <option value="2">Root 2 — Right hemi</option>
+  </select>
+  <select id="route-zone">
+    <option value="present">Present (active)</option>
+    <option value="past">Past (frozen)</option>
+    <option value="future">Future (intent)</option>
+  </select>
+  <select id="route-channel">
+    <option value="external-io">External I/O</option>
+    <option value="afferent-l">Afferent L (in→R1)</option>
+    <option value="afferent-r">Afferent R (in→R2)</option>
+    <option value="efferent-l">Efferent L (R1→out)</option>
+    <option value="efferent-r">Efferent R (R2→out)</option>
+    <option value="callosal">Callosal (R1↔R2)</option>
+    <option value="limbic">Limbic (R0↔hemis)</option>
+  </select>
+  <button class="primary" onclick="commitThought()">Commit</button>
+</div>
+<div class="form-row tether">
+  <input type="text" id="tether-input" placeholder="Tether to leaf IDs (e.g. 1,3,7) — comma separated, optional">
+  <button onclick="document.getElementById('tether-input').value=''">Clear</button>
+</div>
+
+<div class="actions">
+  <button onclick="verifyAll()">Verify integrity</button>
+  <button onclick="exportJSON()">Export JSON</button>
+  <button onclick="importJSON()">Import JSON</button>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+  <button class="danger" onclick="clearAll()">Clear all</button>
+</div>
+
+<h2>Leaves</h2>
+<div class="filter-row">
+  <select id="filter-root" onchange="render()">
+    <option value="all">All roots</option>
+    <option value="0">Root 0 only</option>
+    <option value="1">Root 1 only</option>
+    <option value="2">Root 2 only</option>
+  </select>
+  <select id="filter-state" onchange="render()">
+    <option value="all">All states</option>
+    <option value="active">Active only</option>
+    <option value="frozen">Frozen only</option>
+  </select>
+</div>
+<div class="leaf-list" id="leaf-list"></div>
+
+<div id="status"></div>
+
+<script>
+const STORAGE_KEY = 'tripod_brain_v2';
+
+let state = {
+  leaves: [],
+  roots: { 0: null, 1: null, 2: null },
+  rootStates: { 0: 'thawed', 1: 'thawed', 2: 'thawed' },
+  signalLog: [],
+  lattice: '990990',
+  shadow: null
+};
+
+const LATTICE_SEQ = ['990990','88088','77077','66066','55055','44044','33033','22022','11011'];
+
+async function sha256(str) {
+  const buf = new TextEncoder().encode(str);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function merkleRoot(hashes) {
+  if (hashes.length === 0) return null;
+  if (hashes.length === 1) return hashes[0];
+  let layer = [...hashes];
+  while (layer.length > 1) {
+    const next = [];
+    for (let i = 0; i < layer.length; i += 2) {
+      const a = layer[i];
+      const b = layer[i + 1] || layer[i];
+      next.push(await sha256(a + b));
+    }
+    layer = next;
+  }
+  return layer[0];
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = { ...state, ...parsed };
+      if (!state.rootStates) state.rootStates = { 0: 'thawed', 1: 'thawed', 2: 'thawed' };
+      if (!state.signalLog) state.signalLog = [];
+      if (!state.lattice) state.lattice = '990990';
+    }
+  } catch (e) {}
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+function logSignal(signal, detail) {
+  const entry = `${new Date().toLocaleTimeString()} · ${signal}${detail ? ' · ' + detail : ''}`;
+  state.signalLog.unshift(entry);
+  if (state.signalLog.length > 50) state.signalLog.pop();
+}
+
+function setLattice(val) {
+  state.lattice = val;
+  document.getElementById('lattice-label').textContent = 'Current: ' + val;
+  document.querySelectorAll('#lattice-bar button').forEach(b => {
+    b.classList.toggle('active', b.textContent === val);
+  });
+  saveState();
+  render();
+  setStatus(`Lattice set to ${val}`);
+}
+
+function toggleShadow(mode) {
+  state.shadow = state.shadow === mode ? null : mode;
+  document.getElementById('shadow-status').textContent = 'shadow: ' + (state.shadow || 'off');
+  saveState();
+  render();
+}
+
+async function commitThought() {
+  const input = document.getElementById('thought-input');
+  const content = input.value.trim();
+  if (!content) { setStatus('Empty thought.', true); return; }
+
+  const root = parseInt(document.getElementById('route-root').value);
+  const zone = document.getElementById('route-zone').value;
+  const channel = document.getElementById('route-channel').value;
+
+  if (state.rootStates[root] === 'frozen') {
+    setStatus(`Root ${root} is frozen — corpus must thaw it before writing.`, true);
+    return;
+  }
+
+  const tetherRaw = document.getElementById('tether-input').value.trim();
+  const tethers = tetherRaw
+    ? tetherRaw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && state.leaves.find(l => l.leaf_id === n))
+    : [];
+
+  const timestamp = new Date().toISOString();
+  const payload = JSON.stringify({ timestamp, content, root, zone, channel, tethers, lattice: state.lattice, shadow: state.shadow });
+  const selfHash = await sha256(payload);
+
+  state.leaves.push({
+    leaf_id: state.leaves.length + 1,
+    timestamp, content, root, zone,
+    state: zone === 'present' ? 'active' : 'frozen',
+    channel_origin: channel,
+    self_hash: selfHash,
+    tethers,
+    lattice: state.lattice,
+    shadow: state.shadow
+  });
+
+  await recomputeRoots();
+  saveState();
+  input.value = '';
+  document.getElementById('tether-input').value = '';
+  render();
+  setStatus(`Committed leaf #${state.leaves.length} → Root ${root} / ${state.lattice}${state.shadow ? ' ' + state.shadow : ''}`);
+}
+
+async function recomputeRoots() {
+  for (const r of [0, 1, 2]) {
+    const hashes = state.leaves.filter(l => l.root === r).map(l => l.self_hash);
+    state.roots[r] = await merkleRoot(hashes);
+  }
+}
+
+async function emitSignal(signal) {
+  let detail = '';
+  let n = 0;
+
+  switch (signal) {
+    case 'FREEZE_ALL':
+      [0,1,2].forEach(r => state.rootStates[r] = 'frozen');
+      state.leaves.forEach(l => { if (l.state === 'active') { l.state = 'frozen'; n++; } });
+      detail = `${n} leaves frozen`;
+      break;
+    case 'THAW_ALL':
+      [0,1,2].forEach(r => state.rootStates[r] = 'thawed');
+      state.leaves.forEach(l => { if (l.zone === 'present' && l.state === 'frozen') { l.state = 'active'; n++; } });
+      detail = `${n} present-zone leaves thawed`;
+      break;
+    case 'FREEZE_R0': case 'FREEZE_R1': case 'FREEZE_R2': {
+      const r = parseInt(signal.slice(-1));
+      state.rootStates[r] = 'frozen';
+      state.leaves.forEach(l => { if (l.root === r && l.state === 'active') { l.state = 'frozen'; n++; } });
+      detail = `Root ${r} frozen, ${n} leaves frozen`;
+      break;
+    }
+    case 'THAW_R0': case 'THAW_R1': case 'THAW_R2': {
+      const r = parseInt(signal.slice(-1));
+      state.rootStates[r] = 'thawed';
+      state.leaves.forEach(l => { if (l.root === r && l.zone === 'present' && l.state === 'frozen') { l.state = 'active'; n++; } });
+      detail = `Root ${r} thawed, ${n} leaves thawed`;
+      break;
+    }
+    case 'SYNC_HEMI': {
+      const r1 = state.leaves.filter(l => l.root === 1);
+      const r2 = state.leaves.filter(l => l.root === 2);
+      let added = 0;
+      r1.forEach(l1 => {
+        const partner = r2[r2.length - 1];
+        if (partner && !l1.tethers.includes(partner.leaf_id)) { l1.tethers.push(partner.leaf_id); added++; }
+      });
+      r2.forEach(l2 => {
+        const partner = r1[r1.length - 1];
+        if (partner && !l2.tethers.includes(partner.leaf_id)) { l2.tethers.push(partner.leaf_id); added++; }
+      });
+      detail = `${added} callosal tethers added`;
+      break;
+    }
+  }
+
+  logSignal(signal, detail);
+  await recomputeRoots();
+  saveState();
+  render();
+  setStatus(`Signal ${signal} · ${detail}`);
+}
+
+async function verifyAll() {
+  let bad = 0;
+  for (const l of state.leaves) {
+    const payload = JSON.stringify({
+      timestamp: l.timestamp, content: l.content, root: l.root, zone: l.zone,
+      channel: l.channel_origin, tethers: l.tethers, lattice: l.lattice, shadow: l.shadow
+    });
+    const recomputed = await sha256(payload);
+    if (recomputed !== l.self_hash) bad++;
+  }
+  if (bad === 0) setStatus(`Integrity OK — all ${state.leaves.length} leaves verified.`);
+  else setStatus(`Integrity FAIL — ${bad} leaves corrupted.`, true);
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tripod_brain_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  setStatus('Exported.');
+}
+
+function importJSON() {
+  document.getElementById('import-file').click();
+}
+
+async function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const imported = JSON.parse(text);
+    if (!imported.leaves) throw new Error('Invalid file');
+    state = { ...state, ...imported };
+    if (!state.rootStates) state.rootStates = { 0: 'thawed', 1: 'thawed', 2: 'thawed' };
+    if (!state.signalLog) state.signalLog = [];
+    if (!state.lattice) state.lattice = '990990';
+    await recomputeRoots();
+    saveState();
+    render();
+    setStatus(`Imported ${state.leaves.length} leaves.`);
+  } catch (e) {
+    setStatus(`Import failed: ${e.message}`, true);
+  }
+  event.target.value = '';
+}
+
+function clearAll() {
+  if (!confirm('Clear all leaves, roots, and signal log? Cannot be undone.')) return;
+  state = { leaves: [], roots: { 0: null, 1: null, 2: null }, rootStates: { 0: 'thawed', 1: 'thawed', 2: 'thawed' }, signalLog: [], lattice: '990990', shadow: null };
+  saveState();
+  render();
+  setStatus('Cleared.');
+}
+
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = isError ? 'error' : '';
+}
+
+function shortHash(h) {
+  return h ? h.slice(0, 10) + '…' + h.slice(-8) : '—';
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function render() {
+  document.getElementById('stat-leaves').textContent = state.leaves.length;
+  document.getElementById('stat-active').textContent = state.leaves.filter(l => l.state === 'active').length;
+  document.getElementById('stat-frozen').textContent = state.leaves.filter(l => l.state === 'frozen').length;
+  document.getElementById('stat-edges').textContent = state.leaves.reduce((s, l) => s + (l.tethers?.length || 0), 0);
+
+  ['0','1','2'].forEach(r => {
+    document.getElementById(`root${r}-hash`).textContent = shortHash(state.roots[r]);
+    const stateEl = document.getElementById(`root${r}-state`);
+    stateEl.textContent = state.rootStates[r];
+    stateEl.className = `root-state ${state.rootStates[r]}`;
+  });
+
+  const bar = document.getElementById('lattice-bar');
+  if (bar && bar.children.length === 0) {
+    LATTICE_SEQ.forEach(v => {
+      const b = document.createElement('button');
+      b.className = 'lattice';
+      b.textContent = v;
+      b.onclick = () => setLattice(v);
+      if (v === state.lattice) b.classList.add('active');
+      bar.appendChild(b);
+    });
+  }
+
+  document.getElementById('lattice-label').textContent = 'Current: ' + state.lattice;
+  document.getElementById('shadow-status').textContent = 'shadow: ' + (state.shadow || 'off');
+
+  const log = document.getElementById('signal-log');
+  log.innerHTML = state.signalLog.length
+    ? state.signalLog.map(e => `<div class="entry">${escapeHtml(e)}</div>`).join('')
+    : '<div class="entry" style="color: var(--text-dim);">No signals emitted yet.</div>';
+
+  const fRoot = document.getElementById('filter-root').value;
+  const fState = document.getElementById('filter-state').value;
+  let filtered = state.leaves;
+  if (fRoot !== 'all') filtered = filtered.filter(l => l.root === parseInt(fRoot));
+  if (fState !== 'all') filtered = filtered.filter(l => l.state === fState);
+
+  const list = document.getElementById('leaf-list');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="font-size: 13px; color: var(--text-dim); padding: 12px 0;">No leaves match the filter.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.slice().reverse().map(l => `
+    <div class="leaf r${l.root} ${l.state}">
+      <div class="leaf-meta">
+        <span class="pill">#${l.leaf_id}</span>
+        <span class="pill">Root ${l.root}</span>
+        <span class="pill">${l.zone}</span>
+        <span class="pill">${l.channel_origin}</span>
+        <span class="pill">${l.lattice || '990990'}${l.shadow ? ' ' + l.shadow : ''}</span>
+        <span class="pill ${l.state}">${l.state}</span>
+        <span class="leaf-time">${new Date(l.timestamp).toLocaleString()}</span>
+      </div>
+      <div class="leaf-content">${escapeHtml(l.content)}</div>
+      <div class="leaf-hash">hash: ${shortHash(l.self_hash)}</div>
+      ${l.tethers && l.tethers.length ? `<div class="leaf-tethers">tethered → [${l.tethers.join(', ')}]</div>` : ''}
+    </div>
+  `).join('');
+}
+
+loadState();
+recomputeRoots().then(render);
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of GENESIS BLOCK &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

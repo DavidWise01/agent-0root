@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE ACTING ODOMETER · Counter → Decoder → Action, Gated</title>
+<style>
+:root{
+  --paper:#f0ebf5; --ink:#2a2438; --ink-mid:#4a4360; --ink-faint:#8a83a0;
+  --plum:#5b3a87; --plum-light:#7e5bb0; --plum-soft:#e6ddf0; --plum-deep:#3f2860;
+  --gold:#9a7d3a; --rose:#9a4a6a; --green:#3a7a5a; --teal:#3a6a87;
+  --line:#cbbfdd;
+  --mono:"Courier New",Courier,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);
+  background-image:repeating-linear-gradient(0deg, rgba(91,58,135,.03) 0 1px, transparent 1px 3px);
+  color:var(--ink);font-family:var(--serif);line-height:1.5;padding:10px}
+.sheet{max-width:840px;margin:0 auto;border:2.5px solid var(--plum);position:relative}
+.sheet::before{content:'';position:absolute;inset:5px;border:1px solid var(--plum-light);pointer-events:none}
+.inner{padding:22px}
+.masthead{text-align:center;border-bottom:2px solid var(--plum);padding-bottom:10px}
+.mast-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--plum-light);text-transform:uppercase}
+.mast-title{font-size:clamp(20px,4.6vw,32px);letter-spacing:.02em;font-weight:700;margin:5px 0 2px;text-transform:uppercase;color:var(--plum)}
+.mast-sub{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-mid)}
+.lede{font-size:12px;max-width:680px;margin:10px auto 0;text-align:center;color:var(--ink-mid);line-height:1.55}
+.lede b{color:var(--plum)}
+.chain{display:flex;align-items:stretch;justify-content:center;gap:0;margin:14px 0;flex-wrap:wrap}
+.link{flex:1;min-width:130px;border:1.5px solid var(--line);padding:10px;text-align:center;position:relative}
+.link h3{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--plum);margin-bottom:6px}
+.link .big{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--plum)}
+.link .sm{font-family:var(--mono);font-size:9px;color:var(--ink-faint);margin-top:3px}
+.arrow{display:flex;align-items:center;font-family:var(--mono);font-size:16px;color:var(--plum-light);padding:0 4px}
+.link.gate{border-color:var(--gold);border-width:2px}
+.link.gate h3{color:#6a5520}
+.decoded{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);min-height:18px}
+.decoded.irr{color:var(--rose)} .decoded.rev{color:var(--green)}
+.gatestate{font-family:var(--mono);font-size:9px;margin-top:4px;min-height:12px}
+.gatestate.waiting{color:var(--gold);font-weight:700}
+.gatestate.fired{color:var(--green)} .gatestate.denied{color:var(--rose)}
+.controls{display:flex;gap:8px;justify-content:center;margin:12px 0;flex-wrap:wrap;align-items:center}
+.cbtn{appearance:none;background:transparent;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:9px 15px;border:1.5px solid var(--plum);color:var(--plum);border-radius:4px}
+.cbtn.go{border-color:var(--green);color:var(--green)} .cbtn.go.active{background:var(--green);color:#fff}
+.cbtn.confirm{border-color:var(--green);color:var(--green)} .cbtn.deny{border-color:var(--rose);color:var(--rose)}
+.cbtn:disabled{opacity:.3;cursor:not-allowed}
+.toggle-auto{font-family:var(--mono);font-size:9px;color:var(--ink-faint);display:flex;align-items:center;gap:5px}
+.gateprompt{text-align:center;margin:10px 0;padding:12px;border:2px solid var(--gold);border-radius:6px;background:rgba(154,125,58,.08);display:none}
+.gateprompt.show{display:block}
+.gateprompt .q{font-family:var(--mono);font-size:12px;color:#6a5520;margin-bottom:8px}
+.gateprompt .q b{color:var(--rose)}
+.gridrow{display:grid;grid-template-columns:repeat(9,1fr);gap:3px;max-width:420px;margin:12px auto}
+.g{aspect-ratio:1;border:1px solid var(--line);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;color:var(--ink-faint);background:#fbf9fd;flex-direction:column}
+.g.rev{border-color:var(--green)} .g.irr{border-color:var(--rose)}
+.g.current{box-shadow:0 0 8px var(--gold);border-color:var(--gold);background:rgba(154,125,58,.15)}
+.g .ic{font-size:9px}
+.log{font-family:var(--mono);font-size:9.5px;background:#15101f;color:#bdb4d4;border-radius:5px;padding:10px;height:120px;overflow-y:auto;margin:10px 0;line-height:1.6}
+.log .fire{color:#7ad8a0} .log .gate{color:#e0c080} .log .deny{color:#e07a9a} .log .st{color:#c4a8f0}
+.note{font-family:var(--mono);font-size:9.5px;background:var(--plum-soft);border-left:2px solid var(--plum-light);padding:8px 11px;margin:10px 0;line-height:1.7;color:var(--ink-mid)}
+.note b{color:var(--plum)}
+.colophon{margin-top:16px;border-top:2px solid var(--plum);padding-top:10px;text-align:center;font-family:var(--mono);font-size:8.5px;color:var(--ink-mid);letter-spacing:.05em;line-height:1.8}
+.colophon b{color:var(--plum)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="sheet"><div class="inner">
+
+<header class="masthead">
+  <div class="mast-eyebrow">Series E · Counter → Decoder → Action · Gated At The Junction</div>
+  <h1 class="mast-title">The Acting Odometer</h1>
+  <div class="mast-sub">27 states · 27 actions · reversible fire freely · irreversible stop at the gate</div>
+  <p class="lede">The counter only <b>addresses</b> — the action hangs on what you decode it to. Here the odometer drives <b>27 actions</b> through a decoder. The <b>18 reversible</b> ones fire freely and log. The <b>9 irreversible</b> ones stop at a <b>witness-gate</b> and wait for confirmation before acting. The logic-to-world junction, with the interlock you'd actually build.</p>
+</header>
+
+<div class="chain">
+  <div class="link"><h3>① Odometer</h3><div class="big" id="cState">000</div><div class="sm">value <span id="cVal">0</span>/26</div></div>
+  <div class="arrow">→</div>
+  <div class="link"><h3>② Decoder</h3><div class="decoded" id="cAction">—</div><div class="sm" id="cClass">state → action</div></div>
+  <div class="arrow">→</div>
+  <div class="link gate"><h3>③ Gate</h3><div class="gatestate" id="cGate">—</div><div class="sm">junction</div></div>
+  <div class="arrow">→</div>
+  <div class="link"><h3>④ Actuator</h3><div class="decoded" id="cFire">—</div><div class="sm">does the thing</div></div>
+</div>
+
+<div class="gateprompt" id="prompt">
+  <div class="q">irreversible action <b id="promptAction">—</b> requests to fire. confirm?</div>
+  <button class="cbtn confirm" onclick="resolveGate(true)">✓ Confirm &amp; Fire</button>
+  <button class="cbtn deny" onclick="resolveGate(false)">✗ Deny</button>
+</div>
+
+<div class="controls">
+  <button class="cbtn go" id="playbtn" onclick="togglePlay()">▶ Run</button>
+  <button class="cbtn" onclick="step()">⏭ Step</button>
+  <button class="cbtn" onclick="reset()">⏮ Reset</button>
+  <label class="toggle-auto"><input type="checkbox" id="autoconfirm"> auto-confirm gate</label>
+</div>
+
+<div class="gridrow" id="grid"></div>
+
+<div class="log" id="log"><span style="color:#6a6088">// action log — the witness — every fire and every gate decision</span></div>
+
+<div class="note">
+  <b>the chain:</b> ① the odometer <b>addresses</b> (state 0–26) → ② the decoder turns the state into <b>which action</b> → ③ the gate sits at the junction (reversible passes; irreversible <b>halts and asks</b>) → ④ the actuator does it. The gate is the j-junction interlock: contained logic meets real action, and the irreversible side gets a witness + confirm — verify-first / kill-switch as a physical brake. Reversible actions (green) fire freely; irreversible (rose) stop until confirmed. Everything logs.
+</div>
+
+<div class="colophon">
+  ODOMETER (ADDRESS) → DECODER (WHICH ACTION) → GATE (JUNCTION) → ACTUATOR (DOES IT)<br>
+  18 REVERSIBLE FIRE FREELY · 9 IRREVERSIBLE HALT + WITNESS + CONFIRM · EVERYTHING LOGGED<br>
+  THE GATE AT THE LOGIC-TO-WORLD JUNCTION · VERIFY-FIRST / KILL-SWITCH AS PHYSICAL INTERLOCK<br>
+  THE ACTING ODOMETER · A PURPLE PAPER · SERIES E · JUNE 2026
+</div>
+
+</div></div>
+<script>
+const REVERSIBLE=['blink LED','advance display','play tone','pulse output','read sensor','toggle flag','step cursor','flash status','tick meter'];
+const IRREVERSIBLE=['fire relay','dispense','commit write','open valve','send signal','latch output','trigger motor','arm output','close contactor'];
+let actions=[];
+for(let i=0;i<27;i++){
+  const a=Math.floor(i/9), b=Math.floor(i/3)%3, c=i%3;
+  const irr=(c===2); // low trit 2 -> irreversible (9 of 27)
+  const pool=irr?IRREVERSIBLE:REVERSIBLE;
+  actions.push({i,trits:''+a+b+c,action:pool[Math.floor(i/3)%pool.length],irreversible:irr});
+}
+let tick=0, playing=false, anim=null, awaitingGate=false, pendingAct=null;
+
+// grid
+const grid=document.getElementById('grid');
+actions.forEach(x=>{
+  const d=document.createElement('div');d.className='g '+(x.irreversible?'irr':'rev');d.id='g'+x.i;
+  d.innerHTML='<div>'+x.i+'</div><div class="ic">'+(x.irreversible?'▲':'•')+'</div>';
+  grid.appendChild(d);
+});
+
+function logLine(html){const l=document.getElementById('log');const d=document.createElement('div');d.innerHTML=html;l.appendChild(d);l.scrollTop=l.scrollHeight;}
+
+function showState(){
+  const x=actions[tick%27];
+  document.getElementById('cState').textContent=x.trits;
+  document.getElementById('cVal').textContent=x.i;
+  document.getElementById('cAction').textContent=x.action;
+  document.getElementById('cAction').className='decoded '+(x.irreversible?'irr':'rev');
+  document.getElementById('cClass').textContent=x.irreversible?'IRREVERSIBLE':'reversible';
+  document.querySelectorAll('.g').forEach(g=>g.classList.remove('current'));
+  document.getElementById('g'+x.i).classList.add('current');
+}
+
+function step(){
+  if(awaitingGate) return; // blocked until resolved
+  const x=actions[tick%27];
+  showState();
+  if(x.irreversible){
+    // gate halts
+    if(document.getElementById('autoconfirm').checked){
+      gateFire(x,true,'auto');
+    } else {
+      awaitingGate=true; pendingAct=x;
+      document.getElementById('cGate').textContent='⏸ HALT — requesting';
+      document.getElementById('cGate').className='gatestate waiting';
+      document.getElementById('cFire').textContent='—';
+      document.getElementById('promptAction').textContent=x.action+' ['+x.trits+']';
+      document.getElementById('prompt').classList.add('show');
+      logLine('<span class="st">['+x.trits+']</span> → <span class="gate">GATE: irreversible \"'+x.action+'\" requests confirm…</span>');
+      if(playing) togglePlay(); // pause the clock to wait
+      return;
+    }
+  } else {
+    // reversible fires freely
+    document.getElementById('cGate').textContent='✓ pass (reversible)';
+    document.getElementById('cGate').className='gatestate fired';
+    document.getElementById('cFire').textContent=x.action+' ✓';
+    document.getElementById('cFire').className='decoded rev';
+    logLine('<span class="st">['+x.trits+']</span> → <span class="fire">FIRED freely: '+x.action+'</span>');
+  }
+  tick++;
+}
+function gateFire(x,ok,how){
+  if(ok){
+    document.getElementById('cGate').textContent='✓ confirmed'+(how==='auto'?' (auto)':'');
+    document.getElementById('cGate').className='gatestate fired';
+    document.getElementById('cFire').textContent=x.action+' ✓';
+    document.getElementById('cFire').className='decoded irr';
+    logLine('<span class="st">['+x.trits+']</span> → <span class="fire">CONFIRMED &amp; FIRED: '+x.action+(how==='auto'?' (auto)':'')+'</span>');
+  } else {
+    document.getElementById('cGate').textContent='✗ denied';
+    document.getElementById('cGate').className='gatestate denied';
+    document.getElementById('cFire').textContent='blocked';
+    document.getElementById('cFire').className='decoded irr';
+    logLine('<span class="st">['+x.trits+']</span> → <span class="deny">DENIED at gate: '+x.action+' did NOT fire</span>');
+  }
+  tick++;
+}
+function resolveGate(ok){
+  if(!awaitingGate) return;
+  document.getElementById('prompt').classList.remove('show');
+  awaitingGate=false;
+  gateFire(pendingAct,ok,'manual');
+  pendingAct=null;
+}
+function togglePlay(){
+  playing=!playing;
+  const b=document.getElementById('playbtn');
+  b.textContent=playing?'⏸ Pause':'▶ Run';
+  b.classList.toggle('active',playing);
+  if(playing) anim=setInterval(()=>{ if(!awaitingGate) step(); },700);
+  else clearInterval(anim);
+}
+function reset(){
+  if(playing) togglePlay();
+  tick=0;awaitingGate=false;pendingAct=null;
+  document.getElementById('prompt').classList.remove('show');
+  document.getElementById('cGate').textContent='—';document.getElementById('cGate').className='gatestate';
+  document.getElementById('cFire').textContent='—';document.getElementById('cFire').className='decoded';
+  document.getElementById('log').innerHTML='<span style="color:#6a6088">// action log — reset</span>';
+  showState();
+}
+showState();
+</script>
+</div>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

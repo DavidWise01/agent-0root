@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE 52-CARD INSTRUCTION SET · Program In Playing Cards</title>
+<style>
+:root{
+  --paper:#efeae0; --ink:#2a2438; --ink-mid:#4a4360; --ink-faint:#8a83a0;
+  --plum:#5b3a87; --plum-light:#7e5bb0; --plum-soft:#e6ddf0;
+  --gold:#9a7d3a; --red:#9a3a4a; --black:#2a2438;
+  --line:#cbbfdd;
+  --arith:#5b3a87; --mem:#3a6a87; --ctrl:#9a7d3a; --logic:#3a7a5a;
+  --mono:"Courier New",Courier,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);
+  background-image:repeating-linear-gradient(0deg, rgba(91,58,135,.025) 0 1px, transparent 1px 3px);
+  color:var(--ink);font-family:var(--serif);line-height:1.5;padding:10px}
+.sheet{max-width:880px;margin:0 auto;border:2.5px solid var(--plum);padding:0;position:relative}
+.sheet::before{content:'';position:absolute;inset:5px;border:1px solid var(--plum-light);pointer-events:none}
+.inner{padding:22px}
+.masthead{text-align:center;border-bottom:2px solid var(--plum);padding-bottom:12px}
+.mast-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.24em;color:var(--plum-light);text-transform:uppercase}
+.mast-title{font-size:clamp(20px,5vw,34px);letter-spacing:.02em;font-weight:700;margin:6px 0 2px;text-transform:uppercase;color:var(--plum)}
+.mast-sub{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-mid)}
+.lede{font-size:12px;max-width:660px;margin:10px auto 0;text-align:center;color:var(--ink-mid);line-height:1.55}
+.lede b{color:var(--plum)}
+h2.sec{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;border-bottom:1.5px solid var(--plum);padding-bottom:4px;margin:18px 0 10px;color:var(--plum)}
+/* palette of cards to click */
+.suits{margin-bottom:10px}
+.suitrow{margin-bottom:6px}
+.suitlbl{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;font-weight:700}
+.suitlbl.s{color:var(--arith)} .suitlbl.h{color:var(--mem)} .suitlbl.d{color:var(--ctrl)} .suitlbl.c{color:var(--logic)}
+.cardrow{display:flex;flex-wrap:wrap;gap:3px}
+.card{width:34px;height:46px;border:1.5px solid var(--line);border-radius:4px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:var(--mono);font-size:13px;font-weight:700;transition:all .1s;user-select:none}
+.card:hover{border-color:var(--plum);transform:translateY(-2px)}
+.card.red{color:var(--red)} .card.black{color:var(--black)}
+.card .suit{font-size:14px;line-height:1}
+.card .op{font-size:6px;color:var(--ink-faint);font-weight:400;margin-top:1px;height:7px}
+/* program (the hand) */
+.program{min-height:54px;border:1.5px dashed var(--plum-light);border-radius:4px;padding:8px;display:flex;flex-wrap:wrap;gap:4px;background:rgba(126,91,176,.04);margin-bottom:8px}
+.program .card{cursor:pointer}
+.program .card.executing{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.controls{display:flex;gap:8px;justify-content:center;margin:10px 0;flex-wrap:wrap}
+.cbtn{appearance:none;background:transparent;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:7px 12px;border:1.5px solid var(--plum);color:var(--plum);margin:2px}
+.cbtn.gold{border-color:var(--gold);color:#6a5520}
+.cbtn.red{border-color:var(--red);color:var(--red)}
+/* machine state */
+.state{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+@media(max-width:600px){.state{grid-template-columns:1fr}}
+.statebox{border:1.5px solid var(--line);padding:9px 11px;font-family:var(--mono);font-size:11px;line-height:1.7}
+.statebox h4{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--plum);margin-bottom:5px}
+.statebox .val{color:var(--ink);font-weight:700}
+.output{border:1.5px solid var(--ctrl);padding:9px 11px;font-family:var(--mono);font-size:14px;color:#6a5520;background:rgba(154,125,58,.06);min-height:36px;margin-top:10px;word-break:break-all}
+.output h4{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ctrl);margin-bottom:4px}
+/* reference table */
+table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:10px;margin:8px 0}
+td,th{border:1px solid var(--line);padding:4px 6px;text-align:left}
+th{background:var(--plum-soft);color:var(--plum);font-size:8.5px;letter-spacing:.04em;text-transform:uppercase}
+.samples{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.samplebtn{font-family:var(--mono);font-size:9px;padding:5px 9px;border:1px solid var(--plum-light);color:var(--plum);background:var(--plum-soft);cursor:pointer;border-radius:3px}
+.body p{font-size:12.5px;margin-bottom:7px}
+.body b{color:var(--ink)}
+.colophon{margin-top:18px;border-top:2px solid var(--plum);padding-top:10px;text-align:center;font-family:var(--mono);font-size:9px;color:var(--ink-mid);letter-spacing:.05em;line-height:1.8}
+.colophon b{color:var(--plum)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#39fc6b}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="sheet"><div class="inner">
+
+<header class="masthead">
+  <div class="mast-eyebrow">Series E · A Language Dealt From A Deck</div>
+  <h1 class="mast-title">The 52-Card Instruction Set</h1>
+  <div class="mast-sub">Suit = Operation Family · Rank = The Operation · A Base-52 ISA</div>
+  <p class="lede">A real instruction set where every card is one instruction. <b style="color:var(--arith)">♠ arithmetic</b> · <b style="color:var(--mem)">♥ memory</b> · <b style="color:var(--ctrl)">♦ control/output</b> · <b style="color:var(--logic)">♣ logic</b> — the suit is the <em>op family</em>, the rank is the <em>operation</em>. Deal a hand of cards, run it on a real stack machine, watch it compute. The card-notation an AI reached for, made to actually execute.</p>
+</header>
+
+<h2 class="sec">① Deal Your Program · click cards to add</h2>
+<div class="suits" id="palette"></div>
+
+<h2 class="sec">② The Hand · your program</h2>
+<div class="program" id="program"><span style="color:var(--ink-faint);font-family:var(--mono);font-size:10px">click cards above to build a program…</span></div>
+<div class="samples" id="samples"></div>
+<div class="controls">
+  <button class="cbtn gold" onclick="runProgram()">▶ Run The Hand</button>
+  <button class="cbtn" onclick="stepProgram()">Step ▸</button>
+  <button class="cbtn red" onclick="clearProgram()">Clear ✗</button>
+</div>
+
+<div class="state">
+  <div class="statebox"><h4>Stack (top → right)</h4><div class="val" id="stackview">empty</div></div>
+  <div class="statebox"><h4>Registers · ACC</h4><div class="val" id="regview">R0=0 R1=0 R2=0 R3=0 · ACC=0</div></div>
+</div>
+<div class="output"><h4>Output ♦</h4><div id="outview">—</div></div>
+
+<h2 class="sec">③ Instruction Reference</h2>
+<div class="body">
+<table>
+  <tr><th>Suit</th><th>Family</th><th>Ranks → operations</th></tr>
+  <tr><td style="color:var(--arith);font-weight:700">♠</td><td>ARITH</td><td>A–10 = push that number · J = add · Q = subtract · K = multiply</td></tr>
+  <tr><td style="color:var(--mem);font-weight:700">♥</td><td>MEMORY</td><td>A = load top→ACC · 2 = push ACC · 3–6 = store top→R0..R3 · 7–10 = push R0..R3 · J = dup · Q = swap · K = drop</td></tr>
+  <tr><td style="color:var(--ctrl);font-weight:700">♦</td><td>CONTROL</td><td>A = print top (number) · 2 = print top (as character) · K = halt</td></tr>
+  <tr><td style="color:var(--logic);font-weight:700">♣</td><td>LOGIC</td><td>A = equal? · 2 = greater? · 3 = and · 4 = or · 5 = not (each pushes 1/0)</td></tr>
+</table>
+<p><b>How it runs:</b> a stack machine. Number-cards push values; operation-cards pop values, compute, and push results. <b>5♠ 3♠ J♠</b> means "push 5, push 3, add" → stack holds 8. Then <b>A♦</b> prints the top. It's Reverse-Polish (the operation comes after its operands), the same way real stack machines and old HP calculators work.</p>
+</div>
+
+<div class="colophon">
+  52 CARDS = 4 SUITS (OP FAMILY) × 13 RANKS (OPERATION) = A STRUCTURED BASE-52 ISA<br>
+  ♠ ARITHMETIC · ♥ MEMORY · ♦ CONTROL · ♣ LOGIC · ONE CARD = ONE INSTRUCTION ≈ 5.7 BITS<br>
+  A REAL STACK MACHINE · DEALT FROM A DECK · THE CARD-NOTATION, EXECUTING<br>
+  THE 52-CARD INSTRUCTION SET · SERIES E · JUNE 2026
+</div>
+
+</div></div>
+<script>
+const SUITS=[
+  {sym:'\u2660',key:'s',fam:'ARITH',cls:'black',label:'arithmetic'},
+  {sym:'\u2665',key:'h',fam:'MEM',cls:'red',label:'memory'},
+  {sym:'\u2666',key:'d',fam:'CTRL',cls:'red',label:'control'},
+  {sym:'\u2663',key:'c',fam:'LOGIC',cls:'black',label:'logic'}
+];
+const RANKNAMES={1:'A',11:'J',12:'Q',13:'K'};
+function rname(r){ return RANKNAMES[r]||String(r); }
+// short op hint per card
+function opHint(fam,r){
+  if(fam==='ARITH'){ if(r<=10)return 'push'; return {11:'add',12:'sub',13:'mul'}[r]; }
+  if(fam==='MEM'){ return {1:'ld',2:'pshA',3:'>R0',4:'>R1',5:'>R2',6:'>R3',7:'R0',8:'R1',9:'R2',10:'R3',11:'dup',12:'swap',13:'drop'}[r]; }
+  if(fam==='CTRL'){ return {1:'prn',2:'chr',13:'halt'}[r]||'·'; }
+  if(fam==='LOGIC'){ return {1:'eq',2:'gt',3:'and',4:'or',5:'not'}[r]||'·'; }
+}
+let program=[]; // [{rank,suit,cls,fam}]
+
+function buildPalette(){
+  const p=document.getElementById('palette');p.innerHTML='';
+  SUITS.forEach(s=>{
+    const row=document.createElement('div');row.className='suitrow';
+    const lbl=document.createElement('div');lbl.className='suitlbl '+s.key;
+    lbl.textContent=s.sym+' '+s.label+' ('+s.fam+')';
+    row.appendChild(lbl);
+    const cr=document.createElement('div');cr.className='cardrow';
+    for(let r=1;r<=13;r++){
+      const c=document.createElement('div');c.className='card '+s.cls;
+      c.innerHTML=`<div>${rname(r)}</div><div class="suit">${s.sym}</div><div class="op">${opHint(s.fam,r)||''}</div>`;
+      c.onclick=()=>{ program.push({rank:r,suit:s.sym,cls:s.cls,fam:s.fam}); drawProgram(); };
+      cr.appendChild(c);
+    }
+    row.appendChild(cr);p.appendChild(row);
+  });
+}
+function drawProgram(exIdx=-1){
+  const pr=document.getElementById('program');
+  if(program.length===0){ pr.innerHTML='<span style="color:var(--ink-faint);font-family:var(--mono);font-size:10px">click cards above to build a program…</span>'; return; }
+  pr.innerHTML='';
+  program.forEach((c,i)=>{
+    const el=document.createElement('div');el.className='card '+c.cls+(i===exIdx?' executing':'');
+    el.innerHTML=`<div>${rname(c.rank)}</div><div class="suit">${c.suit}</div><div class="op">${opHint(c.fam,c.rank)||''}</div>`;
+    el.onclick=()=>{ program.splice(i,1); drawProgram(); };
+    pr.appendChild(el);
+  });
+}
+// the machine
+function makeM(){ return {stack:[],acc:0,reg:[0,0,0,0],out:[],halt:false}; }
+function execCard(m,c){
+  const r=c.rank, fam=c.fam;
+  if(fam==='ARITH'){
+    if(r<=10) m.stack.push(r);
+    else if(r===11){const b=m.stack.pop()||0,a=m.stack.pop()||0;m.stack.push(a+b);}
+    else if(r===12){const b=m.stack.pop()||0,a=m.stack.pop()||0;m.stack.push(a-b);}
+    else if(r===13){const b=m.stack.pop()||0,a=m.stack.pop()||0;m.stack.push(a*b);}
+  } else if(fam==='MEM'){
+    if(r===1) m.acc=m.stack[m.stack.length-1]||0;
+    else if(r===2) m.stack.push(m.acc);
+    else if(r>=3&&r<=6) m.reg[r-3]=m.stack.pop()||0;
+    else if(r>=7&&r<=10) m.stack.push(m.reg[r-7]);
+    else if(r===11) m.stack.push(m.stack[m.stack.length-1]||0);
+    else if(r===12){const a=m.stack.pop(),b=m.stack.pop();if(a!==undefined&&b!==undefined)m.stack.push(a,b);}
+    else if(r===13) m.stack.pop();
+  } else if(fam==='CTRL'){
+    if(r===1) m.out.push(String(m.stack[m.stack.length-1]||0));
+    else if(r===2){const v=m.stack[m.stack.length-1]||0; m.out.push(v>=32&&v<127?String.fromCharCode(v):'\u00b7');}
+    else if(r===13) m.halt=true;
+  } else if(fam==='LOGIC'){
+    if(r===1){const b=m.stack.pop(),a=m.stack.pop();m.stack.push(a===b?1:0);}
+    else if(r===2){const b=m.stack.pop()||0,a=m.stack.pop()||0;m.stack.push(a>b?1:0);}
+    else if(r===3){const b=m.stack.pop(),a=m.stack.pop();m.stack.push((a&&b)?1:0);}
+    else if(r===4){const b=m.stack.pop(),a=m.stack.pop();m.stack.push((a||b)?1:0);}
+    else if(r===5){const a=m.stack.pop();m.stack.push(a?0:1);}
+  }
+}
+function renderState(m){
+  document.getElementById('stackview').textContent = m.stack.length?m.stack.join('  '):'empty';
+  document.getElementById('regview').textContent = `R0=${m.reg[0]} R1=${m.reg[1]} R2=${m.reg[2]} R3=${m.reg[3]} \u00b7 ACC=${m.acc}`;
+  document.getElementById('outview').textContent = m.out.length?m.out.join(' '):'\u2014';
+}
+let stepM=null, stepIdx=0;
+function runProgram(){
+  const m=makeM();
+  for(const c of program){ if(m.halt)break; execCard(m,c); }
+  renderState(m); drawProgram();
+}
+function stepProgram(){
+  if(stepM===null || stepIdx>=program.length){ stepM=makeM(); stepIdx=0; }
+  if(stepIdx<program.length && !stepM.halt){
+    execCard(stepM, program[stepIdx]);
+    drawProgram(stepIdx);
+    renderState(stepM);
+    stepIdx++;
+  }
+}
+function clearProgram(){ program=[]; stepM=null; stepIdx=0; drawProgram(); renderState(makeM()); }
+
+// sample programs
+const SAMPLES=[
+  {name:'5 + 3 = 8', prog:[[5,'\u2660'],[3,'\u2660'],[11,'\u2660'],[1,'\u2666']]},
+  {name:'(4×6)−2 = 22', prog:[[4,'\u2660'],[6,'\u2660'],[13,'\u2660'],[2,'\u2660'],[12,'\u2660'],[1,'\u2666']]},
+  {name:'print "A" (65)', prog:[[10,'\u2660'],[6,'\u2660'],[13,'\u2660'],[5,'\u2660'],[11,'\u2660'],[2,'\u2666']]},
+  {name:'is 5 > 3 ?', prog:[[5,'\u2660'],[3,'\u2660'],[2,'\u2663'],[1,'\u2666']]},
+  {name:'store & recall', prog:[[9,'\u2660'],[3,'\u2665'],[1,'\u2660'],[7,'\u2665'],[11,'\u2660'],[1,'\u2666']]}
+];
+function buildSamples(){
+  const s=document.getElementById('samples');s.innerHTML='';
+  SAMPLES.forEach(smp=>{
+    const b=document.createElement('span');b.className='samplebtn';b.textContent=smp.name;
+    b.onclick=()=>{
+      program=smp.prog.map(([rank,suit])=>{
+        const su=SUITS.find(x=>x.sym===suit);
+        return {rank,suit,cls:su.cls,fam:su.fam};
+      });
+      stepM=null;stepIdx=0;drawProgram();
+    };
+    s.appendChild(b);
+  });
+}
+buildPalette(); drawProgram(); buildSamples(); renderState(makeM());
+</script>
+</div>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

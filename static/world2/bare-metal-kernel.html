@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bare Metal Kernel Stack Simulator</title>
+<style>
+:root{
+  --bg:#0b0f19;--card:#121826;--card2:#182033;--line:#2a3550;--text:#eef2ff;--muted:#9aa7c7;
+  --blue:#6ea8fe;--cyan:#67e8f9;--green:#34d399;--yellow:#facc15;--orange:#fb923c;--red:#fb7185;
+  --purple:#c084fc;--silver:#d1d5db;--zinc:#4ade80;
+}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top,#18213a 0,#0b0f19 42%);color:var(--text);font:15px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:28px clamp(18px,4vw,48px);border-bottom:1px solid var(--line);background:rgba(11,15,25,.72);backdrop-filter:blur(12px)}
+h1{margin:0 0 8px;font-size:clamp(24px,3vw,40px);letter-spacing:-.04em}.sub{margin:0;color:var(--muted);max-width:900px}
+main{display:grid;grid-template-columns:300px minmax(360px,1fr) 340px;gap:18px;padding:18px;max-width:1600px;margin:auto}@media(max-width:1100px){main{grid-template-columns:1fr}.canvasCard{min-height:520px}}
+.card{background:linear-gradient(180deg,rgba(18,24,38,.96),rgba(15,20,32,.96));border:1px solid var(--line);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:18px}.card h2{margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.group{margin:0 0 18px}.group:last-child{margin-bottom:0}label{display:flex;justify-content:space-between;gap:12px;margin:0 0 8px;color:var(--muted);font-size:13px}.value{color:var(--text);font-variant-numeric:tabular-nums}
+button{appearance:none;width:100%;border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:12px;padding:11px 12px;font-weight:700;cursor:pointer;margin:0 0 8px;transition:.15s ease}button:hover{border-color:var(--blue);transform:translateY(-1px)}button.primary{background:linear-gradient(135deg,#2563eb,#7c3aed);border-color:transparent}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.row button{margin:0}.active{outline:2px solid var(--cyan)}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.canvasCard{position:relative;overflow:hidden;padding:0;min-height:650px}canvas{width:100%;height:100%;display:block;min-height:650px}.hud{position:absolute;left:16px;right:16px;top:16px;display:flex;justify-content:space-between;gap:12px;pointer-events:none}.pill{background:rgba(11,15,25,.78);border:1px solid var(--line);border-radius:999px;padding:8px 12px;color:var(--muted);backdrop-filter:blur(10px)}.pill b{color:var(--text)}
+.metric{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.07)}.metric:last-child{border-bottom:0}.metric span:first-child{color:var(--muted)}.metric span:last-child{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:800}
+.code{background:#0a0e17;border:1px solid var(--line);border-radius:14px;padding:12px;white-space:pre-wrap;color:#cbd5e1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.note{color:var(--muted);font-size:13px}.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.chip{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}.sw{width:12px;height:12px;border-radius:4px}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#00f5ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; COLD BOOT</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header>
+  <h1>Bare Metal Kernel Stack Simulator</h1>
+  <p class="sub">A stripped, inspectable rebuild of the uploaded stacked-board concept. It keeps only the core: stack layers, gas choice, pressure, pulses, leakage, blocking, and a canvas renderer.</p>
+</header>
+<main>
+  <section class="card">
+    <h2>Build</h2>
+    <div class="group">
+      <button class="primary" id="build">Build 10 layers</button>
+      <div class="row"><button id="add3">+3</button><button id="add5">+5</button></div>
+    </div>
+    <div class="group">
+      <label>Gas <span class="value" id="gasValue">Ar</span></label>
+      <div class="row"><button id="gasAr" class="active">Ar</button><button id="gasKr">Kr</button></div>
+    </div>
+    <div class="group">
+      <label>Pressure <span class="value"><span id="pressureValue">1.00</span> GPa</span></label>
+      <input id="pressure" type="range" min="0.05" max="2" step="0.05" value="1" />
+    </div>
+    <h2>Signal</h2>
+    <div class="group">
+      <button id="pulse">Inject IN pulse</button>
+      <button id="noise">Inject O1 noise</button>
+      <button id="clock">Start clock</button>
+    </div>
+    <div class="group">
+      <label>Clock <span class="value"><span id="freqValue">10.0</span> kHz</span></label>
+      <input id="freq" type="range" min="100" max="50000" step="100" value="10000" />
+    </div>
+  </section>
+
+  <section class="card canvasCard">
+    <canvas id="view"></canvas>
+    <div class="hud">
+      <div class="pill">Gas: <b id="hudGas">Ar</b></div>
+      <div class="pill">Density: <b id="hudDensity">1.78</b> g/cm³</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Live model</h2>
+    <div class="metric"><span>Layers</span><span id="mLayers">0</span></div>
+    <div class="metric"><span>Cores</span><span id="mCores">0</span></div>
+    <div class="metric"><span>O1 block</span><span id="mBlock">0.0%</span></div>
+    <div class="metric"><span>Leak</span><span id="mLeak">0.00 nA</span></div>
+    <div class="metric"><span>OUT</span><span id="mOut">0.00 mA</span></div>
+    <div class="metric"><span>D/core</span><span id="mD">0.0000</span></div>
+    <div class="metric"><span>Thermal penalty</span><span id="mThermal">0.0 K/W</span></div>
+    <h2 style="margin-top:20px">Kernel stack</h2>
+    <div class="legend">
+      <div class="chip"><i class="sw" style="background:var(--yellow)"></i>Au</div><div class="chip"><i class="sw" style="background:var(--silver)"></i>Ag</div><div class="chip"><i class="sw" style="background:var(--orange)"></i>Cu</div>
+      <div class="chip"><i class="sw" style="background:var(--zinc)"></i>Zn</div><div class="chip"><i class="sw" style="background:var(--purple)"></i>Ti</div><div class="chip"><i class="sw" style="background:#fde047"></i>S</div>
+    </div>
+    <h2 style="margin-top:20px">Formula core</h2>
+    <div class="code" id="formula"></div>
+    <p class="note">Numbers are toy-model outputs for visualization, not validated material or medical-device specifications.</p>
+  </section>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const state = { layers:0, gas:'Ar', pressure:1, freq:10000, running:false, pulses:[], noise:[] };
+  const gas = {
+    Ar:{density:1.78, breakdown:28, thermal:17.7, mass:39.95, color:'rgba(110,168,254,.26)'},
+    Kr:{density:3.75, breakdown:42, thermal:9.4, mass:83.80, color:'rgba(103,232,249,.34)'}
+  };
+  const films = [
+    ['Au','#facc15',1.2],['Ag','#d1d5db',1.0],['Cu','#fb923c',1.5],
+    ['Zn','#4ade80',.8],['Ti','#c084fc',.9],['S','#fde047',.6]
+  ];
+  const canvas = $('view'), ctx = canvas.getContext('2d');
+  let rx=-0.55, ry=0.65, zoom=1, drag=false, last=[0,0], timer=null;
+
+  function density(){ return gas[state.gas].density * state.pressure; }
+  function metrics(){
+    if(!state.layers) return {cores:0,block:0,leak:0,out:0,d:0,thermal:0};
+    const g = gas[state.gas], dens = density(), cores = state.layers * 100;
+    const densityRatio = dens / gas.Ar.density;
+    const block = Math.min(98, (65 + (densityRatio - 1) * 15) * (state.gas === 'Kr' ? 1.12 : 1));
+    const leak = (2.5 / Math.max(.01, densityRatio * (g.breakdown / gas.Ar.breakdown))) * (1 + state.layers * .05);
+    const pulsePower = Math.max(.1, state.pulses.length / 8);
+    const out = Math.max(0, pulsePower * cores * .015 * (1 - leak / 12));
+    const o1Leak = (100 - block) / 100;
+    const d = (out - leak * o1Leak * cores / 1000) / Math.max(1, cores);
+    const thermal = state.layers * (state.gas === 'Kr' ? .8 : .4);
+    return {cores,block,leak,out,d,thermal};
+  }
+  function sync(){
+    $('gasValue').textContent = state.gas; $('hudGas').textContent = state.gas;
+    $('pressureValue').textContent = state.pressure.toFixed(2); $('hudDensity').textContent = density().toFixed(2);
+    $('freqValue').textContent = (state.freq/1000).toFixed(1);
+    $('gasAr').classList.toggle('active', state.gas==='Ar'); $('gasKr').classList.toggle('active', state.gas==='Kr');
+    const m = metrics(); $('mLayers').textContent = state.layers; $('mCores').textContent = m.cores;
+    $('mBlock').textContent = m.block.toFixed(1)+'%'; $('mLeak').textContent = m.leak.toFixed(2)+' nA';
+    $('mOut').textContent = m.out.toFixed(2)+' mA'; $('mD').textContent = m.d.toFixed(4); $('mThermal').textContent = m.thermal.toFixed(1)+' K/W';
+    $('formula').textContent = `density = baseDensity × pressure\nblock = clamp(65 + densityRatio bonus + Kr bonus)\nleak = 2.5 / (densityRatio × breakdownRatio)\nD/core = (OUT - O1_leak_term) / cores`;
+  }
+  function size(){ const r=canvas.getBoundingClientRect(), d=devicePixelRatio||1; canvas.width=r.width*d; canvas.height=r.height*d; ctx.setTransform(d,0,0,d,0,0); }
+  function p3(x,y,z){
+    let x1=x*Math.cos(ry)-z*Math.sin(ry), z1=x*Math.sin(ry)+z*Math.cos(ry);
+    let y1=y*Math.cos(rx)-z1*Math.sin(rx), z2=y*Math.sin(rx)+z1*Math.cos(rx);
+    const f=480/(480+z2+180), w=canvas.clientWidth, h=canvas.clientHeight;
+    return [w/2+x1*zoom*f, h/2+y1*zoom*f, z2];
+  }
+  function quad(points, fill, alpha=.9){ ctx.globalAlpha=alpha; ctx.fillStyle=fill; ctx.beginPath(); points.forEach((pt,i)=>i?ctx.lineTo(pt[0],pt[1]):ctx.moveTo(pt[0],pt[1])); ctx.closePath(); ctx.fill(); ctx.globalAlpha=1; }
+  function box(y, thick, fill, alpha){
+    const s=86, a=p3(-s,y,s), b=p3(s,y,s), c=p3(s,y+thick,s), d=p3(-s,y+thick,s), e=p3(-s,y+thick,-s), f=p3(s,y+thick,-s);
+    quad([a,b,c,d],fill,alpha); quad([a,b,f,e],fill,alpha*.75);
+  }
+  function draw(){
+    const w=canvas.clientWidth,h=canvas.clientHeight, now=performance.now(); ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='rgba(110,168,254,.10)'; for(let i=-8;i<=8;i++){ let a=p3(i*22,0,-180),b=p3(i*22,0,180),c=p3(-180,0,i*22),d=p3(180,0,i*22); ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.stroke(); }
+    if(!state.layers){ ctx.fillStyle='rgba(238,242,255,.62)'; ctx.textAlign='center'; ctx.font='15px system-ui'; ctx.fillText('Build the stack to begin', w/2, h/2); requestAnimationFrame(draw); return; }
+    for(let L=0; L<state.layers; L++){
+      let y=L*23; films.forEach(f=>{ box(y, f[2]*2.2, f[1], .82); y += f[2]*2.2; }); if(L<state.layers-1) box(y, 5, gas[state.gas].color, .65);
+    }
+    state.pulses = state.pulses.filter(t=>now-t<1800); state.noise = state.noise.filter(t=>now-t<900);
+    state.pulses.forEach(t=>{ const age=(now-t)/1800, y=age*state.layers*23, q=p3(0,y,0); ctx.fillStyle=`rgba(52,211,153,${1-age})`; ctx.beginPath(); ctx.arc(q[0],q[1],7,0,Math.PI*2); ctx.fill(); });
+    state.noise.forEach(t=>{ const age=(now-t)/900, r=80+age*80; ctx.strokeStyle=`rgba(251,113,133,${.7-age*.7})`; ctx.lineWidth=2; ctx.strokeRect(w/2-r,h/2-r,r*2,r*2); });
+    requestAnimationFrame(draw);
+  }
+  function pulse(){ if(state.layers) state.pulses.push(performance.now()); sync(); }
+  function setClock(on){ state.running=on; $('clock').textContent=on?'Stop clock':'Start clock'; if(timer) clearInterval(timer); if(on) timer=setInterval(pulse, Math.max(25, 100000/state.freq)); }
+  $('build').onclick=()=>{state.layers=10;sync()}; $('add3').onclick=()=>{state.layers+=3;sync()}; $('add5').onclick=()=>{state.layers+=5;sync()};
+  $('gasAr').onclick=()=>{state.gas='Ar';sync()}; $('gasKr').onclick=()=>{state.gas='Kr';sync()};
+  $('pressure').oninput=e=>{state.pressure=+e.target.value;sync()}; $('freq').oninput=e=>{state.freq=+e.target.value; if(state.running) setClock(true); sync()};
+  $('pulse').onclick=pulse; $('noise').onclick=()=>{if(state.layers)state.noise.push(performance.now());sync()}; $('clock').onclick=()=>setClock(!state.running);
+  canvas.onmousedown=e=>{drag=true;last=[e.clientX,e.clientY]}; addEventListener('mouseup',()=>drag=false);
+  canvas.onmousemove=e=>{ if(!drag)return; ry+=(e.clientX-last[0])*.01; rx+=(e.clientY-last[1])*.01; rx=Math.max(-1.4,Math.min(.7,rx)); last=[e.clientX,e.clientY]; };
+  canvas.onwheel=e=>{e.preventDefault(); zoom*=e.deltaY>0?.9:1.1; zoom=Math.max(.45,Math.min(2.4,zoom));};
+  addEventListener('resize',size); size(); sync(); draw();
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of COLD BOOT &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>
