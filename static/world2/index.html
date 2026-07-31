@@ -184,36 +184,10 @@ pxdraw(document.getElementById('taylor'),function(g,W,t){
   px(20,15,3,6,SK);px(20,15,3,1,SKh);px(22,15,1,6,SKs);           // thumb up
   px(18,20,1,7,OL);px(25,20,1,7,OL);px(19,26,6,1,OL);px(20,14,1,6,OL);px(20,14,3,1,OL);px(23,14,1,1,OL);
 });
-// OVER THE — the ROUND cubit as MODERN 3D PIXEL: a lit voxel sphere (normal shading +
-// specular + rim), spinning, folding to a magenta ROOT_0 core.
-pxdraw(document.getElementById('overthe'),function(g,W,t){
-  var G=26,c=W/G,cx=(G-1)/2,cy=(G-1)/2;
-  var fold=0.5+0.5*Math.sin(t*0.9), R=(G*0.47)*(1-fold*0.42);
-  var lx=Math.cos(t*0.5)*0.55,ly=-0.5,lz=0.72,ln=Math.sqrt(lx*lx+ly*ly+lz*lz);lx/=ln;ly/=ln;lz/=ln;
-  var spin=t*1.2;
-  g.clearRect(0,0,W,W);pixMini(g,W,Math.floor(t*2)+9);
-  for(var gy=0;gy<G;gy++)for(var gx=0;gx<G;gx++){
-    var nx=(gx-cx)/R,ny=(gy-cy)/R,r2=nx*nx+ny*ny;
-    if(r2<=1){
-      var nz=Math.sqrt(1-r2);
-      var diff=Math.max(0.08,nx*lx+ny*ly+nz*lz);
-      var band=Math.round(diff*4)/4;                       // quantized light -> pixel bands
-      var u=(Math.atan2(ny,nx)+spin), lat=Math.floor((nz)*5);
-      var isBand=((Math.round(u/0.52)+lat)%3===0);         // spinning green lattice lines
-      var v=0.22+band;
-      var col= isBand
-        ? 'rgb('+Math.round(120*v)+','+Math.round(255*Math.min(1,v))+','+Math.round(150*v)+')'
-        : 'rgb('+Math.round(34*v)+','+Math.round(190*Math.min(1,v))+','+Math.round(78*v)+')';
-      if(r2>0.80) col='rgb('+Math.round(30+120*diff)+','+Math.round(140+110*diff)+','+Math.round(70+40*diff)+')'; // rim
-      g.fillStyle=col;g.fillRect(Math.round(gx*c),Math.round(gy*c),Math.ceil(c),Math.ceil(c));
-      var spec=Math.pow(Math.max(0,(nx*0.3+ny*-0.5+nz*0.81)),12);  // specular hotspot
-      if(spec>0.35){g.fillStyle='rgba(230,255,220,'+Math.min(0.95,spec)+')';g.fillRect(Math.round(gx*c),Math.round(gy*c),Math.ceil(c),Math.ceil(c));}
-    }
-  }
-  var rp=0.5+0.5*Math.sin(t*2.0);g.fillStyle='rgba(255,45,149,'+(0.55+0.35*rp)+')';
-  g.fillRect(Math.round((cx-0.7)*c),Math.round((cy-0.7)*c),Math.ceil(c*1.9),Math.ceil(c*1.9));
-  g.fillStyle='rgba(255,180,220,'+(0.5+0.3*rp)+')';g.fillRect(Math.round(cx*c),Math.round(cy*c),Math.ceil(c*0.7),Math.ceil(c*0.7));
-});
+// OVER THE — the ROUND cubit, now a LIVE CELLULAR AUTOMATON: the "2x2" rule
+// (B36/S125), yellow, folding to a magenta ROOT_0 core. A keeper made of code.
+// (lifeOrb is defined below; function declarations hoist, so this runs fine.)
+lifeOrb(document.getElementById('overthe'),'B36/S125','#ffd23f','#ff2d95');
 // ── pixel-art icons for THE ARCADE (8x8 bitmaps) ──
 var ICONS={
  spawn:["...11...","...11...","..1111..","..1111..",".111111.",".111111.","11111111","11111111"],
@@ -284,8 +258,52 @@ function drawOrb1(cv){var g=cv.getContext('2d');g.imageSmoothingEnabled=false;va
   if(r2>0.8)col='rgb('+(30+120*diff|0)+','+(140+110*diff|0)+','+(70+40*diff|0)+')';g.fillStyle=col;g.fillRect(Math.round(gx*c),Math.round(gy*c),Math.ceil(c),Math.ceil(c));
   var sp=Math.pow(Math.max(0,nx*0.3+ny*-0.5+nz*0.81),12);if(sp>0.35){g.fillStyle='rgba(230,255,220,'+Math.min(0.9,sp)+')';g.fillRect(Math.round(gx*c),Math.round(gy*c),Math.ceil(c),Math.ceil(c));}}}
  g.fillStyle='#ff2d95';g.fillRect(Math.round((cx-0.6)*c),Math.round((cy-0.6)*c),Math.ceil(c*1.6),Math.ceil(c*1.6));}
+// ── THE CUBIT as a LIVE CELLULAR AUTOMATON ──────────────────────────────────
+// Each octagon's centre runs a DIFFERENT Life-like rule (B.../S...), so no two
+// cubits are alike. Alive cells are drawn as 3D-pixel voxels (lit top / dark
+// base) in the appeal's colour, clipped to a disc so it stays a round cubit.
+// Toroidal grid; auto-reseeds when it dies out or freezes into a still life.
+var CA_RULES={                       // slug -> rule (the "code" each appeal runs on)
+ boss:'B3678/S34678',                // Day & Night  — dense, heavy, symmetric
+ cheat:'B36/S23',                    // HighLife     — the self-replicator (the cheat)
+ 'co-op':'B3/S23',                   // Conway Life  — gliders, the crew
+ glitch:'B2/S',                      // Seeds        — explosive chaos (the bug)
+ grind:'B3/S12345',                  // Maze         — grinding corridors
+ loot:'B1357/S1357',                 // Replicator   — crystalline growth
+ respawn:'B35678/S5678',             // Diamoeba     — blobs that die & return
+ spawn:'B368/S245'                   // Move         — spaceships that travel
+};
+var CA_DEFAULT='B3/S23';
+function parseRule(r){var m=/B([0-9]*)\/S([0-9]*)/i.exec(r||'')||[0,'3','23'];var B=[],S=[],i;
+ for(i=0;i<m[1].length;i++)B[+m[1].charAt(i)]=1;for(i=0;i<m[2].length;i++)S[+m[2].charAt(i)]=1;return{B:B,S:S};}
+function lifeOrb(cv,ruleStr,hex,coreCol){if(!cv||!cv.getContext)return;var g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+ var W=cv.width,G=16,c=W/G,rule=parseRule(ruleStr);
+ var A=new Uint8Array(G*G),Bx=new Uint8Array(G*G),cx=(G-1)/2,cy=(G-1)/2,rad=G*0.5;
+ var top=shade(hex,1.6),base=shade(hex,0.5),body=hex,core=coreCol||'#ff2d95';
+ var lit=Math.max(1,Math.round(c*0.34)),dk=Math.max(1,Math.round(c*0.26));
+ function seed(){for(var y=0;y<G;y++)for(var x=0;x<G;x++){var dx=x-cx,dy=y-cy;A[y*G+x]=(dx*dx+dy*dy<=rad*rad&&Math.random()<0.46)?1:0;}}
+ function step(){for(var y=0;y<G;y++)for(var x=0;x<G;x++){var n=0,dy,dx;
+   for(dy=-1;dy<=1;dy++)for(dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;n+=A[((y+dy+G)%G)*G+((x+dx+G)%G)];}
+   var al=A[y*G+x];Bx[y*G+x]=al?(rule.S[n]?1:0):(rule.B[n]?1:0);}
+   var t=A;A=Bx;Bx=t;}
+ function draw(){g.clearRect(0,0,W,W);g.save();g.beginPath();g.arc(W/2,W/2,W*0.5-0.5,0,Math.PI*2);g.clip();
+   for(var y=0;y<G;y++)for(var x=0;x<G;x++)if(A[y*G+x]){var pX=Math.round(x*c),pY=Math.round(y*c),cw=Math.ceil(c),ch=Math.ceil(c);
+     g.fillStyle=body;g.fillRect(pX,pY,cw,ch);
+     g.fillStyle=top;g.fillRect(pX,pY,cw,lit);
+     g.fillStyle=base;g.fillRect(pX,pY+ch-dk,cw,dk);}
+   g.fillStyle=core;g.fillRect(Math.round((cx-0.4)*c),Math.round((cy-0.4)*c),Math.ceil(c*0.9),Math.ceil(c*0.9));
+   g.restore();}
+ var last=0,stale=0,prevChk=-1,frames=0;seed();draw();   // immediate first paint (never blank)
+ function loop(ts){if(ts-last>78){last=ts;var chk=0,p=0,i;
+   for(i=0;i<A.length;i++)if(A[i]){p++;chk=(chk+i*31)|0;}
+   if(p===0){seed();}else if(chk===prevChk){if(++stale>18){seed();stale=0;}}else stale=0;
+   prevChk=chk;if(++frames>720){seed();frames=0;}
+   step();draw();}
+  requestAnimationFrame(loop);}
+ requestAnimationFrame(loop);}
 function buildOctagon(ap){var oc=document.createElement('div');oc.className='octa';
- var core=document.createElement('div');core.className='oc';core.innerHTML='<canvas width="60" height="60"></canvas><div class="ocl">'+ap.name+'</div>';oc.appendChild(core);drawOrb1(core.querySelector('canvas'));
+ var core=document.createElement('div');core.className='oc';core.innerHTML='<canvas width="96" height="96"></canvas><div class="ocl">'+ap.name+'</div>';oc.appendChild(core);
+ lifeOrb(core.querySelector('canvas'),CA_RULES[ap.slug]||CA_DEFAULT,ap.c||'#39fc6b');
  var doms=ap.domains||[];
  for(var i=0;i<8;i++){var a=(22.5+45*i)*Math.PI/180,X=(50+39*Math.sin(a)).toFixed(1),Y=(50-39*Math.cos(a)).toFixed(1);
   var s=document.createElement('div');s.style.left=X+'%';s.style.top=Y+'%';var d=doms[i];
