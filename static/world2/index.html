@@ -195,8 +195,18 @@ var ICONS={
  cheat:["...11...","..1111..",".111111.","11111111","1.1111.1","...11...","...11...","...11..."],
  respawn:["..1111..",".11..11.","11....1.","11...111","11....1.","1.....11",".11..11.","..1111.."]
 };
-function drawIcon(cv,bmp,col){var g=cv.getContext('2d');g.imageSmoothingEnabled=false;var W=cv.width,c=W/8;g.clearRect(0,0,W,W);
- for(var y=0;y<8;y++)for(var x=0;x<8;x++){if(bmp[y].charAt(x)==='1'){g.fillStyle=col;g.fillRect(Math.round(x*c),Math.round(y*c),Math.ceil(c),Math.ceil(c));}}}
+function shade(hex,f){var h=hex.replace('#','');return 'rgb('+Math.min(255,Math.round(parseInt(h.slice(0,2),16)*f))+','+Math.min(255,Math.round(parseInt(h.slice(2,4),16)*f))+','+Math.min(255,Math.round(parseInt(h.slice(4,6),16)*f))+')';}
+// MODERN 3D PIXEL: extrude the 8x8 glyph into a voxel object — depth extrusion (back->front, darkening),
+// a front face, a lit TOP edge and a shadowed RIGHT edge (the top/light/dark-face rule) + outline.
+function drawIcon(cv,bmp,col){var g=cv.getContext('2d');g.imageSmoothingEnabled=false;var W=cv.width,G=13,c=W/G;g.clearRect(0,0,W,W);
+ function cell(x,y,cc){g.fillStyle=cc;g.fillRect(Math.round(x*c),Math.round(y*c),Math.ceil(c),Math.ceil(c));}
+ var offX=1.5,offY=4.5,D=3;
+ for(var d=D;d>=1;d--){var sh=shade(col,0.40+0.07*d);                       // depth extrusion up-right
+   for(var y=0;y<8;y++)for(var x=0;x<8;x++)if(bmp[y].charAt(x)==='1')cell(offX+x+d,offY+y-d,sh);}
+ for(var y=0;y<8;y++)for(var x=0;x<8;x++)if(bmp[y].charAt(x)==='1')cell(offX+x,offY+y,col);   // front face
+ for(var y=0;y<8;y++)for(var x=0;x<8;x++)if(bmp[y].charAt(x)==='1'){                          // face lighting
+   if(y===0||bmp[y-1].charAt(x)!=='1')cell(offX+x,offY+y,shade(col,1.5));                     // lit TOP edge
+   if(x===7||bmp[y].charAt(x+1)!=='1')cell(offX+x,offY+y,shade(col,0.62));}}                  // dark RIGHT edge
 function renderAppeals(list){var ah=document.getElementById('appeals');if(!ah)return;ah.innerHTML='';
  (list||[]).forEach(function(a){var t=document.createElement('div');t.className='appeal';t.style.setProperty('--c',a.c||'#39fc6b');
   t.innerHTML='<canvas width="64" height="64"></canvas><div class="an">'+a.name+'</div><div class="at">'+(a.tag||'')+'</div><div class="lk">&#9642; 0 domains</div>';
