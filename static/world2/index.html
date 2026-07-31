@@ -49,13 +49,22 @@ a.post .pd{font-size:16px;color:var(--txt);line-height:1.4;margin-top:9px}
 a.post .pk{font-size:14px;color:var(--dim);margin-top:8px}
 .seedpost{border:3px dashed var(--edge);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;color:var(--dim);padding:14px;font-size:17px}
 .seedpost .arc{font-size:9px;color:var(--green);margin:6px 0}
-.appeals{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-top:22px}
-.appeal{background:var(--panel);border:3px solid var(--c);box-shadow:0 0 0 3px #0a0e0a,0 0 16px color-mix(in srgb,var(--c) 34%,transparent);padding:15px 12px 14px;text-align:center;transition:transform .1s}
+.appeals{display:flex;flex-direction:column;gap:16px;margin-top:22px}
+.appeal{display:grid;grid-template-columns:132px 1fr;gap:20px;align-items:start;background:var(--panel);border:3px solid var(--c);box-shadow:0 0 0 3px #0a0e0a,0 0 16px color-mix(in srgb,var(--c) 34%,transparent);padding:20px 22px;transition:transform .1s}
 .appeal:hover{transform:translate(-2px,-2px)}
-.appeal canvas{width:58px;height:58px;image-rendering:pixelated;filter:drop-shadow(0 0 5px var(--c))}
-.appeal .an{font-family:'Press Start 2P',ui-monospace,monospace;font-size:12px;color:var(--c);margin-top:9px;text-shadow:2px 2px 0 rgba(0,0,0,.5)}
-.appeal .at{font-size:15px;color:var(--txt);margin-top:7px;line-height:1.3}
-.appeal .lk{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--dim);margin-top:9px}
+.appeal .badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.appeal canvas{width:104px;height:104px;image-rendering:pixelated;filter:drop-shadow(0 0 7px var(--c))}
+.appeal .an{font-family:'Press Start 2P',ui-monospace,monospace;font-size:14px;color:var(--c);text-shadow:2px 2px 0 rgba(0,0,0,.5)}
+.appeal .lk{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--dim)}
+.appeal .body{min-width:0}
+.appeal .at{font-size:16px;color:var(--c);font-style:italic;line-height:1.35;margin-bottom:10px;opacity:.92}
+.appeal .row{margin:7px 0;font-size:15.5px;line-height:1.45;color:var(--txt)}
+.appeal .row b{font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:.5px;color:var(--c);margin-right:8px;text-transform:uppercase}
+.appeal .haiku{margin-top:13px;border-left:3px solid var(--c);padding:9px 0 9px 14px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 12%,transparent),transparent)}
+.appeal .haiku .hh{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--c);opacity:.8;margin-bottom:8px;letter-spacing:1px}
+.appeal .haiku .hl{font-family:'VT323',ui-monospace,monospace;font-size:20px;line-height:1.5;color:var(--txt);white-space:pre-wrap}
+.appeal .haiku .hl b{color:var(--c);font-weight:400;text-shadow:0 0 6px color-mix(in srgb,var(--c) 55%,transparent)}
+@media(max-width:640px){.appeal{grid-template-columns:1fr;gap:12px}.appeal .badge{flex-direction:row;justify-content:flex-start}}
 .octaboard{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
 .octablank{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:2px dashed rgba(37,92,44,.45);color:#2f5a37;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9px;line-height:2;min-height:200px}
 .octablank small{font-size:7px;color:#244a2c}
@@ -109,6 +118,7 @@ a.post .pk{font-size:14px;color:var(--dim);margin-top:8px}
 </div>
 
 <h2>&#9642; THE ARCADE // 8 APPEALS</h2>
+<div class="crt"><span class="tag">ROLL CALL</span> The eight appeals of THE FOLD, one after another &mdash; each with a bio, a mini backstory, what it does, and a <b>haiku written in I.code</b> (the 13 opcodes as words).</div>
 <div class="appeals" id="appeals"></div>
 
 <h2>&#9642; THE OCTAGONS — all 8 appeals, laid out like WORLD I</h2>
@@ -211,10 +221,25 @@ function drawIcon(cv,bmp,col){var g=cv.getContext('2d');g.imageSmoothingEnabled=
  for(var y=0;y<8;y++)for(var x=0;x<8;x++)if(bmp[y].charAt(x)==='1'){                          // face lighting
    if(y===0||bmp[y-1].charAt(x)!=='1')cell(offX+x,offY+y,shade(col,1.5));                     // lit TOP edge
    if(x===7||bmp[y].charAt(x+1)!=='1')cell(offX+x,offY+y,shade(col,0.62));}}                  // dark RIGHT edge
+var OPCODES=["ASK","ANSWER","CONST","ATTR","ARG","RET","DROP","JMPF","CMP","CALL","FUNC","BIN","HALT"];
+var OPRE=new RegExp('\\b('+OPCODES.join('|')+')\\b','g');
+function codeStyle(line){return line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(OPRE,'<b>$1</b>');}
 function renderAppeals(list){var ah=document.getElementById('appeals');if(!ah)return;ah.innerHTML='';
- (list||[]).forEach(function(a){var t=document.createElement('div');t.className='appeal';t.style.setProperty('--c',a.c||'#39fc6b');
-  t.innerHTML='<canvas width="64" height="64"></canvas><div class="an">'+a.name+'</div><div class="at">'+(a.tag||'')+'</div><div class="lk">&#9642; 0 domains</div>';
-  ah.appendChild(t);drawIcon(t.querySelector('canvas'),ICONS[a.icon]||ICONS.spawn,a.c||'#39fc6b');});}
+ (list||[]).forEach(function(a){var col=a.c||'#39fc6b';var lo=a.lore||{};var n=(a.domains||[]).length;
+  var t=document.createElement('div');t.className='appeal';t.style.setProperty('--c',col);
+  var hk=(lo.haiku||[]).map(function(l){return '<div class="hl">'+codeStyle(l)+'</div>';}).join('');
+  t.innerHTML=
+   '<div class="badge"><canvas width="128" height="128"></canvas>'
+    +'<div class="an">'+a.name+'</div>'
+    +'<div class="lk">&#9642; '+n+' domain'+(n===1?'':'s')+'</div></div>'
+   +'<div class="body">'
+    +'<div class="at">'+(a.tag||'')+'</div>'
+    +(lo.bio?'<div class="row"><b>bio</b>'+lo.bio+'</div>':'')
+    +(lo.story?'<div class="row"><b>backstory</b>'+lo.story+'</div>':'')
+    +(lo.does?'<div class="row"><b>what it does</b>'+lo.does+'</div>':'')
+    +(hk?'<div class="haiku"><div class="hh">HAIKU &middot; in I.code</div>'+hk+'</div>':'')
+   +'</div>';
+  ah.appendChild(t);drawIcon(t.querySelector('canvas'),ICONS[a.icon]||ICONS.spawn,col);});}
 // I-13 opcode CHARACTERS — each opcode its OWN sprite: a pixel coder (hue-shifted per the skill)
 // + a distinct floating glyph for what the opcode does. Also varies hat/hair per opcode.
 var GLYPHS={
