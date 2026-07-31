@@ -97,6 +97,19 @@ a.post .pk{font-size:14px;color:var(--dim);margin-top:8px}
 .sph .srun .ops{font-family:ui-monospace,monospace;font-size:10px;color:#4c7a54;margin-left:8px}
 .octa .dom .dc{display:block;font-family:ui-monospace,monospace;font-size:8px;color:var(--dim);margin-top:2px}
 .sph .sphempty,.sphempty{font-family:'VT323',ui-monospace,monospace;font-size:16px;color:#4c7a54;border-left:3px dashed color-mix(in srgb,var(--c) 40%,transparent);padding:6px 0 6px 11px}
+.pole{font-family:'Press Start 2P',ui-monospace,monospace;font-size:7px;padding:3px 6px;border:1px solid;border-radius:2px;vertical-align:middle;white-space:nowrap}
+.pole.push{color:#ffd23f;border-color:#ffd23f;background:rgba(255,210,63,.09)}
+.pole.pull{color:#5ad0ff;border-color:#5ad0ff;background:rgba(90,208,255,.09)}
+.octa .dom .dp{font-family:ui-monospace,monospace}
+.octa .dom .dp.push{color:#ffd23f}.octa .dom .dp.pull{color:#5ad0ff}
+.balancebar{margin-top:16px;background:var(--panel);border:2px solid var(--edge);padding:13px 16px}
+.balancebar .bbrow{display:flex;align-items:center;gap:12px}
+.balancebar .bl{font-family:'Press Start 2P',ui-monospace,monospace;font-size:9px;white-space:nowrap}
+.balancebar .bl.push{color:#ffd23f}.balancebar .bl.pull{color:#5ad0ff}
+.balancebar .bbar{flex:1;display:flex;height:14px;border:1px solid var(--edge);background:#050805;overflow:hidden}
+.balancebar .bbar .ip{background:linear-gradient(90deg,#ffd23f,#ff8c42)}
+.balancebar .bbar .il{background:linear-gradient(90deg,#00f5ff,#5ad0ff)}
+.balancebar .bbnote{font-family:'VT323',ui-monospace,monospace;font-size:16px;color:var(--dim);margin-top:8px;text-align:center}
 .factory{display:grid;grid-template-columns:minmax(0,0.85fr) minmax(0,1.15fr);gap:16px;margin-top:22px}
 @media(max-width:820px){.factory{grid-template-columns:1fr}}
 .factory .fcol{background:var(--panel);border:3px solid var(--mag);box-shadow:0 0 0 3px #0a0e0a,0 0 16px rgba(255,45,149,.22);padding:16px 18px}
@@ -185,7 +198,8 @@ a.post .pk{font-size:14px;color:var(--dim);margin-top:8px}
 <div class="octaboard" id="octaboard"></div>
 
 <h2>&#9642; THE DOMAINS // clever containers &mdash; each holds its spheres</h2>
-<div class="crt"><span class="tag y">RUN</span> Mirroring World I: appeal &rarr; <b>domain</b> &rarr; <b>spheres</b>. The five works aren&rsquo;t domains &mdash; they&rsquo;re spheres, and they live inside three domains: <b>THE TOOLCHAIN</b> (Language + Factory), <b>THE MAINFRAME</b> (Lattice), <b>EVENT HORIZON</b> (Singularity + 4096). Each sphere still carries its own <b>I-13 program</b>, compiled to IVM-13 and executed live &mdash; returning its signature number.</div>
+<div class="crt"><span class="tag y">RUN</span> Mirroring World I: appeal &rarr; <b>domain</b> &rarr; <b>spheres</b>. The five works aren&rsquo;t domains &mdash; they&rsquo;re spheres, and they live inside three domains: <b>THE TOOLCHAIN</b> (Language + Factory), <b>THE MAINFRAME</b> (Lattice), <b>EVENT HORIZON</b> (Singularity + 4096). Each sphere still carries its own <b>I-13 program</b>, compiled to IVM-13 and executed live &mdash; returning its signature number. Every domain carries a <b>pole</b> &mdash; <b>&#8853; push</b> (out, the wall) or <b>&#8854; pull</b> (in, the fold to 0) &mdash; kept in balance.</div>
+<div class="balancebar" id="balancebar"></div>
 <div class="domains" id="domainlist"></div>
 
 <h2>&#9642; FIRST POSTS</h2>
@@ -433,15 +447,25 @@ function renderDomains(appeals){var host=document.getElementById('domainlist');i
       +'<div class="st2">'+s.title+'<span class="sk">'+(s.kicker||'')+'</span></div>'
       +'<a class="sopen" href="'+s.slug+'.html">open &rarr;</a></div>'
       +(code?'<div class="ssrc">'+code+'</div>':'')+run+'</div>';}).join('');
+  var pole=dm.pole||'',pc=pole?'<span class="pole '+pole+'">'+(pole==='push'?'⊕ push':'⊖ pull')+'</span>':'';
   card.innerHTML='<div class="dtop"><canvas class="demb" width="80" height="80"></canvas>'
-    +'<div><div class="dt">'+dm.title+'</div>'
+    +'<div><div class="dt">'+dm.title+' '+pc+'</div>'
     +'<div class="din">domain &middot; in <b>'+a.name+'</b> &middot; '+ns+' sphere'+(ns===1?'':'s')+'</div>'
     +(dm.kicker?'<div class="dkick">'+dm.kicker+'</div>':'')+'</div></div>'
    +'<div class="sphlist">'+(sph||'<div class="sphempty">&#9671; container seated &mdash; spheres coming</div>')+'</div>';
   host.appendChild(card);
   drawIcon(card.querySelector('.demb'),ICONS[dm.icon]||ICONS.loot,col);
   var canv=card.querySelectorAll('.semb');(dm.spheres||[]).forEach(function(s,i){if(canv[i])drawIcon(canv[i],ICONS[s.icon]||ICONS.loot,s.accent||col);});
- });});}
+ });});
+ // live push/pull balance bar
+ var bb=document.getElementById('balancebar');if(bb){var push=0,pull=0;
+  (appeals||[]).forEach(function(a){(a.domains||[]).forEach(function(dm){if(dm.pole==='push')push++;else if(dm.pole==='pull')pull++;});});
+  var tot=push+pull||1,bal=(push===pull);
+  bb.innerHTML='<div class="bbrow"><span class="bl push">⊕ '+push+' push</span>'
+   +'<span class="bbar"><i class="ip" style="width:'+(100*push/tot).toFixed(1)+'%"></i><i class="il" style="width:'+(100*pull/tot).toFixed(1)+'%"></i></span>'
+   +'<span class="bl pull">'+pull+' pull ⊖</span></div>'
+   +'<div class="bbnote">'+(bal?'in balance — the wall pushes out (⊕ i), the fold pulls to zero (⊖ −i), even':'off balance: '+push+' vs '+pull)+'</div>';}
+ }
 // THE FACTORY — the training story rendered live: corpus -> bigram -> sub-agent -> veto + -I
 function renderFactory(cp){var host=document.getElementById('factory');if(!host||!cp||!cp.train)return;
  var src=cp.train,code=src.map(function(l){return i13hl(l);}).join('<br>');
@@ -551,8 +575,8 @@ function buildOctagon(ap){var oc=document.createElement('div');oc.className='oct
  for(var i=0;i<8;i++){var a=(22.5+45*i)*Math.PI/180,X=(50+39*Math.sin(a)).toFixed(1),Y=(50-39*Math.cos(a)).toFixed(1);
   var s=document.createElement('div');s.style.left=X+'%';s.style.top=Y+'%';var d=doms[i];
   if(d){var col=d.accent||'#39fc6b';s.className='slot';
-   var ct=(d.spheres?d.spheres.length:0);
-   s.innerHTML='<a class="dom" href="#dom-'+d.slug+'" style="--c:'+col+'"><span class="dm"><canvas width="40" height="40"></canvas></span><span class="dn">'+d.title+'</span><span class="dc">'+ct+' sph</span></a>';
+   var ct=(d.spheres?d.spheres.length:0),pg=(d.pole==='push'?'⊕':d.pole==='pull'?'⊖':'');
+   s.innerHTML='<a class="dom" href="#dom-'+d.slug+'" style="--c:'+col+'"><span class="dm"><canvas width="40" height="40"></canvas></span><span class="dn">'+d.title+'</span><span class="dc"><span class="dp '+(d.pole||'')+'">'+pg+'</span> '+ct+' sph</span></a>';
    oc.appendChild(s);drawIcon(s.querySelector('canvas'),ICONS[d.icon]||ICONS.loot,col);}
   else{s.className='slot seed';s.style.setProperty('--c','#255c2c');s.innerHTML='<span class="dm"></span>';oc.appendChild(s);}}
  return oc;}
