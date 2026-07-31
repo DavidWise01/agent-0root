@@ -1,0 +1,96 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE CHAIN RULE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#9d00ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#9d00ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#9d00ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#9d00ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #9d00ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#9d00ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#9d00ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#9d00ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#9d00ff;background:transparent;border:2px solid #9d00ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#9d00ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#9d00ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#9d00ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#9d00ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; BACKPROP</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / BACKPROP / <b>THE CHAIN RULE</b></div>
+<h1>THE CHAIN RULE</h1>
+<div class="kick">the error, walked backward through the wires</div>
+<div class="panel">
+ <div class="ctrl">
+  <div class="net">forward &rarr;<br>
+   <span class="n">x=<b class="fwd" id="cx">—</b></span> &rarr;
+   <span class="n">w1=<b class="fwd" id="cw1">—</b></span> &rarr;
+   <span class="n">a=w1·x=<b class="fwd" id="ca">—</b></span> &rarr;
+   <span class="n">w2=<b class="fwd" id="cw2">—</b></span> &rarr;
+   <span class="n">y=w2·a=<b class="fwd" id="cy">—</b></span> &rarr;
+   <span class="n">L=(y−t)²=<b class="fwd" id="cL">—</b></span>
+  </div>
+  <div class="lossbar"><i id="cbar" style="width:0%"></i></div>
+  <div class="net" style="margin-top:12px">&larr; backward (the chain rule)<br>
+   <span class="n">∂L/∂y=<b class="bwd" id="gdy">—</b></span>
+   <span class="n">∂L/∂a=<b class="bwd" id="gda">—</b></span>
+   <span class="n">∂L/∂w2=<b class="bwd" id="gdw2">—</b></span>
+   <span class="n">∂L/∂w1=<b class="bwd" id="gdw1">—</b></span>
+  </div>
+  <div class="rd" style="margin-top:12px">target t <input type="range" id="ct2" min="-1.5" max="1.5" step="0.1" value="1.0"> <b id="ctv" style="font-size:18px">1.0</b>
+   &nbsp;&middot;&nbsp; &eta; <input type="range" id="clr" min="0.01" max="0.30" step="0.01" value="0.10"> <b id="clrv" style="font-size:18px">0.10</b></div>
+  <div class="rd">step <span id="cit">0</span> &middot; loss <b id="cL2">—</b></div>
+  <div class="btns"><button id="cstep">forward + backward + step</button><button id="crun">&#9654; run</button><button id="creset">reset</button></div>
+ </div>
+</div>
+<div class="note"><span class="lit">LIT</span> A genuine 2-layer net and genuine backprop. Forward: a=w1·x, y=w2·a, L=(y&minus;t)². Backward is the literal chain rule: ∂L/∂y=2(y&minus;t), ∂L/∂a=∂L/∂y·w2, ∂L/∂w2=∂L/∂y·a, ∂L/∂w1=∂L/∂a·x. Each number is recomputed every step from the actual weights; SGD (w&larr;w&minus;η·∂L/∂w) drives the loss toward 0. Change the target or η and it re-solves live.<br><br><span class="fig">FIG</span> The glowing wires are decoration; the values on them are real. 'The error walked backward' is how backprop actually works, told as a picture.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of BACKPROP &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var s={x:1.0,w1:0.80,w2:0.50,t:1.0,lr:0.10,it:0};
+function fwd(){var a=s.w1*s.x,y=s.w2*a;return {a:a,y:y,L:(y-s.t)*(y-s.t)};}
+function grads(f){var dy=2*(f.y-s.t);return {dy:dy,da:dy*s.w2,dw2:dy*f.a,dw1:dy*s.w2*s.x};}
+function set(id,v){var e=document.getElementById(id);if(e)e.textContent=(+v).toFixed(3);}
+function render(){var f=fwd(),gr=grads(f);
+ set('cx',s.x);set('cw1',s.w1);set('ca',f.a);set('cw2',s.w2);set('cy',f.y);set('cL',f.L);set('cL2',f.L);
+ set('gdy',gr.dy);set('gda',gr.da);set('gdw2',gr.dw2);set('gdw1',gr.dw1);
+ document.getElementById('cit').textContent=s.it;
+ document.getElementById('cbar').style.width=Math.min(100,f.L*45)+'%';}
+function step(){var f=fwd(),gr=grads(f);s.w1-=s.lr*gr.dw1;s.w2-=s.lr*gr.dw2;s.it++;render();}
+function reset(){s.w1=0.80;s.w2=0.50;s.it=0;render();}
+var run=null;
+document.getElementById('cstep').onclick=step;
+document.getElementById('creset').onclick=function(){if(run){clearInterval(run);run=null;document.getElementById('crun').textContent='\u25b6 run';}reset();};
+document.getElementById('crun').onclick=function(){var b=this;if(run){clearInterval(run);run=null;b.textContent='\u25b6 run';return;}
+ b.textContent='\u25fc stop';run=setInterval(function(){step();if(fwd().L<1e-6||s.it>400){clearInterval(run);run=null;b.textContent='\u25b6 run';}},70);};
+document.getElementById('clr').oninput=function(){s.lr=parseFloat(this.value);document.getElementById('clrv').textContent=s.lr.toFixed(2);};
+document.getElementById('ct2').oninput=function(){s.t=parseFloat(this.value);document.getElementById('ctv').textContent=s.t.toFixed(1);render();};
+reset();window.__chain=s;})();
+</script></body></html>
