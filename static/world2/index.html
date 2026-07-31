@@ -62,8 +62,17 @@ a.post .pk{font-size:14px;color:var(--dim);margin-top:8px}
 .appeal .row b{font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:.5px;color:var(--c);margin-right:8px;text-transform:uppercase}
 .appeal .haiku{margin-top:13px;border-left:3px solid var(--c);padding:9px 0 9px 14px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 12%,transparent),transparent)}
 .appeal .haiku .hh{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--c);opacity:.8;margin-bottom:8px;letter-spacing:1px}
-.appeal .haiku .hl{font-family:'VT323',ui-monospace,monospace;font-size:20px;line-height:1.5;color:var(--txt);white-space:pre-wrap}
-.appeal .haiku .hl b{color:var(--c);font-weight:400;text-shadow:0 0 6px color-mix(in srgb,var(--c) 55%,transparent)}
+.appeal .haiku .hl{font-family:'VT323',ui-monospace,monospace;font-size:20px;line-height:1.45;color:#cfe8d0;white-space:pre-wrap}
+.appeal .haiku .hl .k{color:#00f5ff}
+.appeal .haiku .hl .s{color:#ffd23f}
+.appeal .haiku .hl .num{color:#ff2d95}
+.appeal .haiku .hl .ar{color:var(--c);font-weight:400;text-shadow:0 0 7px color-mix(in srgb,var(--c) 60%,transparent)}
+.appeal .haiku .run{font-family:'VT323',ui-monospace,monospace;font-size:18px;color:var(--dim);margin-top:9px;border-top:1px dashed color-mix(in srgb,var(--c) 30%,transparent);padding-top:8px}
+.appeal .haiku .run .rl{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--c)}
+.appeal .haiku .run b{color:#39fc6b;font-weight:400;font-size:20px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.appeal .haiku .run.err b,.appeal .haiku .run.err{color:#ff2d95}
+.appeal .haiku .ops{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;margin-top:5px;letter-spacing:.3px}
+.appeal .haiku .ops .st{color:var(--dim);opacity:.8}
 @media(max-width:640px){.appeal{grid-template-columns:1fr;gap:12px}.appeal .badge{flex-direction:row;justify-content:flex-start}}
 .octaboard{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
 .octablank{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:2px dashed rgba(37,92,44,.45);color:#2f5a37;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9px;line-height:2;min-height:200px}
@@ -143,6 +152,79 @@ David Lee Wise &middot; ROOT0 &middot; TriPod LLC &middot; one hand, two worlds
 <div class="nav arc"><a href="../">[MIRROR]</a><a href="the-singularity.html">[SINGULARITY]</a><a href="the-positronic-lattice.html">[LATTICE]</a><a href="../keepers.html">[KEEPERS]</a></div>
 <script>
 "use strict";
+// ── I-13 / IVM-13 : the REAL thirteen-opcode VM (ported from i13-language.html), so
+// every arcade haiku is an actual program — lexed, compiled to bytecode, and executed. ──
+var I13=(function(){
+ function lex(s){var T=[],re=/\s*(<-|->|==|!=|<=|>=|[<>+\-*\/%().,{};=]|[A-Za-z_]\w*|\d+(?:\.\d+)?|"[^"]*")/y,i=0;
+  while(i<s.length){re.lastIndex=i;var m=re.exec(s);if(!m){if(/\s/.test(s[i])){i++;continue;}throw new Error('lex @'+i);}T.push(m[1]);i=re.lastIndex;}return T;}
+ function parse(T){var p=0;function peek(){return T[p];}function eat(x){if(T[p]!==x)throw new Error('want '+x+' got '+T[p]);return T[p++];}
+  function isName(t){return /^[A-Za-z_]\w*$/.test(t);}
+  function program(){var b=[];while(p<T.length)b.push(stmt());return{t:'block',b:b};}
+  function block(){eat('{');var b=[];while(peek()!=='}')b.push(stmt());eat('}');return{t:'block',b:b};}
+  function stmt(){
+   if(peek()==='def'){p++;var n=T[p++];eat('(');var a=[];while(peek()!==')'){eat('I');a.push(T[p++]);if(peek()===',')p++;}eat(')');return{t:'FUNCTIONDEF',n:n,a:a,body:block()};}
+   if(peek()==='I'){p++;var nm=T[p++];if(peek()==='<-'){p++;var v=expr();if(peek()===';')p++;return{t:'ASSIGN',n:nm,v:v,decl:1};}if(peek()===';')p++;return{t:'NAME',n:nm};}
+   if(peek()==='if'){p++;var c=expr();var th=block();var el=null;if(peek()==='else'){p++;el=block();}return{t:'IF',c:c,th:th,el:el};}
+   if(peek()==='->'){p++;var rv=expr();if(peek()===';')p++;return{t:'RETURN',v:rv};}
+   if(isName(peek())&&T[p+1]==='<-'){var an=T[p++];p++;var av=expr();if(peek()===';')p++;return{t:'ASSIGN',n:an,v:av};}
+   var e=expr();if(peek()===';')p++;return{t:'EXPR',e:e};}
+  function expr(){return cmp();}
+  function cmp(){var l=add();while(['<','>','<=','>=','==','!='].indexOf(peek())>=0){var o=T[p++];l={t:'COMPARE',o:o,l:l,r:add()};}return l;}
+  function add(){var l=mul();while(['+','-'].indexOf(peek())>=0){var o=T[p++];l={t:'BINOP',o:o,l:l,r:mul()};}return l;}
+  function mul(){var l=post();while(['*','/','%'].indexOf(peek())>=0){var o=T[p++];l={t:'BINOP',o:o,l:l,r:post()};}return l;}
+  function post(){var x=prim();for(;;){if(peek()==='.'){p++;x={t:'ATTRIBUTE',o:x,f:T[p++]};}else if(peek()==='('){p++;var a=[];while(peek()!==')'){a.push(expr());if(peek()===',')p++;}eat(')');x={t:'CALL',f:x,a:a};}else return x;}}
+  function prim(){var t=T[p];if(/^\d/.test(t)){p++;return{t:'CONSTANT',v:parseFloat(t)};}if(t[0]==='"'){p++;return{t:'CONSTANT',v:t.slice(1,-1)};}if(t==='('){p++;var e=expr();eat(')');return e;}if(isName(t)){p++;return{t:'NAME',n:t};}throw new Error('prim '+t);}
+  return program();}
+ var OPS=['ASK','ANSWER','CONST','ATTR','ARG','RET','DROP','JMPF','CMP','CALL','FUNC','BIN','HALT'],OP={};OPS.forEach(function(n,i){OP[n]=i;});
+ function compile(ast){var code=[],fns={};
+  function emit(op,a,b){code.push([op,a===undefined?null:a,b===undefined?null:b]);return code.length-1;}
+  function gen(n){switch(n.t){
+   case 'block':n.b.forEach(gen);break;
+   case 'CONSTANT':emit(OP.CONST,n.v);break;
+   case 'NAME':emit(OP.ASK,n.n);break;
+   case 'ATTRIBUTE':gen(n.o);emit(OP.ATTR,n.f);break;
+   case 'ASSIGN':gen(n.v);emit(OP.ANSWER,n.n);break;
+   case 'BINOP':gen(n.l);gen(n.r);emit(OP.BIN,n.o);break;
+   case 'COMPARE':gen(n.l);gen(n.r);emit(OP.CMP,n.o);break;
+   case 'IF':{gen(n.c);var j=emit(OP.JMPF,0);gen(n.th);if(n.el){var k=emit(OP.JMPF,0,'always');code[j][1]=code.length;gen(n.el);code[k][1]=code.length;}else code[j][1]=code.length;break;}
+   case 'RETURN':gen(n.v);emit(OP.RET);break;
+   case 'EXPR':gen(n.e);emit(OP.DROP);break;
+   case 'CALL':n.a.forEach(gen);gen(n.f);emit(OP.CALL,n.a.length);break;
+   case 'FUNCTIONDEF':{var j2=emit(OP.JMPF,0,'always');var start=code.length;for(var i=n.a.length-1;i>=0;i--)emit(OP.ARG,n.a[i]);gen(n.body);emit(OP.CONST,null);emit(OP.RET);code[j2][1]=code.length;fns[n.n]={addr:start,arity:n.a.length};emit(OP.FUNC,n.n,start);break;}
+   default:throw new Error('gen '+n.t);}}
+  gen(ast);emit(OP.HALT);return{code:code,fns:fns};}
+ function exec(prog,limit){limit=limit||4e6;var code=prog.code,pc=0,st=[],env={v:{nil:{__nil:1}},p:null},frames=[],steps=0;
+  env.v.pair={__native:function(h,t){return{h:h,t:t};},arity:2};var hist=new Array(13).fill(0);
+  function look(n){var e=env;while(e){if(n in e.v)return e.v[n];e=e.p;}throw new Error('unbound '+n);}
+  while(steps++<limit){var op=code[pc][0],a=code[pc][1];hist[op]++;
+   switch(op){
+    case OP.CONST:st.push(a);pc++;break;
+    case OP.ASK:st.push(look(a));pc++;break;
+    case OP.ANSWER:{var v1=st.pop();env.v[a]=v1;pc++;break;}
+    case OP.ATTR:st.push(st.pop()[a]);pc++;break;
+    case OP.ARG:env.v[a]=st.pop();pc++;break;
+    case OP.BIN:{var r=st.pop(),l=st.pop();st.push(a==='+'?l+r:a==='-'?l-r:a==='*'?l*r:a==='/'?l/r:l%r);pc++;break;}
+    case OP.CMP:{var r2=st.pop(),l2=st.pop();st.push(a==='<'?l2<r2:a==='>'?l2>r2:a==='<='?l2<=r2:a==='>='?l2>=r2:a==='=='?l2===r2:l2!==r2);pc++;break;}
+    case OP.JMPF:{if(code[pc][2]==='always'){pc=a;}else{var c=st.pop();pc=c?pc+1:a;}break;}
+    case OP.CALL:{var f=st.pop();if(f&&f.__native){var args=[];for(var ii=0;ii<f.arity;ii++)args.unshift(st.pop());st.push(f.__native.apply(null,args));pc++;break;}frames.push({pc:pc+1,env:env});env={v:{},p:f.env};pc=f.addr;break;}
+    case OP.FUNC:{env.v[a]={addr:code[pc][2],env:env};pc++;break;}
+    case OP.RET:{var rv=st.pop();if(!frames.length)return{v:rv,hist:hist,steps:steps};var fr=frames.pop();env=fr.env;pc=fr.pc;st.push(rv);break;}
+    case OP.DROP:st.pop();pc++;break;
+    case OP.HALT:return{v:st.pop(),hist:hist,steps:steps};
+    default:throw new Error('op '+op);}}
+  throw new Error('step limit');}
+ return {OPS:OPS,run:function(src){return exec(compile(parse(lex(src))));}};
+})();
+// I-13 source syntax highlighter (keywords/strings/numbers/arrows)
+function i13hl(s){var STRB=[];s=String(s).replace(/&/g,'&amp;');
+ s=s.replace(/<-/g,'@ARL@').replace(/->/g,'@ARR@').replace(/<=/g,'@LE@').replace(/>=/g,'@GE@').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ s=s.replace(/"[^"]*"/g,function(m){STRB.push(m);return '@STR'+String.fromCharCode(64+STRB.length)+'@';});
+ s=s.replace(/\b(def|if|else)\b/g,'<span class="k">$1</span>').replace(/(^|[^\w])I(?=\s)/g,'$1<span class="k">I</span>');
+ s=s.replace(/\b\d+(?:\.\d+)?\b/g,'<span class="num">$&</span>');
+ s=s.replace(/@ARL@/g,'<b class="ar">&lt;-</b>').replace(/@ARR@/g,'<b class="ar">-&gt;</b>').replace(/@LE@/g,'&lt;=').replace(/@GE@/g,'&gt;=');
+ s=s.replace(/@STR([A-Z])@/g,function(_,ch){return '<span class="s">'+STRB[ch.charCodeAt(0)-65]+'</span>';});
+ return s;}
+function i13val(v){return (typeof v==='string')?'"'+v+'"':(v===null?'nil':String(v));}
 // ── green binary rain (Code Monkeys backdrop) ──
 (function(){
 var cv=document.getElementById('rain'),g=cv.getContext('2d'),DPR=Math.min(window.devicePixelRatio||1,2);
@@ -221,13 +303,18 @@ function drawIcon(cv,bmp,col){var g=cv.getContext('2d');g.imageSmoothingEnabled=
  for(var y=0;y<8;y++)for(var x=0;x<8;x++)if(bmp[y].charAt(x)==='1'){                          // face lighting
    if(y===0||bmp[y-1].charAt(x)!=='1')cell(offX+x,offY+y,shade(col,1.5));                     // lit TOP edge
    if(x===7||bmp[y].charAt(x+1)!=='1')cell(offX+x,offY+y,shade(col,0.62));}}                  // dark RIGHT edge
-var OPCODES=["ASK","ANSWER","CONST","ATTR","ARG","RET","DROP","JMPF","CMP","CALL","FUNC","BIN","HALT"];
-var OPRE=new RegExp('\\b('+OPCODES.join('|')+')\\b','g');
-function codeStyle(line){return line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(OPRE,'<b>$1</b>');}
+function esc(x){return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function renderAppeals(list){var ah=document.getElementById('appeals');if(!ah)return;ah.innerHTML='';
  (list||[]).forEach(function(a){var col=a.c||'#39fc6b';var lo=a.lore||{};var n=(a.domains||[]).length;
   var t=document.createElement('div');t.className='appeal';t.style.setProperty('--c',col);
-  var hk=(lo.haiku||[]).map(function(l){return '<div class="hl">'+codeStyle(l)+'</div>';}).join('');
+  var lines=lo.haiku||[];
+  var hk=lines.map(function(l){return '<div class="hl">'+i13hl(l)+'</div>';}).join('');
+  var runline='';
+  if(lines.length){try{var res=I13.run(lines.join('\n'));                     // ACTUALLY run it
+    var tally=res.hist.map(function(cnt,i){return cnt?I13.OPS[i]+'·'+cnt:null;}).filter(Boolean).join('  ');
+    runline='<div class="run">&#9654; <span class="rl">IVM-13</span> &rarr; <b>'+esc(i13val(res.v))+'</b>'
+      +'<div class="ops">'+tally+'  <span class="st">'+res.steps+' steps</span></div></div>';
+   }catch(e){runline='<div class="run err">&#9654; '+esc(e.message)+'</div>';}}
   t.innerHTML=
    '<div class="badge"><canvas width="128" height="128"></canvas>'
     +'<div class="an">'+a.name+'</div>'
@@ -237,7 +324,7 @@ function renderAppeals(list){var ah=document.getElementById('appeals');if(!ah)re
     +(lo.bio?'<div class="row"><b>bio</b>'+lo.bio+'</div>':'')
     +(lo.story?'<div class="row"><b>backstory</b>'+lo.story+'</div>':'')
     +(lo.does?'<div class="row"><b>what it does</b>'+lo.does+'</div>':'')
-    +(hk?'<div class="haiku"><div class="hh">HAIKU &middot; in I.code</div>'+hk+'</div>':'')
+    +(hk?'<div class="haiku"><div class="hh">HAIKU &middot; a runnable I-13 program</div>'+hk+runline+'</div>':'')
    +'</div>';
   ah.appendChild(t);drawIcon(t.querySelector('canvas'),ICONS[a.icon]||ICONS.spawn,col);});}
 // I-13 opcode CHARACTERS — each opcode its OWN sprite: a pixel coder (hue-shifted per the skill)
