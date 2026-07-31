@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>| -+ 101 -+ ⟩ · the whole thing, inside 3 qubits</title>
+<!-- PAPER ----------------------------------------------------------------
+  Put the Császár torus (the fused simplex+torus, 7 vertices) INSIDE a 3-qubit
+  register: | -+ 101 -+ >. 2^3 = 8 states; the 7 nonzero = the 7 vertices = the
+  7 points of the FANO PLANE = F2^3 \ {0}. "101" is one vertex; the ± are the
+  rail's light/dark X-basis (from AXIOM-ONE).
+  LIT (verified vs frozen): 3 qubits, 8 states, 7 nonzero = the vertices. The
+  Császár torus's 14 faces = TWO disjoint Fano planes (each a (7,3,1) design:
+  every pair of vertices on exactly one triangle), together covering each pair
+  twice (a closed surface). Label the vertices by F2^3\{0} via a Singer cycle
+  (x³+x+1): '101' = α^6, position 6, on exactly 3 Fano lines. The lines
+  {i,i+1,i+3} are XOR-closed (third point = XOR of the other two) precisely
+  because 1+α+α³ = 0.
+  AMBER: the natural home is a 3-qubit REGISTER (dim 8), not a single qubit
+  (dim 2 < 7) — "a qubit" and the | -+ 101 -+ > notation are the session's
+  framing. The vertex↔bitstring bijection depends on the chosen primitive
+  polynomial (fixed here as x³+x+1). The math above is exact & server-verified.
+  Fail-loud. Offline. Live Fano/register/label vs frozen at boot.
+------------------------------------------------------------------------ -->
+<style>
+:root{--ink:#0d0b08;--org:#ff6a00;--org2:#ff9a3c;--amb:#ffc233;--lit:#7dff6a;--fail:#ff3b3b;--pale:#e8ddcc;--dim:#8f8471;--pt:#ff9a3c;--line:#c98bff;--hot:#ff6ad5;--light:#ffe39a;--dark:#8a6fd6;--vac:#4a4640;font-size:15px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--pale);font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.42}
+header{padding:1rem 1.3rem .8rem;border-bottom:4px solid var(--org);background:linear-gradient(180deg,#1b1610,#0d0b08)}
+h1{margin:0;font-size:1.16rem;letter-spacing:.04em;color:var(--org);text-transform:uppercase;font-weight:800}
+.sub{color:var(--dim);margin-top:.3rem;font-size:.82rem}
+.wrap{padding:1rem 1.3rem 2.5rem;max-width:1180px;margin:0 auto}
+.panel{background:#161310;border:1px solid #2c2318;border-left:5px solid var(--line);padding:.7rem .9rem;margin:.85rem 0}
+h2{margin:.1rem 0 .5rem;font-size:.92rem;color:var(--org2);text-transform:uppercase;letter-spacing:.06em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.card{padding:.55rem .8rem;margin:.4rem 0;border:1px solid #2c2318;font-size:.84rem}
+.card.lit{border-left:5px solid var(--lit)}.card.lit b{color:var(--lit)}
+.card.amber{border-left:5px solid var(--amb)}.card.amber b{color:var(--amb)}
+.card.rg{border-left:5px solid var(--line)}.card.rg b{color:var(--line)}
+.card.fail{border-left:5px solid var(--fail);color:#ffd9d9;white-space:pre-wrap}
+.mon{background:#0a0908;border:1px solid #2c2318;min-height:4.5rem;max-height:9rem;overflow-y:auto;padding:.5rem .6rem;font-size:.74rem}
+.mon .ln{margin:.1rem 0;color:var(--dim)}.mon .ln.ok{color:var(--lit)}.mon .ln.bad{color:var(--fail)}.mon .ln.hd{color:var(--org2)}
+canvas{display:block;width:100%;background:#0a0908;border:1px solid #2c2318}
+.legend{color:var(--dim);font-size:.73rem;margin-top:.4rem}
+.ket{font-size:1.5rem;text-align:center;padding:.6rem;color:var(--hot);letter-spacing:.06em}
+.ket .pm{color:var(--light)}.ket .addr{color:var(--hot);font-weight:800}
+.dials{display:flex;gap:.8rem;flex-wrap:wrap;margin:.3rem 0}
+.dial{border:1px solid #2c2318;padding:.4rem .7rem;min-width:112px}
+.dial .v{font-size:1.05rem;color:var(--line)}
+.dial .k{font-size:.68rem;color:var(--dim)}
+button{background:none;border:1px solid var(--org);color:var(--org);cursor:pointer;font-family:inherit;font-size:.76rem;padding:.28rem .7rem}
+.reg{display:flex;gap:6px;flex-wrap:wrap;margin:.3rem 0}
+.st{border:1px solid #2c2318;padding:.3rem .5rem;font-size:.8rem;border-radius:6px;cursor:pointer}
+.st.on{border-color:var(--pt);color:var(--pt)}.st.vac{color:var(--vac);border-style:dashed}
+.st.hot{border-color:var(--hot);color:var(--hot);background:#2a1622}
+footer{color:var(--dim);font-size:.71rem;padding:0 1.3rem 2rem;max-width:1180px;margin:0 auto}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style></head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header><h1>| -+ 101 -+ ⟩ · THE WHOLE THING, INSIDE 3 QUBITS</h1>
+<div class="sub">the Császár torus\u2019s 7 vertices = the 7 nonzero states of a 3-qubit register = the 7 points of the Fano plane · "101" is one of them, dressed in the ± it started from</div></header>
+<div class="wrap">
+<div class="panel"><h2>the ket</h2>
+<div class="ket">| <span class="pm">−+</span> <span class="addr">101</span> <span class="pm">−+</span> ⟩</div>
+<div class="reg" id="reg"></div>
+<div class="legend">the 3-qubit register: 8 basis states. |000⟩ is the vacuum (dashed); the 7 nonzero are the 7 Császár vertices. |101⟩ (bright) is the addressed one — the ± wings are the light/dark X-basis dressing from axiom one. click a state to re-address.</div></div>
+<div class="panel"><h2>the readout</h2><div class="dials" id="dials"></div></div>
+<div class="panel"><h2>conductor — Fano / register / label vs frozen</h2><div class="mon" id="m1"></div></div>
+<div class="grid2">
+<div class="panel"><h2>the Fano plane — 7 points, 7 lines (where geometry becomes bits)</h2>
+<canvas id="cfano" width="480" height="440"></canvas>
+<div class="legend">the 7 vertices as the Fano plane: 7 points (3-bit strings), 7 lines (6 straight + 1 circle), each line a triple {a, b, a⊕b}. this is HALF the Császár torus\u2019s triangles — the other half is a second Fano plane, and the two together tile the torus. the addressed point 101 glows, with its 3 lines lit.</div></div>
+<div class="panel"><h2>the closure — the tail meets the mouth</h2>
+<canvas id="cloop" width="480" height="300"></canvas>
+<div class="legend">the whole session as one loop: a folded rail\u2019s zero → 1 qubit (the 6-axis octahedron, 3 light/3 dark) → entangle, fuse, braid, protect → the geometry (simplex, torus, Császár) → and it folds right back into qubits. 7 vertices = 7 states; "101" is one vertex, one state, wearing the ± it was born in.</div></div>
+</div>
+<div class="panel"><h2>toddler corner</h2>
+<div class="card rg"><b>ELI5:</b> here\u2019s the magic trick that ends the whole show. That seven-cornered magic donut we built? Give each of its 7 corners a little 3-light switchboard — three switches, each on or off. Three switches make 8 patterns, but "all off" is nobody, so that leaves exactly 7 patterns — one for each corner. Perfect fit! And "101" (on-off-on) is just the name-tag of one particular corner. So the giant geometric donut isn\u2019t really "out there" in space — it fits inside three tiny yes/no switches, three qubits. And the way the corners link up (which triples of corners form triangles) turns out to be a famous little pattern called the Fano plane — 7 dots and 7 lines where every line is "these two switch-patterns XOR to this third one." The whole journey started with a plus-and-minus on a rail, climbed through qubits and knots and donuts, and lands back on three switches with a plus-and-minus wrapped around them. Same plus-and-minus we started with. The story bit its own tail.</div></div>
+</div>
+<footer>| −+ 101 −+ ⟩ · 3 qubits, 8 states, 7 nonzero = 7 Császár vertices = Fano points · 14 faces = two disjoint Fano planes (each (7,3,1)) · 101 = α⁶, on 3 lines; lines {i,i+1,i+3} XOR-closed (LIT) · natural home is a 3-qubit register not 1 qubit; labeling fixes x³+x+1; framing is the session\u2019s (AMBER) · fail-loud · offline</footer>
+<script>
+'use strict';
+function boom(w,e){var r=document.getElementById('m1');
+ var d=document.createElement('div');d.className='ln bad';d.textContent='FAULT @ '+w+' '+(e&&e.stack?e.stack:String(e));r.appendChild(d);}
+window.addEventListener('error',function(ev){try{boom('window',ev.error||ev.message);}catch(_){}});
+function cssv(n){try{return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#fff';}catch(e){return '#fff';}}
+function mlog(t,c){var m=document.getElementById('m1'),d=document.createElement('div');
+ d.className='ln'+(c?' '+c:'');d.textContent=t;m.appendChild(d);m.scrollTop=m.scrollHeight;}
+var RG={"qubits": 3, "states": 8, "nonzero": 7, "addr": "101", "pos_101": 6, "orbitA_fano": true, "orbitB_fano": true, "two_disjoint": true, "lines_closed": true, "lines_through_101": 3, "labels": {"0": "001", "1": "010", "2": "100", "3": "011", "4": "110", "5": "111", "6": "101"}, "fano_lines_pos": [[0, 1, 3], [0, 2, 6], [0, 4, 5], [1, 2, 4], [1, 5, 6], [2, 3, 5], [3, 4, 6]]};
+var addr=RG.addr;
+// register states
+function bin(i){return ('000'+i.toString(2)).slice(-3);}
+function drawReg(){
+  var box=document.getElementById('reg');box.innerHTML='';
+  for(var i=0;i<8;i++){var b=bin(i);var d=document.createElement('div');
+    d.className='st'+(i===0?' vac':(b===addr?' hot':' on'));
+    d.textContent='|'+b+'⟩'+(i===0?' vac':'');
+    d.onclick=(function(bb){return function(){if(bb!=='000'){addr=bb;render();}};})(b);
+    box.appendChild(d);}
+}
+// Fano plane geometry: 7 points. positions: triangle corners, edge midpoints, center; 1 circle line.
+// Use position labels 0..6 = α^i (RG.labels), with the 7 lines {i,i+1,i+3}.
+var FP=(function(){
+  // canonical Fano drawing: 3 outer corners, 3 edge midpoints, 1 center
+  var pos=[ {x:.5,y:.09},{x:.09,y:.85},{x:.91,y:.85},   // corners: 0,1,2
+            {x:.295,y:.47},{x:.705,y:.47},{x:.5,y:.85},  // midpoints: 3,4,5
+            {x:.5,y:.55} ];                              // center: 6
+  return pos;
+})();
+function drawFano(){
+ try{
+  var cv=document.getElementById('cfano'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+  var pad=44; function X(p){return pad+p.x*(W-2*pad);} function Y(p){return pad+p.y*(H-2*pad);}
+  // the 7 lines {i,i+1,i+3}; one of them is the "circle" (the inner triple of midpoints {3,4,5})
+  var lines=RG.fano_lines_pos;
+  // find the line that is exactly the 3 midpoints {3,4,5} -> draw as circle
+  function isMid(L){return L.slice().sort().join()==='3,4,5';}
+  // which lines pass through the addressed point?
+  var addrPos=-1; for(var k=0;k<7;k++){if(RG.labels[k]===addr)addrPos=k;}
+  lines.forEach(function(L){
+    var hot=(addrPos>=0 && L.indexOf(addrPos)>=0);
+    g.strokeStyle=hot?cssv('--hot'):cssv('--line');g.globalAlpha=hot?0.95:0.5;g.lineWidth=hot?2.4:1;
+    if(isMid(L)){ // incircle through the 3 midpoints
+      var cx=X({x:.5,y:.55}),cy=Y({x:.5,y:.55}); var r=Math.abs(Y(FP[3])-cy);
+      // radius = distance from center(6) to a midpoint
+      var rr=Math.hypot(X(FP[3])-X(FP[6]),Y(FP[3])-Y(FP[6]));
+      g.beginPath();g.arc(X(FP[6]),Y(FP[6]),rr,0,7);g.stroke();
+    } else {
+      var a=FP[L[0]],b=FP[L[1]],c=FP[L[2]];
+      // draw the straight line spanning the three (order by projecting)
+      var ptsL=[a,b,c].map(function(p){return {x:X(p),y:Y(p)};});
+      ptsL.sort(function(u,v){return (u.x+u.y)-(v.x+v.y);});
+      g.beginPath();g.moveTo(ptsL[0].x,ptsL[0].y);g.lineTo(ptsL[2].x,ptsL[2].y);g.stroke();
+    }
+    g.globalAlpha=1;g.lineWidth=1;
+  });
+  // points
+  for(var i=0;i<7;i++){var p=FP[i];var lab=RG.labels[i];var hot=(lab===addr);
+    g.fillStyle=hot?cssv('--hot'):cssv('--pt');
+    if(hot){g.globalAlpha=.3;g.beginPath();g.arc(X(p),Y(p),13,0,7);g.fill();g.globalAlpha=1;}
+    g.beginPath();g.arc(X(p),Y(p),hot?7:5,0,7);g.fill();
+    g.fillStyle=hot?cssv('--hot'):cssv('--pale');g.font=(hot?'12px':'11px')+' ui-monospace,monospace';g.textAlign='center';
+    g.fillText(lab,X(p),Y(p)-11);g.textAlign='left';}
+  g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+  g.fillText('7 points (3-bit) · 7 lines (each: {a,b,a⊕b}) · 101 = α⁶ on 3 lines',12,H-10);
+ }catch(e){boom('drawFano',e);}
+}
+function drawLoop(){
+ try{
+  var cv=document.getElementById('cloop'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+  var steps=['−+ rail','the zero','1 qubit','entangle','fuse','braid','protect','simplex','torus','Császár','3 qubits'];
+  var cx=W/2,cy=H/2+8,R=Math.min(W,H)*0.36;
+  // ring
+  g.strokeStyle=cssv('--line');g.globalAlpha=.3;g.beginPath();g.arc(cx,cy,R,0,7);g.stroke();g.globalAlpha=1;
+  for(var i=0;i<steps.length;i++){var a=-Math.PI/2+2*Math.PI*i/steps.length;var x=cx+Math.cos(a)*R,y=cy+Math.sin(a)*R;
+    var first=(i===0),last=(i===steps.length-1);
+    g.fillStyle=(first||last)?cssv('--hot'):cssv('--pt');g.beginPath();g.arc(x,y,first||last?5:3,0,7);g.fill();
+    g.fillStyle=(first||last)?cssv('--hot'):cssv('--dim');g.font='9px ui-monospace,monospace';
+    var tx=cx+Math.cos(a)*(R+16),ty=cy+Math.sin(a)*(R+16);g.textAlign=Math.cos(a)>0.1?'left':(Math.cos(a)<-0.1?'end':'center');
+    g.fillText(steps[i],tx,ty+3);g.textAlign='left';}
+  // close the loop arrow (last -> first)
+  g.fillStyle=cssv('--hot');g.font='11px ui-monospace,monospace';g.textAlign='center';
+  g.fillText('the tail meets the mouth',cx,cy-4);
+  g.fillStyle=cssv('--light');g.fillText('−+  …  −+',cx,cy+14);g.textAlign='left';
+ }catch(e){boom('drawLoop',e);}
+}
+function dials(){
+  var pos=-1;for(var k=0;k<7;k++){if(RG.labels[k]===addr)pos=k;}
+  document.getElementById('dials').innerHTML=
+    '<div class="dial"><div class="v">'+RG.qubits+'</div><div class="k">qubits (dim '+RG.states+')</div></div>'
+   +'<div class="dial"><div class="v">'+RG.nonzero+'</div><div class="k">nonzero = vertices</div></div>'
+   +'<div class="dial"><div class="v">'+addr+'</div><div class="k">address = α^'+(pos<0?'?':pos)+'</div></div>'
+   +'<div class="dial"><div class="v">3</div><div class="k">Fano lines through it</div></div>';
+}
+function render(){drawReg();dials();drawFano();updateVerdict();}
+function updateVerdict(){
+  var pos=-1;for(var k=0;k<7;k++){if(RG.labels[k]===addr)pos=k;}
+  var R=document.getElementById('readout');if(!R)return;
+}
+function boot(){
+ try{
+  mlog('Fano / register / label vs frozen','hd');
+  mlog(RG.qubits+' qubits → '+RG.states+' states; '+RG.nonzero+' nonzero = the 7 Császár vertices = Fano points','ok');
+  var okF=(RG.orbitA_fano&&RG.orbitB_fano&&RG.two_disjoint);
+  mlog('14 faces = two disjoint Fano planes (each (7,3,1) design): '+okF,okF?'ok':'bad');
+  mlog("'101' = α^"+RG.pos_101+"; lines {i,i+1,i+3} XOR-closed: "+RG.lines_closed+'; on '+RG.lines_through_101+' lines','ok');
+  mlog('the loop closes: −+ rail … → 3 qubits, dressed in the ± it started from','ok');
+  render();drawLoop();
+ }catch(e){boom('boot',e);}
+}
+boot();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body></html>

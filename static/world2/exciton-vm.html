@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EXCITON VM · the dot that emits</title>
+<!-- PAPER ----------------------------------------------------------------
+  EXCITON VM — the quantum dot the UD0 corpus doesn't have: the one that
+  EMITS. (Corpus dots compute: blockade perceptron, transmon dance, ternary
+  genesis "no photon needed." This machine is the inverse: photon needed.)
+  THE MACHINE: four-level ladder g -> {X_H, X_V} -> XX. A pulse of area
+  theta prepares XX with P = sin^2(theta/2). The cascade emits two photons;
+  polarization state at inter-emission delay t:
+      (|HH> + e^{i S t / hbar} |VV>) / sqrt(2)
+  S = fine-structure splitting (the villain: a which-path clock).
+  Time-integrated over exponential delay tau:
+      F = 1/2 + 1/(2(1+x^2)),  C = 1/sqrt(1+x^2),  x = S*tau/hbar
+  THE RESCUE: Purcell factor F_P shortens tau -> x/F_P (the cavity outruns
+  the clock). Measured threshold: F_P = 21.27 for F>=0.99 at S=2ueV, tau=1ns.
+  All three probes re-run LIVE: cascade MC vs closed form, Rabi RK4 vs
+  sin^2, Purcell sweep. hbar = 0.65821195 ueV*ns.
+  LIT = within-model math, double-derived. AMBER = physical parameter
+  ranges & hardware prose (training-memory literature, unaudited live).
+  Conductor + 3 monitors · fail-loud · offline · single seed.
+------------------------------------------------------------------------ -->
+<style>
+:root{--ink:#0d0b08;--panel:#161310;--edge:#2c2318;--org:#ff6a00;--org2:#ff9a3c;
+--amb:#ffc233;--lit:#7dff6a;--fail:#ff3b3b;--pale:#e8ddcc;--dim:#8f8471;--ref:#6ab8ff;font-size:15px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--pale);font-family:ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;line-height:1.45}
+header{padding:1.1rem 1.4rem .9rem;border-bottom:4px solid var(--org);background:linear-gradient(180deg,#1b1610,#0d0b08)}
+h1{margin:0;font-size:1.45rem;letter-spacing:.04em;color:var(--org);text-transform:uppercase;font-weight:800}
+.sub{color:var(--dim);margin-top:.3rem;font-size:.85rem}
+.wrap{padding:1rem 1.4rem 2.5rem;max-width:1240px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--edge);border-left:5px solid var(--org);padding:.8rem 1rem;margin:.9rem 0}
+h2{margin:.1rem 0 .55rem;font-size:.95rem;color:var(--org2);text-transform:uppercase;letter-spacing:.08em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem}
+@media(max-width:960px){.grid2,.grid3{grid-template-columns:1fr}}
+.card{padding:.6rem .8rem;margin:.45rem 0;border:1px solid var(--edge);font-size:.85rem}
+.card.lit{border-left:5px solid var(--lit)}.card.lit b{color:var(--lit)}
+.card.amber{border-left:5px solid var(--amb)}.card.amber b{color:var(--amb)}
+.card.fail{border-left:5px solid var(--fail);color:#ffd9d9;white-space:pre-wrap}
+.card.ref{border-left:5px solid var(--ref)}.card.ref b{color:var(--ref)}
+.card.tot{border-left:5px solid var(--org2);background:#1d1710}
+.mon{background:#0a0908;border:1px solid var(--edge);min-height:9.5rem;max-height:13rem;overflow-y:auto;padding:.5rem .6rem;font-size:.74rem}
+.mon .ln{margin:.12rem 0;color:var(--dim)}
+.mon .ln.ok{color:var(--lit)}.mon .ln.bad{color:var(--fail)}.mon .ln.hd{color:var(--org2)}
+.tag{display:inline-block;padding:.05rem .45rem;border:1px solid;font-size:.7rem;letter-spacing:.08em;margin-left:.4rem;vertical-align:middle}
+.tag.run{color:var(--amb);border-color:var(--amb)}.tag.lit{color:var(--lit);border-color:var(--lit)}.tag.fail{color:var(--fail);border-color:var(--fail)}
+canvas{display:block;width:100%;background:#0a0908;border:1px solid var(--edge)}
+.legend{color:var(--dim);font-size:.74rem;margin-top:.4rem}
+button{background:none;border:1px solid var(--org);color:var(--org);cursor:pointer;font-family:inherit;font-size:.78rem;padding:.25rem .7rem;letter-spacing:.05em}
+button.on{background:var(--org);color:var(--ink)}
+input[type=range]{width:190px;accent-color:#ff6a00}
+.row{display:flex;gap:.9rem;align-items:center;margin-top:.45rem;flex-wrap:wrap}
+.mono{color:var(--org2)}
+.big{font-size:1.05rem;letter-spacing:.05em;color:var(--lit)}
+footer{color:var(--dim);font-size:.72rem;padding:0 1.4rem 2rem;max-width:1240px;margin:0 auto}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#39fc6b}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header>
+  <h1>EXCITON VM · the dot that emits</h1>
+  <div class="sub">g → {X_H, X_V} → XX · the biexciton cascade as an entangled-pair factory · villain: fine-structure splitting · rescue: the Purcell effect · photon needed</div>
+</header>
+<div class="wrap">
+
+  <div class="panel"><h2>verdict</h2><div id="readout"><div class="card amber">⏳ conductor booting…</div></div></div>
+
+  <div class="panel"><h2>conductor <span id="ctag" class="tag run">RUNNING</span></h2>
+    <div class="grid3">
+      <div><h2 style="font-size:.78rem">probe-1 · cascade MC × closed form <span id="t1tag" class="tag run">QUEUED</span></h2><div class="mon" id="m1"></div></div>
+      <div><h2 style="font-size:.78rem">probe-2 · π-pulse ladder <span id="t2tag" class="tag run">QUEUED</span></h2><div class="mon" id="m2"></div></div>
+      <div><h2 style="font-size:.78rem">probe-3 · Purcell rescue <span id="t3tag" class="tag run">QUEUED</span></h2><div class="mon" id="m3"></div></div>
+    </div>
+  </div>
+
+  <div class="panel"><h2>the levers · run the factory</h2>
+    <div class="row">
+      <span>FSS S <input type="range" id="sS" min="0" max="6" step="0.05" value="2"><span class="mono" id="vS">2.00 µeV</span></span>
+      <span>Purcell F_P <input type="range" id="sP" min="1" max="30" step="0.5" value="1"><span class="mono" id="vP">×1.0</span></span>
+      <span>pulse θ <input type="range" id="sT" min="0" max="6.2832" step="0.02" value="3.1416"><span class="mono" id="vT">π</span></span>
+    </div>
+    <div class="row">
+      <span class="big" id="rF">·</span><span class="big" id="rC">·</span><span class="big" id="rP">·</span>
+    </div>
+    <div class="legend" id="statline"></div></div>
+
+  <div class="grid2">
+    <div class="panel"><h2>2D — the villain curve & the fringe</h2>
+      <canvas id="c2d" width="580" height="430"></canvas>
+      <div class="legend">top: pair fidelity (orange) and concurrence (amber) vs FSS at the slider's Purcell — dots are a live 20k-pair Monte Carlo landing on the closed form; red line = F=½ (no entanglement). the marker is your slider. bottom: the Rabi fringe P(XX)=sin²(θ/2) — π is the sweet spot, 2π politely undoes your work.</div></div>
+    <div class="panel"><h2>3D — the cascade, running (soft-GL)</h2>
+      <canvas id="c3d" width="580" height="430"></canvas>
+      <div class="row"><button id="spin" class="on">spin</button><span class="legend">top platform XX, split middle rails X_H / X_V (gap = FSS, exaggerated), ground g. photons fall in pairs — orange down the H rail, amber down the V rail; the V photon carries the spinning phase clock e^{iSt/ħ}. crank Purcell and the dwell shortens: the clock has no time to smear the pair. drag to rotate.</span></div></div>
+  </div>
+
+  <div class="panel"><h2>what this dot knows that the corpus dots don't</h2>
+    <div class="card ref"><b>the territory (AMBER · training-memory literature, honest prose, unaudited live).</b> Corpus dots keep the electron home — blockade thresholds, transmon dances, ternary genesis. This dot lets the electron-hole pair leave as light. The surrounding country: single-photon purity g²(0)→0 (one dot, one photon, antibunching); Hong-Ou-Mandel indistinguishability as the swap currency; the FSS villain and its erasure by strain, electric, and magnetic tuning (droplet-etched GaAs dots reach near-zero splitting); cavity QED — micropillars and bullseye gratings for Purcell speed-up and collection; frequency conversion to telecom for fiber; phonon sidebands as the temperature tax. Every clause is standard literature carried in weights, stamped AMBER because none of it was verified against sources in this session. The math in the probes above is LIT within the model.</div>
+    <div class="card lit"><b>the inversion, for the record.</b> tripod-quantum-dots: “No photon needed.” EXCITON VM: photon <i>required</i> — it is the product. Same noun, opposite machine, zero collision. lol certified.</div>
+  </div>
+
+  <div class="panel"><h2>toddler corner</h2>
+    <div class="card ref"><b>ELI5:</b> the dot is a tiny two-step staircase. push it to the top step with exactly the right shove (the π push — too soft or too hard and it doesn't stay). it falls down in two hops and each hop throws one spark. the two sparks are secret twins — UNLESS the middle step is crooked (that's the splitting): then one twin carries a little spinning clock, and if it dawdles on the step, the clock gives the secret away. the rescue: put the staircase in a mirror room (the cavity) so the hops happen faster than the clock can tick. crooked step, fast fall — the twins stay twins.</div></div>
+
+  <div class="panel"><h2>method &amp; provenance</h2>
+    <div class="card lit"><b>double verification.</b> excitonvm.py ran cascade MC (200k pairs/point), RK4 Schrödinger vs sin², and the Purcell sweep; this page re-runs all three live with independent JS. baked ≠ live ⇒ red monitors, dead verdict. ħ = 0.65821195 µeV·ns.</div>
+    <div class="card amber"><b>scope.</b> Werner-clean cascade model: no re-excitation, no phonon dephasing, no spin scattering, perfect collection. Model math exact; hardware pays more. Threshold F_P=21.27 for F≥0.99 at S=2 µeV, τ=1 ns is a within-model statement.</div>
+  </div>
+</div>
+<footer>EXCITON VM · g → X_H/X_V → XX · F = ½ + 1/(2(1+x²)) · C = 1/√(1+x²) · x = Sτ/ħF_P · π prepares, S betrays, Purcell rescues · single seed, offline</footer>
+
+<script>
+"use strict";
+function boom(where,e){
+  var r=document.getElementById('readout');
+  r.innerHTML='<div class="card fail">⛔ INSTRUMENT FAULT @ '+where+'\n'+(e&&e.stack?e.stack:String(e))+'</div>';
+  var c=document.getElementById('ctag');c.textContent='FAIL';c.className='tag fail';
+  throw e;
+}
+window.addEventListener('error',function(ev){try{boom('window',ev.error||ev.message);}catch(_){}});
+
+/*CORE-BEGIN*/
+var HBAR=0.65821195; // ueV*ns
+function Fcf(x){return 0.5+0.5/(1+x*x);}
+function Ccf(x){return 1/Math.sqrt(1+x*x);}
+function mcCascade(x,N){ // returns {F,C} from N sampled pair delays (tau=1)
+  var re=0,im=0,i,t;
+  for(i=0;i<N;i++){t=-Math.log(1-Math.random());re+=Math.cos(x*t);im-=Math.sin(x*t);}
+  re/=N;im/=N;
+  return {F:0.5+0.5*re, C:Math.sqrt(re*re+im*im)};
+}
+function rabiRK4(theta,steps){
+  steps=steps||4000;
+  var dt=theta/steps, cr=[1,0], ci=[0,0], i;
+  function deriv(cr,ci){ // -i H c, H=0.5*sigma_x  => dc0=-0.5i c1, dc1=-0.5i c0
+    return {r:[0.5*ci[1],0.5*ci[0]], i:[-0.5*cr[1],-0.5*cr[0]]};
+  }
+  for(i=0;i<steps;i++){
+    var k1=deriv(cr,ci);
+    var c2r=[cr[0]+dt/2*k1.r[0],cr[1]+dt/2*k1.r[1]],c2i=[ci[0]+dt/2*k1.i[0],ci[1]+dt/2*k1.i[1]];
+    var k2=deriv(c2r,c2i);
+    var c3r=[cr[0]+dt/2*k2.r[0],cr[1]+dt/2*k2.r[1]],c3i=[ci[0]+dt/2*k2.i[0],ci[1]+dt/2*k2.i[1]];
+    var k3=deriv(c3r,c3i);
+    var c4r=[cr[0]+dt*k3.r[0],cr[1]+dt*k3.r[1]],c4i=[ci[0]+dt*k3.i[0],ci[1]+dt*k3.i[1]];
+    var k4=deriv(c4r,c4i);
+    cr=[cr[0]+dt/6*(k1.r[0]+2*k2.r[0]+2*k3.r[0]+k4.r[0]),cr[1]+dt/6*(k1.r[1]+2*k2.r[1]+2*k3.r[1]+k4.r[1])];
+    ci=[ci[0]+dt/6*(k1.i[0]+2*k2.i[0]+2*k3.i[0]+k4.i[0]),ci[1]+dt/6*(k1.i[1]+2*k2.i[1]+2*k3.i[1]+k4.i[1])];
+  }
+  return cr[1]*cr[1]+ci[1]*ci[1];
+}
+function purcellReq(S,tau,Ftarget){ // F_P for F>=Ftarget
+  var xreq=Math.sqrt(1/(2*Ftarget-1)-1);
+  return S*tau/HBAR/xreq;
+}
+/*CORE-END*/
+
+/* baked — excitonvm.py, 2026-07-17 */
+var B={F_x1:0.75,C_x1:0.707107,x0_S2:3.038535,FPreq:21.2697};
+
+var Q=[],ST={p1:true,p2:true,p3:true};
+function mlog(id,txt,cls){var m=document.getElementById(id),d=document.createElement('div');
+  d.className='ln'+(cls?' '+cls:'');d.textContent=txt;m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function setTag(id,st){var t=document.getElementById(id);
+  t.textContent=st;t.className='tag '+(st==='LIT'?'lit':st==='FAIL'?'fail':'run');}
+function enq(f){Q.push(f);}
+function pump(){
+  if(!Q.length){finish();return;}
+  var f=Q.shift();
+  try{f();}catch(e){boom('conductor',e);return;}
+  setTimeout(pump,30);
+}
+function near(a,b,t){return Math.abs(a-b)<=t;}
+
+enq(function(){setTag('t1tag','RUN');mlog('m1','[probe-1] cascade: 50k-pair MC vs F=½+1/(2(1+x²)), C=1/√(1+x²)','hd');});
+[0,0.5,1,2,5].forEach(function(x){enq(function(){
+  var mc=mcCascade(x,50000),ok=near(mc.F,Fcf(x),6e-3)&&near(mc.C,Ccf(x),8e-3);
+  if(!ok)ST.p1=false;
+  mlog('m1','x='+x.toFixed(1)+'  F: mc='+mc.F.toFixed(4)+' cf='+Fcf(x).toFixed(4)+'  C: mc='+mc.C.toFixed(4)+' cf='+Ccf(x).toFixed(4)+'  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+});});
+enq(function(){
+  var ok=near(Fcf(1),B.F_x1,1e-6)&&near(Ccf(1),B.C_x1,1e-5);if(!ok)ST.p1=false;
+  setTag('t1tag',ST.p1?'LIT':'FAIL');
+  mlog('m1','[probe-1] at x=1 exactly one quarter of the entanglement is already gone: F=0.75, C=0.707. '+(ST.p1?'sealed.':'FAIL'),ST.p1?'ok':'bad');
+});
+
+enq(function(){setTag('t2tag','RUN');mlog('m2','[probe-2] RK4 Schrödinger vs sin²(θ/2)','hd');});
+[0.5,Math.PI/2,Math.PI,4.0,2*Math.PI].forEach(function(th){enq(function(){
+  var p=rabiRK4(th),pc=Math.pow(Math.sin(th/2),2),ok=near(p,pc,1e-6);if(!ok)ST.p2=false;
+  mlog('m2','θ='+th.toFixed(4)+'  P_num='+p.toFixed(7)+'  sin²='+pc.toFixed(7)+'  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+});});
+enq(function(){setTag('t2tag',ST.p2?'LIT':'FAIL');
+  mlog('m2','[probe-2] π loads the top rung with certainty; 2π hands it back. preparation is unitary.',ST.p2?'ok':'bad');});
+
+enq(function(){setTag('t3tag','RUN');mlog('m3','[probe-3] Purcell: τ→τ/F_P, x→x/F_P — the cavity outruns the clock','hd');});
+[1,5,10,20].forEach(function(FP){enq(function(){
+  var x=B.x0_S2/FP,mc=mcCascade(x,50000),ok=near(mc.F,Fcf(x),6e-3);if(!ok)ST.p3=false;
+  mlog('m3','F_P='+FP+'  x='+x.toFixed(3)+'  F mc='+mc.F.toFixed(4)+' cf='+Fcf(x).toFixed(4)+'  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+});});
+enq(function(){
+  var fp=purcellReq(2,1,0.99),ok=near(fp,B.FPreq,1e-3);if(!ok)ST.p3=false;
+  mlog('m3','threshold: F_P='+fp.toFixed(2)+' for F≥0.99 at S=2µeV, τ=1ns (baked '+B.FPreq+')  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+  setTag('t3tag',ST.p3?'LIT':'FAIL');
+  mlog('m3','[probe-3] a factor-of-21 cavity beats a 2 µeV villain. speed is a purification you don\'t pay pairs for.',ST.p3?'ok':'bad');
+});
+
+function finish(){
+  var allOK=ST.p1&&ST.p2&&ST.p3;
+  setTag('ctag',allOK?'LIT':'FAIL');
+  var h='';
+  if(!allOK){h+='<div class="card fail">⛔ LIVE/BAKED DISAGREEMENT — a monitor above is red.</div>';}
+  h+='<div class="card tot"><b>THE FACTORY RUNS.</b> π-pulse loads XX, the cascade drops two rungs, and the pair leaves entangled to exactly the degree the fine-structure clock permits: F = ½ + 1/(2(1+x²)), x = Sτ/ħF_P. Every curve on this page is double-derived, Monte Carlo against closed form, live.</div>';
+  h+='<div class="card lit"><b>LIT · the villain quantified.</b> At x=1 (S·τ ≈ 0.66 µeV·ns bare) fidelity is already down to 0.75. The splitting doesn\'t break the pair — it timestamps it, and the timestamp is which-path information.</div>';
+  h+='<div class="card lit"><b>LIT · the rescue quantified.</b> Purcell factor 21.27 rescues a 2 µeV splitting to F≥0.99. Shortening the dwell is equivalent to shrinking the villain: x scales as 1/F_P, verified by simulation at every tested point.</div>';
+  h+='<div class="card amber"><b>AMBER · the hardware country.</b> Everything outside the model — g²(0), HOM visibility, strain-tuned FSS erasure, telecom conversion, phonon tax — is training-memory literature, marked honest prose, unaudited this session.</div>';
+  document.getElementById('readout').innerHTML=h;
+  try{wireLevers();draw2D();build3D();}catch(e){boom('render',e);}
+}
+
+/* -------- levers -------- */
+var LV={S:2,FP:1,TH:Math.PI};
+function wireLevers(){
+  var sS=document.getElementById('sS'),sP=document.getElementById('sP'),sT=document.getElementById('sT');
+  function upd(){
+    LV.S=parseFloat(sS.value);LV.FP=parseFloat(sP.value);LV.TH=parseFloat(sT.value);
+    document.getElementById('vS').textContent=LV.S.toFixed(2)+' µeV';
+    document.getElementById('vP').textContent='×'+LV.FP.toFixed(1);
+    document.getElementById('vT').textContent=(Math.abs(LV.TH-Math.PI)<0.02?'π':LV.TH.toFixed(2));
+    var x=LV.S*1.0/HBAR/LV.FP,F=Fcf(x),C=Ccf(x),P=Math.pow(Math.sin(LV.TH/2),2);
+    document.getElementById('rF').textContent='pair F = '+F.toFixed(4);
+    document.getElementById('rC').textContent='C = '+C.toFixed(4);
+    document.getElementById('rP').textContent='P(XX) = '+P.toFixed(3);
+    document.getElementById('statline').textContent='x = Sτ/ħF_P = '+x.toFixed(3)+
+      ' · yield ∝ P(XX)·F = '+(P*F).toFixed(3)+
+      (F>0.99?' · factory grade':F>0.5?' · entangled but taxed':' · pairs are classical');
+    draw2D();
+  }
+  [sS,sP,sT].forEach(function(s){s.addEventListener('input',upd);});
+  upd();
+}
+
+/* -------- 2D -------- */
+function cssv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function draw2D(){
+  var cv=document.getElementById('c2d');if(!cv)return;
+  var g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+  var x0=44,y0=14,ch=190,cw=W-x0-16,Smax=6;
+  g.strokeStyle='#2c2318';g.beginPath();g.moveTo(x0,y0);g.lineTo(x0,y0+ch);g.lineTo(x0+cw,y0+ch);g.stroke();
+  g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+  [0,0.5,1].forEach(function(t){var y=y0+ch-t*ch;g.fillText(t.toFixed(1),x0-26,y+3);
+    g.strokeStyle='#1c1712';g.beginPath();g.moveTo(x0,y);g.lineTo(x0+cw,y);g.stroke();});
+  var yh=y0+ch-0.5*ch;
+  g.strokeStyle=cssv('--fail');g.setLineDash([4,3]);g.beginPath();g.moveTo(x0,yh);g.lineTo(x0+cw,yh);g.stroke();g.setLineDash([]);
+  function curve(fn,col){
+    g.strokeStyle=col;g.beginPath();
+    for(var i=0;i<=200;i++){var S=Smax*i/200,x=S/HBAR/LV.FP;
+      var px=x0+i/200*cw,py=y0+ch-fn(x)*ch;i?g.lineTo(px,py):g.moveTo(px,py);}
+    g.stroke();
+  }
+  curve(Fcf,cssv('--org'));curve(Ccf,cssv('--amb'));
+  for(var i=0;i<=12;i++){var S=Smax*i/12,x=S/HBAR/LV.FP,mc=mcCascade(x,20000);
+    g.fillStyle=cssv('--org');g.beginPath();g.arc(x0+i/12*cw,y0+ch-mc.F*ch,2.4,0,6.29);g.fill();
+    g.fillStyle=cssv('--amb');g.beginPath();g.arc(x0+i/12*cw,y0+ch-mc.C*ch,2.4,0,6.29);g.fill();}
+  var mx=x0+LV.S/Smax*cw,myy=y0+ch-Fcf(LV.S/HBAR/LV.FP)*ch;
+  g.strokeStyle=cssv('--lit');g.beginPath();g.arc(mx,myy,6,0,6.29);g.stroke();
+  g.fillStyle=cssv('--org2');g.font='11px ui-monospace,monospace';
+  g.fillText('F (orange) & C (amber) vs S · F_P=×'+LV.FP.toFixed(1)+' · dots = live MC',x0,y0-2);
+  /* Rabi fringe */
+  var top=y0+ch+32,ch2=H-top-20;
+  g.strokeStyle='#2c2318';g.beginPath();g.moveTo(x0,top);g.lineTo(x0,top+ch2);g.lineTo(x0+cw,top+ch2);g.stroke();
+  g.fillStyle=cssv('--dim');g.fillText('P(XX) = sin²(θ/2) · 0 → 2π',x0,top-6);
+  g.strokeStyle=cssv('--ref');g.beginPath();
+  for(i=0;i<=200;i++){var th=2*Math.PI*i/200,p=Math.pow(Math.sin(th/2),2);
+    var px=x0+i/200*cw,py=top+ch2-p*ch2;i?g.lineTo(px,py):g.moveTo(px,py);}
+  g.stroke();
+  var tx=x0+LV.TH/(2*Math.PI)*cw,ty=top+ch2-Math.pow(Math.sin(LV.TH/2),2)*ch2;
+  g.strokeStyle=cssv('--lit');g.beginPath();g.arc(tx,ty,6,0,6.29);g.stroke();
+}
+
+/* -------- 3D cascade -------- */
+var G3={yaw:0.6,pitch:0.25,spin:true,parts:[]};
+function build3D(){
+  var cv=document.getElementById('c3d');
+  var drag=false,lx=0,ly=0;
+  cv.addEventListener('pointerdown',function(e){drag=true;lx=e.clientX;ly=e.clientY;});
+  window.addEventListener('pointerup',function(){drag=false;});
+  window.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    G3.yaw+=(e.clientX-lx)*0.008;G3.pitch+=(e.clientY-ly)*0.008;
+    G3.pitch=Math.max(-1.4,Math.min(1.4,G3.pitch));lx=e.clientX;ly=e.clientY;
+  });
+  document.getElementById('spin').addEventListener('click',function(){
+    G3.spin=!G3.spin;this.className=G3.spin?'on':'';});
+  requestAnimationFrame(tick3D);
+}
+function spawnPair(){
+  var rail=Math.random()<0.5?1:-1; // H or V branch of the superposition rendered as a coin
+  var dwell=(0.5-Math.log(1-Math.random()))/LV.FP;
+  G3.parts.push({ph:0,rail:rail,stage:0,t:0,dwell:dwell,clock:0});
+}
+function tick3D(){
+  try{
+    if(G3.spin)G3.yaw+=0.006;
+    if(Math.random()<0.06*Math.pow(Math.sin(LV.TH/2),2))spawnPair();
+    var cv=document.getElementById('c3d'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+    g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+    var cy=Math.cos(G3.yaw),sy=Math.sin(G3.yaw),cp=Math.cos(G3.pitch),sp=Math.sin(G3.pitch),cam=34;
+    function P(X,Y,Z){var x1=X*cy+Z*sy,z1=-X*sy+Z*cy,y2=Y*cp-z1*sp,z2=Y*sp+z1*cp,d=cam+z2;
+      return d<6?null:{x:W/2+x1*17*(cam/d),y:H/2+y2*17*(cam/d),s:cam/d,z:z2};}
+    var gap=0.4+LV.S*0.5;
+    // platforms: XX y=-6, X rails y=0 at x=±gap, g y=+6
+    function plat(Y,X0,wd,col,lab){
+      g.strokeStyle=col;g.beginPath();
+      for(var i=0;i<=20;i++){var p=P(X0-wd/2+wd*i/20,Y,0);if(!p)continue;i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y);}
+      g.stroke();
+      var pl=P(X0+wd/2+0.5,Y,0);if(pl){g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';g.fillText(lab,pl.x,pl.y);}
+    }
+    plat(-6,0,7,cssv('--org2'),'XX');
+    plat(0,-gap,3,cssv('--org'),'X_H');
+    plat(0,gap,3,cssv('--amb'),'X_V');
+    plat(6,0,9,'#5a4f3d','g');
+    // particles
+    G3.parts.forEach(function(q){
+      q.t+=0.03;
+      var X,Y;
+      if(q.stage===0){Y=-6+6*Math.min(1,q.t/0.5);X=q.rail*gap*Math.min(1,q.t/0.5);
+        if(q.t>=0.5){q.stage=1;q.t=0;}}
+      else if(q.stage===1){Y=0;X=q.rail*gap;q.clock+=LV.S/HBAR*0.03;
+        if(q.t>=q.dwell){q.stage=2;q.t=0;}}
+      else{Y=6*Math.min(1,q.t/0.5);X=q.rail*gap*(1-Math.min(1,q.t/0.5));
+        if(q.t>=0.5)q.stage=3;}
+      var p=P(X,Y,0);if(!p)return;
+      g.fillStyle=q.rail>0?cssv('--amb'):cssv('--org');
+      g.fillRect(p.x-3*p.s,p.y-3*p.s,6*p.s,6*p.s);
+      if(q.stage===1&&q.rail>0){ // the which-path clock on the V rail
+        g.strokeStyle=cssv('--ref');g.beginPath();
+        g.moveTo(p.x,p.y);g.lineTo(p.x+9*p.s*Math.cos(q.clock),p.y+9*p.s*Math.sin(q.clock));g.stroke();
+      }
+    });
+    G3.parts=G3.parts.filter(function(q){return q.stage<3;}).slice(-60);
+    g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+    g.fillText('rail gap = FSS · dwell = τ/F_P · blue hand = the which-path clock',10,H-10);
+    requestAnimationFrame(tick3D);
+  }catch(e){boom('3D',e);}
+}
+
+try{
+  mlog('m1','monitor armed.','hd');mlog('m2','monitor armed.','hd');mlog('m3','monitor armed.','hd');
+  setTimeout(pump,60);
+}catch(e){boom('boot',e);}
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

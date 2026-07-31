@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Choice engine — selection under consequence</title>
+<style>
+  :root{--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--txt:#e6e8ee;--mut:#9aa1af;
+        --good:#5dcaa5;--amber:#ef9f27;--bad:#e2726f;--blue:#378add;--purple:#7f77dd}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.6;padding:24px}
+  .wrap{max-width:780px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:14px;margin:0 0 16px}
+  .cards{display:flex;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+  .card{flex:1;min-width:120px;background:var(--panel);border-radius:10px;padding:11px 13px}
+  .card .lab{font-size:12px;color:var(--mut)}
+  .card .val{font-size:21px;font-weight:600;margin-top:2px}
+  canvas{width:100%;display:block;background:var(--panel);border-radius:10px}
+  .caption{font-size:12px;color:var(--mut);margin:6px 2px 12px}
+  .reason{background:var(--panel);border-radius:10px;padding:12px 14px;margin:12px 0;font-size:13px;min-height:64px}
+  .opt{display:flex;align-items:center;gap:8px;padding:3px 0}
+  .opt .k{width:14px;height:14px;border-radius:4px;flex:none}
+  .opt .n{font-weight:600;min-width:44px}
+  .opt .r{color:var(--mut)}
+  .ok .r{color:var(--good)}.no .r{color:var(--bad)}
+  .row{display:flex;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap}
+  .row label{font-size:14px;color:var(--mut);min-width:90px}
+  input[type=range]{flex:1;accent-color:var(--purple);min-width:150px}
+  .row output{font-size:14px;font-weight:600;min-width:30px;text-align:right}
+  button{background:#20242e;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:9px 15px;font-size:14px;cursor:pointer}
+  button:hover{background:#272c38}
+  .legend{font-size:12px;color:var(--mut);display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+  .stamp{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-left:8px;background:#0f3b2e;color:#5dcaa5}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#9d00ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE SANDBOX</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+  <h1>Choice engine <span class="stamp">LIT</span></h1>
+  <p class="sub">Not a scheduler. At each fork it looks down every option and asks one joint question: <b>does a complete, affordable path to the goal survive this pick?</b> It commits to the survivor with the most slack, and grays out the rest with the reason. Watch it refuse the cheap trap.</p>
+
+  <div class="cards">
+    <div class="card"><div class="lab">step</div><div class="val" id="step">0</div></div>
+    <div class="card"><div class="lab">budget left</div><div class="val" id="left">8</div></div>
+    <div class="card"><div class="lab">status</div><div class="val" id="status" style="font-size:16px">ready</div></div>
+    <div class="card"><div class="lab">committed</div><div class="val" id="path" style="font-size:15px">&mdash;</div></div>
+  </div>
+
+  <canvas id="graph" height="300"></canvas>
+  <div class="legend">
+    <span><i class="dot" style="background:#5dcaa5"></i>done</span>
+    <span><i class="dot" style="background:#378add"></i>evaluating</span>
+    <span><i class="dot" style="background:#7f77dd"></i>committed</span>
+    <span><i class="dot" style="background:#e2726f"></i>rejected (strands goal)</span>
+    <span><i class="dot" style="background:#2a2f3a;border:1px solid #444"></i>locked out</span>
+  </div>
+  <div class="caption">the map of consequence &mdash; the goal is only reachable through the expensive branch</div>
+
+  <div class="reason" id="reason">Press <b>Step</b> to watch it evaluate the first fork, or <b>Run</b> to let it choose to the end.</div>
+
+  <div class="row">
+    <label>budget</label>
+    <input type="range" id="budget" min="5" max="12" value="8" step="1" />
+    <output id="budgetout">8</output>
+  </div>
+  <div class="row">
+    <button id="stepBtn">Step</button>
+    <button id="runBtn">Run</button>
+    <button id="reset">Reset</button>
+  </div>
+</div>
+
+<script>
+// verified engine (ported from the passing headless test)
+function makeG(){
+  return {
+    A:{deps:[],cost:2,excl:[],x:0.12,y:0.30},
+    B:{deps:[],cost:2,excl:['A'],x:0.12,y:0.70},
+    C:{deps:['A'],cost:3,excl:[],x:0.37,y:0.30},
+    D:{deps:['B'],cost:1,excl:[],x:0.37,y:0.70},
+    E:{deps:['C'],cost:2,excl:[],x:0.62,y:0.30},
+    F:{deps:['D'],cost:1,excl:[],x:0.62,y:0.70},
+    GOAL:{deps:['E'],cost:1,excl:[],x:0.87,y:0.30}
+  };
+}
+var G, done, dead, spent, step, running, runTimer, evalSet=[], committed=null, rejects={}, budget;
+
+function frontier(){
+  var f=[];
+  for(var n in G){ if(!done.has(n)&&!dead.has(n)&&G[n].deps.every(function(d){return done.has(d);})) f.push(n); }
+  return f;
+}
+function applyPick(pick,dn,dd){
+  dn.add(pick);
+  G[pick].excl.forEach(function(e){ dd.add(e); });
+  var ch=true;
+  while(ch){ ch=false;
+    for(var n in G){ if(dn.has(n)||dd.has(n))continue;
+      if(G[n].deps.some(function(d){return dd.has(d);})){ dd.add(n); ch=true; } }
+  }
+}
+// min remaining cost of a complete path to GOAL from (dn,dd); null if impossible
+function minCostToGoal(dn,dd){
+  var memo={};
+  function cost(n){
+    if(dn.has(n)) return 0;
+    if(dd.has(n)) return null;
+    if(n in memo) return memo[n];
+    var tot=G[n].cost;
+    for(var i=0;i<G[n].deps.length;i++){ var c=cost(G[n].deps[i]); if(c===null){memo[n]=null;return null;} tot+=c; }
+    memo[n]=tot; return tot;
+  }
+  return cost('GOAL');
+}
+// evaluate the frontier: return {best, evals:[{n, ok, reason, slack}]}
+function evaluate(left){
+  var F=frontier(), evals=[], best=null, bestSlack=-1;
+  F.forEach(function(n){
+    var dn=new Set(done), dd=new Set(dead); applyPick(n,dn,dd);
+    var rem=minCostToGoal(dn,dd);
+    if(rem===null){ evals.push({n:n,ok:false,reason:'strands the goal (no path left)'}); return; }
+    var total=G[n].cost+rem;
+    if(total>left){ evals.push({n:n,ok:false,reason:'unaffordable: needs '+total+', have '+left}); return; }
+    var slack=left-total;
+    evals.push({n:n,ok:true,reason:'viable — leaves '+slack+' slack after finishing'});
+    if(slack>bestSlack){ bestSlack=slack; best=n; }
+  });
+  return {best:best, evals:evals};
+}
+
+function doStep(){
+  if(done.has('GOAL')){ return; }
+  step++;
+  var left=budget-spent;
+  var F=frontier();
+  if(F.length===0){ finish('stranded — no moves left'); return; }
+  var res=evaluate(left);
+  evalSet=F.slice(); committed=res.best; rejects={};
+  res.evals.forEach(function(e){ if(!e.ok) rejects[e.n]=e.reason; });
+  showReason(res, left);
+  render();
+  if(res.best===null){ finish('no affordable path to the goal — declining rather than stranding'); return; }
+  // commit after a beat so the evaluate->commit is visible
+  clearTimeout(runTimer);
+  setTimeout(function(){
+    spent+=G[res.best].cost;
+    applyPick(res.best, done, dead);
+    evalSet=[]; 
+    render(); updateCards();
+    if(done.has('GOAL')){ finish('reached the goal'); }
+    else if(running){ runTimer=setTimeout(doStep, 650); }
+    else { committed=null; }
+  }, running?500:0);
+}
+
+function showReason(res,left){
+  var html='<b>Fork at step '+step+'</b> — budget left '+left+'. Evaluating each option:<br>';
+  res.evals.forEach(function(e){
+    var color=e.ok?'#5dcaa5':'#e2726f';
+    var cls=e.ok?'ok':'no';
+    var mark=(e.n===res.best)?' &larr; <b>commit</b>':'';
+    html+='<div class="opt '+cls+'"><span class="k" style="background:'+(e.n===res.best?'#7f77dd':color)+'"></span>'+
+          '<span class="n">'+e.n+'</span><span class="r">'+e.reason+mark+'</span></div>';
+  });
+  if(res.best===null) html+='<div style="color:#e2726f;margin-top:6px"><b>No option survives.</b> Winning was impossible from here — it declines instead of faking coherence.</div>';
+  document.getElementById('reason').innerHTML=html;
+}
+function finish(msg){
+  running=false; document.getElementById('runBtn').textContent='Run';
+  var s=document.getElementById('status');
+  if(done.has('GOAL')){ s.textContent='goal reached'; s.style.color='var(--good)'; }
+  else { s.textContent='declined'; s.style.color='var(--bad)'; }
+}
+function updateCards(){
+  document.getElementById('step').textContent=step;
+  document.getElementById('left').textContent=(budget-spent);
+  var d=Array.from(done); d.sort();
+  document.getElementById('path').textContent=d.length?d.join(' '):'—';
+}
+
+var gc=document.getElementById('graph'), gx=gc.getContext('2d');
+function render(){
+  updateCards();
+  var dpr=window.devicePixelRatio||1, W=gc.clientWidth, H=gc.clientHeight;
+  gc.width=W*dpr; gc.height=H*dpr; gx.setTransform(dpr,0,0,dpr,0,0);
+  gx.clearRect(0,0,W,H);
+  var pad=30, X=function(x){return pad+x*(W-2*pad);}, Y=function(y){return pad+y*(H-2*pad);};
+  gx.strokeStyle='#2a2f3a'; gx.lineWidth=1.5;
+  for(var n in G){ G[n].deps.forEach(function(d){
+    gx.beginPath(); gx.moveTo(X(G[d].x),Y(G[d].y)); gx.lineTo(X(G[n].x),Y(G[n].y)); gx.stroke();
+  }); }
+  for(var m in G){
+    var x=X(G[m].x), y=Y(G[m].y), fill='#20242e', stroke='#444', tcol='#9aa1af';
+    if(done.has(m)){ fill='#0f3b2e'; stroke='#5dcaa5'; tcol='#5dcaa5'; }
+    else if(m===committed){ fill='#241f45'; stroke='#7f77dd'; tcol='#b3aee8'; }
+    else if(m in rejects){ fill='#2b1416'; stroke='#e2726f'; tcol='#e2726f'; }
+    else if(evalSet.indexOf(m)>=0){ fill='#0c2b45'; stroke='#378add'; tcol='#85b7eb'; }
+    else if(dead.has(m)){ fill='#171a21'; stroke='#333'; tcol='#555'; }
+    gx.fillStyle=fill; gx.strokeStyle=stroke; gx.lineWidth=2;
+    gx.beginPath(); gx.arc(x,y,18,0,7); gx.fill(); gx.stroke();
+    gx.fillStyle=tcol; gx.font='12px sans-serif'; gx.textAlign='center'; gx.textBaseline='middle';
+    gx.fillText(m==='GOAL'?'GOAL':m, x, y-3);
+    gx.fillStyle='#6b6f78'; gx.font='9px sans-serif';
+    gx.fillText('c'+G[m].cost, x, y+8);
+  }
+}
+
+function reset(){
+  running=false; clearTimeout(runTimer);
+  G=makeG(); done=new Set(); dead=new Set(); spent=0; step=0;
+  evalSet=[]; committed=null; rejects={};
+  budget=+document.getElementById('budget').value;
+  document.getElementById('runBtn').textContent='Run';
+  var s=document.getElementById('status'); s.textContent='ready'; s.style.color='var(--txt)';
+  document.getElementById('reason').innerHTML='Press <b>Step</b> to watch it evaluate the first fork, or <b>Run</b> to let it choose to the end.';
+  render();
+}
+document.getElementById('budget').oninput=function(){ document.getElementById('budgetout').textContent=this.value; reset(); };
+document.getElementById('stepBtn').onclick=function(){ running=false; doStep(); };
+document.getElementById('runBtn').onclick=function(){
+  running=!running; this.textContent=running?'Pause':'Run';
+  if(running && !done.has('GOAL')) doStep(); else clearTimeout(runTimer);
+};
+document.getElementById('reset').onclick=reset;
+window.onresize=render;
+reset();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SANDBOX &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

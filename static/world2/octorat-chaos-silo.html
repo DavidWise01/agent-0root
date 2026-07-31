@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE CHAOS SILO · A CHAOS ENGINE ON EVERY FLOOR · ZERO COOL</title>
+<style>
+  :root{
+    --bg:#ECEBE7; --panel:#F6F5F2; --panel2:#E3E1DB;
+    --ink:#191817; --muted:#6E6A63; --line:#CFCCC4;
+    --ac:#1B44E8; --ac-deep:#1330A0; --ac-soft:#DDE2FF;
+    --void:#8A2244; --order:#1B7A5A; --chaos:#B0243C;
+    --mono:ui-monospace,'SF Mono','Cascadia Code',Menlo,Consolas,monospace;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+    --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:var(--serif);line-height:1.55}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px 80px}
+  header{padding:44px 0 22px;border-bottom:3px solid var(--ink)}
+  .rail{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--muted)}
+  .rail b{color:var(--ac);font-weight:700}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--ac);font-weight:700;margin-top:18px}
+  h1{font-family:var(--sans);font-size:clamp(38px,7vw,74px);font-weight:800;letter-spacing:-.045em;line-height:.9;margin-top:8px}
+  h1 em{font-style:normal;color:var(--ac)}
+  .sub{font-family:var(--sans);font-size:17px;color:var(--muted);margin-top:14px;font-weight:500;max-width:670px}
+  .readflag{margin-top:18px;background:#F7ECF0;border:1px solid #E0C0CE;border-left:5px solid var(--void);border-radius:6px;padding:13px 18px;font-size:14.5px}
+  .readflag b{color:var(--void)}
+  .stage{display:grid;grid-template-columns:340px 1fr;gap:20px;margin-top:24px}
+  @media(max-width:760px){.stage{grid-template-columns:1fr}}
+  .silo{background:#0E0E16;border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden}
+  #siloCanvas{display:block;width:100%;height:auto;cursor:pointer}
+  .silotag{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:#6E6EA0}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px}
+  .panel h3{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--muted);margin-bottom:12px}
+  .floorhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+  .floorhead .fn{font-family:var(--sans);font-size:22px;font-weight:800;color:var(--ac-deep)}
+  .floorhead .fr{font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .engine{background:#0E0E16;border:1px solid var(--line);border-radius:6px;margin-bottom:12px}
+  #engineCanvas{display:block;width:100%;height:auto}
+  .readrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .readrow:last-child{border-bottom:none}
+  .readrow .k{color:var(--muted)} .readrow .v{font-weight:700}
+  .regime{font-family:var(--mono);font-size:13px;font-weight:800;letter-spacing:.06em;padding:3px 10px;border-radius:4px;color:#fff;display:inline-block}
+  .regime.order{background:var(--order)} .regime.chaos{background:var(--chaos)}
+  .controls{margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{font-family:var(--mono);font-size:12px;font-weight:700;padding:8px 14px;border:1px solid var(--ac);border-radius:4px;background:var(--ac);color:#fff;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--ac-deep)}
+  .floorbtns{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:12px}
+  .fbtn{font-family:var(--mono);font-size:12px;font-weight:700;padding:8px 4px;text-align:center;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ac-deep);cursor:pointer;transition:all .12s}
+  .fbtn:hover{background:var(--ac-soft)} .fbtn.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+  section{margin-top:38px}
+  .num{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--ac);font-weight:700}
+  h2{font-family:var(--sans);font-size:23px;font-weight:800;letter-spacing:-.015em;margin:6px 0 12px}
+  p{margin-bottom:12px;font-size:16px}
+  .eq{font-family:var(--mono);font-size:13.5px;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--ac);padding:12px 16px;margin:12px 0}
+  .pull{font-family:var(--sans);font-size:21px;font-weight:700;line-height:1.32;margin:22px 0;padding-left:18px;border-left:4px solid var(--ac);color:var(--ink)}
+  .pull span{color:var(--ac-deep)}
+  .ledger{margin-top:42px;border-top:3px solid var(--ink);padding-top:20px}
+  .ledger h3{font-family:var(--mono);font-size:12px;letter-spacing:.2em;margin-bottom:14px}
+  .ledger-row{display:grid;grid-template-columns:64px 1fr;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;font-family:var(--sans)}
+  .tag2{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;padding:2px 7px;border-radius:3px;font-weight:700;height:fit-content}
+  .lit2{background:var(--ink);color:var(--bg)} .bri2{background:var(--ac);color:#fff} .spec2{background:transparent;color:var(--ac-deep);border:1.5px dashed var(--ac-deep)}
+  .foot{margin-top:24px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE SHORTCUT</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+
+<header>
+  <div class="rail"><span>INSTRUMENT · <b>THE CHAOS SILO</b></span><span>ZERO COOL · #1B44E8</span></div>
+  <div class="kicker">A CHAOS ENGINE ON EVERY FLOOR · THE ROAD TO CHAOS, STOOD UPRIGHT</div>
+  <h1>The chaos <em>silo</em></h1>
+  <div class="sub">The dark door pointed off the cube along axis 4 — to a coordinate the binary rooms can't hold. You asked to reify that void into a silo and put a chaos engine on each floor. So here it is: a stack of logistic-map engines, tuned floor by floor up the period-doubling cascade, from a calm ground floor into full chaos at the top.</div>
+  <div class="readflag"><b>Two honest flags on the request.</b> The vector <span style="font-family:var(--mono)">0,0,0,0,5.1d,0,0,</span> has seven slots, not eight — I read axis-4 as the silo axis and pad the rest. And <b>5.1d</b> I take as "tops out near floor 5, with a nod to the fractional (non-integer) dimension real chaotic attractors have" — an interpretation, not a decode. Both are choices, marked so you can overrule them.</div>
+</header>
+
+<div class="stage">
+  <div class="silo">
+    <div class="silotag">THE SILO · bifurcation diagram · r rises ▲ · attractor spreads ▶</div>
+    <canvas id="siloCanvas" width="340" height="520"></canvas>
+  </div>
+
+  <div>
+    <div class="panel">
+      <div class="floorhead">
+        <span class="fn" id="floorName">FLOOR 0</span>
+        <span class="fr" id="floorR">r = 2.800</span>
+      </div>
+      <div class="engine"><canvas id="engineCanvas" width="560" height="240"></canvas></div>
+      <div class="readrow"><span class="k">chaos engine</span><span class="v" style="color:var(--ac-deep)">x → r·x·(1−x)</span></div>
+      <div class="readrow"><span class="k">Lyapunov exponent λ</span><span class="v" id="lyapVal" style="color:var(--ac-deep)">—</span></div>
+      <div class="readrow"><span class="k">regime</span><span class="v"><span class="regime order" id="regime">—</span></span></div>
+      <div class="readrow"><span class="k">in the real cube?</span><span class="v" id="inCube" style="color:var(--muted)">—</span></div>
+
+      <div class="floorbtns" id="floorbtns"></div>
+      <div class="controls">
+        <button class="btn" id="play">▶ run engine</button>
+        <button class="btn ghost" id="climbUp">▲ up</button>
+        <button class="btn ghost" id="climbDn">▼ down</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="num">§ WHAT THE SILO IS</div>
+  <h2>Every floor is the same engine, tuned to a different weather</h2>
+  <p>The chaos engine on each floor is the logistic map — the simplest equation that turns order into chaos by turning one knob, r:</p>
+  <div class="eq">x<sub>next</sub> = r · x · (1 − x) &nbsp;— the knob r is set by which floor you stand on</div>
+  <p>Climb the silo and r rises. On the ground floor the engine settles to a single value (calm). One floor up it splits to oscillate between two; up again, four; then eight — the <em>period-doubling cascade</em>. Near the top the doublings pile up without limit and the engine goes chaotic: its orbit never repeats, and two starts a hair apart diverge exponentially. The silo, read bottom to top, <em>is</em> the bifurcation diagram — the road to chaos, stood upright, with your floors marked on it.</p>
+  <p>The honest meter for "is this floor actually chaotic" is the <span style="font-family:var(--sans);font-weight:700">Lyapunov exponent λ</span>: negative means the engine is ordered (nearby orbits converge), positive means chaotic (they fly apart). Not every floor is chaotic — floor 4 (r = 3.83) is a period-3 <em>window</em>, an island of order sitting inside the chaotic sea. The instrument computes λ live and labels each floor by what it truly does, not by what "chaos engine" advertises.</p>
+  <div class="pull">A chaos engine is on every floor. Whether the floor is <span>calm or chaotic is what the Lyapunov exponent tells you</span> — and it doesn't flatter the brochure.</div>
+</section>
+
+<div class="ledger">
+  <h3>HONESTY LEDGER · THE CHAOS SILO</h3>
+  <div class="ledger-row"><span class="tag2 lit2">REAL</span><div>The logistic map and its period-doubling route to chaos are canonical, exact dynamics. Node-verified Lyapunov exponents per floor: r=2.8 → λ=−0.223 (period-1), 3.3 → −0.619 (period-2), 3.5 → −0.873 (period-4), 3.56 → −0.077 (period-8, near onset), 3.83 → −0.370 (period-3 window, order-in-chaos), 3.99 → +0.639 (chaotic). λ>0 ⇔ sensitive dependence. r=4 gives exactly λ=ln2.</div></div>
+  <div class="ledger-row"><span class="tag2 bri2">CHOSEN</span><div>Which r sits on which floor is my choice (picked to walk the cascade cleanly), as is using the logistic map as "the" chaos engine — Hénon, Lorenz, or the standard map would do as well. Floors 0 and 1 (coords 0,1) are the only real hypercube rooms on this axis; floors 2–5 are a constructed annex in the off-cube region — a built silo, not part of the original 256-room cube.</div></div>
+  <div class="ledger-row"><span class="tag2 spec2">NOTE</span><div>"5.1d" and the 7-slot vector are read, not decoded — flagged up top. The "fractional dimension" nod is real physics (chaotic attractors generally have non-integer, e.g. Hausdorff, dimension) but I'm inferring you meant it; say the word and I'll re-tune the silo (more floors, different engines per floor, a true fractal-dimension readout, or a genuinely multi-valued axis). The engine runs real chaos; the silo around it is an honest fiction built where the cube ran out.</div></div>
+</div>
+
+<div class="foot">THE CHAOS SILO · logistic engine per floor · live Lyapunov · period-doubling cascade · floors 0–1 real, 2–5 annex · Zero Cool · #1B44E8</div>
+
+</div>
+
+<script>
+(function(){
+  const floors=[
+    {n:0,r:2.800},{n:1,r:3.300},{n:2,r:3.500},{n:3,r:3.560},{n:4,r:3.830},{n:5,r:3.990}
+  ];
+  const R_LO=2.8, R_HI=4.0;
+  let cur=0, playing=false, orbit=[], ox=0.5, engRaf=null;
+
+  const sc=document.getElementById('siloCanvas'), sx=sc.getContext('2d');
+  const ec=document.getElementById('engineCanvas'), ex=ec.getContext('2d');
+
+  function logistic(r,x){return r*x*(1-x);}
+  function lyapunov(r){ let x=0.5; for(let i=0;i<800;i++)x=logistic(r,x); let s=0,N=6000; for(let i=0;i<N;i++){ x=logistic(r,x); s+=Math.log(Math.abs(r*(1-2*x))); } return s/N; }
+  function detectPeriod(r){ let x=0.5; for(let i=0;i<3000;i++)x=logistic(r,x); const seq=[]; for(let i=0;i<40;i++){x=logistic(r,x);seq.push(x);} for(let p=1;p<=16;p++){ let ok=true; for(let i=0;i<16;i++){ if(Math.abs(seq[i]-seq[i+p])>1e-5){ok=false;break;} } if(ok) return p; } return 0; }
+
+  // ---- render the silo (bifurcation diagram, r vertical) ----
+  function drawSilo(){
+    const W=sc.width,H=sc.height,padT=24,padB=20,padL=18,padR=14;
+    sx.fillStyle='#0E0E16'; sx.fillRect(0,0,W,H);
+    // bifurcation points: for each vertical pixel -> r; iterate; plot attractor x horizontally
+    sx.fillStyle='rgba(120,150,255,0.55)';
+    for(let py=padT;py<H-padB;py++){
+      const r=R_HI-(py-padT)/(H-padT-padB)*(R_HI-R_LO); // top = R_HI
+      let x=0.5; for(let i=0;i<180;i++)x=logistic(r,x);
+      for(let i=0;i<180;i++){ x=logistic(r,x); const sxp=padL+x*(W-padL-padR); sx.fillRect(sxp,py,0.7,0.7); }
+    }
+    // floor markers
+    floors.forEach(f=>{
+      const py=padT+(R_HI-f.r)/(R_HI-R_LO)*(H-padT-padB);
+      const on=(f.n===cur);
+      sx.strokeStyle=on?'#1B44E8':'rgba(221,226,255,0.35)'; sx.lineWidth=on?2:1;
+      sx.beginPath(); sx.moveTo(padL-6,py); sx.lineTo(W-padR,py); sx.stroke();
+      sx.fillStyle=on?'#DDE2FF':'#8888AA'; sx.font=(on?'bold ':'')+'10px monospace'; sx.textAlign='left';
+      sx.fillText('F'+f.n+'  r='+f.r.toFixed(2), padL-4, py-4);
+    });
+    sx.fillStyle='#6E6EA0'; sx.font='9px monospace'; sx.textAlign='right';
+    sx.fillText('chaos ▲', W-padR, padT-8);
+    sx.textAlign='left'; sx.fillText('order ▼', padL, H-6);
+  }
+
+  // ---- render the current floor's engine (cobweb) ----
+  function drawEngine(){
+    const W=ec.width,H=ec.height,pad=24;
+    ex.fillStyle='#0E0E16'; ex.fillRect(0,0,W,H);
+    const r=floors[cur].r;
+    const X=x=> pad + x*(W-2*pad);
+    const Y=y=> (H-pad) - y*(H-2*pad);
+    // diagonal y=x
+    ex.strokeStyle='rgba(160,160,190,0.4)'; ex.lineWidth=1; ex.beginPath(); ex.moveTo(X(0),Y(0)); ex.lineTo(X(1),Y(1)); ex.stroke();
+    // parabola y=r x(1-x)
+    ex.strokeStyle='#6E8CFF'; ex.lineWidth=1.6; ex.beginPath();
+    for(let i=0;i<=200;i++){ const x=i/200; const y=logistic(r,x); if(i===0)ex.moveTo(X(x),Y(y)); else ex.lineTo(X(x),Y(y)); }
+    ex.stroke();
+    // cobweb orbit
+    if(orbit.length>1){
+      ex.strokeStyle='rgba(138,34,68,0.85)'; ex.lineWidth=1;
+      ex.beginPath();
+      let x=orbit[0]; ex.moveTo(X(x),Y(0));
+      for(let i=1;i<orbit.length;i++){ const y=orbit[i]; ex.lineTo(X(x),Y(y)); ex.lineTo(X(y),Y(y)); x=y; }
+      ex.stroke();
+      // current point
+      ex.fillStyle='#B0243C'; ex.beginPath(); ex.arc(X(orbit[orbit.length-1]),Y(logistic(r,orbit[orbit.length-1])),3,0,7); ex.fill();
+    }
+    ex.fillStyle='#6E6EA0'; ex.font='9px monospace'; ex.textAlign='left';
+    ex.fillText('cobweb: xₙ → xₙ₊₁ bouncing between parabola and diagonal', pad, 14);
+  }
+
+  function updateReadouts(){
+    const f=floors[cur], r=f.r;
+    document.getElementById('floorName').textContent='FLOOR '+f.n;
+    document.getElementById('floorR').textContent='r = '+r.toFixed(3);
+    const L=lyapunov(r), P=detectPeriod(r);
+    document.getElementById('lyapVal').textContent=(L>=0?'+':'')+L.toFixed(4);
+    const reg=document.getElementById('regime');
+    if(L>0.0005){ reg.className='regime chaos'; reg.textContent='CHAOS · λ>0'; }
+    else { reg.className='regime order'; reg.textContent=(P>0?('ORDER · period-'+P):'ORDER'); }
+    document.getElementById('inCube').textContent = (f.n<=1) ? 'yes — a real cube room (coord '+f.n+')' : 'no — off-cube annex (coord '+f.n+' > 1)';
+    document.getElementById('inCube').style.color = (f.n<=1)?'var(--order)':'var(--void)';
+    document.querySelectorAll('.fbtn').forEach((b,i)=>b.classList.toggle('on',i===cur));
+  }
+
+  function selectFloor(i){ cur=((i%floors.length)+floors.length)%floors.length; ox=0.5; orbit=[ox]; drawSilo(); updateReadouts(); drawEngine(); }
+
+  function stepEngine(){ if(!playing) return; const r=floors[cur].r; ox=logistic(r,ox); orbit.push(ox); if(orbit.length>90) orbit.shift(); drawEngine(); engRaf=setTimeout(()=>requestAnimationFrame(stepEngine),60); }
+
+  // floor buttons
+  const fb=document.getElementById('floorbtns');
+  floors.forEach(f=>{ const b=document.createElement('div'); b.className='fbtn'; b.textContent='F'+f.n; b.onclick=()=>selectFloor(f.n); fb.appendChild(b); });
+  document.getElementById('play').onclick=function(){ playing=!playing; this.textContent=playing?'❚❚ pause':'▶ run engine'; if(playing){ if(orbit.length===0)orbit=[ox]; stepEngine(); } };
+  document.getElementById('climbUp').onclick=()=>selectFloor(cur+1);
+  document.getElementById('climbDn').onclick=()=>selectFloor(cur-1);
+  sc.addEventListener('click',e=>{ const rect=sc.getBoundingClientRect(); const py=(e.clientY-rect.top)/rect.height*sc.height; const r=R_HI-(py-24)/(sc.height-44)*(R_HI-R_LO); // nearest floor
+    let best=0,bd=1e9; floors.forEach(f=>{const d=Math.abs(f.r-r); if(d<bd){bd=d;best=f.n;}}); selectFloor(best); });
+
+  selectFloor(0);
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SHORTCUT &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

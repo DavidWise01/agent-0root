@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE PROBABILITY ENGINE · THE GAUNTLET · ZERO COOL</title>
+<style>
+  :root{
+    --bg:#ECEBE7; --panel:#F6F5F2; --panel2:#E3E1DB;
+    --ink:#191817; --muted:#6E6A63; --line:#CFCCC4;
+    --ac:#1B44E8; --ac-deep:#1330A0; --ac-soft:#DDE2FF;
+    --plus:#1B44E8; --minus:#8A2244; --engine:#1B7A5A;
+    --mono:ui-monospace,'SF Mono','Cascadia Code',Menlo,Consolas,monospace;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+    --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:var(--serif);line-height:1.55}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px 80px}
+  header{padding:44px 0 22px;border-bottom:3px solid var(--ink)}
+  .rail{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--muted)}
+  .rail b{color:var(--ac);font-weight:700}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--ac);font-weight:700;margin-top:18px}
+  h1{font-family:var(--sans);font-size:clamp(38px,7vw,74px);font-weight:800;letter-spacing:-.045em;line-height:.9;margin-top:8px}
+  h1 em{font-style:normal;color:var(--ac)}
+  .sub{font-family:var(--sans);font-size:17px;color:var(--muted);margin-top:14px;font-weight:500;max-width:680px}
+  .stage{display:grid;grid-template-columns:360px 1fr;gap:20px;margin-top:24px}
+  @media(max-width:760px){.stage{grid-template-columns:1fr}}
+  .shaft{background:#0E0E16;border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden}
+  #gCanvas{display:block;width:100%;height:auto;touch-action:none}
+  .banner{position:absolute;top:0;left:0;right:0;text-align:center;font-family:var(--sans);font-weight:800;font-size:20px;padding:10px;pointer-events:none;opacity:0;transition:opacity .2s}
+  .banner.show{opacity:1}
+  .banner.win{color:#63D6A0} .banner.plus{color:#6E8CFF} .banner.minus{color:#E0788F}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px}
+  .panel h3{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--muted);margin-bottom:12px}
+  .odds{border:1.5px solid var(--ac);border-radius:6px;padding:12px 14px;background:#fff;margin-bottom:14px}
+  .odds .l{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--muted);text-align:center}
+  .oddsbar{display:flex;height:26px;border-radius:4px;overflow:hidden;margin:8px 0;border:1px solid var(--line)}
+  .oddsbar .m{background:var(--minus);display:flex;align-items:center;justify-content:flex-start;padding-left:8px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;transition:width .3s}
+  .oddsbar .p{background:var(--plus);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700;transition:width .3s}
+  .odds .ratio{text-align:center;font-family:var(--mono);font-size:15px;font-weight:800;color:var(--ac-deep)}
+  .engineStat{text-align:center;border:1px solid var(--engine);border-radius:6px;padding:10px;background:#EAF3EE;margin-bottom:12px}
+  .engineStat .n{font-family:var(--mono);font-size:26px;font-weight:800;color:var(--engine)}
+  .engineStat .l{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted)}
+  .readrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--line)}
+  .readrow:last-child{border-bottom:none}
+  .readrow .k{color:var(--muted)} .readrow .v{font-weight:700;color:var(--ac-deep)}
+  .cool{height:6px;background:var(--panel2);border-radius:3px;overflow:hidden;margin-top:4px}
+  .cool .f{height:100%;background:var(--ac);width:100%}
+  .steer{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .sbtn{font-family:var(--mono);font-size:15px;font-weight:800;padding:16px;border-radius:6px;border:2px solid;cursor:pointer;user-select:none;text-align:center}
+  .sbtn.m{border-color:var(--minus);color:var(--minus);background:#fff}
+  .sbtn.m:active{background:var(--minus);color:#fff}
+  .sbtn.p{border-color:var(--plus);color:var(--plus);background:#fff}
+  .sbtn.p:active{background:var(--plus);color:#fff}
+  .controls{margin-top:12px;display:flex;gap:8px}
+  .btn{font-family:var(--mono);font-size:12px;font-weight:700;padding:9px 14px;border:1px solid var(--ac);border-radius:4px;background:var(--ac);color:#fff;cursor:pointer;flex:1}
+  .btn.ghost{background:transparent;color:var(--ac-deep)}
+  .hint{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:10px;text-align:center}
+  section{margin-top:38px}
+  .num{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--ac);font-weight:700}
+  h2{font-family:var(--sans);font-size:23px;font-weight:800;letter-spacing:-.015em;margin:6px 0 12px}
+  p{margin-bottom:12px;font-size:16px}
+  .pull{font-family:var(--sans);font-size:21px;font-weight:700;line-height:1.32;margin:22px 0;padding-left:18px;border-left:4px solid var(--ac);color:var(--ink)}
+  .pull span{color:var(--ac-deep)}
+  .ledger{margin-top:42px;border-top:3px solid var(--ink);padding-top:20px}
+  .ledger h3{font-family:var(--mono);font-size:12px;letter-spacing:.2em;margin-bottom:14px}
+  .ledger-row{display:grid;grid-template-columns:64px 1fr;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;font-family:var(--sans)}
+  .tag2{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;padding:2px 7px;border-radius:3px;font-weight:700;height:fit-content}
+  .lit2{background:var(--ink);color:var(--bg)} .bri2{background:var(--ac);color:#fff} .spec2{background:transparent;color:var(--ac-deep);border:1.5px dashed var(--ac-deep)}
+  .foot{margin-top:24px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE SHORTCUT</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+
+<header>
+  <div class="rail"><span>INSTRUMENT · <b>THE PROBABILITY ENGINE</b></span><span>ZERO COOL · #1B44E8</span></div>
+  <div class="kicker">THE VOID ROOM'S TENANT · CLIMB THE CHAOS TO REACH IT</div>
+  <h1>The probability <em>engine</em></h1>
+  <div class="sub">The empty room finally has something in it. The probability engine sits at the void coordinate — and the only way up is through the chaos tower: ten floors of noise, d1 to d10, each buffeting harder than the last. You start dead-centre at 1:1 between team + and team −. Reach the top and the engine resolves. Touch a wall and a team takes you.</div>
+</header>
+
+<div class="stage">
+  <div class="shaft">
+    <div class="banner" id="banner"></div>
+    <canvas id="gCanvas" width="360" height="520"></canvas>
+  </div>
+
+  <div>
+    <div class="panel">
+      <div class="engineStat">
+        <div class="n" id="reachN">0</div>
+        <div class="l">TIMES THE ENGINE WAS REACHED · P(reach) = <span id="reachP">—</span></div>
+      </div>
+
+      <h3>THE ODDS · started 1:1 · teams + vs −</h3>
+      <div class="odds">
+        <div class="oddsbar"><div class="m" id="obM" style="width:50%">−</div><div class="p" id="obP" style="width:50%">+</div></div>
+        <div class="ratio" id="ratio">1 : 1</div>
+        <div class="l" id="capCount">0 captures so far</div>
+      </div>
+
+      <div class="readrow"><span class="k">status</span><span class="v" id="status">ready</span></div>
+      <div class="readrow"><span class="k">floor</span><span class="v" id="floor">—</span></div>
+      <div class="readrow"><span class="k">chaos on this floor</span><span class="v" id="chaosLvl">—</span></div>
+      <div class="readrow"><span class="k">best floor reached</span><span class="v" id="best">d0</span></div>
+      <div><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px">NUDGE COOLDOWN</div><div class="cool"><div class="f" id="coolFill"></div></div></div>
+
+      <div class="steer">
+        <div class="sbtn m" id="btnM">◀ − nudge</div>
+        <div class="sbtn p" id="btnP">+ nudge ▶</div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="startBtn">▶ start climb</button>
+        <button class="btn ghost" id="resetBtn">↺ reset odds</button>
+      </div>
+      <div class="hint">keys: ← / A nudge −  ·  → / D nudge +  ·  nudges are rate-limited — you cannot hold centre, only time it</div>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="num">§ WHY IT'S HARD, AND WHY THE ODDS ARE HONEST</div>
+  <h2>Real chaos, limited hands, an empirical engine</h2>
+  <p>Each team pushes with its own chaos stream — a deterministic logistic map, not a random-number call. Team + shoves the token right, team − shoves it left, and because the two streams have identical statistics the push is <em>symmetric</em>: with no input, the token is captured by + and − equally often — a true 1:1. That symmetry is the honest floor the whole game stands on (verified: no-input reach ≈ 5%, captures ≈ 48% / 47%).</p>
+  <p>What makes it adversarial is momentum plus <em>limited hands</em>. The token drifts with inertia, and your nudges are rate-limited — you can't clamp it to the centre, only time impulses against a random walk that grows more violent every floor (d10 buffets far harder than d1). Reaching the engine on luck alone is a ~1-in-20 event; skill bends that upward, but the top floors can still tear you to a wall.</p>
+  <div class="pull">The odds start at 1:1 and stay honest — <span>the engine reports the frequencies you actually produce,</span> not a number I picked. Beating the chaos is the only thing that moves them.</div>
+  <p>The <span style="font-family:var(--sans);font-weight:700">probability engine</span> at the top is just that: an empirical tally. Every attempt drops into it — reached, captured by +, captured by − — and it shows the running frequencies. It is the tenant the void room earned: a machine that turns your fight against the chaos tower into a measured probability.</p>
+</section>
+
+<div class="ledger">
+  <h3>HONESTY LEDGER · THE PROBABILITY ENGINE</h3>
+  <div class="ledger-row"><span class="tag2 lit2">REAL</span><div>The noise is deterministic chaos — two logistic streams (r ramps 3.85→4.0 with height), not Math.random. The baseline is genuinely symmetric: Node Monte-Carlo (6000 runs, no input) gives reach ≈ 5%, + captures ≈ 48%, − captures ≈ 47% — a true 1:1. The odds and P(reach) shown are empirical frequencies of your actual attempts, computed live, not assigned.</div></div>
+  <div class="ledger-row"><span class="tag2 bri2">CHOSEN</span><div>Difficulty knobs are game design, not physics: chaos base strength, the per-floor ramp (d10 hardest), nudge power, the cooldown, momentum/damping, and climb speed. Tuned so no-input ≈ 5% reach, reactive play ≈ 70–80%, near-perfect anticipation approaches 100% — a real skill band. The 10 floors echo the tower's d1–d10; here they are noise sources, not the tower's exact attractors.</div></div>
+  <div class="ledger-row"><span class="tag2 spec2">NOTE</span><div>This is the void room's tenant, at last: the door 0,0,0,0,5,0,0,0 that read ∅ now leads up through the chaos to a probability engine. Nothing here is faked — the chaos is real chaos, the odds are your own frequencies, and 1:1 is where everyone starts. Want it truly two-player (a + human vs a − human), or the floors driven by the tower's actual attractors instead of logistic streams? Say so.</div></div>
+</div>
+
+<div class="foot">THE PROBABILITY ENGINE · adversarial chaos gauntlet · symmetric 1:1 baseline (verified) · empirical odds · deterministic-chaos noise · Zero Cool · #1B44E8</div>
+
+</div>
+
+<script>
+(function(){
+  var cvs=document.getElementById('gCanvas'), ctx=cvs.getContext('2d');
+  var W=cvs.width, H=cvs.height, pad=30;
+  // physics (Node-locked)
+  var BASE=12, RAMP=2.0, NUDGE=0.9, CD=0.25, DAMP=0.988, CLIMB=1/12, DT=1/60;
+  var x=0, v=0, y=0, cP=0.31, cM=0.63, cool=0, state='ready', trail=[];
+  var tally={reach:0, plus:0, minus:0}, best=0;
+  var leftHeld=false, rightHeld=false, bannerT=0;
+
+  function reset(){ x=0; v=0; y=0; cP=0.2+0.6*Math.random(); cM=0.2+0.6*Math.random(); cool=0; trail=[]; }
+  function startClimb(){ reset(); state='climbing'; }
+
+  function nudge(dir){ if(state!=='climbing'||cool>0) return; v += (dir==='+'? NUDGE : -NUDGE); cool=CD; }
+
+  function tx(xx){ return W/2 + xx*(W/2 - pad); }
+  function ty(yy){ return (H-pad) - yy*(H-2*pad); }
+
+  function draw(){
+    ctx.fillStyle='#0E0E16'; ctx.fillRect(0,0,W,H);
+    // team-tinted halves
+    ctx.fillStyle='rgba(138,34,68,0.10)'; ctx.fillRect(0,0,W/2,H);
+    ctx.fillStyle='rgba(27,68,232,0.10)'; ctx.fillRect(W/2,0,W/2,H);
+    // walls
+    ctx.fillStyle='rgba(138,34,68,0.55)'; ctx.fillRect(pad-6,0,4,H);
+    ctx.fillStyle='rgba(27,68,232,0.55)'; ctx.fillRect(W-pad+2,0,4,H);
+    ctx.fillStyle='#E0788F'; ctx.font='bold 10px monospace'; ctx.textAlign='left'; ctx.fillText('− TEAM',6,H-8);
+    ctx.fillStyle='#6E8CFF'; ctx.textAlign='right'; ctx.fillText('+ TEAM',W-6,H-8);
+    // centre line
+    ctx.strokeStyle='rgba(180,180,210,0.18)'; ctx.setLineDash([3,5]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(W/2,pad); ctx.lineTo(W/2,H-pad); ctx.stroke(); ctx.setLineDash([]);
+    // floor markers d1..d10 + engine
+    for(var k=1;k<=10;k++){ var fy=ty(k/10 - 0.006); ctx.strokeStyle='rgba(120,120,170,'+(0.12+0.03*k)+')'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad,fy); ctx.lineTo(W-pad,fy); ctx.stroke(); ctx.fillStyle='#6E6EA0'; ctx.font='9px monospace'; ctx.textAlign='left'; ctx.fillText('d'+k,pad+2,fy-2); }
+    // the probability engine at top (void)
+    var ey=ty(1.0); var glow=0.5+0.5*Math.sin(Date.now()/300);
+    ctx.fillStyle='rgba(27,122,90,'+(0.25+0.3*glow)+')'; ctx.fillRect(pad,ey-14,W-2*pad,16);
+    ctx.fillStyle='#63D6A0'; ctx.font='bold 10px monospace'; ctx.textAlign='center'; ctx.fillText('◆ PROBABILITY ENGINE ◆',W/2,ey-3);
+    // start line
+    var sy=ty(0); ctx.strokeStyle='rgba(200,200,220,0.3)'; ctx.beginPath(); ctx.moveTo(pad,sy); ctx.lineTo(W-pad,sy); ctx.stroke();
+    ctx.fillStyle='#889'; ctx.textAlign='center'; ctx.fillText('START · 1:1',W/2,sy+12);
+    // trail
+    for(var i=0;i<trail.length;i++){ var a=i/trail.length; ctx.fillStyle='rgba(120,150,255,'+(a*0.5)+')'; ctx.beginPath(); ctx.arc(tx(trail[i][0]),ty(trail[i][1]),2+a*2,0,7); ctx.fill(); }
+    // token
+    if(state!=='ready'){ var px=tx(x),py=ty(y); var col = x>0.02?'#6E8CFF':(x<-0.02?'#E0788F':'#DDE2FF');
+      ctx.shadowColor=col; ctx.shadowBlur=12; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(px,py,7,0,7); ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke(); }
+  }
+
+  function step(){
+    if(state==='climbing'){
+      var rP=3.85+0.15*y, rM=3.85+0.15*y; cP=rP*cP*(1-cP); cM=rM*cM*(1-cM);
+      var strength=BASE*(1+RAMP*y);
+      v += strength*(cP-cM)*DT;
+      if(leftHeld) nudge('-'); if(rightHeld) nudge('+');
+      if(cool>0) cool-=DT;
+      v*=DAMP; x+=v*DT; y+=CLIMB*DT;
+      trail.push([x,y]); if(trail.length>26) trail.shift();
+      // outcomes
+      if(x>=1){ tally.plus++; endAttempt('plus'); }
+      else if(x<=-1){ tally.minus++; endAttempt('minus'); }
+      else if(y>=1){ tally.reach++; endAttempt('reach'); }
+      var fl=Math.min(10,Math.floor(y*10)+1); if(fl>best) best=fl;
+      document.getElementById('floor').textContent='d'+fl;
+      document.getElementById('chaosLvl').textContent=(strength).toFixed(1)+' ×';
+      document.getElementById('coolFill').style.width=(100*(1-Math.max(0,cool)/CD))+'%';
+    }
+    updateHUD();
+  }
+
+  function endAttempt(kind){
+    var b=document.getElementById('banner');
+    if(kind==='reach'){ b.textContent='✦ ENGINE REACHED ✦'; b.className='banner win show'; }
+    else if(kind==='plus'){ b.textContent='+ TEAM CAPTURE'; b.className='banner plus show'; }
+    else { b.textContent='− TEAM CAPTURE'; b.className='banner minus show'; }
+    state='cooldown'; bannerT=1.1;
+  }
+
+  function updateHUD(){
+    document.getElementById('reachN').textContent=tally.reach;
+    var total=tally.reach+tally.plus+tally.minus;
+    document.getElementById('reachP').textContent = total>0 ? (100*tally.reach/total).toFixed(1)+'%' : '—';
+    var caps=tally.plus+tally.minus;
+    var pP = caps>0 ? tally.plus/caps : 0.5, pM = caps>0 ? tally.minus/caps : 0.5;
+    document.getElementById('obP').style.width=(pP*100)+'%';
+    document.getElementById('obM').style.width=(pM*100)+'%';
+    document.getElementById('obP').textContent='+ '+tally.plus;
+    document.getElementById('obM').textContent=tally.minus+' −';
+    // ratio in lowest terms-ish
+    var r='1 : 1';
+    if(caps>0){ if(tally.plus>=tally.minus && tally.minus>0) r=(tally.plus/tally.minus).toFixed(2)+' : 1'; else if(tally.minus>tally.plus && tally.plus>0) r='1 : '+(tally.minus/tally.plus).toFixed(2); else if(tally.plus>0&&tally.minus===0) r=tally.plus+' : 0'; else if(tally.minus>0&&tally.plus===0) r='0 : '+tally.minus; }
+    document.getElementById('ratio').textContent=r;
+    document.getElementById('capCount').textContent=caps+' captures · '+total+' attempts';
+    document.getElementById('best').textContent='d'+best;
+    document.getElementById('status').textContent=state;
+  }
+
+  function loop(){
+    step(); draw();
+    if(state==='cooldown'){ bannerT-=1/60; if(bannerT<=0){ document.getElementById('banner').className='banner'; startClimb(); } }
+    requestAnimationFrame(loop);
+  }
+
+  // input
+  document.addEventListener('keydown',function(e){ if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){ leftHeld=true; if(state==='climbing')nudge('-'); } if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){ rightHeld=true; if(state==='climbing')nudge('+'); } });
+  document.addEventListener('keyup',function(e){ if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A') leftHeld=false; if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') rightHeld=false; });
+  function bind(id,dir){ var el=document.getElementById(id);
+    el.addEventListener('pointerdown',function(ev){ ev.preventDefault(); if(dir<0)leftHeld=true; else rightHeld=true; nudge(dir<0?'-':'+'); });
+    el.addEventListener('pointerup',function(){ if(dir<0)leftHeld=false; else rightHeld=false; });
+    el.addEventListener('pointerleave',function(){ if(dir<0)leftHeld=false; else rightHeld=false; });
+  }
+  bind('btnM',-1); bind('btnP',1);
+  document.getElementById('startBtn').onclick=function(){ if(state==='ready'||state==='cooldown') { document.getElementById('banner').className='banner'; startClimb(); } };
+  document.getElementById('resetBtn').onclick=function(){ tally={reach:0,plus:0,minus:0}; best=0; state='ready'; reset(); document.getElementById('banner').className='banner'; };
+
+  reset(); updateHUD(); loop();
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SHORTCUT &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>
