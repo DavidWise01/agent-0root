@@ -73,6 +73,21 @@ a.post .pk{font-size:14px;color:var(--dim);margin-top:8px}
 .appeal .haiku .run.err b,.appeal .haiku .run.err{color:#ff2d95}
 .appeal .haiku .ops{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;margin-top:5px;letter-spacing:.3px}
 .appeal .haiku .ops .st{color:var(--dim);opacity:.8}
+.domains{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:22px}
+.dcard{background:var(--panel);border:3px solid var(--c);box-shadow:0 0 0 3px #0a0e0a,0 0 16px color-mix(in srgb,var(--c) 30%,transparent);padding:16px 18px}
+.dcard .dtop{display:flex;align-items:center;gap:14px}
+.dcard canvas{width:76px;height:76px;image-rendering:pixelated;filter:drop-shadow(0 0 6px var(--c))}
+.dcard .dt{font-family:'Press Start 2P',ui-monospace,monospace;font-size:13px;color:var(--c);text-shadow:2px 2px 0 rgba(0,0,0,.5)}
+.dcard .din{font-size:14px;color:var(--dim);margin-top:6px}
+.dcard .din b{color:var(--txt)}
+.dcard .dsrc{font-family:'VT323',ui-monospace,monospace;font-size:18px;line-height:1.4;color:#cfe8d0;margin-top:12px;border-left:3px solid var(--c);padding:6px 0 6px 12px;background:linear-gradient(90deg,color-mix(in srgb,var(--c) 10%,transparent),transparent)}
+.dcard .dsrc .k{color:#00f5ff}.dcard .dsrc .s{color:#ffd23f}.dcard .dsrc .num{color:#ff2d95}.dcard .dsrc .ar{color:var(--c)}
+.dcard .drun{font-family:'VT323',ui-monospace,monospace;font-size:18px;color:var(--dim);margin-top:10px;border-top:1px dashed color-mix(in srgb,var(--c) 30%,transparent);padding-top:8px}
+.dcard .drun b{color:#39fc6b;font-size:20px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.dcard .drun.err b,.dcard .drun.err{color:#ff2d95}
+.dcard .drun .ops{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;margin-top:4px}
+.dcard .dopen{display:inline-block;margin-top:11px;font-family:'Press Start 2P',ui-monospace,monospace;font-size:8px;color:var(--c);text-decoration:none;opacity:.85}
+.dcard .dopen:hover{opacity:1;text-decoration:underline}
 @media(max-width:640px){.appeal{grid-template-columns:1fr;gap:12px}.appeal .badge{flex-direction:row;justify-content:flex-start}}
 .octaboard{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
 .octablank{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:2px dashed rgba(37,92,44,.45);color:#2f5a37;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9px;line-height:2;min-height:200px}
@@ -133,6 +148,10 @@ a.post .pk{font-size:14px;color:var(--dim);margin-top:8px}
 <h2>&#9642; THE OCTAGONS — all 8 appeals, laid out like WORLD I</h2>
 <div class="crt"><span class="tag">8&times;8</span> Each appeal is a domain <b>octagon</b>, mirrored on World I: its domains ring a central cubit, empty seats awaiting the rest. SPAWN holds the 3 founding works; the other seven are fresh boards.</div>
 <div class="octaboard" id="octaboard"></div>
+
+<h2>&#9642; THE DOMAINS // seated works, each a runnable I-13 program</h2>
+<div class="crt"><span class="tag y">RUN</span> The works seated in the octagons above &mdash; each carries a little <b>I-13 program</b> that returns its signature number: the language&rsquo;s 13 forms, the factory&rsquo;s stations, the lattice folded 8192&rarr;root, the lens&rsquo; bent angle, 2048 doubled. Compiled to IVM-13 and executed live.</div>
+<div class="domains" id="domainlist"></div>
 
 <h2>&#9642; FIRST POSTS</h2>
 <div class="posts" id="posts"></div>
@@ -327,6 +346,22 @@ function renderAppeals(list){var ah=document.getElementById('appeals');if(!ah)re
     +(hk?'<div class="haiku"><div class="hh">HAIKU &middot; a runnable I-13 program</div>'+hk+runline+'</div>':'')
    +'</div>';
   ah.appendChild(t);drawIcon(t.querySelector('canvas'),ICONS[a.icon]||ICONS.spawn,col);});}
+// THE DOMAINS — each seated work carries its own runnable I-13 snippet (compiled + executed live)
+function renderDomains(appeals){var host=document.getElementById('domainlist');if(!host)return;host.innerHTML='';
+ var rows=[];(appeals||[]).forEach(function(a){(a.domains||[]).forEach(function(d){rows.push({d:d,ap:a});});});
+ rows.forEach(function(x){var d=x.d,col=d.accent||'#39fc6b';var src=d.i13||[];
+  var t=document.createElement('div');t.className='dcard';t.style.setProperty('--c',col);
+  var code=src.map(function(l){return i13hl(l);}).join('<br>');
+  var runline='';
+  if(src.length){try{var r=I13.run(src.join('\n'));
+    var tally=r.hist.map(function(cnt,i){return cnt?I13.OPS[i]+'·'+cnt:null;}).filter(Boolean).join('  ');
+    runline='<div class="drun">&#9654; <b>'+esc(i13val(r.v))+'</b><div class="ops">'+tally+'  &middot; '+r.steps+' steps</div></div>';
+   }catch(e){runline='<div class="drun err">&#9654; '+esc(e.message)+'</div>';}}
+  t.innerHTML='<div class="dtop"><canvas width="96" height="96"></canvas>'
+    +'<div><div class="dt">'+d.title+'</div><div class="din">in <b>'+x.ap.name+'</b></div></div></div>'
+   +(code?'<div class="dsrc">'+code+'</div>':'')+runline
+   +'<a class="dopen" href="'+d.slug+'.html">open the sphere &rarr;</a>';
+  host.appendChild(t);drawIcon(t.querySelector('canvas'),ICONS[d.icon]||ICONS.loot,col);});}
 // I-13 opcode CHARACTERS — each opcode its OWN sprite: a pixel coder (hue-shifted per the skill)
 // + a distinct floating glyph for what the opcode does. Also varies hat/hair per opcode.
 var GLYPHS={
@@ -443,6 +478,7 @@ fetch('fold.json').then(function(r){return r.json();}).then(function(d){
   renderAppeals(d.appeals);
   renderCorpus(d.corpus);
   renderOctagons(d.appeals);
+  renderDomains(d.appeals);
   var host=document.getElementById('posts');
   (d.spheres||[]).forEach(function(s){
     var a=document.createElement('a');a.className='post';a.href=(s.slug.indexOf('../')===0?s.slug+'.html':s.slug+'.html');
