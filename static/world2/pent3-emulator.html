@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PENT-3 — a balanced-ternary transcriber ISA</title>
+<style>
+  :root{
+    --bg:#0C1016; --bg-2:#141A24; --bg-3:#1C2230; --ink:#E7E9F2; --soft:#8C92A6; --rule:#283041;
+    --write:#D2A24B; --held:#8C92A6; --read:#5BC8E0; --seam:#E9C46A; --pc:#6FB87E; --neg:#9B5DE5;
+    --lit:#6FB87E; --bri:#D2A24B; --spec:#D2705F;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;line-height:1.5}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  .wrap{max-width:1000px;margin:0 auto;padding:26px 22px 70px}
+  h1{font-size:clamp(22px,3.5vw,32px);margin:0;font-weight:600}
+  .sub{max-width:78ch;margin:12px 0 0;color:#c7ccd8;font-size:16px} .sub b{color:var(--ink)}
+  .byline{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.08em;color:var(--soft);margin:10px 0 0}
+  .grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin:22px 0 0}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--bg-2);border:1px solid var(--rule);padding:14px 15px}
+  .card h3{margin:0 0 10px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);font-family:ui-monospace,Menlo,monospace;font-weight:400}
+  .word{font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:2px;display:inline-flex;gap:3px}
+  .trit{display:inline-block;width:20px;text-align:center;border-radius:3px}
+  .t-w{color:var(--write)} .t-h{color:var(--held)} .t-r{color:var(--read)}
+  .t-seam{border:1px solid var(--seam);}
+  .prog{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  .prow{display:flex;align-items:center;gap:10px;padding:5px 6px;border-bottom:1px solid var(--rule)}
+  .prow.cur{background:rgba(111,184,126,0.10);border-left:2px solid var(--pc)}
+  .prow .idx{color:var(--soft);width:18px} .prow .nm{width:62px} .prow .ef{color:var(--soft);font-size:11.5px}
+  .nm-w{color:var(--write)} .nm-h{color:var(--held)} .nm-r{color:var(--read)}
+  .reg{font-family:ui-monospace,Menlo,monospace;font-size:13px;display:flex;align-items:center;gap:10px;margin:0 0 8px}
+  .reg .k{color:var(--soft);width:60px} .reg .v{color:var(--ink)}
+  .stack{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--soft)} .stack b{color:var(--ink)}
+  .decode{text-align:center;padding:8px 0}
+  .dir{font-family:ui-monospace,Menlo,monospace;font-size:22px;font-weight:600;letter-spacing:.06em}
+  .dir-w{color:var(--write)} .dir-h{color:var(--held)} .dir-r{color:var(--read)}
+  .mir{margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule)}
+  .mir .lab{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--neg)}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  button{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:var(--bg-3);border:1px solid var(--rule);padding:8px 12px;cursor:pointer}
+  button:hover{border-color:var(--soft)} button.go{border-color:var(--pc);color:#a8e0b6} button.rev{border-color:var(--neg);color:#c4b0e8}
+  input[type=number]{font-family:ui-monospace,Menlo,monospace;background:var(--bg-3);border:1px solid var(--rule);color:var(--ink);padding:5px 8px;width:80px}
+  .fixed{margin-top:14px;background:var(--bg-2);border:1px solid var(--rule);border-left:3px solid var(--seam);padding:12px 14px;font-size:13px;color:#c7ccd8}
+  .fixed .w{font-family:ui-monospace,Menlo,monospace;color:var(--seam)}
+  .tiers{font-size:12px;color:var(--soft);line-height:1.5;margin-top:14px} .tiers .row{display:flex;gap:8px;margin:0 0 7px}
+  .tag{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border:1px solid;height:fit-content;white-space:nowrap}
+  .tag.lit{color:var(--lit);border-color:var(--lit)} .tag.bri{color:var(--bri);border-color:var(--bri)} .tag.spec{color:var(--spec);border-color:var(--spec)}
+  .verdict{margin-top:14px;font-family:ui-monospace,Menlo,monospace;font-size:13px;padding:10px 12px;border:1px solid var(--pc);color:#a8e0b6}
+  footer{margin:22px 0 0;color:var(--soft);font-size:12.5px;max-width:80ch;line-height:1.6} footer b{color:var(--ink)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#39fc6b}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+  <h1>PENT-3 — a transcriber ISA in balanced ternary</h1>
+  <p class="sub">The veracity test, executable. Five trits, 243 states, each word <b class="mono">⟨t₄ t₃ t₂ t₁ t₀⟩</b>. The leading trit is the <b style="color:var(--write)">direction</b> — <b style="color:var(--write)">− write/in</b>, <b style="color:var(--held)">0 held/turn</b>, <b style="color:var(--read)">+ read/out</b> — so negating a word flips write↔read. Because <b>negation is just flipping every trit</b>, subtraction is addition of a negated operand (no SUB hardware), the inverse of any instruction is its trit-negation, and <b class="mono">⟨0 0 0 0 0⟩ = 0</b> is the one word that is its own negation: the held turn, the <b class="mono">g·g</b> seam. This isn't described — it runs. Step it, then prove it: run a program, then run its trit-negation in reverse, and the machine returns to zero.</p>
+  <p class="byline mono">Bridge-Burners LLC · Fiddler · 3⁵=243 · NEG = trit-flip = inverse · ⟨00000⟩ = held = fixed point · anchor: AKASHA</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Program · PC <span id="pc" class="mono" style="color:var(--pc)">0</span></h3>
+      <div class="prog" id="prog"></div>
+      <div class="controls">
+        <button id="step" class="go">Step ›</button>
+        <button id="run" class="go">Run ▶</button>
+        <button id="rev" class="rev">Prove reversible ⟲</button>
+        <button id="reset">Reset</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Machine state</h3>
+      <div class="reg"><span class="k">ACC</span><span class="v"><span class="word" id="acc-trits"></span> = <b id="acc-dec" class="mono">0</span></span></div>
+      <div class="reg"><span class="k">STORE</span><span class="v stack" id="store">[ ]</span></div>
+      <div class="reg"><span class="k">HELD</span><span class="v stack" id="held">[ ]</span></div>
+      <div class="decode" id="decode"></div>
+    </div>
+  </div>
+
+  <div class="fixed">
+    <b>The fixed point.</b> Scan all 243 words: the only one equal to its own negation is <span class="w">⟨ 0 0 0 0 0 ⟩ = 0 = NOP = the held turn</span>. Balanced ternary centres on it. Binary cannot: the 5-bit NOT of <span class="mono">00000</span> is <span class="mono">11111</span> — no fixed point, so PENT-2 has nowhere structural to put <span class="mono">g·g</span>. That single asymmetry is why the held state votes ternary.
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Encode any value (−121…121) — watch NEG flip the trits</h3>
+    <div class="reg"><span class="k">value</span><input type="number" id="vin" value="40" min="-121" max="121"><span style="margin-left:14px" class="v"><span class="word" id="vin-trits"></span></span></div>
+    <div class="reg"><span class="k" style="color:var(--neg)">NEG</span><span class="v"><span class="word" id="vneg-trits"></span> = <b id="vneg-dec" class="mono">-40</b> &nbsp;<span class="soft mono" style="color:var(--soft);font-size:11px">— every trit flipped, no borrow</span></span></div>
+  </div>
+
+  <div class="verdict" id="verdict">running veracity…</div>
+
+  <div class="tiers">
+    <div class="row"><span class="tag lit">Literal</span><span>Balanced ternary: 243 values, ±121, NEG = flip every trit = arithmetic negation, 0 the unique fixed point. Subtraction is ADD of a negated operand — no SUB unit (the Setun principle). The program and its trit-negation-reversed form compose to identity, executed here.</span></div>
+    <div class="row"><span class="tag bri">Bridge</span><span>Mapping the direction trit to write / held / read and to e ( p ( g·g ) p ) e; NEG as the in↔out mirror; ⟨00000⟩ as the held turn.</span></div>
+    <div class="row"><span class="tag spec">Speculative</span><span>That a transcriber "is" this machine, and the specific opcode assignment, are design choices. A 5-trit word is a micro-ISA — one transduction unit, not a CPU. The veracity is that the encoding closes and runs, not that this is a general computer.</span></div>
+  </div>
+
+  <footer><b>What the test shows.</b> Both 32 (binary, 2⁵) and 243 (ternary, 3⁵) can carry an instruction encoding — neither is fake. But only one carries the transcriber faithfully: the held turn is the centre of the palindrome, and only balanced ternary has a centre that is its own negation, so only ternary can place <b class="mono">g·g</b> at a structural fixed point and make the write↔read mirror a free trit-flip. The emulator proves it the one way that cannot be argued with — it executes, and a program annihilates with its own trit-negation back to zero. Subtraction was never separate from addition; the inverse was never separate from the word. 3⁵, not 2⁵ — because the held state is not optional.
+  </footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  // ---- VM (identical to the Node-verified core) ----
+  function toTrits(v){let t=[],x=v;for(let i=0;i<5;i++){let r=((x%3)+3)%3;if(r===0){t.push(0);x=x/3;}else if(r===1){t.push(1);x=(x-1)/3;}else{t.push(-1);x=(x+1)/3;}x=Math.trunc(x);}return t;}
+  function neg(v){return -v;}
+  function opName(dir,sel){if(dir===0)return sel===0?"NOP":(sel===-1?"HOLD":"UNHOLD");if(dir===-1)return sel===1?"ADD":(sel===0?"PUSH":"STOR");return sel===1?"LOAD":(sel===0?"POP":"SUB");}
+  function dirClass(dir){return dir===-1?"w":(dir===0?"h":"r");}
+  function effectText(dir,sel,o){
+    if(dir===0)return sel===0?"— rest":(sel===-1?"HELD ← ACC":"ACC ← HELD");
+    if(dir===-1)return sel===1?("ACC += "+o):(sel===0?("STORE ← "+o):"STORE ← ACC");
+    return sel===1?"ACC ← STORE":(sel===0?"ACC ← STORE":("ACC += "+o));
+  }
+  function mk(dir,sel,op){return op + sel*27 + dir*81;}
+  function exec(s,w){let t=toTrits(w),dir=t[4],sel=t[3],o=t[0]+3*t[1]+9*t[2];
+    if(dir===0){if(sel===-1)s.held.push(s.acc);else if(sel===1){if(s.held.length)s.acc=s.held.pop();}}
+    else if(dir===-1){if(sel===1)s.acc+=o;else if(sel===0)s.store.push(o);else s.store.push(s.acc);}
+    else{if(sel===1){if(s.store.length)s.acc=s.store.pop();}else if(sel===0){if(s.store.length)s.acc=s.store.pop();}else s.acc+=o;}
+    return s;}
+
+  var BASE=[ mk(-1,1,5), mk(-1,-1,0), mk(-1,1,7), mk(0,-1,0), mk(-1,1,-2) ]; // ADD5,STOR,ADD7,HOLD,ADD-2
+  var prog=BASE.slice();
+  var st={acc:0,store:[],held:[]}, pc=0, ext=false;
+
+  function tritSpans(w){
+    var t=toTrits(w), dir=t[4]; var cls=dir===-1?"t-w":(dir===0?"t-h":"t-r");
+    var glyph=function(x){return x===-1?"−":(x===0?"0":"+");};
+    var html="";
+    for(var i=4;i>=0;i--){ var c = (i===4)?cls : (t[i]===-1?"t-w":(t[i]===0?"t-h":"t-r"));
+      var seam=(i===2)?" t-seam":"";
+      html+='<span class="trit '+c+seam+'">'+glyph(t[i])+'</span>';
+    }
+    return html;
+  }
+  function renderProg(){
+    var el=document.getElementById("prog"); el.innerHTML="";
+    prog.forEach(function(w,i){ var t=toTrits(w),nm=opName(t[4],t[3]),o=t[0]+3*t[1]+9*t[2];
+      var nmcls=t[4]===-1?"nm-w":(t[4]===0?"nm-h":"nm-r");
+      var div=document.createElement("div"); div.className="prow"+(i===pc?" cur":"");
+      div.innerHTML='<span class="idx">'+i+'</span><span class="word">'+tritSpans(w)+'</span>'+
+        '<span class="nm '+nmcls+'">'+nm+(t[4]!==0&&t[3]!==0?(" "+o):"")+'</span>'+
+        '<span class="ef">'+effectText(t[4],t[3],o)+'</span>';
+      el.appendChild(div);
+    });
+    document.getElementById("pc").textContent=pc;
+  }
+  function renderState(){
+    document.getElementById("acc-trits").innerHTML=tritSpans(st.acc);
+    document.getElementById("acc-dec").textContent=st.acc;
+    document.getElementById("store").innerHTML = st.store.length? ("[ "+st.store.join("  ")+" ] <b>← top</b>") : "[ ]";
+    document.getElementById("held").innerHTML = st.held.length? ("[ "+st.held.join("  ")+" ] <b>← top</b>") : "[ ]";
+  }
+  function renderDecode(){
+    var el=document.getElementById("decode");
+    if(pc>=prog.length){ el.innerHTML='<div class="dir dir-h">— halted —</div>'; return; }
+    var w=prog[pc],t=toTrits(w),dir=t[4],sel=t[3],o=t[0]+3*t[1]+9*t[2];
+    var dirName=dir===-1?"WRITE":(dir===0?"HELD":"READ"), dc=dirClass(dir);
+    var nw=neg(w),nt=toTrits(nw),nn=opName(nt[4],nt[3]),no=nt[0]+3*nt[1]+9*nt[2];
+    el.innerHTML=
+      '<div class="dir dir-'+dc+'">'+dirName+'</div>'+
+      '<div class="mono" style="margin-top:4px">'+opName(dir,sel)+(dir!==0&&sel!==0?(" "+o):"")+' &nbsp;·&nbsp; '+effectText(dir,sel,o)+'</div>'+
+      '<div class="mir"><div class="lab">negate the word → the inverse</div>'+
+        '<div class="word" style="justify-content:center;margin:6px 0">'+tritSpans(nw)+'</div>'+
+        '<div class="mono" style="color:var(--neg)">'+nn+(nt[4]!==0&&nt[3]!==0?(" "+no):"")+' &nbsp;·&nbsp; '+effectText(nt[4],nt[3],no)+'</div></div>';
+  }
+  function renderAll(){renderProg();renderState();renderDecode();}
+
+  function step(){ if(pc<prog.length){ exec(st,prog[pc]); pc++; renderAll(); } }
+  function run(){ while(pc<prog.length) step(); }
+  function reset(){ st={acc:0,store:[],held:[]}; pc=0; prog=BASE.slice(); ext=false; document.getElementById("verdict").className="verdict"; document.getElementById("verdict").style.borderColor="var(--pc)"; document.getElementById("verdict").innerHTML=veredict0; renderAll(); }
+  function proveReversible(){
+    run(); // finish forward
+    if(!ext){ // append reverse(neg(P))
+      var R=BASE.slice().reverse().map(neg);
+      prog=BASE.concat(R); ext=true; renderProg();
+      // run the appended half
+      while(pc<prog.length) step();
+      var ok=(st.acc===0 && st.store.length===0 && st.held.length===0);
+      var v=document.getElementById("verdict");
+      v.innerHTML = ok
+        ? "✓ PROVEN — ran the program, then its trit-negation in reverse: ACC=0, STORE empty, HELD empty. The machine annihilated with its own negation, exactly back to the held turn. The inverse was free."
+        : "✗ state did not return — (unexpected)";
+      v.style.borderColor = ok? "var(--pc)":"var(--spec)";
+    }
+  }
+  var veredict0='Step or Run the program; then <b>Prove reversible</b> to append its trit-negation in reverse and watch the state return to ⟨00000⟩.';
+
+  document.getElementById("step").onclick=step;
+  document.getElementById("run").onclick=run;
+  document.getElementById("rev").onclick=proveReversible;
+  document.getElementById("reset").onclick=reset;
+
+  // value encoder
+  function renderEnc(){
+    var v=parseInt(document.getElementById("vin").value||"0",10); if(isNaN(v))v=0; v=Math.max(-121,Math.min(121,v));
+    document.getElementById("vin-trits").innerHTML=tritSpans(v);
+    document.getElementById("vneg-trits").innerHTML=tritSpans(-v);
+    document.getElementById("vneg-dec").textContent=(-v);
+  }
+  document.getElementById("vin").addEventListener("input",renderEnc);
+
+  document.getElementById("verdict").innerHTML=veredict0;
+  renderAll(); renderEnc();
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

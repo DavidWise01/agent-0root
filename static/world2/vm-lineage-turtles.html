@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VM LINEAGE · TURTLES ALL THE WAY DOWN</title>
+<style>
+:root{
+  --paper:#f0ebf5; --ink:#2a2438; --ink-mid:#4a4360; --ink-faint:#8a83a0;
+  --plum:#5b3a87; --plum-light:#7e5bb0; --plum-soft:#e6ddf0; --plum-deep:#3f2860;
+  --gold:#9a7d3a; --rose:#9a4a6a; --green:#3a7a5a; --teal:#3a6a87;
+  --real:#2a2438; --hyp:#5b3a87; --vm:#3a6a87; --cont:#3a7a5a; --runtime:#9a7d3a; --sand:#9a4a6a; --proc:#7e5bb0;
+  --line:#cbbfdd;
+  --mono:"Courier New",Courier,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);
+  background-image:repeating-linear-gradient(0deg, rgba(91,58,135,.03) 0 1px, transparent 1px 3px);
+  color:var(--ink);font-family:var(--serif);line-height:1.5;padding:10px}
+.sheet{max-width:840px;margin:0 auto;border:2.5px solid var(--plum);position:relative}
+.sheet::before{content:'';position:absolute;inset:5px;border:1px solid var(--plum-light);pointer-events:none}
+.inner{padding:22px}
+.masthead{text-align:center;border-bottom:2px solid var(--plum);padding-bottom:10px}
+.mast-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--plum-light);text-transform:uppercase}
+.mast-title{font-size:clamp(20px,4.6vw,33px);letter-spacing:.02em;font-weight:700;margin:5px 0 2px;text-transform:uppercase;color:var(--plum)}
+.mast-sub{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-mid)}
+.lede{font-size:12px;max-width:680px;margin:10px auto 0;text-align:center;color:var(--ink-mid);line-height:1.55}
+.lede b{color:var(--plum)}
+h2.sec{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;border-bottom:1.5px solid var(--plum);padding-bottom:4px;margin:20px 0 12px;color:var(--plum)}
+h2.sec .num{color:var(--rose);margin-right:8px}
+/* timeline */
+.tl-item{display:grid;grid-template-columns:78px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.tl-item:last-child{border-bottom:none}
+.tl-date{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--plum);text-align:right;padding-top:2px}
+.tl-body h3{font-family:var(--serif);font-size:14px;color:var(--ink);margin-bottom:1px}
+.tl-body p{font-size:11.5px;color:var(--ink-mid);line-height:1.45}
+.tl-tag{display:inline-block;font-family:var(--mono);font-size:8px;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:2px;font-weight:700;margin-bottom:3px}
+.t-first{background:rgba(91,58,135,.15);color:var(--plum)}
+.t-theory{background:rgba(154,125,58,.15);color:#6a5520}
+.t-crack{background:rgba(154,74,106,.15);color:var(--rose)}
+.t-heal{background:rgba(58,122,90,.15);color:var(--green)}
+/* turtle stack */
+.casebtns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.casebtn{font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;padding:8px 12px;border:1.5px solid var(--plum);color:var(--plum);background:transparent;cursor:pointer;border-radius:4px}
+.casebtn.active{background:var(--plum);color:#fff}
+.stack{margin:12px auto;max-width:560px}
+.slab{border:2px solid var(--plum);border-radius:6px;margin:0 auto 5px;padding:9px 14px;position:relative;transition:.2s;font-family:var(--mono)}
+.slab .lvl{position:absolute;left:-2px;top:-2px;background:var(--plum);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px 0 6px 0}
+.slab .nm{font-size:12px;font-weight:700;margin-left:24px}
+.slab .kd{font-size:8px;letter-spacing:.08em;text-transform:uppercase;margin-left:24px;opacity:.7}
+.slab .note{font-size:9.5px;color:var(--ink-mid);margin-left:24px;margin-top:3px;font-family:var(--serif);line-height:1.4}
+.slab.real{border-color:#2a2438;background:rgba(42,36,56,.06)} .slab.real .lvl{background:#2a2438}
+.slab.os{border-color:#7a6a4a;background:rgba(122,106,74,.06)} .slab.os .lvl{background:#7a6a4a}
+.slab.hypervisor{border-color:#5b3a87;background:rgba(91,58,135,.08)} .slab.hypervisor .lvl{background:#5b3a87}
+.slab.vm{border-color:#3a6a87;background:rgba(58,106,135,.09)} .slab.vm .lvl{background:#3a6a87}
+.slab.container{border-color:#3a7a5a;background:rgba(58,122,90,.09)} .slab.container .lvl{background:#3a7a5a}
+.slab.runtime{border-color:#9a7d3a;background:rgba(154,125,58,.09)} .slab.runtime .lvl{background:#9a7d3a}
+.slab.sandbox{border-color:#9a4a6a;background:rgba(154,74,106,.09)} .slab.sandbox .lvl{background:#9a4a6a}
+.slab.process{border-color:#7e5bb0;background:rgba(126,91,176,.1)} .slab.process .lvl{background:#7e5bb0}
+.depthcount{text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-mid);margin:10px 0;padding:8px;border:1px solid var(--line);border-radius:5px;line-height:1.7}
+.depthcount b{color:var(--plum)}
+.depthcount .vmc{color:var(--vm);font-weight:700} .depthcount .cc{color:var(--cont);font-weight:700}
+.def{font-family:var(--mono);font-size:10.5px;background:var(--plum-soft);border-left:2px solid var(--plum-light);padding:9px 12px;margin:9px 0;line-height:1.7;color:var(--ink-mid)}
+.def b{color:var(--plum)}
+.accuracy{border:1.5px solid var(--gold);padding:9px 12px;margin:10px 0;font-family:var(--mono);font-size:10px;line-height:1.7;color:var(--ink-mid)}
+.accuracy b{color:#6a5520}
+.body p{font-size:13px;margin-bottom:8px}
+.body b{color:var(--ink)}
+.colophon{margin-top:18px;border-top:2px solid var(--plum);padding-top:10px;text-align:center;font-family:var(--mono);font-size:8.5px;color:var(--ink-mid);letter-spacing:.05em;line-height:1.8}
+.colophon b{color:var(--plum)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#39fc6b}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="sheet"><div class="inner">
+
+<header class="masthead">
+  <div class="mast-eyebrow">Series E · The Machine Inside The Machine</div>
+  <h1 class="mast-title">VM Lineage · Turtles All The Way Down</h1>
+  <div class="mast-sub">where it came from · and how deep the nesting really goes</div>
+  <p class="lede">Two halves: the <b>lineage</b> of the virtual machine (first hypervisor 1967 → healed in hardware 2005), and the <b>embedding stack</b> — how many machines-inside-machines your code actually sits within — with an honest accounting of where <b>WSL2 and Docker</b> really land (they're not the same kind of thing).</p>
+</header>
+
+<section class="body">
+
+  <h2 class="sec"><span class="num">§1</span> The Lineage · first hypervisor → healed in silicon</h2>
+  <div>
+    <div class="tl-item"><div class="tl-date">1967</div><div class="tl-body"><span class="tl-tag t-first">first hypervisor</span><h3>CP-40 · IBM Cambridge Scientific Center</h3><p>The first OS to implement <b>complete virtualization</b> — each user got a full virtual S/360. Ran <b>14 simultaneous VMs</b>; privileged instructions trapped to the control program, which <b>simulated</b> them. Trap-and-simulate is the seed of everything.</p></div></div>
+    <div class="tl-item"><div class="tl-date">1968</div><div class="tl-body"><h3>CP-67 / CMS</h3><p>CP-40 ported to the S/360-67 — the first <b>widely available</b> VM architecture, given to key time-sharing customers.</p></div></div>
+    <div class="tl-item"><div class="tl-date">Aug 1972</div><div class="tl-body"><span class="tl-tag t-first">first product</span><h3>VM/370</h3><p>The first VM operating system IBM shipped as an <b>official product</b> — and the first <b>hardware-assisted</b> virtualization (System/370). The production hypervisor mainframes ran for decades.</p></div></div>
+    <div class="tl-item"><div class="tl-date">1974</div><div class="tl-body"><span class="tl-tag t-theory">the theory</span><h3>Popek &amp; Goldberg</h3><p>The doctrinal test: an architecture is efficiently virtualizable <b>iff its sensitive instructions are a subset of its privileged instructions</b> — every instruction that could expose machine state must <b>trap</b> to the supervisor. The rule every CPU is measured against for 30 years.</p></div></div>
+    <div class="tl-item"><div class="tl-date">~1985–98</div><div class="tl-body"><span class="tl-tag t-crack">the crack</span><h3>The x86 Dark Age</h3><p>Virtualization vanished from PCs: x86 <b>broke the Popek-Goldberg rule</b> — <b>17 sensitive instructions failed silently</b> in user mode instead of trapping. The measure-level crack: a specific count of instructions that wouldn't behave.</p></div></div>
+    <div class="tl-item"><div class="tl-date">1998</div><div class="tl-body"><span class="tl-tag t-heal">heal (software)</span><h3>VMware · binary translation</h3><p>Healed x86 by <b>rewriting kernel code on the fly</b> to force the missing traps — making x86 virtualization commercially viable for the first time. The old rule satisfied by translation.</p></div></div>
+    <div class="tl-item"><div class="tl-date">2005–06</div><div class="tl-body"><span class="tl-tag t-heal">heal (hardware)</span><h3>Intel VT-x · AMD-V</h3><p>The hardware finally <b>added the traps x86 lacked</b> — healing the Popek-Goldberg violation <em>in silicon</em>. VMs became fast and ubiquitous; the entire cloud runs on this. (Xen, 2003, bridged the gap just before.)</p></div></div>
+  </div>
+  <div class="def"><b>"hypervisor"</b> = "hyper" (above) + "visor" (supervisor) = <b>the layer that supervises the supervisors</b> (the OSes). The crack is always an instruction count; the heal absorbs the old rule as a constraint the new layer satisfies. Same crack→heal staircase as gravity and sandboxing.</div>
+
+  <h2 class="sec"><span class="num">§2</span> Turtles All The Way Down · the embedding stack</h2>
+  <p>How many machines-inside-machines does your code sit within? Pick a setup — the stack builds with <b>accurate</b> depth:</p>
+  <div class="casebtns">
+    <button class="casebtn active" onclick="setCase('wsl')">Docker on WSL2 (Windows)</button>
+    <button class="casebtn" onclick="setCase('linux')">Docker on Linux</button>
+    <button class="casebtn" onclick="setCase('cloud')">AI agent in cloud</button>
+  </div>
+  <div class="stack" id="stack"></div>
+  <div class="depthcount" id="depthcount"></div>
+
+  <div class="accuracy">
+    <b>the accuracy point you asked for:</b> a <b>VM and a container are different kinds of embedding.</b><br><br>
+    <b>WSL2 is a real VM</b> — a genuine Linux kernel running in a lightweight Hyper-V virtual machine. It virtualizes <em>hardware</em> and has <em>its own kernel</em>. That's a true nesting level.<br><br>
+    <b>A Docker container is NOT a VM</b> — it's <em>OS-level isolation</em> (namespaces + cgroups) that <b>shares the host kernel</b>. It virtualizes the <em>operating system's view</em>, not the hardware. Lighter, but a different kind of boundary.<br><br>
+    So "Docker is a VM" is a <b>common misconception</b>: plain Docker on Linux adds <em>zero</em> VMs. Only <b>Docker Desktop on Windows/Mac</b> adds a real VM — because it runs the Docker engine <em>inside WSL2 (a VM)</em>. That's why the same "docker run" is a different depth on Windows than on Linux.
+  </div>
+
+  <h2 class="sec"><span class="num">§3</span> Unbounded · why it's really turtles</h2>
+  <p>A VM can run a VM can run a VM — <b>nested virtualization is real</b> (VT-x can expose itself to a guest). So embedding depth isn't fixed; it's <b>arbitrarily extendable</b>, a self-similar stack of machines each believing it owns "the" hardware. The name says it: a hypervisor <em>supervises supervisors</em>, and that can itself be supervised. Bounded only by the <b>friction tax</b> each layer adds — every embedding level costs performance, the conversion-cost at every boundary.</p>
+  <div class="def">VM = virtualizes hardware (own kernel) · container = virtualizes the OS (shares kernel) · runtime/sandbox = virtualizes execution · each is a machine-in-a-machine · nesting is unbounded in principle · each turtle pays rent (performance) to the one below.</div>
+
+</section>
+
+<div class="colophon">
+  CP-40 (1967) → VM/370 (1972) → POPEK-GOLDBERG (1974) → x86 BROKE IT (17 INSTRUCTIONS) → VMWARE (1998) → VT-x/AMD-V (2005-06)<br>
+  HYPERVISOR = SUPERVISOR OF SUPERVISORS · VM VIRTUALIZES HARDWARE · CONTAINER SHARES THE KERNEL<br>
+  WSL2 = REAL VM · DOCKER CONTAINER = OS-ISOLATION, NOT A VM · NESTING UNBOUNDED · EACH TURTLE PAYS RENT<br>
+  VM LINEAGE · TURTLES ALL THE WAY DOWN · A PURPLE PAPER · SERIES E · JUNE 2026
+</div>
+
+</div></div>
+<script>
+const CASES={
+  wsl:{
+    title:'Docker on WSL2 (Docker Desktop, Windows)',
+    stack:[
+      {lvl:0,kind:'real',nm:'Physical hardware',kd:'real silicon',note:'the only real machine'},
+      {lvl:1,kind:'os',nm:'Windows host OS',kd:'host operating system',note:'the host you log into'},
+      {lvl:2,kind:'hypervisor',nm:'Hyper-V hypervisor',kd:'type-1 hypervisor',note:'WSL2 requires Hyper-V; Windows becomes a root partition above it'},
+      {lvl:3,kind:'vm',nm:'WSL2 lightweight VM',kd:'real VM · own Linux kernel',note:'a GENUINE virtual machine — a real Linux kernel in a lightweight Hyper-V VM. NOT a container.'},
+      {lvl:4,kind:'container',nm:'Docker container',kd:'OS-isolation · shares WSL2 kernel',note:'namespaces + cgroups inside WSL2. Shares the WSL2 Linux kernel — it is NOT another VM.'},
+      {lvl:5,kind:'process',nm:'Your process / agent',kd:'the workload',note:'where your code actually runs'}
+    ],
+    vms:1, containers:1,
+    summary:'1 hypervisor + <span class="vmc">1 real VM (WSL2)</span> + <span class="cc">1 container (Docker)</span> → your code sits <b>~3 virtualization layers</b> deep'
+  },
+  linux:{
+    title:'Docker on native Linux (no VM)',
+    stack:[
+      {lvl:0,kind:'real',nm:'Physical hardware',kd:'real silicon',note:'the only real machine'},
+      {lvl:1,kind:'os',nm:'Linux host OS',kd:'host operating system',note:'the host kernel — shared by all containers'},
+      {lvl:2,kind:'container',nm:'Docker container',kd:'OS-isolation · shares host kernel',note:'namespaces + cgroups. NO VM here — the container shares the host Linux kernel directly.'},
+      {lvl:3,kind:'process',nm:'Your process',kd:'the workload',note:'runs on the host kernel, just isolated'}
+    ],
+    vms:0, containers:1,
+    summary:'<span class="vmc">0 VMs</span> + <span class="cc">1 container</span> → just <b>1 OS-isolation layer</b>. The common "Docker is a VM" myth: it is NOT — it shares the host kernel.'
+  },
+  cloud:{
+    title:'AI agent in a cloud deployment (full stack)',
+    stack:[
+      {lvl:0,kind:'real',nm:'Physical hardware',kd:'cloud datacenter silicon',note:'the real machine in a rack somewhere'},
+      {lvl:1,kind:'hypervisor',nm:'Cloud hypervisor',kd:'type-1 hypervisor (KVM/Xen/Nitro)',note:'multiplexes the physical host into guest VMs'},
+      {lvl:2,kind:'vm',nm:'Guest VM (your instance)',kd:'real VM · own kernel',note:'your cloud instance — a full virtual machine'},
+      {lvl:3,kind:'container',nm:'Container',kd:'OS-isolation · shares VM kernel',note:'the workload container (k8s pod, etc.) inside the VM'},
+      {lvl:4,kind:'runtime',nm:'Language runtime',kd:'a VM in the OTHER sense',note:'JVM / V8 / Python — itself a "virtual machine" that runs bytecode'},
+      {lvl:5,kind:'sandbox',nm:'Agent sandbox',kd:'restricted execution context',note:'the agent\'s sandboxed environment (iframe / restricted interpreter)'},
+      {lvl:6,kind:'process',nm:'The artifact / action',kd:'what the agent touches',note:'the thing the agent actually manipulates'}
+    ],
+    vms:1, containers:1,
+    summary:'<span class="vmc">1 VM</span> + <span class="cc">1 container</span> + runtime + sandbox → the agent\'s action sits <b>~4–6 nested layers</b> deep'
+  }
+};
+function setCase(k){
+  document.querySelectorAll('.casebtn').forEach(b=>b.classList.remove('active'));
+  event && event.target.classList.add('active');
+  const c=CASES[k];
+  const s=document.getElementById('stack');s.innerHTML='';
+  c.stack.forEach((L,i)=>{
+    const d=document.createElement('div');d.className='slab '+L.kind;
+    // indent deeper levels slightly to show nesting
+    d.style.width=(100-i*5)+'%';
+    d.style.maxWidth=(560-i*26)+'px';
+    d.innerHTML=`<span class="lvl">L${L.lvl}</span><div class="nm">${L.nm}</div><div class="kd">${L.kd}</div><div class="note">${L.note}</div>`;
+    s.appendChild(d);
+  });
+  document.getElementById('depthcount').innerHTML='<b>'+c.title+'</b><br>'+c.summary;
+}
+// init (no event on first call)
+(function(){
+  const c=CASES.wsl;
+  const s=document.getElementById('stack');
+  c.stack.forEach((L,i)=>{
+    const d=document.createElement('div');d.className='slab '+L.kind;
+    d.style.width=(100-i*5)+'%'; d.style.maxWidth=(560-i*26)+'px';
+    d.innerHTML=`<span class="lvl">L${L.lvl}</span><div class="nm">${L.nm}</div><div class="kd">${L.kd}</div><div class="note">${L.note}</div>`;
+    s.appendChild(d);
+  });
+  document.getElementById('depthcount').innerHTML='<b>'+c.title+'</b><br>'+c.summary;
+})();
+</script>
+</div>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LOGICAL QUBIT · toric code · the analog of the braid qubit</title>
+<!-- PAPER ----------------------------------------------------------------
+  ANALOG of AXIOM-FIVE's topological (braid) qubit -> a LOGICAL qubit via the
+  TORIC CODE. Same principle, different topology: knot-topology (braids) ->
+  lattice-topology (loops on a torus).
+  LIT (verified vs frozen): LxL torus (L=3), 2L²=18 qubits on edges; 2L²=18
+  stabilizers (star A_v=∏X, plaquette B_p=∏Z); ALL commute; F2 rank 16 (two
+  redundancies ∏A=∏B=I) -> k = 18-16 = 2 LOGICAL QUBITS (the torus's 2 handles).
+  Logical ops are NON-CONTRACTIBLE LOOPS: Z̄ (Z-loop) and X̄ (X-loop) each commute
+  with every stabilizer and anticommute with each other (share exactly 1 edge)
+  -> a genuine logical qubit. Distance = L = 3. A single error violates 2
+  stabilizers = an ANYON PAIR (the syndrome) -> detect & correct.
+  THE ANALOG: topological qubit (braids) <-> logical qubit (toric code):
+   non-abelian anyons <-> abelian e/m excitations; fusion outcome <-> loop
+   homology; braids <-> logical string ops; protected because the qubit is
+   NON-LOCAL (nowhere in particular).
+  AMBER: the code math (stabilizers, k, logical algebra, distance, syndromes)
+  is EXACT & server-verified; framing/analog is interpretive. This is a memory/
+  error-corrected qubit; universal logic on it needs more (lattice surgery,
+  magic states) — not claimed here.
+  Fail-loud. Offline. Live code invariants vs frozen at boot.
+------------------------------------------------------------------------ -->
+<style>
+:root{--ink:#0d0b08;--org:#ff6a00;--org2:#ff9a3c;--amb:#ffc233;--lit:#7dff6a;--fail:#ff3b3b;--pale:#e8ddcc;--dim:#8f8471;--sap:#7c9cff;--edge:#4a5568;--star:#ffb84d;--plaq:#5affd1;--eany:#ff5a5a;--many:#5aa9ff;--zbar:#ffd86a;--xbar:#ff6ad5;font-size:15px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--pale);font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.42}
+header{padding:1rem 1.3rem .8rem;border-bottom:4px solid var(--org);background:linear-gradient(180deg,#1b1610,#0d0b08)}
+h1{margin:0;font-size:1.14rem;letter-spacing:.04em;color:var(--org);text-transform:uppercase;font-weight:800}
+.sub{color:var(--dim);margin-top:.3rem;font-size:.82rem}
+.wrap{padding:1rem 1.3rem 2.5rem;max-width:1180px;margin:0 auto}
+.panel{background:#161310;border:1px solid #2c2318;border-left:5px solid var(--xbar);padding:.7rem .9rem;margin:.85rem 0}
+h2{margin:.1rem 0 .5rem;font-size:.92rem;color:var(--org2);text-transform:uppercase;letter-spacing:.06em}
+.grid2{display:grid;grid-template-columns:1.02fr .98fr;gap:.9rem}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.card{padding:.55rem .8rem;margin:.4rem 0;border:1px solid #2c2318;font-size:.84rem}
+.card.lit{border-left:5px solid var(--lit)}.card.lit b{color:var(--lit)}
+.card.amber{border-left:5px solid var(--amb)}.card.amber b{color:var(--amb)}
+.card.lq{border-left:5px solid var(--xbar)}.card.lq b{color:var(--xbar)}
+.card.fail{border-left:5px solid var(--fail);color:#ffd9d9;white-space:pre-wrap}
+.mon{background:#0a0908;border:1px solid #2c2318;min-height:4.5rem;max-height:9rem;overflow-y:auto;padding:.5rem .6rem;font-size:.74rem}
+.mon .ln{margin:.1rem 0;color:var(--dim)}.mon .ln.ok{color:var(--lit)}.mon .ln.bad{color:var(--fail)}.mon .ln.hd{color:var(--org2)}
+canvas{display:block;width:100%;background:#0a0908;border:1px solid #2c2318}
+.legend{color:var(--dim);font-size:.73rem;margin-top:.4rem}
+button{background:none;border:1px solid var(--org);color:var(--org);cursor:pointer;font-family:inherit;font-size:.76rem;padding:.28rem .7rem}
+button.on{background:var(--org);color:var(--ink)}
+.dials{display:flex;gap:.8rem;flex-wrap:wrap;margin:.3rem 0}
+.dial{border:1px solid #2c2318;padding:.4rem .7rem;min-width:116px}
+.dial .v{font-size:1.05rem;color:var(--xbar)}
+.dial .k{font-size:.68rem;color:var(--dim)}
+.row{display:flex;gap:.6rem;align-items:center;margin-top:.5rem;flex-wrap:wrap}
+.pill{border:1px solid var(--xbar);color:var(--xbar);border-radius:12px;padding:.05rem .5rem;font-size:.7rem}
+table{width:100%;border-collapse:collapse;font-size:.8rem;margin:.2rem 0}
+td{border:1px solid #2c2318;padding:.32rem .5rem}td.h{color:var(--org2)}
+.tq{color:var(--braid,#c98bff)}.lq2{color:var(--xbar)}
+footer{color:var(--dim);font-size:.71rem;padding:0 1.3rem 2rem;max-width:1180px;margin:0 auto}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style></head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE KONAMI CODE</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header><h1>THE LOGICAL QUBIT · TORIC CODE <span class="pill">analog of the braid qubit</span></h1>
+<div class="sub">the same protected qubit, translated: braids (knot topology) → loops on a torus (lattice topology) · info lives in loops that wrap · errors are anyon pairs you can catch</div></header>
+<div class="wrap">
+<div class="panel"><h2>verdict</h2><div id="readout"><div class="card lq">booting — encoding a logical qubit...</div></div></div>
+<div class="panel"><h2>the readout</h2><div class="dials" id="dials"></div>
+<div class="row"><span>click edges to inject errors:</span>
+<button id="mZ" class="on">Z error (→ e-anyons on stars)</button><button id="mX">X error (→ m-anyons on plaquettes)</button>
+<button id="clear">clear errors</button><button id="showZ" class="on">show Z̄ loop</button><button id="showX" class="on">show X̄ loop</button></div></div>
+<div class="panel"><h2>conductor — code invariants vs frozen</h2><div class="mon" id="m1"></div></div>
+<div class="grid2">
+<div class="panel"><h2>the code — a torus lattice, qubits on edges</h2>
+<canvas id="clat" width="560" height="470"></canvas>
+<div class="legend">dots on edges are the physical qubits; the lattice wraps (a torus — right joins left, top joins bottom). click an edge to flip an error. a Z error lights the two STARS at its ends (red e-anyons); an X error lights the two PLAQUETTES it touches (blue m-anyons). errors always appear in PAIRS — that pairing is the syndrome you correct by. the gold loop is Z̄, the pink loop is X̄: the logical qubit lives in those wrap-around loops.</div></div>
+<div class="panel"><h2>the analog — braid qubit ↔ logical qubit</h2>
+<canvas id="cana" width="560" height="230"></canvas>
+<table>
+<tr><td class="h">principle</td><td class="tq">topological qubit (axiom 4/5)</td><td class="lq2">logical qubit (toric code)</td></tr>
+<tr><td>where the bit lives</td><td>the global fusion outcome</td><td>the homology of a wrap-around loop</td></tr>
+<tr><td>excitations</td><td>non-abelian anyons (τ)</td><td>abelian anyons (e, m)</td></tr>
+<tr><td>operations / gates</td><td>braiding worldlines</td><td>logical string operators X̄, Z̄</td></tr>
+<tr><td>why protected</td><td>no local anyon holds it</td><td>no local qubit holds it; errors = anyon pairs, detected</td></tr>
+<tr><td>the shape of safety</td><td>knot topology</td><td>lattice topology (the torus)</td></tr>
+</table>
+<div class="legend">two faces of one idea: store the qubit where nothing local can reach it. axiom 4/5 is the <i>computer</i> (braid non-abelian anyons); the toric code is the <i>protected memory</i> (catch errors as anyon pairs).</div></div>
+</div>
+<div class="panel"><h2>toddler corner</h2>
+<div class="card lq"><b>ELI5:</b> a normal bit is one coin on a table — bump the table and it flips, and you\u2019ll never know. A LOGICAL qubit hides one bit across a whole grid of coins so cleverly that the answer isn\u2019t written on any single coin — it\u2019s written in a big loop that goes all the way around. Now if a gremlin flips one coin, it always leaves a matching pair of "alarm lights" (the anyons) at the two ends of its mischief — so you can SEE exactly what it did and undo it, all without ever disturbing the hidden answer. The only way to actually change the real answer is to flip a whole loop\u2019s worth of coins going all the way around the donut — and that\u2019s so big it basically never happens by accident. It\u2019s the same trick as the braided anyons from before: don\u2019t keep the bit anywhere in particular, keep it in the shape of the whole thing. One protects with knots; this one protects with loops on a donut. Same magic: safe because it\u2019s nowhere.</div></div>
+</div>
+<footer>THE LOGICAL QUBIT · toric code, 3×3 torus, 18 qubits · 18 stabilizers all commute, rank 16 → 2 logical qubits · Z̄,X̄ loops commute w/ stabilizers, anticommute (dist 3) · error → anyon pair (syndrome) (LIT) · code math exact; analog interpretive; universal logic needs more (AMBER) · fail-loud · offline</footer>
+<script>
+'use strict';
+function boom(w,e){var r=document.getElementById('readout');
+ r.innerHTML='<div class="card fail">FAULT @ '+w+'\n'+(e&&e.stack?e.stack:String(e))+'</div>';}
+window.addEventListener('error',function(ev){try{boom('window',ev.error||ev.message);}catch(_){}});
+function cssv(n){try{return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#fff';}catch(e){return '#fff';}}
+function mlog(t,c){var m=document.getElementById('m1'),d=document.createElement('div');
+ d.className='ln'+(c?' '+c:'');d.textContent=t;m.appendChild(d);m.scrollTop=m.scrollHeight;}
+var LQ={"code": "toric", "L": 3, "qubits": 18, "stabilizers": 18, "all_commute": true, "independent_stabs": 16, "logical_qubits": 2, "Zbar_weight": 3, "Xbar_weight": 3, "logical_anticommute": true, "distance": 3, "single_error_syndrome": 2}, L=LQ.L;
+// edges: he(i,j)=2*((i%L)*L+(j%L)), ve(i,j)=that+1
+function mod(a){return ((a%L)+L)%L;}
+function he(i,j){return 2*(mod(i)*L+mod(j));}
+function ve(i,j){return 2*(mod(i)*L+mod(j))+1;}
+var nQ=2*L*L;
+var errX=new Array(nQ).fill(0), errZ=new Array(nQ).fill(0);
+var mode='Z', showZ=true, showX=true;
+document.getElementById('mZ').addEventListener('click',function(){mode='Z';this.classList.add('on');document.getElementById('mX').classList.remove('on');});
+document.getElementById('mX').addEventListener('click',function(){mode='X';this.classList.add('on');document.getElementById('mZ').classList.remove('on');});
+document.getElementById('clear').addEventListener('click',function(){errX=new Array(nQ).fill(0);errZ=new Array(nQ).fill(0);draw();mlog('errors cleared','ok');});
+document.getElementById('showZ').addEventListener('click',function(){showZ=!showZ;this.classList.toggle('on',showZ);draw();});
+document.getElementById('showX').addEventListener('click',function(){showX=!showX;this.classList.toggle('on',showX);draw();});
+
+// syndromes: star A_(i,j) violated if odd # of Z errors on its 4 edges; plaquette B violated if odd # X errors on its 4 edges
+function starViol(i,j){return (errZ[he(i,j)]+errZ[he(i-1,j)]+errZ[ve(i,j)]+errZ[ve(i,j-1)])%2;}
+function plaqViol(i,j){return (errX[he(i,j)]+errX[he(i,j+1)]+errX[ve(i,j)]+errX[ve(i+1,j)])%2;}
+
+// geometry
+var lat={ox:60,oy:60,cell:130};
+function vpos(i,j){return {x:lat.ox+j*lat.cell, y:lat.oy+i*lat.cell};}
+function edgeHit(mx,my){ // nearest edge midpoint within radius
+  var best=-1,bd=18;
+  for(var i=0;i<L;i++)for(var j=0;j<L;j++){
+    var a=vpos(i,j), b=vpos(i,j+1); var mxp=(a.x+b.x)/2,myp=(a.y+b.y)/2;
+    var d=Math.hypot(mx-mxp,my-myp); if(d<bd){bd=d;best=he(i,j);}
+    var c=vpos(i+1,j); mxp=(a.x+c.x)/2;myp=(a.y+c.y)/2;
+    d=Math.hypot(mx-mxp,my-myp); if(d<bd){bd=d;best=ve(i,j);}
+  }
+  return best;
+}
+(function(){var cv=document.getElementById('clat');if(!cv)return;
+ cv.addEventListener('click',function(e){var r=cv.getBoundingClientRect();
+   var mx=(e.clientX-r.left)*(cv.width/r.width), my=(e.clientY-r.top)*(cv.height/r.height);
+   var ed=edgeHit(mx,my); if(ed<0)return;
+   if(mode==='Z'){errZ[ed]^=1;}else{errX[ed]^=1;}
+   draw();
+   var viols=0;for(var i=0;i<L;i++)for(var j=0;j<L;j++){viols+=(mode==='Z'?starViol(i,j):plaqViol(i,j));}
+   mlog((mode==='Z'?'Z':'X')+' error toggled on edge '+ed+' → '+viols+' '+(mode==='Z'?'star (e)':'plaquette (m)')+'-anyons lit','ok');
+ });
+})();
+function drawLat(){
+ try{
+  var cv=document.getElementById('clat'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+  // logical loops (draw under): Z̄ on horizontal edges row0 (gold), X̄ on horizontal edges col-cross (pink)
+  // Z̄ = Z on {he(i,0)} : the top horizontal line wrapping
+  if(showZ){g.strokeStyle=cssv('--zbar');g.lineWidth=6;g.globalAlpha=.28;g.beginPath();
+    var a0=vpos(0,0);g.moveTo(a0.x-14,a0.y);var aL=vpos(L,0);g.lineTo(aL.x+14,aL.y);g.stroke();g.globalAlpha=1;g.lineWidth=1;
+    g.fillStyle=cssv('--zbar');g.font='11px ui-monospace,monospace';g.fillText('Z̄',aL.x+18,aL.y+4);}
+  // X̄ = X on {he(0,j)} : left vertical line of horizontal-edge midpoints — draw as vertical band at col0 midpoints
+  if(showX){g.strokeStyle=cssv('--xbar');g.lineWidth=6;g.globalAlpha=.24;g.beginPath();
+    var b0=vpos(0,0),bMx=(vpos(0,0).x+vpos(0,1).x)/2;
+    g.moveTo(bMx,lat.oy-14);g.lineTo(bMx,lat.oy+L*lat.cell+14);g.stroke();g.globalAlpha=1;g.lineWidth=1;
+    g.fillStyle=cssv('--xbar');g.font='11px ui-monospace,monospace';g.fillText('X̄',bMx+6,lat.oy-16);}
+  // grid edges
+  for(var i=0;i<L;i++)for(var j=0;j<L;j++){
+    var a=vpos(i,j),b=vpos(i,j+1),c=vpos(i+1,j);
+    // horizontal edge
+    g.strokeStyle=(errZ[he(i,j)]?cssv('--zbar'):(errX[he(i,j)]?cssv('--xbar'):cssv('--edge')));
+    g.lineWidth=(errZ[he(i,j)]||errX[he(i,j)])?3:1.5;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();
+    // vertical edge
+    g.strokeStyle=(errZ[ve(i,j)]?cssv('--zbar'):(errX[ve(i,j)]?cssv('--xbar'):cssv('--edge')));
+    g.lineWidth=(errZ[ve(i,j)]||errX[ve(i,j)])?3:1.5;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(c.x,c.y);g.stroke();g.lineWidth=1;
+    // qubit dots at edge midpoints
+    g.fillStyle=cssv('--dim');
+    var mh={x:(a.x+b.x)/2,y:(a.y+b.y)/2},mv={x:(a.x+c.x)/2,y:(a.y+c.y)/2};
+    g.beginPath();g.arc(mh.x,mh.y,2.5,0,7);g.fill();g.beginPath();g.arc(mv.x,mv.y,2.5,0,7);g.fill();
+  }
+  // vertices (stars) + anyons
+  for(var i2=0;i2<L;i2++)for(var j2=0;j2<L;j2++){var p=vpos(i2,j2);
+    var sv=starViol(i2,j2);
+    g.fillStyle=sv?cssv('--eany'):'#3a3226';g.beginPath();g.arc(p.x,p.y,sv?7:3.5,0,7);g.fill();
+    if(sv){g.strokeStyle=cssv('--eany');g.globalAlpha=.6;g.beginPath();g.arc(p.x,p.y,12,0,7);g.stroke();g.globalAlpha=1;
+      g.fillStyle=cssv('--eany');g.font='9px ui-monospace,monospace';g.fillText('e',p.x+9,p.y-6);}
+  }
+  // plaquette centers (m anyons)
+  for(var i3=0;i3<L;i3++)for(var j3=0;j3<L;j3++){var pc={x:lat.ox+j3*lat.cell+lat.cell/2,y:lat.oy+i3*lat.cell+lat.cell/2};
+    var pv=plaqViol(i3,j3);
+    if(pv){g.fillStyle=cssv('--many');g.beginPath();g.arc(pc.x,pc.y,7,0,7);g.fill();
+      g.strokeStyle=cssv('--many');g.globalAlpha=.6;g.beginPath();g.arc(pc.x,pc.y,12,0,7);g.stroke();g.globalAlpha=1;
+      g.fillStyle=cssv('--many');g.font='9px ui-monospace,monospace';g.fillText('m',pc.x+9,pc.y-6);}
+    else {g.fillStyle='#211d15';g.beginPath();g.arc(pc.x,pc.y,2,0,7);g.fill();}
+  }
+  // highlight one star + one plaquette as the stabilizer legend
+  var sp=vpos(2,2);g.strokeStyle=cssv('--star');g.globalAlpha=.5;g.lineWidth=2;
+  g.beginPath();var ss=[vpos(2,2),vpos(2,3),vpos(3,2)];
+  // draw the 4 edges of star(2,2)
+  function seg(p,q){g.beginPath();g.moveTo(p.x,p.y);g.lineTo(q.x,q.y);g.stroke();}
+  g.strokeStyle=cssv('--star');seg(vpos(2,2),vpos(2,3));seg(vpos(2,2),vpos(2,1));seg(vpos(2,2),vpos(3,2));seg(vpos(2,2),vpos(1,2));
+  g.globalAlpha=1;g.lineWidth=1;g.fillStyle=cssv('--star');g.font='10px ui-monospace,monospace';g.fillText('A=∏X (star)',vpos(2,2).x-24,vpos(2,2).y+20);
+  g.fillStyle=cssv('--plaq');g.fillText('B=∏Z (plaquette)',lat.ox+0*lat.cell+18,lat.oy+0*lat.cell+lat.cell/2+3);
+  g.fillStyle=cssv('--dim');g.font='9px ui-monospace,monospace';g.fillText('lattice wraps (torus): right↔left, top↔bottom',lat.ox,H-8);
+ }catch(e){boom('drawLat',e);}
+}
+function drawAna(){
+ try{
+  var cv=document.getElementById('cana'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+  // left: a braid glyph ; right: a torus-loop glyph ; arrow between
+  g.fillStyle=cssv('--dim');g.font='11px ui-monospace,monospace';
+  g.fillText('braids (knot topology)',24,20);g.fillText('loops on a torus (lattice topology)',W*0.54,20);
+  // braid glyph
+  var bx=W*0.16;
+  for(var s=0;s<3;s++){var x0=bx-40+s*40;g.strokeStyle=[cssv('--star'),cssv('--plaq'),cssv('--zbar')][s];g.lineWidth=3;
+    g.beginPath();g.moveTo(x0,40);g.bezierCurveTo(x0,90,x0+((s%2)?-30:30),120,x0+((s%2)?0:0),170);g.stroke();g.lineWidth=1;}
+  // torus glyph (ellipses + a wrapping loop)
+  var tx=W*0.72,ty=110;
+  g.strokeStyle=cssv('--edge');g.lineWidth=2;
+  g.beginPath();g.ellipse(tx,ty,80,46,0,0,7);g.stroke();
+  g.beginPath();g.ellipse(tx,ty,32,15,0,0,Math.PI);g.stroke();
+  g.beginPath();g.ellipse(tx,ty-4,26,10,0,Math.PI,2*Math.PI);g.stroke();g.lineWidth=1;
+  // wrapping logical loop
+  g.strokeStyle=cssv('--xbar');g.lineWidth=3;g.beginPath();g.ellipse(tx,ty,80,46,0,-0.4,Math.PI+0.4);g.stroke();
+  g.strokeStyle=cssv('--zbar');g.beginPath();g.ellipse(tx-30,ty,20,44,0,0,7);g.stroke();g.lineWidth=1;
+  // arrow
+  g.fillStyle=cssv('--xbar');g.font='20px ui-monospace,monospace';g.textAlign='center';g.fillText('≈',W*0.44,ty+6);g.textAlign='left';
+  g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';g.textAlign='center';
+  g.fillText('same idea: the bit is in the whole, not any part',W*0.5,H-12);g.textAlign='left';
+ }catch(e){boom('drawAna',e);}
+}
+function dials(){
+  var eAny=0,mAny=0;for(var i=0;i<L;i++)for(var j=0;j<L;j++){eAny+=starViol(i,j);mAny+=plaqViol(i,j);}
+  document.getElementById('dials').innerHTML=
+    '<div class="dial"><div class="v">'+LQ.logical_qubits+'</div><div class="k">logical qubits (torus)</div></div>'
+   +'<div class="dial"><div class="v">'+LQ.qubits+'</div><div class="k">physical qubits (edges)</div></div>'
+   +'<div class="dial"><div class="v">'+LQ.distance+'</div><div class="k">code distance (loop = L)</div></div>'
+   +'<div class="dial"><div class="v">'+eAny+' / '+mAny+'</div><div class="k">e / m anyons lit now</div></div>';
+}
+function draw(){drawLat();drawAna();dials();updateVerdict();}
+function updateVerdict(){
+  var eAny=0,mAny=0;for(var i=0;i<L;i++)for(var j=0;j<L;j++){eAny+=starViol(i,j);mAny+=plaqViol(i,j);}
+  var R=document.getElementById('readout');
+  R.innerHTML=
+   '<div class="card lq"><b>A LOGICAL QUBIT, THE ANALOG OF THE BRAID QUBIT</b> One logical qubit is stored across '+LQ.qubits+' physical qubits on a torus, in loops that wrap around it. '+LQ.stabilizers+' stabilizers (stars ∏X, plaquettes ∏Z) all commute; the torus carries '+LQ.logical_qubits+' logical qubits. '+(eAny+mAny>0?('Right now '+eAny+' e-anyons and '+mAny+' m-anyons are lit — the error syndrome.'):'Click edges to inject errors and watch anyon pairs appear.')+'</div>'
+   +'<div class="card lit"><b>PROTECTED, LIKE THE BRAID — NON-LOCALLY</b> The logical operators Z̄ and X̄ are non-contractible loops: each commutes with every stabilizer and they anticommute with each other (a real qubit), distance '+LQ.distance+'. A local error always makes a PAIR of anyons at its ends — detectable and correctable — and it takes a whole loop around the torus to change the logical bit. The qubit is nowhere local, so nothing local can read or wreck it: the same protection as braiding, in lattice topology instead of knots.</div>'
+   +'<div class="card amber"><b>AMBER</b> The code math (stabilizers all commute, rank→2 logical qubits, logical algebra, distance, syndromes) is exact and server-verified; the braid↔code analog is an interpretive mapping. This is a protected MEMORY qubit; full universal logic on it needs more (lattice surgery, magic-state distillation) — not claimed here.</div>';
+}
+// boot
+try{
+  mlog('code invariants vs frozen','hd');
+  mlog('toric '+L+'×'+L+' torus: '+LQ.qubits+' qubits, '+LQ.stabilizers+' stabilizers, all commute: '+LQ.all_commute,LQ.all_commute?'ok':'bad');
+  var okK=(LQ.logical_qubits===2 && LQ.independent_stabs===16);
+  mlog('F2 rank '+LQ.independent_stabs+' → logical qubits k='+LQ.logical_qubits+' '+(okK?'MATCH':'DRIFT'),okK?'ok':'bad');
+  mlog('Z̄,X̄ loops (weight '+LQ.Zbar_weight+'/'+LQ.Xbar_weight+') anticommute: '+LQ.logical_anticommute+'; distance '+LQ.distance,LQ.logical_anticommute?'ok':'bad');
+  mlog('single error → '+LQ.single_error_syndrome+' stabilizers violated = an anyon pair (syndrome)','ok');
+  draw();
+}catch(e){boom('boot',e);}
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE KONAMI CODE &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body></html>

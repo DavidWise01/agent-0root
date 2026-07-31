@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PXK — the Perception Kernel · minimum instruction set for reality</title>
+<style>
+  :root{
+    --bg:#f5f2ec; --paper:#fcfbf7; --ink:#211e19; --ink2:#544e44; --dim:#8c857a;
+    --line:#dcd6c9; --accent:#3a6b6f; --accent2:#2b5356; --warm:#9a6a3c;
+    --a:#456fa8; --b:#a8564a; --bond:#2f7a55; --dormant:#b0a894;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:ui-monospace,'SF Mono','Cascadia Code',Menlo,monospace;
+    padding:24px 18px;min-height:100vh;line-height:1.55;font-size:13px}
+  .wrap{max-width:1000px;margin:0 auto}
+  header{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:20px}
+  header h1{font-size:22px;font-weight:700;letter-spacing:-0.3px;font-family:'Iowan Old Style',Palatino,Georgia,serif}
+  header .sub{font-size:13px;color:var(--ink2);margin-top:6px;font-family:'Iowan Old Style',Palatino,Georgia,serif;font-style:italic}
+  header .spec{font-size:11.5px;color:var(--dim);margin-top:9px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:15px 16px;margin-bottom:16px}
+  .panel h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.3px;color:var(--accent2);margin-bottom:11px;font-family:ui-sans-serif,system-ui,sans-serif}
+  .isa-row{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:6px 0;border-bottom:1px dotted var(--line);align-items:baseline}
+  .isa-row:last-child{border-bottom:none}
+  .op{font-weight:700;color:var(--accent);font-size:13px}
+  .op.priv{color:var(--warm)}
+  .gloss{font-size:12px;color:var(--ink2);font-family:'Iowan Old Style',Palatino,Georgia,serif;line-height:1.5}
+  textarea{width:100%;height:190px;background:#fff;border:1px solid var(--line);color:var(--ink);
+    padding:11px;font-family:inherit;font-size:12.5px;border-radius:5px;line-height:1.6;resize:vertical}
+  .ctl{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px;align-items:center}
+  button{background:var(--accent);color:#fff;border:none;padding:9px 16px;font-family:ui-sans-serif,system-ui,sans-serif;
+    font-weight:600;cursor:pointer;font-size:12.5px;border-radius:5px}
+  button.ghost{background:transparent;color:var(--accent2);border:1px solid var(--accent)}
+  button.alt{background:var(--warm)}
+  #status{font-size:11.5px;color:var(--ink2);font-family:ui-sans-serif,system-ui,sans-serif;margin-left:auto}
+  .machine{display:grid;grid-template-columns:1fr 40px 1fr;gap:10px;align-items:stretch;margin-bottom:14px}
+  .mind{border:1.5px solid;border-radius:6px;padding:11px;min-height:130px}
+  .mind.A{border-color:var(--a)} .mind.B{border-color:var(--b)}
+  .mind .mh{font-weight:700;font-size:11px;font-family:ui-sans-serif,system-ui,sans-serif;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+  .mind.A .mh{color:var(--a)} .mind.B .mh{color:var(--b)}
+  .reg{font-size:11px;padding:2px 0;color:var(--ink2)}
+  .reg .h{color:var(--dim)}
+  .aperture{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .ap-state{font-size:9px;font-family:ui-sans-serif,system-ui,sans-serif;color:var(--dim);writing-mode:vertical-rl;text-orientation:mixed}
+  .ap-line{width:2px;flex:1;background:var(--accent);border-radius:2px;transition:all .3s}
+  .ap-line.closed{background:var(--dormant);opacity:0.4}
+  .bonds{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fff;min-height:52px}
+  .bond{display:inline-block;margin:3px 5px 3px 0;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;
+    background:rgba(47,122,85,0.12);color:var(--bond);border:1px solid var(--bond)}
+  .bond.dormant{background:rgba(176,168,148,0.15);color:var(--dormant);border-color:var(--dormant);text-decoration:line-through}
+  .trace{font-size:11.5px;line-height:1.7;max-height:230px;overflow-y:auto}
+  .trace .ln{padding:2px 0;border-bottom:1px dotted var(--line)}
+  .trace .op-tag{display:inline-block;min-width:30px;font-weight:700;color:var(--accent)}
+  .trace .ln.event{background:rgba(47,122,85,0.09);font-weight:600;color:var(--bond);padding:4px 6px;border-radius:4px;border:none}
+  .trace .ln.close{color:var(--warm)}
+  .trace .ln.err{color:var(--b)}
+  footer{font-size:12px;color:var(--ink2);line-height:1.7;border-top:1px solid var(--line);padding-top:13px;margin-top:4px;font-family:'Iowan Old Style',Palatino,Georgia,serif}
+  footer b{color:var(--ink)}
+  .diag{border:1px solid var(--b);background:rgba(168,86,74,0.06);border-radius:6px;padding:12px;margin-top:12px;font-size:12px;color:var(--b);display:none;white-space:pre-wrap}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#39fc6b}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+<header>
+  <h1>PXK — the Perception Kernel</h1>
+  <div class="sub">An instruction set architecture for reality. Five ops. Meaning is the event; the kernel runs it.</div>
+  <div class="spec">shared-register machine · red is red because two minds AGREE · ground is optional · close your eyes and the bond goes dormant</div>
+</header>
+
+<div class="grid">
+  <div>
+    <div class="panel">
+      <h2>the ISA — 5 core ops + 1 privileged</h2>
+      <div class="isa-row"><span class="op">PT</span><span class="gloss"><b>POINT</b> r, x — a mind directs attention at raw x (a wavelength, a token, a fruit). Private. Yields a <i>handle</i>, not yet meaning.</span></div>
+      <div class="isa-row"><span class="op">NM</span><span class="gloss"><b>NAME</b> h, w — bind a handle to a symbol inside one mind. Still private. "I call this red." One thing, one mind.</span></div>
+      <div class="isa-row"><span class="op">EM</span><span class="gloss"><b>EMIT</b> w — push a symbol across the aperture to the other mind. The only op that crosses the gap.</span></div>
+      <div class="isa-row"><span class="op">AG</span><span class="gloss"><b>AGREE</b> w — the peer's symbol meets yours on the same handle; if they match, a <i>bond</i> forms. This is the meaning-event. Red becomes real.</span></div>
+      <div class="isa-row"><span class="op">CL</span><span class="gloss"><b>CLOSE</b> — shut the aperture. Bonds needing this peer go dormant, not deleted. "I close my eyes, you don't exist."</span></div>
+      <div class="isa-row"><span class="op priv">GD</span><span class="gloss"><b>GROUND</b> h — check a handle against the world directly (taste the fruit). Privileged: a mind with a body can run it; a mind of words alone cannot. The kernel proves meaning closes <i>without</i> it.</span></div>
+    </div>
+    <div class="panel">
+      <h2>program</h2>
+      <textarea id="src"># red becomes real between two minds
+# syntax:  MIND OP args        ( MIND is A or B )
+
+A PT 700nm        # A points at a wavelength -> handle
+A NM 700nm red    # A names it 'red' (private)
+B PT 700nm        # B points at the same raw
+B NM 700nm red    # B names it 'red' (private) -- still 2 minds, 2 things
+A EM red          # A emits 'red' across the aperture
+B AG red          # B agrees -> BOND. red is now real.
+
+# now close an eye
+A CL              # A shuts the aperture
+# the bond 'red' goes dormant -- B still holds it,
+# but the shared reality is suspended. perception is revocable.
+</textarea>
+      <div class="ctl">
+        <button id="run">assemble &amp; run</button>
+        <button id="step" class="ghost">step</button>
+        <button id="ground" class="alt">try GD (ground)</button>
+        <button id="reset" class="ghost">reset</button>
+        <span id="status">6 ops · 2 minds · ready</span>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2>the machine — two minds, one aperture</h2>
+      <div class="machine">
+        <div class="mind A"><div class="mh">mind A</div><div id="regA"></div></div>
+        <div class="aperture"><span class="ap-state" id="apState">aperture open</span><div class="ap-line" id="apLine"></div></div>
+        <div class="mind B"><div class="mh">mind B</div><div id="regB"></div></div>
+      </div>
+      <div style="font-size:11px;font-family:ui-sans-serif,system-ui,sans-serif;color:var(--dim);margin-bottom:5px">SHARED REALITY — bonds that exist between the minds</div>
+      <div class="bonds" id="bonds"><span style="color:var(--dim);font-size:11px">— nothing is real yet —</span></div>
+    </div>
+    <div class="panel">
+      <h2>execution trace</h2>
+      <div class="trace" id="trace"><span style="color:var(--dim)">run the program to watch reality assemble, op by op.</span></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <b>What the kernel proves by running:</b> reality here is not stored in either mind — it lives in the <b>bonds</b>, the shared register, and a bond only forms on <b>AG</b>. A mind can PT and NM all day in private and nothing becomes real; it takes <b>EM across the aperture</b> and a matching <b>AG</b> on the other side. That's "red is red because we both call it red," compiled. ·
+  <b>Ground is demoted on purpose.</b> GD — checking against the world — is the op a mind of words alone can't run, and the kernel demonstrates the meaning-event closes without it: red needs agreement, not a verified wavelength. The thing Gullick calls the fatal gap ("no way to check against the world") is real, but it's not what makes meaning — agreement is. ·
+  <b>CL is the whole thesis in one op:</b> close the aperture and the bond doesn't delete, it goes <i>dormant</i> — the shared reality is suspended, not destroyed, and reopening restores it. Perception is the revocable act that conditions existence. Close your eyes; the other doesn't vanish from the world, but the <i>one-thing-to-two-minds</i> that made them real to you goes quiet. ·
+  Five instructions for reality. The sixth is a luxury.
+</footer>
+<div class="diag" id="diag"></div>
+</div>
+
+<script>
+"use strict";
+(function(){
+const DIAG=m=>{const d=document.getElementById('diag');d.style.display='block';d.textContent="error\n\n"+m;};
+try{
+const status=document.getElementById('status');
+
+function freshState(){return{
+  minds:{A:{handles:{},names:{}},B:{handles:{},names:{}}},
+  aperture:true,
+  emitted:{},            // symbol pending across the gap, per source mind
+  bonds:{},              // symbol -> {minds:[..], dormant:bool}
+  ground:{},             // handle -> grounded bool
+  trace:[]
+};}
+let S=freshState(), program=[], pc=0;
+
+function parse(text){
+  const prog=[];
+  text.split("\n").forEach((raw,i)=>{
+    const line=raw.replace(/#.*/,"").trim();
+    if(!line)return;
+    const parts=line.split(/\s+/);
+    const mind=parts[0], op=parts[1], args=parts.slice(2);
+    if(mind!=="A"&&mind!=="B") throw new Error("line "+(i+1)+": mind must be A or B, got '"+mind+"'");
+    if(!["PT","NM","EM","AG","CL","GD"].includes(op)) throw new Error("line "+(i+1)+": unknown op '"+op+"'");
+    prog.push({mind,op,args,src:line});
+  });
+  return prog;
+}
+
+function exec(instr){
+  const {mind,op,args}=instr;
+  const me=S.minds[mind], peer=mind==="A"?"B":"A";
+  let note="", cls="";
+  if(op==="PT"){
+    const x=args[0]; me.handles[x]=true;
+    note=mind+" points at "+x+" -> handle (private)";
+  } else if(op==="NM"){
+    const [h,w]=args;
+    if(!me.handles[h]) { note=mind+" NM failed: no handle "+h+" (PT first)"; cls="err"; }
+    else { me.names[h]=w; note=mind+" names "+h+" '"+w+"' (private: 1 thing, 1 mind)"; }
+  } else if(op==="EM"){
+    const w=args[0];
+    if(!S.aperture){ note=mind+" EM '"+w+"' but aperture CLOSED — nothing crosses"; cls="close"; }
+    else { S.emitted[mind]=w; note=mind+" emits '"+w+"' across the aperture ->"; }
+  } else if(op==="AG"){
+    const w=args[0];
+    const incoming=S.emitted[peer];
+    if(!S.aperture){ note=mind+" AG but aperture CLOSED"; cls="err"; }
+    else if(incoming===undefined){ note=mind+" AG '"+w+"' but peer emitted nothing yet"; cls="err"; }
+    else if(incoming===w){
+      S.bonds[w]={minds:["A","B"],dormant:false};
+      note=">>> AGREE: '"+w+"' matches. BOND FORMS. '"+w+"' is now REAL — one thing, two minds. <<<";
+      cls="event";
+    } else { note=mind+" AG '"+w+"' but peer said '"+incoming+"' — no match, no bond (two things, two minds)"; cls="err"; }
+  } else if(op==="CL"){
+    S.aperture=false;
+    Object.values(S.bonds).forEach(b=>b.dormant=true);
+    note=mind+" CLOSE — aperture shut. all bonds go DORMANT (suspended, not deleted).";
+    cls="close";
+  } else if(op==="GD"){
+    const h=args[0];
+    S.ground[h]=true;
+    note=mind+" GROUND "+h+" — checked against the world. (a bodied mind can; a worded one cannot.)";
+    cls="close";
+  }
+  S.trace.push({op,note,cls});
+  render();
+}
+
+function regHtml(m){
+  const mind=S.minds[m];
+  let h="";
+  const handles=Object.keys(mind.handles);
+  if(handles.length===0) return '<span class="reg h">— empty —</span>';
+  handles.forEach(hd=>{
+    const nm=mind.names[hd];
+    h+='<div class="reg"><span class="h">handle</span> '+hd+(nm?' <span class="h">=</span> "'+nm+'"':' <span class="h">(unnamed)</span>')+(S.ground[hd]?' <span class="h">[grounded]</span>':'')+'</div>';
+  });
+  return h;
+}
+function render(){
+  document.getElementById('regA').innerHTML=regHtml("A");
+  document.getElementById('regB').innerHTML=regHtml("B");
+  const apLine=document.getElementById('apLine'), apState=document.getElementById('apState');
+  if(S.aperture){apLine.className="ap-line";apState.textContent="aperture open";}
+  else{apLine.className="ap-line closed";apState.textContent="aperture closed";}
+  const bonds=Object.entries(S.bonds);
+  document.getElementById('bonds').innerHTML = bonds.length?
+    bonds.map(([w,b])=>'<span class="bond'+(b.dormant?' dormant':'')+'">'+w+(b.dormant?' (dormant)':'')+'</span>').join('')
+    : '<span style="color:var(--dim);font-size:11px">— nothing is real yet —</span>';
+  const tr=S.trace.map(t=>'<div class="ln '+(t.cls||'')+'"><span class="op-tag">'+t.op+'</span> '+t.note+'</div>').join('');
+  document.getElementById('trace').innerHTML = tr || '<span style="color:var(--dim)">run the program to watch reality assemble, op by op.</span>';
+  const traceEl=document.getElementById('trace'); traceEl.scrollTop=traceEl.scrollHeight;
+}
+
+function assemble(){
+  try{ program=parse(document.getElementById('src').value); S=freshState(); pc=0; render();
+    status.textContent=program.length+" instructions assembled"; return true; }
+  catch(e){ DIAG(e.message); status.textContent="assemble failed"; return false; }
+}
+function run(){
+  if(!assemble())return;
+  document.getElementById('diag').style.display='none';
+  try{ while(pc<program.length){ exec(program[pc]); pc++; }
+    const real=Object.values(S.bonds).filter(b=>!b.dormant).length;
+    const dormant=Object.values(S.bonds).filter(b=>b.dormant).length;
+    status.textContent="halted · "+real+" real, "+dormant+" dormant bond(s)";
+  }catch(e){DIAG(e.message);status.textContent="runtime error";}
+}
+function step(){
+  if(program.length===0){ if(!assemble())return; }
+  if(pc>=program.length){ status.textContent="program halted — reset to run again"; return; }
+  exec(program[pc]); pc++;
+  status.textContent="step "+pc+"/"+program.length;
+}
+function ground(){
+  // demo the privileged op: inject a GD on the first handle A holds
+  const h=Object.keys(S.minds.A.handles)[0];
+  if(!h){ status.textContent="nothing to ground — run or step first"; return; }
+  exec({mind:"A",op:"GD",args:[h]});
+  status.textContent="GD run — note the bond did not need it";
+}
+function reset(){ S=freshState(); program=[]; pc=0; document.getElementById('diag').style.display='none'; render(); status.textContent="reset · ready"; }
+
+document.getElementById('run').onclick=run;
+document.getElementById('step').onclick=step;
+document.getElementById('ground').onclick=ground;
+document.getElementById('reset').onclick=reset;
+render();
+}catch(e){DIAG((e&&e.stack)?e.stack:String(e));}
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

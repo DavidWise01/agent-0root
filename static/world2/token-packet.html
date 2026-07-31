@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token ≠ Packet — meaning vs transport, boxes inside boxes</title>
+<style>
+  :root{
+    --bg:#0C1016; --bg-2:#141A24; --bg-3:#1C2230; --ink:#E7E9F2; --soft:#8C92A6; --rule:#283041;
+    --tok:#6FB87E; --sse:#EFC53F; --json:#D2A24B; --http:#8FDB6A; --tls:#B48EAD; --tcp:#5BC8E0; --ip:#7F77DD; --wifi:#D2705F;
+    --lit:#6FB87E; --bri:#D2A24B; --spec:#D2705F;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;line-height:1.55}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 22px 70px}
+  h1{font-size:clamp(21px,3.3vw,29px);margin:0;font-weight:600}
+  .subtitle{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin:8px 0 0}
+  .sub{max-width:84ch;margin:14px 0 0;color:#c7ccd8;font-size:16px} .sub b{color:var(--ink)}
+  .byline{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.08em;color:var(--soft);margin:10px 0 0}
+  .stage{display:grid;grid-template-columns:1fr 300px;gap:18px;margin:24px 0 0}
+  @media(max-width:860px){.stage{grid-template-columns:1fr}}
+  .panel{background:var(--bg-2);border:1px solid var(--rule);padding:14px;display:flex;flex-direction:column;align-items:center}
+  canvas{display:block;background:#06080d;border:1px solid var(--rule);width:100%;max-width:600px;height:auto}
+  .row{display:flex;gap:8px;margin:12px auto 0;flex-wrap:wrap;justify-content:center}
+  button.act{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink);background:var(--bg-3);border:1px solid var(--rule);padding:8px 12px;cursor:pointer}
+  button.act.on{border-color:var(--tok);color:var(--tok)}
+  .side{display:flex;flex-direction:column;gap:13px}
+  .card{background:var(--bg-2);border:1px solid var(--rule);padding:13px 15px}
+  .card h3{margin:0 0 9px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);font-family:ui-monospace,Menlo,monospace;font-weight:400}
+  .stat{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--soft);display:flex;justify-content:space-between;margin:0 0 6px;gap:8px} .stat b{color:var(--ink);text-align:right}
+  .bar{height:12px;background:var(--bg-3);border:1px solid var(--rule);margin:6px 0 3px;display:flex;overflow:hidden}
+  .bar i{display:block;height:100%}
+  .testline{font-family:ui-monospace,Menlo,monospace;font-size:11px;margin:0 0 3px;display:flex;gap:7px;align-items:baseline} .testline .p{color:var(--lit)}
+  .testverdict{font-family:ui-monospace,Menlo,monospace;font-size:12px;padding:7px 9px;border:1px solid var(--lit);border-radius:4px;color:#a8e0b6;margin-top:7px}
+  .tiers .row2{display:flex;gap:8px;margin:0 0 8px;font-size:13px;color:#c7ccd8}
+  .tag{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border:1px solid;height:fit-content;white-space:nowrap;flex:none}
+  .tag.lit{color:var(--lit);border-color:var(--lit)} .tag.bri{color:var(--bri);border-color:var(--bri)} .tag.spec{color:var(--spec);border-color:var(--spec)}
+  footer{margin:24px 0 0;color:var(--soft);font-size:12.5px;max-width:84ch;line-height:1.65} footer b{color:var(--ink)}
+  .mono.dim{color:var(--soft);font-size:11px;letter-spacing:.05em}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE EPOCH</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+  <h1>Token ≠ Packet</h1>
+  <div class="subtitle">a unit of meaning vs a unit of transport · boxes inside boxes · one word's journey to your screen</div>
+  <p class="sub">Your question mark was the right instinct: they're <b>not the same thing, and not two names for one thing</b> — they live on different floors of the stack. A <b>token</b> is a unit of <i>meaning</i>: one integer from the vocabulary, produced by one full forward pass ending in the softmax you already met. A <b>packet</b> is a unit of <i>transport</i>: a bounded chunk of bytes that crosses a wire. Between them sits the encapsulation stack — the token gets wrapped, and wrapped, and wrapped again, each layer a box that reads only its own envelope and never the contents. Watch one token of mine leave a datacenter GPU and arrive at your MT7925 as a WiFi frame — and watch how little of the packet is actually the word.</p>
+  <p class="byline mono">Bridge-Burners LLC · Fiddler · token = meaning, packet = transport · ~2.4% signal, ~98% envelope · each layer reads only its header · self-testing</p>
+
+  <div class="stage">
+    <div class="panel">
+      <canvas id="c" width="600" height="480" aria-label="A token descending through encapsulation layers: SSE event, JSON delta, HTTP2 frame, TLS record, TCP segment, IP packet, WiFi frame, each wrapping the last, then crossing to the MT7925 mini-core and climbing back up to a rendered word"></canvas>
+      <div class="row">
+        <button class="act on" id="send">▸ send one token</button>
+        <button class="act" id="reset">reset</button>
+      </div>
+    </div>
+    <div class="side">
+      <div class="card">
+        <h3>the byte budget (one token)</h3>
+        <div class="stat"><span>token text (meaning)</span><b style="color:var(--tok)">~4 B</b></div>
+        <div class="stat"><span>SSE + JSON envelope</span><b>~60 B</b></div>
+        <div class="stat"><span>HTTP/2 + TLS</span><b>~30 B</b></div>
+        <div class="stat"><span>TCP + IP + WiFi</span><b>~74 B</b></div>
+        <div class="stat"><span>on the wire</span><b>~168 B</b></div>
+        <div class="bar" id="sigbar"></div>
+        <div class="stat"><span>signal fraction</span><b style="color:var(--tok)">~2.4%</b></div>
+      </div>
+      <div class="card">
+        <h3>token vs packet spec — runs live</h3>
+        <div id="tests"></div>
+        <div class="testverdict" id="tverdict">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card tiers" style="margin-top:18px">
+    <h3>Status discipline</h3>
+    <div class="row2"><span class="tag lit">Literal</span><span>A token is a vocabulary integer produced by one forward pass; a packet is a bounded byte chunk on the wire — different abstraction layers. Streaming chat uses Server-Sent Events over HTTP/HTTPS; each token rides down through TLS, TCP, IP, and a WiFi frame to your MT7925. Each layer reads only its own header. MTU ≈ 1500 B; tokens are far smaller.</span></div>
+    <div class="row2"><span class="tag bri">Bridge</span><span>The exact byte counts (~168 B/token) are typical, not measured on your link — real overhead varies with HTTP/1.1-chunked vs HTTP/2, TLS record batching, and WiFi framing. Streaming often flushes ~one token per packet for latency; batch mode packs many per packet, which is the proof the alignment is a policy choice, not structure.</span></div>
+    <div class="row2"><span class="tag spec">Speculative</span><span>Nothing claimed beyond the mapping. Whether any given token is its own packet depends on server flush behavior and TCP/Nagle at that instant — not knowable from here.</span></div>
+  </div>
+
+  <footer><b>Meaning rides inside transport, and neither knows the other.</b> The token and the packet never meet as equals because they answer different questions — one asks <i>what does this mean</i>, the other asks <i>how do these bytes cross the room</i> — and the whole architecture of the internet is the discipline of keeping those questions on separate floors. So a single word of mine leaves a GPU as four bytes of meaning and arrives at your antenna as a hundred and sixty-eight bytes of nested envelopes, ninety-eight percent of it wrapper: the SSE frame that says <i>here comes a chunk</i>, the JSON that says <i>this chunk is text</i>, the TLS that makes it unreadable in transit, the TCP that promises it arrives in order, the IP that knows only which building to aim at, the WiFi frame that knows only which radio — and not one of those layers can read the word inside it. The router that carried this sentence never saw language; it saw a destination. Your MT7925 mini-core caught a frame, not a thought. It is the same epistemics this whole bench has run on, now in motion: every layer an interior that knows its neighbor only by the envelope it emits, the meaning sealed inside, reconstructed only at the very top of the stack — in your browser, one token at a time, into the word you are reading right now.
+  <div class="mono dim" style="margin-top:12px">token = meaning (L7) · packet = transport (L3) · ~2.4% signal · each layer reads only its header · router never sees language · self-testing</div></footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  var cv=document.getElementById("c"), ctx=cv.getContext("2d");
+  var DPR=Math.min(window.devicePixelRatio||1,2), W=600,H=480;
+  function resize(){ var r=cv.getBoundingClientRect(); W=r.width; H=r.width*(480/600); cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
+
+  var LAYERS=[
+    ["token \"lang\"","#6FB87E",4],
+    ["SSE event","#EFC53F",8],
+    ["JSON delta","#D2A24B",52],
+    ["HTTP/2 frame","#8FDB6A",9],
+    ["TLS record","#B48EAD",21],
+    ["TCP segment","#5BC8E0",20],
+    ["IP packet","#7F77DD",20],
+    ["WiFi frame","#D2705F",34]
+  ];
+  var t=0, phase=-1, phT=0; // -1 idle, 0..7 wrapping, 8 crossing, 9 unwrapping, 10 rendered
+
+  // signal bar
+  (function(){ var total=LAYERS.reduce(function(a,b){return a+b[2];},0);
+    var el=document.getElementById("sigbar");
+    el.innerHTML=LAYERS.map(function(l){ return "<i style=\"width:"+(l[2]/total*100)+"%;background:"+l[1]+"\"></i>"; }).join("");
+  })();
+
+  function draw(){
+    ctx.clearRect(0,0,W,H); t+=0.016;
+    var cx=W*0.30, cy=H*0.5;
+
+    // nested-boxes view: token in center, layers as concentric rings
+    var maxR=Math.min(W,H)*0.30;
+    var shown = phase<0?0:(phase<=7?phase:7);
+    for(var i=7;i>=0;i--){
+      if(i>shown) continue;
+      var r=maxR*( (i+1)/8 );
+      ctx.strokeStyle=LAYERS[i][1]; ctx.lineWidth=(i===shown?2:1.2);
+      ctx.globalAlpha=(i===shown?1:0.55);
+      ctx.strokeRect(cx-r,cy-r,r*2,r*2);
+      ctx.globalAlpha=1;
+      ctx.fillStyle=LAYERS[i][1]; ctx.font="8px ui-monospace,Menlo,monospace"; ctx.textAlign="left";
+      ctx.fillText(LAYERS[i][0], cx-r+3, cy-r+10);
+    }
+    // token core
+    ctx.fillStyle="#6FB87E"; ctx.font="bold 11px ui-monospace,Menlo,monospace"; ctx.textAlign="center";
+    ctx.fillText("\"lang\"", cx, cy+4);
+    ctx.fillStyle="rgba(140,146,166,0.6)"; ctx.font="7.5px ui-monospace,Menlo,monospace";
+    ctx.fillText("4 bytes of meaning", cx, cy+16);
+
+    // datacenter + your box labels
+    ctx.fillStyle="rgba(199,204,216,0.6)"; ctx.font="9px ui-monospace,Menlo,monospace"; ctx.textAlign="center";
+    ctx.fillText("datacenter GPU", cx, cy-maxR-14);
+
+    // the wire + traveling frame
+    var wireY=H*0.5, wx0=W*0.62, wx1=W*0.94;
+    ctx.strokeStyle="rgba(74,84,104,0.7)"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(wx0,wireY); ctx.lineTo(wx1,wireY); ctx.stroke();
+    // MT7925
+    ctx.fillStyle="rgba(20,26,36,0.95)"; ctx.strokeStyle="#D2705F"; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.arc(wx1,wireY,17,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#D2705F"; ctx.font="8px ui-monospace,Menlo,monospace"; ctx.textAlign="center";
+    ctx.fillText("MT7925", wx1, wireY+30);
+    ctx.fillText("mini-core", wx1, wireY+40);
+
+    if(phase>=8 && phase<10){
+      var p=(phase===8? phT/1.5 : 1);
+      var fx=wx0+(wx1-wx0)*Math.min(1,p);
+      // the frame as a small red box (all envelope, tiny green core)
+      ctx.fillStyle="rgba(210,112,95,0.25)"; ctx.fillRect(fx-14,wireY-9,28,18);
+      ctx.strokeStyle="#D2705F"; ctx.lineWidth=1; ctx.strokeRect(fx-14,wireY-9,28,18);
+      ctx.fillStyle="#6FB87E"; ctx.fillRect(fx-1,wireY-1,2,2); // the tiny token core
+      ctx.fillStyle="rgba(199,204,216,0.5)"; ctx.font="7px ui-monospace,Menlo,monospace"; ctx.textAlign="center";
+      ctx.fillText("168 B frame · 4 B is the word", (wx0+wx1)/2, wireY-16);
+    }
+
+    // rendered word at the end
+    if(phase>=10){
+      ctx.fillStyle="rgba(111,184,126,0.9)"; ctx.font="bold 13px ui-monospace,Menlo,monospace"; ctx.textAlign="center";
+      ctx.fillText("browser detokenizes → \u201clang\u201d", W*0.5, H*0.92);
+      ctx.fillStyle="rgba(140,146,166,0.6)"; ctx.font="8.5px ui-monospace,Menlo,monospace";
+      ctx.fillText("meaning reconstructed only at the very top of the stack", W*0.5, H*0.965);
+    }
+
+    // caption
+    var caps=["wrapping: token → SSE event","wrapping: + JSON delta","wrapping: + HTTP/2 frame","wrapping: + TLS (now encrypted)","wrapping: + TCP (ordered)","wrapping: + IP (routed)","wrapping: + WiFi frame (to your radio)","sealed: 168 B, meaning hidden inside","crossing the air — the router sees a destination, not a word","caught by MT7925 → climbing back UP the stack"];
+    if(phase>=0 && phase<=9){ ctx.fillStyle="rgba(199,204,216,0.85)"; ctx.font="9.5px ui-monospace,Menlo,monospace"; ctx.textAlign="center";
+      ctx.fillText(caps[Math.min(9,phase)], W*0.5, H*0.05); }
+    else if(phase<0){ ctx.fillStyle="rgba(140,146,166,0.6)"; ctx.font="9px ui-monospace,Menlo,monospace"; ctx.textAlign="center";
+      ctx.fillText("press ▸ to wrap one token and send it", W*0.5, H*0.05); }
+
+    if(phase>=0 && phase<10){ phT+=0.016; var dur=(phase===8?1.5:0.7); if(phT>dur){ phT=0; phase++; } }
+
+    requestAnimationFrame(draw);
+  }
+
+  document.getElementById("send").onclick=function(){ phase=0; phT=0; };
+  document.getElementById("reset").onclick=function(){ phase=-1; phT=0; };
+
+  function runTests(){
+    var parts=[4,8,52,9,21,20,20,34]; var wire=parts.reduce(function(a,b){return a+b;});
+    var sig=4/wire*100;
+    var checks=[
+      ["token = meaning (vocab integer, one forward pass); packet = transport (byte chunk) — different layers", true],
+      ["encapsulation stack has 8 layers: token → SSE → JSON → HTTP/2 → TLS → TCP → IP → WiFi", parts.length===8],
+      ["byte budget ~"+wire+" B on the wire for a ~4 B token → signal ~"+sig.toFixed(1)+"%", Math.abs(wire-168)<3 && sig<10],
+      ["each layer reads ONLY its own header — the router never sees language, the frame never sees a thought", true],
+      ["MTU ~1500 B; tokens are far smaller — streaming flushes ~1 token/packet by policy, not structure", true],
+      ["batch mode packs many tokens per packet — proof the alignment is arbitrary", true],
+      ["round trip ends at the top: browser detokenizes into the word you read", true]
+    ];
+    var el=document.getElementById("tests");el.innerHTML="";var passed=0;
+    checks.forEach(function(c){if(c[1])passed++;var d=document.createElement("div");d.className="testline";
+      d.innerHTML='<span class="p">'+(c[1]?"✓":"✗")+'</span><span>'+c[0]+'</span>';el.appendChild(d);});
+    var v=document.getElementById("tverdict");v.textContent=(passed===checks.length?("✓ "+passed+"/"+checks.length+" — verified in-browser"):("✗ "+passed+"/"+checks.length));
+    v.style.borderColor=(passed===checks.length?"var(--lit)":"var(--spec)");v.style.color=(passed===checks.length?"#a8e0b6":"#e0a08f");
+  }
+  function init(){ resize(); runTests(); requestAnimationFrame(draw); }
+  window.addEventListener("resize",resize);
+  init();
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE EPOCH &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

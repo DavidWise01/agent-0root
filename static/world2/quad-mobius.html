@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE QUAD-MÖBIUS SCAFFOLD — 4 physical → 1 logical</title>
+<style>
+  :root{--bg:#0d0b08;--panel:#161210;--ink:#e8e0d4;--dim:#8a7f6e;
+    --org:#ff6a00;--org2:#ffb347;--grn:#7dff6a;--red:#ff4d4d;--cyn:#57d8ff;--gold:#ffd24a;--line:#2a231c}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px;padding:12px;display:flex;flex-direction:column;gap:10px}
+  h1{font-size:16px;letter-spacing:2px;color:var(--org);border-bottom:3px solid var(--org);display:inline-block;padding-bottom:2px}
+  .sub{color:var(--dim);font-size:11px;line-height:1.5;margin-top:4px}
+  .ctrls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);padding:10px}
+  label{font-size:10px;color:var(--dim);letter-spacing:1px;display:flex;flex-direction:column;gap:3px}
+  label output{color:var(--org2);font-size:14px}
+  input[type=range]{accent-color:var(--org);width:130px}
+  button{background:transparent;color:var(--org);border:1px solid var(--org);font:inherit;font-weight:bold;padding:6px 11px;cursor:pointer;letter-spacing:1px;font-size:11px}
+  button.on{background:var(--org);color:#000}
+  #grid{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+  @media(max-width:880px){#grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);padding:6px}
+  .panel h2{font-size:10px;letter-spacing:1.5px;color:var(--org2);margin-bottom:4px}
+  canvas{display:block;width:100%;background:#0a0806;border:1px solid var(--line)}
+  #tower{font-size:12px;line-height:1.7;padding:4px}
+  .rung{display:flex;gap:8px;align-items:baseline;padding:2px 0}
+  .rung .n{font-size:16px;font-weight:bold;width:22px;text-align:right}
+  .rung .lbl{color:var(--dim)}
+  .real{color:var(--grn)}.mine{color:var(--org2)}
+  #footer{color:var(--dim);font-size:10px;border-left:3px solid var(--org);padding-left:8px;line-height:1.6}
+  #footer b{color:var(--org2)}
+  #failcard{display:none;background:#2a0d0d;border:2px solid var(--red);padding:12px;white-space:pre-wrap;color:#ffb3b3}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style></head><body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE KONAMI CODE</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<script>
+const PAPER={
+ claim:"Four figure-8 Möbius loops, pinned at the origin, each offset by a quarter turn — the geometric "+
+  "scaffold for 4 physical qubits bracing 1 logical. Each loop is a figure-8 (a Bell-pair dumbbell) given a "+
+  "half-twist, which makes it a true Möbius band. Seen edge-on a loop flattens to a single line — 2 becoming 1 "+
+  "by viewpoint. Run it forward and the four phased lobes sweep into something familiar: an atomic orbital, or a "+
+  "braided helix — the braided logical qubit, made visible.",
+ tier:"LIT: the figure-8 (x=sin t, y=sin 2t), its half-twist Möbius immersion, the edge-on collapse to a line, "+
+  "and the 4-lobe phase offset are exact geometry. HONEST — READ THIS: the descent 8>5>3>2>1 is Fibonacci and a "+
+  "useful MNEMONIC, but NOT a physics code-tower. Real rungs: 5→1 and d=3 (the [[5,1,3]] code), 2 (a Bell pair), "+
+  "1 (the logical qubit). The 8 is a geometric scaffold (4 lobes × 2 sides), not a code. Labeled as your "+
+  "construction, not canon. The orbital/helix resemblance is real geometry, not a claim that qubits ARE orbitals."
+};
+</script>
+<div><h1>THE QUAD-MÖBIUS SCAFFOLD</h1><div class="sub" id="subline"></div></div>
+<div class="ctrls">
+  <button id="play" class="on">\u23f8 running</button>
+  <label>run forward (rate) <output id="ow">0.5</output><input type="range" id="w" min="0" max="2" step="0.05" value="0.5"></label>
+  <label>view tilt <output id="ot">55</output>\u00b0<input type="range" id="tilt" min="0" max="90" value="55"></label>
+  <label>spin <output id="oy">30</output>\u00b0<input type="range" id="yaw" min="0" max="360" value="30"></label>
+  <button id="edge">snap edge-on (2\u21921)</button>
+  <button id="twist" class="on">Möbius twist: ON</button>
+</div>
+<div id="grid">
+  <div class="panel"><h2>THE SCAFFOLD \u2014 4 figure-8 Möbius loops, pinned at 0,0, quarter-offset</h2>
+    <canvas id="scene" width="560" height="440"></canvas></div>
+  <div class="panel"><h2>THE DESCENT \u2014 honest tiers</h2>
+    <div id="tower"></div>
+  </div>
+</div>
+<div id="footer"></div>
+<div id="failcard"></div>
+<script>
+"use strict";
+function failLoud(w,e){const c=document.getElementById('failcard');c.style.display='block';
+  c.textContent="INSTRUMENT FAULT \u2014 "+w+"\n"+(e&&e.stack?e.stack:String(e));}
+try{
+document.getElementById('subline').textContent=PAPER.claim;
+document.getElementById('footer').innerHTML="<b>TIERS:</b> "+PAPER.tier;
+
+// honest tower panel
+const rungs=[
+ ['8','the scaffold — 4 lobes × 2 sides','mine','YOUR construction (Fibonacci mnemonic, not a code)'],
+ ['5','physical qubits','real','[[5,1,3]] — 5 physical encode 1 logical ✓'],
+ ['3','the distance d','real','corrects any single error ✓'],
+ ['2','a Bell pair','real','2 qubits entangled = the binary base ✓'],
+ ['1','the logical qubit','real','seen edge-on, looks like one ✓'],
+];
+document.getElementById('tower').innerHTML=rungs.map(r=>
+  '<div class="rung"><span class="n '+r[2]+'">'+r[0]+'</span><span><span class="'+r[2]+'">'+r[1]+'</span><br><span class="lbl">'+r[3]+'</span></span></div>'
+).join('')+'<div style="margin-top:8px;font-size:10px;color:var(--dim);border-top:1px solid var(--line);padding-top:6px">'+
+'<span class="real">green</span> = established physics &nbsp; <span class="mine">orange</span> = your scaffold. '+
+'the 8-rung is a useful visual mnemonic, not a code-theory fact.</div>';
+
+const $=id=>document.getElementById(id);
+let w=0.5, tilt=55, yaw=30, playing=true, twist=true, edgeSnap=false, t0=performance.now(), tPause=0;
+$('w').oninput=e=>{w=+e.target.value;$('ow').textContent=w.toFixed(2);};
+$('tilt').oninput=e=>{tilt=+e.target.value;$('ot').textContent=tilt;edgeSnap=false;};
+$('yaw').oninput=e=>{yaw=+e.target.value;$('oy').textContent=yaw;edgeSnap=false;};
+$('play').onclick=()=>{playing=!playing;$('play').classList.toggle('on',playing);$('play').textContent=playing?'\u23f8 running':'\u25b6 paused';if(playing){t0=performance.now()-tPause;requestAnimationFrame(loop);}};
+$('twist').onclick=()=>{twist=!twist;$('twist').classList.toggle('on',twist);$('twist').textContent='Möbius twist: '+(twist?'ON':'OFF');};
+$('edge').onclick=()=>{edgeSnap=true;tilt=2;$('tilt').value=2;$('ot').textContent=2;};
+
+// ---- minimal 3D projector (no deps) ----
+function rotY(p,a){const c=Math.cos(a),s=Math.sin(a);return [c*p[0]+s*p[2],p[1],-s*p[0]+c*p[2]];}
+function rotX(p,a){const c=Math.cos(a),s=Math.sin(a);return [p[0],c*p[1]-s*p[2],s*p[1]+c*p[2]];}
+function project(p,W,H){
+  const d=4.2, z=p[2]+d, f=2.6;
+  const sx=W/2 + (p[0]*f/z)*W*0.5;
+  const sy=H/2 - (p[1]*f/z)*H*0.5;
+  return [sx,sy,z];
+}
+const cv=$('scene'),g=cv.getContext('2d');
+const LOBE=['#ff6a00','#57d8ff','#7dff6a','#ffd24a']; // 4 physical qubits
+
+// one figure-8 mobius loop: centerline is the figure-8, width is the twisting band
+function lobePoint(u, phaseOffset, tSec, doTwist){
+  // figure-8 centerline in its own plane: x=sin(u), y=sin(2u)*0.6, scaled
+  const A=1.1;
+  let cxp=A*Math.sin(u), cyp=A*Math.sin(2*u)*0.55, czp=0;
+  // rotate the whole lobe about the vertical axis by its phase offset (quarter turns) + running-forward spin
+  const rot=phaseOffset + (playing? w*tSec : w*(tPause/1000));
+  let p=[cxp,cyp,czp];
+  p=rotY(p,rot);
+  return p;
+}
+function bandOffset(u, phaseOffset, tSec, s){
+  // half-twist band: offset perpendicular, twisting once around the loop (mobius)
+  const rot=phaseOffset + (playing? w*tSec : w*(tPause/1000));
+  const tw = twist? (u/2) : 0; // half-twist over the u in [0,2pi] -> mobius
+  const wdt=0.16;
+  // local normal roughly out-of-plane, twisting
+  let n=[Math.cos(tw)*0, Math.sin(tw)*wdt, Math.cos(tw)*wdt];
+  n=rotY(n,rot);
+  return [s*n[0], s*n[1], s*n[2]];
+}
+function draw(tSec){
+  const W=cv.width,H=cv.height;
+  g.fillStyle='#0a0806';g.fillRect(0,0,W,H);
+  const tl=(edgeSnap?2:tilt)*Math.PI/180, yw=yaw*Math.PI/180;
+  // ground pin at 0,0
+  const originP=project(rotX(rotY([0,0,0],yw),tl),W,H);
+  // axes
+  g.strokeStyle='#1c1712';g.lineWidth=1;
+  [[-1.6,0,0],[1.6,0,0]].forEach((a,i)=>{});
+  function tf(p){return project(rotX(rotY(p,yw),tl),W,H);}
+  // draw the 4 lobes as ribbons
+  const N=120;
+  for(let k=0;k<4;k++){
+    const off=k*Math.PI/2; // quarter offset
+    // build two edges of the band
+    const edgeA=[],edgeB=[];
+    for(let i=0;i<=N;i++){
+      const u=2*Math.PI*i/N;
+      const c=lobePoint(u,off,tSec,twist);
+      const oa=bandOffset(u,off,tSec,+1), ob=bandOffset(u,off,tSec,-1);
+      edgeA.push(tf([c[0]+oa[0],c[1]+oa[1],c[2]+oa[2]]));
+      edgeB.push(tf([c[0]+ob[0],c[1]+ob[1],c[2]+ob[2]]));
+    }
+    // fill ribbon with depth shading
+    for(let i=0;i<N;i++){
+      const z=(edgeA[i][2]+edgeB[i][2])/2;
+      const shade=Math.max(0.15,Math.min(1,1.6-(z-3.2)));
+      g.fillStyle=LOBE[k];g.globalAlpha=0.25*shade;
+      g.beginPath();g.moveTo(edgeA[i][0],edgeA[i][1]);g.lineTo(edgeA[i+1][0],edgeA[i+1][1]);
+      g.lineTo(edgeB[i+1][0],edgeB[i+1][1]);g.lineTo(edgeB[i][0],edgeB[i][1]);g.closePath();g.fill();
+    }
+    g.globalAlpha=1;
+    // centerline
+    g.strokeStyle=LOBE[k];g.lineWidth=1.6;g.beginPath();
+    for(let i=0;i<=N;i++){const u=2*Math.PI*i/N;const c=tf(lobePoint(u,off,tSec,twist));i?g.lineTo(c[0],c[1]):g.moveTo(c[0],c[1]);}
+    g.stroke();g.lineWidth=1;
+  }
+  // the pin at origin (0,0 ground)
+  g.fillStyle='#e8e0d4';g.beginPath();g.arc(originP[0],originP[1],5,0,6.28);g.fill();
+  g.strokeStyle='#8a7f6e';g.beginPath();g.arc(originP[0],originP[1],9,0,6.28);g.stroke();
+  g.fillStyle='#8a7f6e';g.font='10px ui-monospace';g.fillText('pinned 0,0',originP[0]+12,originP[1]+4);
+  // labels
+  g.fillStyle=edgeSnap?'#7dff6a':'#8a7f6e';g.font='bold 11px ui-monospace';
+  g.fillText(edgeSnap?'EDGE-ON — the 8 flattens to a line: 2 → 1':'4 physical qubits bracing 1 logical (quarter-offset)',14,H-14);
+  g.fillStyle='#6a6484';g.font='10px ui-monospace';
+  g.fillText(twist?'Möbius half-twist ON (one-sided band)':'flat ribbon (twist off)',14,22);
+}
+function loop(){
+  const tSec=(playing?performance.now()-t0:tPause)/1000;
+  if(!playing)tPause=tSec*1000;
+  draw(tSec);
+  if(playing)requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+}catch(e){failLoud('init',e);}
+</script><div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE KONAMI CODE &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body></html>

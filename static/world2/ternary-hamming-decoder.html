@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE TERNARY HAMMING DECODER · Locate & Correct By Address</title>
+<style>
+:root{
+  --paper:#e9e3cd; --ink:#1c3d2e; --ink-mid:#2f5a44; --ink-faint:#7a937f;
+  --stamp:#8a3324; --ochre:#8a6d2f; --neg:#8a3324; --zero:#2f5a44; --pos:#2d566e;
+  --mono:"Courier New",Courier,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);
+  background-image:repeating-linear-gradient(0deg, rgba(28,61,46,.03) 0 1px, transparent 1px 3px);
+  color:var(--ink);font-family:var(--serif);line-height:1.5;padding:10px}
+.sheet{max-width:780px;margin:0 auto;border:2.5px solid var(--ink);padding:0;position:relative}
+.sheet::before{content:'';position:absolute;inset:5px;border:1px solid var(--ink);pointer-events:none}
+.inner{padding:22px}
+.masthead{text-align:center;border-bottom:2px solid var(--ink);padding-bottom:12px}
+.mast-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.28em;color:var(--ink-mid);text-transform:uppercase}
+.mast-title{font-size:clamp(21px,5.2vw,34px);letter-spacing:.03em;font-weight:700;margin:6px 0 2px;text-transform:uppercase}
+.mast-sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;color:var(--ink-mid)}
+.lede{font-size:13px;max-width:620px;margin:12px auto 0;text-align:center;color:var(--ink-mid);line-height:1.6}
+h2.sec{font-family:var(--mono);font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;border-bottom:1.5px solid var(--ink);padding-bottom:4px;margin:22px 0 10px}
+h2.sec .n{color:var(--stamp);margin-right:8px}
+.body p{font-size:13.5px;margin-bottom:9px}
+.body b{color:var(--ink)}
+.tn{font-family:var(--mono);color:var(--neg);font-weight:700}
+.tz{font-family:var(--mono);color:var(--zero);font-weight:700}
+.tp{font-family:var(--mono);color:var(--pos);font-weight:700}
+.def{font-family:var(--mono);font-size:11px;background:rgba(28,61,46,.06);border-left:2px solid var(--ochre);padding:8px 11px;margin:8px 0;line-height:1.6}
+.stage{border:1.5px solid var(--ink);padding:14px;margin:14px 0}
+.stage h3{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-mid);text-align:center;margin-bottom:10px}
+/* H matrix */
+.hmat{display:flex;justify-content:center;gap:14px;margin:10px 0;font-family:var(--mono);font-size:11px}
+.hmat .col{text-align:center}
+.hmat .col .lbl{font-size:8px;color:var(--ink-mid);margin-bottom:3px}
+.hmat .col .vec{border:1px solid var(--ink-faint);padding:4px 8px;line-height:1.4}
+.hmat .col.hit .vec{border-color:var(--stamp);border-width:2px;background:rgba(138,51,36,.12);color:var(--stamp);font-weight:700}
+/* word display */
+.word{display:flex;gap:8px;justify-content:center;margin:10px 0;flex-wrap:wrap}
+.cellw{width:56px;text-align:center}
+.cellw select{width:100%;font-family:var(--mono);font-size:20px;font-weight:700;text-align:center;border:1.5px solid var(--ink-faint);background:var(--paper);padding:5px 0;cursor:pointer;-webkit-appearance:none;appearance:none}
+.cellw select.n{color:var(--neg);background:rgba(138,51,36,.12)}
+.cellw select.z{color:var(--zero);background:rgba(47,90,68,.1)}
+.cellw select.p{color:var(--pos);background:rgba(45,86,110,.12)}
+.cellw.errpos select{outline:2px solid var(--stamp);outline-offset:1px}
+.cellw.fixpos select{outline:2px solid var(--zero);outline-offset:1px}
+.cellw .pl{font-family:var(--mono);font-size:8px;color:var(--ink-mid);margin-top:3px}
+.synd{font-family:var(--mono);font-size:13px;text-align:center;margin:10px 0;letter-spacing:.05em}
+.synd .z{color:var(--zero);font-weight:700} .synd .e{color:var(--stamp);font-weight:700}
+.steps{font-family:var(--mono);font-size:11px;line-height:1.9;margin-top:8px}
+.steps .s{display:block;padding-left:14px;text-indent:-14px}
+.steps .ok{color:var(--zero);font-weight:700} .steps .hit{color:var(--stamp);font-weight:700} .steps .fix{color:var(--ochre);font-weight:700}
+.controls{text-align:center;margin-top:10px}
+.cbtn{appearance:none;background:transparent;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:7px 12px;border:1.5px solid var(--ink);color:var(--ink);margin:4px}
+.cbtn.warm{border-color:var(--stamp);color:var(--stamp)}
+.cbtn.gold{border-color:var(--ochre);color:#5a4a20}
+.colophon{margin-top:20px;border-top:2px solid var(--ink);padding-top:12px;text-align:center;font-family:var(--mono);font-size:9.5px;color:var(--ink-mid);letter-spacing:.06em;line-height:1.9}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE SHORTCUT</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="sheet"><div class="inner">
+
+<header class="masthead">
+  <div class="mast-eyebrow">Series E · Field Primer II · Trits Only</div>
+  <h1 class="mast-title">The Ternary Hamming Decoder</h1>
+  <div class="mast-sub">Locate &amp; Correct A Single Trit Error · By Address</div>
+  <p class="lede">The intro showed parity that <em>detects</em>. This shows the next step: a code that <b>locates and corrects</b>. The ternary Hamming <b>[4,2,3]₃</b> code carries 2 data trits in 4, and when one trit is corrupted it computes a <b>syndrome</b> — two check values that together form the <em>balanced-ternary address</em> of the broken trit and the <em>magnitude</em> of its error. Not "something broke" — <b>"trit 2 was pushed up by 1, here is the fix."</b> Corrupt any trit below and watch it get caught, named, and repaired.</p>
+</header>
+
+<section class="body">
+
+  <h2 class="sec"><span class="n">§1</span> The Check Matrix H</h2>
+  <p>The code is defined by a <b>parity-check matrix H</b> — here 2 rows × 4 columns over GF(3). Each <b>column is the "address" of one trit-position</b>, and the columns are chosen to all be distinct (no column is a multiple of another). A word is a <b>valid codeword</b> exactly when H × word = <span class="tz">(0,0)</span>. There are <b>9 valid codewords</b> (3² data trits) hiding in the 81-word space — and every non-codeword is a corrupted version that H will expose.</p>
+  <div class="hmat" id="hmat"></div>
+  <div class="def">column j = the syndrome a single error at position j produces (times its magnitude).<br>so the syndrome <em>is</em> the address. that is the whole trick.</div>
+
+  <h2 class="sec"><span class="n">§2</span> The Live Decoder</h2>
+  <div class="stage">
+    <h3>received word · 4 trits</h3>
+    <div class="word" id="word"></div>
+    <div class="synd" id="syndrome"></div>
+    <div class="controls">
+      <button class="cbtn gold" onclick="loadCodeword()">Load Clean Codeword</button>
+      <button class="cbtn warm" onclick="corrupt()">Corrupt 1 Trit ⚡</button>
+      <button class="cbtn" onclick="decodeWord()">Decode &amp; Correct ✓</button>
+    </div>
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <h2 class="sec"><span class="n">§3</span> How The Syndrome Locates</h2>
+  <p>When a single trit at position <b>j</b> is corrupted by amount <b>a</b>, the syndrome comes out as exactly <b>a × (column j of H)</b>. Since every column is distinct, the syndrome's <em>direction</em> uniquely names <b>which position</b> broke, and its <em>scale</em> gives <b>how much</b>. The decoder reads the syndrome, matches it to a column to find the position, reads the scalar to find the magnitude, and <b>subtracts the error</b> — restoring the original codeword. This is "3 locates" from your kernel, running as real arithmetic: a witness that doesn't just detect a fault but hands you its coordinate.</p>
+  <div class="def">syndrome = <span class="tz">0</span> → clean. &nbsp; syndrome = a·H[:,j] → error of size a at position j → subtract to fix.<br>distance d=3 → corrects exactly ⌊(3−1)/2⌋ = <b>1</b> trit error, always, by address.</div>
+
+  <h2 class="sec"><span class="n">§4</span> Why This Is The Witness, Concretely</h2>
+  <p>Every abstraction from the series lands here as machinery. The <b>codeword</b> is a statement that satisfies the constraints (H·c=0) — a "true" message. A <b>corruption</b> is a lie injected at one position. The <b>syndrome</b> is the witness: zero when the statement is consistent, and when not, it doesn't merely raise an alarm — it <b>points at the liar and quantifies the lie</b>. The <b>distance-1 correcting limit</b> is the honest bound: this code survives <em>one</em> corrupted trit and provably fails at two (it would "correct" toward the wrong codeword). That bound — fix one, declare defeat at two — is the coding-theory form of "good enough, with the limit stated." No absolutes. A correctable radius, and an honest edge past it.</p>
+
+</section>
+
+<footer class="colophon">
+  H'S COLUMNS ARE ADDRESSES · THE SYNDROME IS THE WITNESS · ZERO = CLEAN, ELSE = WHO &amp; HOW MUCH<br>
+  [4,2,3]₃ CORRECTS ONE TRIT BY COORDINATE · FAILS HONESTLY AT TWO · THAT EDGE IS THE BOUND<br>
+  THE TERNARY HAMMING DECODER · FIELD PRIMER II · JUNE 2026
+</footer>
+
+</div></div>
+<script>
+const OPT={'-1':'−','0':'0','1':'+'}, CLS={'-1':'n','0':'z','1':'p'};
+const H=[[0,1],[1,0],[1,1],[1,2]]; // 4 columns (positions), 2 rows
+function m3(x){x=((x%3)+3)%3;return x===2?-1:x;}
+// enumerate codewords
+let codewords=[];
+for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)for(let c=-1;c<=1;c++)for(let d=-1;d<=1;d++){
+  const w=[a,b,c,d];const s=syndrome(w);if(s[0]===0&&s[1]===0)codewords.push(w);
+}
+let word=codewords[4].slice(), original=word.slice(), errInfo=null, hitCol=-1, fixCol=-1;
+
+function syndrome(w){let s=[0,0];for(let j=0;j<4;j++){s[0]=m3(s[0]+H[j][0]*w[j]);s[1]=m3(s[1]+H[j][1]*w[j]);}return s;}
+
+function drawH(){
+  const c=document.getElementById('hmat');c.innerHTML='';
+  for(let j=0;j<4;j++){
+    const col=document.createElement('div');col.className='col'+(hitCol===j?' hit':'');
+    col.innerHTML=`<div class="lbl">pos ${j+1}</div><div class="vec">${fmt(H[j][0])}<br>${fmt(H[j][1])}</div>`;
+    c.appendChild(col);
+  }
+}
+function fmt(x){const v=x===2?-1:x;return `<span class="t${v<0?'n':v>0?'p':'z'}">${v===0?'0':v>0?'+'+v:v}</span>`;}
+
+function drawWord(){
+  const c=document.getElementById('word');c.innerHTML='';
+  word.forEach((v,i)=>{
+    const cell=document.createElement('div');cell.className='cellw'+(errInfo&&errInfo.pos===i?' errpos':'')+(fixCol===i?' fixpos':'');
+    const sel=document.createElement('select');sel.className=CLS[v];
+    ['1','0','-1'].forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=OPT[o];if(parseInt(o)===v)op.selected=true;sel.appendChild(op);});
+    sel.onchange=e=>{word[i]=parseInt(e.target.value);errInfo=null;hitCol=-1;fixCol=-1;refresh();};
+    const pl=document.createElement('div');pl.className='pl';pl.textContent='t'+(i+1);
+    cell.appendChild(sel);cell.appendChild(pl);c.appendChild(cell);
+  });
+}
+function drawSyndrome(){
+  const s=syndrome(word);
+  const el=document.getElementById('syndrome');
+  const clean=s[0]===0&&s[1]===0;
+  el.innerHTML=`syndrome H·word = ( ${fmt(s[0])} , ${fmt(s[1])} ) → `+
+    (clean?'<span class="z">CLEAN · valid codeword</span>':'<span class="e">NONZERO · error present</span>');
+}
+function refresh(){drawH();drawWord();drawSyndrome();}
+
+function loadCodeword(){
+  word=codewords[Math.floor(Math.random()*codewords.length)].slice();
+  original=word.slice();errInfo=null;hitCol=-1;fixCol=-1;refresh();
+  document.getElementById('steps').innerHTML='<span class="s ok">loaded a valid codeword — syndrome is (0,0). now corrupt a trit.</span>';
+}
+function corrupt(){
+  original=word.slice();
+  const i=Math.floor(Math.random()*4);
+  const opts=[-1,0,1].filter(x=>x!==word[i]);
+  word[i]=opts[Math.floor(Math.random()*opts.length)];
+  errInfo=null;hitCol=-1;fixCol=-1;refresh();
+  document.getElementById('steps').innerHTML=`<span class="s hit">corrupted trit ${i+1}. the syndrome is now nonzero. press Decode &amp; Correct.</span>`;
+}
+function decodeWord(){
+  const s=syndrome(word);
+  const steps=document.getElementById('steps');
+  if(s[0]===0&&s[1]===0){
+    hitCol=-1;fixCol=-1;errInfo=null;refresh();
+    steps.innerHTML='<span class="s ok">syndrome = (0,0) → no error. word is already a valid codeword.</span>';
+    return;
+  }
+  // find position j and magnitude a with a*H[:,j] = s
+  let found=null;
+  for(let j=0;j<4&&!found;j++)for(let a=-1;a<=1;a++){
+    if(a!==0&&m3(a*H[j][0])===s[0]&&m3(a*H[j][1])===s[1]){found={pos:j,mag:a};}
+  }
+  if(!found){steps.innerHTML='<span class="s hit">syndrome matches no single-error pattern → 2+ errors, UNCORRECTABLE (the honest bound).</span>';return;}
+  errInfo=found;hitCol=found.pos;
+  let html=`<span class="s">syndrome = ( ${fmt(s[0])} , ${fmt(s[1])} )</span>`;
+  html+=`<span class="s hit">↳ matches column ${found.pos+1} × ${found.mag>0?'+':''}${found.mag} → error at <b>trit ${found.pos+1}</b>, magnitude <b>${found.mag>0?'+':''}${found.mag}</b></span>`;
+  // correct
+  const corrected=word.slice();
+  corrected[found.pos]=m3(corrected[found.pos]-found.mag);
+  word=corrected;fixCol=found.pos;errInfo=null;
+  refresh();
+  const restored=JSON.stringify(word)===JSON.stringify(original);
+  html+=`<span class="s fix">↳ subtract ${found.mag>0?'+':''}${found.mag} from trit ${found.pos+1} → CORRECTED${restored?' · matches original codeword ✓':''}</span>`;
+  steps.innerHTML=html;
+}
+refresh();
+document.getElementById('steps').innerHTML='<span class="s ok">a valid codeword is loaded. corrupt a trit, then decode.</span>';
+</script>
+</div>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SHORTCUT &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

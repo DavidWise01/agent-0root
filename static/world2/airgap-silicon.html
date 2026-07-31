@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIRGAP NODES ON SILICON — Si/SiGe realization</title>
+<style>
+  :root{--bg:#0d0b08;--panel:#161210;--ink:#e8e0d4;--dim:#8a7f6e;
+    --org:#ff6a00;--org2:#ffb347;--grn:#7dff6a;--red:#ff4d4d;--cyn:#57d8ff;
+    --si:#3a4250;--si2:#4a5568;--sige:#5a4a68;--line:#2a231c}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px;padding:12px;display:flex;flex-direction:column;gap:10px}
+  h1{font-size:17px;letter-spacing:2px;color:var(--org);border-bottom:3px solid var(--org);
+    display:inline-block;padding-bottom:2px}
+  .sub{color:var(--dim);font-size:11px;line-height:1.5;margin-top:4px}
+  #upper{display:grid;grid-template-columns:3fr 2fr;gap:10px}
+  @media(max-width:860px){#upper{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);padding:6px}
+  .panel h2{font-size:10px;letter-spacing:1.5px;color:var(--org2);margin-bottom:4px}
+  canvas{display:block;width:100%;background:#0a0806;border:1px solid var(--line)}
+  #lower{background:var(--panel);border:1px solid var(--line);padding:8px}
+  .acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  button{background:transparent;color:var(--org);border:1px solid var(--org);font:inherit;font-weight:bold;
+    padding:5px 12px;cursor:pointer;letter-spacing:1px}
+  button.on{background:var(--org);color:#000}
+  .ros{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+  .ro{background:#12100c;border:1px solid var(--line);padding:8px}
+  .ro .k{font-size:10px;color:var(--dim);letter-spacing:1px}
+  .ro .v{font-size:15px;margin-top:2px}
+  .num{font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:1px 7px;font-size:10px;font-weight:bold}
+  .b-fail{background:var(--red);color:#000}.b-pass{background:var(--grn);color:#000}.b-run{background:var(--cyn);color:#000}
+  #footer{color:var(--dim);font-size:10px;border-left:3px solid var(--org);padding-left:8px;line-height:1.6}
+  #footer b{color:var(--org2)}
+  #failcard{display:none;background:#2a0d0d;border:2px solid var(--red);padding:12px;white-space:pre-wrap;color:#ffb3b3}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a3c}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE FIREWALL</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+
+<!-- ============ EDIT BLOCK 1: PAPER + MEASURED DATA ============ -->
+<script>
+const PAPER={
+ title:"AIRGAP NODES ON SILICON",
+ claim:"The two-folder experiment rendered as a Si/SiGe gate-defined device. Two parallel electron channels "+
+  "on one die, separated by an etched trench (the air gap: zero tunnel coupling between channels). A pair-prep "+
+  "stage launches momentum-branch-correlated electrons into both channels. ACT I: node1 encodes its bit in its "+
+  "barrier gate voltage — node0's detector statistics do not move (Δ=1e-15, measured). ACT II: detector outcomes "+
+  "agree 79.9%, MI=0.0032 bits/round — shared randomness, zero signaling. ACT III: outcomes as pad + the metal "+
+  "interconnect (classical channel, drawn and labeled) + repetition-101 majority: node0's register flips 0→1.",
+ tier:"LIT: every number below is embedded from the actual run (seed 128, N=420 grid) or exact unit arithmetic. "+
+  "SCHEMATIC: the device drawing — single-band effective-mass picture (m*=0.19 m_e, [100] transverse); NOT modeled: "+
+  "valley splitting, interface roughness, phonons, charge noise, and the pair-prep stage itself, which is the hardest "+
+  "part in real silicon (momentum-branch entangled pairs as drawn are idealized; real Si entanglement sources are "+
+  "spin-based, e.g. Cooper-pair splitters). Kinematic packet animation is illustrative pacing, not the PDE."
+};
+// unit mapping (verified in Node): m*=0.19 m_e, L=2.239 nm, E_u=80.00 meV, t_u=8.23 fs
+const SI={L:2.239,Eu:80.0,tu:8.23,
+ arm1:{V:160.0,Vswap:240.0,w:3.13},arm2:{V:184.0,w:2.69},
+ Ea:48.4,Eb:176.4,sigma:5.60,launch:44.8,chan:313,run:247};
+// measured run data (transcript.log, seed 128)
+const RUN={
+ enc0:{TT:0.064820,TR:0.149681,RT:0.118001,RR:0.667498},
+ enc1:{TT:0.014494,TR:0.032968,RT:0.168327,RR:0.784211},
+ marg0:"0.182820996734", margDelta:"1.05e-15",
+ freq0:0.18250, freq1:0.18205, noise:0.00224, rounds:200000,
+ agree:0.7987, MI:0.003172,
+ R:101, votes:88, decoded:1, keyDisagree:0.2013, majBound:"1.5e-8",
+ C_ent:0.025605, C0:0.999356, CHSH0:2.827517
+};
+</script>
+<!-- ============================================================ -->
+
+<div><h1>AIRGAP NODES ON SILICON</h1><div class="sub" id="subline"></div></div>
+
+<div id="upper">
+  <div class="panel">
+    <h2>2D — device cross-section (Si/SiGe, gate-defined) · SCHEMATIC geometry, MEASURED physics</h2>
+    <canvas id="c2d" width="920" height="380"></canvas>
+  </div>
+  <div class="panel">
+    <h2>3D — die view: two channels, one trench, one interconnect (soft-GL)</h2>
+    <canvas id="c3d" width="620" height="380"></canvas>
+  </div>
+</div>
+
+<div id="lower">
+  <div class="acts">
+    <span style="color:var(--dim);font-size:10px;letter-spacing:1px">SELECT ACT:</span>
+    <button id="a1" class="on">ACT I — FORBIDDEN</button>
+    <button id="a2">ACT II — CORRELATION</button>
+    <button id="a3">ACT III — LEGAL TRANSFER</button>
+    <span style="flex:1"></span>
+    <span id="actverdict"></span>
+  </div>
+  <div class="ros" id="ros"></div>
+</div>
+
+<div id="failcard"></div>
+<div id="footer"></div>
+
+<script>
+"use strict";
+function failLoud(w,e){const c=document.getElementById('failcard');c.style.display='block';
+  c.textContent="INSTRUMENT FAULT — "+w+"\n"+(e&&e.stack?e.stack:String(e));}
+try{
+document.getElementById('subline').textContent=PAPER.claim;
+document.getElementById('footer').innerHTML="<b>TIERS:</b> "+PAPER.tier+
+ " <b>SILICON MAPPING (verified arithmetic):</b> m*=0.19 m_e ⇒ length unit "+SI.L+" nm, energy unit "+SI.Eu+
+ " meV, time unit "+SI.tu+" fs. Channels "+SI.chan+" nm; barriers "+SI.arm1.V+" meV × "+SI.arm1.w+" nm (node1, encode-swap to "+
+ SI.arm1.Vswap+" meV) and "+SI.arm2.V+" meV × "+SI.arm2.w+" nm (node0); branch energies "+SI.Ea+" / "+SI.Eb+
+ " meV; packet σ="+SI.sigma+" nm; run "+SI.run+" fs. These are Si/SiGe quantum-well numbers, not decoration.";
+
+// seeded RNG for live Born sampling
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+const rnd=mulberry32(128);
+function sampleQ(q){const u=rnd();
+  if(u<q.TT)return [1,1]; if(u<q.TT+q.TR)return [1,0];
+  if(u<q.TT+q.TR+q.RT)return [0,1]; return [0,0];}
+
+// live counters
+let act=1, phase=0, enc=1;
+let n=0,agreeN=0,t1=0,t0enc0=0,n0=0,t0enc1=0,n1=0;
+let voteIdx=0,voteOnes=0,decodedShown=false;
+let lastOutcome=[[0,0],[0,0]]; // [arm][flash countdown]
+let flash=[0,0];
+
+// ---------- 2D device cross-section ----------
+const c2=document.getElementById('c2d'),g2=c2.getContext('2d');
+function chanY(arm){return arm===0?110:270;}
+function draw2D(){
+  const W=c2.width,H=c2.height;
+  g2.fillStyle='#0a0806';g2.fillRect(0,0,W,H);
+  // silicon die background
+  g2.fillStyle='#232a36';g2.fillRect(20,30,W-40,H-60);
+  g2.fillStyle='#8a7f6e';g2.font='10px ui-monospace,monospace';
+  g2.fillText('Si substrate (die '+(2*SI.chan/1000).toFixed(1)+' × 0.7 μm drawn region)',26,44);
+  // trench (air gap)
+  g2.fillStyle='#0a0806';g2.fillRect(60,175,W-120,30);
+  g2.fillStyle='#ff6a00';g2.fillText('ETCHED TRENCH — the air gap: zero tunnel coupling between channels',W/2-230,193);
+  // pair prep block
+  g2.fillStyle='#5a4a68';g2.fillRect(40,80,70,220);
+  g2.strokeStyle='#ffb347';g2.strokeRect(40,80,70,220);
+  g2.fillStyle='#ffb347';g2.fillText('PAIR',60,180);g2.fillText('PREP',60,192);
+  g2.fillStyle='#8a7f6e';g2.fillText('(idealized:',44,290);g2.fillText('see tier)',48,300);
+  for(const arm of [0,1]){
+    const y=chanY(arm);
+    // channel (2DEG strip)
+    g2.fillStyle='#4a5568';g2.fillRect(110,y-14,W-190,28);
+    // barrier gate
+    const bx=110+(W-190)*0.52, bw=arm===0?26:22;
+    const V=arm===0?(act===1&&enc===1?SI.arm1.Vswap:SI.arm1.V):SI.arm2.V;
+    const bh=V/240*46;
+    g2.fillStyle='rgba(255,106,0,0.75)';
+    g2.fillRect(bx,y-14-bh,bw,bh);
+    g2.fillStyle='#ffb347';
+    g2.fillText((arm===0?'node1 gate ':'node0 gate ')+V.toFixed(0)+' meV × '+(arm===0?SI.arm1.w:SI.arm2.w)+' nm',bx-40,y-20-bh);
+    if(arm===0&&act===1){
+      g2.fillStyle=enc===1?'#ff4d4d':'#57d8ff';
+      g2.fillText('encoding bit='+enc+' →',bx-120,y-20-bh);
+    }
+    // SiGe barrier hint inside channel
+    g2.fillStyle='#5a4a68';g2.fillRect(bx,y-14,bw,28);
+    // detector (SET)
+    g2.fillStyle='#2a3a2a';g2.fillRect(W-72,y-16,34,32);
+    g2.strokeStyle=flash[arm]>0?(lastOutcome[arm]?'#7dff6a':'#57d8ff'):'#3a4a3a';
+    g2.lineWidth=flash[arm]>0?3:1;
+    g2.strokeRect(W-72,y-16,34,32);g2.lineWidth=1;
+    g2.fillStyle='#8a7f6e';g2.fillText('SET',W-66,y+4);
+    g2.fillText(arm===0?'CHANNEL 1 (node1)  '+SI.chan+' nm':'CHANNEL 0 (node0)  '+SI.chan+' nm',116,y+30);
+    // moving packet (kinematic, illustrative)
+    const px=118+((phase%120)/120)*(W-320);
+    if(px<bx||rnd()>0){ // draw always; split visual after barrier
+      g2.fillStyle='rgba(232,224,212,0.9)';
+      g2.beginPath();g2.arc(Math.min(px,bx-4),y,4,0,6.29);g2.fill();
+      if(px>bx){ // transmitted ghost + reflected ghost, opacity by measured probs
+        const q=act===1&&enc===1?RUN.enc1:RUN.enc0;
+        const pT=arm===0?(q.TT+q.TR):(q.TT+q.RT);
+        g2.fillStyle='rgba(125,255,106,'+(0.25+pT).toFixed(2)+')';
+        g2.beginPath();g2.arc(bx+30+(px-bx)*0.8,y,3.5,0,6.29);g2.fill();
+        g2.fillStyle='rgba(87,216,255,'+(0.25+(1-pT)*0.6).toFixed(2)+')';
+        g2.beginPath();g2.arc(bx-24-(px-bx)*0.5,y,3.5,0,6.29);g2.fill();
+      }
+    }
+  }
+  // classical interconnect (ACT III only active)
+  const icY=190;
+  g2.strokeStyle=act===3?'#ffb347':'#3a332b';
+  g2.lineWidth=act===3?2.5:1;
+  g2.beginPath();
+  g2.moveTo(W-55,chanY(0)+16);g2.lineTo(W-55,icY);g2.lineTo(W-55,chanY(1)-16);
+  g2.stroke();g2.lineWidth=1;
+  g2.fillStyle=act===3?'#ffb347':'#3a332b';
+  g2.fillText('metal interconnect',W-180,icY+4);
+  g2.fillStyle=act===3?'#ff6a00':'#3a332b';
+  g2.fillText(act===3?'= CLASSICAL CHANNEL (the thing that crosses)':'(inactive — air gap only)',W-330,icY+18);
+  if(act===3&&voteIdx>0&&voteIdx<=RUN.R){
+    g2.fillStyle='#ffb347';
+    g2.beginPath();g2.arc(W-55,chanY(0)+16+((phase*3)%128),3,0,6.29);g2.fill();
+  }
+}
+// ---------- 3D die ----------
+const SGL={cv:document.getElementById('c3d'),th:0.7,cx:null,
+  project(x,y,z){const c=Math.cos(this.th),s=Math.sin(this.th);
+    const x1=x*c-z*s,z1=x*s+z*c;
+    const y1=y*0.94-z1*0.34,z2=y*0.34+z1*0.94;
+    const d=560,sc=d/(d+z2);
+    return[this.cv.width/2+x1*sc,this.cv.height/2-y1*sc+30,sc];},
+  line(p,q,col,w){const A=this.project(...p),B=this.project(...q);
+    this.cx.strokeStyle=col;this.cx.lineWidth=w||1;
+    this.cx.beginPath();this.cx.moveTo(A[0],A[1]);this.cx.lineTo(B[0],B[1]);this.cx.stroke();},
+  quad(pts,col){this.cx.fillStyle=col;this.cx.beginPath();
+    pts.forEach((p,i)=>{const P=this.project(...p);i?this.cx.lineTo(P[0],P[1]):this.cx.moveTo(P[0],P[1]);});
+    this.cx.closePath();this.cx.fill();},
+  text3(p,t,col){const P=this.project(...p);this.cx.fillStyle=col;
+    this.cx.font='10px ui-monospace,monospace';this.cx.fillText(t,P[0],P[1]);}
+};
+SGL.cx=SGL.cv.getContext('2d');
+function draw3D(){
+  const cx=SGL.cx,W=SGL.cv.width,H=SGL.cv.height;
+  cx.fillStyle='#0a0806';cx.fillRect(0,0,W,H);
+  SGL.th+=0.004;
+  // die slab
+  SGL.quad([[-190,-20,-120],[190,-20,-120],[190,-20,120],[-190,-20,120]],'#1c2430');
+  SGL.quad([[-190,-20,120],[190,-20,120],[190,-44,120],[-190,-44,120]],'#141a24');
+  SGL.quad([[190,-20,-120],[190,-20,120],[190,-44,120],[190,-44,-120]],'#10151d');
+  // channels (two ridges)
+  for(const z of [-55,55]){
+    SGL.quad([[-160,-12,z-12],[150,-12,z-12],[150,-12,z+12],[-160,-12,z+12]],'#3a4658');
+    // barrier gate block
+    const gx=18;
+    SGL.quad([[gx,-12,z-14],[gx+16,-12,z-14],[gx+16,14,z-14],[gx,14,z-14]],'rgba(255,106,0,0.8)');
+    SGL.quad([[gx,14,z-14],[gx+16,14,z-14],[gx+16,14,z+14],[gx,14,z+14]],'rgba(255,140,40,0.8)');
+    // detector cube
+    SGL.quad([[150,-12,z-10],[172,-12,z-10],[172,6,z-10],[150,6,z-10]],'#2a3a2a');
+  }
+  // trench
+  SGL.quad([[-160,-19,-30],[150,-19,-30],[150,-19,30],[-160,-19,30]],'#05070a');
+  SGL.text3([-40,-16,0],'trench = air gap','#ff6a00');
+  // pair prep
+  SGL.quad([[-186,-12,-70],[-160,-12,-70],[-160,18,-70],[-186,18,-70]],'#5a4a68');
+  SGL.quad([[-186,18,-70],[-160,18,-70],[-160,18,70],[-186,18,70]],'#6a5a78');
+  SGL.text3([-186,30,0],'pair prep','#ffb347');
+  // interconnect (act 3)
+  SGL.line([161,10,-55],[161,34,-55],act===3?'#ffb347':'#2a2a2a',act===3?2.5:1);
+  SGL.line([161,34,-55],[161,34,55],act===3?'#ffb347':'#2a2a2a',act===3?2.5:1);
+  SGL.line([161,34,55],[161,10,55],act===3?'#ffb347':'#2a2a2a',act===3?2.5:1);
+  SGL.text3([120,52,0],act===3?'classical channel ACTIVE':'classical channel idle','#8a7f6e');
+  // packets
+  const px=-150+((phase%120)/120)*290;
+  for(const z of [-55,55]){
+    cx.fillStyle='rgba(232,224,212,0.95)';
+    const P=SGL.project(Math.min(px,14),-4,z);
+    cx.beginPath();cx.arc(P[0],P[1],3.5*P[2],0,6.29);cx.fill();
+  }
+  SGL.text3([-160,-58,-120],'Si die — channels '+SI.chan+' nm, barriers '+SI.arm1.V+'/'+SI.arm2.V+' meV','#8a7f6e');
+}
+// ---------- lower readouts per act ----------
+const ros=document.getElementById('ros');
+function ro(k,v,color){return '<div class="ro"><div class="k">'+k+'</div><div class="v num"'+(color?' style="color:'+color+'"':'')+'>'+v+'</div></div>';}
+function renderRos(){
+  let h='';
+  if(act===1){
+    document.getElementById('actverdict').innerHTML='<span class="badge b-fail">TRANSFER FAILS — NO-COMMUNICATION THEOREM</span>';
+    h+=ro('node1 encodes bit in gate','0 → 160 meV · 1 → 240 meV','#ffb347');
+    h+=ro('node0 marginal P(T), enc 0',RUN.marg0,'#57d8ff');
+    h+=ro('node0 marginal P(T), enc 1',RUN.marg0,'#57d8ff');
+    h+=ro('|Δ| (measured)',RUN.margDelta+' — needs ~1e30 rounds','#ff4d4d');
+    h+=ro('live sampler: node0 freq | enc0',(n0?(t0enc0/n0).toFixed(4):'—')+' ('+n0+' rounds)');
+    h+=ro('live sampler: node0 freq | enc1',(n1?(t0enc1/n1).toFixed(4):'—')+' ('+n1+' rounds)');
+    h+=ro('decoder accuracy','50.0% — the bit does not cross','#ff4d4d');
+  } else if(act===2){
+    document.getElementById('actverdict').innerHTML='<span class="badge b-pass">CORRELATION WITHOUT SIGNALING</span>';
+    h+=ro('reference agreement (exact)',RUN.agree.toFixed(4),'#7dff6a');
+    h+=ro('live sampler agreement',(n?(agreeN/n).toFixed(4):'—')+' ('+n+' rounds)','#7dff6a');
+    h+=ro('mutual information',RUN.MI.toFixed(6)+' bits/round','#ffb347');
+    h+=ro('quadrants (enc1 state)','TT '+RUN.enc1.TT.toFixed(4)+' · TR '+RUN.enc1.TR.toFixed(4)+' · RT '+RUN.enc1.RT.toFixed(4)+' · RR '+RUN.enc1.RR.toFixed(4));
+    h+=ro('quantum grade of the source','C₀='+RUN.C0+' · CHSH '+RUN.CHSH0,'#ffb347');
+    h+=ro('what crossed the trench','NOTHING — bits born correlated','#7dff6a');
+  } else {
+    const done=voteIdx>=RUN.R;
+    document.getElementById('actverdict').innerHTML=done?
+      '<span class="badge b-pass">node0 register: 0 → 1 · DELIVERED</span>':
+      '<span class="badge b-run">TRANSMITTING '+voteIdx+'/'+RUN.R+'</span>';
+    h+=ro('pad','both nodes\' outcomes · disagreement '+(RUN.keyDisagree*100).toFixed(1)+'%','#57d8ff');
+    h+=ro('classical channel','ciphertext_i = bit ⊕ key1_i · '+RUN.R+' rounds','#ffb347');
+    h+=ro('majority tally',voteIdx?voteOnes+' / '+voteIdx+' vote 1':'—','#ffb347');
+    h+=ro('reference run','88/101 → decoded 1 · err bound '+RUN.majBound,'#7dff6a');
+    h+=ro('node1/bit.txt','1','#7dff6a');
+    h+=ro('node0/bit.txt',done?'1 (was 0)':'0','#'+(done?'7dff6a':'ff4d4d').replace('#',''));
+    h+=ro('what crossed','ONLY the interconnect file — labeled classical','#ffb347');
+  }
+  ros.innerHTML=h;
+}
+// ---------- act switching ----------
+function setAct(a){
+  act=a;
+  for(const [id,v] of [['a1',1],['a2',2],['a3',3]])
+    document.getElementById(id).classList.toggle('on',v===a);
+  if(a===3){voteIdx=0;voteOnes=0;decodedShown=false;}
+  renderRos();
+}
+document.getElementById('a1').onclick=()=>setAct(1);
+document.getElementById('a2').onclick=()=>setAct(2);
+document.getElementById('a3').onclick=()=>setAct(3);
+// ---------- loop ----------
+let frameCount=0;
+function frame(){
+  try{
+    phase++;frameCount++;
+    // sampling cadence: one Born sample every 12 frames
+    if(frameCount%12===0){
+      if(act===1){
+        enc=1-enc;
+        const q=enc===1?RUN.enc1:RUN.enc0;
+        const [x1,x0]=sampleQ(q);
+        if(enc===0){n0++;t0enc0+=x0;}else{n1++;t0enc1+=x0;}
+        lastOutcome=[x1,x0];flash=[8,8];
+      } else if(act===2){
+        const [x1,x0]=sampleQ(RUN.enc1);
+        n++;if(x1===x0)agreeN++;
+        lastOutcome=[x1,x0];flash=[8,8];
+      } else if(act===3&&voteIdx<RUN.R){
+        const [x1,x0]=sampleQ(RUN.enc1);
+        const cipher=1^x1;              // bit=1 XOR key1
+        const vote=cipher^x0;
+        voteOnes+=vote;voteIdx++;
+        lastOutcome=[x1,x0];flash=[8,8];
+      }
+      renderRos();
+    }
+    if(flash[0]>0)flash[0]--;if(flash[1]>0)flash[1]--;
+    draw2D();draw3D();
+  }catch(e){failLoud('frame loop',e);return;}
+  requestAnimationFrame(frame);
+}
+renderRos();
+requestAnimationFrame(frame);
+}catch(e){failLoud('init',e);}
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE FIREWALL &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

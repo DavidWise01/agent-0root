@@ -1,0 +1,217 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Enigma — the machine and its one fatal flaw</title>
+<style>
+:root{
+  --void:#0b0a08;--panel:#14110c;--metal:#1c1812;--rule:#2a241a;
+  --ink:#f0e8d8;--faint:#9a8e78;--fainter:#5a5040;
+  --key:#1a1610;--keytop:#262016;--lamp:#3a3020;--lamphot:#ffd24a;
+  --rotor:#c9a860;--sig:#ff9c4a;--reflect:#ff5c6a;--wire:#3a3226;
+  --brass:#b8963f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--void);color:var(--ink);font:400 13px/1.5 "IBM Plex Mono",ui-monospace,Menlo,monospace}
+body{padding:24px 18px 44px}
+.wrap{max-width:1000px;margin:0 auto}
+.eyebrow{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
+h1{font:600 32px/1.05 "IBM Plex Sans","Helvetica Neue",sans-serif;letter-spacing:-.015em;max-width:20ch}
+h1 em{font-style:normal;color:var(--brass)}
+.lede{color:var(--faint);font-size:13px;max-width:66ch;line-height:1.7;margin-top:14px}
+.lede b{color:var(--ink);font-weight:400}
+.machine{background:linear-gradient(180deg,#17130d,#100d09);border:1px solid var(--rule);border-radius:14px;padding:20px;margin:22px 0 8px;box-shadow:inset 0 1px 0 rgba(255,220,150,0.06)}
+.rotors{display:flex;justify-content:center;gap:16px;margin-bottom:8px}
+.rotor{background:var(--metal);border:1px solid var(--rule);border-radius:8px;padding:8px 6px;text-align:center;min-width:64px}
+.rotor .lbl{font-size:8.5px;letter-spacing:.15em;color:var(--fainter);text-transform:uppercase}
+.rotor .win{font:600 26px "IBM Plex Mono",monospace;color:var(--rotor);background:#0a0806;border-radius:5px;margin:5px 0 3px;padding:3px 0;text-shadow:0 0 8px rgba(201,168,96,0.4)}
+.rotor .rn{font-size:9px;color:var(--faint)}
+.rotor .step{display:flex;gap:3px;justify-content:center;margin-top:5px}
+.rotor .step button{font:inherit;font-size:9px;color:var(--faint);background:#0a0806;border:1px solid var(--rule);border-radius:3px;padding:1px 6px;cursor:pointer}
+.rotor .step button:hover{color:var(--rotor);border-color:var(--rotor)}
+.scope{width:100%;border-radius:8px;background:#0a0806;display:block;margin:12px 0}
+.lamps,.keys{display:flex;flex-direction:column;gap:6px;align-items:center;margin:12px 0}
+.lrow{display:flex;gap:6px}
+.lamp{width:30px;height:30px;border-radius:50%;background:var(--lamp);border:1px solid #2a2418;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#6a5f45;transition:all .1s}
+.lamp.on{background:var(--lamphot);color:#1a1206;box-shadow:0 0 16px rgba(255,210,74,0.7);border-color:var(--lamphot)}
+.key{width:30px;height:30px;border-radius:50%;background:var(--keytop);border:1px solid #322a1c;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 2px 0 #0a0806}
+.key:hover{background:#342c1e}
+.key:active,.key.press{transform:translateY(2px);box-shadow:0 0 0 #0a0806;background:var(--brass);color:#1a1206}
+.io{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0 4px}
+.io .box{background:var(--metal);border:1px solid var(--rule);border-radius:8px;padding:10px 12px}
+.io .box h3{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--fainter);margin-bottom:6px}
+.io .box .txt{font:600 15px "IBM Plex Mono",monospace;color:var(--ink);word-break:break-all;min-height:22px;letter-spacing:.08em}
+.io .box.out .txt{color:var(--brass)}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+button.ctl{font:inherit;font-size:11px;color:var(--ink);background:var(--metal);border:1px solid var(--rule);border-radius:7px;padding:8px 14px;cursor:pointer}
+button.ctl:hover{border-color:var(--brass);color:var(--brass)}
+.flaw{margin-top:8px;padding:11px 14px;border:1px solid var(--rule);border-radius:8px;font-size:11.5px;color:var(--faint);line-height:1.55}
+.flaw b{color:var(--reflect);font-weight:400}
+.foot{color:var(--fainter);font-size:11px;line-height:1.75;margin-top:22px;max-width:84ch}
+.foot b{color:var(--faint);font-weight:400}.foot .r{color:var(--reflect)}.foot .s{color:var(--brass)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a3c}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style></head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE FIREWALL</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+  <div class="eyebrow">the enigma machine · real wirings · the flaw that lost the war</div>
+  <h1>Type a letter. Watch it <em>scramble and bounce back</em>.</h1>
+  <p class="lede">The Enigma turned German military traffic into gibberish with three spinning rotors, a reflector, and 158 quintillion settings. Press a key and the current races <b>right-to-left through the rotors</b>, hits the <b>reflector</b>, and comes <b>back through</b> a different path to light a lamp — and the rotors <b>step like an odometer</b> so the same key never means the same thing twice. It looked unbreakable. But the reflector that made it elegant also gave it one fatal flaw, visible below, that Alan Turing turned into the key.</p>
+
+  <div class="machine">
+    <div class="rotors" id="rotors"></div>
+    <canvas class="scope" id="scope" width="900" height="200"></canvas>
+    <div class="lamps" id="lamps"></div>
+    <div class="keys" id="keys"></div>
+    <div class="io">
+      <div class="box"><h3>you type (plaintext)</h3><div class="txt" id="plain">—</div></div>
+      <div class="box out"><h3>machine outputs (cipher)</h3><div class="txt" id="cipher">—</div></div>
+    </div>
+    <div class="controls">
+      <button class="ctl" id="reset">reset rotors → AAA</button>
+      <button class="ctl" id="clear">clear message</button>
+      <button class="ctl" id="decode">↺ feed cipher back (decrypt)</button>
+    </div>
+    <div class="flaw" id="flaw"><b>The flaw:</b> because the reflector never wires a letter to itself, <b>no letter can ever encrypt to itself</b> — press A and you can get anything but A. That single guarantee let codebreakers rule out billions of settings at a glance.</div>
+  </div>
+
+  <div class="foot"><b>Why the reflector was both the genius and the ruin.</b> The <r>reflector</r> is what makes Enigma <b>reciprocal</b> — the same setting that encrypts also decrypts, so both ends used identical machines. But to bounce every letter to a <i>different</i> letter, it can never connect a letter to itself, and that ripples all the way out: <b>A never comes out as A.</b> At Bletchley Park, that meant a guessed word (a "crib" like WETTER, weather) could be slid along the ciphertext, and any position where a letter lined up with itself was instantly impossible — throwing out huge swaths of the search. Combined with the rotors' <s>double-step</s> quirk and sloppy operator habits, that flaw is what Turing's bombe machines exploited. The wirings here are the real Enigma I rotors (I, II, III) and Reflector B; typing AAAAA from AAA gives BDZGO, the genuine historical test vector. A perfect cipher with one imperfect promise — that a thing is never itself — and the whole thing unravels from there.</p>
+</div>
+
+<script>
+(function(){
+var $=function(id){return document.getElementById(id);};
+// ---- real Enigma I ----
+var ROTORS={I:{wiring:"EKMFLGDQVZNTOWYHXUSPAIBRCJ",notch:"Q"},II:{wiring:"AJDKSIRUXBLHWTMCQGZNPYFVOE",notch:"E"},III:{wiring:"BDFHJLCPRTXVZNYEIWGAKMUSQO",notch:"V"}};
+var REFLECTOR="YRUHQSLDPXNGOKMIEBFZCWVJAT";
+var A=65; function ci(c){return c.charCodeAt(0)-A;} function ic(i){return String.fromCharCode(A+((i%26+26)%26));}
+var order=["I","II","III"], pos=[0,0,0];
+function fwd(w,c,p){var i=(ci(c)+p)%26;return ic(ci(w[i])-p);}
+function bwd(w,c,p){var i=(ci(c)+p)%26;return ic(w.indexOf(ic(i))-p);}
+function step(){
+  var rN=ci(ROTORS[order[2]].notch),mN=ci(ROTORS[order[1]].notch);
+  var atR=(pos[2]===rN),atM=(pos[1]===mN);
+  if(atM){pos[1]=(pos[1]+1)%26;pos[0]=(pos[0]+1)%26;}
+  else if(atR){pos[1]=(pos[1]+1)%26;}
+  pos[2]=(pos[2]+1)%26;
+}
+// returns {out, path:[stage letters]} for animation
+function encrypt(c){
+  step();
+  var path=[c];
+  var x=c;
+  x=fwd(ROTORS[order[2]].wiring,x,pos[2]);path.push(x);
+  x=fwd(ROTORS[order[1]].wiring,x,pos[1]);path.push(x);
+  x=fwd(ROTORS[order[0]].wiring,x,pos[0]);path.push(x);
+  x=ic(ci(REFLECTOR[ci(x)]));path.push(x);
+  x=bwd(ROTORS[order[0]].wiring,x,pos[0]);path.push(x);
+  x=bwd(ROTORS[order[1]].wiring,x,pos[1]);path.push(x);
+  x=bwd(ROTORS[order[2]].wiring,x,pos[2]);path.push(x);
+  return {out:x,path:path};
+}
+
+var plain="", cipher="", lastPath=null, animT=0;
+
+// build UI
+function buildRotors(){
+  var names=["LEFT","MIDDLE","RIGHT"];
+  $('rotors').innerHTML=order.map(function(r,i){
+    return '<div class="rotor"><div class="lbl">'+names[i]+'</div>'+
+      '<div class="win" id="win'+i+'">'+ic(pos[i])+'</div>'+
+      '<div class="rn">rotor '+r+'</div>'+
+      '<div class="step"><button data-i="'+i+'" data-d="-1">▼</button><button data-i="'+i+'" data-d="1">▲</button></div></div>';
+  }).join("");
+  $('rotors').querySelectorAll('button').forEach(function(b){b.onclick=function(){var i=+b.dataset.i,d=+b.dataset.d;pos[i]=(pos[i]+d+26)%26;updateWindows();};});
+}
+function updateWindows(){for(var i=0;i<3;i++)$('win'+i).textContent=ic(pos[i]);}
+var LAYOUT=["QWERTZUIO","ASDFGHJK","PYXCVBNML"]; // enigma keyboard layout
+function buildBoard(){
+  $('lamps').innerHTML=LAYOUT.map(function(row){return '<div class="lrow">'+row.split("").map(function(c){return '<div class="lamp" id="lamp'+c+'">'+c+'</div>';}).join("")+'</div>';}).join("");
+  $('keys').innerHTML=LAYOUT.map(function(row){return '<div class="lrow">'+row.split("").map(function(c){return '<div class="key" id="key'+c+'">'+c+'</div>';}).join("")+'</div>';}).join("");
+  $('keys').querySelectorAll('.key').forEach(function(k){k.onclick=function(){press(k.textContent);};});
+}
+
+function press(c){
+  var r=encrypt(c);
+  plain+=c; cipher+=r.out; lastPath=r.path; animT=0;
+  $('plain').textContent=plain; $('cipher').textContent=cipher;
+  updateWindows();
+  // light lamp
+  document.querySelectorAll('.lamp.on').forEach(function(l){l.classList.remove('on');});
+  var lamp=$('lamp'+r.out); if(lamp)lamp.classList.add('on');
+  var key=$('key'+c); if(key){key.classList.add('press');setTimeout(function(){key.classList.remove('press');},120);}
+  // flaw live check
+  $('flaw').innerHTML='<b>The flaw:</b> you pressed <b style="color:var(--ink)">'+c+'</b> → got <b style="color:var(--brass)">'+r.out+'</b>. '+
+    (r.out===c?'!!! THIS SHOULD BE IMPOSSIBLE':'Notice: '+c+' never becomes '+c+'. No letter ever encrypts to itself — that is the crack.');
+}
+
+// ---- signal path animation on the scope ----
+var sc=$('scope'), g=sc.getContext('2d');
+var DPR=Math.min(devicePixelRatio||1,2);
+function fit(){var w=sc.clientWidth;sc.width=w*DPR;sc.height=w*200/900*DPR;g.setTransform(DPR,0,0,DPR,0,0);SW=w;SH=w*200/900;}
+var SW=900,SH=200;
+function drawScope(){
+  animT+=0.03;
+  g.clearRect(0,0,SW,SH);
+  // stage columns: keyboard | R | M | L | reflector | L | M | R | lamp  (9 nodes)
+  var stages=["KEY","R","M","L","REFL","L","M","R","LAMP"];
+  var n=stages.length, colW=SW/n;
+  // draw all 26 contacts faintly per column
+  for(var s=0;s<n;s++){var x=colW*(s+0.5);
+    g.fillStyle='rgba(90,80,64,0.5)';g.font='8px monospace';g.textAlign='center';g.fillText(stages[s],x,SH-4);
+  }
+  if(lastPath){
+    // lastPath has 8 letters: [in, afterR, afterM, afterL, afterREFL, afterL, afterM, afterR] => output = last
+    // map to 9 nodes: node0=in(key), 1..7 = path[1..7], node8=lamp=output
+    var nodes=[lastPath[0]];for(var i=1;i<lastPath.length;i++)nodes.push(lastPath[i]);nodes.push(lastPath[lastPath.length-1]);
+    // y position of a letter: row by alphabet
+    function ly(c){return 14 + ci(c)/25*(SH-40);}
+    // draw the wire path
+    var prog=Math.min(1,animT);
+    for(s=0;s<nodes.length-1;s++){
+      var x0=colW*(s+0.5),x1=colW*(s+1.5),y0=ly(nodes[s]),y1=ly(nodes[s+1]);
+      var segStart=s/(nodes.length-1), segEnd=(s+1)/(nodes.length-1);
+      if(prog<segStart)continue;
+      var local=Math.min(1,(prog-segStart)/(segEnd-segStart));
+      var isReflect=(s===3); // into reflector
+      g.strokeStyle=s<4?'#ff9c4a':'#ffd24a';
+      if(s===3||s===4)g.strokeStyle='#ff5c6a';
+      g.lineWidth=2.5;g.beginPath();g.moveTo(x0,y0);g.lineTo(x0+(x1-x0)*local,y0+(y1-y0)*local);g.stroke();
+      // node dots
+      g.fillStyle=s<4?'#ff9c4a':(s>=4?'#ffd24a':'#ff9c4a');g.beginPath();g.arc(x0,y0,3,0,6.28);g.fill();
+      // letter label at node
+      g.fillStyle='rgba(240,232,216,0.85)';g.font='9px monospace';g.textAlign='center';g.fillText(nodes[s],x0,y0-6);
+    }
+    // final node
+    if(prog>=1){var xf=colW*(nodes.length-0.5),yf=ly(nodes[nodes.length-1]);
+      g.fillStyle='#ffd24a';g.beginPath();g.arc(xf,yf,4,0,6.28);g.fill();
+      g.fillStyle='#ffd24a';g.fillText(nodes[nodes.length-1],xf,yf-6);}
+    // reflector bracket
+    var rx=colW*4.5;g.strokeStyle='rgba(255,92,106,0.4)';g.lineWidth=1;g.setLineDash([3,3]);
+    g.beginPath();g.moveTo(rx,10);g.lineTo(rx,SH-14);g.stroke();g.setLineDash([]);
+  } else {
+    g.fillStyle='rgba(150,140,120,0.5)';g.font='12px monospace';g.textAlign='center';
+    g.fillText('press a key — watch the current scramble through and bounce back',SW/2,SH/2);
+  }
+}
+
+// controls
+$('reset').onclick=function(){pos=[0,0,0];updateWindows();};
+$('clear').onclick=function(){plain="";cipher="";lastPath=null;$('plain').textContent='—';$('cipher').textContent='—';document.querySelectorAll('.lamp.on').forEach(function(l){l.classList.remove('on');});};
+$('decode').onclick=function(){ // feed current cipher back through fresh AAA to show reciprocity
+  if(!cipher)return; var saved=cipher; pos=[0,0,0];
+  plain="";cipher="";
+  for(var i=0;i<saved.length;i++){var r=encrypt(saved[i]);plain+=saved[i];cipher+=r.out;}
+  // now 'cipher' holds the decoded plaintext
+  $('plain').textContent=saved+' (fed in)'; $('cipher').textContent=cipher+' (decoded)';
+  updateWindows();lastPath=null;
+};
+window.addEventListener('keydown',function(e){var c=e.key.toUpperCase();if(c.length===1&&c>='A'&&c<='Z')press(c);});
+
+window.addEventListener('resize',fit);
+buildRotors();buildBoard();fit();
+(function loop(){drawScope();requestAnimationFrame(loop);})();
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE FIREWALL &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body></html>

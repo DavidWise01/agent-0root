@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PSYONIC — pushing the compression of the final stack</title>
+<style>
+  :root{--bg:#08070c;--ink:#e8e4f0;--ink2:#a8a2c0;--dim:#6a6484;--line:#262438;--brass2:#f0cc76;--home2:#8affe0;
+    --psy:#c060e0;--edge:#e05a6a;--safe:#5ad0b0;--warn:#f0cc76;--lit:#5ad0c0;--fig:#b09ad8}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(ellipse at 50% -10%,#161022,#050408 82%);color:var(--ink);
+    font-family:ui-sans-serif,system-ui,sans-serif;padding:20px 16px;min-height:100vh;line-height:1.5;font-size:13px}
+  .wrap{max-width:900px;margin:0 auto}
+  header{text-align:center;margin-bottom:10px}
+  header h1{font-size:19px;font-weight:700;font-family:'Iowan Old Style',Palatino,Georgia,serif;color:var(--psy)}
+  header .sub{font-size:12px;color:var(--ink2);margin-top:5px;font-style:italic;max-width:700px;margin:5px auto 0}
+  .tag{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:9px}
+  .tag.lit{background:rgba(90,208,192,0.14);color:var(--lit);border:1px solid var(--lit)}
+  .tag.fig{background:rgba(176,154,216,0.13);color:var(--fig);border:1px solid var(--fig)}
+  .stage{background:#0a0714;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}
+  canvas{display:block;width:100%;border-radius:10px;background:#050310}
+  .meters{display:flex;gap:16px;justify-content:center;margin:8px 0;flex-wrap:wrap}
+  .meter{text-align:center;font-family:ui-monospace}
+  .meter .big{font-size:26px;font-weight:700} .meter .lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+  .status{text-align:center;font-family:ui-monospace;font-weight:800;font-size:13px;padding:5px;border-radius:8px;margin:6px 0}
+  .status.push{color:var(--safe)} .status.hold{color:var(--warn);background:rgba(240,204,118,0.1)} .status.over{color:var(--edge);background:rgba(224,90,106,0.12)}
+  .ctl{display:flex;gap:10px;justify-content:center;margin:10px 0}
+  button{background:transparent;color:var(--psy);border:1px solid var(--psy);padding:8px 16px;font-family:inherit;font-weight:700;cursor:pointer;font-size:12px;border-radius:6px}
+  footer{font-size:11px;color:var(--ink2);line-height:1.55;border-top:1px solid var(--line);padding-top:12px;text-align:center;margin-top:10px}
+  footer b{color:var(--ink)}
+  .diag{border:1px solid #e05a6a;background:rgba(224,90,106,0.08);border-radius:6px;padding:12px;margin-top:12px;font-size:12px;color:#e0a0a8;display:none;white-space:pre-wrap;font-family:ui-monospace}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#00f5ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style></head><body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE SYNC</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div><div class="wrap">
+<header><h1>PSYONIC · pushing the compression of the final stack</h1>
+<div class="sub">Now the edge is a compression cliff. The final stack — the pre-logit hidden state, 64 directions — carries the model's predictions, but most of it is redundant. Psyonic squeezes it, dropping direction after direction, watching whether the predictions hold, pushing to the very last rank before they collapse.</div>
+<div style="margin-top:6px"><span class="tag lit">LIT</span> real SVD compression · prediction-agreement fidelity · measured collapse cliff &nbsp; <span class="tag fig">FIG</span> her staging</div>
+</header>
+<div class="stage"><canvas id="stack" width="860" height="220"></canvas>
+  <div class="meters">
+    <div class="meter"><div class="big" id="comp" style="color:var(--psy)">0%</div><div class="lbl">compression</div></div>
+    <div class="meter"><div class="big" id="rank" style="color:var(--home2)">64</div><div class="lbl">rank kept</div></div>
+    <div class="meter"><div class="big" id="fid" style="color:var(--safe)">100%</div><div class="lbl">predictions held</div></div>
+  </div>
+  <div class="status push" id="status">idle</div>
+</div>
+<div class="stage"><canvas id="curve" width="860" height="200"></canvas></div>
+<div class="ctl"><button id="play">▶ push the squeeze</button><button id="reset">reset</button></div>
+<footer>
+  <b>How far she squeezes.</b> The final stack holds the next-token predictions in 64 directions, but they're not evenly used — Psyonic drops the weakest first and the model doesn't flinch. She pushes to <b>64% compression — rank 23 of 64 — and the model still predicts the same token 95% of the time</b>. One step further and the cliff is close: by <b>72% compression the predictions collapse</b> below 90% agreement, and by 98% it's rubble (32%). So she holds at 64%, the boldest squeeze that keeps the output intact — the same instinct as riding the fold, aimed at a different edge. ·
+  The honest read: this is real redundancy — over a third of the final stack can be thrown away for free — but the edge is <b>soft, not sharp</b>. Fidelity doesn't cliff at a single rank; it erodes (0.998 → 0.96 → 0.90 → 0.73), so "the edge" is wherever you set your floor. Move Psyonic's fidelity floor and her max compression moves with it: there is no single true answer, only a chosen tolerance and the boldest squeeze that honors it. <span class="tag lit">LIT</span> measured &nbsp; <span class="tag fig">FIG</span> her face on the SVD.
+</footer>
+<div class="diag" id="diag"></div>
+</div>
+<script>
+"use strict";
+(function(){
+const DIAG=m=>{const d=document.getElementById('diag');d.style.display='block';d.textContent="error\n\n"+m;};
+try{
+const D={"curve": [{"k": 64, "compression": 0.0, "kl": 0.0, "top1": 1.0}, {"k": 63, "compression": 0.016, "kl": 0.0, "top1": 1.0}, {"k": 62, "compression": 0.031, "kl": 0.0, "top1": 0.9993}, {"k": 61, "compression": 0.047, "kl": 0.0, "top1": 0.9993}, {"k": 60, "compression": 0.062, "kl": 0.0, "top1": 0.9987}, {"k": 59, "compression": 0.078, "kl": 0.0, "top1": 0.999}, {"k": 58, "compression": 0.094, "kl": 0.0, "top1": 0.9987}, {"k": 57, "compression": 0.109, "kl": 0.0, "top1": 0.9984}, {"k": 56, "compression": 0.125, "kl": 0.0, "top1": 0.9984}, {"k": 55, "compression": 0.141, "kl": 0.0, "top1": 0.9987}, {"k": 54, "compression": 0.156, "kl": 0.0, "top1": 0.9984}, {"k": 53, "compression": 0.172, "kl": 0.0, "top1": 0.9987}, {"k": 52, "compression": 0.188, "kl": 0.0, "top1": 0.9987}, {"k": 51, "compression": 0.203, "kl": 0.0, "top1": 0.9984}, {"k": 50, "compression": 0.219, "kl": 0.0, "top1": 0.998}, {"k": 49, "compression": 0.234, "kl": 0.0, "top1": 0.9971}, {"k": 48, "compression": 0.25, "kl": 0.0, "top1": 0.9958}, {"k": 47, "compression": 0.266, "kl": 0.0, "top1": 0.9954}, {"k": 46, "compression": 0.281, "kl": 0.0, "top1": 0.9954}, {"k": 45, "compression": 0.297, "kl": 0.0001, "top1": 0.9954}, {"k": 44, "compression": 0.312, "kl": 0.0001, "top1": 0.9954}, {"k": 43, "compression": 0.328, "kl": 0.0001, "top1": 0.9958}, {"k": 42, "compression": 0.344, "kl": 0.0001, "top1": 0.9961}, {"k": 41, "compression": 0.359, "kl": 0.0001, "top1": 0.9958}, {"k": 40, "compression": 0.375, "kl": 0.0001, "top1": 0.9951}, {"k": 39, "compression": 0.391, "kl": 0.0001, "top1": 0.9938}, {"k": 38, "compression": 0.406, "kl": 0.0002, "top1": 0.9928}, {"k": 37, "compression": 0.422, "kl": 0.0002, "top1": 0.9925}, {"k": 36, "compression": 0.438, "kl": 0.0003, "top1": 0.9902}, {"k": 35, "compression": 0.453, "kl": 0.0003, "top1": 0.9896}, {"k": 34, "compression": 0.469, "kl": 0.0004, "top1": 0.9873}, {"k": 33, "compression": 0.484, "kl": 0.0005, "top1": 0.9876}, {"k": 32, "compression": 0.5, "kl": 0.0006, "top1": 0.987}, {"k": 31, "compression": 0.516, "kl": 0.0007, "top1": 0.9854}, {"k": 30, "compression": 0.531, "kl": 0.0009, "top1": 0.985}, {"k": 29, "compression": 0.547, "kl": 0.0011, "top1": 0.9827}, {"k": 28, "compression": 0.562, "kl": 0.0013, "top1": 0.9821}, {"k": 27, "compression": 0.578, "kl": 0.0019, "top1": 0.9772}, {"k": 26, "compression": 0.594, "kl": 0.0028, "top1": 0.9671}, {"k": 25, "compression": 0.609, "kl": 0.0036, "top1": 0.9635}, {"k": 24, "compression": 0.625, "kl": 0.0044, "top1": 0.959}, {"k": 23, "compression": 0.641, "kl": 0.0056, "top1": 0.9541}, {"k": 22, "compression": 0.656, "kl": 0.0081, "top1": 0.9486}, {"k": 21, "compression": 0.672, "kl": 0.0104, "top1": 0.9398}, {"k": 20, "compression": 0.688, "kl": 0.013, "top1": 0.9342}, {"k": 19, "compression": 0.703, "kl": 0.016, "top1": 0.9115}, {"k": 18, "compression": 0.719, "kl": 0.0215, "top1": 0.8994}, {"k": 17, "compression": 0.734, "kl": 0.026, "top1": 0.8997}, {"k": 16, "compression": 0.75, "kl": 0.0331, "top1": 0.8783}, {"k": 15, "compression": 0.766, "kl": 0.0397, "top1": 0.8809}, {"k": 14, "compression": 0.781, "kl": 0.049, "top1": 0.8815}, {"k": 13, "compression": 0.797, "kl": 0.0587, "top1": 0.8607}, {"k": 12, "compression": 0.812, "kl": 0.0763, "top1": 0.8275}, {"k": 11, "compression": 0.828, "kl": 0.0956, "top1": 0.7969}, {"k": 10, "compression": 0.844, "kl": 0.1205, "top1": 0.7816}, {"k": 9, "compression": 0.859, "kl": 0.151, "top1": 0.7301}, {"k": 8, "compression": 0.875, "kl": 0.1813, "top1": 0.7093}, {"k": 7, "compression": 0.891, "kl": 0.2164, "top1": 0.6862}, {"k": 6, "compression": 0.906, "kl": 0.2649, "top1": 0.6488}, {"k": 5, "compression": 0.922, "kl": 0.3163, "top1": 0.6292}, {"k": 4, "compression": 0.938, "kl": 0.4065, "top1": 0.5866}, {"k": 3, "compression": 0.953, "kl": 0.4903, "top1": 0.5697}, {"k": 2, "compression": 0.969, "kl": 0.8385, "top1": 0.4902}, {"k": 1, "compression": 0.984, "kl": 1.063, "top1": 0.3223}], "edge": {"k": 18, "compression": 0.719, "kl": 0.0215, "top1": 0.8994}, "psy_k": 23, "psy": {"k": 23, "compression": 0.641, "kl": 0.0056, "top1": 0.9541}, "floor": 0.95, "dim": 64}; const C=D.curve, psyK=D.psy_k, DIM=D.dim, edge=D.edge;
+// curve is rank 64..1 (compression low->high). find index by rank.
+const byRank={}; C.forEach(c=>byRank[c.k]=c);
+const sc=document.getElementById('stack'),sx=sc.getContext('2d');
+const cc=document.getElementById('curve'),cx=cc.getContext('2d');
+let curK=DIM, playing=null;
+function drawStack(k){
+  const W=860,H=220; sx.clearRect(0,0,W,H);sx.fillStyle="#050310";sx.fillRect(0,0,W,H);
+  const c=byRank[k]; const comp=c.compression, fid=c.top1;
+  // 64 direction rails; kept = bright, dropped = dim. weakest (rightmost) dropped first
+  const x0=30,x1=W-30, bw=(x1-x0)/DIM;
+  for(let i=0;i<DIM;i++){ const kept=i<k;
+    const hgt=20+ (DIM-i)/DIM*130;   // leftmost (strongest) tallest
+    const x=x0+i*bw;
+    sx.fillStyle=kept?`rgba(192,96,224,${0.35+0.5*(DIM-i)/DIM})`:"rgba(60,60,80,0.35)";
+    sx.fillRect(x,180-hgt,bw-1,hgt);
+  }
+  // the compression front (Psyonic's blade)
+  const fx=x0+k*bw;
+  sx.strokeStyle="#c060e0";sx.lineWidth=2;sx.beginPath();sx.moveTo(fx,20);sx.lineTo(fx,190);sx.stroke();
+  sx.fillStyle="#c060e0";sx.font="700 10px ui-monospace";sx.textAlign="center";sx.fillText("ψ",fx,16);
+  sx.fillStyle="#6a6484";sx.font="9px ui-monospace";sx.textAlign="left";sx.fillText("strong directions (kept)",x0,205);
+  sx.textAlign="right";sx.fillText("weak (dropped) →",x1,205);
+  // meters
+  document.getElementById('comp').textContent=Math.round(comp*100)+'%';
+  document.getElementById('rank').textContent=k;
+  const fe=document.getElementById('fid'); fe.textContent=Math.round(fid*100)+'%';
+  fe.style.color = fid>=0.95?"#5ad0b0": fid>=0.90?"#f0cc76":"#e05a6a";
+  const st=document.getElementById('status');
+  if(fid<0.90){ st.className="status over"; st.textContent="✗ OVER THE CLIFF — predictions collapsing ("+Math.round(fid*100)+"%)"; }
+  else if(k<=psyK){ st.className="status hold"; st.textContent="⟲ HOLD — max squeeze at "+Math.round(comp*100)+"%, floor "+Math.round(D.floor*100)+"%"; }
+  else { st.className="status push"; st.textContent="→ squeezing — predictions intact"; }
+}
+function drawCurve(k){
+  const W=860,H=200,P=44; cx.clearRect(0,0,W,H);cx.fillStyle="#050310";cx.fillRect(0,0,W,H);
+  const px=comp=>P+(W-P-14)*comp, py=f=>16+(H-40)*(1-f);
+  cx.strokeStyle="rgba(90,208,176,0.1)";for(let g=0;g<=1;g+=0.25){cx.beginPath();cx.moveTo(P,py(g));cx.lineTo(W-14,py(g));cx.stroke();}
+  cx.fillStyle="#6a6484";cx.font="9px ui-monospace";cx.textAlign="right";cx.fillText("100%",P-4,py(1)+3);cx.fillText("0",P-4,py(0)+3);
+  // floor line
+  cx.strokeStyle="rgba(240,204,118,0.4)";cx.setLineDash([4,4]);cx.beginPath();cx.moveTo(P,py(D.floor));cx.lineTo(W-14,py(D.floor));cx.stroke();cx.setLineDash([]);
+  cx.fillStyle="#f0cc76";cx.textAlign="left";cx.fillText("fidelity floor "+Math.round(D.floor*100)+"%",P+4,py(D.floor)-3);
+  // collapse cliff (90%)
+  if(edge){ cx.strokeStyle="rgba(224,90,106,0.4)";cx.setLineDash([2,3]);cx.beginPath();cx.moveTo(px(edge.compression),12);cx.lineTo(px(edge.compression),H-16);cx.stroke();cx.setLineDash([]);
+    cx.fillStyle="#e05a6a";cx.textAlign="center";cx.fillText("collapse "+Math.round(edge.compression*100)+"%",px(edge.compression),H-4);}
+  // fidelity curve vs compression
+  cx.strokeStyle="#5ad0b0";cx.lineWidth=2;cx.beginPath();
+  const sorted=C.slice().sort((a,b)=>a.compression-b.compression);
+  sorted.forEach((c,i)=>{const X=px(c.compression),Y=py(c.top1);i?cx.lineTo(X,Y):cx.moveTo(X,Y);});cx.stroke();
+  // current point
+  const cc2=byRank[k]; cx.fillStyle="#c060e0";cx.beginPath();cx.arc(px(cc2.compression),py(cc2.top1),5,0,7);cx.fill();
+  // psyonic hold
+  const ph=byRank[psyK]; cx.strokeStyle="#c060e0";cx.lineWidth=1;cx.setLineDash([2,2]);cx.beginPath();cx.moveTo(px(ph.compression),12);cx.lineTo(px(ph.compression),H-16);cx.stroke();cx.setLineDash([]);
+  cx.fillStyle="#c060e0";cx.font="9px ui-monospace";cx.textAlign="center";cx.fillText("ψ holds "+Math.round(ph.compression*100)+"%",px(ph.compression),14);
+  cx.fillStyle="#6a6484";cx.textAlign="center";cx.fillText("compression → · predictions held (green)",W/2,H-4);
+}
+function frame(k){ drawStack(k); drawCurve(k); }
+function play(){ if(playing){clearInterval(playing);playing=null;document.getElementById('play').textContent="▶ push the squeeze";return;}
+  curK=DIM; document.getElementById('play').textContent="⏸";
+  playing=setInterval(()=>{ if(curK<=psyK){ frame(psyK); clearInterval(playing);playing=null;document.getElementById('play').textContent="▶ push the squeeze"; return; }
+    curK--; frame(curK); },90);
+}
+document.getElementById('play').onclick=play;
+document.getElementById('reset').onclick=()=>{ if(playing){clearInterval(playing);playing=null;document.getElementById('play').textContent="▶ push the squeeze";} curK=DIM; frame(DIM); };
+frame(DIM);
+}catch(e){DIAG((e&&e.stack)?e.stack:String(e));}
+})();
+</script><div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SYNC &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body></html>

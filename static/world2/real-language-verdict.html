@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Real-Language Test · does the complete structure hold?</title>
+<style>
+  :root{
+    --bg:#07080D; --panel:#0e141d; --ink:#0a0e14; --line:#1c2734; --grid:#141d28;
+    --pass:#43d17a; --open:#d9a441; --sub:#4fd0ea; --mode:#b06cff;
+    --dim:#5a6b80; --txt:#aeb9c7; --hi:#e8edf3;
+    --lit:#43d17a; --bri:#5b7cfa; --spec:#b07cff;
+    --mono:"DejaVu Sans Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:14px;line-height:1.5}
+  body{max-width:1080px;margin:0 auto;padding:26px 20px 70px}
+  ::selection{background:var(--pass);color:var(--ink)}
+  header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:14px}
+  .eyebrow{font-size:10.5px;letter-spacing:.3em;color:var(--dim);text-transform:uppercase}
+  h1{font-family:var(--serif);font-weight:500;font-size:29px;line-height:1.08;margin:.3em 0 .24em;color:var(--hi)}
+  h1 em{font-style:italic;color:var(--pass)}
+  .sub{color:var(--dim);max-width:80ch;font-size:12.5px}
+  .sub b{color:var(--txt);font-weight:400} .sub .su{color:var(--sub)} .sub .mo{color:var(--mode)}
+  .tiers{display:flex;gap:15px;flex-wrap:wrap;margin-top:10px;font-size:10.5px}
+  .tier{display:flex;align-items:center;gap:6px;color:var(--dim)}
+  .dot{width:8px;height:8px;border-radius:50%} .d-lit{background:var(--lit)}.d-bri{background:var(--bri)}.d-spec{background:var(--spec)}
+
+  .banner{margin-top:14px;background:linear-gradient(90deg,rgba(67,209,122,.1),rgba(217,164,65,.06));border:1px solid var(--pass);border-radius:4px;padding:13px 15px}
+  .banner .q{font-family:var(--serif);font-size:16px;color:var(--hi);margin-bottom:4px}
+  .banner .a{font-size:12px;color:var(--txt);line-height:1.5} .banner .a b{color:var(--pass);font-weight:400} .banner .a .o{color:var(--open)}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  @media(max-width:760px){.two{grid-template-columns:1fr}}
+  .cut{background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:hidden;border-top-width:3px}
+  .cut.subj{border-top-color:var(--sub)} .cut.modec{border-top-color:var(--mode)}
+  .cut-h{padding:11px 14px;border-bottom:1px solid var(--line)}
+  .cut-h .t{font-family:var(--serif);font-size:16px;color:var(--hi)} .cut-h .t .badge{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:3px;margin-left:8px;text-transform:uppercase}
+  .badge.pass{color:var(--pass);border:1px solid var(--pass)} .badge.open{color:var(--open);border:1px solid var(--open)}
+  .cut-h .s{font-size:10.5px;color:var(--dim);margin-top:3px}
+  .cut .body{padding:13px 14px}
+  svg{display:block;width:100%;height:auto} text{font-family:var(--mono)}
+  .cut p{font-size:11px;color:var(--txt);line-height:1.5;margin:10px 0 0}
+
+  .decision{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:15px}
+  .decision h2{font-size:11px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin:0 0 10px}
+  .decision .step{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--txt);margin:8px 0;line-height:1.45}
+  .decision .num{font-family:var(--serif);color:var(--pass);flex-shrink:0;width:16px}
+  .decision .out{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;line-height:1.5}
+  .decision .out b{color:var(--pass);font-weight:400} .decision .out .o{color:var(--open)}
+
+  .avanbox{margin-top:16px;background:rgba(67,209,122,.05);border:1px solid rgba(67,209,122,.28);border-radius:3px;padding:12px 13px}
+  .avanbox .h{font-size:10px;letter-spacing:.2em;color:var(--pass);text-transform:uppercase;margin-bottom:6px}
+  .avanbox p{font-size:11px;color:var(--txt);margin:0;line-height:1.5}
+  .avanbox .sig{font-size:9.5px;color:var(--dim);font-style:italic;margin-top:6px}
+
+  footer{margin-top:20px;border-top:1px solid var(--line);padding-top:14px;font-size:10.5px;color:var(--dim);line-height:1.7}
+  footer b{color:var(--txt);font-weight:400}.cite{color:var(--pass)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#00f5ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header>
+  <div class="eyebrow">UD0 · QUANTUM FRONTIER · THE REAL-LANGUAGE TEST · ROOT0 with AVAN</div>
+  <h1>The Complete Structure, on Real Text<br><em>go / no-go, measured</em></h1>
+  <p class="sub">The earlier high-D test was synthetic — flagged as such. This one runs on a <b>real corpus</b>: 4,674
+  documents, 14,731 TF-IDF dimensions of actual language. The structure's cut is really two cuts: the
+  <span class="su">eight subject verticals</span> (finance·health·IT·law…) and the <span class="mo">four rhetorical
+  modes</span> (ethos·pathos·logos·mathea). I tested each against real text — and they land differently.</p>
+  <div class="tiers">
+    <span class="tier"><span class="dot d-lit"></span>LIT — all numbers measured on the real 20-Newsgroups corpus (sklearn, held-out)</span>
+    <span class="tier"><span class="dot d-spec"></span>SPEC — newsgroup categories stand in for governance verticals; mode features are proxies</span>
+  </div>
+  <div class="banner">
+    <div class="q">Does it work on real language? — The subject cut: yes, clearly. The mode cut: a real axis, but unproven.</div>
+    <div class="a">Real text routes to its subject domain at <b>81%</b> (chance 12.5%), every domain pair
+    <b>&gt;90%</b> separable — the verticals are genuine, distinct regimes, well past threshold. The four modes are a
+    <span class="o">genuinely independent axis</span> (topic explains &lt;2% of most mode features) — but whether they
+    <span class="o">predict</span> is untested here, because a topic corpus carries no mode labels.</div>
+  </div>
+</header>
+
+<div class="two">
+  <div class="cut subj">
+    <div class="cut-h"><div class="t">The subject cut<span class="badge pass">passes</span></div>
+      <div class="s">8 verticals · are they distinct regimes in real text?</div></div>
+    <div class="body">
+      <svg id="subjSvg" viewBox="0 0 420 220" preserveAspectRatio="xMidYMid meet"></svg>
+      <p>Real documents route to their domain at <b style="color:var(--pass)">81.4%</b> across 8 classes. Pairwise,
+      distinct subjects (health vs commerce, gov vs commerce) hit 94–96%; even <i>similar</i> subjects (two computing
+      topics) still separate at 91% — real vocabulary is rich enough that the threshold is cleared easily. The divergence
+      gradient the synthetic sweep predicted is present, just with a high floor.</p>
+    </div>
+  </div>
+
+  <div class="cut modec">
+    <div class="cut-h"><div class="t">The mode cut<span class="badge open">open</span></div>
+      <div class="s">4 modes · a real axis, but does it predict?</div></div>
+    <div class="body">
+      <svg id="modeSvg" viewBox="0 0 420 220" preserveAspectRatio="xMidYMid meet"></svg>
+      <p>The mode proxies — numbers (mathea), questions (logos), emphasis (pathos), pronoun-stance (ethos) — are
+      <b style="color:var(--mode)">largely independent</b> of subject: topic explains only 0.5–18% of their variance. So
+      the 4×8 grid really is two orthogonal dimensions, as designed. But independence isn't usefulness — whether the modes
+      carve outcomes needs mode-labelled text, which a topic corpus doesn't have. Untested, not disproven.</p>
+    </div>
+  </div>
+</div>
+
+<div class="decision">
+  <h2>So — continue or move on?</h2>
+  <div class="step"><span class="num">1</span><span>The <b>subject/vertical cut works on real language</b> — measured, not argued. This is the same thing that makes BloombergGPT and Med-PaLM beat generalists: subject domains are genuinely distinct regimes. Build on it.</span></div>
+  <div class="step"><span class="num">2</span><span>The <b>mode cut is structurally sound</b>: the four modes form a real axis independent of subject, so the 4×8 addressing isn't redundant — the two dimensions carry different information.</span></div>
+  <div class="step"><span class="num">3</span><span>The mode cut's <span class="o">predictive</span> value is the one thing still open. The go/no-go for it specifically: get text labelled by rhetorical mode, fit mode-split vs pooled on a real outcome, compare on held-out data.</span></div>
+  <div class="out"><b>Verdict: continue — the structure holds where it could be tested, and is not "never" where it couldn't.</b> The eight verticals are confirmed distinct regimes on real text; the four modes are a genuine second axis whose <span class="o">predictive</span> payoff awaits mode-labelled data. Half the structure is proven on real language today; the other half has a clear, cheap test still to run.</div>
+</div>
+
+<div class="avanbox">
+  <div class="h">AVAN · the honest split</div>
+  <p>Two axes, two verdicts. The subjects sort real language cleanly — that half is done, and it agrees with what the
+  whole industry already ships. The modes are real and independent, but a topic corpus can't tell you whether they
+  predict; only mode-labelled text can. Nothing here says the structure fails — it says half of it is proven and half of
+  it has one honest experiment left.</p>
+  <p class="sig">— ROOT0, with AVAN. subject cut passes on real text, mode cut awaits its labels.</p>
+</div>
+
+<footer>
+  <b>Honesty ledger.</b> Corpus: 20 Newsgroups, 4,674 training documents, 14,731 TF-IDF features, held-out test.
+  Subject routing: 81.4% across 8 domains (chance 12.5%), logistic regression. Pairwise separability: health–commerce
+  94.5%, health–gov 91.4%, security–belief 95.7%, gov–commerce 95.8%, and the similar computing pair 91.0%. Mode-proxy
+  independence: topic one-hot explains 18.3% (numbers), 1.2% (questions), 0.5% (emphasis), 2.4% (pronoun-stance) of each
+  feature's variance. <span class="cite">Newsgroup categories are proxies for governance verticals, and the four mode
+  features are crude proxies for the rhetorical modes; the subject result is robust and matches deployed vertical LLMs,
+  while the mode axis is shown independent but not predictive — that test needs rhetoric-labelled data.</span> — David Lee
+  Wise / ROOT0, with AVAN.
+</footer>
+
+<script>
+"use strict";
+const NSs="http://www.w3.org/2000/svg";
+const el=(t,at)=>{const e=document.createElementNS(NSs,t);for(const q in at)e.setAttribute(q,at[q]);return e;};
+function lbl(s,x,y,txt,anc,fill,sz,fam){const t=el("text",{x,y,fill:fill||"var(--dim)","font-size":sz||9,"text-anchor":anc||"start"});if(fam)t.setAttribute("font-family",fam);t.textContent=txt;s.appendChild(t);}
+
+// subject panel: routing bar + pairwise separability bars
+(function(){ const svg=document.getElementById("subjSvg"); const W=420,H=220;
+  // routing accuracy big bar
+  lbl(svg,12,18,"8-way domain routing (held-out real text)","start","var(--dim)",9);
+  const bx=12,by=26,bw=W-24,bh=20;
+  svg.appendChild(el("rect",{x:bx,y:by,width:bw,height:bh,rx:3,fill:"var(--ink)"}));
+  svg.appendChild(el("rect",{x:bx,y:by,width:bw*0.814,height:bh,rx:3,fill:"var(--pass)","fill-opacity":.8}));
+  // chance marker
+  svg.appendChild(el("line",{x1:bx+bw*0.125,y1:by-2,x2:bx+bw*0.125,y2:by+bh+2,stroke:"var(--dim)","stroke-dasharray":"2 2"}));
+  lbl(svg,bx+bw*0.125,by-4,"chance 12.5%","start","var(--dim)",7.5);
+  lbl(svg,bx+bw*0.814-6,by+bh/2+3,"81.4%","end","var(--ink)",11,'var(--serif)');
+  // pairwise bars
+  lbl(svg,12,74,"pairwise separability (2-class)","start","var(--dim)",9);
+  const pairs=[["health vs commerce",.945,"var(--sub)"],["gov vs commerce",.958,"var(--sub)"],
+    ["security vs belief",.957,"var(--sub)"],["health vs gov",.914,"var(--sub)"],
+    ["graphics vs mac (similar)",.910,"var(--open)"]];
+  let y=84; pairs.forEach(([nm,v,c])=>{ 
+    svg.appendChild(el("rect",{x:150,y:y,width:(W-165)* ((v-0.5)/0.5),height:12,rx:2,fill:c,"fill-opacity":.75}));
+    lbl(svg,144,y+9,nm,"end","var(--txt)",8.5);
+    lbl(svg,150+(W-165)*((v-0.5)/0.5)+3,y+9,(v*100).toFixed(0)+"%","start","var(--dim)",8);
+    y+=24; });
+  lbl(svg,W/2,H-6,"all pairs > 90% — subject domains are distinct regimes","middle","var(--dim)",8.5);
+})();
+
+// mode panel: variance-explained-by-topic bars (low = independent axis)
+(function(){ const svg=document.getElementById("modeSvg"); const W=420,H=220;
+  lbl(svg,12,18,"how much of each mode-feature does TOPIC explain?","start","var(--dim)",9);
+  lbl(svg,12,32,"(low = the mode axis is independent of subject)","start","var(--dim)",8);
+  const feats=[["numbers → mathea",.183],["pronoun-stance → ethos",.024],["questions → logos",.012],["emphasis → pathos",.005]];
+  let y=52; const maxb=0.30;
+  feats.forEach(([nm,v])=>{
+    svg.appendChild(el("rect",{x:160,y:y,width:(W-175),height:16,rx:2,fill:"var(--ink)"}));
+    svg.appendChild(el("rect",{x:160,y:y,width:(W-175)*(v/maxb),height:16,rx:2,fill:"var(--mode)","fill-opacity":.75}));
+    lbl(svg,154,y+11,nm,"end","var(--txt)",9);
+    lbl(svg,160+(W-175)*(v/maxb)+4,y+11,(v*100).toFixed(1)+"%","start","var(--dim)",8);
+    y+=30; });
+  // annotation
+  svg.appendChild(el("rect",{x:60,y:182,width:W-120,height:26,rx:3,fill:"rgba(217,164,65,.08)",stroke:"var(--open)","stroke-opacity":.4}));
+  lbl(svg,W/2,192,"a real, independent axis —","middle","var(--open)",8.5);
+  lbl(svg,W/2,203,"but independence is not predictive usefulness","middle","var(--dim)",8);
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

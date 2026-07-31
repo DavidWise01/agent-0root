@@ -1,0 +1,228 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE STORYBOARD · how one token gets chosen</title>
+<style>
+:root{--bg:#0A1C1A;--s1:#0D2220;--s2:#0F2826;--s3:#132E2B;
+--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.14);
+--text:#E8F0EF;--text2:#7AA8A5;--text3:#2A5450;--seam:#FFFFFF;
+--lime:#39FF14;--cyan:#00FFFF;--red:#FF2244;--amber:#FFAA00;--pink:#FF00AA;--violet:#b98cff;
+--mono:ui-monospace,"Cascadia Code","SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.45;position:relative}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:80px 80px}
+header{padding:18px 22px 12px;border-bottom:1px solid var(--border2);position:relative;z-index:1}
+h1{font-size:19px;font-family:var(--mono);letter-spacing:1px;font-weight:600}
+h1 .a{color:var(--amber)} h1 .c{color:var(--cyan)}
+.seam{height:2px;background:var(--seam);width:100%;margin-top:10px;opacity:.9}
+.sub{color:var(--text2);font-size:11.5px;margin-top:8px;font-family:var(--mono)}
+.wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:16px 22px 56px;display:grid;gap:16px}
+.viz{background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:12px;position:relative}
+.sec-h{font-family:var(--mono);font-size:10.5px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+canvas{width:100%;display:block;background:#08201d;border:1px solid var(--border);border-radius:4px;cursor:pointer}
+.grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+button{font-family:var(--mono);font-size:12px;background:var(--s2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:6px 11px;cursor:pointer}
+button:hover{border-color:var(--cyan)}
+.lesson-title{font-family:var(--mono);font-size:12px;color:var(--cyan);margin-top:8px}
+.lesson-cap{font-family:var(--mono);font-size:12px;color:var(--text);margin-top:4px;min-height:52px}
+.hint{position:absolute;bottom:20px;right:20px;font-family:var(--mono);font-size:9px;color:var(--text3)}
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:14px 16px}
+.panel h2{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--amber);text-transform:uppercase;margin-bottom:10px}
+.ledger{font-family:var(--mono);font-size:12px;max-height:280px;overflow:auto}
+.ledger div{padding:5px 0;border-bottom:1px solid var(--border);color:var(--text2)}
+.ledger b{color:var(--text)}
+.story{background:var(--s2);border:1px solid var(--border);border-left:3px solid var(--lime);border-radius:6px;padding:14px 16px}
+.story h2{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--lime);text-transform:uppercase;margin-bottom:8px}
+.story p{font-size:13px;margin:6px 0} .story b{color:var(--amber)}
+.files{font-family:var(--mono);font-size:11px;color:var(--text3);columns:2;gap:20px}@media(max-width:700px){.files{columns:1}}
+.files span{display:block;padding:2px 0}
+.selnote{font-family:var(--mono);font-size:11.5px;color:var(--cyan);margin-top:6px;min-height:30px}
+.fb{display:none;position:absolute;inset:12px;align-items:center;justify-content:center;background:rgba(255,34,68,.12);border:1px solid var(--red);color:var(--red);font-family:var(--mono);font-size:11px;text-align:center;padding:12px}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style></head><body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE EPOCH</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header><h1>🎢 <span class="a">THE STORYBOARD</span> <span class="c">// how one token gets chosen</span></h1>
+<div class="sub">sink → slam → flexible → superposition → interference → sparsity → quantum-dot → collapse → confidence → bits → propagation → jetpack → shirt · told twice: mechanism &amp; Bit</div>
+<div class="seam"></div></header>
+<div class="wrap">
+ <div class="grid2">
+  <div class="viz"><div class="sec-h">2D · the map — tap a stop to open its lesson</div>
+    <canvas id="cvMap" width="600" height="440"></canvas>
+    <div class="selnote" id="selnote">the thread loops: it starts at the attention sink and ends reading the message that the sink's discharge writes.</div>
+    <div class="fb" id="fbMap">MAP UNAVAILABLE</div></div>
+  <div class="viz"><div class="sec-h">3D · interactive lessons — drag to rotate</div>
+    <canvas id="cvLes" width="520" height="330"></canvas>
+    <div class="row"><button id="prev">◄ prev</button><span id="lcount" style="font-family:var(--mono);font-size:11px;color:var(--text3)"></span><button id="next">next ►</button></div>
+    <div class="lesson-title" id="ltitle"></div><div class="lesson-cap" id="lcap"></div>
+    <div class="hint">DRAG</div><div class="fb" id="fbLes">RENDER FAILED</div></div>
+ </div>
+ <div class="panel"><h2>the ledger — 19 anchors that held</h2><div class="ledger" id="ledger"></div></div>
+ <div class="story"><h2>🧸 Bit's storybook — 16 pages</h2><div id="story"></div></div>
+ <div class="panel"><h2>the instruments (this folder)</h2><div class="files" id="files"></div></div>
+</div>
+<script>
+"use strict";
+function cv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+
+/* ---------- data ---------- */
+const STAGES=[
+ {n:1,label:"attention sink",blurb:"~65% of attention parks on position 0 in every model — the one universal law.",les:0,col:"--amber"},
+ {n:2,label:"the slam",blurb:"a violent final-layer discharge — but only in SEQUENTIAL architectures (GPT-2, Llama). Pythia glides.",les:0,col:"--red"},
+ {n:3,label:"slam ≠ quality",blurb:"the hardest smasher (SmolLM2) is the BEST model. quality tracks data/recency, not the slam.",les:null,col:"--cyan"},
+ {n:4,label:"naked norm",blurb:"remove the final LayerNorm and you INDUCE the slam — with no quality loss. the Cup champion.",les:null,col:"--lime"},
+ {n:5,label:"slam localizes",blurb:"'nothing but slammers' is impossible; the slam is 1-3 layers and FADES with depth.",les:null,col:"--amber"},
+ {n:6,label:"why it slams",blurb:"the final layer cancels the accumulated common-mode bulk before readout. not noise (13-28σ).",les:4,col:"--red"},
+ {n:7,label:"flexible vs clean",blurb:"one shared pipe (flexible) needs the slam; registers give the junk its own lane (clean).",les:null,col:"--cyan"},
+ {n:8,label:"superposition",blurb:"a shared stream packs MORE features than dimensions — 5 into 2, as a pentagon. that's 'flexible'.",les:1,col:"--lime"},
+ {n:9,label:"interference",blurb:"the price of flexible: packed neighbors bleed ~0.08 into each other.",les:1,col:"--pink"},
+ {n:10,label:"sparsity",blurb:"why it survives: language lights only ~0.27% of the vocab at once (Zipf). the bill rarely comes due.",les:null,col:"--cyan"},
+ {n:11,label:"quantum dot",blurb:"width = an exponential menu (2^d). readout collapses the superposed point to one pick; the rest lost.",les:2,col:"--violet"},
+ {n:12,label:"collapse temp",blurb:"temperature sets the snap (eff-choices 1.7→25k), but the natural sharpness = the model's confidence.",les:2,col:"--amber"},
+ {n:13,label:"raise confidence",blurb:"training (53→6), in-context evidence (2273→154, copy), and scale — all widen the logit gap.",les:null,col:"--lime"},
+ {n:14,label:"bits per prim",blurb:"one primitive = log2(options) yes/no bits (~16 for a word); context pre-pays some.",les:null,col:"--cyan"},
+ {n:15,label:"propagation",blurb:"aim beats size: random noise dies, a targeted nudge flips a bit. amplify ×12 then the slam clamps it.",les:3,col:"--red"},
+ {n:16,label:"the jetpack",blurb:"the sink is a CAPACITOR: charges every layer (→3105), dumps 41× at the slam, launches the token.",les:0,col:"--amber"},
+ {n:17,label:"why 76 not 0",blurb:"the tank (one rail dim) fully empties to ~0; the 76 floor is the token itself — it still has to predict.",les:4,col:"--lime"},
+ {n:18,label:"what's inside",blurb:"the tank holds FUEL, not the message — near-uniform garbage, orthogonal to the content. propellant, not payload.",les:4,col:"--pink"},
+ {n:19,label:"bit's shirt",blurb:"the content channel: early layers echo the input, the slam flips it to the next-token guess. the readout.",les:5,col:"--cyan"},
+];
+const STORY=[
+ "1 · A baby robot named Bit learns to read words on a stack of pancake-stairs.",
+ "2 · The top pancake has a comb that tidies the answer. Take the comb away and it must SHOVE — that's the slam.",
+ "3 · The best robots shove hardest, so shoving isn't a flaw — it's just how they finish.",
+ "4 · Bit keeps a junk-pile while reading and shoves it away before answering.",
+ "5 · He can't make EVERY step shove — he always keeps a calm middle.",
+ "6 · Taller stacks shove GENTLER, not harder — big stacks like to be calm.",
+ "7 · Random arrows point sideways; Bit's shove points backwards on purpose (that's why it's negative).",
+ "8 · His closet: 5 toys into 2 shelves, angled into a star. More toys than shelves.",
+ "9 · The toys are so close that poking one wobbles its neighbors — so Bit plays one at a time.",
+ "10 · His toybox has 12,631 toys but he only grabs ~34 at once; most sit in the dark.",
+ "11 · His toy is a light-switch panel: 8 switches = 256 patterns; reading snaps to ONE.",
+ "12 · Temperature is how hard he squints — but a baby robot stays a little fuzzy even at its best.",
+ "13 · What makes him sure: practice, a hint (he copies what he just saw), and being a big robot.",
+ "14 · To find one toy he plays 20 questions — each yes/no halves the pile.",
+ "15 · A random shove does nothing; a shove aimed at his 2nd-favorite tips him over.",
+ "16 · His jetpack is a capacitor: reading charges it, then ZAP — the bolt launches the answer; the tank empties but Bit stays; the fuel isn't the message; and his shirt flips to the guess at the very top. The end. 👋",
+];
+const FILES=["benchmark-3model.html","model-ladder.html","benchmark-stitched.html","quality-vs-discharge.html","smasher-cup.html",
+ "slammer-profile-teal.html","slam-ceiling-teal.html","why-it-slams-teal.html","reverse-zipper-teal.html","superposition-teal.html",
+ "interference-teal.html","why-sparse-teal.html","quantum-dot-teal.html","collapse-temp-teal.html","confidence-teal.html",
+ "bits-per-prim-teal.html","propagation-teal.html","jetpack-teal.html","why76-teal.html","whats-inside-teal.html","bits-shirt-teal.html","STORYBOARD-index.html"];
+
+/* ---------- shared 3D projector ---------- */
+const SGL={ax:-0.35,ay:0.6,drag:false,lx:0,ly:0,
+ proj(p,W,H){const cy=Math.cos(this.ay),sy=Math.sin(this.ay),cx=Math.cos(this.ax),sx=Math.sin(this.ax);
+   let X=p.x*cy-p.z*sy,Z=p.x*sy+p.z*cy,Y=p.y*cx-Z*sx;Z=p.y*sx+Z*cx;
+   const f=300/(Z+520);return{X:W/2+X*f,Y:H/2-Y*f,Z,f};}};
+
+/* ---------- the 6 interactive lessons ---------- */
+const LESSONS=[
+ {title:"1 · The Capacitor Jetpack",
+  cap:"The attention sink charges every layer, then discharges in one bolt at the final layer — the slam. That bolt launches the token. Rings swell as it charges; the top collapses and fires.",
+  draw:(c,W,H,t)=>{const prof=[0.06,0.2,0.55,0.85,0.9,0.94,0.97,0.99,1,1,1,1,0.02];const n=prof.length;
+   for(let i=0;i<n;i++){const R=8+50*prof[i],y=-150+300*i/(n-1),ring=[];
+    for(let a=0;a<=24;a++){const th=a/24*6.283;ring.push(SGL.proj({x:R*Math.cos(th),y,z:R*Math.sin(th)},W,H));}
+    const last=i===n-1;c.strokeStyle=last?cv('--cyan'):cv('--amber');c.globalAlpha=last?1:0.3+0.7*prof[i];c.lineWidth=last?1:1.6;
+    c.beginPath();ring.forEach((p,k)=>{k?c.lineTo(p.X,p.Y):c.moveTo(p.X,p.Y);});c.closePath();c.stroke();c.globalAlpha=1;}
+   const top=SGL.proj({x:0,y:150,z:0},W,H);let prev=top,seed=t*13;c.strokeStyle=cv('--cyan');c.globalAlpha=Math.sin(t*6)>0?1:0.4;c.lineWidth=2.2;c.beginPath();c.moveTo(top.X,top.Y);
+   for(let k=1;k<=6;k++){seed=Math.sin(seed*7.13)*4e4;const jx=(seed-Math.floor(seed)-0.5)*60;seed=Math.sin(seed*3.7)*1e3;const jz=(seed-Math.floor(seed)-0.5)*60;const p=SGL.proj({x:jx,y:150+34*k,z:jz},W,H);c.lineTo(p.X,p.Y);}
+   c.stroke();c.globalAlpha=1;c.fillStyle=cv('--cyan');c.font='10px '+cv('--mono');c.textAlign='center';const z=SGL.proj({x:0,y:340,z:0},W,H);c.fillText('⚡ token',z.X,z.Y);}},
+ {title:"2 · Superposition (the pentagon)",
+  cap:"A flexible shared stream packs more features than it has dimensions by angling them apart — 5 features into a 2D plane form a pentagon. The gift, and the reason the pipe stays one bus.",
+  draw:(c,W,H,t)=>{const O=SGL.proj({x:0,y:0,z:0},W,H),R=120;const pts=[];
+   for(let i=0;i<5;i++){const th=i/5*6.283-1.57;pts.push(SGL.proj({x:R*Math.cos(th),y:R*Math.sin(th),z:0},W,H));}
+   c.strokeStyle=cv('--amber');c.globalAlpha=.3;c.lineWidth=1;for(let i=0;i<5;i++)for(let j=i+1;j<5;j++){c.beginPath();c.moveTo(pts[i].X,pts[i].Y);c.lineTo(pts[j].X,pts[j].Y);c.stroke();}c.globalAlpha=1;
+   pts.forEach((p,i)=>{c.strokeStyle=cv('--lime');c.lineWidth=2;c.beginPath();c.moveTo(O.X,O.Y);c.lineTo(p.X,p.Y);c.stroke();c.fillStyle=cv('--lime');c.beginPath();c.arc(p.X,p.Y,4,0,7);c.fill();c.fillStyle=cv('--text');c.font='10px '+cv('--mono');c.textAlign='center';c.fillText('f'+(i+1),p.X,p.Y-9);});}},
+ {title:"3 · The Quantum Dot (menu + collapse)",
+  cap:"Width d gives 2^d corners — an exponential menu. A superposed 'dot' blurs among them, then the softmax readout snaps it to ONE corner (here 011); the rest are lost.",
+  draw:(c,W,H,t)=>{const R=95,cor=[];for(let i=0;i<8;i++)cor.push({x:((i&1)?1:-1)*R,y:((i&2)?1:-1)*R,z:((i&4)?1:-1)*R,b:((i&1)?'1':'0')+((i&2)?'1':'0')+((i&4)?'1':'0')});
+   const P=cor.map(o=>SGL.proj(o,W,H));c.strokeStyle=cv('--border2');c.lineWidth=1;
+   for(let i=0;i<8;i++)for(let j=i+1;j<8;j++){let d=0;for(let b=0;b<3;b++)if(((i>>b)&1)!==((j>>b)&1))d++;if(d===1){c.beginPath();c.moveTo(P[i].X,P[i].Y);c.lineTo(P[j].X,P[j].Y);c.stroke();}}
+   const ph=(Math.sin(t*1.5)*0.5+0.5),tgt=cor[3];const dot=SGL.proj({x:tgt.x*ph+(1-ph)*18*Math.cos(t*3),y:tgt.y*ph+(1-ph)*18*Math.sin(t*2),z:tgt.z*ph},W,H);
+   P.forEach((p,i)=>{const snap=(i===3&&ph>0.85);c.fillStyle=snap?cv('--cyan'):cv('--violet');c.beginPath();c.arc(p.X,p.Y,snap?6:4,0,7);c.fill();c.fillStyle=cv('--text3');c.font='8px '+cv('--mono');c.textAlign='center';c.fillText(cor[i].b,p.X,p.Y-8);});
+   c.fillStyle=cv('--amber');c.beginPath();c.arc(dot.X,dot.Y,5,0,7);c.fill();c.globalAlpha=.3;c.beginPath();c.arc(dot.X,dot.Y,10,0,7);c.fill();c.globalAlpha=1;}},
+ {title:"4 · Propagation (aim beats size)",
+  cap:"A nudge amplifies ~12× climbing the stack, then the final layer clamps it back — the slam as stabilizer. Random noise spreads thin and dies; only an aimed nudge flips a bit.",
+  draw:(c,W,H,t)=>{const G=[1,7.4,7.3,8.1,9.1,9.2,9.3,9.5,10.1,10.3,11,12.3,4.5],n=G.length,gm=12.3;
+   for(let i=0;i<n;i++){const R=8+42*G[i]/gm,y=-160+320*i/(n-1),ring=[];for(let a=0;a<=22;a++){const th=a/22*6.283;ring.push(SGL.proj({x:R*Math.cos(th),y,z:R*Math.sin(th)},W,H));}
+    const last=i===n-1;c.strokeStyle=last?cv('--cyan'):cv('--amber');c.globalAlpha=last?1:0.4+0.5*G[i]/gm;c.lineWidth=last?2:1.3;c.beginPath();ring.forEach((p,k)=>{k?c.lineTo(p.X,p.Y):c.moveTo(p.X,p.Y);});c.closePath();c.stroke();c.globalAlpha=1;}
+   const lo=SGL.proj({x:0,y:-165,z:0},W,H);c.fillStyle=cv('--text2');c.font='9px '+cv('--mono');c.textAlign='center';c.fillText('1×',lo.X,lo.Y+14);
+   const hi=SGL.proj({x:0,y:165,z:0},W,H);c.fillStyle=cv('--cyan');c.fillText('clamped 4.5×',hi.X,hi.Y-8);}},
+ {title:"5 · Fuel ⊥ Message",
+  cap:"The capacitor holds inert fuel (one rail axis, reads as garbage). The answer rides a separate, orthogonal message channel. That's why the tank can dump to zero without losing the answer.",
+  draw:(c,W,H,t)=>{const O=SGL.proj({x:0,y:0,z:0},W,H),ft=SGL.proj({x:0,y:150,z:0},W,H);
+   c.strokeStyle=cv('--amber');c.lineWidth=8;c.beginPath();c.moveTo(O.X,O.Y);c.lineTo(ft.X,ft.Y);c.stroke();c.fillStyle=cv('--amber');c.font='9px '+cv('--mono');c.textAlign='center';c.fillText('FUEL (inert)',ft.X,ft.Y-8);
+   c.strokeStyle=cv('--lime');c.lineWidth=1.5;c.beginPath();for(let a=0;a<=40;a++){const th=a/40*6.283;const p=SGL.proj({x:70*Math.cos(th),y:0,z:70*Math.sin(th)},W,H);a?c.lineTo(p.X,p.Y):c.moveTo(p.X,p.Y);}c.closePath();c.stroke();
+   const mv=SGL.proj({x:55,y:0,z:30},W,H);c.strokeStyle=cv('--lime');c.lineWidth=2.4;c.beginPath();c.moveTo(O.X,O.Y);c.lineTo(mv.X,mv.Y);c.stroke();c.fillStyle=cv('--lime');c.beginPath();c.arc(mv.X,mv.Y,4,0,7);c.fill();
+   const ml=SGL.proj({x:80,y:0,z:44},W,H);c.fillStyle=cv('--lime');c.font='9px '+cv('--mono');c.textAlign='left';c.fillText('MESSAGE (answer)',ml.X,ml.Y);}},
+ {title:"6 · Bit & The Shirt (the readout)",
+  cap:"Bit holds up his shirt — the content channel. Early layers echo the word he's holding; at the top, the slam flips it to his next-token guess. The tank launches, the shirt tells.",
+  draw:(c,W,H,t)=>{
+   function bx(cx,cy,cz,sx,sy,sz,col){const Q=[];for(let i=0;i<8;i++)Q.push(SGL.proj({x:cx+((i&1)?sx:-sx),y:cy+((i&2)?sy:-sy),z:cz+((i&4)?sz:-sz)},W,H));[[0,1],[1,3],[3,2],[2,0],[4,5],[5,7],[7,6],[6,4],[0,4],[1,5],[2,6],[3,7]].forEach(e=>{c.strokeStyle=col;c.lineWidth=1.6;c.beginPath();c.moveTo(Q[e[0]].X,Q[e[0]].Y);c.lineTo(Q[e[1]].X,Q[e[1]].Y);c.stroke();});}
+   bx(0,-20,0,26,40,16,cv('--text2'));bx(0,50,0,18,16,14,cv('--text2'));
+   const e1=SGL.proj({x:-7,y:52,z:15},W,H),e2=SGL.proj({x:7,y:52,z:15},W,H);c.fillStyle=cv('--cyan');c.beginPath();c.arc(e1.X,e1.Y,2.5,0,7);c.fill();c.beginPath();c.arc(e2.X,e2.Y,2.5,0,7);c.fill();
+   const a0=SGL.proj({x:0,y:66,z:0},W,H),a1=SGL.proj({x:0,y:82,z:0},W,H);c.strokeStyle=cv('--amber');c.lineWidth=1.5;c.beginPath();c.moveTo(a0.X,a0.Y);c.lineTo(a1.X,a1.Y);c.stroke();c.fillStyle=cv('--amber');c.beginPath();c.arc(a1.X,a1.Y,3,0,7);c.fill();
+   const sp=[SGL.proj({x:-18,y:2,z:16.5},W,H),SGL.proj({x:18,y:2,z:16.5},W,H),SGL.proj({x:18,y:-30,z:16.5},W,H),SGL.proj({x:-18,y:-30,z:16.5},W,H)];
+   c.fillStyle='rgba(0,255,255,0.12)';c.beginPath();sp.forEach((p,k)=>{k?c.lineTo(p.X,p.Y):c.moveTo(p.X,p.Y);});c.closePath();c.fill();c.strokeStyle=cv('--cyan');c.lineWidth=1.5;c.stroke();
+   const sc=SGL.proj({x:0,y:-14,z:16.5},W,H);c.fillStyle=cv('--cyan');c.font='bold 14px '+cv('--mono');c.textAlign='center';c.fillText('"the"',sc.X,sc.Y+4);}},
+];
+
+/* ---------- map (2D storyboard) ---------- */
+let hover=-1;
+function drawMap(){const c=document.getElementById('cvMap');if(!c)return;const x=c.getContext('2d'),W=600,H=440;
+ try{
+  x.clearRect(0,0,W,H);
+  // serpentine node positions
+  const cols=4, pad=64, cw=(W-2*pad)/(cols-1), rh=88, top=54;
+  STAGES.forEach((s,i)=>{const row=Math.floor(i/cols); let col=i%cols; if(row%2===1)col=cols-1-col;
+    s._x=pad+col*cw; s._y=top+row*rh;});
+  // connectors
+  x.strokeStyle=cv('--border2');x.lineWidth=1.5;
+  for(let i=0;i<STAGES.length-1;i++){x.beginPath();x.moveTo(STAGES[i]._x,STAGES[i]._y);x.lineTo(STAGES[i+1]._x,STAGES[i+1]._y);x.globalAlpha=.5;x.stroke();x.globalAlpha=1;}
+  // loop-back arrow 19 -> 1
+  const a=STAGES[STAGES.length-1],b=STAGES[0];
+  x.strokeStyle=cv('--cyan');x.globalAlpha=.5;x.setLineDash([4,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(a._x,a._y+14);x.bezierCurveTo(a._x,H-14,b._x,H-14,b._x,b._y-14);x.stroke();x.setLineDash([]);x.globalAlpha=1;
+  x.fillStyle=cv('--cyan');x.font='9px '+cv('--mono');x.textAlign='center';x.fillText('the loop: the shirt reads the sink\u2019s discharge',W/2,H-8);
+  // nodes
+  STAGES.forEach((s,i)=>{const col=cv(s.col),hv=i===hover;
+    x.fillStyle=col;x.globalAlpha=hv?1:.85;x.beginPath();x.arc(s._x,s._y,hv?12:9,0,7);x.fill();x.globalAlpha=1;
+    if(s.les!=null){x.strokeStyle=cv('--seam');x.globalAlpha=.5;x.lineWidth=1;x.beginPath();x.arc(s._x,s._y,hv?15:12,0,7);x.stroke();x.globalAlpha=1;}
+    x.fillStyle=cv('--bg');x.font='bold 9px '+cv('--mono');x.textAlign='center';x.fillText(s.n,s._x,s._y+3);
+    x.fillStyle=hv?cv('--text'):cv('--text2');x.font='8px '+cv('--mono');x.fillText(s.label,s._x,s._y+22);});
+ }catch(e){document.getElementById('fbMap').style.display='flex';}
+}
+
+/* ---------- lesson engine ---------- */
+let cur=0,tt=0;
+function drawLes(){const c=document.getElementById('cvLes');if(!c)return;const x=c.getContext('2d'),W=520,H=330;
+ try{x.clearRect(0,0,W,H);tt+=0.02;LESSONS[cur].draw(x,W,H,tt);}catch(e){document.getElementById('fbLes').style.display='flex';}}
+function setLesson(i){cur=(i+LESSONS.length)%LESSONS.length;document.getElementById('ltitle').textContent=LESSONS[cur].title;
+ document.getElementById('lcap').textContent=LESSONS[cur].cap;document.getElementById('lcount').textContent=(cur+1)+' / '+LESSONS.length;}
+
+/* ---------- panels ---------- */
+document.getElementById('ledger').innerHTML=STAGES.map(s=>'<div><b>'+s.n+'. '+s.label+'</b> — '+s.blurb+'</div>').join('');
+document.getElementById('story').innerHTML=STORY.map(p=>'<p>'+p+'</p>').join('');
+document.getElementById('files').innerHTML=FILES.map(f=>'<span>· '+f+'</span>').join('');
+
+/* ---------- wiring ---------- */
+(function(){
+ setLesson(0);
+ document.getElementById('prev').onclick=()=>setLesson(cur-1);
+ document.getElementById('next').onclick=()=>setLesson(cur+1);
+ const cvL=document.getElementById('cvLes');
+ cvL.addEventListener('mousedown',e=>{SGL.drag=true;SGL.lx=e.offsetX;SGL.ly=e.offsetY;});
+ window.addEventListener('mouseup',()=>SGL.drag=false);
+ window.addEventListener('mousemove',e=>{if(!SGL.drag)return;SGL.ay+=(e.offsetX-SGL.lx)*.01;SGL.ax+=(e.offsetY-SGL.ly)*.01;SGL.lx=e.offsetX;SGL.ly=e.offsetY;});
+ const cvM=document.getElementById('cvMap');
+ function pick(e){const r=cvM.getBoundingClientRect(),sx=cvM.width/r.width,sy=cvM.height/r.height,mx=(e.clientX-r.left)*sx,my=(e.clientY-r.top)*sy;let best=-1,bd=1e9;
+   STAGES.forEach((s,i)=>{const d=Math.hypot(s._x-mx,s._y-my);if(d<20&&d<bd){bd=d;best=i;}});return best;}
+ cvM.addEventListener('mousemove',e=>{hover=pick(e);});
+ cvM.addEventListener('click',e=>{const i=pick(e);if(i<0)return;const s=STAGES[i];
+   document.getElementById('selnote').textContent=s.n+'. '+s.label+' — '+s.blurb;
+   if(s.les!=null)setLesson(s.les);});
+ let t=0;(function loop(){t+=.005;if(!SGL.drag){SGL.ay=0.6+Math.sin(t)*0.4;}drawLes();drawMap();requestAnimationFrame(loop);})();
+})();
+</script><div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE EPOCH &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body></html>

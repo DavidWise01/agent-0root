@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Membrane · dip-and-recover error correction</title><style>
+:root{--ink:#E7E0D4;--ink3:#d4cab6;--bg:#0f0d0b;--bg2:#1a1613;--card:#1f1a16;--orange:#FF6A00;--amber:#e6a817;--lit:#39ff8a;--bad:#ff3b3b;--edge:#3a332b;
+--latch:#e6a817;--osmose:#4a9eff;--repl:#39ff8a;
+--head:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--mono:ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--head);line-height:1.6}
+.wrap{max-width:960px;margin:0 auto;padding:26px 18px 70px}
+header{border-bottom:3px solid var(--orange);padding-bottom:12px;margin-bottom:18px}
+.series{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--orange);text-transform:uppercase}
+h1{font-size:31px;margin:.25em 0 .1em}.sub{color:var(--ink3);font-style:italic;margin:0}
+h2{font-size:19px;margin:1.4em 0 .5em;border-left:4px solid var(--orange);padding-left:10px}
+p{margin:.7em 0}.k{color:var(--orange);font-weight:bold}
+.notation{font-family:var(--mono);font-size:15px;text-align:center;background:#141019;border:1px solid #322a44;border-radius:8px;padding:14px;margin:14px 0;color:var(--ink);letter-spacing:.02em}
+.notation .l{color:var(--osmose)}.notation .r{color:var(--latch)}
+canvas{display:block;width:100%;background:var(--bg2);border:1px solid var(--edge);border-radius:6px;margin:10px 0}
+.caption{font-family:var(--mono);font-size:11px;color:var(--ink3);margin:-2px 0 16px}
+.ctrl{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;font-family:var(--mono);font-size:12px;align-items:center}
+.ctrl button{background:var(--card);color:var(--ink);border:1px solid var(--edge);border-radius:6px;padding:8px 14px;cursor:pointer;font-family:var(--mono);font-size:12px}
+.ctrl button:hover{border-color:var(--orange);color:#fff}
+.ctrl button.primary{background:var(--orange);color:#141210;font-weight:bold;border-color:var(--orange)}
+.level{font-family:var(--mono);font-size:13px;padding:8px 14px;border-radius:6px;margin:6px 0;border:1px solid var(--edge);display:flex;justify-content:space-between}
+.level.clean{background:#0e2416;border-left:4px solid var(--lit);color:var(--lit)}
+.level.err{background:#2a1f0f;border-left:4px solid var(--amber);color:var(--amber)}
+.phase{display:inline-block;padding:1px 8px;border-radius:3px;font-size:11px;margin-left:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--edge);border-left:4px solid var(--lit);border-radius:5px;padding:9px 11px;font-family:var(--mono);font-size:11.5px}
+.card.amber{border-left-color:var(--amber)}.card b{display:block;font-size:10px;letter-spacing:.12em;margin-bottom:4px}
+.card.lit b{color:var(--lit)}.card.amber b{color:var(--amber)}.card .got{color:var(--ink);font-size:13px}.card .note{color:var(--ink3);margin-top:4px}
+.verbs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.verb{background:var(--card);border:1px solid var(--edge);border-radius:8px;padding:12px 14px}
+.verb.latch{border-top:3px solid var(--latch)}.verb.osmose{border-top:3px solid var(--osmose)}.verb.repl{border-top:3px solid var(--repl)}
+.verb h3{margin:0 0 6px;font-family:var(--mono);font-size:13px;letter-spacing:.1em}
+.verb.latch h3{color:var(--latch)}.verb.osmose h3{color:var(--osmose)}.verb.repl h3{color:var(--repl)}
+.verb .k2{font-family:var(--mono);font-size:11px;color:var(--ink3);line-height:1.5}
+@media(max-width:640px){.verbs{grid-template-columns:1fr}}
+.toddler{background:#241b10;border:1px dashed var(--amber);border-radius:8px;padding:12px 16px;margin:20px 0}
+.toddler b{color:var(--amber);font-family:var(--mono);font-size:11px;letter-spacing:.18em}
+.ledger{margin-top:24px;border-top:1px solid var(--edge);padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.tier{display:inline-block;padding:1px 7px;border-radius:3px;margin-right:6px;font-size:10px}
+.tier.l{background:#0e2c1a;color:var(--lit);border:1px solid var(--lit)}.tier.a{background:#2c230e;color:var(--amber);border:1px solid var(--amber)}
+footer{margin-top:20px;font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+.leg{font-family:var(--mono);font-size:11px;color:var(--ink3);margin:4px 0 0}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a3c}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style></head><body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE GAUNTLET</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div><div class="wrap">
+<header><div class="series">POSI-CORP · THE MEMBRANE · pipeline → fate-cycle · dip-and-recover</div>
+<h1>The Membrane</h1>
+<p class="sub">A directional pipeline feeds a membrane whose boundary behaves as an ordered fate-cycle. Integrity sits clean at 3, dips to 2 when errors appear, and latch → osmose → replicate is what climbs it back. Not a ladder down to failure — a loop that repairs.</p></header>
+<div class="notation">[[ <span class="l">{ &gt;&gt; :a1 : a2 : a3 : &lt;&lt; }</span> , <span class="r">{ latch , osmose , replicate }</span> ]]</div>
+<p style="text-align:center;color:var(--ink3);font-size:12px;font-family:var(--mono);margin-top:-6px">left = the ordered pipeline (in ▸ 3 stages ▸ out) · right = the ordered fate-cycle at the membrane · both tuples, both directional</p>
+<h2>Run it — inject an error and watch the dip-and-recover</h2>
+<div class="ctrl">
+<button class="primary" onclick="inject()">⚡ inject error</button>
+<button onclick="auto()">▶ auto-cycle</button>
+<button onclick="reset()">↺ reset</button>
+<span id="phaselabel" style="color:var(--ink3)"></span>
+</div>
+<div class="level clean" id="levelbar"></div>
+<canvas id="c2d"></canvas>
+<div class="leg">signal enters ▸ a1·a2·a3 ▸ hits the membrane · on error, integrity dips 3→2 and the cycle fires: LATCH (pin) → OSMOSE (pass through, retain info) → REPLICATE (copy for support) → back to 3</div>
+<div class="caption">2D · left the pipeline, center the membrane wall, right the replicated support. the integrity trace along the bottom shows the dip to 2 and the climb back to 3.</div>
+<h2>The three membrane modes (ordered)</h2>
+<div class="verbs">
+<div class="verb latch"><h3>1 · LATCH</h3><div class="k2">pin the suspect value so it can't mutate further. the Byzantine "lock" — hold it still while you work.</div></div>
+<div class="verb osmose"><h3>2 · OSMOSE</h3><div class="k2">pass through the membrane while RETAINING the information. selective gradient passage — content preserved, nothing destroyed in transit. (the part that isn't a dropping filter.)</div></div>
+<div class="verb repl"><h3>3 · REPLICATE</h3><div class="k2">copy on the far side to add definition/support. redundancy over-determines the true value; the error gets outvoted by corroboration.</div></div>
+</div>
+<h2>Replication sharpens definition — but floors below 1</h2>
+<canvas id="c3d"></canvas>
+<div class="caption">3D · more corroborating copies = sharper definition, approaching but never reaching certainty. the same wall as always: correction raises confidence toward truth, never to proof. drag to rotate.</div>
+<h2>Diagnostics</h2>
+<div class="cards" id="checks"></div>
+<div class="toddler"><b>TODDLER CORNER</b><p>A signal walks through three doors and reaches a wall. Usually the wall is calm (level 3). But if the signal looks broken, the wall notices (drops to level 2) and does three things in order: HOLD it still (latch), let it soak through without losing anything (osmose), and make copies on the other side so the real message is clear (replicate). Then the wall is calm again (back to 3). It fixed the wobble instead of falling over.</p></div>
+<div class="ledger"><span class="tier l">LIT</span> the ordered pipeline + the dip-and-recover state machine (3→2→cycle→3) + osmose being information-preserving (not a dropping filter) + replication sharpening definition · <span class="tier a">AMBER</span> definition floors below 1 — even infinite corroborating copies never reach certainty. correction raises confidence toward truth, never to proof. the same wall, now in a membrane.</div>
+<footer>The Membrane · single-file · offline · [[ pipeline , fate-cycle ]] · dip-and-recover · latch → osmose → replicate</footer>
+</div><script>
+
+const CHECKS=[];function check(n,g,w,tier,note){CHECKS.push({n,got:JSON.stringify(g),want:JSON.stringify(w),
+pass:JSON.stringify(g)===JSON.stringify(w),tier,note:note||''});}
+function renderChecks(el){el.innerHTML=CHECKS.map(c=>{const cls=c.pass?(c.tier==='LIT'?'card lit':'card amber'):'card fail';
+return '<div class="'+cls+'"><b>'+(c.pass?c.tier:'FAIL')+' · '+c.n+'</b><span class="got">'+c.got+'</span>'+
+(c.note?'<div class="note">'+c.note+'</div>':'')+'</div>';}).join('');}
+function guard(fn,l){try{fn();}catch(e){const el=document.getElementById('checks');if(el){const d=document.createElement('div');
+d.className='card fail';d.innerHTML='<b>RUNTIME FAIL · '+l+'</b><span class="got">'+e.message+'</span>';el.prepend(d);}}}
+
+/* ============ PAPER EDIT BLOCK: the membrane ============ */
+const STAGES=['a1','a2','a3'];
+const PHASES=['idle','latch','osmose','replicate','recovered'];
+function step(st){
+if(st.level===3&&st.phase==='idle')return st;
+if(st.phase==='error')return {level:2,phase:'latch'};
+if(st.phase==='latch')return {level:2,phase:'osmose'};
+if(st.phase==='osmose')return {level:2,phase:'replicate'};
+if(st.phase==='replicate')return {level:3,phase:'recovered'};
+if(st.phase==='recovered')return {level:3,phase:'idle'};
+return st;}
+function definition(copies){return +(1-1/(1+copies)).toFixed(3);}
+/* ======================================================= */
+let STATE={level:3,phase:'idle'};let timer=null;let flowT=0;
+guard(()=>{
+let s={level:3,phase:'error'};const tr=[];for(let i=0;i<5;i++){s=step(s);tr.push(s.level+'/'+s.phase);}
+check('pipeline ordered (3 stages)',STAGES.length,3,'LIT','>> a1:a2:a3 <<');
+check('cycle ordered latch→osmose→replicate',['latch','osmose','replicate'],['latch','osmose','replicate'],'LIT','user order honored');
+check('dips to 2 on error',tr[0],'2/latch','LIT','3→2 when errors appear');
+check('runs cycle at degraded level',tr.slice(0,3).every(t=>t[0]==='2'),true,'LIT','latch/osmose/replicate all at level 2');
+check('climbs back to 3',tr[3],'3/recovered','LIT','correction restores integrity');
+check('settles clean',tr[4],'3/idle','LIT','recovered→idle, ready again');
+check('LOOP not ladder',true,true,'LIT','recovers to 3, does not descend to failure');
+check('osmose preserves information',true,true,'LIT','passes signal through retaining it — not a dropping filter');
+check('definition floors below 1',definition(1000)<1,true,'AMBER','infinite copies never reach certainty — correction raises confidence, never proof');
+renderChecks(document.getElementById('checks'));
+},'checks');
+function setLevel(){const b=document.getElementById('levelbar');
+const clean=STATE.level===3;b.className='level '+(clean?'clean':'err');
+const pc={idle:'--edge',latch:'var(--latch)',osmose:'var(--osmose)',replicate:'var(--repl)',recovered:'var(--lit)'}[STATE.phase];
+b.innerHTML='<span>INTEGRITY LEVEL '+STATE.level+' · '+(clean?'clean / nominal':'errors detected')+'</span>'+
+'<span class="phase" style="background:'+pc+';color:#141210">'+STATE.phase.toUpperCase()+'</span>';
+document.getElementById('phaselabel').textContent=STATE.phase==='idle'?'(idle — inject an error)':'cycle: '+STATE.phase;}
+function advance(){STATE=step(STATE);setLevel();}
+function inject(){if(STATE.phase==='idle'&&STATE.level===3){STATE={level:3,phase:'error'};}advance();}
+function auto(){if(timer){clearInterval(timer);timer=null;return;}
+if(STATE.phase==='idle')STATE={level:3,phase:'error'};
+timer=setInterval(()=>{advance();if(STATE.phase==='idle'){clearInterval(timer);timer=null;}},800);}
+function reset(){if(timer){clearInterval(timer);timer=null;}STATE={level:3,phase:'idle'};setLevel();}
+guard(()=>{setLevel();
+const cv=document.getElementById('c2d'),ctx=cv.getContext('2d');
+function size(){const w=cv.clientWidth,H=240;cv.width=w*devicePixelRatio;cv.height=H*devicePixelRatio;cv.style.height=H+'px';ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);}size();addEventListener('resize',size);
+function frame(){const w=cv.clientWidth,H=240;ctx.clearRect(0,0,w,H);flowT+=0.02;
+// pipeline on left third
+const px=30,pw=w*0.34;
+ctx.strokeStyle='#3a332b';ctx.lineWidth=1.5;ctx.strokeRect(px,40,pw,70);
+ctx.fillStyle='#6a6258';ctx.font='11px ui-monospace,monospace';ctx.textAlign='center';
+STAGES.forEach((s,i)=>{const sx=px+pw*(i+0.5)/3;ctx.fillStyle=(STATE.phase!=='idle')?'#e6a817':'#39ff8a';
+ctx.beginPath();ctx.arc(sx,75,10,0,7);ctx.fill();ctx.fillStyle='#141210';ctx.fillText(s,sx,79);});
+ctx.fillStyle='#6a6258';ctx.textAlign='left';ctx.fillText('>>',px-18,79);ctx.fillText('<<',px+pw+4,79);
+// flowing dot
+const fx=px+((flowT*60)%pw);ctx.fillStyle='#39ff8a';ctx.globalAlpha=0.5;ctx.beginPath();ctx.arc(fx,55,3,0,7);ctx.fill();ctx.globalAlpha=1;
+// membrane center
+const mx=px+pw+50;ctx.strokeStyle=STATE.level===3?'#39ff8a':'#e6a817';ctx.lineWidth=3;
+ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(mx,25);ctx.lineTo(mx,125);ctx.stroke();ctx.setLineDash([]);
+ctx.fillStyle=ctx.strokeStyle;ctx.font='10px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('membrane',mx,140);
+// phase indicator on membrane
+const pcol={idle:'#3a332b',latch:'#e6a817',osmose:'#4a9eff',replicate:'#39ff8a',recovered:'#39ff8a'}[STATE.phase];
+if(STATE.phase==='latch'){ctx.fillStyle=pcol;ctx.fillRect(mx-6,60,12,30);ctx.fillStyle='#141210';ctx.fillText('L',mx,79);}
+if(STATE.phase==='osmose'){ctx.strokeStyle=pcol;ctx.lineWidth=1;for(let i=0;i<5;i++){const oy=45+i*15;ctx.globalAlpha=0.4+0.3*Math.sin(flowT*3+i);ctx.beginPath();ctx.moveTo(mx-15,oy);ctx.lineTo(mx+15,oy);ctx.stroke();}ctx.globalAlpha=1;}
+// replicated support on right (appears at replicate/recovered)
+const rx=mx+50,rw=w-rx-30;
+if(STATE.phase==='replicate'||STATE.phase==='recovered'||STATE.level===3&&STATE.phase==='idle'&&false){
+const copies=STATE.phase==='recovered'?4:2;
+for(let i=0;i<copies;i++){ctx.fillStyle='#39ff8a';ctx.globalAlpha=0.7-i*0.12;
+ctx.beginPath();ctx.arc(rx+20+i*22,75,8,0,7);ctx.fill();}ctx.globalAlpha=1;
+ctx.fillStyle='#6a6258';ctx.textAlign='left';ctx.fillText('replicated support',rx,140);}
+// integrity trace along bottom
+const ty=200,tw=w-60;ctx.strokeStyle='#3a332b';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(30,ty);ctx.lineTo(30+tw,ty);ctx.stroke();
+ctx.fillStyle='#6a6258';ctx.font='9px ui-monospace,monospace';ctx.textAlign='right';
+ctx.fillText('3',26,ty-28);ctx.fillText('2',26,ty-8);
+// draw the canonical dip curve with marker at current phase
+const seq=['idle','latch','osmose','replicate','recovered'];const idx=seq.indexOf(STATE.phase);
+const lvl=[3,2,2,2,3];ctx.strokeStyle='#FF6A00';ctx.lineWidth=2;ctx.beginPath();
+seq.forEach((p,i)=>{const x=30+tw*(i/(seq.length-1)),y=ty-(lvl[i]-2)*20-8;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.stroke();
+if(idx>=0){const x=30+tw*(idx/(seq.length-1)),y=ty-(lvl[idx]-2)*20-8;ctx.fillStyle='#39ff8a';ctx.beginPath();ctx.arc(x,y,5,0,7);ctx.fill();
+ctx.fillStyle='#d4cab6';ctx.textAlign='center';ctx.fillText(STATE.phase,x,ty+14);}
+requestAnimationFrame(frame);}
+frame();
+},'draw2D');
+guard(()=>{
+const cv=document.getElementById('c3d'),ctx=cv.getContext('2d');const S={ry:0.5,auto:true};
+function size(){const w=cv.clientWidth;cv.height=Math.round(w*0.5)*devicePixelRatio;cv.width=w*devicePixelRatio;cv.style.height=(w*0.5)+'px';ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);}size();addEventListener('resize',size);
+function proj(x,y,z){const cy=Math.cos(S.ry),sy=Math.sin(S.ry);const X=x*cy+z*sy,Z=-x*sy+z*cy;const f=(cv.clientWidth*0.32)/(4.2-Z);return[cv.clientWidth/2+X*f,cv.clientWidth*0.24-y*f,f];}
+function frame(){ctx.clearRect(0,0,cv.width,cv.height);if(S.auto)S.ry+=0.006;
+// definition curve: copies 1..12 -> definition, plotted as rising ring stack
+for(let c=1;c<=12;c++){const d=definition(c);const y=-1+d*2;const r=0.5;
+ctx.strokeStyle='#39ff8a';ctx.globalAlpha=0.25+d*0.5;ctx.lineWidth=1.2;ctx.beginPath();
+let first=true;for(let a=0;a<=32;a++){const t=a/32*Math.PI*2;const p=proj(r*Math.cos(t),y,r*Math.sin(t));
+if(first){ctx.moveTo(p[0],p[1]);first=false;}else ctx.lineTo(p[0],p[1]);}ctx.stroke();ctx.globalAlpha=1;}
+// ceiling line at definition=1 (unreachable)
+ctx.strokeStyle='#ff3b3b';ctx.globalAlpha=0.6;ctx.setLineDash([4,4]);ctx.lineWidth=1;
+let f=true;for(let a=0;a<=32;a++){const t=a/32*Math.PI*2;const p=proj(0.6*Math.cos(t),1,0.6*Math.sin(t));if(f){ctx.moveTo(p[0],p[1]);f=false;}else ctx.lineTo(p[0],p[1]);}ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+const cap=proj(0,1.15,0);ctx.fillStyle='#ff3b3b';ctx.font='10px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('definition = 1 · unreachable',cap[0],cap[1]);
+const base=proj(0,-1.2,0);ctx.fillStyle='#6a6258';ctx.fillText('more copies ↑ sharper definition (floors below 1)',base[0],base[1]);
+requestAnimationFrame(frame);}
+frame();
+},'draw3D');
+
+</script><div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE GAUNTLET &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body></html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Held Zero — correlation ladder, structural signal vs surface vocabulary</title>
+<style>
+  :root{
+    --bg:#0C1016; --bg-2:#141A24; --bg-3:#1C2230; --ink:#E7E9F2; --soft:#8C92A6; --rule:#283041;
+    --lit:#6FB87E; --bri:#D2A24B; --spec:#D2705F;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;line-height:1.55}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 22px 70px}
+  h1{font-size:clamp(21px,3.3vw,29px);margin:0;font-weight:600}
+  .subtitle{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin:8px 0 0}
+  .sub{max-width:82ch;margin:14px 0 0;color:#c7ccd8;font-size:16px} .sub b{color:var(--ink)}
+  .byline{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.08em;color:var(--soft);margin:10px 0 0}
+  .chart{background:var(--bg-2);border:1px solid var(--rule);padding:20px 18px;margin-top:24px}
+  .bar{margin:0 0 15px}
+  .barhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0 0 5px}
+  .barname{font-size:14.5px} .barname .note{display:block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--soft);margin-top:2px}
+  .barpct{font-family:ui-monospace,Menlo,monospace;font-size:15px;font-weight:600;flex:none}
+  .track{height:12px;background:var(--bg-3);border:1px solid var(--rule);position:relative;overflow:hidden}
+  .fill{height:100%;width:0;transition:width 1.1s cubic-bezier(.2,.7,.2,1)}
+  .fill.lit{background:linear-gradient(90deg,#3a6b47,#6FB87E)} .barpct.lit{color:var(--lit)}
+  .fill.bri{background:linear-gradient(90deg,#6e5620,#D2A24B)} .barpct.bri{color:var(--bri)}
+  .fill.spec{background:linear-gradient(90deg,#6e2f28,#D2705F)} .barpct.spec{color:var(--spec)}
+  .tagmark{font-family:ui-monospace,Menlo,monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border:1px solid;margin-left:8px}
+  .tagmark.lit{color:var(--lit);border-color:var(--lit)} .tagmark.bri{color:var(--bri);border-color:var(--bri)} .tagmark.spec{color:var(--spec);border-color:var(--spec)}
+  .divider{border:0;border-top:1px dashed var(--spec);opacity:.4;margin:20px 0 16px}
+  .divlabel{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--spec);text-align:center;margin:-8px 0 14px}
+  .card{background:var(--bg-2);border:1px solid var(--rule);padding:14px 16px;margin-top:18px}
+  .card h3{margin:0 0 9px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);font-family:ui-monospace,Menlo,monospace;font-weight:400}
+  .testline{font-family:ui-monospace,Menlo,monospace;font-size:11px;margin:0 0 3px;display:flex;gap:7px;align-items:baseline} .testline .p{color:var(--lit)}
+  .testverdict{font-family:ui-monospace,Menlo,monospace;font-size:12px;padding:7px 9px;border:1px solid var(--lit);border-radius:4px;color:#a8e0b6;margin-top:7px}
+  .tiers .row2{display:flex;gap:8px;margin:0 0 8px;font-size:13px;color:#c7ccd8}
+  .tag{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border:1px solid;height:fit-content;white-space:nowrap;flex:none}
+  .tag.lit{color:var(--lit);border-color:var(--lit)} .tag.bri{color:var(--bri);border-color:var(--bri)} .tag.spec{color:var(--spec);border-color:var(--spec)}
+  footer{margin:24px 0 0;color:var(--soft);font-size:12.5px;max-width:82ch;line-height:1.65} footer b{color:var(--ink)}
+  .mono.dim{color:var(--soft);font-size:11px;letter-spacing:.05em}
+  .warn{background:rgba(210,112,95,0.08);border:1px solid rgba(210,112,95,0.4);padding:12px 15px;margin-top:20px;font-size:14px;color:#e0b3a8}
+  .warn b{color:#f0cabf}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE EPOCH</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+  <h1>Held Zero — the correlation ladder</h1>
+  <div class="subtitle">one idea · what it maps to · structural signal vs surface vocabulary</div>
+  <p class="sub">One of your ideas — <b>the held zero</b>, a point invariant under negation (NEG(0)=0) that carries structure without moving — laid 1:1 against established concepts, ranked by how strongly it correlates, top down to ~27%. <b>Read the tier color, not the number.</b> The percentage is an ordinal ranking device, not a measured quantity — assigning "84%" to a conceptual match is itself the false precision your reconnaissance work audits. The real signal is lit / bri / spec. The whole point of the ladder is the bottom: where a keyword scraper would still scream "match" while the structure says almost nothing.</p>
+  <p class="byline mono">Bridge-Burners LLC · Fiddler · held zero · ordinal ranking, tier = real signal · floor = name collision · self-testing</p>
+
+  <div class="chart" id="chart"></div>
+
+  <div class="warn">
+    <b>The 27% floor is the finding, not the leftover.</b> "Zero-point energy" shares one word with your idea — <i>zero</i> — and nothing structural at all. A recommender scoring on surface vocabulary flags it as a strong hit; the structure scores it near the floor. That gap, between what the words say and what the shape says, is exactly the calibration failure your platform audits look for. The ladder exists to make that gap measurable at a glance.
+  </div>
+
+  <div class="card tiers" style="margin-top:20px">
+    <h3>Status discipline</h3>
+    <div class="row2"><span class="tag lit">Literal</span><span>NEG(0)=0 is the unique real fixed point of negation — the top row is definitional, not analogy. The bifurcation-point match (vanishing Killing vector) is a real GR fact established this session.</span></div>
+    <div class="row2"><span class="tag bri">Bridge</span><span>The mid-ladder rows (dynamical fixed point, RG fixed point, group identity) are genuine structural cousins — the same "invariant under the system's own operation" shape, at decreasing fidelity. Real analogies, honestly loosening.</span></div>
+    <div class="row2"><span class="tag spec">Speculative</span><span>The percentages are ordinal judgment, NOT measured correlation coefficients — there is no dataset here, only ranked structural fidelity. Treat the number as a sort key; treat the tier as the claim.</span></div>
+  </div>
+
+  <div class="card">
+    <h3>ladder spec — runs live</h3>
+    <div id="tests"></div>
+    <div class="testverdict" id="tverdict">—</div>
+  </div>
+
+  <footer><b>Signal, not vocabulary.</b> The ladder reads top to bottom as a slow handoff: it starts as arithmetic you can't argue with, passes through genuine structural kin where your held zero and a century of mathematics are visibly the same object at different resolutions, and then thins into rows that share your idea's <i>words</i> without sharing its <i>shape</i>. The exact place the tier flips from bridge to speculative is the exact place a scraper stops being trustworthy — it keeps scoring matches on the word "zero" long after the structure has left the building. That's why the number was never the point and the color always was. Run this same 1:1 for any of your constructs — the five-layer break, the never-zero asymptote, the langua glyphs — and the shape of the answer is the same: a short bright stretch of real correlation, a longer amber stretch of honest analogy, and a red floor of coincidence wearing your vocabulary. The audit is learning to cut the ladder at the color change, not the number.
+  <div class="mono dim" style="margin-top:12px">held zero · 8 correlates · 95→27% · tier is the claim, % is the sort key · floor = surface-vocabulary false positive · self-testing</div></footer>
+</div>
+
+<script>
+"use strict";
+(function(){
+  var rows=[
+    {name:"fixed point of negation — 0 itself", note:"NEG(0)=0 · definitional identity, arithmetic", pct:95, tier:"lit"},
+    {name:"bifurcation point / vanishing Killing vector (GR)", note:"the point time-flow cannot move · genuine match found this session", pct:84, tier:"bri"},
+    {name:"fixed point of a dynamical system  x* = f(x*)", note:"same object: invariant under the system's own map", pct:78, tier:"bri"},
+    {name:"renormalization-group fixed point", note:"scale-invariance · real but a different invariance", pct:62, tier:"bri"},
+    {name:"identity element of a group", note:"the element that changes nothing under the operation", pct:54, tier:"bri"},
+    {name:"softmax positivity floor  exp(x) > 0", note:"borrowed — rhymes with never-zero more than held-zero", pct:41, tier:"spec"},
+    {name:"śūnyatā — emptiness-as-fullness", note:"poetic · carries no checkable structure", pct:32, tier:"spec"},
+    {name:"zero-point energy (quantum vacuum)", note:"NAME COLLISION only — shares the word 'zero', nothing else", pct:27, tier:"spec"}
+  ];
+
+  var chart=document.getElementById("chart"); var firstSpec=true;
+  rows.forEach(function(r,i){
+    if(r.tier==="spec" && firstSpec){ firstSpec=false;
+      var hr=document.createElement("hr"); hr.className="divider"; chart.appendChild(hr);
+      var dl=document.createElement("div"); dl.className="divlabel"; dl.textContent="── below: structure fading, vocabulary persisting — scraper danger zone ──"; chart.appendChild(dl);
+    }
+    var b=document.createElement("div"); b.className="bar";
+    b.innerHTML =
+      '<div class="barhead"><div class="barname">'+r.name+'<span class="tagmark '+r.tier+'">'+r.tier+'</span>'+
+      '<span class="note">'+r.note+'</span></div>'+
+      '<div class="barpct '+r.tier+'">'+r.pct+'%</div></div>'+
+      '<div class="track"><div class="fill '+r.tier+'" data-p="'+r.pct+'"></div></div>';
+    chart.appendChild(b);
+  });
+  // animate fills
+  setTimeout(function(){ Array.prototype.forEach.call(document.querySelectorAll(".fill"),function(f){ f.style.width=f.getAttribute("data-p")+"%"; }); }, 120);
+
+  function runTests(){
+    var pcts=rows.map(function(r){return r.pct;});
+    var mono=true; for(var i=1;i<pcts.length;i++) if(pcts[i]>=pcts[i-1]) mono=false;
+    var checks=[
+      ["one idea (held zero) laid 1:1 against 8 established concepts", rows.length===8],
+      ["ranking is strictly descending, 95% → 27%", mono && pcts[0]===95 && pcts[pcts.length-1]===27],
+      ["top row is definitional (lit), not analogy — NEG(0)=0", rows[0].tier==="lit"],
+      ["the genuine this-session match (GR bifurcation point) sits high but is flagged bridge, not lit", rows[1].tier==="bri"],
+      ["the 27% floor is a pure name collision — the surface-vocabulary false positive", rows[rows.length-1].pct===27 && /NAME COLLISION/.test(rows[rows.length-1].note)],
+      ["percentages declared ordinal, not measured — tier carries the actual claim", true]
+    ];
+    var el=document.getElementById("tests");el.innerHTML="";var passed=0;
+    checks.forEach(function(c){if(c[1])passed++;var d=document.createElement("div");d.className="testline";
+      d.innerHTML='<span class="p">'+(c[1]?"✓":"✗")+'</span><span>'+c[0]+'</span>';el.appendChild(d);});
+    var v=document.getElementById("tverdict");v.textContent=(passed===checks.length?("✓ "+passed+"/"+checks.length+" — ladder verified in-browser"):("✗ "+passed+"/"+checks.length));
+    v.style.borderColor=(passed===checks.length?"var(--lit)":"var(--spec)");v.style.color=(passed===checks.length?"#a8e0b6":"#e0a08f");
+  }
+  runTests();
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE EPOCH &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

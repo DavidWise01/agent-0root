@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE ERROR CORRECTION BENCH — how to be wrong on purpose</title>
+<style>
+:root{
+  --ferrite:#171B21; --ferrite2:#1E242D; --ferrite3:#2A323E; --ferrite4:#3A4553;
+  --copper:#E07B3C; --copper-dim:#8A4E27;
+  --phosphor:#7FD9E8; --phosphor-dim:#3E7C88;
+  --ghost:#6B7A8D;
+  --lit:#86C98B; --amber:#EFD060;
+  --paper:#C8D0DA; --paper-dim:#7E8B9C;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --serif:"Iowan Old Style",Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ferrite);
+  background-image:radial-gradient(ellipse 120% 80% at 50% -10%, #212936 0%, var(--ferrite) 60%);
+  color:var(--paper); font-family:var(--mono); font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+
+/* ---------- masthead ---------- */
+.mast{border-bottom:1px solid var(--ferrite3);padding-bottom:20px;margin-bottom:26px}
+.mast h1{
+  font-size:clamp(21px,3.6vw,34px); font-weight:600; margin:0 0 4px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--paper);
+}
+.mast .sub{color:var(--paper-dim);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.eq{
+  margin-top:16px; font-size:clamp(17px,2.6vw,23px); color:var(--copper);
+  letter-spacing:.04em; display:flex; align-items:baseline; gap:16px; flex-wrap:wrap;
+}
+.eq .note{font-family:var(--serif);font-size:14px;color:var(--paper-dim);letter-spacing:0;font-style:italic}
+
+/* ---------- stamps ---------- */
+.stamp{
+  display:inline-block;font-size:9.5px;letter-spacing:.16em;font-weight:700;
+  padding:2px 6px;border-radius:2px;vertical-align:middle;text-transform:uppercase;
+}
+.stamp.lit{color:var(--lit);border:1px solid rgba(134,201,139,.45);background:rgba(134,201,139,.09)}
+.stamp.amb{color:var(--amber);border:1px solid rgba(239,208,80,.4);background:rgba(239,208,80,.08)}
+
+/* ---------- panels ---------- */
+.panel{
+  background:var(--ferrite2);border:1px solid var(--ferrite3);border-radius:3px;
+  margin-bottom:22px;overflow:hidden;
+}
+.panel > header{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:11px 16px;border-bottom:1px solid var(--ferrite3);background:rgba(0,0,0,.16);
+}
+.panel > header h2{
+  margin:0;font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;color:var(--paper);
+}
+.panel > header .rt{font-size:10.5px;letter-spacing:.1em;color:var(--paper-dim);text-transform:uppercase}
+.body{padding:16px}
+
+/* ---------- scope ---------- */
+.scope{position:relative;background:#10141A;border:1px solid var(--ferrite3);border-radius:2px}
+canvas{display:block;width:100%}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--paper-dim)}
+.legend i{display:inline-block;width:16px;height:2px;vertical-align:middle;margin-right:6px}
+
+/* ---------- controls ---------- */
+.ctl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:13px 20px;margin-top:18px}
+.ctl label{display:block;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--paper-dim);margin-bottom:5px}
+.ctl label b{color:var(--paper);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-transform:none;font-size:12px}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--ferrite4);
+  border-radius:2px;outline:none;cursor:pointer;margin:0;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--copper);
+  border:2px solid var(--ferrite2);cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{
+  width:13px;height:13px;border-radius:50%;background:var(--copper);border:2px solid var(--ferrite2);cursor:pointer;
+}
+input[type=range]:focus-visible{box-shadow:0 0 0 2px var(--phosphor)}
+.toggles{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,select{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  background:var(--ferrite3);color:var(--paper);border:1px solid var(--ferrite4);
+  padding:7px 12px;border-radius:2px;cursor:pointer;transition:background .12s,border-color .12s;
+}
+button:hover,select:hover{background:var(--ferrite4);border-color:var(--paper-dim)}
+button:focus-visible,select:focus-visible{outline:2px solid var(--phosphor);outline-offset:1px}
+button[aria-pressed=true]{background:var(--copper-dim);border-color:var(--copper);color:#FFEBDA}
+button.go{background:var(--copper);border-color:var(--copper);color:#241206;font-weight:700}
+button.go:hover{background:#EE8C4C}
+
+/* ---------- readouts ---------- */
+.reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:1px;background:var(--ferrite3);border:1px solid var(--ferrite3);margin-top:18px}
+.read{background:var(--ferrite2);padding:9px 11px}
+.read .k{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--paper-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.read .v{font-size:16px;font-variant-numeric:tabular-nums;margin-top:2px;color:var(--paper)}
+.read .v.hot{color:var(--copper)}
+.read .v.cool{color:var(--phosphor)}
+.read .v.warn{color:var(--amber)}
+
+/* ---------- manual ---------- */
+.manual{font-family:var(--serif);font-size:16px;line-height:1.65;color:var(--paper)}
+.manual h3{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper);margin:26px 0 9px;font-weight:600}
+.manual h3:first-child{margin-top:0}
+.manual p{margin:0 0 13px;max-width:68ch}
+.manual ol{max-width:68ch;padding-left:22px;margin:0 0 13px}
+.manual li{margin-bottom:7px}
+.manual code{font-family:var(--mono);font-size:13.5px;color:var(--phosphor);background:rgba(127,217,232,.07);padding:1px 5px;border-radius:2px}
+.manual em{color:var(--paper-dim)}
+.toddler{border-left:2px solid var(--amber);padding:2px 0 2px 18px;margin:18px 0;background:rgba(239,208,80,.035)}
+.toddler .hd{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+pre.log{
+  font-family:var(--mono);font-size:11.5px;line-height:1.65;color:var(--paper-dim);
+  background:#10141A;border:1px solid var(--ferrite3);border-radius:2px;
+  padding:14px;overflow-x:auto;margin:0;
+}
+pre.log b{color:var(--lit);font-weight:400}
+pre.log u{color:var(--amber);text-decoration:none}
+.foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--ferrite3);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--paper-dim)}
+.decode{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:1px;background:var(--ferrite3);border:1px solid var(--ferrite3)}
+.decode div{background:var(--ferrite2);padding:9px 12px}
+.decode .sy{font-size:17px;color:var(--copper);letter-spacing:.02em}
+.decode .wd{font-family:var(--serif);font-size:14px;color:var(--paper);line-height:1.45;margin-top:3px}
+.decode .un{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--paper-dim);margin-top:4px}
+.readas{margin-top:12px;font-family:var(--serif);font-size:16px;color:var(--paper);line-height:1.55;max-width:72ch}
+.readas b{color:var(--copper);font-style:normal}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:20px}
+.gcol h5{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--copper);margin:0 0 9px;font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--ferrite3)}
+.gcol dl{margin:0}
+.gcol dt{font-size:14px;color:var(--phosphor);margin-top:11px;letter-spacing:.02em}
+.gcol dt span{font-size:9.5px;color:var(--paper-dim);letter-spacing:.1em;text-transform:uppercase;margin-left:7px}
+.gcol dd{margin:2px 0 0;font-family:var(--serif);font-size:14px;line-height:1.45;color:var(--paper)}
+.gcol dd em{color:var(--paper-dim);font-size:13px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:14px}
+.card{background:#10141A;border:1px solid var(--ferrite3);border-radius:3px;padding:13px;display:flex;flex-direction:column}
+.card h4{margin:0 0 2px;font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--copper);font-weight:600}
+.card .job{font-family:var(--serif);font-size:14.5px;line-height:1.5;color:var(--paper);margin:8px 0 0}
+.card .tie{margin-top:auto;padding-top:9px;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--paper-dim)}
+.card canvas{margin-top:4px}
+.card.hero{grid-column:1/-1;border-color:var(--copper-dim)}
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--ferrite3);border:1px solid var(--ferrite3);margin-top:12px}
+.map div{background:var(--ferrite2);padding:8px 10px;font-size:10.5px;letter-spacing:.06em;color:var(--paper-dim)}
+.map div b{display:block;color:var(--copper);font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px;font-weight:600}
+.scrub{display:flex;align-items:center;gap:12px;margin-top:12px}
+.scrub input[type=range]{flex:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.regime{display:inline-block;font-size:9.5px;letter-spacing:.14em;font-weight:700;padding:2px 7px;border-radius:2px;text-transform:uppercase}
+.regime.turns{color:var(--phosphor);border:1px solid rgba(127,217,232,.45);background:rgba(127,217,232,.09)}
+.regime.energy{color:var(--amber);border:1px solid rgba(239,208,80,.45);background:rgba(239,208,80,.09)}
+.kbar{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:var(--ferrite3);border:1px solid var(--ferrite3)}
+.kbar div{background:var(--ferrite2);padding:9px 12px}
+.kbar .sy{font-size:17px;color:var(--copper)}
+.kbar .wd{font-family:var(--serif);font-size:14px;color:var(--paper);line-height:1.45;margin-top:3px}
+.kbar .un{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--paper-dim);margin-top:4px}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a3c}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style><style>
+#venn{cursor:pointer}
+.bigread{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:var(--ferrite3);border:1px solid var(--ferrite3);margin-top:16px}
+.bigread div{background:var(--ferrite2);padding:12px 14px}
+.bigread .k{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--paper-dim)}
+.bigread .v{font-size:22px;font-variant-numeric:tabular-nums;margin-top:4px}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE GAUNTLET</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+
+<div class="mast">
+  <h1>The Error Correction Bench</h1>
+  <div class="sub">Redundancy looks like waste right up until you meet noise</div>
+  <div class="eq">C = 1 &minus; H(p)
+    <span class="note">&mdash; Shannon, 1948. Below this line you can drive the error rate to <em>zero</em> over a noisy channel. Above it you cannot beat a coin toss. There is a wall, and it is sharp.</span>
+  </div>
+  <div class="decode">
+    <div><div class="sy">p</div><div class="wd">the channel's bit-flip probability. How often a 1 arrives as a 0.</div><div class="un">a probability</div></div>
+    <div><div class="sy">H(p)</div><div class="wd">binary entropy &mdash; how many bits of genuine surprise each received bit carries. Maximal at p = &frac12;, where the channel tells you nothing.</div><div class="un">bits</div></div>
+    <div><div class="sy">C</div><div class="wd">capacity. The highest rate at which arbitrarily reliable communication is possible at all.</div><div class="un">bits per channel use</div></div>
+  </div>
+  <p class="readas">Out loud: <b>a noisy channel does not merely degrade your message &mdash; it has a hard, computable ceiling on how much you can push through it reliably.</b> Stay under the ceiling and errors can be made as rare as you like. Go over and no amount of cleverness helps. Shannon proved this in 1948 without exhibiting a single code that achieved it, and it took forty-five years to find one that came close.</p>
+</div>
+
+<section class="panel">
+  <header><h2>A &middot; Break it yourself</h2><div class="rt">Hamming(7,4) &middot; three circles, seven bits, click any bit to flip it</div></header>
+  <div class="body">
+    <div class="scope"><canvas id="venn" height="440"></canvas></div>
+    <div class="toggles" style="margin-top:14px">
+      <button id="bNew" class="go">New message</button>
+      <button id="bOne">Corrupt one bit</button>
+      <button id="bTwo">Corrupt two bits</button>
+      <button id="bFix">Repair</button>
+      <button id="bShow" aria-pressed="true">Show the arithmetic</button>
+    </div>
+    <div class="bigread">
+      <div><div class="k">syndrome</div><div class="v cool" id="rSyn">&mdash;</div></div>
+      <div><div class="k">the code's verdict</div><div class="v" id="rVer">&mdash;</div></div>
+      <div><div class="k">data you sent</div><div class="v" id="rSent">&mdash;</div></div>
+      <div><div class="k">data recovered</div><div class="v" id="rGot">&mdash;</div></div>
+    </div>
+    <p style="margin:14px 0 0;font-family:var(--serif);font-size:15px;color:var(--paper)">
+      <span id="rReg" class="regime turns">&mdash;</span>
+      <span id="rRegTxt" style="color:var(--paper-dim);font-size:14px"></span></p>
+  </div>
+</section>
+
+<section class="panel">
+  <header><h2>B &middot; The channel, running</h2><div class="rt">real bits through real noise &middot; coded against uncoded, side by side</div></header>
+  <div class="body">
+    <div class="scope"><canvas id="chan" height="300"></canvas></div>
+    <div class="legend">
+      <span><i style="background:#2E6E58"></i>arrived clean</span>
+      <span><i style="background:var(--amber)"></i>damaged, then repaired</span>
+      <span><i style="background:#B4463C"></i>damaged beyond repair</span>
+    </div>
+    <div class="toggles" style="margin-top:14px">
+      <button id="bRun" class="go">Run the channel</button>
+      <button id="bPause">Pause</button>
+      <button id="bReset">Reset counters</button>
+    </div>
+    <div class="ctl-grid" style="margin-top:14px">
+      <div class="ctl"><label for="sP">Channel bit-flip rate p <b id="lP"></b></label><input type="range" id="sP" min="0" max="1000" value="330"></div>
+      <div class="ctl"><label for="sSpeed">Blocks per second <b id="lSpeed"></b></label><input type="range" id="sSpeed" min="0" max="1000" value="500"></div>
+    </div>
+    <div class="bigread">
+      <div><div class="k">blocks sent</div><div class="v" id="rBlk">0</div></div>
+      <div><div class="k">uncoded bit error rate</div><div class="v hot" id="rUn">&mdash;</div></div>
+      <div><div class="k">after Hamming(7,4)</div><div class="v cool" id="rCo">&mdash;</div></div>
+      <div><div class="k">theory says</div><div class="v" id="rTh">&mdash;</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <header><h2>C &middot; Shannon's wall</h2><div class="rt">everything below the curve is possible &middot; everything above it is not, ever</div></header>
+  <div class="body">
+    <div class="scope"><canvas id="wall" height="360"></canvas></div>
+    <div class="legend">
+      <span><i style="background:var(--phosphor)"></i>capacity C = 1 &minus; H(p)</span>
+      <span><i style="background:var(--copper)"></i>code rates</span>
+      <span><i style="background:var(--amber)"></i>your channel</span>
+      <span><i style="background:rgba(180,70,60,.35)"></i>impossible &mdash; no code exists</span>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <header><h2>D &middot; The forty-five year gap</h2><div class="rt">Shannon promised a code existed &middot; he did not say how to build it</div></header>
+  <div class="body">
+    <div class="scope"><canvas id="gap" height="360"></canvas></div>
+    <div class="legend">
+      <span><i style="background:var(--ghost)"></i>uncoded</span>
+      <span><i style="background:var(--phosphor)"></i>repetition 3 / 5 / 7</span>
+      <span><i style="background:var(--copper)"></i>Hamming(7,4)</span>
+      <span><i style="background:var(--amber)"></i>your channel</span>
+    </div>
+  </div>
+</section>
+<section class="panel">
+  <header><h2>Manual</h2><div class="rt">the last inversion: the waste is the whole point</div></header>
+  <div class="body manual">
+
+    <h3>Three circles</h3>
+    <p>Panel A is the entire idea of error correction, and it fits in a Venn diagram. Four data bits go in the overlaps. Three parity bits go in the outer slivers, each chosen so that <b>its circle contains an even number of ones</b>. That is all.</p>
+    <p>Now flip any single bit. Every circle containing that bit goes odd; every circle not containing it stays even. Since each of the seven regions sits in a <em>different combination</em> of circles, the pattern of which circles complain is a unique fingerprint &mdash; it does not merely tell you that something broke, it tells you <em>which bit</em>. That fingerprint is called the syndrome, and correcting the error is just flipping the bit it names.</p>
+    <p>Then flip a second bit and watch it fail. The code does not shrug &mdash; it confidently repairs the wrong bit and hands you three errors where you had two. That is not a bug in this particular code; it is the price of a decoder that always commits to an answer. Every error-correcting code has a radius, and outside it the code lies to you with total confidence.</p>
+
+    <h3>It is a perfect code, in a technical and slightly beautiful sense</h3>
+    <p>Draw a sphere of radius one around every codeword &mdash; the codeword plus the seven vectors a single flip away, so eight vectors each. There are sixteen codewords, so the spheres cover <code>16 &times; 8 = 128</code> vectors. The whole space of seven-bit strings contains <code>2&#8311; = 128</code>.</p>
+    <p>They match <em>exactly</em>. The correction spheres tile the space with no gaps and no overlap: every possible seven-bit string is either a codeword or exactly one flip from exactly one codeword. Nothing is wasted and nothing is ambiguous. Only a handful of perfect binary codes exist, and Hamming's is the smallest interesting one.</p>
+
+    <h3>The wall</h3>
+    <p>Here is the result that should be much more famous than it is. A channel that flips bits with probability <code>p</code> has a <b>capacity</b>, <code>C = 1 &minus; H(p)</code>, where <code>H</code> is the binary entropy. Below that rate, codes exist whose error probability can be made <em>as small as you like</em> &mdash; not small, not manageable, arbitrarily small. Above it, nothing works, and no future cleverness will change that.</p>
+    <p>The obvious way to fight noise is repetition: send everything three times and take the majority. It works, and panel D shows how badly. At 5% noise, reaching a one-in-a-billion error rate by repetition needs <b>23 copies of every bit</b> &mdash; a rate of 0.043. Shannon says the capacity there is 0.714. A good code should manage <b>sixteen times</b> that rate at the same reliability.</p>
+    <p>And Hamming does not save you either. Measured against the wall, every classical code sits absurdly far from it:</p>
+    <ul>
+      <li>repetition-3 &mdash; <b>301&times;</b> away from the noise it could theoretically survive</li>
+      <li>repetition-7 &mdash; 21&times; away</li>
+      <li>Hamming(7,4) &mdash; <b>263&times;</b> away</li>
+    </ul>
+    <p>Shannon's proof is non-constructive. He showed that if you pick a code <em>at random</em> and make it long enough, it almost certainly works &mdash; without exhibiting one you could actually decode. That gap between "exists" and "buildable" stood from 1948 until turbo codes in 1993 and the rediscovery of Gallager's LDPC codes, which had been sitting ignored in a 1962 thesis for thirty years. Those get within a fraction of a decibel of the wall, and they are why your phone works.</p>
+
+    <h3>Why this belongs at the end of the series</h3>
+    <p>Every bench in this run has been about a defect that turned out to be structural. Leakage inductance makes the transformer equations solvable. Parasitic capacitance is the only reason the flyback spike is finite. Anharmonicity &mdash; a departure from the perfect oscillator &mdash; is the entire qubit. The comma cannot be removed, only relocated.</p>
+    <p>This one is the cleanest case. <b>Redundancy is, by definition, information you did not need to send.</b> It is pure waste, measurable in wasted bandwidth, and it is the only thing that lets a probe twenty-five billion kilometres away talk to you on twenty watts. The waste is not a tax on the signal. It <em>is</em> the signal's ability to survive.</p>
+
+    <div class="toddler">
+      <div class="hd">Toddler corner</div>
+      <p style="font-size:15px">Three hula hoops on the floor, overlapping. You put pebbles in the sections. Rule: <b>every hoop must hold an even number of pebbles.</b></p>
+      <p style="font-size:15px">Now somebody sneaks in and moves one pebble. Some hoops now have an odd count and start complaining.</p>
+      <p style="font-size:15px">Here's the magic: <em>every section sits in a different set of hoops.</em> So the exact list of complaining hoops points straight at the section that got messed with. You never saw it happen and you can still say precisely where.</p>
+      <p style="font-size:15px;margin-bottom:0">But if they move <b>two</b> pebbles, the complaints add up to look like one different pebble &mdash; and you'll fix the wrong one, confidently. Every safety net has an edge, and just past the edge it doesn't say "I don't know." It says the wrong thing, cheerfully.</p>
+    </div>
+
+    <h3>Verification log</h3>
+    <pre class="log" id="vlog">running probes&hellip;</pre>
+
+    <h3>What is measured and what is modelled</h3>
+    <p><span class="stamp lit">lit</span> &mdash; the code's minimum distance found by brute force over all sixteen codewords; the uniqueness of all seven single-error syndromes; the sphere-packing identity; binary entropy and capacity; and the residual error rates computed <em>exactly</em> by enumerating all 128 error patterns rather than by simulation, so the live channel in panel B has a closed-form number to converge to and you can watch it do so.</p>
+    <p><span class="stamp amb">amber</span> &mdash; the channel here is the textbook binary symmetric one: every bit independently flipped with the same probability. Real channels have bursts, fading, and memory, which is exactly why real systems interleave before coding and why Reed&ndash;Solomon operates on symbols rather than bits. The positions plotted for turbo and LDPC codes are indicative of published results, not computed here. And Shannon's capacity is an asymptotic statement about infinitely long blocks; at the short block lengths on this bench, finite-length penalties are real and not modelled.</p>
+  </div>
+</section>
+
+<div class="foot">Standalone file &middot; no network, no dependencies &middot; eighth bench &middot; the defect is load-bearing, one last time</div>
+</div>
+<script>
+"use strict";
+/* ============================================================ THE CODE
+   Hamming(7,4) in the Venn layout. Regions 0..6:
+     0 = A&B&C   1 = A&B   2 = A&C   3 = B&C      (the four data bits)
+     4 = A only  5 = B only  6 = C only           (the three parity bits)
+   Each circle is forced to hold an EVEN number of ones. Because every region
+   sits in a different combination of circles, the set of circles that come out
+   odd is a unique fingerprint naming the broken bit. */
+const CIRC=[[0,1,2,4],[0,1,3,5],[0,2,3,6]];      // A, B, C
+const encode=d=>{ const w=[d[0],d[1],d[2],d[3],0,0,0];
+  w[4]=(w[0]+w[1]+w[2])%2; w[5]=(w[0]+w[1]+w[3])%2; w[6]=(w[0]+w[2]+w[3])%2; return w; };
+const syn=w=>CIRC.map(c=>c.reduce((s,i)=>s+w[i],0)%2);
+const SYNMAP={};
+for(let i=0;i<7;i++){ const e=[0,0,0,0,0,0,0]; e[i]=1; SYNMAP[syn(e).join("")]=i; }
+function decode(w){ const s=syn(w), k=s.join(""), r=w.slice();
+  const at=(k==="000")?-1:SYNMAP[k];
+  if(at>=0) r[at]^=1;
+  return {s,at,word:r,data:r.slice(0,4)};
+}
+const H=p=>(p<=0||p>=1)?0:-p*Math.log2(p)-(1-p)*Math.log2(1-p);
+const cap=p=>1-H(p);
+/* exact residual data-bit error rate, by enumerating all 128 error patterns.
+   the code is linear, so we may take the transmitted word to be all zeros. */
+const HAMEXACT=(()=>{ const pats=[];
+  for(let m=0;m<128;m++){ const e=[]; let w=0;
+    for(let i=0;i<7;i++){ const b=(m>>i)&1; e.push(b); w+=b; }
+    const d=decode(e); pats.push([w, d.data.reduce((a,b)=>a+b,0)/4]);
+  }
+  return p=>pats.reduce((s,[w,f])=>s+Math.pow(p,w)*Math.pow(1-p,7-w)*f,0);
+})();
+function comb(n,k){ let r=1; for(let i=0;i<k;i++) r=r*(n-i)/(i+1); return r; }
+const repBER=(p,n)=>{ let s=0; for(let i=Math.floor(n/2)+1;i<=n;i++) s+=comb(n,i)*Math.pow(p,i)*Math.pow(1-p,n-i); return s; };
+function pAtRate(r){ let lo=0,hi=0.5;
+  for(let i=0;i<200;i++){ const m=(lo+hi)/2; if(cap(m)>r) lo=m; else hi=m; } return (lo+hi)/2; }
+
+/* ============================================================ CANVAS */
+const el=id=>document.getElementById(id), CSSV=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function setup(cv,hOv){ const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=hOv||(cv.getAttribute("height")|0);
+  if(w<40){ cv.width=1; cv.height=1; } else { cv.width=w*dpr;cv.height=h*dpr; }
+  cv.style.height=h+"px";
+  const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);return {g,w,h}; }
+function grid2(g,L,R,T,B,nx,ny){ g.strokeStyle="rgba(255,255,255,.055)";g.lineWidth=1;
+  for(let i=0;i<=nx;i++){const x=L+(R-L)*i/nx;g.beginPath();g.moveTo(x,T);g.lineTo(x,B);g.stroke();}
+  for(let i=0;i<=ny;i++){const y=T+(B-T)*i/ny;g.beginPath();g.moveTo(L,y);g.lineTo(R,y);g.stroke();}
+  g.strokeStyle="rgba(255,255,255,.16)";g.strokeRect(L+.5,T+.5,R-L,B-T); }
+function lab(g,t,x,y,c,a,s,wt){g.fillStyle=c;g.font=(wt?wt+" ":"")+(s||10)+"px ui-monospace,Menlo,monospace";
+  g.textAlign=a||"left";g.textBaseline="middle";g.fillText(t,x,y);}
+
+/* ============================================================ STATE */
+let DATA=[1,0,1,1], WORD=encode(DATA), SHOWMATH=true;
+let hits=[];   // clickable bit positions, filled by drawVenn
+let running=false, timer=null, stats={blk:0,unBits:0,unErr:0,coBits:0,coErr:0}, strip=[];
+
+/* ---------- panel A ---------- */
+function drawVenn(){
+  const {g,w,h}=setup(el("venn"));
+  const cx=w*0.38, cy=h*0.50, r=Math.min(w*0.19,h*0.30);
+  const cen=[[cx-0.50*r,cy-0.30*r],[cx+0.50*r,cy-0.30*r],[cx,cy+0.58*r]];
+  const d=decode(WORD), s=d.s;
+  const NAMES=["A","B","C"];
+  const COL=[CSSV("--copper"),CSSV("--phosphor"),CSSV("--amber")];
+  cen.forEach((c,i)=>{
+    g.beginPath();g.arc(c[0],c[1],r,0,7);
+    g.fillStyle=s[i]?"rgba(180,70,60,.22)":"rgba(255,255,255,.03)";g.fill();
+    g.strokeStyle=s[i]?"#D6584C":COL[i];g.lineWidth=s[i]?3:2;g.stroke();
+    const lx=c[0]+(i===0?-r*0.95:i===1?r*0.95:0), ly=c[1]+(i===2?r*0.95:-r*0.92);
+    lab(g,"circle "+NAMES[i]+(s[i]?"  ODD \u2717":"  even \u2713"),lx,ly,
+        s[i]?"#E27468":COL[i],i===0?"right":i===1?"left":"center",10.5,"600");
+  });
+  // the seven regions
+  const P=[[cx,cy+0.06*r],[cx,cy-0.52*r],[cx-0.44*r,cy+0.34*r],[cx+0.44*r,cy+0.34*r],
+           [cx-0.82*r,cy-0.52*r],[cx+0.82*r,cy-0.52*r],[cx,cy+1.00*r]];
+  const LBL=["d\u2081","d\u2082","d\u2083","d\u2084","p\u2081","p\u2082","p\u2083"];
+  hits=[];
+  P.forEach((p,i)=>{
+    const isP=i>=4, broken=(d.at===i);
+    g.beginPath();g.arc(p[0],p[1],21,0,7);
+    g.fillStyle=WORD[i]?(isP?"rgba(127,217,232,.85)":"rgba(224,123,60,.9)"):"rgba(20,26,33,.95)";
+    g.fill();
+    g.strokeStyle=broken?"#E27468":(WORD[i]?"rgba(255,255,255,.35)":"rgba(255,255,255,.28)");
+    g.lineWidth=broken?3.5:1.6;g.stroke();
+    lab(g,String(WORD[i]),p[0],p[1]-1,WORD[i]?"#141A21":"rgba(200,208,218,.8)","center",15,"700");
+    lab(g,LBL[i],p[0],p[1]+31,isP?"rgba(127,217,232,.65)":"rgba(224,123,60,.7)","center",9.5);
+    hits.push({x:p[0],y:p[1],i});
+  });
+  lab(g,"click any bit to flip it",cx,h-16,"rgba(255,255,255,.35)","center",10.5);
+  // the arithmetic, spelled out on the right
+  if(SHOWMATH){
+    const X=w*0.70, Y0=44;
+    lab(g,"WHAT EACH CIRCLE SEES",X,Y0-16,"rgba(255,255,255,.35)","left",9.5);
+    CIRC.forEach((c,i)=>{
+      const bits=c.map(k=>WORD[k]), sum=bits.reduce((a,b)=>a+b,0);
+      lab(g,"circle "+NAMES[i]+" :  "+bits.join(" + ")+"  =  "+sum+"   "+(sum%2?"ODD":"even"),
+          X,Y0+i*22,s[i]?"#E27468":"rgba(200,208,218,.85)","left",11.5);
+    });
+    lab(g,"syndrome  "+s.join("")+(d.at<0?"   \u2192  nothing wrong":"   \u2192  bit "+LBL[d.at]+" is the liar"),
+        X,Y0+82,d.at<0?CSSV("--lit"):CSSV("--amber"),"left",12,"600");
+    lab(g,"THE SEVEN FINGERPRINTS",X,Y0+118,"rgba(255,255,255,.35)","left",9.5);
+    for(let i=0;i<7;i++){
+      const e=[0,0,0,0,0,0,0]; e[i]=1;
+      const k=syn(e).join("");
+      lab(g,"flip "+LBL[i]+"  \u2192  "+k,X+(i%2)*118,Y0+138+Math.floor(i/2)*20,
+          (d.at===i)?CSSV("--amber"):"rgba(200,208,218,.45)","left",11);
+    }
+    lab(g,"all seven differ \u2014 that is the whole trick",X,Y0+228,"rgba(255,255,255,.4)","left",10);
+  }
+}
+/* ---------- panel B ---------- */
+function drawChan(){
+  const {g,w,h}=setup(el("chan"));
+  const L=20,R=w-20,T=22,B=h-52;
+  const N=80, cw=(R-L)/N;
+  lab(g,"the last "+N+" blocks, newest on the right",L,T-10,"rgba(255,255,255,.35)","left",9.5);
+  for(let i=0;i<strip.length;i++){
+    const x=R-(strip.length-i)*cw;
+    if(x<L) continue;
+    const st=strip[i];
+    g.fillStyle=st===0?"rgba(46,110,88,.85)":st===1?"rgba(239,208,80,.9)":"rgba(180,70,60,.92)";
+    g.fillRect(x+1,T,cw-2,B-T);
+  }
+  g.strokeStyle="rgba(255,255,255,.16)";g.strokeRect(L+.5,T+.5,R-L,B-T);
+  const p=+el("sP").value/1000*0.5;
+  lab(g,running?"running \u2014 "+stats.blk+" blocks":"paused",L,B+16,
+      running?CSSV("--lit"):"rgba(255,255,255,.4)","left",11);
+  lab(g,"p = "+(p*100).toFixed(2)+"%   \u2192  theory says "+HAMEXACT(p).toExponential(2)+" residual",
+      R,B+16,CSSV("--amber"),"right",11);
+  const cl=strip.filter(x=>x===0).length, fx=strip.filter(x=>x===1).length, bd=strip.filter(x=>x===2).length;
+  lab(g,"clean "+cl+"    repaired "+fx+"    beyond repair "+bd,L,B+34,"rgba(255,255,255,.45)","left",10.5);
+}
+/* ---------- panel C ---------- */
+function drawWall(){
+  const {g,w,h}=setup(el("wall"));
+  const L=68,R=w-24,T=20,B=h-34;
+  grid2(g,L,R,T,B,10,10);
+  const X=p=>L+(R-L)*p/0.5, Y=c=>B-(B-T)*c;
+  // impossible region
+  g.beginPath(); g.moveTo(L,T);
+  for(let q=0;q<=400;q++){ const p=0.5*q/400; g.lineTo(X(p),Y(cap(p))); }
+  g.lineTo(R,T); g.closePath();
+  g.fillStyle="rgba(180,70,60,.16)"; g.fill();
+  lab(g,"IMPOSSIBLE",(L+R)/2,T+30,"rgba(226,116,104,.75)","center",13,"700");
+  lab(g,"no code exists here, and none ever will",(L+R)/2,T+50,"rgba(226,116,104,.5)","center",10);
+  lab(g,"possible \u2014 error can be made arbitrarily small",(L+R)*0.34,B-30,"rgba(134,201,139,.6)","center",10.5);
+  g.strokeStyle=CSSV("--phosphor");g.lineWidth=2.4;g.beginPath();
+  for(let q=0;q<=400;q++){ const p=0.5*q/400; q?g.lineTo(X(p),Y(cap(p))):g.moveTo(X(p),Y(cap(p))); }
+  g.stroke();
+  const p=+el("sP").value/1000*0.5;
+  g.strokeStyle=CSSV("--amber");g.setLineDash([4,3]);g.lineWidth=2;
+  g.beginPath();g.moveTo(X(p),T);g.lineTo(X(p),B);g.stroke();g.setLineDash([]);
+  lab(g,"your p = "+(p*100).toFixed(2)+"%",X(p)+6,T+14,CSSV("--amber"),"left",10.5);
+  [[4/7,"Hamming(7,4)"],[1/3,"repetition-3"],[1/5,"repetition-5"],[1/7,"repetition-7"]].forEach(([r,nm])=>{
+    g.strokeStyle="rgba(224,123,60,.5)";g.lineWidth=1.4;
+    g.beginPath();g.moveTo(L,Y(r));g.lineTo(R,Y(r));g.stroke();
+    const pl=pAtRate(r);
+    g.fillStyle=CSSV("--copper");g.beginPath();g.arc(X(pl),Y(r),4,0,7);g.fill();
+    lab(g,nm+"  rate "+r.toFixed(3)+"  \u2014 the wall lets it run to p = "+(pl*100).toFixed(1)+"%",
+        L+8,Y(r)-9,"rgba(224,123,60,.85)","left",9.5);
+  });
+  for(let q=0;q<=10;q++) lab(g,(q/10).toFixed(1),L-7,Y(q/10),CSSV("--phosphor-dim"),"right",9.5);
+  for(let q=0;q<=10;q++) lab(g,(q*5)+"%",L+(R-L)*q/10,B+14,"rgba(255,255,255,.35)","center",9.5);
+  lab(g,"CHANNEL BIT-FLIP RATE p",(L+R)/2,B+14,"rgba(255,255,255,.2)","center",9);
+  lab(g,"RATE",L,T-8,CSSV("--phosphor-dim"),"left",9);
+}
+/* ---------- panel D ---------- */
+function drawGap(){
+  const {g,w,h}=setup(el("gap"));
+  const L=72,R=w-24,T=20,B=h-34;
+  const p0=1e-4,p1=0.5, lo=-12, hi=0;
+  grid2(g,L,R,T,B,8,12);
+  const X=p=>L+(R-L)*Math.log10(p/p0)/Math.log10(p1/p0);
+  const Y=v=>B-(B-T)*(Math.log10(Math.max(v,1e-13))-lo)/(hi-lo);
+  const line=(f,col,lw,nm,yoff)=>{ g.strokeStyle=col;g.lineWidth=lw;g.beginPath();
+    for(let q=0;q<=300;q++){ const p=p0*Math.pow(p1/p0,q/300);
+      q?g.lineTo(X(p),Y(f(p))):g.moveTo(X(p),Y(f(p))); }
+    g.stroke();
+    if(nm){ const pp=p0*Math.pow(p1/p0,0.62); lab(g,nm,X(pp),Y(f(pp))+(yoff||-9),col,"center",9.5); } };
+  line(p=>p,CSSV("--ghost"),1.6,"uncoded");
+  line(p=>repBER(p,3),"rgba(127,217,232,.55)",1.5,"rep-3");
+  line(p=>repBER(p,5),"rgba(127,217,232,.75)",1.5,"rep-5");
+  line(p=>repBER(p,7),CSSV("--phosphor"),1.7,"rep-7");
+  line(HAMEXACT,CSSV("--copper"),2.3,"Hamming(7,4)",12);
+  const p=+el("sP").value/1000*0.5;
+  if(p>p0){ g.strokeStyle=CSSV("--amber");g.setLineDash([4,3]);g.lineWidth=2;
+    g.beginPath();g.moveTo(X(p),T);g.lineTo(X(p),B);g.stroke();g.setLineDash([]); }
+  // where a capacity-approaching code would sit
+  const pl=pAtRate(4/7);
+  g.strokeStyle="rgba(134,201,139,.7)";g.setLineDash([2,3]);g.lineWidth=2;
+  g.beginPath();g.moveTo(X(pl),T);g.lineTo(X(pl),B);g.stroke();g.setLineDash([]);
+  lab(g,"the wall for rate 4/7",X(pl),T+12,"rgba(134,201,139,.85)","center",9.5);
+  lab(g,"a modern LDPC code at this rate works",X(pl)-8,T+28,"rgba(134,201,139,.6)","right",9);
+  lab(g,"almost up to here",X(pl)-8,T+42,"rgba(134,201,139,.6)","right",9);
+  for(let q=lo;q<=hi;q+=2) lab(g,"1e"+q,L-7,Y(Math.pow(10,q)),CSSV("--phosphor-dim"),"right",9.5);
+  [1e-4,1e-3,1e-2,0.1,0.5].forEach(v=>lab(g,(v*100)+"%",X(v),B+14,"rgba(255,255,255,.35)","center",9.5));
+  lab(g,"CHANNEL BIT-FLIP RATE p",(L+R)/2,B+14,"rgba(255,255,255,.2)","center",9);
+  lab(g,"ERROR RATE YOU ARE LEFT WITH",L,T-8,CSSV("--phosphor-dim"),"left",9);
+}
+/* ============================================================ RUN */
+function refresh(){
+  const p=+el("sP").value/1000*0.5;
+  el("lP").textContent=(p*100).toFixed(2)+" %";
+  el("lSpeed").textContent=Math.round(4+Math.pow(+el("sSpeed").value/1000,2)*2600).toLocaleString()+" /s";
+  const d=decode(WORD);
+  el("rSyn").textContent=d.s.join("");
+  const clean=d.s.join("")==="000";
+  const ok=d.data.join("")===DATA.join("");
+  el("rVer").textContent=clean?"nothing wrong":("bit "+["d\u2081","d\u2082","d\u2083","d\u2084","p\u2081","p\u2082","p\u2083"][d.at]+" is broken");
+  el("rSent").textContent=DATA.join(" ");
+  el("rGot").textContent=d.data.join(" ");
+  el("rGot").className="v "+(ok?"cool":"warn");
+  el("rReg").className="regime "+(ok?"turns":"energy");
+  el("rReg").textContent=ok?(clean?"intact":"repaired"):"MISCORRECTED";
+  el("rRegTxt").textContent = ok
+    ? (clean ? " \u2014 every circle is even, the syndrome is 000, and the code has nothing to say."
+             : " \u2014 the circles that went odd named the broken bit, it was flipped back, and your data survived intact.")
+    : " \u2014 two errors look exactly like one different error. The code did not detect a problem it could not solve; it confidently repaired the wrong bit and handed you corrupted data. This is the edge of the safety net.";
+  el("rBlk").textContent=stats.blk.toLocaleString();
+  el("rUn").textContent=stats.unBits?(stats.unErr/stats.unBits).toExponential(3):"\u2014";
+  el("rCo").textContent=stats.coBits?(stats.coErr/stats.coBits).toExponential(3):"\u2014";
+  el("rTh").textContent=HAMEXACT(p).toExponential(3);
+  drawVenn(); drawChan(); drawWall(); drawGap();
+}
+function tick(){
+  const p=+el("sP").value/1000*0.5;
+  const n=Math.max(1,Math.round((4+Math.pow(+el("sSpeed").value/1000,2)*2600)/20));
+  for(let q=0;q<n;q++){
+    const d=[0,1,2,3].map(()=>Math.random()<0.5?1:0);
+    const c=encode(d), r=c.map(b=>Math.random()<p?b^1:b);
+    const flips=r.reduce((s,b,i)=>s+(b!==c[i]?1:0),0);
+    const dec=decode(r);
+    const bad=dec.data.reduce((s,b,i)=>s+(b!==d[i]?1:0),0);
+    stats.blk++; stats.unBits+=4; stats.coBits+=4;
+    stats.unErr+=r.slice(0,4).reduce((s,b,i)=>s+(b!==d[i]?1:0),0);
+    stats.coErr+=bad;
+    strip.push(flips===0?0:(bad===0?1:2));
+    if(strip.length>80) strip.shift();
+  }
+  refresh();
+}
+el("venn").addEventListener("pointerdown",e=>{
+  // offsetX/Y are already canvas-local CSS pixels, which is exactly the space the
+  // hit targets were drawn in. fall back to the rect only if they are unavailable.
+  const cv=el("venn"), r=cv.getBoundingClientRect();
+  const x=(e.offsetX!==undefined)?e.offsetX:(e.clientX-r.left);
+  const y=(e.offsetY!==undefined)?e.offsetY:(e.clientY-r.top);
+  let best=null;
+  hits.forEach(hh=>{ const dd=Math.hypot(hh.x-x,hh.y-y); if(dd<26&&(!best||dd<best.d)) best={d:dd,i:hh.i}; });
+  if(best){ WORD[best.i]^=1; refresh(); }
+});
+el("bNew").addEventListener("click",()=>{DATA=[0,1,2,3].map(()=>Math.random()<0.5?1:0);WORD=encode(DATA);refresh();});
+el("bOne").addEventListener("click",()=>{WORD=encode(DATA);WORD[Math.floor(Math.random()*7)]^=1;refresh();});
+el("bTwo").addEventListener("click",()=>{WORD=encode(DATA);
+  const a=Math.floor(Math.random()*7); let b=a; while(b===a) b=Math.floor(Math.random()*7);
+  WORD[a]^=1;WORD[b]^=1;refresh();});
+el("bFix").addEventListener("click",()=>{WORD=encode(DATA);refresh();});
+el("bShow").addEventListener("click",e=>{SHOWMATH=!SHOWMATH;e.currentTarget.setAttribute("aria-pressed",SHOWMATH);refresh();});
+el("bRun").addEventListener("click",()=>{ if(timer)clearInterval(timer);
+  running=true; timer=setInterval(tick,50); el("bRun").textContent="Running\u2026"; });
+el("bPause").addEventListener("click",()=>{running=false;if(timer)clearInterval(timer);timer=null;
+  el("bRun").textContent="Run the channel";refresh();});
+el("bReset").addEventListener("click",()=>{stats={blk:0,unBits:0,unErr:0,coBits:0,coErr:0};strip=[];refresh();});
+["sP","sSpeed"].forEach(id=>el(id).addEventListener("input",refresh));
+/* redraw when the CONTAINER changes size, not just the window */
+let __rt=null;
+function __redraw(){ clearTimeout(__rt); __rt=setTimeout(()=>{ try{ refresh(); }catch(e){} },60); }
+window.addEventListener("resize",__redraw);
+if(window.ResizeObserver){ const __ro=new ResizeObserver(__redraw);
+  __ro.observe(document.body);
+  document.querySelectorAll("canvas").forEach(c=>__ro.observe(c.parentElement||c)); }
+requestAnimationFrame(()=>requestAnimationFrame(__redraw));
+setTimeout(__redraw,250); setTimeout(__redraw,900);
+/* ============================================================ SELF-TEST */
+function selfTest(){
+  const CODE=[]; for(let m=0;m<16;m++) CODE.push(encode([(m>>3)&1,(m>>2)&1,(m>>1)&1,m&1]));
+  let dmin=99;
+  for(let i=0;i<16;i++)for(let j=i+1;j<16;j++){
+    let dd=0; for(let k=0;k<7;k++) if(CODE[i][k]!==CODE[j][k]) dd++;
+    if(dd<dmin) dmin=dd; }
+  let fp="",seen=new Set();
+  for(let i=0;i<7;i++){ const e=[0,0,0,0,0,0,0]; e[i]=1; const k=syn(e).join("");
+    seen.add(k); fp+=`         flip bit ${i} -> syndrome ${k}\n`; }
+  const spheres=16*(1+7), space=128;
+  let ent="";
+  [0,0.01,0.11,0.25,0.5].forEach(p=>{ ent+=`         p=${p.toFixed(2)}   H=${H(p).toFixed(4)}   C=${cap(p).toFixed(4)}`+
+    (p===0.5?"   <- pure noise, capacity zero\n":"\n"); });
+  let tbl="";
+  [0.001,0.01,0.05,0.2].forEach(p=>{
+    tbl+=`         p=${(p*100).toFixed(1).padStart(5)}%  uncoded ${p.toExponential(2)}  rep-3 ${repBER(p,3).toExponential(2)}  rep-7 ${repBER(p,7).toExponential(2)}  Hamming ${HAMEXACT(p).toExponential(2)}\n`; });
+  let gapT="";
+  [["repetition-3",p=>repBER(p,3),1/3],["repetition-7",p=>repBER(p,7),1/7],["Hamming(7,4)",HAMEXACT,4/7]].forEach(([nm,f,r])=>{
+    let lo=1e-9,hi=0.5;
+    for(let i=0;i<200;i++){ const m=(lo+hi)/2; if(f(m)<1e-6) lo=m; else hi=m; }
+    const works=(lo+hi)/2, wall=pAtRate(r);
+    gapT+=`         ${nm.padEnd(14)} rate ${r.toFixed(3)}  reliable to p=${(works*100).toFixed(3)}%  the wall says ${(wall*100).toFixed(2)}%  gap ${(wall/works).toFixed(0)}x\n`; });
+  let rep=1; while(repBER(0.05,rep)>1e-9) rep+=2;
+  el("vlog").innerHTML=
+`probe 1  is it actually a code? brute force over all 16 codewords
+         minimum Hamming distance = ${dmin}
+         corrects floor((d-1)/2) = ${(dmin-1)>>1} error, detects ${dmin-1}   <b>[LIT]</b>
+
+probe 2  does the syndrome NAME the broken bit?
+${fp}         ${seen.size} distinct nonzero fingerprints for 7 possible single
+         errors -> ${seen.size===7?"unique, therefore decodable":"AMBIGUOUS"}   <b>[LIT]</b>
+
+probe 3  the sphere-packing identity
+         16 codewords x (1 + 7 vectors one flip away) = ${spheres}
+         total 7-bit strings                          = ${space}
+         ${spheres===space?"EQUAL. the correction spheres exactly TILE the space:":"not perfect"}
+         every string is either a codeword or one flip from exactly
+         one codeword. no gaps, no overlap. a PERFECT code.  <b>[LIT]</b>
+
+probe 4  capacity C = 1 - H(p)
+${ent}                                             <b>[LIT]</b>
+
+probe 5  residual error rates, computed EXACTLY by enumerating all
+         128 error patterns (the code is linear, so take c = 0)
+${tbl}         the live channel in panel B converges to these.    <b>[LIT]</b>
+
+probe 6  how far is everything from the wall?
+${gapT}         and to reach 1e-9 at p=0.05 by repetition alone you would
+         need ${rep} copies of every bit -- rate ${(1/rep).toFixed(4)}, against a capacity
+         of ${cap(0.05).toFixed(4)}. about ${Math.round(cap(0.05)*rep)}x worse than necessary.
+         Shannon proved a good code EXISTS in 1948 by averaging over
+         random codes, without exhibiting one. closing that gap took
+         until turbo codes in 1993, and the rediscovery of Gallager's
+         1962 LDPC thesis that had sat unread for thirty years. <b>[LIT]</b>
+
+<u>[AMBER]</u>  binary symmetric channel: every bit flipped independently with
+         the same probability. real channels burst and fade, which is
+         why real systems interleave and why Reed-Solomon works on
+         symbols not bits. turbo/LDPC positions are indicative of
+         published results, not computed here. and capacity is an
+         asymptotic statement about long blocks -- at n=7 the
+         finite-length penalty is real and not modelled.`;
+}
+refresh(); setTimeout(selfTest,50);
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE GAUNTLET &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

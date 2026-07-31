@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dry-run corpus agent</title>
+<style>
+  :root{--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--txt:#e6e8ee;--mut:#9aa1af;
+        --good:#5dcaa5;--amber:#ef9f27;--bad:#e2726f;--blue:#378add;--purple:#7f77dd;--coral:#d85a30}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.6;padding:20px}
+  .wrap{max-width:900px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:14px;margin:0 0 14px}
+  .banner{background:#241417;border:1px solid #5a3a3a;border-radius:10px;padding:9px 13px;font-size:13px;color:#e7b7b7;margin-bottom:14px}
+  .layout{display:grid;grid-template-columns:1fr 320px;gap:16px}
+  @media(max-width:720px){.layout{grid-template-columns:1fr}}
+  textarea{width:100%;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;font-family:ui-monospace,Menlo,monospace;min-height:120px;resize:vertical}
+  .row{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+  button{background:#20242e;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer}
+  button:hover{background:#272c38}
+  button.primary{background:#241f45;border-color:#7f77dd;color:#c9c4f2}
+  .cards{display:flex;gap:10px;margin:12px 0}
+  .card{flex:1;background:var(--panel);border-radius:10px;padding:9px 12px;text-align:center}
+  .card .lab{font-size:11px;color:var(--mut)}
+  .card .val{font-size:20px;font-weight:600}
+  .item{background:var(--panel);border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:3px solid #2a2f3a}
+  .item.keep{border-left-color:var(--good)}
+  .item.flag{border-left-color:var(--amber)}
+  .item.quar{border-left-color:var(--bad)}
+  .item .head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .item .txt{font-size:13px;color:var(--txt)}
+  .item .why{font-size:12px;color:var(--mut);margin-top:3px;font-family:ui-monospace,Menlo,monospace}
+  .tag{font-size:11px;font-weight:600;padding:2px 9px;border-radius:6px;flex:none}
+  .t-keep{background:#0f3b2e;color:#5dcaa5}.t-flag{background:#3a2c0a;color:#efab27}.t-quar{background:#2b1416;color:#e2726f}
+  .blind{font-size:11px;color:#e2726f;margin-top:3px}
+  .side{background:var(--panel);border-radius:10px;padding:12px;height:520px;display:flex;flex-direction:column}
+  .side h2{font-size:13px;font-weight:600;margin:0 0 8px;color:var(--mut);text-transform:uppercase;letter-spacing:0.04em}
+  .log{flex:1;overflow-y:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55}
+  .log .l{padding:2px 0;border-bottom:0.5px solid #20242e}
+  .log .l.step{color:var(--blue)}.log .l.pass{color:var(--good)}.log .l.stop{color:var(--amber)}.log .l.err{color:var(--bad)}.log .l.mut{color:var(--mut)}
+  .stamp{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-left:8px;background:#0f3b2e;color:#5dcaa5}
+  .amberst{background:#3a2c0a;color:#efab27}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#00f5ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="wrap">
+  <h1>Dry-run corpus agent <span class="stamp">DRY-RUN</span> <span class="stamp amberst">gate: local/blind</span></h1>
+  <p class="sub">Iterates each chunk: hug &rarr; absorb &rarr; understand &rarr; gate &rarr; <b>propose</b> an action. Writes nothing. The sidebar narrates every decision so you can watch the gate be right &mdash; and be wrong.</p>
+
+  <div class="banner"><b>Nothing is written.</b> Every action is a proposal (KEEP / FLAG / QUARANTINE). The local gate is blind to tautology &mdash; watch for a hollow chunk getting KEPT. That visible error is the point of running dry.</div>
+
+  <div class="layout">
+    <div>
+      <textarea id="corpus">the laser builds amplitude because feedback returns light in phase each pass
+the synergistic paradigm holistically leverages emergent dynamic frameworks going forward
+gate one verifies the instruction is agentic before the engine acts on it
+it is what it is and things will be as they are when they become themselves
+perhaps it might possibly could potentially seem to maybe suggest something
+ok
+reciprocal means the human stays inside the loop and can block each step</textarea>
+      <div class="row">
+        <button id="run" class="primary">Run dry pass</button>
+        <button id="clear">Clear</button>
+        <span style="font-size:12px;color:var(--mut)">one chunk per line</span>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="lab">keep</div><div class="val" id="cKeep" style="color:var(--good)">0</div></div>
+        <div class="card"><div class="lab">flag (human)</div><div class="val" id="cFlag" style="color:var(--amber)">0</div></div>
+        <div class="card"><div class="lab">quarantine</div><div class="val" id="cQuar" style="color:var(--bad)">0</div></div>
+        <div class="card"><div class="lab">writes</div><div class="val" id="cWrite">0</div></div>
+      </div>
+      <div id="results"></div>
+    </div>
+
+    <div class="side">
+      <h2>agent sidebar — live</h2>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var BUZZ=new Set('synergistic paradigm holistic holistically leverage leverages emergent dynamic framework frameworks scalable robust seamless disruptive innovative optimize stakeholder ecosystem transformative'.split(' '));
+var MODAL=new Set('perhaps might maybe possibly could potentially seem seems suggest may would somewhat'.split(' '));
+var RELATION=new Set('because so therefore thus since if then returns return each causes cause makes make before after verifies gates blocks builds derive means requires when'.split(' '));
+var MECH=new Set('builds returns verifies blocks derive gates acts phase pass loop human instruction amplitude feedback reachable step commit context absorb corpus gate agent'.split(' '));
+var FILLER=new Set('the a an is are of to and or in on for with as it this that be will can we you i they its'.split(' '));
+function toks(s){ return (s.toLowerCase().match(/[a-z\-]+/g)||[]); }
+function content(s){ return toks(s).filter(function(w){return !FILLER.has(w);}); }
+function gate(text){
+  var c=content(text), n=Math.max(1,c.length);
+  var A=0.4*(1-c.filter(function(w){return BUZZ.has(w);}).length/n)
+       +0.3*(toks(text).some(function(w){return RELATION.has(w);})?1:0)
+       +0.3*Math.min(1,c.filter(function(w){return MECH.has(w);}).length/2);
+  var modal=toks(text).filter(function(w){return MODAL.has(w);}).length/Math.max(1,toks(text).length);
+  var assertion=1-Math.min(1,modal*4);
+  var grounded=c.filter(function(w){return !BUZZ.has(w)&&!MODAL.has(w);});
+  var B=0.5*assertion+0.2*(new Set(c).size/n)+0.3*Math.min(1,grounded.length/4);
+  return {A:A,B:B};
+}
+function propose(text){
+  if(toks(text).length<3) return {act:'QUARANTINE',why:'too short / empty to assess',A:0,B:0};
+  var g=gate(text);
+  if(g.A>=0.5&&g.B>=0.5) return {act:'KEEP',why:'passes local gate (A='+g.A.toFixed(2)+' B='+g.B.toFixed(2)+') — would retain',A:g.A,B:g.B};
+  if(g.A<0.3&&g.B<0.4) return {act:'QUARANTINE',why:'empty on both axes (A='+g.A.toFixed(2)+' B='+g.B.toFixed(2)+')',A:g.A,B:g.B};
+  return {act:'FLAG',why:'ambiguous (A='+g.A.toFixed(2)+' B='+g.B.toFixed(2)+') — needs human',A:g.A,B:g.B};
+}
+// heuristic: is this likely a tautology the gate MISSED? (flag it visibly, do not change verdict)
+function looksTautological(text){
+  var t=toks(text);
+  var uniqueRatio=new Set(t).size/Math.max(1,t.length);
+  var beVerbs=t.filter(function(w){return ['is','are','be','was','were','been','become','becomes'].indexOf(w)>=0;}).length;
+  var c=content(text);
+  var mechish=c.filter(function(w){return MECH.has(w);}).length;
+  return beVerbs>=2 && mechish===0 && uniqueRatio<0.92;
+}
+
+function log(cls,msg){
+  var el=document.getElementById('log');
+  var d=document.createElement('div'); d.className='l '+(cls||''); d.textContent=msg;
+  el.appendChild(d); el.scrollTop=el.scrollHeight;
+}
+function wait(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+
+var running=false;
+async function run(){
+  if(running) return; running=true;
+  document.getElementById('results').innerHTML='';
+  document.getElementById('log').innerHTML='';
+  var chunks=document.getElementById('corpus').value.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  var keep=0,flag=0,quar=0,writes=0,missed=0;
+  log('mut','── dry pass started · '+chunks.length+' chunks · WRITES DISABLED ──');
+  for(var i=0;i<chunks.length;i++){
+    var ch=chunks[i];
+    log('step','['+(i+1)+'/'+chunks.length+'] intake: "'+ch.slice(0,42)+(ch.length>42?'…':'')+'"');
+    await wait(180); log('mut','   hug: taken in whole');
+    await wait(160); log('mut','   absorb: integrated');
+    await wait(160); log('mut','   understand: resolved to a claim');
+    await wait(160);
+    var p=propose(ch);
+    var taut=looksTautological(ch);
+    if(p.act==='KEEP'){ keep++; log('pass','   gate: KEEP  (A='+p.A.toFixed(2)+' B='+p.B.toFixed(2)+')'); }
+    else if(p.act==='FLAG'){ flag++; log('stop','   gate: FLAG → would ask human'); }
+    else { quar++; log('err','   gate: QUARANTINE'); }
+    log('mut','   propose: '+p.act+' · action NOT executed (dry-run)');
+    if(taut && p.act==='KEEP'){ missed++; log('err','   ⚠ blind-spot: reads tautological but gate KEPT it — this is the miss'); }
+    renderItem(ch,p,taut);
+    document.getElementById('cKeep').textContent=keep;
+    document.getElementById('cFlag').textContent=flag;
+    document.getElementById('cQuar').textContent=quar;
+    document.getElementById('cWrite').textContent=writes; // stays 0
+    await wait(120);
+  }
+  log('mut','── pass complete · files written: '+writes+' (invariant: 0) ──');
+  if(missed>0) log('err','── gate blind-spot fired '+missed+'× — do NOT let this gate act unattended ──');
+  else log('pass','── no blind-spot flags this run (absence ≠ safety — see note) ──');
+  running=false;
+}
+function renderItem(text,p,taut){
+  var cls=p.act==='KEEP'?'keep':(p.act==='FLAG'?'flag':'quar');
+  var tag=p.act==='KEEP'?'t-keep':(p.act==='FLAG'?'t-flag':'t-quar');
+  var d=document.createElement('div'); d.className='item '+cls;
+  d.innerHTML='<div class="head"><span class="txt">'+esc(text)+'</span><span class="tag '+tag+'">'+p.act+'</span></div>'+
+    '<div class="why">'+esc(p.why)+'</div>'+
+    (taut&&p.act==='KEEP'?'<div class="blind">⚠ likely tautology the local gate can\'t catch — would be wrongly kept</div>':'');
+  document.getElementById('results').appendChild(d);
+}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+document.getElementById('run').onclick=run;
+document.getElementById('clear').onclick=function(){ document.getElementById('corpus').value=''; };
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

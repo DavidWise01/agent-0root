@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HACI v1 Pipeline: Visual Canvas Compiler</title>
+<style>
+:root {
+  --bg: #0a0b0f;
+  --bg-panel: #13151d;
+  --bg-code: #191c27;
+  --border: #2a2f3f;
+  --text: #e8edf5;
+  --text-muted: #8892a8;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --fss: #3b82f6;
+  --bss: #10b981;
+  --og: #6b7280;
+  --ogprime: #a855f7;
+  --error: #ef4444;
+  --warn: #f59e0b;
+  --mono: 'Cascadia Code', 'Fira Code', 'Menlo', monospace;
+  --sans: 'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  overflow: hidden;
+}
+
+body { display: flex; flex-direction: column; }
+
+header {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  z-index: 100;
+}
+
+h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7c3aed, #a855f7, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+button:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+button.secondary {
+  background: var(--bg-code);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+button.secondary:hover { background: #212533; box-shadow: none; }
+
+select {
+  background: var(--bg-code);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+}
+
+.main-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 1px;
+  background: var(--border);
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .main-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 350px 1fr;
+  }
+  body { overflow: auto; }
+}
+
+.editor-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  min-width: 0;
+}
+
+.panel {
+  background: var(--bg-panel);
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+  flex: 1;
+}
+
+.panel-header {
+  padding: 8px 12px;
+  background: var(--bg-code);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-header h2 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+textarea, .output {
+  flex: 1;
+  background: var(--bg-code);
+  color: var(--text);
+  border: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  resize: none;
+  outline: none;
+  tab-size: 2;
+}
+
+.output { overflow-y: auto; white-space: pre; }
+
+.canvas-container {
+  background: var(--bg-panel);
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-header {
+  padding: 8px 12px;
+  background: var(--bg-code);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.canvas-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.stat-item { display: flex; gap: 4px; }
+.stat-value { color: var(--accent); font-weight: 600; font-family: var(--mono); }
+
+#haciCanvas {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+}
+
+#haciCanvas:active { cursor: grabbing; }
+
+.legend {
+  position: absolute;
+  top: 50px;
+  right: 12px;
+  background: rgba(19, 21, 29, 0.95);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.75rem;
+  backdrop-filter: blur(10px);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+.error-panel {
+  background: rgba(239, 68, 68, 0.1);
+  border-top: 2px solid var(--error);
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-family: var(--mono);
+  max-height: 80px;
+  overflow-y: auto;
+  color: var(--error);
+  display: none;
+}
+
+.error-panel.active { display: block; }
+
+.tooltip {
+  position: absolute;
+  background: rgba(10, 11, 15, 0.98);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  pointer-events: none;
+  z-index: 1000;
+  display: none;
+  font-family: var(--mono);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+}
+
+.tooltip.active { display: block; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header>
+  <h1>HACI v1 Visual Pipeline: Lexer → Parser → IR → FSS/BSS → OG'</h1>
+  <div class="header-controls">
+    <select id="exampleSelect">
+      <option value="">Load Example...</option>
+      <option value="declare">Declare Object</option>
+      <option value="mutate">Mutate & Ref</option>
+      <option value="scope">Scope Traversal</option>
+      <option value="error">Error: Short Reference</option>
+    </select>
+    <button id="runPipelineBtn">Run Pipeline</button>
+    <button id="pauseBtn" class="secondary">Pause</button>
+    <button id="stepBtn" class="secondary">Step</button>
+    <button id="resetBtn" class="secondary">Reset</button>
+  </div>
+</header>
+
+<div class="main-container">
+  <div class="editor-stack">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>HACI Source</h2>
+      </div>
+      <textarea id="sourceCode" spellcheck="false">// HACI v1: Namespace.ObjectName! or !Namespace.ObjectName
+// ! = Declare (upward) | ? = Query/Ref (bidirectional) | > = Observe (eye)
+// case = ownership | prefix = outbound | suffix = inbound
+
+IT.Dept! {
+  Manager.Bob! {
+    Role = "Lead";
+    Team.Alpha? > Project.X;
+  }
+}</textarea>
+      <div class="error-panel" id="sourceErrors"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Token Stream</h2>
+      </div>
+      <div class="output" id="tokenOutput">// Tokens appear here...</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2>IR / Symbol Table</h2>
+      </div>
+      <div class="output" id="irOutput">// IR and symbols...</div>
+    </div>
+  </div>
+
+  <div class="canvas-container">
+    <div class="canvas-header">
+      <h2 style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Pipeline Visualization</h2>
+      <div class="canvas-stats">
+        <div class="stat-item">FSS: <span class="stat-value" id="statFSS">0</span></div>
+        <div class="stat-item">BSS: <span class="stat-value" id="statBSS">0</span></div>
+        <div class="stat-item">OG': <span class="stat-value" id="statOGP">0</span></div>
+        <div class="stat-item">Cycle: <span class="stat-value" id="statCycle">None</span></div>
+      </div>
+    </div>
+    <canvas id="haciCanvas"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-color" style="background:var(--fss)"></div>FSS Proposal</div>
+      <div class="legend-item"><div class="legend-color" style="background:var(--bss)"></div>BSS Validated</div>
+      <div class="legend-item"><div class="legend-color" style="background:var(--og)"></div>OG State</div>
+      <div class="legend-item"><div class="legend-color" style="background:var(--ogprime)"></div>OG' Merged</div>
+      <div class="legend-item"><div class="legend-color" style="background:var(--error)"></div>Error/Cycle</div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+</div>
+
+<script>
+/*
+ * HACI v1 SPEC IMPLEMENTATION
+ * Namespace.ObjectName! = Declare (upward)
+ * ? = Reference/Bidirectional | > = Observe (eye)
+ * case=ownership | prefix=outbound | suffix=inbound
+ * folder=namespace | .=scope | OG/FSS/BSS/OG' merge
+ */
+
+// --- HACI Lexer ---
+class HACILexer {
+  constructor(input) {
+    this.input = input;
+    this.pos = 0;
+    this.line = 1;
+    this.col = 1;
+  }
+
+  tokenize() {
+    const tokens = [];
+    while (this.pos < this.input.length) {
+      this.skipWhitespace();
+      if (this.pos >= this.input.length) break;
+
+      const ch = this.input[this.pos];
+      const start = {line: this.line, col: this.col, pos: this.pos};
+
+      // Comments
+      if (ch === '/' && this.input[this.pos + 1] === '/') {
+        while (this.pos < this.input.length && this.input[this.pos] !== '\n') this.advance();
+        continue;
+      }
+
+      // Operators: ! ? > . { } ; = : "
+      if ('!?>{};=.:'.includes(ch)) {
+        tokens.push({type: ch, value: ch, ...start});
+        this.advance();
+        continue;
+      }
+
+      // String literals
+      if (ch === '"') {
+        this.advance();
+        let str = '';
+        while (this.pos < this.input.length && this.input[this.pos] !== '"') {
+          str += this.input[this.pos];
+          this.advance();
+        }
+        this.advance(); // closing "
+        tokens.push({type: 'STRING', value: str, ...start});
+        continue;
+      }
+
+      // Identifiers: Namespace or ObjectName
+      if (/[A-Za-z_]/.test(ch)) {
+        let id = '';
+        while (this.pos < this.input.length && /[A-Za-z0-9_]/.test(this.input[this.pos])) {
+          id += this.input[this.pos];
+          this.advance();
+        }
+        tokens.push({type: 'IDENT', value: id, ...start});
+        continue;
+      }
+
+      tokens.push({type: 'UNKNOWN', value: ch, ...start});
+      this.advance();
+    }
+    tokens.push({type: 'EOF', value: null});
+    return tokens;
+  }
+
+  advance() {
+    if (this.input[this.pos] === '\n') {
+      this.line++;
+      this.col = 1;
+    } else {
+      this.col++;
+    }
+    this.pos++;
+  }
+
+  skipWhitespace() {
+    while (this.pos < this.input.length && /\s/.test(this.input[this.pos])) this.advance();
+  }
+}
+
+// --- HACI Parser & IR Builder ---
+class HACIParser {
+  constructor(tokens) {
+    this.tokens = tokens;
+    this.idx = 0;
+    this.currentScope = [];
+    this.symbolTable = new Map(); // path -> {owner, type, refs, declared}
+    this.ir = []; // Intermediate operations
+    this.fss = []; // Forward State Space proposals
+    this.bss = new Map(); // Back State Space validated
+    this.og = new Map(); // Original Graph
+    this.ogPrime = new Map(); // Merged result
+    this.errors = [];
+    this.depGraph = new Map(); // dep graph: node -> Set(deps)
+  }
+
+  parse() {
+    try {
+      while (!this.match('EOF')) {
+        this.statement();
+      }
+      this.buildBSS();
+      this.mergeOGPrime();
+    } catch (e) {
+      this.errors.push(e.message);
+    }
+    return {
+      ir: this.ir,
+      symbols: this.symbolTable,
+      fss: this.fss,
+      bss: this.bss,
+      ogPrime: this.ogPrime,
+      errors: this.errors,
+      depGraph: this.depGraph
+    };
+  }
+
+  statement() {
+    if (this.check('IDENT')) {
+      const first = this.advance();
+      
+      // Namespace.ObjectName! pattern
+      if (this.match('.')) {
+        const objName = this.consume('IDENT', 'Expected object name after .').value;
+        const path = [...this.currentScope, first.value, objName];
+        const pathStr = path.join('.');
+
+        if (this.match('!')) {
+          // Declare: IT.Dept! or prefix !Dept
+          this.declare(pathStr, first.value, objName);
+        } else if (this.match('?')) {
+          // Query/Reference
+          this.reference(pathStr, 'bidirectional');
+          if (this.match('>')) this.observe(pathStr);
+        } else if (this.match('>')) {
+          // Observe: eye on object
+          this.observe(pathStr);
+        }
+        
+        if (this.match('{')) {
+          this.currentScope.push(...[first.value, objName]);
+          while (!this.check('}') && !this.match('EOF')) this.statement();
+          this.consume('}', "Expected '}'");
+          this.currentScope = this.currentScope.slice(0, -2);
+        }
+      }
+      // Prefix operator: !ObjectName
+      else if (first.value.length > 0 && first.type === 'IDENT') {
+        // Check for standalone declare
+        if (this.match('!')) {
+          const pathStr = [...this.currentScope, first.value].join('.');
+          this.declare(pathStr, null, first.value, true);
+        }
+      }
+      // Property assignment
+      else if (this.match('=')) {
+        const value = this.parseValue();
+        this.consume(';', "Expected ';'");
+        const propPath = [...this.currentScope, first.value].join('.');
+        this.ir.push({op: 'ASSIGN', path: propPath, value});
+      }
+    } else if (this.match('.')) {
+      // Scope traversal: .Object
+      const obj = this.consume('IDENT', 'Expected name after .').value;
+      this.currentScope.push(obj);
+      if (this.match('{')) {
+        while (!this.check('}') && !this.match('EOF')) this.statement();
+        this.consume('}', "Expected '}'");
+        this.currentScope.pop();
+      }
+    } else {
+      this.advance(); // skip
+    }
+  }
+
+  declare(path, namespace, objName, isPrefix = false) {
+    const owner = namespace || this.getOwner(path);
+    const entry = {
+      path,
+      owner,
+      objName,
+      type: 'DECLARE',
+      direction: isPrefix ? 'outbound' : 'inbound',
+      refs: [],
+      declared: true
+    };
+    
+    this.symbolTable.set(path, entry);
+    this.fss.push({op: '!', path, owner, objName, scope: [...this.currentScope]});
+    this.ir.push({op: 'DECLARE', ...entry});
+    
+    if (!this.depGraph.has(path)) this.depGraph.set(path, new Set());
+  }
+
+  reference(path, mode) {
+    if (!this.symbolTable.has(path)) {
+      this.errors.push(`Short Reference Error: '${path}' not declared before use`);
+      return;
+    }
+    const entry = this.symbolTable.get(path);
+    entry.refs.push({type: 'REF', mode});
+    this.fss.push({op: '?', path, mode});
+    this.ir.push({op: 'REF', path, mode});
+  }
+
+  observe(path) {
+    this.fss.push({op: '>', path});
+    this.ir.push({op: 'OBSERVE', path});
+  }
+
+  parseValue() {
+    if (this.match('STRING')) return this.previous().value;
+    if (this.match('IDENT')) return this.previous().value;
+    return null;
+  }
+
+  getOwner(path) {
+    const parts = path.split('.');
+    for (let i = parts.length - 2; i >= 0; i--) {
+      if (/[A-Z]/.test(parts[i][0])) return parts[i];
+    }
+    return 'Global';
+  }
+
+  buildBSS() {
+    // Validate FSS against ownership rules
+    for (let prop of this.fss) {
+      if (prop.op === '!') {
+        const entry = this.symbolTable.get(prop.path);
+        if (entry && entry.owner === prop.owner) {
+          this.bss.set(prop.path, {validated: true, ...entry});
+        } else {
+          this.errors.push(`Ownership violation: ${prop.path} by ${prop.owner}`);
+        }
+      } else {
+        this.bss.set(prop.path + '_' + Math.random(), prop);
+      }
+    }
+  }
+
+  mergeOGPrime() {
+    // Merge OG + validated BSS -> OG'
+    this.ogPrime = new Map(this.og);
+    for (let [k, v] of this.bss) {
+      if (v.validated || v.op !== '!') {
+        this.ogPrime.set(v.path || k, v);
+      }
+    }
+  }
+
+  match(...types) {
+    for (let t of types) {
+      if (this.check(t)) {
+        this.advance();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  check(type) { return this.peek().type === type; }
+  advance() { if (!this.match('EOF')) this.idx++; return this.previous(); }
+  peek() { return this.tokens[this.idx]; }
+  previous() { return this.tokens[this.idx - 1]; }
+  consume(type, msg) {
+    if (this.check(type)) return this.advance();
+    throw new Error(msg);
+  }
+}
+
+// --- Canvas Visualizer ---
+class HACICanvasViz {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.dpr = window.devicePixelRatio || 1;
+    
+    this.nodes = new Map(); // id -> node data
+    this.edges = []; // {from, to, type}
+    this.particles = []; // animation packets
+    this.scopeBoxes = []; // nested scope visualization
+    
+    this.camera = {x: 0, y: 0, zoom: 1};
+    this.dragging = null;
+    this.hovered = null;
+    this.running = false;
+    this.stepMode = false;
+    
+    this.setupCanvas();
+    this.setupInteraction();
+    this.animate();
+  }
+
+  setupCanvas() {
+    const resize = () => {
+      const rect = this.canvas.getBoundingClientRect();
+      this.canvas.width = rect.width * this.dpr;
+      this.canvas.height = rect.height * this.dpr;
+      this.ctx.scale(this.dpr, this.dpr);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+  }
+
+  setupInteraction() {
+    let lastMouse = {x: 0, y: 0};
+    
+    this.canvas.addEventListener('mousedown', (e) => {
+      const pos = this.getMousePos(e);
+      this.dragging = this.getNodeAt(pos);
+      lastMouse = pos;
+    });
+
+    this.canvas.addEventListener('mousemove', (e) => {
+      const pos = this.getMousePos(e);
+      if (this.dragging) {
+        this.dragging.x += (pos.x - lastMouse.x) / this.camera.zoom;
+        this.dragging.y += (pos.y - lastMouse.y) / this.camera.zoom;
+      } else {
+        this.hovered = this.getNodeAt(pos);
+        this.updateTooltip(e, this.hovered);
+      }
+      lastMouse = pos;
+    });
+
+    this.canvas.addEventListener('mouseup', () => { this.dragging = null; });
+    this.canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      this.camera.zoom = Math.max(0.3, Math.min(2, this.camera.zoom * delta));
+    });
+  }
+
+  getMousePos(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+  }
+
+  getNodeAt(pos) {
+    const wx = (pos.x - this.camera.x) / this.camera.zoom;
+    const wy = (pos.y - this.camera.y) / this.camera.zoom;
+    for (let node of this.nodes.values()) {
+      if (Math.hypot(wx - node.x, wy - node.y) < 30) return node;
+    }
+    return null;
+  }
+
+  updateTooltip(e, node) {
+    const tt = document.getElementById('tooltip');
+    if (node) {
+      tt.innerHTML = `<strong>${node.label}</strong><br>Type: ${node.type}<br>Scope: ${node.scope || 'root'}`;
+      tt.style.left = e.clientX + 10 + 'px';
+      tt.style.top = e.clientY + 10 + 'px';
+      tt.classList.add('active');
+    } else {
+      tt.classList.remove('active');
+    }
+  }
+
+  loadPipeline(data) {
+    this.nodes.clear();
+    this.edges = [];
+    this.particles = [];
+    
+    // Layout stages
+    const stages = ['LEXER', 'PARSER', 'IR', 'FSS', 'BSS', 'OG\''];
+    stages.forEach((s, i) => {
+      this.nodes.set(s, {
+        id: s, label: s, type: 'STAGE',
+        x: 100 + i * 180, y: 100,
+        color: s === 'FSS' ? '#3b82f6' : s === 'BSS' ? '#10b981' : s === 'OG\'' ? '#a855f7' : '#6b7280'
+      });
+    });
+
+    // Create edges between stages
+    for (let i = 0; i < stages.length - 1; i++) {
+      this.edges.push({from: stages[i], to: stages[i+1], type: 'FLOW'});
+    }
+
+    // Add symbol nodes
+    let yOff = 250;
+    for (let [path, sym] of data.symbols) {
+      const id = 'sym_' + path.replace(/\./g, '_');
+      this.nodes.set(id, {
+        id, label: path, type: sym.type,
+        x: 150 + (yOff % 600), y: yOff,
+        color: sym.declared ? '#7c3aed' : '#ef4444',
+        scope: path.split('.').slice(0, -1).join('.'),
+        operator: sym.direction
+      });
+      yOff += 80;
+    }
+  }
+
+  runAnimation(irData) {
+    this.particles = [];
+    let delay = 0;
+    irData.forEach((op, i) => {
+      setTimeout(() => {
+        this.spawnParticle(op);
+      }, delay);
+      delay += 300;
+    });
+  }
+
+  spawnParticle(op) {
+    const from = this.nodes.get('LEXER');
+    const to = this.nodes.get('OG\'');
+    if (!from || !to) return;
+    
+    this.particles.push({
+      x: from.x, y: from.y,
+      targetX: to.x, targetY: to.y,
+      progress: 0,
+      op: op.op,
+      path: op.path || '',
+      color: op.op === '!' ? '#3b82f6' : op.op === '?' ? '#10b981' : '#a855f7',
+      life: 1.0
+    });
+  }
+
+  update() {
+    // Update particles
+    this.particles = this.particles.filter(p => {
+      p.progress += 0.02;
+      p.x = p.x + (p.targetX - p.x) * 0.05;
+      p.y = p.y + (p.targetY - p.y) * 0.05;
+      p.life -= 0.01;
+      return p.life > 0 && p.progress < 1;
+    });
+  }
+
+  render() {
+    const ctx = this.ctx;
+    const w = this.canvas.width / this.dpr;
+    const h = this.canvas.height / this.dpr;
+    
+    ctx.fillStyle = '#0a0b0f';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.save();
+    ctx.translate(this.camera.x, this.camera.y);
+    ctx.scale(this.camera.zoom, this.camera.zoom);
+
+    // Draw edges
+    ctx.strokeStyle = '#2a2f3f';
+    ctx.lineWidth = 2;
+    this.edges.forEach(e => {
+      const from = this.nodes.get(e.from);
+      const to = this.nodes.get(e.to);
+      if (from && to) {
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+      }
+    });
+
+    // Draw nodes
+    for (let node of this.nodes.values()) {
+      ctx.save();
+      ctx.translate(node.x, node.y);
+      
+      // Glow
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 35);
+      gradient.addColorStop(0, node.color + '40');
+      gradient.addColorStop(1, node.color + '00');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(0, 0, 35, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Node circle
+      ctx.fillStyle = node.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, 25, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Operator icon
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const icon = node.type === 'DECLARE' ? '!' : node.type === 'REF' ? '?' : node.type === 'OBSERVE' ? '👁' : node.label[0];
+      ctx.fillText(icon, 0, 0);
+
+      // Label
+      ctx.fillStyle = '#e8edf5';
+      ctx.font = '11px monospace';
+      ctx.fillText(node.label.substring(0, 12), 0, 40);
+
+      ctx.restore();
+    }
+
+    // Draw particles
+    this.particles.forEach(p => {
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.op, p.x, p.y - 12);
+      ctx.restore();
+    });
+
+    ctx.restore();
+  }
+
+  animate() {
+    if (this.running || !this.stepMode) this.update();
+    this.render();
+    requestAnimationFrame(() => this.animate());
+  }
+}
+
+// --- Main Controller ---
+const examples = {
+  declare: `// Declare with prefix ! and suffix !
+IT.Dept! {
+  Manager.Alice! {
+    Role = "Lead";
+  }
+}`,
+  mutate: `// Mutate and reference
+IT.Dept! {
+  Project.X! {
+    Status = "Active";
+  }
+}
+IT.Dept.Project.X? > IT.Dept.Manager.Alice;`,
+  scope: `// Scope traversal with .
+Company.IT! {
+  .Dept! {
+    .Team.Alpha! {
+      Member = "Bob";
+    }
+  }
+}`,
+  error: `// Error: Short reference
+IT.Dept? > Manager.Bob;`
+};
+
+let viz = null;
+let parserResult = null;
+
+function init() {
+  const canvas = document.getElementById('haciCanvas');
+  viz = new HACICanvasViz(canvas);
+  
+  document.getElementById('runPipelineBtn').onclick = runPipeline;
+  document.getElementById('pauseBtn').onclick = () => { viz.running = false; };
+  document.getElementById('stepBtn').onclick = () => { viz.stepMode = true; viz.running = true; setTimeout(()=>viz.running=false, 50); };
+  document.getElementById('resetBtn').onclick = () => { viz.loadPipeline({symbols: new Map()}); };
+  
+  document.getElementById('exampleSelect').onchange = (e) => {
+    if (e.target.value && examples[e.target.value]) {
+      document.getElementById('sourceCode').value = examples[e.target.value];
+      runPipeline();
+    }
+  };
+
+  document.getElementById('sourceCode').addEventListener('input', () => {
+    clearTimeout(window.compileTimeout);
+    window.compileTimeout = setTimeout(runPipeline, 500);
+  });
+
+  runPipeline();
+}
+
+function runPipeline() {
+  const src = document.getElementById('sourceCode').value;
+  
+  // Lex
+  const lexer = new HACILexer(src);
+  const tokens = lexer.tokenize();
+  document.getElementById('tokenOutput').textContent = tokens
+    .filter(t => t.type !== 'EOF')
+    .map(t => `${t.type.padEnd(8)} ${t.value}`)
+    .join('\n');
+  
+  // Parse
+  const parser = new HACIParser(tokens);
+  parserResult = parser.parse();
+  
+  // Display IR
+  const irText = parserResult.ir.map(i => `${i.op.padEnd(10)} ${i.path || i.value || ''}`).join('\n');
+  const symText = Array.from(parserResult.symbols.entries())
+    .map(([k,v]) => `${k} [${v.owner}] ${v.type}`)
+    .join('\n');
+  document.getElementById('irOutput').textContent = irText + '\n\n--- Symbols ---\n' + symText;
+  
+  // Errors
+  const errEl = document.getElementById('sourceErrors');
+  if (parserResult.errors.length > 0) {
+    errEl.classList.add('active');
+    errEl.innerHTML = parserResult.errors.map(e => `⚠ ${e}`).join('<br>');
+  } else {
+    errEl.classList.remove('active');
+  }
+  
+  // Update stats
+  document.getElementById('statFSS').textContent = parserResult.fss.length;
+  document.getElementById('statBSS').textContent = parserResult.bss.size;
+  document.getElementById('statOGP').textContent = parserResult.ogPrime.size;
+  document.getElementById('statCycle').textContent = parserResult.errors.some(e => e.includes('cycle')) ? 'Detected' : 'None';
+  
+  // Visualize
+  viz.loadPipeline(parserResult);
+  viz.running = true;
+  viz.runAnimation(parserResult.ir);
+}
+
+window.addEventListener('load', init);
+</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

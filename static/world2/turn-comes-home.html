@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE TURN COMES HOME · A Clocked 27-Cell Ternary Lattice</title>
+<style>
+:root{
+  --paper:#f0ebf5; --ink:#2a2438; --ink-mid:#4a4360; --ink-faint:#8a83a0;
+  --plum:#5b3a87; --plum-light:#7e5bb0; --plum-soft:#e6ddf0; --plum-deep:#3f2860;
+  --gold:#9a7d3a; --rose:#9a4a6a; --green:#3a7a5a; --teal:#3a6a87;
+  --p0:#9a4a6a; --p1:#5b3a87; --p2:#3a6a87;
+  --line:#cbbfdd;
+  --mono:"Courier New",Courier,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);
+  background-image:repeating-linear-gradient(0deg, rgba(91,58,135,.03) 0 1px, transparent 1px 3px);
+  color:var(--ink);font-family:var(--serif);line-height:1.5;padding:10px}
+.sheet{max-width:820px;margin:0 auto;border:2.5px solid var(--plum);position:relative}
+.sheet::before{content:'';position:absolute;inset:5px;border:1px solid var(--plum-light);pointer-events:none}
+.inner{padding:22px}
+.masthead{text-align:center;border-bottom:2px solid var(--plum);padding-bottom:10px}
+.mast-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.24em;color:var(--plum-light);text-transform:uppercase}
+.mast-title{font-size:clamp(20px,4.8vw,34px);letter-spacing:.03em;font-weight:700;margin:5px 0 2px;text-transform:uppercase;color:var(--plum)}
+.mast-sub{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-mid)}
+.lede{font-size:12px;max-width:660px;margin:10px auto 0;text-align:center;color:var(--ink-mid);line-height:1.55}
+.lede b{color:var(--plum)}
+.canvaswrap{text-align:center;margin:14px 0}
+canvas{max-width:100%;height:auto;background:radial-gradient(circle at 50% 40%,#1a1428,#0f0b17);border-radius:8px}
+.phasebar{display:flex;justify-content:center;gap:0;margin:10px auto;max-width:420px;border:1.5px solid var(--line);border-radius:6px;overflow:hidden}
+.pseg{flex:1;text-align:center;padding:8px 4px;font-family:var(--mono);font-size:10px;color:var(--ink-faint);border-right:1px solid var(--line);transition:.2s}
+.pseg:last-child{border-right:none}
+.pseg.active{color:#fff;font-weight:700}
+.pseg.active.p0{background:var(--p0)} .pseg.active.p1{background:var(--p1)} .pseg.active.p2{background:var(--p2)}
+.controls{display:flex;gap:8px;justify-content:center;margin:12px 0;flex-wrap:wrap}
+.cbtn{appearance:none;background:transparent;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:9px 15px;border:1.5px solid var(--plum);color:var(--plum);border-radius:4px}
+.cbtn.go{border-color:var(--green);color:var(--green)}
+.cbtn.active{background:var(--plum);color:#fff}
+.readout{font-family:var(--mono);font-size:10.5px;text-align:center;color:var(--ink-mid);margin:8px 0;padding:9px;border:1px solid var(--line);border-radius:5px;line-height:1.8}
+.readout b{color:var(--plum)}
+.readout .vals{color:var(--gold);font-size:9.5px}
+.homed{color:var(--green);font-weight:700}
+.stack{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin:10px 0;font-family:var(--mono);font-size:10px;color:var(--ink-mid)}
+.stack .s{text-align:center}
+.stack .s b{display:block;font-size:18px;color:var(--plum);font-family:var(--serif);font-weight:700}
+.note{font-family:var(--mono);font-size:9.5px;background:var(--plum-soft);border-left:2px solid var(--plum-light);padding:8px 11px;margin:10px 0;line-height:1.7;color:var(--ink-mid)}
+.note b{color:var(--plum)}
+.colophon{margin-top:16px;border-top:2px solid var(--plum);padding-top:10px;text-align:center;font-family:var(--mono);font-size:8.5px;color:var(--ink-mid);letter-spacing:.05em;line-height:1.8}
+.colophon b{color:var(--plum)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE SHORTCUT</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="sheet"><div class="inner">
+
+<header class="masthead">
+  <div class="mast-eyebrow">Series E · Nine At A Time · Three Phases · Period 3</div>
+  <h1 class="mast-title">The Turn Comes Home</h1>
+  <div class="mast-sub">a clocked 27-cell ternary lattice · 3 × 9 = 27</div>
+  <p class="lede">27 cells, but never all at once. The clock lights <b>9 at a time</b> — one 3×3 plane per phase — and sweeps three phases to cover all 27, then <b>returns home</b>. The high trit picks the phase; the low two address the nine. Watch the turn come home every third tick.</p>
+</header>
+
+<div class="canvaswrap">
+  <canvas id="c" width="600" height="340"></canvas>
+</div>
+
+<div class="phasebar">
+  <div class="pseg p0" id="ps0">PHASE 0 · trit −1</div>
+  <div class="pseg p1" id="ps1">PHASE 1 · trit 0</div>
+  <div class="pseg p2" id="ps2">PHASE 2 · trit +1</div>
+</div>
+
+<div class="controls">
+  <button class="cbtn go" id="playbtn" onclick="togglePlay()">▶ Run Clock</button>
+  <button class="cbtn" onclick="step()">⏭ Step</button>
+  <button class="cbtn" onclick="reset()">⏮ Reset</button>
+</div>
+
+<div class="readout" id="readout"></div>
+
+<div class="stack">
+  <div class="s"><b>3</b>tick (phase)</div>
+  <div class="s"><b>9</b>width (per phase)</div>
+  <div class="s"><b>27</b>cycle (full lattice)</div>
+  <div class="s"><b>3</b>period (home)</div>
+</div>
+
+<div class="note">
+  <b>how to read it:</b> the cube is 3 planes of 9. each <b>phase</b> lights one plane (9 cells) — the cells whose <b>high trit</b> equals the phase. three phases sweep all 27 and the clock returns to phase 0 — the turn comes home. it's time-division over the ternary lattice: a 9-wide window, a 3-phase clock, 27 addressed without 27 simultaneous lines. balanced ternary: high trit = phase, low two trits = the nine.
+</div>
+
+<div class="colophon">
+  27 CELLS · 9 LIVE PER PHASE · 3 PHASES · PERIOD 3 · THE TURN COMES HOME<br>
+  HIGH TRIT = PHASE · LOW TWO TRITS = THE NINE · 3 (TICK) × 9 (WIDTH) = 27 (CYCLE)<br>
+  TIME-DIVISION OVER A TERNARY LATTICE · THE DUTY-CYCLE CLOCK OVER THE 27-CELL REGISTER<br>
+  THE TURN COMES HOME · A PURPLE PAPER · SERIES E · JUNE 2026
+</div>
+
+</div></div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const W=600,H=340;
+const T=[-1,0,1];
+const PCOL=['#9a4a6a','#7e5bb0','#3a6a87'];
+const PCOL_DIM=['#3a2430','#2a2440','#1e3040'];
+// build 27 cells
+let cells=[];
+for(let hi=0;hi<3;hi++)for(let mi=0;mi<3;mi++)for(let li=0;li<3;li++){
+  cells.push({h:T[hi],m:T[mi],l:T[li],hi,mi,li,phase:hi,val:T[hi]*9+T[mi]*3+T[li]});
+}
+let phase=0, playing=false, anim=null, tick=0, cycles=0;
+
+// layout: 3 planes side by side, each a 3x3 grid (mid=row, low=col)
+const planeW=160, gap=28, cell=42, startX=40, startY=90;
+function planeOrigin(p){ return {x:startX + p*(planeW+gap), y:startY}; }
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // title for each plane
+  ctx.font='10px Courier New';ctx.textAlign='center';
+  for(let p=0;p<3;p++){
+    const o=planeOrigin(p);
+    const live = (p===phase);
+    ctx.fillStyle = live ? PCOL[p] : '#4a4458';
+    ctx.fillText('plane '+p+' (high='+T[p]+')', o.x+planeW/2-12, o.y-16);
+    // draw the 9 cells
+    cells.filter(c=>c.hi===p).forEach(c=>{
+      const cx=o.x + c.li*(cell+6);
+      const cy=o.y + c.mi*(cell+6);
+      const active = (c.phase===phase);
+      ctx.beginPath();
+      const r=7;
+      roundRect(ctx,cx,cy,cell,cell,r);
+      if(active){
+        ctx.fillStyle=PCOL[p]; ctx.globalAlpha=0.92; ctx.fill(); ctx.globalAlpha=1;
+        // glow
+        ctx.shadowColor=PCOL[p]; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
+        ctx.fillStyle='#fff'; ctx.font='bold 13px Courier New';
+        ctx.fillText(c.val>=0?('+'+c.val):(''+c.val), cx+cell/2, cy+cell/2+5);
+      } else {
+        ctx.fillStyle=PCOL_DIM[p]; ctx.fill();
+        ctx.strokeStyle='#2a2438';ctx.lineWidth=1;ctx.stroke();
+        ctx.fillStyle='#5a5470'; ctx.font='11px Courier New';
+        ctx.fillText(c.val>=0?('+'+c.val):(''+c.val), cx+cell/2, cy+cell/2+4);
+      }
+    });
+  }
+  // phase ring indicator (the turn) - bottom center
+  const rx=W/2, ry=305, rr=18;
+  for(let p=0;p<3;p++){
+    const a=-Math.PI/2 + p*(2*Math.PI/3);
+    const px=rx+rr*Math.cos(a), py=ry+rr*Math.sin(a);
+    ctx.beginPath();ctx.arc(px,py,7,0,2*Math.PI);
+    ctx.fillStyle = p===phase?PCOL[p]:'#2a2438';ctx.fill();
+    ctx.strokeStyle=PCOL[p];ctx.lineWidth=1.5;ctx.stroke();
+  }
+  ctx.strokeStyle='#4a4458';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(rx,ry,rr,0,2*Math.PI);ctx.stroke();
+  ctx.fillStyle='#8a83a0';ctx.font='8px Courier New';ctx.textAlign='center';
+  ctx.fillText('the turn', rx, ry+rr+14);
+  updateUI();
+}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function updateUI(){
+  for(let p=0;p<3;p++){
+    const seg=document.getElementById('ps'+p);
+    seg.className='pseg p'+p+(p===phase?' active':'');
+  }
+  const live=cells.filter(c=>c.phase===phase).map(c=>c.val>=0?('+'+c.val):(''+c.val));
+  const homed = (phase===0 && tick>0);
+  document.getElementById('readout').innerHTML=
+    'tick <b>'+tick+'</b> · phase <b>'+phase+'</b> · high trit <b>'+(T[phase]>=0?'+'+T[phase]:T[phase])+'</b> · cycles home: <b>'+cycles+'</b>'
+    + (homed?' &nbsp; <span class="homed">⟳ THE TURN CAME HOME</span>':'')
+    + '<br><span class="vals">9 live values: '+live.join('  ')+'</span>';
+}
+function step(){
+  tick++;
+  phase=(phase+1)%3;
+  if(phase===0) cycles++;
+  draw();
+}
+function togglePlay(){
+  playing=!playing;
+  const b=document.getElementById('playbtn');
+  b.textContent = playing?'⏸ Pause':'▶ Run Clock';
+  b.classList.toggle('active',playing);
+  if(playing){ anim=setInterval(step,900); }
+  else { clearInterval(anim); }
+}
+function reset(){
+  if(playing) togglePlay();
+  phase=0;tick=0;cycles=0;draw();
+}
+draw();
+</script>
+</div>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SHORTCUT &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

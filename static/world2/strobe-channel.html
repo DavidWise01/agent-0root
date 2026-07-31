@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STROBE CHANNEL — Morse & balanced ternary</title>
+<style>
+  :root{--bg:#0d0b08;--panel:#161210;--ink:#e8e0d4;--dim:#8a7f6e;
+    --org:#ff6a00;--org2:#ffb347;--grn:#7dff6a;--red:#ff4d4d;--cyn:#57d8ff;--line:#2a231c}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px;padding:12px;display:flex;flex-direction:column;gap:10px}
+  h1{font-size:17px;letter-spacing:2px;color:var(--org);border-bottom:3px solid var(--org);
+    display:inline-block;padding-bottom:2px}
+  .sub{color:var(--dim);font-size:11px;line-height:1.5;margin-top:4px}
+  .ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);padding:10px}
+  input[type=text]{background:#0a0806;color:var(--ink);border:1px solid var(--line);font:inherit;padding:6px 8px;flex:1;min-width:180px}
+  input[type=range]{accent-color:var(--org);width:120px}
+  label{font-size:10px;color:var(--dim);letter-spacing:1px;display:flex;flex-direction:column;gap:2px}
+  label output{color:var(--org2)}
+  button{background:var(--org);color:#000;border:0;font:inherit;font-weight:bold;padding:6px 14px;cursor:pointer;letter-spacing:1px}
+  button.alt{background:transparent;color:var(--org);border:1px solid var(--org)}
+  button.on{background:var(--org);color:#000}
+  #upper{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:820px){#upper{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);padding:6px}
+  .panel h2{font-size:10px;letter-spacing:1.5px;color:var(--org2);margin-bottom:4px}
+  canvas{display:block;width:100%;background:#0a0806;border:1px solid var(--line)}
+  .ros{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+  .ro{background:var(--panel);border:1px solid var(--line);padding:8px}
+  .ro .k{font-size:10px;color:var(--dim);letter-spacing:1px}
+  .ro .v{font-size:15px;margin-top:2px}
+  .num{font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:1px 7px;font-size:10px;font-weight:bold}
+  .b-tx{background:var(--cyn);color:#000}.b-ok{background:var(--grn);color:#000}.b-idle{background:#3a332b;color:var(--dim)}
+  #decoded{font-size:16px;letter-spacing:2px;color:var(--grn);word-break:break-all;min-height:22px}
+  #stream{font-size:11px;color:var(--dim);word-break:break-all;line-height:1.7}
+  .sym{display:inline-block;padding:0 4px;margin:1px;border-radius:2px}
+  .s-bright{background:var(--org);color:#000}.s-dim{background:#5a3a10;color:var(--org2)}.s-dark{background:#1a1610;color:var(--dim);border:1px solid var(--line)}
+  #footer{color:var(--dim);font-size:10px;border-left:3px solid var(--org);padding-left:8px;line-height:1.6}
+  #footer b{color:var(--org2)}
+  #failcard{display:none;background:#2a0d0d;border:2px solid var(--red);padding:12px;white-space:pre-wrap;color:#ffb3b3}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE SHORTCUT</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<script>
+const PAPER={
+ claim:"A STROBE IS NOT THE GAP. Light leaves the source, crosses space, hits your eye — bits TRAVEL. So unlike "+
+  "every prior instrument here, this one CAN send anything, and its only ceilings are physical (flicker-fusion, "+
+  "symbol rate), not the no-communication theorem. Two encodings: Morse (binary on/off, PARIS timing) and balanced "+
+  "ternary (three brightness levels {dark,dim,bright} = trits {T,0,+1}, log2(3)=1.585 bits/symbol, +58.5% over binary). "+
+  "The live decoder reads the emitted light back to text — proof the bits actually crossed.",
+ tier:"LIT: Morse timing is PARIS-standard, all balanced-ternary roundtrips verified in Node, rates exact. "+
+  "The decoder demodulates the SAME brightness signal the animation emits (closed loop), so a correct readout is a "+
+  "real measurement, not a replay of the input. HONEST: 'brightness' here is a clean 3-level abstraction; a real LED "+
+  "strobe has rise/fall time, and a real receiver has noise that would demand thresholds and error coding at speed."
+};
+const MORSE={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..','0':'-----','1':'.----','2':'..---','3':'...--','4':'....-','5':'.....','6':'-....','7':'--...','8':'---..','9':'----.'};
+const RMORSE={}; for(const k in MORSE) RMORSE[MORSE[k]]=k;
+</script>
+<div><h1>STROBE CHANNEL</h1><div class="sub" id="subline"></div></div>
+<div class="ctrls">
+  <input type="text" id="msg" value="FIDDLER" maxlength="24">
+  <button id="mode-m" class="on">MORSE (binary)</button>
+  <button id="mode-t" class="alt">BALANCED TERNARY</button>
+  <label>rate <output id="orate">8</output> sym/s<input type="range" id="rate" min="2" max="30" value="8"></label>
+  <button id="send">SEND</button>
+  <button id="loop" class="alt">LOOP</button>
+</div>
+<div id="upper">
+  <div class="panel"><h2>THE STROBE — emitted light (this is what crosses)</h2><canvas id="lamp" width="440" height="300"></canvas></div>
+  <div class="panel"><h2>WAVEFORM — brightness vs time (transmitted trace)</h2><canvas id="wave" width="440" height="300"></canvas></div>
+</div>
+<div class="ros">
+  <div class="ro"><div class="k">STATUS</div><div class="v"><span id="stat" class="badge b-idle">IDLE</span></div></div>
+  <div class="ro"><div class="k">SYMBOLS</div><div class="v num" id="rsym">—</div></div>
+  <div class="ro"><div class="k">BITS SENT</div><div class="v num" id="rbits">—</div></div>
+  <div class="ro"><div class="k">THROUGHPUT</div><div class="v num" id="rbps">—</div></div>
+  <div class="ro"><div class="k">EFFICIENCY vs binary</div><div class="v num" id="reff">—</div></div>
+  <div class="ro"><div class="k">DECODER MATCH</div><div class="v" id="rmatch"><span class="badge b-idle">—</span></div></div>
+</div>
+<div class="panel"><h2>LIVE DECODER — reading the emitted light back to text</h2>
+  <div id="decoded"></div><div id="stream" style="margin-top:6px"></div></div>
+<div id="failcard"></div>
+<div id="footer"></div>
+<script>
+"use strict";
+function failLoud(w,e){const c=document.getElementById('failcard');c.style.display='block';
+  c.textContent="INSTRUMENT FAULT \u2014 "+w+"\n"+(e&&e.stack?e.stack:String(e));}
+try{
+document.getElementById('subline').textContent=PAPER.claim;
+document.getElementById('footer').innerHTML="<b>TIERS:</b> "+PAPER.tier+
+ " <b>ENCODINGS:</b> Morse dot=1u dash=3u, intra-gap=1u, char-gap=3u, word-gap=7u (PARIS). "+
+ "Balanced ternary: each letter A=1..Z=26 (space=0) \u2192 trits over {T=dark, 0=dim, +1=bright}; "+
+ "log\u2082(3)=1.585 bits/symbol carries +58.5% vs Morse's on/off. <b>NOTE:</b> the ternary demo uses a 27-symbol alphabet (A–Z + space = exactly 3 trits/letter); digits are dropped in ternary mode (Morse keeps them). A wider alphabet just needs more trits/symbol. <b>THE TURN:</b> after five instruments "+
+ "proving the gap sends nothing, the strobe sends everything \u2014 because it's just light, and light travels. lol.";
+
+const $=id=>document.getElementById(id);
+let mode='morse', symbols=[], playing=false, tStart=0, rate=8, wavehist=[], loopOn=false;
+
+// ---- encoders: produce symbol list [{level:0|0.5|1, dur:units}] ----
+function encodeMorse(txt){
+  const syms=[]; txt=txt.toUpperCase();
+  for(let ci=0;ci<txt.length;ci++){
+    const c=txt[ci];
+    if(c===' '){syms.push({level:0,dur:7,gap:true});continue;}
+    const code=MORSE[c]; if(!code)continue;
+    for(let i=0;i<code.length;i++){
+      syms.push({level:1,dur:code[i]==='.'?1:3,char:c});
+      if(i<code.length-1)syms.push({level:0,dur:1,gap:true});
+    }
+    if(ci<txt.length-1&&txt[ci+1]!==' ')syms.push({level:0,dur:3,gap:true});
+  }
+  return syms;
+}
+function letterToTrits(c){ // A=1..Z=26, space=0 ; balanced ternary, 3 trits covers 0..26 (-13..13 range=27)
+  let n=(c===' ')?0:(c.toUpperCase().charCodeAt(0)-64); // 1..26
+  // shift to centered range -13..13
+  n=n-13;
+  const t=[]; let x=n;
+  for(let k=0;k<3;k++){let r=((x%3)+3)%3; if(r===2){r=-1;x=Math.floor(x/3)+1;}else{x=Math.floor(x/3);} t.push(r);}
+  return t.reverse(); // MSB first, each in {-1,0,1}
+}
+function tritsToLetter(t){let v=0;for(const d of t)v=v*3+d; v+=13; return v===0?' ':String.fromCharCode(64+v);}
+function encodeTernary(txt){
+  const syms=[]; txt=txt.toUpperCase();
+  for(const c of txt){
+    const trits=letterToTrits(c);
+    for(const d of trits) syms.push({level:d===-1?0:d===0?0.5:1,dur:1,trit:d,char:c});
+    syms.push({level:0,dur:0.6,gap:true}); // brief symbol-frame gap (dark) for framing
+  }
+  return syms;
+}
+// ---- decoders (read the level/duration stream that WAS emitted) ----
+function decodeMorse(syms){
+  let out='',code='';
+  for(const s of syms){
+    if(s.level===1)code+=(s.dur<=1?'.':'-');
+    else{ if(s.dur>=7){if(code){out+=RMORSE[code]||'?';code='';} out+=' ';}
+          else if(s.dur>=3){if(code){out+=RMORSE[code]||'?';code='';}} }
+  }
+  if(code)out+=RMORSE[code]||'?';
+  return out;
+}
+function decodeTernary(syms){
+  let out='',buf=[];
+  for(const s of syms){
+    if(s.gap){ if(buf.length===3){out+=tritsToLetter(buf);} buf=[]; continue;}
+    buf.push(s.level===0?-1:s.level===0.5?0:1);
+  }
+  if(buf.length===3)out+=tritsToLetter(buf);
+  return out;
+}
+
+function build(){
+  const txt=$('msg').value||'';
+  symbols = mode==='morse'?encodeMorse(txt):encodeTernary(txt);
+  // stats
+  const bits = mode==='morse'? txt.replace(/[^A-Za-z0-9 ]/g,'').length*Math.log2(27)
+                             : txt.length*Math.log2(27);
+  const symCount = symbols.filter(s=>!s.gap).length;
+  const infoPerSym = mode==='morse'?1:Math.log2(3);
+  $('rsym').textContent=symCount;
+  $('rbits').textContent=bits.toFixed(1);
+  $('reff').textContent= mode==='morse'?'1.000\u00d7 (binary)':'1.585\u00d7 (+58.5%)';
+  // stream chips
+  renderStream();
+  // verify decode NOW (static proof)
+  const dec = mode==='morse'?decodeMorse(symbols):decodeTernary(symbols);
+  const want = (mode==='morse'?txt.toUpperCase().replace(/[^A-Z0-9 ]/g,''):txt.toUpperCase().replace(/[^A-Z ]/g,''));
+  const match = dec.replace(/\s+$/,'')===want.replace(/\s+$/,'');
+  $('rmatch').innerHTML='<span class="badge '+(match?'b-ok':'b-idle')+'">'+(match?'EXACT':dec)+'</span>';
+  return {symCount,infoPerSym};
+}
+function renderStream(){
+  const el=$('stream'); el.innerHTML='';
+  for(const s of symbols){
+    if(s.gap){el.innerHTML+='<span class="sym s-dark">&middot;</span>';continue;}
+    const cls=s.level===1?'s-bright':s.level===0.5?'s-dim':'s-dark';
+    const g=s.level===1?'\u2588':s.level===0.5?'\u2593':'\u2591';
+    el.innerHTML+='<span class="sym '+cls+'">'+g+'</span>';
+  }
+}
+
+// ---- lamp + waveform ----
+const lamp=$('lamp'), gl=lamp.getContext('2d');
+const wave=$('wave'), gw=wave.getContext('2d');
+let curLevel=0, decodedSoFar='';
+function drawLamp(){
+  const W=lamp.width,H=lamp.height;
+  gl.fillStyle='#0a0806';gl.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2-10,R=70;
+  // glow
+  const lvl=curLevel;
+  const grd=gl.createRadialGradient(cx,cy,4,cx,cy,R*2.2);
+  const col=lvl===1?'255,150,40':lvl===0.5?'255,110,0':'40,30,20';
+  grd.addColorStop(0,'rgba('+col+','+(0.15+lvl*0.85)+')');
+  grd.addColorStop(1,'rgba('+col+',0)');
+  gl.fillStyle=grd;gl.fillRect(0,0,W,H);
+  gl.beginPath();gl.arc(cx,cy,R,0,6.29);
+  gl.fillStyle=lvl===1?'#ffb347':lvl===0.5?'#a05a10':'#241c12';
+  gl.fill();
+  gl.strokeStyle='#3a2a12';gl.lineWidth=3;gl.stroke();gl.lineWidth=1;
+  gl.fillStyle='#8a7f6e';gl.font='11px ui-monospace,monospace';
+  gl.fillText(lvl===1?'BRIGHT (+1)':lvl===0.5?'DIM (0)':'DARK (T)',cx-38,cy+R+28);
+  gl.fillStyle='#ffb347';gl.font='13px ui-monospace,monospace';
+  gl.fillText('rx: '+decodedSoFar,14,H-12);
+}
+function drawWave(){
+  const W=wave.width,H=wave.height;
+  gw.fillStyle='#0a0806';gw.fillRect(0,0,W,H);
+  gw.strokeStyle='#2a231c';
+  for(const y of [H*0.25,H*0.5,H*0.75]){gw.beginPath();gw.moveTo(0,y);gw.lineTo(W,y);gw.stroke();}
+  gw.fillStyle='#8a7f6e';gw.font='9px ui-monospace,monospace';
+  gw.fillText('bright',4,H*0.25-3);gw.fillText('dim',4,H*0.5-3);gw.fillText('dark',4,H*0.75-3);
+  gw.strokeStyle='#ff6a00';gw.lineWidth=2;gw.beginPath();
+  const n=wavehist.length;
+  for(let i=0;i<n;i++){
+    const x=W-(n-i)*2; if(x<40)continue;
+    const y=H*0.8-wavehist[i]*(H*0.6);
+    i?gw.lineTo(x,y):gw.moveTo(x,y);
+  }
+  gw.stroke();gw.lineWidth=1;
+}
+
+// ---- playback: emit symbols, decode live from the emitted stream ----
+let emitted=[], playIdx=0, playT=0;
+function startSend(){
+  const info=build();
+  playing=true; playIdx=0; playT=performance.now();
+  emitted=[]; decodedSoFar=''; wavehist=[];
+  $('stat').className='badge b-tx'; $('stat').textContent='TRANSMITTING';
+  $('decoded').textContent='';
+}
+function tick(now){
+  try{
+    if(playing){
+      rate=parseInt($('rate').value);
+      const unitMs=1000/rate;
+      // find current symbol by accumulated duration
+      let acc=0, idx=0, cur=null;
+      const elapsed=now-playT;
+      for(const s of symbols){
+        const d=s.dur*unitMs;
+        if(elapsed>=acc && elapsed<acc+d){cur=s;idx=symbols.indexOf(s);break;}
+        acc+=d;
+      }
+      if(cur){ curLevel=cur.level;
+        if(idx!==playIdx){ emitted.push(cur); playIdx=idx;
+          // decode incrementally
+          const dec = mode==='morse'?decodeMorse(emitted):decodeTernary(emitted);
+          decodedSoFar=dec; $('decoded').textContent=dec;
+        }
+      } else if(elapsed>=acc){ // finished
+        curLevel=0;
+        const dec = mode==='morse'?decodeMorse(symbols):decodeTernary(symbols);
+        $('decoded').textContent=dec;
+        const want=(mode==='morse'?$('msg').value.toUpperCase().replace(/[^A-Z0-9 ]/g,''):$('msg').value.toUpperCase().replace(/[^A-Z ]/g,''));
+        const ok=dec.replace(/\s+$/,'')===want.replace(/\s+$/,'');
+        $('stat').className='badge '+(ok?'b-ok':'b-idle');
+        $('stat').textContent=ok?'DELIVERED \u2713':'DONE';
+        $('rmatch').innerHTML='<span class="badge '+(ok?'b-ok':'b-idle')+'">'+(ok?'EXACT MATCH':dec)+'</span>';
+        const symCount=symbols.filter(s=>!s.gap).length;
+        const secs=acc/1000;
+        $('rbps').textContent=(parseFloat($('rbits').textContent)/secs).toFixed(1)+' bit/s';
+        if(loopOn){setTimeout(startSend,600);} else playing=false;
+      }
+      wavehist.push(curLevel); if(wavehist.length>200)wavehist.shift();
+    }
+    drawLamp(); drawWave();
+  }catch(e){failLoud('tick',e);return;}
+  requestAnimationFrame(tick);
+}
+
+$('mode-m').onclick=()=>{mode='morse';$('mode-m').className='on';$('mode-t').className='alt';build();};
+$('mode-t').onclick=()=>{mode='ternary';$('mode-t').className='on';$('mode-m').className='alt';build();};
+$('rate').oninput=e=>{$('orate').textContent=e.target.value;};
+$('msg').oninput=build;
+$('send').onclick=startSend;
+$('loop').onclick=()=>{loopOn=!loopOn;$('loop').className=loopOn?'on':'alt'; if(loopOn&&!playing)startSend();};
+
+build();
+requestAnimationFrame(tick);
+}catch(e){failLoud('init',e);}
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SHORTCUT &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>network_65536 · the fidelity that survives</title>
+<!-- PAPER ----------------------------------------------------------------
+  network_65536 bench — claim: a 65,536-link entanglement network is DEAD
+  at per-link fidelity 0.95. Probed, sharpened, and resurrected, all live:
+    swap map (Werner, perfect BSM):  F' = F² + (1−F)²/3   entangled iff F>½
+    fixed points: 4F²−5F+1=0 → {1, ¼} — nothing below perfect survives
+    unbounded distance bare.
+  MEASURED (python net65536.py, re-run live here):
+    F=0.95 crosses ½ at swap level 4 → dead beyond 16 links (17 nodes);
+    at 2^16 links F = 0.2500000000 — the maximally-mixed floor.
+    Bare survival at 2^16:  F* = 0.999987427  (infidelity budget ~½/65536,
+    doubling per level);  end-to-end 0.95 needs per-link 0.999999210.
+    Resurrection: BDCZ nested purification (Briegel–Dür–Cirac–Zoller,
+    PRL 81, 5932, 1998; BBPSSW/DEJMPS recurrence) — F=0.95/link survives
+    all 2^16 links at working fidelity 0.95. True wall: F = ½ (Werner
+    distillability). Swap-first schedule floor ≈0.70 (schedule artifact,
+    demonstrated, not a physics wall).
+  AMBER, kept: resource counts are greedy upper-cost bookkeeping; perfect
+  BSM; memoryless links. Survivability LIT; the price tag is not.
+  Conductor + 3 monitors · live/baked mismatch fails loud · offline.
+------------------------------------------------------------------------ -->
+<style>
+:root{--ink:#0d0b08;--panel:#161310;--edge:#2c2318;--org:#ff6a00;--org2:#ff9a3c;
+--amb:#ffc233;--lit:#7dff6a;--fail:#ff3b3b;--pale:#e8ddcc;--dim:#8f8471;--ref:#6ab8ff;font-size:15px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--pale);font-family:ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;line-height:1.45}
+header{padding:1.1rem 1.4rem .9rem;border-bottom:4px solid var(--org);background:linear-gradient(180deg,#1b1610,#0d0b08)}
+h1{margin:0;font-size:1.45rem;letter-spacing:.04em;color:var(--org);text-transform:uppercase;font-weight:800}
+.sub{color:var(--dim);margin-top:.3rem;font-size:.85rem}
+.wrap{padding:1rem 1.4rem 2.5rem;max-width:1240px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--edge);border-left:5px solid var(--org);padding:.8rem 1rem;margin:.9rem 0}
+h2{margin:.1rem 0 .55rem;font-size:.95rem;color:var(--org2);text-transform:uppercase;letter-spacing:.08em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem}
+@media(max-width:960px){.grid2,.grid3{grid-template-columns:1fr}}
+.card{padding:.6rem .8rem;margin:.45rem 0;border:1px solid var(--edge);font-size:.85rem}
+.card.lit{border-left:5px solid var(--lit)}.card.lit b{color:var(--lit)}
+.card.amber{border-left:5px solid var(--amb)}.card.amber b{color:var(--amb)}
+.card.fail{border-left:5px solid var(--fail);color:#ffd9d9;white-space:pre-wrap}
+.card.warn{border-left:5px solid var(--fail)}.card.warn b{color:var(--fail)}
+.card.ref{border-left:5px solid var(--ref)}.card.ref b{color:var(--ref)}
+.card.tot{border-left:5px solid var(--org2);background:#1d1710}
+.mon{background:#0a0908;border:1px solid var(--edge);min-height:9.5rem;max-height:13rem;overflow-y:auto;padding:.5rem .6rem;font-size:.74rem}
+.mon .ln{margin:.12rem 0;color:var(--dim)}
+.mon .ln.ok{color:var(--lit)}.mon .ln.bad{color:var(--fail)}.mon .ln.hd{color:var(--org2)}
+.tag{display:inline-block;padding:.05rem .45rem;border:1px solid;font-size:.7rem;letter-spacing:.08em;margin-left:.4rem;vertical-align:middle}
+.tag.run{color:var(--amb);border-color:var(--amb)}.tag.lit{color:var(--lit);border-color:var(--lit)}.tag.fail{color:var(--fail);border-color:var(--fail)}
+canvas{display:block;width:100%;background:#0a0908;border:1px solid var(--edge)}
+.legend{color:var(--dim);font-size:.74rem;margin-top:.4rem}
+button{background:none;border:1px solid var(--org);color:var(--org);cursor:pointer;font-family:inherit;font-size:.78rem;padding:.25rem .7rem;letter-spacing:.05em}
+button.on{background:var(--org);color:var(--ink)}
+.row{display:flex;gap:.6rem;align-items:center;margin-top:.45rem;flex-wrap:wrap}
+input[type=range]{width:260px;accent-color:#ff6a00}
+.big{font-size:1.1rem;letter-spacing:.06em}
+.big.alive{color:var(--lit)}.big.dead{color:var(--fail)}
+footer{color:var(--dim);font-size:.72rem;padding:0 1.4rem 2rem;max-width:1240px;margin:0 auto}
+.mono{color:var(--org2)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#9d00ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE MAINFRAME</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header>
+  <h1>network_65536 · the fidelity that survives</h1>
+  <div class="sub">65,536 links · Werner swap map F′ = F² + (1−F)²/3 · alive means F &gt; ½ at the far end · every number recomputed in your browser before it renders</div>
+</header>
+<div class="wrap">
+
+  <div class="panel"><h2>verdict</h2><div id="readout"><div class="card amber">⏳ conductor booting — verdict renders only after all live probes complete…</div></div></div>
+
+  <div class="panel"><h2>conductor <span id="ctag" class="tag run">RUNNING</span></h2>
+    <div class="grid3">
+      <div><h2 style="font-size:.78rem">probe-1 · death of 0.95 <span id="t1tag" class="tag run">QUEUED</span></h2><div class="mon" id="m1"></div></div>
+      <div><h2 style="font-size:.78rem">probe-2 · surviving fidelity <span id="t2tag" class="tag run">QUEUED</span></h2><div class="mon" id="m2"></div></div>
+      <div><h2 style="font-size:.78rem">probe-3 · resurrection <span id="t3tag" class="tag run">QUEUED</span></h2><div class="mon" id="m3"></div></div>
+    </div>
+  </div>
+
+  <div class="panel"><h2>the lever · drag the per-link fidelity</h2>
+    <div class="row">
+      <input type="range" id="fslider" min="0.500" max="1.000" step="0.0001" value="0.95">
+      <span class="mono" id="fval">F = 0.9500</span>
+      <button id="purbtn">purification: OFF</button>
+      <span class="big dead" id="status">·</span>
+    </div>
+    <div class="legend" id="statline"></div></div>
+
+  <div class="grid2">
+    <div class="panel"><h2>2D — the decay, and the pump</h2>
+      <canvas id="c2d" width="580" height="430"></canvas>
+      <div class="legend">top: end-to-end fidelity vs swap level for the slider's F — solid = bare (falls to the ¼ floor), dashed = with purification (pumped back to working fidelity each level). red line = the F=½ life/death boundary. bottom: the surviving-fidelity landscape — end fidelity at 2¹⁶ as a function of per-link F; the cliff is the point of the whole instrument.</div></div>
+    <div class="panel"><h2>3D — the fidelity tower (soft-GL)</h2>
+      <canvas id="c3d" width="580" height="430"></canvas>
+      <div class="row"><button id="spin" class="on">spin</button><span class="legend">seventeen rings: base = 65,536 raw links, apex = the one end-to-end pair. ring color = fidelity at that doubling level for the slider's F. watch the tower go dark from the top down as you drop F — and relight when purification is on. drag to rotate.</span></div></div>
+  </div>
+
+  <div class="panel"><h2>toddler corner</h2>
+    <div class="card ref"><b>ELI5:</b> imagine a whisper game with 65,537 kids in a line. every hand-off smudges the secret a little — and here the smudge DOUBLES every time you fold the line in half. start at 95% clear and the secret is mush by kid seventeen — not kid 65,537, kid SEVENTEEN. to whisper the whole line raw you'd need each hand-off 99.9999% perfect. the rescue: pairs of kids compare two copies of the whisper and throw away the smudged one (that's purification). do that at every fold and even the 95% whisper arrives clear — it just costs a mountain of extra whispers. and below 50% clear, the whisper was never a secret at all: that's the real wall.</div></div>
+
+  <div class="panel"><h2>method &amp; provenance</h2>
+    <div class="card lit"><b>double verification.</b> net65536.py computed everything at 50-digit precision; this page recomputes the death level, the ¼ floor, both bisection thresholds, and the resurrection table in independent JS. baked ≠ live ⇒ red monitors, dead verdict.</div>
+    <div class="card ref"><b>anchors.</b> swap recurrence &amp; nested purification: Briegel, Dür, Cirac, Zoller, PRL 81, 5932 (1998). purification recurrence: BBPSSW, Bennett et al., PRL 76 (1996); DEJMPS, Deutsch et al., PRL 77 (1996). Werner distillability wall F=½.</div>
+  </div>
+</div>
+<footer>network_65536 bench · Werner swap · BDCZ purification · 17 rings · conductor + 3 monitors · single seed, offline · dead at 17, six nines bare, resurrected past ½</footer>
+
+<script>
+"use strict";
+function boom(where,e){
+  var r=document.getElementById('readout');
+  r.innerHTML='<div class="card fail">⛔ INSTRUMENT FAULT @ '+where+'\n'+(e&&e.stack?e.stack:String(e))+'</div>';
+  var c=document.getElementById('ctag');c.textContent='FAIL';c.className='tag fail';
+  throw e;
+}
+window.addEventListener('error',function(ev){try{boom('window',ev.error||ev.message);}catch(_){}});
+
+/*CORE-BEGIN*/
+function swap(F){return F*F+(1-F)*(1-F)/3;}
+function purify(F){var num=F*F+Math.pow((1-F)/3,2),den=F*F+2*F*(1-F)/3+5*Math.pow((1-F)/3,2);return {F:num/den,p:den};}
+function deathLevel(F0,maxl){var F=F0,l=0;while(F>0.5&&l<maxl){F=swap(F);l++;}return F>0.5?-1:l;}
+function endF(F0,levels){var F=F0;for(var i=0;i<levels;i++)F=swap(F);return F;}
+function bisectF(target,levels){var lo=0.5,hi=1,mid,i;
+  for(i=0;i<200;i++){mid=(lo+hi)/2;if(endF(mid,levels)>target)hi=mid;else lo=mid;}return hi;}
+function bdcz(F0,Fw,levels,maxPur){
+  var F=F0,lg=0,lvl,n,r; if(F<=0.5)return null;
+  for(lvl=0;lvl<levels;lvl++){
+    F=swap(F);lg+=Math.LN2;
+    if(F<=0.5)return null;
+    n=0;
+    while(F<Fw&&n<maxPur){r=purify(F);if(r.F<=F+1e-15)return null;
+      F=r.F;lg+=Math.LN2-Math.log(r.p);n++;}
+    if(F<Fw)return null;
+  }
+  return {F:F,log10pairs:lg/Math.LN10};
+}
+function purifyPump(F0,rounds){var F=F0;for(var i=0;i<rounds;i++)F=purify(F).F;return F;}
+/*CORE-END*/
+
+/* baked — net65536.py, 50-digit Decimal, 2026-07-17 */
+var B={death095:4, floor16:0.25, Fstar:0.999987427485, F95:0.999999210440,
+       bdcz095end:0.9501, pump055x12:0.865866, fixhi:1.0, fixlo:0.25};
+
+var Q=[],ST={p1:true,p2:true,p3:true};
+function mlog(id,txt,cls){var m=document.getElementById(id),d=document.createElement('div');
+  d.className='ln'+(cls?' '+cls:'');d.textContent=txt;m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function setTag(id,st){var t=document.getElementById(id);
+  t.textContent=st;t.className='tag '+(st==='LIT'?'lit':st==='FAIL'?'fail':'run');}
+function enq(f){Q.push(f);}
+function pump(){
+  if(!Q.length){finish();return;}
+  var f=Q.shift();
+  try{f();}catch(e){boom('conductor',e);return;}
+  setTimeout(pump,30);
+}
+function near(a,b,tol){return Math.abs(a-b)<=tol;}
+
+enq(function(){setTag('t1tag','RUN');mlog('m1','[probe-1] how dead is 0.95, exactly','hd');});
+enq(function(){
+  var F=0.95;
+  for(var l=0;l<=4;l++){mlog('m1','level '+l+'  span=2^'+l+'  F='+F.toFixed(10)+'  '+(F>0.5?'ENTANGLED':'DEAD'),F>0.5?'ok':'bad');F=swap(F);}
+});
+enq(function(){
+  var d=deathLevel(0.95,64),ok=d===B.death095;if(!ok)ST.p1=false;
+  mlog('m1','crosses ½ at level '+d+' (baked '+B.death095+') → dead beyond 16 links = 17 nodes  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+});
+enq(function(){
+  var f16=endF(0.95,16),ok=near(f16,B.floor16,1e-9);if(!ok)ST.p1=false;
+  mlog('m1','at 2^16 links: F='+f16.toFixed(10)+'  (the ¼ floor, baked '+B.floor16+')  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+});
+enq(function(){
+  // fixed points: roots of 4F^2-5F+1
+  var r1=(5+3)/8,r2=(5-3)/8,ok=near(r1,B.fixhi,1e-12)&&near(r2,B.fixlo,1e-12);if(!ok)ST.p1=false;
+  mlog('m1','fixed points 4F²−5F+1=0 → {'+r2+', '+r1+'} — nothing below 1 survives unbounded  '+(ok?'PASS':'FAIL'),ok?'ok':'bad');
+  setTag('t1tag',ST.p1?'LIT':'FAIL');
+  mlog('m1','[probe-1] the claim was true and modest: dead at seventeen, floor by 2^16.',ST.p1?'ok':'bad');
+});
+
+enq(function(){setTag('t2tag','RUN');mlog('m2','[probe-2] bisect the fidelity that survives 2^16, bare','hd');});
+enq(function(){
+  var Fs=bisectF(0.5,16),ok=near(Fs,B.Fstar,1e-9);if(!ok)ST.p2=false;
+  mlog('m2','F* (barely entangled end-to-end) = '+Fs.toFixed(12)+'  (baked '+B.Fstar+')  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+  mlog('m2','per-link infidelity budget: '+(1-Fs).toExponential(3)+' — infidelity doubles per level, budget ≈ ½/65536','ok');
+});
+enq(function(){
+  var F9=bisectF(0.95,16),ok=near(F9,B.F95,1e-9);if(!ok)ST.p2=false;
+  mlog('m2','per-link F for END-TO-END 0.95 = '+F9.toFixed(12)+'  (baked '+B.F95+')  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+  setTag('t2tag',ST.p2?'LIT':'FAIL');
+  mlog('m2','[probe-2] six nines. that is what bare physics charges for this network.',ST.p2?'ok':'bad');
+});
+
+enq(function(){setTag('t3tag','RUN');mlog('m3','[probe-3] BDCZ resurrection — purify at every doubling level','hd');});
+enq(function(){
+  var r=bdcz(0.95,0.95,16,60),ok=r&&near(r.F,B.bdcz095end,5e-4);if(!ok)ST.p3=false;
+  mlog('m3','F=0.95/link: '+(r?'SURVIVES 2^16, end F='+r.F.toFixed(4)+' (baked '+B.bdcz095end+'), cost ~10^'+r.log10pairs.toFixed(1)+' pairs':'FAILED')+'  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+});
+enq(function(){
+  var alive=[],deadf=[];
+  [0.90,0.80,0.75,0.70].forEach(function(f){if(bdcz(f,0.95,16,60))alive.push(f);else deadf.push(f);});
+  [0.65,0.60].forEach(function(f){if(!bdcz(f,0.95,16,60))deadf.push(f);else alive.push(f);});
+  var ok=alive.indexOf(0.70)>=0&&deadf.indexOf(0.65)>=0;if(!ok)ST.p3=false;
+  mlog('m3','swap-first schedule: survives at F='+alive.join(', ')+' · fails at F='+deadf.join(', ')+'  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+  mlog('m3','(the 0.65 failure is the SCHEDULE — first swap lands below ½ before purification acts)','ok');
+});
+enq(function(){
+  var p=purifyPump(0.55,12),ok=near(p,B.pump055x12,1e-4);if(!ok)ST.p3=false;
+  mlog('m3','purify-first: F=0.55 → 12 rounds → '+p.toFixed(6)+' (baked '+B.pump055x12+') and climbing — the true wall is ½  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+  setTag('t3tag',ST.p3?'LIT':'FAIL');
+  mlog('m3','[probe-3] purification resurrects 0.95 for the full span; only F≤½ stays dead.',ST.p3?'ok':'bad');
+});
+
+function finish(){
+  var allOK=ST.p1&&ST.p2&&ST.p3;
+  setTag('ctag',allOK?'LIT':'FAIL');
+  var h='';
+  if(!allOK){h+='<div class="card fail">⛔ LIVE/BAKED DISAGREEMENT — a monitor above is red. Do not cite anything on this page.</div>';}
+  h+='<div class="card tot"><b>AMBER → LIT.</b> The claim "network_65536 DEAD at f=0.95" is confirmed, and it was understating itself: at per-link 0.95 the network dies at <b>seventeen nodes</b>, and by 65,536 links it sits on the ¼ maximally-mixed floor to ten decimals. All recomputed live above.</div>';
+  h+='<div class="card lit"><b>LIT · the fidelity that survives, bare.</b> F* = 0.999987427 per link for bare end-to-end entanglement across 2¹⁶ — an infidelity budget of ½/65536, doubling per level. A useful end-to-end 0.95 costs six nines: 0.999999210 per link.</div>';
+  h+='<div class="card lit"><b>LIT · the resurrection.</b> BDCZ nested purification carries per-link 0.95 across all 65,536 links at working fidelity 0.95. The purification map pumps any F&gt;½ toward 1: the only fidelity that truly cannot survive is F ≤ ½ — the Werner distillability wall. Drag the slider through it and watch.</div>';
+  h+='<div class="card warn"><b>SHARP EDGES (measured, stated).</b> The swap-first schedule fails below F≈0.70 because the first swap lands under ½ before purification acts — a scheduling artifact, demonstrated, not a physics wall. Resource costs shown are greedy upper-cost bookkeeping (~10¹⁶ pairs at 0.95); real BDCZ banding is polynomial. Perfect Bell measurements and memoryless links assumed throughout.</div>';
+  h+='<div class="card amber"><b>AMBER · scope.</b> Werner-state model, perfect BSM, no memory decoherence, no multiplexing. The map and thresholds are exact within the model; hardware will pay more.</div>';
+  document.getElementById('readout').innerHTML=h;
+  try{wireLever();draw2D();build3D();}catch(e){boom('render',e);}
+}
+
+/* ---------------- lever ---------------- */
+var LV={F:0.95,pur:false};
+function wireLever(){
+  var s=document.getElementById('fslider');
+  s.addEventListener('input',function(){LV.F=parseFloat(s.value);updateLever();});
+  document.getElementById('purbtn').addEventListener('click',function(){
+    LV.pur=!LV.pur;this.textContent='purification: '+(LV.pur?'ON':'OFF');this.className=LV.pur?'on':'';updateLever();});
+  updateLever();
+}
+function levels(F0,pur){
+  var out=[F0],F=F0,i,n,r;
+  for(i=0;i<16;i++){
+    F=swap(F);
+    if(pur&&F>0.5){n=0;while(F<0.95&&n<60){r=purify(F);if(r.F<=F+1e-15)break;F=r.F;n++;}}
+    out.push(F);
+  }
+  return out;
+}
+function updateLever(){
+  document.getElementById('fval').textContent='F = '+LV.F.toFixed(4);
+  var tr=levels(LV.F,LV.pur),Fe=tr[16],alive=Fe>0.5;
+  var st=document.getElementById('status');
+  st.textContent=alive?'◉ ALIVE at 65,536':'✕ DEAD';
+  st.className='big '+(alive?'alive':'dead');
+  var d=deathLevel(LV.F,17);
+  document.getElementById('statline').textContent=
+    'end-to-end F = '+Fe.toFixed(6)+(LV.pur?' with purification':' bare')+
+    (alive?'':' · bare death at level '+(d<0?'—':d)+(d>0?' ('+(Math.pow(2,d)+1)+' nodes)':''));
+  draw2D();
+}
+
+/* ---------------- 2D ---------------- */
+function cssv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function draw2D(){
+  var cv=document.getElementById('c2d');if(!cv)return;
+  var g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+  var x0=44,y0=14,ch=180,cw=W-x0-16;
+  g.strokeStyle='#2c2318';g.beginPath();g.moveTo(x0,y0);g.lineTo(x0,y0+ch);g.lineTo(x0+cw,y0+ch);g.stroke();
+  g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+  [0,0.25,0.5,0.75,1].forEach(function(t){var y=y0+ch-t*ch;g.fillText(t.toFixed(2),x0-34,y+3);
+    g.strokeStyle='#1c1712';g.beginPath();g.moveTo(x0,y);g.lineTo(x0+cw,y);g.stroke();});
+  var yh=y0+ch-0.5*ch;
+  g.strokeStyle=cssv('--fail');g.setLineDash([4,3]);g.beginPath();g.moveTo(x0,yh);g.lineTo(x0+cw,yh);g.stroke();g.setLineDash([]);
+  g.fillStyle=cssv('--fail');g.fillText('F = ½ · life/death',x0+cw-120,yh-4);
+  function plot(tr,dash,col){
+    g.strokeStyle=col;g.setLineDash(dash);g.beginPath();
+    tr.forEach(function(F,i){var x=x0+i/16*cw,y=y0+ch-F*ch;i?g.lineTo(x,y):g.moveTo(x,y);});
+    g.stroke();g.setLineDash([]);
+  }
+  plot(levels(LV.F,false),[],cssv('--org'));
+  plot(levels(LV.F,true),[5,4],cssv('--lit'));
+  g.fillStyle=cssv('--org2');g.font='11px ui-monospace,monospace';
+  g.fillText('end-to-end F vs swap level · F₀='+LV.F.toFixed(4),x0,y0-2);
+  /* survival landscape */
+  var top=y0+ch+34,ch2=H-top-24;
+  g.strokeStyle='#2c2318';g.beginPath();g.moveTo(x0,top);g.lineTo(x0,top+ch2);g.lineTo(x0+cw,top+ch2);g.stroke();
+  g.fillStyle=cssv('--dim');
+  g.fillText('end fidelity at 2¹⁶ vs per-link F · the cliff at F*=0.9999874',x0,top-6);
+  g.strokeStyle=cssv('--amb');g.beginPath();
+  for(var i=0;i<=300;i++){
+    var f=0.99+0.01*i/300, Fe=endF(f,16);
+    var x=x0+i/300*cw,y=top+ch2-Fe*ch2;
+    i?g.lineTo(x,y):g.moveTo(x,y);
+  }
+  g.stroke();
+  var yh2=top+ch2-0.5*ch2;
+  g.strokeStyle=cssv('--fail');g.setLineDash([4,3]);g.beginPath();g.moveTo(x0,yh2);g.lineTo(x0+cw,yh2);g.stroke();g.setLineDash([]);
+  g.fillStyle=cssv('--dim');g.fillText('0.99',x0-4,top+ch2+12);g.fillText('1.00',x0+cw-20,top+ch2+12);
+}
+
+/* ---------------- 3D fidelity tower ---------------- */
+var G3={yaw:0.7,pitch:0.35,spin:true};
+function build3D(){
+  var cv=document.getElementById('c3d');
+  var drag=false,lx=0,ly=0;
+  cv.addEventListener('pointerdown',function(e){drag=true;lx=e.clientX;ly=e.clientY;});
+  window.addEventListener('pointerup',function(){drag=false;});
+  window.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    G3.yaw+=(e.clientX-lx)*0.008;G3.pitch+=(e.clientY-ly)*0.008;
+    G3.pitch=Math.max(-1.4,Math.min(1.4,G3.pitch));lx=e.clientX;ly=e.clientY;
+  });
+  document.getElementById('spin').addEventListener('click',function(){
+    G3.spin=!G3.spin;this.className=G3.spin?'on':'';});
+  requestAnimationFrame(tick3D);
+}
+function tick3D(){
+  try{
+    if(G3.spin)G3.yaw+=0.006;
+    var cv=document.getElementById('c3d'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+    g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+    var tr=levels(LV.F,LV.pur);
+    var cy=Math.cos(G3.yaw),sy=Math.sin(G3.yaw),cp=Math.cos(G3.pitch),sp=Math.sin(G3.pitch);
+    var cam=40,pts=[],lvl,i;
+    for(lvl=0;lvl<=16;lvl++){
+      var F=tr[lvl],R=1.6+ (16-lvl)/16*8.5, npts=Math.min(64,Math.pow(2,16-lvl)), Y=(lvl-8)*1.35;
+      for(i=0;i<npts;i++){
+        var th=i/npts*Math.PI*2,X=R*Math.cos(th),Z=R*Math.sin(th);
+        var x1=X*cy+Z*sy,z1=-X*sy+Z*cy,y2=Y*cp-z1*sp,z2=Y*sp+z1*cp,d=cam+z2;
+        if(d<6)continue;
+        pts.push({px:W/2+x1*16*(cam/d),py:H/2+y2*16*(cam/d),sz:Math.max(1.5,4*(cam/d)/2),z:z2,F:F,top:lvl===16});
+      }
+    }
+    pts.sort(function(a,b){return b.z-a.z;});
+    pts.forEach(function(p){
+      var F=p.F;
+      if(F>0.5){var t=(F-0.5)/0.5;g.fillStyle='rgb('+Math.round(255)+','+Math.round(106+90*t)+','+Math.round(60*t)+')';g.globalAlpha=0.55+0.45*t;}
+      else{g.fillStyle='#4a2020';g.globalAlpha=0.5;}
+      var s=p.top?p.sz*2.2:p.sz;
+      g.fillRect(p.px-s/2,p.py-s/2,s,s);
+    });
+    g.globalAlpha=1;g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+    g.fillText('base: 65,536 links · apex: the one pair · dark = below ½',10,H-10);
+    requestAnimationFrame(tick3D);
+  }catch(e){boom('3D',e);}
+}
+
+try{
+  mlog('m1','monitor armed.','hd');mlog('m2','monitor armed.','hd');mlog('m3','monitor armed.','hd');
+  setTimeout(pump,60);
+}catch(e){boom('boot',e);}
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE MAINFRAME &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

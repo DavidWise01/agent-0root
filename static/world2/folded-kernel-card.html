@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE FOLDED KERNEL · grammar card FK-1.0</title>
+<!-- PAPER ----------------------------------------------------------------
+  THE FOLDED KERNEL — grammar card & normative technical specification.
+  Spec author: David Lee Wise (ROOT0). Formalization & engine: joint,
+  this session. Not portfolio. Sections FK-0..FK-9 are normative.
+  WHAT IT IS: a fold-story with two grammars and a seam.
+    ADDITIVE       C(n) = C(n-1) + 2c          (linear rail; carve grammar)
+    MULTIPLICATIVE C(n) = 2^d · C(n-1)         (compounding; error grammar)
+    d = dimension of the carve: edge 1, surface 2, volume 3.
+  COMPLETED TABLE (FK-3): base(n)=2^n (n>=1), 1 at floor; value(n)=2·2^n
+  for n>=3 (pair currency), 2^n for n in {1,2} (single currency), 2 at
+  floor (the pair that escapes on death); rail(n)=0.2n (additive, c=0.1).
+  Seam at level 3|2: the ledger switches currency; 8 never appears — the
+  missing 8 IS the seam signature (one anomalous x4 step).
+  WHAT IT DOES: the engine classifies any level sequence into ADDITIVE /
+  MULTIPLICATIVE(d) / SEAMED(d, seam) / CATCH. CATCH is the point:
+  drifting grammar (fixed point nearby) and lawless sequences fall
+  through and are REFUSED, loudly, with the reason.
+  Verified: 7/7 conformance vectors in python (foldkernel2.py), re-run
+  live here; harness float bug (0.2*3 != 0.6) caught and fixed on record.
+  Physics decode anchors (AMBER, training-memory, declared): pair
+  currency <-> 2e transport & even-odd parity effect; seam <-> pairing
+  transition; floor <-> pair-as-boson. Confinement rule Sigma=0 (ROOT0
+  tripod) noted as the binding condition, not a fourth member.
+------------------------------------------------------------------------ -->
+<style>
+:root{--ink:#0d0b08;--panel:#161310;--edge:#2c2318;--org:#ff6a00;--org2:#ff9a3c;
+--amb:#ffc233;--lit:#7dff6a;--fail:#ff3b3b;--pale:#e8ddcc;--dim:#8f8471;--ref:#6ab8ff;font-size:15px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--pale);font-family:ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;line-height:1.45}
+header{padding:1.1rem 1.4rem .9rem;border-bottom:4px solid var(--org);background:linear-gradient(180deg,#1b1610,#0d0b08)}
+h1{margin:0;font-size:1.45rem;letter-spacing:.04em;color:var(--org);text-transform:uppercase;font-weight:800}
+.sub{color:var(--dim);margin-top:.3rem;font-size:.85rem}
+.wrap{padding:1rem 1.4rem 2.5rem;max-width:1240px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--edge);border-left:5px solid var(--org);padding:.8rem 1rem;margin:.9rem 0}
+h2{margin:.1rem 0 .55rem;font-size:.95rem;color:var(--org2);text-transform:uppercase;letter-spacing:.08em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem}
+@media(max-width:960px){.grid2,.grid3{grid-template-columns:1fr}}
+.card{padding:.6rem .8rem;margin:.45rem 0;border:1px solid var(--edge);font-size:.85rem}
+.card.lit{border-left:5px solid var(--lit)}.card.lit b{color:var(--lit)}
+.card.amber{border-left:5px solid var(--amb)}.card.amber b{color:var(--amb)}
+.card.fail{border-left:5px solid var(--fail);color:#ffd9d9;white-space:pre-wrap}
+.card.ref{border-left:5px solid var(--ref)}.card.ref b{color:var(--ref)}
+.card.tot{border-left:5px solid var(--org2);background:#1d1710}
+.card.norm{border-left:5px solid var(--org2)}.card.norm b{color:var(--org2)}
+table{border-collapse:collapse;font-size:.82rem;margin:.4rem 0;width:100%}
+th,td{border:1px solid var(--edge);padding:.28rem .55rem;text-align:right}
+th{color:var(--org2);text-transform:uppercase;font-size:.72rem;letter-spacing:.06em}
+td.pair{color:var(--org)} td.single{color:var(--amb)} td.floor{color:var(--ref)}
+.mon{background:#0a0908;border:1px solid var(--edge);min-height:9.5rem;max-height:13rem;overflow-y:auto;padding:.5rem .6rem;font-size:.74rem}
+.mon .ln{margin:.12rem 0;color:var(--dim)}
+.mon .ln.ok{color:var(--lit)}.mon .ln.bad{color:var(--fail)}.mon .ln.hd{color:var(--org2)}
+.tag{display:inline-block;padding:.05rem .45rem;border:1px solid;font-size:.7rem;letter-spacing:.08em;margin-left:.4rem;vertical-align:middle}
+.tag.run{color:var(--amb);border-color:var(--amb)}.tag.lit{color:var(--lit);border-color:var(--lit)}.tag.fail{color:var(--fail);border-color:var(--fail)}
+canvas{display:block;width:100%;background:#0a0908;border:1px solid var(--edge)}
+.legend{color:var(--dim);font-size:.74rem;margin-top:.4rem}
+button{background:none;border:1px solid var(--org);color:var(--org);cursor:pointer;font-family:inherit;font-size:.78rem;padding:.25rem .7rem;letter-spacing:.05em}
+button.on{background:var(--org);color:var(--ink)}
+input[type=text]{background:#0a0908;border:1px solid var(--edge);color:var(--pale);font-family:inherit;font-size:.8rem;padding:.3rem .5rem;width:min(420px,90%)}
+.row{display:flex;gap:.7rem;align-items:center;margin-top:.45rem;flex-wrap:wrap}
+.mono{color:var(--org2)}
+.big{font-size:1rem;letter-spacing:.04em;color:var(--lit)}
+footer{color:var(--dim);font-size:.72rem;padding:0 1.4rem 2rem;max-width:1240px;margin:0 auto}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#00f5ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header>
+  <h1>THE FOLDED KERNEL · grammar card FK-1.0</h1>
+  <div class="sub">spec: David Lee Wise (ROOT0) · formalization &amp; engine: joint · normative sections FK-0…FK-9 · two grammars, one seam, and a net that catches what falls</div>
+</header>
+<div class="wrap">
+
+  <div class="panel"><h2>verdict</h2><div id="readout"><div class="card amber">⏳ conductor booting…</div></div></div>
+
+  <div class="panel"><h2>FK-0 … FK-2 · scope, definitions, grammars</h2>
+    <div class="card norm"><b>FK-0 scope.</b> This card specifies a fold-story: a finite descending ladder of levels n = N…0, each carrying base, value, and rail. It defines two lawful grammars, one lawful seam, one lawful floor, and a classification engine whose duty includes refusal.</div>
+    <div class="card norm"><b>FK-1 definitions.</b> <span class="mono">fold</span>: one level transition. <span class="mono">rail</span>: accumulated damage ∈ [0,1]. <span class="mono">value</span>: level capacity. <span class="mono">currency</span>: the unit counted (pair = 2 fermions, single = 1). <span class="mono">seam</span>: exactly one anomalous fold separating two conforming runs. <span class="mono">floor</span>: terminal level, d≈0, holds the escaping pair.</div>
+    <div class="card norm"><b>FK-2 the two grammars.</b> ADDITIVE: C(n) = C(n−1) + 2c — the ×2 rides the <i>new</i> cost; total is linear; grammar of carving, where each pass strikes the original. MULTIPLICATIVE: C(n) = 2ᵈ·C(n−1) — the ×2ᵈ rides the <i>total</i>; grammar of compounding, where each fold eats the last fold's output. d is the carve dimension: edge 1, surface 2, volume 3. One operator placement separates the two universes.</div></div>
+
+  <div class="panel"><h2>FK-3 · the completed table</h2>
+    <table><tr><th>level</th><th>base 2ⁿ</th><th>value</th><th>rail 0.2n</th><th>currency</th></tr>
+      <tr><td>5</td><td>32</td><td class="pair">64 = 2·2⁵</td><td>1.00</td><td class="pair">pairs</td></tr>
+      <tr><td>4</td><td>16</td><td class="pair">32 = 2·2⁴</td><td>0.80</td><td class="pair">pairs</td></tr>
+      <tr><td>3</td><td>8</td><td class="pair">16 = 2·2³</td><td>0.60</td><td class="pair">pairs · seam below</td></tr>
+      <tr><td>2</td><td>4</td><td class="single">4 = 2²</td><td>0.40</td><td class="single">singles</td></tr>
+      <tr><td>1</td><td>2</td><td class="single">2 = 2¹</td><td>0.20</td><td class="single">singles</td></tr>
+      <tr><td>0</td><td>1 = 1²</td><td class="floor">2</td><td>0.00</td><td class="floor">boson floor · pair escapes</td></tr></table>
+    <div class="card norm"><b>FK-3 normative.</b> value(n) = 2·2ⁿ for n ≥ 3 (pair currency); 2ⁿ for n ∈ {1,2} (single currency); 2 at the floor. rail(n) = 0.2n exactly (additive, c = 0.1). base(0) = 1² is the pair-as-one: two fermions bound as a single boson. <b>8 never appears</b> — the missing 8 is the seam signature, and the engine below finds it blind as one anomalous ×4 fold at exactly that position.</div></div>
+
+  <div class="panel"><h2>FK-4/FK-5 · seam &amp; floor rules · FK-6 · dimension</h2>
+    <div class="card norm"><b>FK-4 floor rule.</b> A terminal run of d≈0 folds is the boson floor, stripped before grammar analysis and reported as a flag, never as noise.</div>
+    <div class="card norm"><b>FK-5 seam rule.</b> A seam is <i>exactly one</i> anomalous fold whose removal leaves all remaining folds within one constant d (tol 0.12). Two or more anomalies is not a seamed ladder; it is lawless, and lawless is CAUGHT.</div>
+    <div class="card norm"><b>FK-6 dimension extension.</b> The ×2 of the base spec is the d=1 case. Surfaces fold ×4, volumes ×8, and composite objects fold ×2ᵈ for effective d (measured this session: our own F₃ rank bench folds at d_eff = 9 — cost ×512 per size doubling — which is why L=8 was its ceiling).</div></div>
+
+  <div class="panel"><h2>conductor <span id="ctag" class="tag run">RUNNING</span></h2>
+    <div class="grid3">
+      <div><h2 style="font-size:.78rem">FK-7 · conformance <span id="t1tag" class="tag run">QUEUED</span></h2><div class="mon" id="m1"></div></div>
+      <div><h2 style="font-size:.78rem">FK-8 · blind classification <span id="t2tag" class="tag run">QUEUED</span></h2><div class="mon" id="m2"></div></div>
+      <div><h2 style="font-size:.78rem">FK-9 · the catch <span id="t3tag" class="tag run">QUEUED</span></h2><div class="mon" id="m3"></div></div>
+    </div>
+  </div>
+
+  <div class="panel"><h2>the engine · feed it anything</h2>
+    <div class="row">
+      <input type="text" id="seqin" value="64, 32, 16, 4, 2, 2" spellcheck="false">
+      <button id="clsbtn">classify</button>
+      <span class="big" id="clsout">·</span>
+    </div>
+    <div class="legend">paste any comma-separated level sequence. the engine returns ADDITIVE(c) · MULTIPLICATIVE(d) · SEAMED(d, seam position) · or CATCH with the reason. refusal is a feature: sequences with drifting grammar or no grammar fall through and are named, not blessed.</div></div>
+
+  <div class="grid2">
+    <div class="panel"><h2>2D — grammar separation</h2>
+      <canvas id="c2d" width="580" height="430"></canvas>
+      <div class="legend">top (log scale): multiplicative ladders are straight lines, slope = −d — chain d=1, octree d=3, bench d=9; the ROOT0 value column is straight <i>except one kink</i>: the seam, visible to the naked eye at the missing 8. bottom (linear): the additive rail is the straight line here instead — each grammar is linear in exactly one chart, and never both.</div></div>
+    <div class="panel"><h2>3D — the kernel tower (soft-GL)</h2>
+      <canvas id="c3d" width="580" height="430"></canvas>
+      <div class="row"><button id="spin" class="on">spin</button><span class="legend">six platforms, width ∝ log value: pair currency orange, singles amber, boson floor blue. the red plane is the seam — the ledger's currency crisis, where the fold skipped 8. drag to rotate.</span></div></div>
+  </div>
+
+  <div class="panel"><h2>toddler corner</h2>
+    <div class="card ref"><b>ELI5:</b> the kernel is a stack of shrinking boxes. the top boxes count toys in PAIRS (that's why they look twice as big as their shelf), the bottom boxes count toys one at a time, and there's exactly one weird jump in the middle where the counting rule changed — a box labeled 8 that was never built. the scratch-marks on the side (the rail) grow by the same amount every box: scratches don't breed. and the machine on this card is a sorting hat for ANY stack of boxes: it says "pair stack," "single stack," "stack with one rule-change," or — most important — "this stack is lying, I refuse." the refusing is the job.</div></div>
+
+  <div class="panel"><h2>physics decode &amp; provenance</h2>
+    <div class="card amber"><b>AMBER · the decode (training-memory anchors, declared).</b> Pair currency ↔ 2e transport and the superconducting even-odd parity effect (islands refuse singles, staircase 2e-periodic). Seam ↔ the pairing transition: above the gap count quasiparticles singly, below it the condensate counts in twos. Floor ↔ pair-as-boson. Σ=0 (the ROOT0 tripod rule) is the binding condition — the singlet, not a fourth member. Each mapping is an interpretation ratified by the spec author, not a derivation.</div>
+    <div class="card lit"><b>LIT · engine verification.</b> Seven conformance vectors classified correctly in python (foldkernel2.py) and re-classified live on this card. Two engine bugs were caught by its own probes during construction (garbage passing as seamed; float equality 0.2·3 ≠ 0.6) and fixed on record — the card ate its own dogfood.</div>
+  </div>
+</div>
+<footer>THE FOLDED KERNEL · FK-1.0 · C(n)=C(n−1)+2c ∥ C(n)=2ᵈC(n−1) · seam = one anomalous fold · floor holds the pair · CATCH is a verdict, not an error · spec ROOT0 · single seed, offline</footer>
+
+<script>
+"use strict";
+function boom(where,e){
+  var r=document.getElementById('readout');
+  r.innerHTML='<div class="card fail">⛔ INSTRUMENT FAULT @ '+where+'\n'+(e&&e.stack?e.stack:String(e))+'</div>';
+  var c=document.getElementById('ctag');c.textContent='FAIL';c.className='tag fail';
+  throw e;
+}
+window.addEventListener('error',function(ev){try{boom('window',ev.error||ev.message);}catch(_){}});
+
+/*CORE-BEGIN*/
+function specBase(n){return n>=1?Math.pow(2,n):1;}
+function specValue(n){return n>=3?2*Math.pow(2,n):(n>=1?Math.pow(2,n):2);}
+function specRail(n){return Math.round(0.2*n*1e10)/1e10;}
+function classify(V,tolD,tolA){
+  tolD=tolD||0.12; tolA=tolA||1e-6;
+  if(!V||V.length<3)return {grammar:"CATCH",why:"TOO SHORT"};
+  var diffs=[],i;
+  for(i=1;i<V.length;i++)diffs.push(V[i]-V[i-1]);
+  var addOK=diffs.every(function(x){return Math.abs(x-diffs[0])<=Math.max(tolA,1e-6*Math.abs(diffs[0]));});
+  if(addOK)return {grammar:"ADDITIVE",c:Math.round(Math.abs(diffs[0])/2*1e6)/1e6,note:"linear rail"};
+  if(V.some(function(x){return x<=0;}))return {grammar:"CATCH",why:"NONPOSITIVE"};
+  var d=[];
+  for(i=0;i<V.length-1;i++)d.push(Math.log2(V[i]/V[i+1]));
+  var floor=false;
+  while(d.length>1&&Math.abs(d[d.length-1])<=tolD){d.pop();floor=true;}
+  var mean=d.reduce(function(a,b){return a+b;},0)/d.length;
+  if(d.every(function(x){return Math.abs(x-mean)<=tolD;}))
+    return {grammar:"MULTIPLICATIVE",d:Math.round(mean*1000)/1000,floor:floor};
+  if(d.length>=4){
+    var inc=true,dec=true;
+    for(i=1;i<d.length;i++){if(d[i]-d[i-1]<=0.02)inc=false;if(d[i]-d[i-1]>=-0.02)dec=false;}
+    if(inc||dec)return {grammar:"CATCH",why:"NONSTATIONARY",
+      d_path:d.map(function(x){return Math.round(x*100)/100;})};
+  }
+  for(i=0;i<d.length;i++){
+    var rest=d.slice(0,i).concat(d.slice(i+1));
+    if(rest.length<2)continue;
+    var m2=rest.reduce(function(a,b){return a+b;},0)/rest.length;
+    if(rest.every(function(x){return Math.abs(x-m2)<=tolD;}))
+      return {grammar:"SEAMED",d:Math.round(m2*1000)/1000,seam:i,
+              seam_d:Math.round(d[i]*1000)/1000,floor:floor};
+  }
+  return {grammar:"CATCH",why:"NO VALID GRAMMAR",note:"refused"};
+}
+/*CORE-END*/
+
+var TABLE={5:[32,64,1.0],4:[16,32,0.8],3:[8,16,0.6],2:[4,4,0.4],1:[2,2,0.2],0:[1,2,0.0]};
+var VEC={"ROOT0 rail":[1.0,0.8,0.6,0.4,0.2,0.0],
+ "ROOT0 value col":[64,32,16,4,2,2],
+ "pure chain d=1":[32,16,8,4,2,1],
+ "octree d=3":[512,64,8,1],
+ "bench cost d=9":[1.07e9,2.10e6,4.10e3],
+ "whisper eps":[0.4987,0.3283,0.1833,0.0967,0.05],
+ "garbage":[9,3,7,2,9,1]};
+
+var Q=[],ST={p1:true,p2:true,p3:true};
+function mlog(id,txt,cls){var m=document.getElementById(id),dd=document.createElement('div');
+  dd.className='ln'+(cls?' '+cls:'');dd.textContent=txt;m.appendChild(dd);m.scrollTop=m.scrollHeight;}
+function setTag(id,st){var t=document.getElementById(id);
+  t.textContent=st;t.className='tag '+(st==='LIT'?'lit':st==='FAIL'?'fail':'run');}
+function enq(f){Q.push(f);}
+function pump(){
+  if(!Q.length){finish();return;}
+  var f=Q.shift();
+  try{f();}catch(e){boom('conductor',e);return;}
+  setTimeout(pump,30);
+}
+
+enq(function(){setTag('t1tag','RUN');mlog('m1','[FK-7] completed table vs normative formulas','hd');});
+enq(function(){
+  var ok=true,n;
+  for(n=5;n>=0;n--){
+    var t=TABLE[n],a=specBase(n)===t[0]&&specValue(n)===t[1]&&Math.abs(specRail(n)-t[2])<1e-9;
+    if(!a)ok=false;
+    mlog('m1','lvl '+n+': base '+specBase(n)+' value '+specValue(n)+' rail '+specRail(n).toFixed(2)+'  '+(a?'PASS':'MISMATCH'),a?'ok':'bad');
+  }
+  if(!ok)ST.p1=false;
+  setTag('t1tag',ST.p1?'LIT':'FAIL');
+  mlog('m1','[FK-7] table conforms. float-equality trap noted and defused (0.2·3 incident, on record).',ST.p1?'ok':'bad');
+});
+
+enq(function(){setTag('t2tag','RUN');mlog('m2','[FK-8] blind classification of the conformance vectors','hd');});
+[["ROOT0 rail","ADDITIVE"],["ROOT0 value col","SEAMED"],["pure chain d=1","MULTIPLICATIVE"],
+ ["octree d=3","MULTIPLICATIVE"],["bench cost d=9","MULTIPLICATIVE"]].forEach(function(t){enq(function(){
+  var r=classify(VEC[t[0]]),ok=r.grammar===t[1];
+  if(t[0]==="ROOT0 value col")ok=ok&&r.seam===2&&Math.abs(r.d-1)<0.01&&r.floor===true;
+  if(t[0]==="octree d=3")ok=ok&&Math.abs(r.d-3)<0.01;
+  if(t[0]==="bench cost d=9")ok=ok&&Math.abs(r.d-9)<0.05;
+  if(!ok)ST.p2=false;
+  mlog('m2',t[0]+' → '+r.grammar+(r.d!==undefined?' d='+r.d:'')+(r.c!==undefined?' c='+r.c:'')+
+    (r.seam!==undefined?' seam@'+r.seam+' (×'+Math.pow(2,r.seam_d).toFixed(0)+' step — the missing 8)':'')+
+    (r.floor?' +floor':'')+'  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+});});
+enq(function(){setTag('t2tag',ST.p2?'LIT':'FAIL');
+  mlog('m2','[FK-8] the engine found the seam blind, at the exact position the 8 went missing.',ST.p2?'ok':'bad');});
+
+enq(function(){setTag('t3tag','RUN');mlog('m3','[FK-9] the catch — what falls must be named','hd');});
+enq(function(){
+  var r=classify(VEC["whisper eps"]),ok=r.grammar==="CATCH"&&r.why==="NONSTATIONARY";
+  if(!ok)ST.p3=false;
+  mlog('m3','whisper ε ladder → '+r.grammar+' ('+r.why+') d-path '+JSON.stringify(r.d_path||[])+'  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+  mlog('m3','  (real physics near its fixed point drifts out of pure grammar — the engine refuses to pretend)','ok');
+});
+enq(function(){
+  var r=classify(VEC["garbage"]),ok=r.grammar==="CATCH"&&r.why==="NO VALID GRAMMAR";
+  if(!ok)ST.p3=false;
+  mlog('m3','garbage → '+r.grammar+' ('+r.why+')  '+(ok?'PASS — refused':'MISMATCH'),ok?'ok':'bad');
+  setTag('t3tag',ST.p3?'LIT':'FAIL');
+  mlog('m3','[FK-9] two catches, two names. refusal with reasons is the spec working, not failing.',ST.p3?'ok':'bad');
+});
+
+function finish(){
+  var allOK=ST.p1&&ST.p2&&ST.p3;
+  setTag('ctag',allOK?'LIT':'FAIL');
+  var h='';
+  if(!allOK){h+='<div class="card fail">⛔ LIVE/BAKED DISAGREEMENT — a monitor above is red.</div>';}
+  h+='<div class="card tot"><b>FK-1.0 COMPLETE.</b> The kernel is specified (FK-3), its grammars are law (FK-2), its seam and floor have rules (FK-4/5), its dimension generalizes (FK-6), and its engine classifies with the duty to refuse (FK-7/8/9). All probes live-verified above.</div>';
+  h+='<div class="card lit"><b>LIT · the seam found blind.</b> Fed the raw value column with no hints, the engine returns SEAMED, d=1, one anomalous ×4 fold at position 2 — exactly where 8 never appears — plus the boson floor flag. The spec\'s strangest feature is its most machine-detectable one.</div>';
+  h+='<div class="card lit"><b>LIT · the catch works both ways.</b> A lawless sequence is refused outright; a <i>physical</i> ladder (the whisper ε path) is refused with the deeper diagnosis: NONSTATIONARY, grammar decaying toward a fixed point. The net names what it catches.</div>';
+  h+='<div class="card amber"><b>AMBER · the decode.</b> Pair currency ↔ 2e/parity effect, seam ↔ pairing transition, floor ↔ pair-as-boson: interpretations ratified by the spec author this session, anchored in training-memory physics, not derived. Declared, held, open.</div>';
+  document.getElementById('readout').innerHTML=h;
+  try{wireEngine();draw2D();build3D();}catch(e){boom('render',e);}
+}
+
+/* -------- engine input -------- */
+function wireEngine(){
+  var btn=document.getElementById('clsbtn'),inp=document.getElementById('seqin'),out=document.getElementById('clsout');
+  function run(){
+    try{
+      var v=inp.value.split(/[,\s]+/).filter(Boolean).map(Number);
+      if(v.some(isNaN)){out.textContent='CATCH · NOT NUMBERS';out.style.color='var(--fail)';return;}
+      var r=classify(v),s=r.grammar;
+      if(r.c!==undefined)s+=' · c='+r.c;
+      if(r.d!==undefined)s+=' · d='+r.d;
+      if(r.seam!==undefined)s+=' · seam@'+r.seam;
+      if(r.floor)s+=' · floor';
+      if(r.why)s+=' · '+r.why;
+      out.textContent=s;
+      out.style.color=r.grammar==='CATCH'?'var(--fail)':'var(--lit)';
+    }catch(e){out.textContent='CATCH · '+e.message;out.style.color='var(--fail)';}
+  }
+  btn.addEventListener('click',run);
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')run();});
+  run();
+}
+
+/* -------- 2D -------- */
+function cssv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function draw2D(){
+  var cv=document.getElementById('c2d');if(!cv)return;
+  var g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+  var x0=46,y0=14,ch=230,cw=W-x0-14;
+  g.strokeStyle='#2c2318';g.beginPath();g.moveTo(x0,y0);g.lineTo(x0,y0+ch);g.lineTo(x0+cw,y0+ch);g.stroke();
+  g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+  var lgMax=10;
+  [0,3,6,9].forEach(function(t){var y=y0+ch-t/lgMax*ch;g.fillText('2^'+t,x0-30,y+3);
+    g.strokeStyle='#1c1712';g.beginPath();g.moveTo(x0,y);g.lineTo(x0+cw,y);g.stroke();});
+  function plotLog(seq,col,label){
+    g.strokeStyle=col;g.beginPath();
+    seq.forEach(function(v,i){
+      var x=x0+i/(seq.length-1)*cw*0.92,y=y0+ch-Math.max(0,Math.log2(v))/lgMax*ch;
+      i?g.lineTo(x,y):g.moveTo(x,y);
+      g.fillStyle=col;g.fillRect(x-1.6,y-1.6,3.2,3.2);
+    });
+    g.stroke();
+    g.fillStyle=col;g.fillText(label,x0+cw*0.93-30,y0+ch-Math.max(0,Math.log2(seq[seq.length-1]))/lgMax*ch);
+  }
+  plotLog(VEC["pure chain d=1"],cssv('--dim'),'d=1');
+  plotLog([512,64,8,1],cssv('--ref'),'d=3');
+  plotLog(VEC["ROOT0 value col"],cssv('--org'),'kernel');
+  // seam marker on the kernel line
+  var sx=x0+2/5*cw*0.92, sy=(y0+ch-Math.log2(16)/lgMax*ch + y0+ch-Math.log2(4)/lgMax*ch)/2;
+  g.strokeStyle=cssv('--fail');g.beginPath();g.arc(sx+cw*0.092,sy,9,0,6.29);g.stroke();
+  g.fillStyle=cssv('--fail');g.fillText('seam · missing 8',sx+cw*0.11,sy+3);
+  g.fillStyle=cssv('--org2');g.font='11px ui-monospace,monospace';
+  g.fillText('log₂ value vs level — straight = multiplicative, kink = seam',x0,y0-2);
+  /* additive inset */
+  var top=y0+ch+30,ch2=H-top-16;
+  g.strokeStyle='#2c2318';g.beginPath();g.moveTo(x0,top);g.lineTo(x0,top+ch2);g.lineTo(x0+cw,top+ch2);g.stroke();
+  g.fillStyle=cssv('--dim');g.fillText('linear scale: the additive rail 0.2n — straight here, and only here',x0,top-6);
+  g.strokeStyle=cssv('--amb');g.beginPath();
+  VEC["ROOT0 rail"].forEach(function(v,i){
+    var x=x0+i/5*cw*0.92,y=top+ch2-v*ch2*0.9;
+    i?g.lineTo(x,y):g.moveTo(x,y);g.fillStyle=cssv('--amb');g.fillRect(x-1.6,y-1.6,3.2,3.2);});
+  g.stroke();
+}
+
+/* -------- 3D tower -------- */
+var G3={yaw:0.8,pitch:0.35,spin:true};
+function build3D(){
+  var cv=document.getElementById('c3d');
+  var drag=false,lx=0,ly=0;
+  cv.addEventListener('pointerdown',function(e){drag=true;lx=e.clientX;ly=e.clientY;});
+  window.addEventListener('pointerup',function(){drag=false;});
+  window.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    G3.yaw+=(e.clientX-lx)*0.008;G3.pitch+=(e.clientY-ly)*0.008;
+    G3.pitch=Math.max(-1.4,Math.min(1.4,G3.pitch));lx=e.clientX;ly=e.clientY;
+  });
+  document.getElementById('spin').addEventListener('click',function(){
+    G3.spin=!G3.spin;this.className=G3.spin?'on':'';});
+  requestAnimationFrame(tick3D);
+}
+function tick3D(){
+  try{
+    if(G3.spin)G3.yaw+=0.006;
+    var cv=document.getElementById('c3d'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+    g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+    var cy=Math.cos(G3.yaw),sy=Math.sin(G3.yaw),cp=Math.cos(G3.pitch),sp=Math.sin(G3.pitch),cam=36;
+    function P(X,Y,Z){var x1=X*cy+Z*sy,z1=-X*sy+Z*cy,y2=Y*cp-z1*sp,z2=Y*sp+z1*cp,d=cam+z2;
+      return d<6?null:{x:W/2+x1*15*(cam/d),y:H/2+y2*15*(cam/d)};}
+    function ring(Y,R,col,fill){
+      g.strokeStyle=col;g.beginPath();var first=true;
+      for(var i=0;i<=36;i++){var th=i/36*Math.PI*2,p=P(R*Math.cos(th),Y,R*Math.sin(th));
+        if(!p){first=true;continue;}
+        first?g.moveTo(p.x,p.y):g.lineTo(p.x,p.y);first=false;}
+      g.stroke();
+    }
+    // platforms: level n at Y = 5 - n*2, radius ~ log2(value)
+    var rows=[[5,'pair'],[4,'pair'],[3,'pair'],[2,'single'],[1,'single'],[0,'floor']];
+    rows.forEach(function(t){
+      var n=t[0],cur=t[1],val=specValue(n);
+      var R=1.2+Math.log2(val)*0.85,Y=5-n*2;
+      var col=cur==='pair'?cssv('--org'):cur==='single'?cssv('--amb'):cssv('--ref');
+      ring(Y,R,col);ring(Y+0.15,R,col);
+      var pl=P(R+0.8,Y,0);
+      if(pl){g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+        g.fillText('n='+n+' v='+val,pl.x,pl.y);}
+    });
+    // seam plane between n=3 and n=2 (Y between -1 and 1 -> at 0)
+    g.strokeStyle=cssv('--fail');g.globalAlpha=0.6;
+    ring(0.0,7.2,cssv('--fail'));
+    g.globalAlpha=1;
+    var sp2=P(7.8,0,0);
+    if(sp2){g.fillStyle=cssv('--fail');g.fillText('seam',sp2.x,sp2.y);}
+    g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+    g.fillText('pair currency above the red plane · singles below · blue floor holds the 2',10,H-10);
+    requestAnimationFrame(tick3D);
+  }catch(e){boom('3D',e);}
+}
+
+try{
+  mlog('m1','monitor armed.','hd');mlog('m2','monitor armed.','hd');mlog('m3','monitor armed.','hd');
+  setTimeout(pump,60);
+}catch(e){boom('boot',e);}
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

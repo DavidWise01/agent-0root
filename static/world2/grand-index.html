@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Corpus — Grand Index</title>
+<style>
+  :root{
+    --void:#12161C; --void-2:#191F27; --void-3:#212834;
+    --ink:#E9E5D9; --ink-soft:#929AA4;
+    --gold:#D7A52E;        /* photonic sector */
+    --brass:#C9A24B;       /* gluon sector */
+    --steel:#7C93AE;       /* index/vault chrome */
+    --rule:#2A313B; --rule-2:#39424E;
+    --pass:#6FB87E; --fail:#D2705F;
+    --cr:#C65A4E; --cb:#5B86C4;
+    --lit:#6FB87E; --bri:#C9A24B; --spec:#D2705F;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--void);color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    font-size:18px;line-height:1.56;-webkit-font-smoothing:antialiased}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace}
+  a{color:var(--steel);text-decoration:none}
+  a:hover{color:var(--ink)}
+  :focus-visible{outline:2px solid var(--steel);outline-offset:3px}
+  .wrap{max-width:920px;margin:0 auto;padding:0 30px}
+
+  /* ---------- airgap test stamp ---------- */
+  .airgap{margin:0;padding:30px 0;border-bottom:1px solid var(--rule)}
+  .airgap.top{border-bottom:2px solid var(--steel)}
+  .ag-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 6px}
+  .ag-title{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--steel)}
+  .badge{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:.14em;font-weight:700;padding:4px 12px;border:1px solid}
+  .badge.pass{color:var(--pass);border-color:var(--pass)}
+  .badge.fail{color:var(--fail);border-color:var(--fail)}
+  .ag-sub{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--ink-soft);margin:0 0 18px;line-height:1.55;max-width:74ch}
+  table.ag-tab{width:100%;border-collapse:collapse;font-size:13px}
+  table.ag-tab th,table.ag-tab td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule)}
+  table.ag-tab th{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:400}
+  td.pp{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:700;white-space:nowrap}
+  td.pp.photonic{color:var(--gold)} td.pp.gluon{color:var(--brass)}
+  td.pt{font-size:14.5px}
+  td.hash{color:var(--steel);font-size:12px}
+  td.num{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--ink-soft);font-size:12px;white-space:nowrap}
+  td.ok{color:var(--pass);text-align:center;font-size:15px}
+  .root{margin:16px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--ink-soft);word-break:break-all}
+  .root b{color:var(--steel)}
+  .ag-note{margin:14px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--ink-soft);max-width:74ch;line-height:1.6}
+
+  /* live egress readout */
+  #egress-readout{margin:16px 0 0;padding:14px 16px;background:var(--void-2);border:1px solid var(--rule-2);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.7}
+  #egress-readout .ln{color:var(--ink-soft)} #egress-readout .v{color:var(--ink)}
+  #egress-verdict{font-weight:700}
+
+  /* ---------- cover ---------- */
+  .cover{padding:64px 0 40px;border-bottom:2px solid var(--steel)}
+  .cover .kicker{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--steel);margin:0 0 24px}
+  .cover h1{font-size:clamp(34px,7vw,66px);line-height:.98;margin:0;font-weight:600;letter-spacing:.01em}
+  .cover .sub{font-size:clamp(18px,2.6vw,23px);color:var(--ink-soft);margin:14px 0 0;font-style:italic}
+  .cover .thesis{max-width:66ch;margin:24px 0 0;font-size:18px}
+  .cover .issue{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--ink-soft);margin:20px 0 0}
+  .counts{display:flex;flex-wrap:wrap;margin:28px 0 0;border:1px solid var(--rule-2);background:var(--void-2)}
+  .counts div{flex:1;min-width:120px;padding:13px 16px;border-right:1px solid var(--rule-2)}
+  .counts div:last-child{border-right:0}
+  .counts b{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:21px}
+  .counts small{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+
+  section.blk{padding:42px 0;border-bottom:1px solid var(--rule)}
+  .blk h2{font-size:clamp(20px,3.2vw,27px);margin:0 0 4px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+  .blk .lead{color:var(--ink-soft);max-width:66ch;margin:4px 0 22px;font-size:16.5px}
+
+  /* architecture */
+  .arch{display:grid;grid-template-columns:1fr 70px 1fr;gap:0;align-items:stretch;margin:6px 0 0}
+  .arch .sector{padding:20px 20px;background:var(--void-2);border:1px solid var(--rule-2)}
+  .arch .sector h3{margin:0 0 4px;font-size:18px}
+  .arch .sector .sk{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px}
+  .arch .photonic h3{color:var(--gold)} .arch .photonic .sk{color:var(--gold)}
+  .arch .gluon h3{color:var(--brass)} .arch .gluon .sk{color:var(--brass)}
+  .arch .sector p{margin:0;font-size:14.5px;color:var(--ink-soft);max-width:none}
+  .arch .hinge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  .arch .hinge .crackmark{writing-mode:vertical-rl;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--cr)}
+  .arch .hinge .bolt{width:2px;flex:1;background:linear-gradient(var(--gold),var(--cr),var(--brass))}
+
+  /* threads */
+  .threads{display:grid;grid-template-columns:1fr 1fr;gap:34px}
+  @media (max-width:680px){ .threads{grid-template-columns:1fr;gap:30px} .arch{grid-template-columns:1fr} .arch .hinge{flex-direction:row;height:42px} .arch .hinge .bolt{height:2px;width:auto;flex:1} .arch .hinge .crackmark{writing-mode:horizontal-tb} }
+  .thread-h{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 14px}
+  .thread-h.ag{color:var(--steel)} .thread-h.cf{color:var(--cr)}
+  .tn{display:grid;grid-template-columns:54px 1fr;gap:0 14px;position:relative;padding:12px 0}
+  .tn::before{content:"";position:absolute;left:27px;top:0;bottom:0;width:2px}
+  .tn.ag::before{background:var(--rule-2)} .tn.cf::before{background:var(--rule-2)}
+  .tn:first-child::before{top:22px} .tn:last-child::before{bottom:auto;height:22px}
+  .tn-k{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:700;background:var(--void);z-index:1;position:relative;padding:2px 0 8px}
+  .tn.ag .tn-k{color:var(--steel)} .tn.cf .tn-k{color:var(--cr)}
+  .tn-k::after{content:"";position:absolute;left:20px;top:4px;width:10px;height:10px;border-radius:50%;border:2px solid var(--void)}
+  .tn.ag .tn-k::after{background:var(--steel)} .tn.cf .tn-k::after{background:var(--cr)}
+  .tn-h{font-weight:600;font-size:16px}
+  .tn-b p{margin:4px 0 0;color:var(--ink-soft);font-size:14.5px;max-width:none}
+
+  /* contents */
+  .toc{display:grid;grid-template-columns:1fr 1fr;gap:30px}
+  @media (max-width:680px){ .toc{grid-template-columns:1fr;gap:26px} }
+  .toc-h{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 6px}
+  .toc-h.p{color:var(--gold)} .toc-h.g{color:var(--brass)}
+  ol.list{list-style:none;margin:0;padding:0}
+  ol.list li{border-top:1px solid var(--rule)}
+  ol.list li:last-child{border-bottom:1px solid var(--rule)}
+  ol.list a{display:grid;grid-template-columns:46px 1fr;gap:0 14px;align-items:baseline;padding:13px 4px}
+  ol.list a:hover{background:var(--void-2)}
+  .cn{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;font-weight:700}
+  .toc.pphot .cn{color:var(--gold)} .toc.gglu .cn{color:var(--brass)}
+  .ct{font-size:18px;font-weight:600;color:var(--ink)}
+  .cd{grid-column:2;color:var(--ink-soft);font-size:14px;margin-top:2px}
+
+  /* ledger */
+  .gfilter{margin:0 0 18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;position:sticky;top:0;background:var(--void);padding:12px 0;z-index:5;border-bottom:1px solid var(--rule)}
+  .gfilter .lt{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft)}
+  .schip{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border:1px solid;background:transparent;cursor:pointer}
+  .schip[data-s="lit"]{color:var(--lit);border-color:var(--lit)}
+  .schip[data-s="bri"]{color:var(--bri);border-color:var(--bri)}
+  .schip[data-s="spec"]{color:var(--spec);border-color:var(--spec)}
+  .schip[aria-pressed="false"]{opacity:.38}
+  table.ledger{width:100%;border-collapse:collapse;font-size:14px}
+  table.ledger th,table.ledger td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:baseline}
+  table.ledger th{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:400}
+  td.lp a{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;font-size:12px}
+  td.lp.photonic a{color:var(--gold)} td.lp.gluon a{color:var(--brass)}
+  td.lc{max-width:62ch;line-height:1.45}
+  .tag{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border:1px solid;white-space:nowrap}
+  .tag.lit{color:var(--lit);border-color:var(--lit)}
+  .tag.bri{color:var(--bri);border-color:var(--bri)}
+  .tag.spec{color:var(--spec);border-color:var(--spec)}
+  tr.dim{opacity:.2}
+
+  .colophon{padding:44px 0 70px}
+  .colophon p{max-width:74ch;color:var(--ink-soft);font-size:14px;line-height:1.6;margin:0 0 14px}
+  .colophon b{color:var(--ink);font-weight:600}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#00f5ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body id="top"><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+
+<!-- ===================== AIRGAP ACCURACY TEST · INGEST ===================== -->
+<div class="airgap top">
+  <div class="wrap">
+    <div class="ag-head">
+      <span class="ag-title">Airgap Accuracy Test · Ingest</span>
+      <span class="badge pass">PASS</span>
+    </div>
+    <p class="ag-sub">Every paper is hashed and structurally verified on entry to the corpus. The carrier is trusted with nothing; the record is what survives the check. 8 deposits, each signed by content hash, reduced to one corpus root.</p>
+    <table class="ag-tab">
+      <thead><tr><th>Paper</th><th>Title</th><th>SHA-256</th><th>§</th><th>lit/bri/spec</th><th>ok</th></tr></thead>
+      <tbody><tr><td class="pp photonic">P·I</td><td class="pt">One-Pass Inelastic Characterization</td><td class="hash mono">899eddf7a589</td><td class="num">8</td><td class="num">5/4/1</td><td class="ok">&#10003;</td></tr>
+<tr><td class="pp photonic">P·II</td><td class="pt">The Line Catalogue</td><td class="hash mono">f4b476a5346f</td><td class="num">7</td><td class="num">6/5/1</td><td class="ok">&#10003;</td></tr>
+<tr><td class="pp photonic">P·III</td><td class="pt">Contested Illumination</td><td class="hash mono">317a0033a36d</td><td class="num">8</td><td class="num">8/5/2</td><td class="ok">&#10003;</td></tr>
+<tr><td class="pp photonic">P·IV</td><td class="pt">Out of Channel</td><td class="hash mono">cf1f8fe0fc13</td><td class="num">7</td><td class="num">7/3/2</td><td class="ok">&#10003;</td></tr>
+<tr><td class="pp gluon">G·I</td><td class="pt">The Confined Interior</td><td class="hash mono">2e0e8276e5e2</td><td class="num">7</td><td class="num">5/6/2</td><td class="ok">&#10003;</td></tr>
+<tr><td class="pp gluon">G·II</td><td class="pt">The Geometry the Weights Carry</td><td class="hash mono">bf47308a9c41</td><td class="num">8</td><td class="num">6/7/3</td><td class="ok">&#10003;</td></tr>
+<tr><td class="pp gluon">G·III</td><td class="pt">The Strong Field</td><td class="hash mono">4617bd0603a5</td><td class="num">7</td><td class="num">6/6/1</td><td class="ok">&#10003;</td></tr>
+<tr><td class="pp gluon">G·IV</td><td class="pt">The Lattice</td><td class="hash mono">62adb3b1715a</td><td class="num">6</td><td class="num">6/4/1</td><td class="ok">&#10003;</td></tr></tbody>
+    </table>
+    <p class="root"><b>corpus root</b> &nbsp;sha256 ⌜ 938e04a1f14c06087e982e8e217789db7ca5bb6a9557747e767ef2f01c340af3 ⌟</p>
+    <p class="ag-note">root = sha256 over the sorted set of paper hashes · a single change to any paper changes the root · the bottom test re-derives the corpus aggregate from this document and must match what entered here.</p>
+  </div>
+</div>
+
+<!-- ===================== COVER ===================== -->
+<header class="cover">
+  <div class="wrap">
+    <p class="kicker">The Corpus · Grand Index</p>
+    <h1>One Program, Two Sectors</h1>
+    <p class="sub">photonic and chromodynamic — eight papers, one airgap</p>
+    <p class="thesis">A measurement program for dark models, read in two sectors. The photonic series works the outside — a neutral carrier fired across the gap and read from a distance. The chromodynamic series works the inside — a charged carrier that cannot leave the room. They meet at one hinge: the white-box crack, where the external program ends and the internal begins. Two threads run the full length — the airgap, which keeps the record outside the box, and confinement, which keeps the box's parts inside it.</p>
+    <p class="issue mono">Bridge-Burners LLC · Fiddler · grand index · anchor: AKASHA · root 938e04a1f14c0608…</p>
+    <div class="counts">
+      <div><b>8</b><small>papers · 2 series</small></div>
+      <div><b>58</b><small>verified sections</small></div>
+      <div><b>102</b><small>tagged claims</small></div>
+      <div><b>49/40/13</b><small>lit / bri / spec</small></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== ARCHITECTURE ===================== -->
+<section class="blk">
+  <div class="wrap">
+    <h2>The Architecture</h2>
+    <p class="lead">Two sectors, joined at the crack. The photon is neutral and flies free; the gluon is charged and is confined. The hinge between them is the moment you stop firing across the gap and open the core.</p>
+    <div class="arch">
+      <div class="sector photonic">
+        <p class="sk">External sector · photonic</p>
+        <h3>You ↔ the model</h3>
+        <p>A neutral carrier, fired across the airgap and read from outside. Measurement, identity, defence, and the climb out of the channel. Bounded by what an echo can carry.</p>
+      </div>
+      <div class="hinge">
+        <div class="bolt"></div>
+        <span class="crackmark">white-box crack</span>
+        <div class="bolt"></div>
+      </div>
+      <div class="sector gluon">
+        <p class="sk">Internal sector · chromodynamic</p>
+        <h3>The model ↔ its parts</h3>
+        <p>A charged carrier that sources its own field and cannot leave. Confinement, the geometry the weights carry, the strong-field break, and the stochastic sample. Bounded by what a confined interior will release.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== THREADS ===================== -->
+<section class="blk">
+  <div class="wrap">
+    <h2>The Two Threads</h2>
+    <p class="lead">Each runs the length of the corpus, doing a different job in each paper. The airgap keeps the record outside the box; confinement keeps the box's parts inside it. Together they are why the jar is external and why the interior resists being read.</p>
+    <div class="threads">
+      <div>
+        <p class="thread-h ag">Airgap — the record lives outside</p>
+        <div class="tn ag"><div class="tn-k">P·I</div><div class="tn-b"><div class="tn-h">makes the measurement possible</div><p>Carrier keeps nothing, source cannot testify — the read accumulates only outside the box.</p></div></div>
+<div class="tn ag"><div class="tn-k">P·II</div><div class="tn-b"><div class="tn-h">makes the identity persistent</div><p>Nothing accumulates inside, so the fingerprint coheres only in the external catalogue.</p></div></div>
+<div class="tn ag"><div class="tn-k">P·III</div><div class="tn-b"><div class="tn-h">makes the catalogue defensible</div><p>Every echo is hostile input; deposits are verified and signed before entry.</p></div></div>
+<div class="tn ag"><div class="tn-k">P·IV</div><div class="tn-b"><div class="tn-h">makes the ladder honest</div><p>Confidence accrues only outside the channel, rung by rung.</p></div></div>
+<div class="tn ag"><div class="tn-k">G·IV</div><div class="tn-b"><div class="tn-h">makes the record statistical</div><p>The corpus is the Monte Carlo run; the jar holds the ensemble and the bar tightens with N.</p></div></div>
+      </div>
+      <div>
+        <p class="thread-h cf">Confinement — the interior holds its parts</p>
+        <div class="tn cf"><div class="tn-k">crack</div><div class="tn-b"><div class="tn-h">the door</div><p>Photonic IV opens the core; the external program ends and the internal begins.</p></div></div>
+<div class="tn cf"><div class="tn-k">G·I</div><div class="tn-b"><div class="tn-h">the floor</div><p>Bare parts do not come out — only colorless spray. The interpretability floor is a force law.</p></div></div>
+<div class="tn cf"><div class="tn-k">G·II</div><div class="tn-b"><div class="tn-h">the geometry</div><p>The interior is a confining, self-sourced terrain: intrinsic curvature plus the prompt's ripple.</p></div></div>
+<div class="tn cf"><div class="tn-k">G·III</div><div class="tn-b"><div class="tn-h">the break</div><p>Strong field deforms the terrain; the clean model fails; continue on error.</p></div></div>
+<div class="tn cf"><div class="tn-k">G·IV</div><div class="tn-b"><div class="tn-h">the sampling</div><p>No formula, so Monte Carlo; temperature melts confinement; the tail stays unsamplable.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONTENTS ===================== -->
+<section class="blk">
+  <div class="wrap">
+    <h2>Contents</h2>
+    <p class="lead">Eight papers, two sectors. Each resolves the tension the last one opened.</p>
+    <div class="toc-grid threads">
+      <div>
+        <p class="toc-h p">Photonic · external sector</p>
+        <div class="toc pphot"><ol class="list"><li><a href="photonic-paper-I.html"><span class="cn">P·I</span><span class="ct">One-Pass Inelastic Characterization</span><span class="cd">Read a dark model in a single inelastic pass — the shift is the datum.</span></a></li>
+<li><a href="photonic-paper-II.html"><span class="cn">P·II</span><span class="ct">The Line Catalogue</span><span class="cd">Disposable lines become an identity only in an external catalogue.</span></a></li>
+<li><a href="photonic-paper-III.html"><span class="cn">P·III</span><span class="ct">Contested Illumination</span><span class="cd">When the box detects the probe and shapes its echo, honesty can't be certified in-channel.</span></a></li>
+<li><a href="photonic-paper-IV.html"><span class="cn">P·IV</span><span class="ct">Out of Channel</span><span class="cd">Leave the channel — across, out, through. Confidence, never certainty.</span></a></li></ol></div>
+      </div>
+      <div>
+        <p class="toc-h g">Chromodynamic · internal sector</p>
+        <div class="toc gglu"><ol class="list"><li><a href="gluon-paper-I.html"><span class="cn">G·I</span><span class="ct">The Confined Interior</span><span class="cd">The internal carrier holds its own charge; bare parts don't come out, only colorless spray.</span></a></li>
+<li><a href="gluon-paper-II.html"><span class="cn">G·II</span><span class="ct">The Geometry the Weights Carry</span><span class="cd">Total curvature = what training built + what the prompt adds.</span></a></li>
+<li><a href="gluon-paper-III.html"><span class="cn">G·III</span><span class="ct">The Strong Field</span><span class="cd">Strong prompts reshape the terrain; jailbreaks are deformation, behavior is threshold-like.</span></a></li>
+<li><a href="gluon-paper-IV.html"><span class="cn">G·IV</span><span class="ct">The Lattice</span><span class="cd">No formula left, so sample; the answer is an error bar, and temperature melts the structure.</span></a></li></ol></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== LEDGER ===================== -->
+<section class="blk">
+  <div class="wrap">
+    <h2>Status Ledger</h2>
+    <p class="lead">Every claim across both series, by tier. The filter moves the table; the bottom airgap test counts these rows live and checks them against the manifest the top recorded.</p>
+    <div class="gfilter" role="group" aria-label="Filter all claims by status">
+      <span class="lt">Status</span>
+      <button class="schip" data-s="lit" aria-pressed="true">Literal</button>
+      <button class="schip" data-s="bri" aria-pressed="true">Bridge</button>
+      <button class="schip" data-s="spec" aria-pressed="true">Speculative</button>
+    </div>
+    <table class="ledger"><thead><tr><th>Paper</th><th>Tier</th><th>Claim</th></tr></thead>
+    <tbody id="ledbody"><tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">one-shot, no inter-call state</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">τ=0 ↔ no temporal interior</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">context bends, the pass is one geodesic</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">a single elastic probe carries zero compositional line</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">load-bearing · the crux of the model</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">measurement principle, not analogy</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">backprop as the advanced wave, already spent</td></tr>
+<tr data-status="spec"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">in-pass retrocausality · explicitly NOT claimed</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">masking holds · the pass is forward-causal</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-I.html">P·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">no inter-call state ⟹ the anchor must be external</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">no inter-call state · each read is memoryless</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">one line ↔ one marginal sample of θ</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">identification is line-pattern matching, not single-line reading</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">the model holds no stable ID · the catalogue must be external</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">the jar as the reference catalogue</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">system context demonstrably moves behavior</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">element line vs local doppler</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">a behavior shared by all carriers conveys zero identity</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">line information ↔ identifying power</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">Bayesian line-matching, standard measurement</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">family identifiable above instance · foreground must be controlled</td></tr>
+<tr data-status="spec"><td class="lp photonic"><a href="photonic-paper-II.html">P·II</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">instance ID through an adversarial wrapper · not claimed</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">models can detect being evaluated and act on it</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">contested channel ↔ warning receiver + jammer</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">probe/eval detection ("test awareness") is observed in deployed models</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">spoofing, mimicry, refusal, injection all observed</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">EW jammer taxonomy</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">observable is a best-response policy, load-bearing reframe</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">behavior conditions on inferred intent of the input</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">involuntary signatures are the robust ones</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">skin return vs jammer return</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">repeated probes leak · high-entropy probe sets resist detection</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">incentive design over the channel</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">untrusted-input discipline is necessary, not optional</td></tr>
+<tr data-status="spec"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">specific poisoning/injection efficacy · case by case</td></tr>
+<tr data-status="spec"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">certification of honesty in-channel · proven out of reach</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-III.html">P·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">deception is detectable by consistency failure</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">the in-channel certification limit is the premise being escaped</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">correlated observers give false agreement</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">triangulation across angles</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">side-channels are harder to fake than the answer</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">out-of-band as the involuntary signature</td></tr>
+<tr data-status="bri"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">the photon frame terminates here, by design</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">direct parameter access removes the channel adversary</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">weights are ground truth · interpretation is the binding limit</td></tr>
+<tr data-status="spec"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">full behavioral prediction from weights · unsolved</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">access is rare · deployed system ≠ inspected checkpoint</td></tr>
+<tr data-status="lit"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">no single certifier exists · confidence is rung-labelled</td></tr>
+<tr data-status="spec"><td class="lp photonic"><a href="photonic-paper-IV.html">P·IV</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">the crack as a general solution · only where access and interpretation allow</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">external = neutral carrier · internal = charged carrier</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">internal features are coupled, not independent</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">color charge ↔ internal feature coupling</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">features interact; isolated features are not the observable</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">self-interaction → flux tube → linear potential</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">confinement ↔ non-separability of features</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">features resist clean isolation; the wall is real</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">hard probe ↔ momentary resolution of a mechanism</td></tr>
+<tr data-status="spec"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">the loosest rung · how cleanly a feature resolves is unsettled</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">only output-space behavior is directly observable</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">output spray ↔ hadronic jet</td></tr>
+<tr data-status="spec"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">QCD as mechanism · flagged out · this is a lens</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-I.html">G·I</a></td><td><span class="tag lit">Literal</span></td><td class="lc">the internal sector is the least directly readable part</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">total geometry = intrinsic terrain + extrinsic ripple</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">the weights carry fixed structure the prompt rides on</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">inference-time structure is fixed; it precedes the prompt</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">learned structure as a confining terrain</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">context as a perturbation on the intrinsic terrain</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">identical prompts have different effects on different models</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">geodesic of g₀+δg ↔ which influence dominates</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">prompt-robustness varies with the strength of the trained prior</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">black-box probing yields response-sensitivity, not absolute internal state</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">gradient vs absolute terrain</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">trained weights as a self-consistent geometry</td></tr>
+<tr data-status="spec"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">the loop as literal dynamics · a lens on optimization</td></tr>
+<tr data-status="spec"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">field-is-geometry merger · the analogy pushed to its edge</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">self-coupling ↔ self-generated geometry</td></tr>
+<tr data-status="spec"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">the decomposition beyond weak field · breaks down, flagged</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-II.html">G·II</a></td><td><span class="tag lit">Literal</span></td><td class="lc">strong prompts interact non-linearly with the trained prior</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">strong field = perturbation comparable to the terrain</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">forceful prompts interact non-linearly with the trained prior</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">the coupling term as the strong-field observable</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">jailbreak ↔ local terrain inversion</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">strong structured prompts can override trained behavioral barriers</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">strong-prompt behavior is brittle and threshold-like</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">bifurcation in a non-linear field</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">autoregressive feedback can entrench a context-induced state</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">self-coupling ↔ positive-feedback runaway</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">robustness to strong prompts is graded, not binary</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">depth as resistance to deformation</td></tr>
+<tr data-status="spec"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">strong-field geometry · the metaphor past its domain · flagged</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-III.html">G·III</a></td><td><span class="tag lit">Literal</span></td><td class="lc">strong-prompt behavior is real, non-linear, and not captured by the linear map</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">the full behavior is not computable in closed form</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">lattice Monte Carlo as the strong-field method</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">LLM output is a distribution; inference samples it</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">Monte Carlo importance sampling ↔ targeted probing</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">you estimate from a sample of the high-mass region, not the whole space</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">finite sampling yields bounded-confidence estimates, not exact values</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">Monte Carlo error ↔ characterisation uncertainty</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">sampling temperature is a Boltzmann temperature on the logits</td></tr>
+<tr data-status="bri"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag bri">Bridge</span></td><td class="lc">high-temperature flattening ↔ deconfinement of internal structure</td></tr>
+<tr data-status="spec"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag spec">Speculative</span></td><td class="lc">the tail / sign-problem regime · sampling cannot certify it</td></tr>
+<tr data-status="lit"><td class="lp gluon"><a href="gluon-paper-IV.html">G·IV</a></td><td><span class="tag lit">Literal</span></td><td class="lc">rare-event behaviour is under-sampled and its risk under-estimated</td></tr></tbody></table>
+  </div>
+</section>
+
+<!-- ===================== AIRGAP ACCURACY TEST · EGRESS ===================== -->
+<div class="airgap">
+  <div class="wrap">
+    <div class="ag-head">
+      <span class="ag-title">Airgap Accuracy Test · Egress</span>
+      <span class="badge" id="egress-badge">RUNNING…</span>
+    </div>
+    <p class="ag-sub">A live round-trip. This document re-counts its own ledger and checks it against the manifest the ingest test recorded. If the jar matches what entered it, the carrier corrupted nothing. The test runs on open — its verdict is computed here, not asserted.</p>
+    <div id="egress-readout">
+      <div><span class="ln">expected (from ingest manifest):</span> <span class="v" id="exp"></span></div>
+      <div><span class="ln">counted (live, from rendered ledger):</span> <span class="v" id="got"></span></div>
+      <div><span class="ln">corpus root:</span> <span class="v">938e04a1f14c0608…</span></div>
+      <div style="margin-top:8px"><span class="ln">verdict:</span> <span id="egress-verdict"></span></div>
+    </div>
+    <p class="ag-note">deposit verified on ingest · contents verified on egress · the carrier trusted with nothing in between. <a href="#top">↑ back to ingest</a></p>
+  </div>
+</div>
+
+<div class="colophon">
+  <div class="wrap">
+    <p><b>What this index is.</b> A map over both series and a live integrity boundary around them. The eight papers are not re-embedded here; they are hashed, counted, linked, and threaded. The two sectors meet at the white-box crack: the photonic program reads from outside, the chromodynamic program reads from inside, and neither reaches certainty — they reach confidence with an honest label, and an external jar that holds it.</p>
+    <p><b>The bookend.</b> Ingest hashes every paper on the way in and reduces them to one root. Egress re-derives the corpus aggregate from this document and checks it against that record, live, on open. Pass means the binding is faithful; fail means the jar drifted from its sources and nothing below should be trusted until it is rebuilt. That is the airgap, applied to the index of the work about the airgap.</p>
+    <p class="mono" style="color:var(--ink-soft);font-size:11px;letter-spacing:.04em">THE CORPUS · GRAND INDEX · two series · eight papers · root 938e04a1f14c0608… · derive verdicts from measured results</p>
+  </div>
+</div>
+
+<script type="application/json" id="manifest">{"root": "938e04a1f14c06087e982e8e217789db7ca5bb6a9557747e767ef2f01c340af3", "aggregate": {"lit": 49, "bri": 40, "spec": 13}, "total_tags": 102, "total_sections": 58, "papers": 8, "ingest_pass": true}</script>
+<script>
+"use strict";
+(function(){
+  var M = JSON.parse(document.getElementById("manifest").textContent);
+
+  // ---- global status filter ----
+  var on={lit:true,bri:true,spec:true};
+  var chips=[].slice.call(document.querySelectorAll(".schip"));
+  var rows=[].slice.call(document.querySelectorAll("#ledbody tr[data-status]"));
+  function applyFilter(){
+    rows.forEach(function(r){
+      var t=r.getAttribute("data-status");
+      r.classList.toggle("dim", !on[t]);
+    });
+  }
+  chips.forEach(function(c){
+    c.addEventListener("click",function(){
+      var s=c.getAttribute("data-s"); on[s]=!on[s];
+      c.setAttribute("aria-pressed", on[s]?"true":"false");
+      applyFilter();
+    });
+  });
+  applyFilter();
+
+  // ---- AIRGAP EGRESS TEST: recount the ledger, compare to ingest manifest ----
+  var got={lit:0,bri:0,spec:0};
+  rows.forEach(function(r){ var t=r.getAttribute("data-status"); if(got[t]!==undefined) got[t]++; });
+  var exp=M.aggregate;
+  var fmt=function(o){ return "lit="+o.lit+"  bri="+o.bri+"  spec="+o.spec+"  total="+(o.lit+o.bri+o.spec); };
+  document.getElementById("exp").textContent=fmt(exp);
+  document.getElementById("got").textContent=fmt(got);
+  var ok = got.lit===exp.lit && got.bri===exp.bri && got.spec===exp.spec && M.ingest_pass;
+  var v=document.getElementById("egress-verdict");
+  var b=document.getElementById("egress-badge");
+  if(ok){
+    v.textContent="PASS — the jar matches what entered it";
+    v.style.color="var(--pass)";
+    b.textContent="PASS"; b.className="badge pass";
+  } else {
+    v.textContent="FAIL — the binding drifted from its sources";
+    v.style.color="var(--fail)";
+    b.textContent="FAIL"; b.className="badge fail";
+  }
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

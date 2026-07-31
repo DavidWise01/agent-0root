@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fractal_ternary · audit bench</title>
+<!-- PAPER ----------------------------------------------------------------
+  fractal_ternary audit bench — instrument, not diagram.
+  Object: qutrit CSS code from the ternary CA rule s -> (1+x)s over F_3
+  (mod-3 Pascal / ternary Sierpinski), decoupled-sublattice wiring
+  (two classical CA codes related by reflection — published family shape,
+  Yoshida 2013 lineage / reflected-CA-pair qLDPC line).
+  This bench RE-RUNS the verification live in the browser:
+    SWEEP   k(L) by F_3 matrix rank  ×  independent gcd-law prediction
+    TASK-3  fractalization reduction: kernel == closed CA trajectories,
+            verified by regeneration from seed
+    TASK-4  string search: no codeword confined to width-w strips, either
+            orientation  +  quantum-sector probe (weight-1 Z logical)
+  A mini CONDUCTOR orchestrates the tasks; each has its own monitor.
+  Baked expectations come from the Python run (conductor.py, 2026-07-17);
+  any live/baked mismatch fails loud. LIT = machine-verified twice.
+  AMBER = identity with the original session artifact (unrecovered
+  generators) — this is the canonical reconstruction, not a certified replay.
+  Offline. System fonts. No CDN. Fails loud, never a silent black screen.
+------------------------------------------------------------------------ -->
+<style>
+:root{
+  --ink:#0d0b08; --panel:#161310; --edge:#2c2318;
+  --org:#ff6a00; --org2:#ff9a3c; --amb:#ffc233; --lit:#7dff6a;
+  --fail:#ff3b3b; --pale:#e8ddcc; --dim:#8f8471; --ref:#6ab8ff;
+  font-size:15px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--pale);
+  font-family:ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;line-height:1.45}
+header{padding:1.1rem 1.4rem .9rem;border-bottom:4px solid var(--org);
+  background:linear-gradient(180deg,#1b1610,#0d0b08)}
+h1{margin:0;font-size:1.45rem;letter-spacing:.04em;color:var(--org);
+  text-transform:uppercase;font-weight:800}
+.sub{color:var(--dim);margin-top:.3rem;font-size:.85rem}
+.wrap{padding:1rem 1.4rem 2.5rem;max-width:1240px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--edge);border-left:5px solid var(--org);
+  padding:.8rem 1rem;margin:.9rem 0}
+h2{margin:.1rem 0 .55rem;font-size:.95rem;color:var(--org2);
+  text-transform:uppercase;letter-spacing:.08em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem}
+@media(max-width:960px){.grid2,.grid3{grid-template-columns:1fr}}
+.card{padding:.6rem .8rem;margin:.45rem 0;border:1px solid var(--edge);font-size:.85rem}
+.card.lit{border-left:5px solid var(--lit)} .card.lit b{color:var(--lit)}
+.card.amber{border-left:5px solid var(--amb)} .card.amber b{color:var(--amb)}
+.card.fail{border-left:5px solid var(--fail);color:#ffd9d9;white-space:pre-wrap}
+.card.warn{border-left:5px solid var(--fail)} .card.warn b{color:var(--fail)}
+.card.ref{border-left:5px solid var(--ref)} .card.ref b{color:var(--ref)}
+.card.tot{border-left:5px solid var(--org2);background:#1d1710}
+.mon{background:#0a0908;border:1px solid var(--edge);min-height:9.5rem;max-height:13rem;
+  overflow-y:auto;padding:.5rem .6rem;font-size:.74rem}
+.mon .ln{margin:.12rem 0;color:var(--dim)}
+.mon .ln.ok{color:var(--lit)} .mon .ln.bad{color:var(--fail)}
+.mon .ln.hd{color:var(--org2)}
+.tag{display:inline-block;padding:.05rem .45rem;border:1px solid;font-size:.7rem;
+  letter-spacing:.08em;margin-left:.4rem;vertical-align:middle}
+.tag.run{color:var(--amb);border-color:var(--amb)}
+.tag.lit{color:var(--lit);border-color:var(--lit)}
+.tag.fail{color:var(--fail);border-color:var(--fail)}
+canvas{display:block;width:100%;background:#0a0908;border:1px solid var(--edge)}
+.legend{color:var(--dim);font-size:.74rem;margin-top:.4rem}
+button{background:none;border:1px solid var(--org);color:var(--org);cursor:pointer;
+  font-family:inherit;font-size:.78rem;padding:.25rem .7rem;letter-spacing:.05em}
+button.on{background:var(--org);color:var(--ink)}
+.row{display:flex;gap:.6rem;align-items:center;margin-top:.45rem;flex-wrap:wrap}
+footer{color:var(--dim);font-size:.72rem;padding:0 1.4rem 2rem;max-width:1240px;margin:0 auto}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE SHORTCUT</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<header>
+  <h1>fractal_ternary · audit bench</h1>
+  <div class="sub">ternary Sierpinski CA code over F₃ · toy instance vs published family · live re-verification — nothing on this page is asserted without being recomputed in your browser</div>
+</header>
+<div class="wrap">
+
+  <div class="panel"><h2>verdict</h2><div id="readout"><div class="card amber">⏳ conductor booting — verdict renders only after all live checks complete…</div></div></div>
+
+  <div class="panel"><h2>conductor <span id="ctag" class="tag run">RUNNING</span></h2>
+    <div class="grid3">
+      <div><h2 style="font-size:.78rem">sweep · k(L) rank × gcd law <span id="t0tag" class="tag run">QUEUED</span></h2><div class="mon" id="m0"></div></div>
+      <div><h2 style="font-size:.78rem">task-3 · fractalization reduction <span id="t3tag" class="tag run">QUEUED</span></h2><div class="mon" id="m3"></div></div>
+      <div><h2 style="font-size:.78rem">task-4 · string search + q-probe <span id="t4tag" class="tag run">QUEUED</span></h2><div class="mon" id="m4"></div></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel"><h2>2D — k(L) fingerprint &amp; the fractal itself</h2>
+      <canvas id="c2d" width="580" height="430"></canvas>
+      <div class="legend">top: orange bars = k(L) by live F₃ matrix rank · gold rings = independent gcd-law prediction 2·deg gcd((1+x)ᴸ−1, xᴸ−1). they must coincide. bottom: mod-3 Pascal raster — the support every logical operator is condemned to. orange = trit 1, amber = trit 2.</div></div>
+    <div class="panel"><h2>3D — the logical tower (soft-GL)</h2>
+      <canvas id="c3d" width="580" height="430"></canvas>
+      <div class="row"><button id="spin" class="on">spin</button><span class="legend">each layer down = one CA step s → (1+x)s. the operator's footprint is this tower — fractal, never a string. drag to rotate.</span></div></div>
+  </div>
+
+  <div class="panel"><h2>toddler corner</h2>
+    <div class="card ref"><b>ELI5:</b> we have a coloring rule: each new row of blocks is made by adding neighbor blocks (colors count 0,1,2 and 3 wraps to 0). the rule draws a snowflake. question 1: is our snowflake game one from the big library? YES — the shelf-count rule from the library book predicts our shelves perfectly, every size we tried. question 2: can you cheat with a thin straight line of blocks? NO — we hunted for skinny lines and there are none; only snowflakes. question 3: is there a catch? YES — one wrong block on the quiet side is invisible to the checkers. good toy, sharp edge.</div></div>
+
+  <div class="panel"><h2>method &amp; provenance</h2>
+    <div class="card lit"><b>double verification.</b> every number here was computed once in Python (numpy, F₃ Gaussian elimination + polynomial gcd, 17/17 cross-method agreement) and is recomputed live in this page by an independent JS implementation. baked ≠ live ⇒ this page fails loud.</div>
+    <div class="card ref"><b>family anchors.</b> CA/fractal stabilizer construction: Yoshida, PRB 88 (2013), arXiv:1302.6248 · fractalization map &amp; integer intrinsic dimension caveat · reflected-CA-pair codes in current biased-noise qLDPC work · qutrit cubic codes, arXiv:2606.19873 (June 2026). none of these are claims of equivalence beyond what the gcd law demonstrates.</div>
+  </div>
+</div>
+<footer>fractal_ternary bench · F₃ · rule s→(1+x)s · decoupled CSS wiring · conductor + 3 monitors · single seed, offline, system fonts · sweep→reduction→strings→verdict</footer>
+
+<script>
+"use strict";
+/* ============================ fail-loud rail ============================ */
+function boom(where,e){
+  var r=document.getElementById('readout');
+  r.innerHTML='<div class="card fail">⛔ INSTRUMENT FAULT @ '+where+'\n'+(e&&e.stack?e.stack:String(e))+'</div>';
+  var c=document.getElementById('ctag'); c.textContent='FAIL'; c.className='tag fail';
+  throw e;
+}
+window.addEventListener('error',function(ev){ try{boom('window',ev.error||ev.message);}catch(_){} });
+
+/*CORE-BEGIN*/
+var P=3;
+function buildM(L){ // classical CA closure: v(i,j+1)-v(i,j)-v(i+1,j) = 0
+  var n=L*L,M=[],r,i,j;
+  var idx=function(i,j){return ((i%L)+L)%L*L+(((j%L)+L)%L);};
+  for(i=0;i<L;i++)for(j=0;j<L;j++){
+    r=new Int32Array(n);
+    r[idx(i,j+1)]=(r[idx(i,j+1)]+1)%P;
+    r[idx(i,j)]  =(r[idx(i,j)]+2)%P;
+    r[idx(i+1,j)]=(r[idx(i+1,j)]+2)%P;
+    M.push(r);
+  }
+  return M;
+}
+function inv3(a){a=((a%P)+P)%P; if(a===1)return 1; if(a===2)return 2; throw new Error('inv3(0)');}
+function rrefF3(Min){
+  var M=Min.map(function(row){return Int32Array.from(row);});
+  var rows=M.length,cols=rows?M[0].length:0,piv=[],r=0,c,row,pr,f,k,t;
+  for(c=0;c<cols&&r<rows;c++){
+    pr=-1;
+    for(row=r;row<rows;row++){if(M[row][c]%P){pr=row;break;}}
+    if(pr<0)continue;
+    t=M[r];M[r]=M[pr];M[pr]=t;
+    f=inv3(M[r][c]);
+    for(k=0;k<cols;k++)M[r][k]=(M[r][k]*f)%P;
+    for(row=0;row<rows;row++){
+      if(row!==r&&M[row][c]%P){
+        f=M[row][c];
+        for(k=0;k<cols;k++)M[row][k]=(((M[row][k]-f*M[r][k])%P)+P)%P;
+      }
+    }
+    piv.push(c);r++;
+  }
+  return {R:M,piv:piv};
+}
+function rankF3(M){return rrefF3(M).piv.length;}
+function nullspaceF3(M){
+  var o=rrefF3(M),R=o.R,piv=o.piv,cols=M[0].length,inpiv={},basis=[],fc,v,r;
+  for(r=0;r<piv.length;r++)inpiv[piv[r]]=r;
+  for(fc=0;fc<cols;fc++){
+    if(inpiv[fc]!==undefined)continue;
+    v=new Int32Array(cols);v[fc]=1;
+    for(r=0;r<piv.length;r++)v[piv[r]]=((-R[r][fc])%P+P)%P;
+    basis.push(v);
+  }
+  return basis;
+}
+/* polynomial gcd machinery over F_3 */
+function pTrim(a){var b=a.slice();while(b.length>1&&b[b.length-1]===0)b.pop();return b;}
+function pMul(a,b){var r=new Array(a.length+b.length-1).fill(0),i,j;
+  for(i=0;i<a.length;i++)if(a[i])for(j=0;j<b.length;j++)r[i+j]=(r[i+j]+a[i]*b[j])%P;return pTrim(r);}
+function pMod(a,m){a=a.slice();
+  while(a.length>=m.length&&a.some(function(x){return x;})){
+    if(a[a.length-1]===0){a.pop();continue;}
+    var c=a[a.length-1]*inv3(m[m.length-1])%P,s=a.length-m.length,i;
+    for(i=0;i<m.length;i++)a[s+i]=(((a[s+i]-c*m[i])%P)+P)%P;
+    while(a.length>1&&a[a.length-1]===0)a.pop();
+  }
+  return a.some(function(x){return x;})?pTrim(a):[0];}
+function pGcd(a,b){a=pTrim(a);b=pTrim(b);
+  while(b.some(function(x){return x;})){var t=pMod(a,b);a=b;b=t;}return a;}
+function pPowMod(f,e,m){var r=[1],b=pMod(f.slice(),m);
+  while(e>0){if(e&1)r=pMod(pMul(r,b),m);b=pMod(pMul(b,b),m);e>>=1;}return r;}
+function kByRank(L){return 2*(L*L-rankF3(buildM(L)));}
+function kByGcd(L){
+  var xl1=new Array(L+1).fill(0);xl1[0]=P-1;xl1[L]=1;
+  var fl=pPowMod([1,1],L,xl1);fl=fl.slice();fl[0]=((fl[0]-1)%P+P)%P;
+  var g=pGcd(xl1,pTrim(fl));
+  return g.some(function(x){return x;})?2*(g.length-1):2*L;
+}
+function caEvolve(s){var L=s.length,o=new Int32Array(L),i;
+  for(i=0;i<L;i++)o[i]=(s[i]+s[(i+1)%L])%P;return o;}
+function task3(L){ // kernel == closed CA trajectories, regenerate from seed
+  var M=buildM(L),ker=nullspaceF3(M),ok=true,vi,j,i,V,s;
+  for(vi=0;vi<ker.length;vi++){
+    V=ker[vi];s=new Int32Array(L);
+    for(i=0;i<L;i++)s[i]=V[i*L+0];
+    for(j=1;j<L;j++){
+      s=caEvolve(s);
+      for(i=0;i<L;i++)if(s[i]!==V[i*L+j]){ok=false;}
+    }
+    s=caEvolve(s);
+    for(i=0;i<L;i++)if(s[i]!==V[i*L+0]){ok=false;} // closure around torus
+  }
+  return {dim:ker.length,ok:ok};
+}
+function task4strips(L,wmax){ // any codeword confined to a width-w strip?
+  var M=buildM(L),found=[],w,start,orient,cols,i,d,sub,nd,r;
+  for(w=1;w<=wmax&&w<L;w++){
+    for(orient=0;orient<2;orient++){
+      for(start=0;start<L;start++){
+        cols=[];
+        if(orient===0){for(i=0;i<L;i++)for(d=0;d<w;d++)cols.push(i*L+((start+d)%L));}
+        else{for(i=0;i<L;i++)for(d=0;d<w;d++)cols.push(((start+d)%L)*L+i);}
+        sub=M.map(function(row){var rr=new Int32Array(cols.length),k;
+          for(k=0;k<cols.length;k++)rr[k]=row[cols[k]];return rr;});
+        nd=cols.length-rankF3(sub);
+        if(nd>0)found.push([w,orient?'i':'j',start,nd]);
+      }
+    }
+  }
+  return found;
+}
+function qprobe(L){ // is single-site Z a stabilizer product? (else: undetected logical)
+  var M=buildM(L),e0=new Int32Array(L*L);e0[0]=1;
+  var r1=rankF3(M),r2=rankF3(M.concat([e0]));
+  return {rank:r1,full:r1===L*L,inRowspace:r2===r1};
+}
+/*CORE-END*/
+
+/* baked expectations — Python conductor.py run, 2026-07-17 */
+var EXPECT_K={2:2,3:0,4:2,5:0,6:6,7:0,8:14,9:0,10:2,11:0,12:6,13:12};
+var EXPECT_T3={4:1,6:3,8:7,10:1,12:3,13:6};
+
+/* ============================ conductor ============================ */
+var Q=[],STATE={sweepOK:true,t3OK:true,t4OK:true,kLive:{},qp:{}};
+function mlog(id,txt,cls){var m=document.getElementById(id),d=document.createElement('div');
+  d.className='ln'+(cls?' '+cls:'');d.textContent=txt;m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function setTag(id,st){var t=document.getElementById(id);
+  t.textContent=st;t.className='tag '+(st==='LIT'?'lit':st==='FAIL'?'fail':'run');}
+function enq(f){Q.push(f);}
+function pump(){
+  if(!Q.length){finish();return;}
+  var f=Q.shift();
+  try{f();}catch(e){boom('conductor task',e);return;}
+  setTimeout(pump,30);
+}
+
+/* sweep */
+enq(function(){setTag('t0tag','RUN');mlog('m0','[sweep] k(L): live rank vs live gcd vs baked python','hd');});
+(function(){var L;for(L=2;L<=13;L++)(function(L){enq(function(){
+  var kr=kByRank(L),kg=kByGcd(L),kb=EXPECT_K[L];
+  var ok=(kr===kg)&&(kr===kb);STATE.kLive[L]=kr;if(!ok)STATE.sweepOK=false;
+  mlog('m0','L='+String(L).padStart(2)+'  rank:'+kr+'  gcd:'+kg+'  baked:'+kb+'  '+(ok?'PASS':'MISMATCH'),ok?'ok':'bad');
+});})(L);})();
+enq(function(){setTag('t0tag',STATE.sweepOK?'LIT':'FAIL');
+  mlog('m0','[sweep] '+(STATE.sweepOK?'three independent methods agree at every L. sealed.':'DISAGREEMENT — do not trust this page.'),STATE.sweepOK?'ok':'bad');});
+
+/* task-3 */
+enq(function(){setTag('t3tag','RUN');mlog('m3','[task-3] kernel == closed CA trajectories (regen from seed)','hd');});
+[4,6,8,10,12,13].forEach(function(L){enq(function(){
+  var t=task3(L),ok=t.ok&&t.dim===EXPECT_T3[L];if(!ok)STATE.t3OK=false;
+  mlog('m3','L='+String(L).padStart(2)+'  dim ker='+t.dim+' (baked '+EXPECT_T3[L]+')  CA+regen '+(t.ok?'PASS':'FAIL'),ok?'ok':'bad');
+});});
+enq(function(){setTag('t3tag',STATE.t3OK?'LIT':'FAIL');
+  mlog('m3','[task-3] '+(STATE.t3OK?'every codeword regenerates from its seed row under s→(1+x)s and closes on the torus. the 2D code IS the fractalized 1D ternary chain.':'reduction FAILED.'),STATE.t3OK?'ok':'bad');});
+
+/* task-4 */
+enq(function(){setTag('t4tag','RUN');mlog('m4','[task-4] strip hunt w≤3, both orientations + quantum probe','hd');});
+[6,8,10].forEach(function(L){enq(function(){
+  var f=task4strips(L,3),ok=f.length===0;if(!ok)STATE.t4OK=false;
+  mlog('m4','L='+String(L).padStart(2)+'  strips w≤3: '+(ok?'NONE — no string codewords':'FOUND '+JSON.stringify(f.slice(0,3))),ok?'ok':'bad');
+});});
+[7,8].forEach(function(L){enq(function(){
+  var q=qprobe(L);STATE.qp[L]=q;
+  mlog('m4','L='+L+'  q-probe: rankHZ='+q.rank+'/'+(L*L)+'  single-Z in stabilizers: '+q.inRowspace+(q.full?'  (k=0, no logicals)':'  → UNDETECTED weight-1 Z logical'),'ok');
+});});
+enq(function(){setTag('t4tag',STATE.t4OK?'LIT':'FAIL');
+  mlog('m4','[task-4] fractal support only; sharp edge on the quiet sublattice recorded.',STATE.t4OK?'ok':'bad');});
+
+/* ============================ verdict ============================ */
+function finish(){
+  var allOK=STATE.sweepOK&&STATE.t3OK&&STATE.t4OK;
+  setTag('ctag',allOK?'LIT':'FAIL');
+  var h='';
+  if(!allOK){h+='<div class="card fail">⛔ LIVE/BAKED DISAGREEMENT — a monitor above shows red. The numbers on this page cannot be trusted until resolved.</div>';}
+  h+='<div class="card tot"><b>IDENTIFICATION — toy instance of a published family.</b> fractal_ternary (decoupled wiring, rule s→(1+x)s) obeys the family law k(L) = 2·deg gcd((1+x)ᴸ−1, xᴸ−1) over F₃ at every tested size — three independent methods, live in this page. No novelty attaches to the construction; it sits in the Yoshida-2013 / reflected-CA-pair lineage.</div>';
+  h+='<div class="card lit"><b>LIT · sweep.</b> k(L) for L=2…13: '+Object.keys(EXPECT_K).map(function(L){return EXPECT_K[L];}).join(' ')+'. Non-monotonic by arithmetic, not accident — the L=13 spike exists because 3³≡1 (mod 13), so x¹³−1 grows cubic factors over F₃ and the CA suddenly finds closed orbits. The degeneracy is number theory.</div>';
+  h+='<div class="card lit"><b>LIT · task-3.</b> Every codeword is a closed trajectory of the 1D ternary CA, regenerated from its seed row alone. The 2D code is a fractalization of a 1D chain — fractal-looking support, integer-dimensional structure, exactly the published caveat.</div>';
+  h+='<div class="card lit"><b>LIT · task-4.</b> No codeword fits in a strip of width ≤3 in either orientation at any tested L. Logical support is genuinely fractal — the tower on the right, never a string.</div>';
+  h+='<div class="card warn"><b>SHARP EDGE (measured, not a bug).</b> In this decoupled wiring, X-checks never touch sublattice A: at L=8 a single-qutrit Z error is an undetected logical (weight-1). Unbiased quantum distance is 1. This wiring is a biased-noise classical pair — matching its published role — not a general quantum memory. The coupled wiring tested earlier is worse: valid group, k=0, stores nothing.</div>';
+  h+='<div class="card amber"><b>AMBER · identity.</b> The original session artifact&rsquo;s generators were not recoverable; this bench audits the canonical reconstruction. Everything above is true of THIS object; the match to the original toy is unconfirmed.</div>';
+  document.getElementById('readout').innerHTML=h;
+  try{draw2D();build3D();}catch(e){boom('render',e);}
+}
+
+/* ============================ 2D canvas ============================ */
+function cssv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function draw2D(){
+  var cv=document.getElementById('c2d'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+  /* chart */
+  var Ls=[],L;for(L=2;L<=13;L++)Ls.push(L);
+  var kmax=14,cw=(W-70)/Ls.length,x0=48,y0=16,ch=180;
+  g.strokeStyle='#2c2318';g.beginPath();g.moveTo(x0,y0);g.lineTo(x0,y0+ch);g.lineTo(W-16,y0+ch);g.stroke();
+  g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+  [0,7,14].forEach(function(t){var y=y0+ch-t/kmax*ch;g.fillText(String(t),x0-20,y+3);
+    g.strokeStyle='#1c1712';g.beginPath();g.moveTo(x0,y);g.lineTo(W-16,y);g.stroke();});
+  Ls.forEach(function(L,ix){
+    var k=STATE.kLive[L],x=x0+8+ix*cw,bh=k/kmax*ch;
+    g.fillStyle=cssv('--org');g.fillRect(x,y0+ch-bh,cw*0.55,bh||1);
+    var kg=kByGcd(L),yg=y0+ch-kg/kmax*ch;
+    g.strokeStyle=cssv('--amb');g.lineWidth=1.5;g.beginPath();
+    g.arc(x+cw*0.275,yg,4,0,6.2832);g.stroke();g.lineWidth=1;
+    g.fillStyle=cssv('--dim');g.fillText(String(L),x+cw*0.1,y0+ch+12);
+  });
+  g.fillStyle=cssv('--org2');g.font='11px ui-monospace,monospace';
+  g.fillText('k(L)  bars=rank  rings=gcd law',x0,y0-2);
+  /* Sierpinski raster */
+  var top=y0+ch+28,rows=Math.floor((H-top-8)/3),width=Math.floor((W-32)/3);
+  var s=new Int32Array(width);s[Math.floor(width/2)]=1;
+  g.fillStyle=cssv('--dim');g.fillText('(1+x)^t mod 3  — logical support raster',16,top-6);
+  for(var t=0;t<rows;t++){
+    for(var i=0;i<width;i++){
+      if(s[i]===0)continue;
+      g.fillStyle=(s[i]===1)?cssv('--org'):cssv('--amb');
+      g.fillRect(16+i*3,top+t*3,2.6,2.6);
+    }
+    var ns=new Int32Array(width);
+    for(i=0;i<width;i++)ns[i]=(s[i]+(i+1<width?s[i+1]:0))%P;
+    s=ns;
+  }
+}
+
+/* ============================ soft-GL 3D ============================ */
+var G3={yaw:0.7,pitch:0.42,spin:true,cells:null};
+function build3D(){
+  var T=27,Wd=55,c0=Math.floor(Wd/2),s=new Int32Array(Wd),cells=[],t,i;
+  s[c0]=1;
+  for(t=0;t<T;t++){
+    for(i=0;i<Wd;i++)if(s[i])cells.push({x:i-c0,y:t-T/2,v:s[i]});
+    var ns=new Int32Array(Wd);
+    for(i=0;i<Wd;i++)ns[i]=(s[i]+(i+1<Wd?s[i+1]:0))%P;
+    s=ns;
+  }
+  G3.cells=cells;
+  var cv=document.getElementById('c3d');
+  var drag=false,lx=0,ly=0;
+  cv.addEventListener('pointerdown',function(e){drag=true;lx=e.clientX;ly=e.clientY;});
+  window.addEventListener('pointerup',function(){drag=false;});
+  window.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    G3.yaw+=(e.clientX-lx)*0.008;G3.pitch+=(e.clientY-ly)*0.008;
+    G3.pitch=Math.max(-1.4,Math.min(1.4,G3.pitch));lx=e.clientX;ly=e.clientY;
+  });
+  document.getElementById('spin').addEventListener('click',function(){
+    G3.spin=!G3.spin;this.className=G3.spin?'on':'';});
+  requestAnimationFrame(tick3D);
+}
+function tick3D(){
+  try{
+    if(G3.spin)G3.yaw+=0.006;
+    var cv=document.getElementById('c3d'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+    g.fillStyle='#0a0908';g.fillRect(0,0,W,H);
+    var cy=Math.cos(G3.yaw),sy=Math.sin(G3.yaw),cp=Math.cos(G3.pitch),sp=Math.sin(G3.pitch);
+    var sc=10.5,cam=62,pts=[],k,c,X,Y,Z,x1,z1,y2,z2,d,px,py,sz;
+    for(k=0;k<G3.cells.length;k++){
+      c=G3.cells[k];X=c.x;Y=c.y;Z=0;
+      x1=X*cy+Z*sy; z1=-X*sy+Z*cy;
+      y2=Y*cp-z1*sp; z2=Y*sp+z1*cp;
+      d=cam+z2;if(d<8)continue;
+      px=W/2+x1*sc*(cam/d); py=H/2+y2*sc*(cam/d); sz=Math.max(1.4,3.4*(cam/d));
+      pts.push({px:px,py:py,sz:sz,z:z2,v:c.v});
+    }
+    pts.sort(function(a,b){return b.z-a.z;});
+    for(k=0;k<pts.length;k++){
+      var p=pts[k];
+      g.fillStyle=(p.v===1)?cssv('--org'):cssv('--amb');
+      g.globalAlpha=Math.max(0.35,Math.min(1,1.25-p.z/70));
+      g.fillRect(p.px-p.sz/2,p.py-p.sz/2,p.sz,p.sz);
+    }
+    g.globalAlpha=1;
+    g.fillStyle=cssv('--dim');g.font='10px ui-monospace,monospace';
+    g.fillText('t →  (each layer = one CA step)',10,H-10);
+    requestAnimationFrame(tick3D);
+  }catch(e){boom('3D',e);}
+}
+
+/* ============================ boot ============================ */
+try{
+  mlog('m0','monitor armed.','hd');mlog('m3','monitor armed.','hd');mlog('m4','monitor armed.','hd');
+  setTimeout(pump,60);
+}catch(e){boom('boot',e);}
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SHORTCUT &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

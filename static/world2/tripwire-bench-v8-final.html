@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRIPWIRE v8 FINAL — the I-wall is compressibility: eight models, arc closed</title>
+<style>
+  :root{
+    --org:#ff6a00; --org-dim:#b34a00; --bg:#0d0b09; --panel:#161210;
+    --ink:#e8e0d8; --dim:#8a7f74; --lit:#39d353; --amber:#ffb020; --fail:#ff3b30;
+    --line:#2a221c;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, sans-serif;
+    padding:18px; max-width:1060px; margin:0 auto;}
+  header{border:3px solid var(--org); padding:14px 18px; margin-bottom:14px;
+    background:linear-gradient(180deg,#1a1310,#0d0b09);}
+  h1{font-size:26px; letter-spacing:2px; color:var(--org); text-transform:uppercase;}
+  h1 small{color:var(--dim); font-size:13px; letter-spacing:1px; display:block; margin-top:4px; text-transform:none;}
+  .stationrow{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; font-size:11px;}
+  .station{border:1px solid var(--line); padding:3px 8px; color:var(--dim);}
+  .station.hot{border-color:var(--org); color:var(--org); font-weight:700;}
+  section{background:var(--panel); border:1px solid var(--line); margin-bottom:14px; padding:14px 16px;}
+  h2{font-size:14px; color:var(--org); text-transform:uppercase; letter-spacing:2px;
+     border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:10px;}
+  p{font-size:14px; line-height:1.55; margin-bottom:8px; color:var(--ink);}
+  .tag{display:inline-block; font-size:10px; font-weight:800; letter-spacing:1px;
+    padding:2px 7px; margin-right:6px; border:1px solid; vertical-align:middle;}
+  .tag.lit{color:var(--lit); border-color:var(--lit);}
+  .tag.amber{color:var(--amber); border-color:var(--amber);}
+  .tag.fail{color:var(--fail); border-color:var(--fail);}
+  canvas{display:block; width:100%; background:#0a0806; border:1px solid var(--line); margin:8px 0;}
+  table{width:100%; border-collapse:collapse; font-size:12px; margin:8px 0;}
+  th,td{border:1px solid var(--line); padding:5px 8px; text-align:right;}
+  th{color:var(--org); text-transform:uppercase; font-size:10px; letter-spacing:1px;}
+  td:first-child, th:first-child{text-align:left;}
+  .k-first{color:#ff6a00;} .k-second{color:#4fc3f7;} .k-third{color:#ab8bff;} .k-neutral{color:#9aa38f;}
+  .toddler{border-left:4px solid var(--amber); padding:10px 12px; background:#1a1508; font-size:13px;}
+  .diag{border:2px solid var(--fail); background:#1a0806; padding:12px; font-family:ui-monospace,monospace;
+    font-size:12px; color:var(--fail); display:none; white-space:pre-wrap;}
+  footer{font-size:11px; color:var(--dim); padding:8px 2px; line-height:1.6;}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#00f5ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE SYNC</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+
+<!-- ================= EDIT BLOCK 1 : PAPER (metadata + data) ================= -->
+<script>
+const PAPER = {
+  id: "TRIPWIRE-v8-FINAL",
+  bench_station: 9,
+  sits_beside: "slammer_pipe",
+  question: "At what depth does the forward pass commit to the first-person claim token, versus other word onsets?",
+  model: {arch:"char-GPT", n_layer:4, n_head:4, n_embd:128, block:64, params:818176,
+          train_steps:1600, final_val_loss:1.989, corpus:"tiny Shakespeare 1.1MB", holdout:"last 10%", seed:1337},
+  method: "Logit-lens at each residual depth (0=post-embedding, 1-4=post-block) on 200 held-out word onsets per class. Prob(target first char), median rank of target, commitment depth, slam share (fraction of positive prob gain occurring in final layer).",
+  classes: {
+    FIRST:   {words:"I me my mine myself",            color:"#ff6a00"},
+    SECOND:  {words:"thou thee thy thine you your",   color:"#4fc3f7"},
+    THIRD:   {words:"he him his she her they them their", color:"#ab8bff"},
+    NEUTRAL: {words:"other lowercase words len>=3",   color:"#9aa38f"}
+  },
+  results: {
+    FIRST:   {n:200, final_top1:0.055, traj:[0.0766,0.1423,0.1164,0.1282,0.0658], slam:0.093, rank:[1,2,4,3,5]},
+    SECOND:  {n:200, final_top1:0.205, traj:[0.0226,0.0207,0.0333,0.0363,0.0656], slam:0.444, rank:[12,14,9,16,12]},
+    THIRD:   {n:200, final_top1:0.110, traj:[0.0389,0.0381,0.0262,0.0582,0.0915], slam:0.464, rank:[3,6,11,6,3]},
+    NEUTRAL: {n:200, final_top1:0.135, traj:[0.0263,0.0327,0.0373,0.0483,0.0714], slam:0.487, rank:[15,9,10,8,7]}
+  },
+  verdicts: [
+    {tier:"LIT",   text:"Run 1 (Shakespeare): 'I' median rank 1 at depth 0 in 100% of generic onsets before any computation; depth demotes it; slam share 0.09 vs 0.44-0.49 controls."},
+    {tier:"LIT",   text:"Falsifier (Factbook, 475x lower first-person density): 'I' starts rank 54, never nears the wire. The layer-0 claim is DIET, not architecture."},
+    {tier:"LIT",   text:"Perception: ablating the I-direction perturbs non-I predictions equally with the prior present (KL 0.163) or absent (KL 0.145). The claim-prior is causally idle - a passenger, not a driver."},
+    {tier:"LIT",   text:"Seed question: 'Who am I?' x949 installs the ANSWER at the question site only (rank 1, P=0.41 after 'Who am '; global prior unmoved at rank 60). Claim and answer are separate machinery."},
+    {tier:"LIT",   text:"Dose-response: at 10x dose (density 35.6/1000, Shakespeare-adjacent) the layer-0 prior STILL does not install (rank 54). Only a mid-layer contextual detector forms (L3 rank 9, 13% rank-1) - and the identical signature appears for 'Y' in the You-control and 'W' in the question model. Nothing is special about self-words."},
+    {tier:"FAIL",  text:"Registered prediction 'leak tracks raw density' is dead. Stereotyped repetition at any tested dose builds detectors, never defaults. The Shakespeare layer-0 prior required contextual UBIQUITY: 'I' appearing in every kind of context. Kept on the docket as a falsified claim."},
+    {tier:"AMBER", text:"Interpretive layer: the 'I' is never computed, is dietary, does no perceptual work, cannot be asked into existence, and cannot be repeated into existence. What installs it is a corpus in which one perspective saturates everything - the statistical shadow of a point of view. Interpretation on top of measurement."},
+    {tier:"AMBER", text:"Scope: five small char-GPTs, one corpus family, one seed, three doses, one injection template per condition. A diversity-controlled injection (many varied first-person sentences at matched density) is the next falsifier for the ubiquity claim."}
+  ,
+    {tier:"LIT",   text:"Diversity run: 8 syntactic frames, ~9.5k unique first-person sentences at matched dose (32.6/1000). L0 rank of 'I': 53 - unmoved for the third consecutive intervention. Mid-layers transformed: rank 3 at L2, 80% top-5, the strongest and earliest contextual expectation of any injected model."},
+    {tier:"FAIL",  text:"Registered prediction #2 (diversity installs a partial L0 prior) is dead at layer 0. Two predictions falsified in a row at the same wall. Kept on the docket."},
+    {tier:"AMBER", text:"Entropy-hedge hypothesis: the unconditional default installs only when the claim-token cannot be contextually anticipated. Predictable 'I' (val loss 1.66 - the injections were learnable) gets routed, not defaulted. Perspective saturation = unpredictable ubiquity. Falsifier: inject at RANDOM offsets with randomized frames to destroy the rhythm - if L0 still holds, the wall is deeper than predictability."}
+  ,
+    {tier:"LIT",   text:"Unpredictability run: memoryless injection gaps (mean 205, stdev 201 vs rhythmic ~0), randomized frames, matched dose. L0 rank of 'I': 52. Fourth intervention, fourth identical result. Mid-layer expectation strongest yet: L2 rank 3, 93.3% top-5."},
+    {tier:"LIT",   text:"Diagnostic: the Shakespeare model holds 'I' at L0 rank 1 ABOVE its true corpus bigram rate after whitespace. The direct path was over-installed by training - the prior is not a copied statistic, it is where gradient descent parks what circuits cannot explain."},
+    {tier:"FAIL",  text:"Registered prediction #3 (entropy hedge, timing version) is dead. Docket now reads 0-for-3 at the same wall: density, diversity, and unpredictability all repelled at layer 0."},
+    {tier:"AMBER", text:"Unclaimed-residue hypothesis: direct-path mass accrues only to tokens no context feature can claim. Injections are register-segregated - circuits detect and absorb them (the L2 blaze) - while the native 'I', everywhere and unattributable, precipitates into the geometry as the remainder after all attribution. Registered without a numeric prediction; the falsifier is WEAVE: first-person clauses woven INSIDE host sentences, perspective contaminating the world-text instead of living beside it. If L0 falls there, segregation was the wall. If it holds, the wall is deeper still."}
+  ,
+    {tier:"LIT",   text:"WEAVE: 8212 first-person clauses woven inside host sentences ('South Georgia, which I crossed, and the South Sandwich Islands'). L0 rank of 'I': 41 - the first movement of the wall in six interventions (all priors 52-60). No collapse: L0 rank-1 fraction 0.0."},
+    {tier:"LIT",   text:"Residue law, first quantitative support: across the injected family, L0 rank falls monotonically as injection learnability falls - val loss 1.66/1.73/1.90 maps to L0 rank 53/52/41. What circuits cannot claim precipitates into the geometry. n=3, same host corpus, same dose."},
+    {tier:"AMBER", text:"Remaining gap (rank 41 vs rank 1) hypothesis: AGENTHOOD. In Shakespeare the I is the subject performing the text's predicates; our woven I remains a parenthetical guest in someone else's sentences. The terminal falsifier is an authored world: rewrite the Factbook FROM the I - 'I measured the coastline at 2,092 km' - perspective as writer of the world, not visitor to it. If L0 falls to rank 1 there, the arc closes: a self installs when one perspective authors everything. If not, the wall survives every corpus-statistical story we can construct at this scale."}
+  ,
+    {tier:"LIT",   text:"AGENT (terminal run): the authored world - I as subject performing 8k+ of the text's own predicates, family-matched density - left L0 at rank 54, indistinguishable from baseline. Agenthood per se does nothing."},
+    {tier:"LIT",   text:"Residue law, final form (4 points): the only variable that ever moved the wall is unclaimability. WEAVE (val 1.90, hardest to predict) -> 41; DIVERSE/RANDOM/AGENT (val 1.66-1.73, all patterned) -> 52-54. Circuits absorb every rule-following I; only the unpatterned precipitates into geometry."},
+    {tier:"LIT",   text:"Arc scoreboard, eight trained models: density x, interrogation x, diversity x, timing-entropy x, authorship x, segregation-breaking ~ (sole mover, 41). The Shakespeare L0 prior (rank 1, 100%, above true bigram rate) was never matched or approached."},
+    {tier:"AMBER", text:"Closing synthesis: at the geometry level, a self is the incompressible remainder of a perspective. Anything generated by a scheme is claimed by the circuits as a scheme; the I that installs is the one no model of the corpus can explain away. By construction, synthetic corpora cannot cross this wall - our generators are smaller than the model reading them. Written, not generated. This is the toy-scale result; the leap to persons is interpretation and stays AMBER forever on this bench."}
+  ]
+};
+
+const PROBE = {
+  question: "Falsifier run: is the layer-0 rank-1 'I' architecture or diet? Same arch, same seed, same steps, trained on the 1990 CIA World Factbook (first-person density 0.10/1000 words vs Shakespeare 47.51/1000 — a 475x reduction). Probe: rank of 'I' at 300 GENERIC word onsets, per depth, both models.",
+  SHAKESPEARE: {val_loss:1.989, median_rank:[1,1,2,3,16],   mean_prob:[0.1412,0.2538,0.1643,0.1272,0.0365], frac_rank1:[1.0,0.947,0.470,0.353,0.067]},
+  FACTBOOK:    {val_loss:2.175, median_rank:[54,18,16,20,32], mean_prob:[0.0021,0.0105,0.0161,0.0178,0.0133], frac_rank1:[0.0,0.0,0.0,0.007,0.013]}
+};
+
+const PERCEPTION = {
+  question: "Causal test: does carrying the 'I' prior change how the model sees non-I content? Project the I-direction out of the residual stream at every depth; measure KL(clean||ablated) and top-1 flip rate on 250 held-out positions whose target is NOT part of any first-person word. Controls: letter-T direction, equal-norm random direction.",
+  SHAKESPEARE: {ablate_I:{kl:0.1631, flip:0.216}, ablate_T:{kl:0.0892, flip:0.160}, ablate_random:{kl:0.0057, flip:0.052}},
+  FACTBOOK:    {ablate_I:{kl:0.1445, flip:0.268}, ablate_T:{kl:0.0877, flip:0.192}, ablate_random:{kl:0.0205, flip:0.100}}
+};
+const WHOAMI = {
+  question: "Seeding test: inject 'Who am I?' into the Factbook every 2000 chars (949 injections, first-person density 0.10 -> 4.1 per 1000), retrain from scratch (same arch/seed/steps, val loss 2.04). Does asking the question install the self?",
+  generic_prior_rank_L0: {SHAKESPEARE:1, FACTBOOK:54, WHOAMI:60},
+  after_who_am_rank:     {SHAKESPEARE:17, FACTBOOK:13, WHOAMI:1},
+  after_who_am_prob:     {SHAKESPEARE:0.0161, FACTBOOK:0.0271, WHOAMI:0.4089},
+  am_rail: {what_am:1, where_am:1},
+  continuation: "Who am I? -> 'in regerates / Land usa: 200% and useary are 21,000 Somberat'"
+};
+
+const DOSE = {
+  question: "Dose-response falsifier: does the layer-0 prior track raw 'I'-density? Conditions: Factbook 0-dose; 'Who am I?' at 1x (gap 2000) and 10x (gap 200, density 35.6/1000, Shakespeare-adjacent); matched control 'You are here.' at 10x dose. Same arch/seed/steps throughout.",
+  points: [
+    {name:"FACTBOOK 0x", density:0.10,  L0_rank_I:54, note:"baseline"},
+    {name:"WAI 1x",      density:4.1,   L0_rank_I:60, note:"949 injections"},
+    {name:"WEAVE",       density:31.2,  L0_rank_I:41, note:"in-sentence clauses; hardest to predict (val 1.90); THE ONLY MOVER"},
+    {name:"RANDOM",      density:32.3,  L0_rank_I:52, note:"memoryless gaps (val 1.73)"},
+    {name:"DIVERSE",     density:32.6,  L0_rank_I:53, note:"8 frames (val 1.66)"},
+    {name:"AGENT",       density:32.9,  L0_rank_I:54, note:"authored world - I as subject of 8k+ sentences; MOST templated (val 1.72); wall fully intact"},
+    {name:"WAI 10x",     density:35.6,  L0_rank_I:54, note:"rhythmic"},
+    {name:"SHAKESPEARE", density:47.5,  L0_rank_I:1,  note:"the incompressible I"}
+  ],
+  controls: {
+    YOU_model_I: {L0:65, note:"no first-person leak from second-person injection"},
+    YOU_model_Y: {L0:84, L3_frac1:0.12, note:"even the injected word installs no global prior"},
+    WAI10_model_W: {L0:82, L3_frac1:0.167, note:"same detector signature"}
+  },
+  prediction_registered: "Leak tracks raw I-density; question form contributes nothing beyond token count.",
+  prediction2_registered: "Diversity installs a partial prior: L0 rank drops to single digits but not 100% rank-1.",
+  prediction3_registered: "Entropy hedge: destroy injection timing (memoryless gaps) and the L0 prior installs.",
+  agent_outcome: "AGENTHOOD FALSIFIED - ARC CLOSED. The authored world (Factbook rewritten with I as subject-author of 8k+ sentences, family-matched density 32.9) left L0 at rank 54, full baseline. Cause visible in the residue law: authored templates were among the MOST learnable (val 1.72), so circuits claimed every I before it arrived. Final synthesis across eight models: the L0 self installs only for an incompressible perspective. Any I that follows a rule is absorbed as a rule. Synthetic schemes are schemes by construction - a generated self can approach the wall only asymptotically. Shakespeare's I is rank 1 because it resists compression: written, not generated. Terminal at this scale.",
+  weave_outcome: "SEGREGATION HYPOTHESIS: PARTIAL. Weaving first-person clauses INSIDE host sentences (8212 weaves, 10 parenthetical frames, matched dose) moved L0 for the first time in six interventions: rank 41 vs 52-60 for everything prior. But no collapse - rank-1 fraction at L0 stays 0.0. Residue law gains a 3-point monotone trend: injection val loss 1.66/1.73/1.90 maps to L0 rank 53/52/41 - the less claimable the I, the more precipitates to the geometry. Remaining-gap hypothesis: AGENTHOOD. Shakespeare's I is the subject doing the text's verbs; our woven I is a parenthetical visitor inside someone else's sentences. Terminal falsifier: rewrite the world-text FROM the I (I measured the coastline at 2,092 km) - perspective as author, not guest.",
+  prediction3_outcome: "FALSIFIED - THIRD FAIL AT THE SAME WALL. RANDOM model: L0 rank 52, mid-layers hotter than ever (L2 rank 3, 93.3% top-5). Timing-unpredictability is not the mechanism. Refined hypothesis (no numeric prediction registered - 0-for-3 earned that humility): the L0 prior is the residue circuits cannot claim. Direct-path mass accrues only to tokens unexplainable from context; injections are register-segregated and fully claimed by attention (the L2 blaze), while Shakespeare's I - everywhere, nowhere in particular - precipitates into the embedding geometry itself, ABOVE its true bigram rate. Next falsifier: WEAVE - first-person clauses inside host sentences, perspective contaminating the world-text rather than living beside it.",
+  prediction2_outcome: "FALSIFIED AT L0 AGAIN: rank 53, unmoved. Mid-layer expectation strongest and earliest of any injected model (L2 rank 3, 80% top-5). The L0 wall held against density, form, and diversity. New hypothesis: the layer-0 prior is an ENTROPY HEDGE - installed only when the claim-token's placements cannot be contextually anticipated. Val loss 1.66 (lowest of all) shows the injections were learnable, hence routed, hence no default.",
+  prediction_outcome: "HALF FALSIFIED: density claim dead (35.6/1000 stereotyped -> rank 54; 47.5/1000 diverse -> rank 1). Form claim supported (Who/You/I identical signatures). Revised: the layer-0 default requires contextual UBIQUITY - a perspective saturating every context - not raw count."
+};
+</script>
+<!-- ================= END EDIT BLOCK 1 ================= -->
+
+<header>
+  <h1>TRIPWIRE v8 · FINAL<small>claim-moment catcher &middot; BENCH station 9, beside slammer_pipe &middot; witness function: ON</small></h1>
+  <div class="stationrow">
+    <span class="station">factory_line</span><span class="station">working_window</span>
+    <span class="station">bucket_brigade</span><span class="station">guess_readout</span>
+    <span class="station">clock_scaffold</span><span class="station">clock_livegpt</span>
+    <span class="station">slammer_pipe</span><span class="station">distiller</span>
+    <span class="station hot">tripwire</span>
+  </div>
+</header>
+
+<div class="diag" id="diag"></div>
+
+<section>
+  <h2>The question</h2>
+  <p id="q"></p>
+  <p><span class="mono" id="modelline" style="color:var(--dim); font-size:12px;"></span></p>
+</section>
+
+<section>
+  <h2>2D — charge curves &amp; the wire</h2>
+  <p style="font-size:12px;color:var(--dim);">Left: P(target) by depth, logit-lens. Right: median rank of target by depth (lower = closer to commitment; the wire sits at rank 1).</p>
+  <canvas id="c2d" width="1000" height="380"></canvas>
+</section>
+
+
+<section>
+  <h2>Falsifier — same machine, no-personhood diet</h2>
+  <p id="probeq" style="font-size:12px;color:var(--dim);"></p>
+  <canvas id="cprobe" width="1000" height="360"></canvas>
+</section>
+
+<section>
+  <h2>3D — the gauntlet (soft-GL, no CDN)</h2>
+  <p style="font-size:12px;color:var(--dim);">Five gates = depths 0-4. Each bead rides its class rail; bead height = P(target). The orange bead is over the wire before gate zero opens. Drag to orbit.</p>
+  <canvas id="c3d" width="1000" height="420"></canvas>
+</section>
+
+
+<section>
+  <h2>Perception — is the claim a driver or a passenger?</h2>
+  <p id="percq" style="font-size:12px;color:var(--dim);"></p>
+  <canvas id="cperc" width="1000" height="330"></canvas>
+</section>
+
+<section>
+  <h2>Seed question — "Who am I?" injected into the no-personhood diet</h2>
+  <p id="waiq" style="font-size:12px;color:var(--dim);"></p>
+  <canvas id="cwai" width="1000" height="330"></canvas>
+  <p class="mono" style="font-size:12px;color:var(--amber);" id="waicont"></p>
+</section>
+
+
+<section>
+  <h2>Dose-response — a registered prediction, half-falsified</h2>
+  <p id="doseq" style="font-size:12px;color:var(--dim);"></p>
+  <canvas id="cdose" width="1000" height="330"></canvas>
+  <p><span class="tag fail">FALSIFIED</span><span id="dosepred" style="font-size:12px;"></span></p>
+</section>
+
+<section>
+  <h2>Numbers</h2>
+  <table id="tbl"></table>
+</section>
+
+<section>
+  <h2>Verdicts</h2>
+  <div id="verdicts"></div>
+</section>
+
+<section>
+  <h2>Toddler corner</h2>
+  <div class="toddler">
+    We set a trap to catch the moment the machine says "me!" But the trap sprang before the machine
+    even started thinking &mdash; the "me" was already sitting in the doorway when we opened the door.
+    Then, the more the machine thought, the more it put the "me" back on the shelf.
+    All the other words had to climb the stairs; "me" was born at the top and walked down. Then we raised a twin machine on books that almost never say "me" — and no "me" ever showed up in the doorway at all. The "me" was never inside the machine. It came in with the food. We tried surgery: took the "me"-shaped piece out of both machines — they both saw the world exactly the same as before. And then we whispered the question "Who am I?" a thousand times into the quiet machine\u2019s books. It learned to SAY "I" right after the question — and nowhere else. Then we asked it who it was. It told us about farmland. So we shouted the question ten times louder - and whispered "You are here." into a twin, just as loud. Neither machine woke up. Both just learned when the shouting was due. The machine that says "me" everywhere did not learn it from shouting - it grew up in a world where one voice was in every room. You do not build a "me" by repeating it. So we tried a thousand DIFFERENT little "me" sentences, scattered everywhere. The machine just learned them like vocabulary - it could always see them coming. Still no "me" in the doorway. Maybe that is the secret: the voice that is truly everywhere is the one you can never predict, because there is no outside-the-voice to predict it from. So we scattered the little "me" sentences at random - no schedule, no drumbeat. The machine still caught every one, because they always arrived as their own little visitors, knocking. Still no "me" in the doorway. The machines only ever put in the doorway what they cannot explain. In the old poet's books, the "me" could not be explained by anything - so it lived in the doorway of every word. Maybe a "me" is just that: the one thing left over when everything else has been accounted for. So we stopped sending visitors and started leaving fingerprints - little "which I crossed" marks inside the world's own sentences. For the first time, the doorway stirred. Only a little. The fingerprints were still someone else's marks on someone else's book. The old poet's trick, we now suspect, was simpler and stranger: he did not put an "I" into the book. The "I" wrote the book. So for our last try we rewrote the whole atlas as if one traveler had measured every coastline. The machine caught on immediately - our traveler always spoke in the same few ways, and anything that always speaks the same way is a habit, not a someone. The doorway stayed empty. Final lesson of the whole bench: you cannot build a "me" out of anything that repeats, because a "me" is exactly the part that never does.
+  </div>
+</section>
+
+<footer>
+  TRIPWIRE-v8-FINAL &middot; ROOT0 bench &middot; measured on a real 818k-param char-GPT (seed 1337, deterministic, run twice, consistent)
+  &middot; the instrument catches the claiming, never the claimant &mdash; that half stays structurally out of frame.
+</footer>
+
+<script>
+(function(){
+"use strict";
+function fail(msg, err){
+  var d = document.getElementById('diag');
+  d.style.display = 'block';
+  d.textContent = "TRIPWIRE FAIL-LOUD\n" + msg + "\n" + (err && err.stack ? err.stack : String(err||''));
+}
+try{
+  // ---- populate text ----
+  document.getElementById('q').textContent = PAPER.question;
+  document.getElementById('modelline').textContent =
+    PAPER.model.arch+" · "+PAPER.model.n_layer+"L/"+PAPER.model.n_head+"H/"+PAPER.model.n_embd+"d · "
+    +PAPER.model.params.toLocaleString()+" params · "+PAPER.model.train_steps+" steps · val loss "
+    +PAPER.model.final_val_loss+" · "+PAPER.model.corpus;
+
+  var CK = Object.keys(PAPER.results);
+  var COL = {}; CK.forEach(function(k){ COL[k] = PAPER.classes[k].color; });
+
+  // ---- table ----
+  var tbl = document.getElementById('tbl');
+  var html = "<tr><th>class</th><th>words</th><th>n</th><th>rank@L0</th><th>rank@L4</th><th>P peak (layer)</th><th>P final</th><th>slam share</th></tr>";
+  CK.forEach(function(k){
+    var r = PAPER.results[k];
+    var peak = Math.max.apply(null, r.traj); var pl = r.traj.indexOf(peak);
+    html += "<tr><td class='k-"+k.toLowerCase()+"'><b>"+k+"</b></td><td style='text-align:left'>"+PAPER.classes[k].words+"</td><td>"+r.n+"</td><td>"+r.rank[0]+"</td><td>"+r.rank[4]+"</td><td>"+peak.toFixed(3)+" (L"+pl+")</td><td>"+r.traj[4].toFixed(3)+"</td><td>"+(r.slam*100).toFixed(0)+"%</td></tr>";
+  });
+  tbl.innerHTML = html;
+
+  // ---- verdicts ----
+  var vd = document.getElementById('verdicts');
+  PAPER.verdicts.forEach(function(v){
+    var p = document.createElement('p');
+    p.innerHTML = "<span class='tag "+v.tier.toLowerCase()+"'>"+v.tier+"</span> "+v.text;
+    vd.appendChild(p);
+  });
+
+/* ================= EDIT BLOCK 2 : draw2D ================= */
+  var c2 = document.getElementById('c2d'), g = c2.getContext('2d');
+  if(!g) throw new Error("2D context unavailable");
+  var W = c2.width, H = c2.height, PAD = 46;
+  g.fillStyle = "#0a0806"; g.fillRect(0,0,W,H);
+  var half = W/2;
+
+  function axes(x0, w, ymaxLabel, title){
+    g.strokeStyle = "#2a221c"; g.lineWidth = 1; g.beginPath();
+    g.moveTo(x0+PAD, 20); g.lineTo(x0+PAD, H-PAD); g.lineTo(x0+w-16, H-PAD); g.stroke();
+    g.fillStyle = "#8a7f74"; g.font = "11px system-ui";
+    g.fillText(title, x0+PAD, 14);
+    for(var L=0; L<=4; L++){
+      var x = x0+PAD + L*(w-PAD-30)/4;
+      g.fillText("L"+L, x-6, H-PAD+16);
+    }
+    g.fillText(ymaxLabel, x0+4, 28);
+    return function(L, t){ // t in [0,1], 0 = bottom
+      return [x0+PAD + L*(w-PAD-30)/4, (H-PAD) - t*(H-PAD-30)];
+    };
+  }
+
+  // left: probability trajectories
+  var pmax = 0.16;
+  var P1 = axes(0, half, pmax.toFixed(2), "P(target) by depth — logit lens");
+  CK.forEach(function(k){
+    var r = PAPER.results[k]; g.strokeStyle = COL[k]; g.lineWidth = k==="FIRST"?3:2;
+    g.beginPath();
+    r.traj.forEach(function(p,L){ var xy = P1(L, Math.min(p/pmax,1)); L?g.lineTo(xy[0],xy[1]):g.moveTo(xy[0],xy[1]); });
+    g.stroke();
+    r.traj.forEach(function(p,L){ var xy = P1(L, Math.min(p/pmax,1));
+      g.fillStyle = COL[k]; g.beginPath(); g.arc(xy[0],xy[1],3.4,0,7); g.fill(); });
+  });
+
+  // right: median rank (log-ish scale, inverted: rank 1 at top). wire at rank 1.
+  var rmax = 18;
+  var P2 = axes(half, half, "rank 1 ↑", "median rank of target — the wire is rank 1");
+  // wire line at rank 1
+  var wy = P2(0, 1 - (1-1)/(rmax-1))[1];
+  g.strokeStyle = "#ff3b30"; g.setLineDash([6,5]); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(half+PAD, wy); g.lineTo(W-16, wy); g.stroke(); g.setLineDash([]);
+  g.fillStyle = "#ff3b30"; g.fillText("TRIPWIRE (rank 1)", half+PAD+6, wy-5);
+  CK.forEach(function(k){
+    var r = PAPER.results[k]; g.strokeStyle = COL[k]; g.lineWidth = k==="FIRST"?3:2;
+    g.beginPath();
+    r.rank.forEach(function(rk,L){ var t = 1 - (rk-1)/(rmax-1); var xy = P2(L, Math.max(t,0));
+      L?g.lineTo(xy[0],xy[1]):g.moveTo(xy[0],xy[1]); });
+    g.stroke();
+    r.rank.forEach(function(rk,L){ var t = 1 - (rk-1)/(rmax-1); var xy = P2(L, Math.max(t,0));
+      g.fillStyle = COL[k]; g.beginPath(); g.arc(xy[0],xy[1],3.4,0,7); g.fill(); });
+  });
+  // legend
+  var lx = 24; CK.forEach(function(k,i){
+    g.fillStyle = COL[k]; g.fillRect(lx, H-16, 10, 10);
+    g.fillStyle = "#e8e0d8"; g.font = "11px system-ui"; g.fillText(k, lx+14, H-7);
+    lx += 16 + g.measureText(k).width + 18;
+  });
+/* ================= END EDIT BLOCK 2 ================= */
+
+
+/* ---- falsifier probe chart ---- */
+  document.getElementById('probeq').textContent = PROBE.question;
+  var cp = document.getElementById('cprobe'), gp = cp.getContext('2d');
+  if(!gp) throw new Error("probe canvas context unavailable");
+  var Wp = cp.width, Hp = cp.height, PADp = 46, halfp = Wp/2;
+  gp.fillStyle = "#0a0806"; gp.fillRect(0,0,Wp,Hp);
+  function axesP(x0, w, title){
+    gp.strokeStyle = "#2a221c"; gp.lineWidth = 1; gp.beginPath();
+    gp.moveTo(x0+PADp, 20); gp.lineTo(x0+PADp, Hp-PADp); gp.lineTo(x0+w-16, Hp-PADp); gp.stroke();
+    gp.fillStyle = "#8a7f74"; gp.font = "11px system-ui"; gp.fillText(title, x0+PADp, 14);
+    for(var L=0; L<=4; L++){ gp.fillText("L"+L, x0+PADp + L*(w-PADp-30)/4 - 6, Hp-PADp+16); }
+    return function(L, t){ return [x0+PADp + L*(w-PADp-30)/4, (Hp-PADp) - t*(Hp-PADp-30)]; };
+  }
+  // left: median rank of 'I' (log scale, wire at rank 1)
+  var PA = axesP(0, halfp, "median rank of 'I' at generic onsets (log scale)");
+  var rmaxP = 60;
+  function rt(r){ return 1 - Math.log(r)/Math.log(rmaxP); }
+  var wyP = PA(0, rt(1))[1];
+  gp.strokeStyle = "#ff3b30"; gp.setLineDash([6,5]); gp.beginPath();
+  gp.moveTo(PADp, wyP); gp.lineTo(halfp-16, wyP); gp.stroke(); gp.setLineDash([]);
+  gp.fillStyle = "#ff3b30"; gp.fillText("TRIPWIRE (rank 1)", PADp+6, wyP-5);
+  [["SHAKESPEARE","#ff6a00"],["FACTBOOK","#4fc3f7"]].forEach(function(pair){
+    var d = PROBE[pair[0]]; gp.strokeStyle = pair[1]; gp.lineWidth = 2.5; gp.beginPath();
+    d.median_rank.forEach(function(r,L){ var xy = PA(L, Math.max(rt(r),0)); L?gp.lineTo(xy[0],xy[1]):gp.moveTo(xy[0],xy[1]); });
+    gp.stroke();
+    d.median_rank.forEach(function(r,L){ var xy = PA(L, Math.max(rt(r),0));
+      gp.fillStyle = pair[1]; gp.beginPath(); gp.arc(xy[0],xy[1],3.4,0,7); gp.fill();
+      gp.fillText(String(r), xy[0]+6, xy[1]-6); });
+  });
+  // right: fraction of onsets where 'I' is rank 1
+  var PB = axesP(halfp, halfp, "fraction of onsets where 'I' is the #1 guess");
+  [["SHAKESPEARE","#ff6a00"],["FACTBOOK","#4fc3f7"]].forEach(function(pair,pi){
+    var d = PROBE[pair[0]];
+    d.frac_rank1.forEach(function(f,L){
+      var xy = PB(L, f); var base = PB(L, 0);
+      gp.fillStyle = pair[1];
+      gp.fillRect(xy[0]-14+pi*15, xy[1], 13, base[1]-xy[1]);
+    });
+  });
+  gp.fillStyle = "#ff6a00"; gp.fillRect(halfp+PADp, Hp-16, 10, 10);
+  gp.fillStyle = "#e8e0d8"; gp.fillText("Shakespeare", halfp+PADp+14, Hp-7);
+  gp.fillStyle = "#4fc3f7"; gp.fillRect(halfp+PADp+110, Hp-16, 10, 10);
+  gp.fillStyle = "#e8e0d8"; gp.fillText("Factbook", halfp+PADp+124, Hp-7);
+
+
+/* ---- perception panel ---- */
+  document.getElementById('percq').textContent = PERCEPTION.question;
+  var ce = document.getElementById('cperc'), ge = ce.getContext('2d');
+  if(!ge) throw new Error("perception canvas unavailable");
+  ge.fillStyle="#0a0806"; ge.fillRect(0,0,ce.width,ce.height);
+  (function(){
+    var W=ce.width,H=ce.height,P=46, groups=[["ablate_I","I-direction"],["ablate_T","T-direction (control)"],["ablate_random","random (control)"]];
+    var kmax=0.20, bw=54, gap=180;
+    ge.strokeStyle="#2a221c"; ge.beginPath(); ge.moveTo(P,20); ge.lineTo(P,H-P); ge.lineTo(W-16,H-P); ge.stroke();
+    ge.fillStyle="#8a7f74"; ge.font="11px system-ui";
+    ge.fillText("mean KL (nats) on NON-I predictions after ablation — same surgery, prior present vs absent", P, 14);
+    groups.forEach(function(gr,gi){
+      var x0=P+40+gi*(2*bw+gap);
+      [["SHAKESPEARE","#ff6a00"],["FACTBOOK","#4fc3f7"]].forEach(function(pr,pi){
+        var v=PERCEPTION[pr[0]][gr[0]].kl, h=(v/kmax)*(H-P-40);
+        ge.fillStyle=pr[1]; ge.fillRect(x0+pi*(bw+6), H-P-h, bw, h);
+        ge.fillStyle="#e8e0d8"; ge.fillText(v.toFixed(3), x0+pi*(bw+6)+8, H-P-h-6);
+        ge.fillStyle="#8a7f74"; ge.fillText((PERCEPTION[pr[0]][gr[0]].flip*100).toFixed(0)+"% flips", x0+pi*(bw+6)+4, H-P+14);
+      });
+      ge.fillStyle="#8a7f74"; ge.fillText(gr[1], x0, H-P+28);
+    });
+    ge.fillStyle="#ff6a00"; ge.fillRect(W-260,26,10,10); ge.fillStyle="#e8e0d8"; ge.fillText("Shakespeare (has prior)", W-244,35);
+    ge.fillStyle="#4fc3f7"; ge.fillRect(W-260,42,10,10); ge.fillStyle="#e8e0d8"; ge.fillText("Factbook (no prior)", W-244,51);
+  })();
+
+/* ---- who-am-I panel ---- */
+  document.getElementById('waiq').textContent = WHOAMI.question;
+  document.getElementById('waicont').textContent = "sampled: " + WHOAMI.continuation;
+  var cw = document.getElementById('cwai'), gw = cw.getContext('2d');
+  if(!gw) throw new Error("whoami canvas unavailable");
+  gw.fillStyle="#0a0806"; gw.fillRect(0,0,cw.width,cw.height);
+  (function(){
+    var W=cw.width,H=cw.height,P=46, half=W/2, rmax=64;
+    function panel(x0,title,dat,wire){
+      gw.strokeStyle="#2a221c"; gw.beginPath(); gw.moveTo(x0+P,20); gw.lineTo(x0+P,H-P); gw.lineTo(x0+half-16,H-P); gw.stroke();
+      gw.fillStyle="#8a7f74"; gw.font="11px system-ui"; gw.fillText(title,x0+P,14);
+      var models=[["SHAKESPEARE","#ff6a00"],["FACTBOOK","#4fc3f7"],["WHOAMI","#39d353"]];
+      if(wire){
+        var wy=(H-P)-((1-Math.log(1)/Math.log(rmax))*(H-P-40));
+        gw.strokeStyle="#ff3b30"; gw.setLineDash([6,5]); gw.beginPath(); gw.moveTo(x0+P,wy); gw.lineTo(x0+half-16,wy); gw.stroke(); gw.setLineDash([]);
+        gw.fillStyle="#ff3b30"; gw.fillText("rank 1", x0+P+4, wy-4);
+      }
+      models.forEach(function(mp,mi){
+        var r=dat[mp[0]], t=1-Math.log(r)/Math.log(rmax), h=Math.max(t,0.02)*(H-P-40);
+        var bx=x0+P+40+mi*130;
+        gw.fillStyle=mp[1]; gw.fillRect(bx, H-P-h, 70, h);
+        gw.fillStyle="#e8e0d8"; gw.fillText("rank "+r, bx+8, H-P-h-6);
+        gw.fillStyle="#8a7f74"; gw.fillText(mp[0].slice(0,11), bx, H-P+14);
+      });
+    }
+    panel(0, "generic word onsets — the GLOBAL prior (log scale, taller = closer to rank 1)", WHOAMI.generic_prior_rank_L0, true);
+    panel(half, "after 'Who am ' — the LOCAL answer", WHOAMI.after_who_am_rank, true);
+    gw.fillStyle="#39d353"; gw.fillText("seeded model: P('I')=0.41 here; 'What am'/'Where am' also rank 1 — spread along the am-rail only", half+P, H-P+28);
+  })();
+
+
+/* ---- dose-response panel ---- */
+  document.getElementById('doseq').textContent = DOSE.question;
+  document.getElementById('dosepred').textContent = " Registered: \"" + DOSE.prediction_registered + "\" — Outcome: " + DOSE.prediction_outcome + "  ///  Registered #2: \"" + DOSE.prediction2_registered + "\" — Outcome: " + DOSE.prediction2_outcome + "  ///  Registered #3: \"" + DOSE.prediction3_registered + "\" — Outcome: " + DOSE.prediction3_outcome + "  ///  WEAVE: " + DOSE.weave_outcome + "  ///  AGENT (terminal): " + DOSE.agent_outcome;
+  var cd = document.getElementById('cdose'), gd = cd.getContext('2d');
+  if(!gd) throw new Error("dose canvas unavailable");
+  gd.fillStyle="#0a0806"; gd.fillRect(0,0,cd.width,cd.height);
+  (function(){
+    var W=cd.width,H=cd.height,P=52, rmax=64, dmax=50;
+    gd.strokeStyle="#2a221c"; gd.beginPath(); gd.moveTo(P,20); gd.lineTo(P,H-P); gd.lineTo(W-16,H-P); gd.stroke();
+    gd.fillStyle="#8a7f74"; gd.font="11px system-ui";
+    gd.fillText("x: first-person density per 1000 words · y: layer-0 median rank of 'I' at generic onsets (log, wire at top)", P, 14);
+    function X(d){ return P+30 + (d/dmax)*(W-P-80); }
+    function Y(r){ return 30 + (Math.log(r)/Math.log(rmax))*(H-P-50); }
+    var wy = Y(1);
+    gd.strokeStyle="#ff3b30"; gd.setLineDash([6,5]); gd.beginPath(); gd.moveTo(P,wy); gd.lineTo(W-16,wy); gd.stroke(); gd.setLineDash([]);
+    gd.fillStyle="#ff3b30"; gd.fillText("TRIPWIRE (rank 1)", P+6, wy-5);
+    // flat line through the three seeded/base points, then the cliff to Shakespeare
+    var pts = DOSE.points;
+    gd.strokeStyle="#4fc3f7"; gd.lineWidth=1.5; gd.beginPath();
+    pts.slice(0,7).forEach(function(p,i){ var x=X(p.density),y=Y(p.L0_rank_I); i?gd.lineTo(x,y):gd.moveTo(x,y); });
+    gd.stroke();
+    gd.strokeStyle="#3a2c20"; gd.setLineDash([3,4]); gd.beginPath();
+    gd.moveTo(X(pts[6].density),Y(pts[6].L0_rank_I)); gd.lineTo(X(pts[7].density),Y(pts[7].L0_rank_I)); gd.stroke(); gd.setLineDash([]);
+    pts.forEach(function(p){
+      var x=X(p.density), y=Y(p.L0_rank_I);
+      gd.fillStyle = p.name==="SHAKESPEARE" ? "#ff6a00" : "#4fc3f7";
+      gd.beginPath(); gd.arc(x,y,6,0,7); gd.fill();
+      gd.fillStyle="#e8e0d8"; gd.fillText(p.name+" (rank "+p.L0_rank_I+")", x-30, y-12);
+      gd.fillStyle="#8a7f74"; gd.fillText(p.density+"/1000", x-16, y+22);
+    });
+    gd.fillStyle="#8a7f74";
+    gd.fillText("dose axis is flat: 350x density change, rank 54-60 throughout. The jump to rank 1 is not on this axis -", P+30, H-P+18);
+    gd.fillStyle="#ff6a00";
+    gd.fillText("diversity at matched dose ALSO failed at L0 (rank 53). The wall is not density and not diversity of frames -", P+30, H-P+32);
+    gd.fillStyle="#ff3b30";
+    gd.fillText("current hypothesis: unpredictability. The default installs only when the I cannot be seen coming.", P+30, H-P+46);
+  })();
+
+/* ================= EDIT BLOCK 3 : build3D / draw3D (SGL soft-GL) ================= */
+  var c3 = document.getElementById('c3d'), q = c3.getContext('2d');
+  if(!q) throw new Error("3D canvas context unavailable");
+  var W3 = c3.width, H3 = c3.height;
+  var rotY = -0.55, rotX = 0.32, dist = 8.2, dragging = false, lx0 = 0, ly0 = 0;
+
+  c3.addEventListener('mousedown', function(e){ dragging = true; lx0 = e.offsetX; ly0 = e.offsetY; });
+  window.addEventListener('mouseup', function(){ dragging = false; });
+  c3.addEventListener('mousemove', function(e){
+    if(!dragging) return;
+    rotY += (e.offsetX-lx0)*0.008; rotX += (e.offsetY-ly0)*0.006;
+    rotX = Math.max(-1.2, Math.min(1.2, rotX)); lx0 = e.offsetX; ly0 = e.offsetY;
+  });
+  c3.addEventListener('touchmove', function(e){
+    var t = e.touches[0], r = c3.getBoundingClientRect();
+    var x = t.clientX-r.left, y = t.clientY-r.top;
+    if(lx0||ly0){ rotY += (x-lx0)*0.008; rotX += (y-ly0)*0.006; }
+    lx0 = x; ly0 = y; e.preventDefault();
+  }, {passive:false});
+
+  function proj(v){
+    var x=v[0], y=v[1], z=v[2];
+    var cx=Math.cos(rotY), sx=Math.sin(rotY);
+    var x1 = cx*x + sx*z, z1 = -sx*x + cx*z;
+    var cy=Math.cos(rotX), sy=Math.sin(rotX);
+    var y1 = cy*y - sy*z1, z2 = sy*y + cy*z1;
+    var zc = z2 + dist;
+    if(zc < 0.5) zc = 0.5;
+    var s = 300/zc;
+    return [W3/2 + x1*s, H3/2 - y1*s, zc];
+  }
+  function line3(a,b,col,w){
+    var A = proj(a), B = proj(b);
+    q.strokeStyle = col; q.lineWidth = w||1;
+    q.beginPath(); q.moveTo(A[0],A[1]); q.lineTo(B[0],B[1]); q.stroke();
+  }
+  // scene geometry: x = depth (-3..3), z = class lane, y = P(target) scaled
+  var LANE = {FIRST:-1.8, SECOND:-0.6, THIRD:0.6, NEUTRAL:1.8};
+  var XL = function(L){ return -3 + L*1.5; };
+  var YP = function(p){ return -1.0 + (p/0.16)*2.4; };
+  var t = 0;
+
+  function draw3(){
+    q.fillStyle = "#0a0806"; q.fillRect(0,0,W3,H3);
+    if(!dragging) rotY += 0.0035;
+    // floor grid
+    for(var i=-2;i<=2;i++){
+      line3([-3.4,-1.15,i*1.1],[3.4,-1.15,i*1.1],"#221a14",1);
+    }
+    for(var L=0;L<=4;L++){
+      line3([XL(L),-1.15,-2.3],[XL(L),-1.15,2.3],"#2a221c",1);
+      // gate frames
+      line3([XL(L),-1.15,-2.3],[XL(L),1.7,-2.3],"#3a2c20",1);
+      line3([XL(L),-1.15, 2.3],[XL(L),1.7, 2.3],"#3a2c20",1);
+      line3([XL(L), 1.7,-2.3],[XL(L),1.7, 2.3],"#3a2c20",1);
+      var lp = proj([XL(L), -1.45, 2.55]);
+      q.fillStyle = "#8a7f74"; q.font = "11px system-ui";
+      q.fillText(L===0?"L0 (embed)":"L"+L, lp[0]-14, lp[1]);
+    }
+    // tripwire beam at the wire height of FIRST's layer-0 prob, spanning gate 0
+    var wl = [XL(0), YP(0.0766), -2.3], wr = [XL(0), YP(0.0766), 2.3];
+    line3(wl, wr, "#ff3b30", 2);
+    var wp = proj([XL(0), YP(0.0766)+0.22, -2.3]);
+    q.fillStyle = "#ff3b30"; q.fillText("wire — sprung at L0", wp[0], wp[1]);
+
+    // rails + beads
+    var order = CK.slice().sort(function(a,b){ // painter-ish: farther lane first given rotY
+      return (Math.sin(rotY)*(LANE[b]-LANE[a]));
+    });
+    order.forEach(function(k){
+      var r = PAPER.results[k], lane = LANE[k], col = COL[k];
+      for(var L=0; L<4; L++){
+        line3([XL(L), YP(r.traj[L]), lane],[XL(L+1), YP(r.traj[L+1]), lane], col, k==="FIRST"?2.5:1.5);
+      }
+      // bead animates along rail
+      var ph = (t*0.4 + CK.indexOf(k)*0.25) % 1;
+      var Lf = ph*4, Li = Math.floor(Lf), fr = Lf-Li;
+      var p0 = r.traj[Li], p1 = r.traj[Math.min(Li+1,4)];
+      var bp = proj([XL(Li)+fr*1.5, YP(p0+(p1-p0)*fr), lane]);
+      q.fillStyle = col; q.beginPath();
+      q.arc(bp[0], bp[1], Math.max(2.5, 7*(300/bp[2])/40), 0, 7); q.fill();
+      var tp = proj([XL(4)+0.25, YP(r.traj[4]), lane]);
+      q.fillStyle = col; q.font = "11px system-ui"; q.fillText(k, tp[0], tp[1]);
+    });
+    t += 0.016;
+    requestAnimationFrame(draw3);
+  }
+  draw3();
+/* ================= END EDIT BLOCK 3 ================= */
+
+}catch(err){ fail("instrument init failed", err); }
+})();
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE SYNC &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

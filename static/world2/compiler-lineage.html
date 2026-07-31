@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FROM HOLES TO HIGH LANGUAGE · A Lineage Of Compilers</title>
+<style>
+:root{
+  --paper:#efeae0; --ink:#2a2438; --ink-mid:#4a4360; --ink-faint:#8a83a0;
+  --plum:#5b3a87; --plum-light:#7e5bb0; --plum-soft:#e6ddf0;
+  --gold:#9a7d3a; --rose:#9a4a6a;
+  --line:#cbbfdd;
+  --mono:"Courier New",Courier,monospace;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);
+  background-image:repeating-linear-gradient(0deg, rgba(91,58,135,.025) 0 1px, transparent 1px 3px);
+  color:var(--ink);font-family:var(--serif);line-height:1.5;padding:10px}
+.sheet{max-width:800px;margin:0 auto;border:2.5px solid var(--plum);padding:0;position:relative}
+.sheet::before{content:'';position:absolute;inset:5px;border:1px solid var(--plum-light);pointer-events:none}
+.inner{padding:24px}
+.masthead{text-align:center;border-bottom:2px solid var(--plum);padding-bottom:12px}
+.mast-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.26em;color:var(--plum-light);text-transform:uppercase}
+.mast-title{font-size:clamp(22px,5.4vw,38px);letter-spacing:.02em;font-weight:700;margin:6px 0 2px;text-transform:uppercase;color:var(--plum)}
+.mast-sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-mid)}
+.lede{font-size:13px;max-width:640px;margin:12px auto 0;text-align:center;color:var(--ink-mid);line-height:1.6}
+.lede b{color:var(--plum)}
+.ladder-note{font-family:var(--mono);font-size:10px;text-align:center;color:var(--plum-light);margin-top:10px;letter-spacing:.05em}
+h2.sec{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;border-bottom:1.5px solid var(--plum);padding-bottom:4px;margin:24px 0 12px;color:var(--plum)}
+h2.sec .num{color:var(--rose);margin-right:8px}
+.body p{font-size:13.5px;margin-bottom:9px}
+.body b{color:var(--ink)}
+/* timeline entries */
+.entry{display:grid;grid-template-columns:74px 1fr;gap:14px;margin-bottom:14px;position:relative}
+.entry .yr{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--plum);text-align:right;padding-top:2px}
+.entry .body2{border-left:2px solid var(--line);padding-left:14px;position:relative}
+.entry .body2::before{content:'';position:absolute;left:-6px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--plum-light);border:2px solid var(--paper)}
+.entry .who{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--rose)}
+.entry .what{font-size:14px;font-weight:700;color:var(--ink);margin:2px 0 3px}
+.entry .why{font-size:12.5px;color:var(--ink-mid);line-height:1.55}
+.entry .why b{color:var(--plum)}
+.rung{display:inline-block;font-family:var(--mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;background:var(--plum-soft);color:var(--plum);padding:1px 7px;border-radius:2px;margin-top:5px}
+.def{font-family:var(--mono);font-size:11px;background:var(--plum-soft);border-left:2px solid var(--plum-light);padding:9px 12px;margin:10px 0;line-height:1.6;color:var(--ink-mid)}
+.def b{color:var(--plum)}
+/* the ladder diagram */
+.ladderbox{border:1.5px solid var(--plum-light);padding:14px;margin:14px 0;background:rgba(126,91,176,.04)}
+.ladderbox h3{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--plum-light);text-align:center;margin-bottom:10px}
+.rungrow{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-family:var(--mono);font-size:11px}
+.rungrow .lv{width:120px;font-weight:700;color:var(--plum);text-align:right}
+.rungrow .bar{flex:1;height:18px;background:linear-gradient(90deg,var(--plum-soft),rgba(126,91,176,.18));border:1px solid var(--line);display:flex;align-items:center;padding-left:8px;font-size:9px;color:var(--ink-mid)}
+.rungrow .dist{font-size:8px;color:var(--ink-faint);width:80px}
+.colophon{margin-top:22px;border-top:2px solid var(--plum);padding-top:12px;text-align:center;font-family:var(--mono);font-size:9px;color:var(--ink-mid);letter-spacing:.05em;line-height:1.9}
+.colophon b{color:var(--plum)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<div class="sheet"><div class="inner">
+
+<header class="masthead">
+  <div class="mast-eyebrow">Series E · Lineage · Start At Square One</div>
+  <h1 class="mast-title">From Holes To High Language</h1>
+  <div class="mast-sub">Compilers &amp; Machine Language · The Ladder Of Translators</div>
+  <p class="lede">Every layer of programming is a <b>translator</b> that lets a human speak one step further from the machine — while the machine, underneath, still only ever executes <b>binary</b>. This is the lineage of that climb: from holes punched in cards to languages that read almost like thought, each rung a translator standing on the one below. Start at square one.</p>
+  <div class="ladder-note">holes → machine code → assembly → compiler → interpreter / JIT</div>
+</header>
+
+<section class="body">
+
+  <h2 class="sec"><span class="num">§1</span> The Floor · instructions as physical things</h2>
+
+  <div class="entry">
+    <div class="yr">1804</div>
+    <div class="body2">
+      <div class="who">Joseph Marie Jacquard</div>
+      <div class="what">The Jacquard Loom</div>
+      <div class="why">Punched cards control which threads lift — the weave is encoded as <b>holes</b>. The first time instructions lived on a physical medium a machine could read in sequence. Not yet computing, but the seed: <b>a program is a pattern a machine follows.</b></div>
+      <div class="rung">rung 0 · instructions as holes</div>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="yr">1843</div>
+    <div class="body2">
+      <div class="who">Ada Lovelace</div>
+      <div class="what">Note G — the first program</div>
+      <div class="why">For Babbage's (unbuilt) Analytical Engine, Lovelace wrote a step-by-step method to compute Bernoulli numbers — <b>the first published algorithm intended for a machine.</b> She also saw furthest: that such an engine might manipulate not just numbers but <em>symbols</em>. The first programmer, before the first computer.</div>
+      <div class="rung">rung 0 · the first algorithm</div>
+    </div>
+  </div>
+
+  <h2 class="sec"><span class="num">§2</span> The Idea Of Computation</h2>
+
+  <div class="entry">
+    <div class="yr">1936</div>
+    <div class="body2">
+      <div class="who">Alan Turing</div>
+      <div class="what">On Computable Numbers — the Turing Machine</div>
+      <div class="why">Defines <b>what computation is</b>: a machine reading and writing symbols on a tape by simple rules. Establishes the floor and the ceiling — what any machine can and cannot, in principle, compute. Every layer above is built on this definition.</div>
+      <div class="rung">the definition</div>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="yr">1945</div>
+    <div class="body2">
+      <div class="who">John von Neumann</div>
+      <div class="what">First Draft of a Report on the EDVAC</div>
+      <div class="why">The <b>stored-program architecture</b>: program and data share the same memory. The consequence is enormous and is the root of everything since — <b>code becomes data you can manipulate</b>, which is exactly what makes a compiler (a program that reads and writes programs) possible.</div>
+      <div class="rung">code becomes data</div>
+    </div>
+  </div>
+
+  <h2 class="sec"><span class="num">§3</span> The Climb · each rung a translator</h2>
+
+  <div class="entry">
+    <div class="yr">1940s</div>
+    <div class="body2">
+      <div class="who">The machine-code era</div>
+      <div class="what">Machine Language — raw binary</div>
+      <div class="why"><b>The floor of the climb.</b> 1s and 0s — opcodes the CPU executes directly, entered by switches or cards. No translation: this <em>is</em> the machine's language. Powerful, total, and almost impossible for a human to write or read at length.</div>
+      <div class="rung">rung 1 · machine code (binary)</div>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="yr">1947</div>
+    <div class="body2">
+      <div class="who">Kathleen Booth (early assemblers)</div>
+      <div class="what">Assembly Language</div>
+      <div class="why">The first symbolic layer: mnemonics — <span style="font-family:var(--mono)">ADD</span>, <span style="font-family:var(--mono)">MOV</span>, <span style="font-family:var(--mono)">JMP</span> — that map <b>one-to-one</b> onto machine instructions. An <em>assembler</em> translates them to binary. Not yet a compiler (it's a direct 1:1 swap), but the first time a human wrote words instead of numbers.</div>
+      <div class="rung">rung 2 · assembly (1:1 mnemonics)</div>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="yr">1952</div>
+    <div class="body2">
+      <div class="who">Grace Hopper</div>
+      <div class="what">The A-0 System — the first compiler</div>
+      <div class="why"><b>The pivotal rung.</b> Hopper built the first program that translated <em>symbolic</em> instructions into machine code — and <b>coined the word "compiler."</b> The leap past assembly: one human statement could now become <em>many</em> machine instructions. She fought the then-radical idea that a machine should help write its own programs.</div>
+      <div class="rung">rung 3 · the compiler is born</div>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="yr">1957</div>
+    <div class="body2">
+      <div class="who">John Backus &amp; IBM</div>
+      <div class="what">FORTRAN — the first widely-used high-level compiler</div>
+      <div class="why">Proved compiled high-level code could rival hand-written assembly in speed — the doubt that had held the field back. <b>FORTRAN opened programming to scientists and engineers</b> who didn't want to think in machine terms. The compiler became practical, not just possible.</div>
+      <div class="rung">rung 3 · high-level, proven</div>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="yr">1958–60</div>
+    <div class="body2">
+      <div class="who">John McCarthy · the ALGOL committee</div>
+      <div class="what">LISP (1958) &amp; ALGOL (1960)</div>
+      <div class="why">Two foundations. <b>LISP</b>: code <em>is</em> data (von Neumann's insight made into a language), recursion, the ancestor of every functional language. <b>ALGOL</b>: block structure and formal grammar — the syntactic ancestor of nearly every modern language (C, Java, Python all descend from its shape).</div>
+      <div class="rung">rung 4 · the language families fork</div>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="yr">1972</div>
+    <div class="body2">
+      <div class="who">Dennis Ritchie</div>
+      <div class="what">The C Language</div>
+      <div class="why">A high-level language close enough to the metal to write an operating system in (Unix) yet portable across machines. <b>C became the compiler target and lingua franca</b> beneath almost everything since — most languages are still implemented in, or compile through, C's lineage.</div>
+      <div class="rung">rung 4 · the portable systems language</div>
+    </div>
+  </div>
+
+  <div class="entry">
+    <div class="yr">1970s →</div>
+    <div class="body2">
+      <div class="who">Interpreters · virtual machines · JIT</div>
+      <div class="what">Bytecode, VMs, Just-In-Time compilation</div>
+      <div class="why">The two engines fuse. <b>Compile</b> to portable bytecode ahead of time, then <b>interpret or JIT-compile</b> it live at runtime (Java 1995, and the dynamic languages after). The batch translator and the live translator, working together — exactly the compiler/interpreter pair.</div>
+      <div class="rung">rung 5 · compiler + interpreter fused</div>
+    </div>
+  </div>
+
+  <h2 class="sec"><span class="num">§4</span> The Whole Ladder · one picture</h2>
+  <div class="ladderbox">
+    <h3>distance from the machine ↑</h3>
+    <div class="rungrow"><div class="lv">high-level lang</div><div class="bar">C · LISP · FORTRAN · "almost thought"</div><div class="dist">furthest</div></div>
+    <div class="rungrow"><div class="lv">compiler</div><div class="bar">one statement → many instructions</div><div class="dist">↑ translates</div></div>
+    <div class="rungrow"><div class="lv">assembly</div><div class="bar">ADD, MOV — 1:1 mnemonics</div><div class="dist">↑ translates</div></div>
+    <div class="rungrow"><div class="lv">machine code</div><div class="bar">10110000 01100001 — raw binary</div><div class="dist">the floor</div></div>
+    <div class="rungrow"><div class="lv">the machine</div><div class="bar" style="background:var(--plum-soft)">transistors · voltage · executes binary only</div><div class="dist">bedrock</div></div>
+  </div>
+  <div class="def">the through-line: <b>every rung is a translator.</b> each lets a human speak one step further from the machine — and the machine still only ever runs the bottom row. the whole tower exists so a person can express a thought and have it fall, layer by layer, into voltage. <b>compiler = translate the whole, ahead of time. interpreter = translate live, line by line.</b></div>
+
+</section>
+
+<div class="colophon">
+  HOLES (1804) → FIRST PROGRAM (1843) → COMPUTATION DEFINED (1936) → CODE-AS-DATA (1945)<br>
+  MACHINE CODE → ASSEMBLY (1:1) → <b>THE COMPILER (HOPPER 1952)</b> → FORTRAN → LISP/ALGOL → C → JIT<br>
+  EVERY RUNG A TRANSLATOR · THE MACHINE STILL RUNS ONLY BINARY · THE TOWER LETS A THOUGHT FALL INTO VOLTAGE<br>
+  FROM HOLES TO HIGH LANGUAGE · SERIES E · JUNE 2026
+</div>
+
+</div></div>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

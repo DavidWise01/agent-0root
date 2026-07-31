@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#140f1f">
+<title>LIMEN · Air-Gap Decoder</title>
+<style>
+  :root{
+    --ink:#140f1f; --ink2:#1b1430; --ink3:#241a3d;
+    --parch:#ece6f4; --dim:#a99fc4;
+    --gate:#8a7cff; --wit:#e0b24a; --cyan:#5fd0e0;
+    --ok:#5fd6a0; --no:#e0566a; --rise:#5fd0a8; --fall:#d08a5f;
+    --line:#37305255;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bot:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--ink);color:var(--parch);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  body{min-height:100vh;min-height:100dvh;
+    padding:calc(var(--safe-top) + 14px) 16px calc(var(--safe-bot) + 16px);
+    max-width:560px;margin:0 auto}
+  h1{font-size:21px;font-weight:700;letter-spacing:-.01em;margin:0 0 2px}
+  h1 .x{color:var(--gate)}
+  .sub{font-size:13px;color:var(--dim);line-height:1.5;margin:0 0 16px}
+
+  /* the live gate face — the signature element */
+  .face{
+    position:relative;background:var(--ink2);border:1px solid var(--line);
+    border-radius:20px;padding:22px 18px 18px;text-align:center;overflow:hidden;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .face.hot{border-color:var(--gate);box-shadow:0 0 0 1px var(--gate),0 0 34px -6px var(--gate)}
+  .glyphbig{font-size:74px;line-height:1;color:var(--gate);height:84px;
+    display:flex;align-items:center;justify-content:center;transition:color .12s}
+  .glyphbig.silent{color:#3a3358}
+  .gname{font-size:15px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);
+    margin-top:6px;min-height:20px}
+  .gdir{font-size:13px;color:var(--dim);margin-top:6px;min-height:18px}
+  .gdir .ar{font-size:16px;font-weight:700}
+  .gdir .rise{color:var(--rise)} .gdir .fall{color:var(--fall)}
+  .hz{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;color:var(--dim);
+    margin-top:10px;min-height:16px;letter-spacing:.02em}
+
+  /* live frequency meter */
+  .meter{height:54px;margin:14px 0 4px;display:flex;align-items:flex-end;gap:3px}
+  .meter .bar{flex:1;background:linear-gradient(var(--gate),#4a3fb0);border-radius:2px 2px 0 0;
+    height:2px;transition:height .05s linear;opacity:.85}
+
+  /* the five gates legend / tuning targets */
+  .gates{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:14px 0 6px}
+  .g{background:var(--ink2);border:1px solid var(--line);border-radius:12px;
+    padding:9px 3px;text-align:center;transition:.12s}
+  .g.lit{border-color:var(--gate);background:rgba(138,124,255,.16);transform:translateY(-2px)}
+  .g .gg{font-size:22px;color:var(--gate)}
+  .g .gt{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--dim);margin-top:3px}
+  .g .gn{font-size:9px;color:var(--dim);text-transform:capitalize;margin-top:1px}
+
+  /* heard line */
+  .heard-label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);
+    margin:18px 0 6px}
+  .heard{min-height:40px;font-size:26px;letter-spacing:.06em;color:var(--gate);
+    word-break:break-word;line-height:1.3}
+  .heard .w{opacity:.55} .heard .w.fresh{opacity:1}
+  .heard .ph{color:#3a3358;font-size:15px}
+
+  /* big start button (iOS needs a user gesture for mic + audio) */
+  .btn{display:block;width:100%;border:0;border-radius:16px;padding:17px;
+    font-size:17px;font-weight:600;font-family:inherit;cursor:pointer;
+    background:var(--gate);color:#0d0a16;margin:8px 0;transition:.12s;
+    -webkit-appearance:none;touch-action:manipulation}
+  .btn:active{transform:scale(.985)}
+  .btn.ghost{background:transparent;color:var(--gate);border:1px solid var(--gate)}
+  .btn.stop{background:var(--no);color:#fff}
+  .btn[disabled]{opacity:.4}
+  .row{display:flex;gap:8px}.row .btn{margin:8px 0}
+
+  .status{font-size:13px;color:var(--dim);text-align:center;min-height:20px;margin:6px 0 2px;line-height:1.5}
+  .status.err{color:var(--no)}
+  .status.live{color:var(--rise)}
+
+  details{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+  summary{font-size:13px;color:var(--cyan);cursor:pointer;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ ";color:var(--dim)}
+  details[open] summary::before{content:"▾ "}
+  .note{font-size:13px;color:var(--dim);line-height:1.65;margin-top:10px}
+  .note b{color:var(--parch);font-weight:600}
+  .note code{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--cyan);
+    background:#0d0a16;padding:1px 5px;border-radius:5px}
+  .foot{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#5a5278;
+    text-align:center;margin-top:20px;line-height:1.7}
+
+  /* the self-test transmitter (so one iPhone can prove it works, or send to another) */
+  .tx{margin-top:10px}
+  .txline{font-size:18px;letter-spacing:.06em;color:var(--gate);min-height:26px;margin:8px 0;word-break:break-word}
+  .pick{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .pill{background:var(--ink2);border:1px solid var(--line);border-radius:20px;
+    padding:7px 12px;font-size:13px;color:var(--parch);cursor:pointer;touch-action:manipulation}
+  .pill.on{border-color:var(--gate);background:rgba(138,124,255,.16);color:var(--gate)}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a3c}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style>
+</head>
+<body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE FIREWALL</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+
+<h1>LIMEN <span class="x">·</span> Air-Gap Decoder</h1>
+<p class="sub">Listens across the air for a LIMEN crossing and recovers <b>gate + direction by ear</b> — a live FFT on the gate tones, synced to the <code style="font-family:ui-monospace,Menlo,monospace">3-2-1-0</code> pulse. Point this phone's mic at a device speaking LIMEN.</p>
+
+<div class="face" id="face">
+  <div class="glyphbig silent" id="glyph">◇</div>
+  <div class="gname" id="gname">— listening —</div>
+  <div class="gdir" id="gdir"></div>
+  <div class="hz" id="hz"></div>
+</div>
+
+<div class="meter" id="meter"></div>
+
+<div class="gates" id="gates"></div>
+
+<div class="heard-label">heard line (gate · direction)</div>
+<div class="heard" id="heard"><span class="ph">nothing yet — start listening</span></div>
+
+<button class="btn" id="listen">▶ Start listening</button>
+<button class="btn stop" id="stoplisten" style="display:none">■ Stop</button>
+<div class="status" id="status">mic needs your tap (iOS rule) &amp; an HTTPS or installed page</div>
+
+<details>
+  <summary>Test it on this one phone — or transmit to another</summary>
+  <div class="tx">
+    <p class="note">Build a crossing and play it aloud. With <b>one</b> iPhone: tap <b>Start listening</b>, then <b>Play</b> — it hears itself across the air. With <b>two</b>: play on one, listen on the other (the real air gap).</p>
+    <div class="pick" id="dirpick"></div>
+    <div class="pick" id="gatepick"></div>
+    <div class="txline" id="txline">↑◐«witness»</div>
+    <button class="btn ghost" id="play">🔊 Play this crossing</button>
+    <button class="btn ghost" id="playline">🔊 Play the 4-word demo line</button>
+  </div>
+</details>
+
+<details>
+  <summary>What this decodes — and what it can't (honest)</summary>
+  <p class="note">
+    Per the LIMEN spec, the audio carries a <b>2-field tag</b>: the gate's base tone → <b>which gate</b>, the rise/fall contour → <b>which direction</b>. That is all the sound holds. <b>The witness text never rides the audio</b> — it travels only on the glyph channel. So this decoder honestly recovers gate + direction and shows <code>«…»</code> as a blank witness slot.<br><br>
+    The five gate tones it listens for: <b>stile</b> 262Hz · <b>airgap</b> 330Hz · <b>veil</b> 392Hz · <b>close</b> 523Hz · <b>gap</b> 294Hz. Direction is read from contour — if the three pulses ascend it's a <span style="color:var(--rise)">rise ↑</span>, if they descend it's a <span style="color:var(--fall)">fall ↓</span>. The <code>3-2-1-0</code> cadence is the clock, not data — it's how the decoder knows <em>when</em> to listen.<br><br>
+    <b>Honest limits:</b> acoustic detection can mis-hear in a noisy room or off a tinny speaker; phone mics roll off the high tones; and an empty-witness crossing is, by the witness rule, a <b>non-event</b> (silent) — so silence here is correct, not a failure.
+  </p>
+</details>
+
+<div class="foot">
+  LIMEN · air-gap decoder · listens, never claims the witness from sound<br>
+  canonical: github.com/DavidWise01/pulse · ROOT0 / TriPod LLC · CC-BY-ND-4.0<br>
+  decodes gate + direction by ear · the witness stays on the glyph
+</div>
+
+<script>
+"use strict";
+/* ── LIMEN spec constants, copied verbatim from limen.py / exchange.html ── */
+const GATES = {
+  stile:  {glyph:"◐", tone:262, frm:"observe", to:"act"},
+  airgap: {glyph:"⊘", tone:330, frm:"TOPH",    to:"Patricia"},
+  veil:   {glyph:"◑", tone:392, frm:"compute", to:"product"},
+  close:  {glyph:"⟳", tone:523, frm:"wrap",    to:"closure"},
+  gap:    {glyph:"◇", tone:294, frm:"forward", to:"inverse"},
+};
+const DIRS = { rise:{glyph:"↑"}, fall:{glyph:"↓"} };
+const TONES = Object.entries(GATES).map(([n,g])=>({n,hz:g.tone}));
+// rise ascends, fall descends — semitone offsets over the 3 pulses (from voiceOf)
+const voiceOf = (gate,dir) => {
+  const base = GATES[gate].tone, semis = dir==="rise" ? [0,2,4] : [4,2,0];
+  return semis.map(s => base * Math.pow(2, s/12));
+};
+
+/* ── elements ── */
+const $ = id => document.getElementById(id);
+const faceEl=$("face"), glyphEl=$("glyph"), gnameEl=$("gname"), gdirEl=$("gdir"), hzEl=$("hz");
+const meterEl=$("meter"), gatesEl=$("gates"), heardEl=$("heard"), statusEl=$("status");
+
+/* build the gate legend */
+Object.entries(GATES).forEach(([n,g])=>{
+  const el=document.createElement("div"); el.className="g"; el.dataset.g=n;
+  el.innerHTML=`<div class="gg">${g.glyph}</div><div class="gt">${g.tone}</div><div class="gn">${n}</div>`;
+  gatesEl.appendChild(el);
+});
+/* build meter bars */
+const NBARS=32, bars=[];
+for(let i=0;i<NBARS;i++){const b=document.createElement("div");b.className="bar";meterEl.appendChild(b);bars.push(b);}
+
+/* ── audio state ── */
+let actx=null, analyser=null, micStream=null, freqData=null, binHz=0, raf=0, listening=false;
+let heardWords=[];           // recovered {gate,dir}
+let phaseHz=[];              // peak Hz collected this word
+let lastLoud=0, lastWordT=0;
+
+function ensureCtx(){
+  if(!actx){
+    actx = new (window.AudioContext||window.webkitAudioContext)();
+  }
+  return actx.resume().catch(()=>{});  // iOS: must resume inside a gesture
+}
+
+/* ── the listener: FFT peak per frame, segment by the pulse gaps ── */
+async function startListening(){
+  statusEl.className="status"; statusEl.textContent="requesting mic…";
+  try{
+    await ensureCtx();
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false }
+    });
+  }catch(e){
+    statusEl.className="status err";
+    statusEl.textContent = (location.protocol==="https:"||location.hostname==="localhost")
+      ? "mic blocked — allow microphone access in Safari settings"
+      : "mic needs HTTPS — open this page over https:// (or add it to Home Screen)";
+    return;
+  }
+  const src = actx.createMediaStreamSource(micStream);
+  analyser = actx.createAnalyser();
+  analyser.fftSize = 8192; analyser.smoothingTimeConstant = 0;
+  binHz = actx.sampleRate / analyser.fftSize;
+  freqData = new Uint8Array(analyser.frequencyBinCount);
+  src.connect(analyser);
+
+  listening=true; heardWords=[]; phaseHz=[];
+  $("listen").style.display="none"; $("stoplisten").style.display="block";
+  statusEl.className="status live"; statusEl.textContent="● listening across the air…";
+  heardEl.innerHTML='<span class="ph">listening…</span>';
+  lastWordT=performance.now();
+  loop();
+}
+
+function stopListening(){
+  listening=false; cancelAnimationFrame(raf);
+  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
+  $("listen").style.display="block"; $("stoplisten").style.display="none";
+  statusEl.className="status"; statusEl.textContent="stopped";
+  faceEl.classList.remove("hot"); glyphEl.classList.add("silent");
+  glyphEl.textContent="◇"; gnameEl.textContent="— listening —"; gdirEl.textContent=""; hzEl.textContent="";
+}
+
+/* peak-frequency in the gate band (240–560 Hz) */
+function peakHz(){
+  analyser.getByteFrequencyData(freqData);
+  const lo = Math.floor(235/binHz), hi = Math.ceil(560/binHz);
+  let best=-1, bi=-1, energy=0;
+  for(let i=lo;i<=hi;i++){ energy+=freqData[i]; if(freqData[i]>best){best=freqData[i];bi=i;} }
+  return { hz: bi*binHz, amp: best, energy };
+}
+const nearestGate = hz => TONES.reduce((a,b)=> Math.abs(b.hz-hz)<Math.abs(a.hz-hz)?b:a).n;
+
+let silentFrames=0;
+function loop(){
+  if(!listening) return;
+  raf = requestAnimationFrame(loop);
+  const {hz, amp} = peakHz();
+
+  // live meter
+  analyser.getByteFrequencyData(freqData);
+  const lo=Math.floor(235/binHz);
+  for(let i=0;i<NBARS;i++){ const v=freqData[lo+i*2]||0; bars[i].style.height=(2+(v/255)*52)+"px"; }
+
+  const LOUD = 150;  // amplitude threshold (0-255)
+  const now = performance.now();
+
+  if(amp > LOUD && hz>240 && hz<560){
+    silentFrames=0;
+    phaseHz.push(hz);
+    lastLoud=now;
+    // live face: show the nearest gate while a tone is sounding
+    const g = nearestGate(hz);
+    glyphEl.classList.remove("silent"); faceEl.classList.add("hot");
+    glyphEl.textContent = GATES[g].glyph; glyphEl.style.color="var(--gate)";
+    gnameEl.textContent = g;
+    hzEl.textContent = Math.round(hz)+" Hz → "+GATES[g].tone+" Hz ("+g+")";
+    litGate(g);
+  } else {
+    silentFrames++;
+    faceEl.classList.remove("hot");
+    // a real gap after collected tones → close out a word
+    if(phaseHz.length>=2 && (now-lastLoud)>140){
+      finishWord();
+    }
+    if(silentFrames>40){ glyphEl.classList.add("silent"); litGate(null); }
+  }
+}
+
+function finishWord(){
+  // we have ~3 phase peaks for one crossing; recover gate (median) + direction (contour)
+  const hzs = phaseHz.slice(); phaseHz=[];
+  if(hzs.length<2) return;
+  const f1=hzs[0], fN=hzs[hzs.length-1];
+  const dir = f1 < fN - 4 ? "rise" : (f1 > fN + 4 ? "fall" : "rise");
+  const base = dir==="rise" ? Math.min(...hzs) : Math.min(...hzs); // base is the lowest tone either way
+  const gate = nearestGate(base);
+  heardWords.push({gate, dir});
+  renderHeard();
+  // pulse the face to the resolved gate
+  glyphEl.textContent=GATES[gate].glyph; gnameEl.textContent=gate;
+  gdirEl.innerHTML = dir==="rise"
+    ? '<span class="ar rise">↑</span> rise · '+GATES[gate].frm+' → '+GATES[gate].to
+    : '<span class="ar fall">↓</span> fall · '+GATES[gate].to+' ← '+GATES[gate].frm;
+}
+
+function renderHeard(){
+  if(!heardWords.length){ heardEl.innerHTML='<span class="ph">listening…</span>'; return; }
+  heardEl.innerHTML = heardWords.map((w,i)=>{
+    const fresh = i===heardWords.length-1 ? " fresh":"";
+    return `<span class="w${fresh}">${DIRS[w.dir].glyph}${GATES[w.gate].glyph}«»</span>`;
+  }).join(" ");
+}
+let litT=0;
+function litGate(name){
+  [...gatesEl.children].forEach(c=>c.classList.toggle("lit", c.dataset.g===name));
+}
+
+/* ── transmitter (self-test / send to another phone) ── */
+let txDir="rise", txGate="stile";
+const dirpick=$("dirpick"), gatepick=$("gatepick"), txlineEl=$("txline");
+Object.keys(DIRS).forEach(d=>{
+  const el=document.createElement("div"); el.className="pill"+(d===txDir?" on":""); el.textContent=DIRS[d].glyph+" "+d;
+  el.onclick=()=>{txDir=d;[...dirpick.children].forEach(c=>c.classList.toggle("on",c.textContent.endsWith(d)));renderTx();};
+  dirpick.appendChild(el);
+});
+Object.keys(GATES).forEach(g=>{
+  const el=document.createElement("div"); el.className="pill"+(g===txGate?" on":""); el.textContent=GATES[g].glyph+" "+g;
+  el.onclick=()=>{txGate=g;[...gatepick.children].forEach(c=>c.classList.toggle("on",c.textContent.endsWith(g)));renderTx();};
+  gatepick.appendChild(el);
+});
+function renderTx(){ txlineEl.textContent = DIRS[txDir].glyph+GATES[txGate].glyph+"«witness»"; }
+renderTx();
+
+/* play one crossing as the 3-2-1 carrier voiced at the gate tone, contoured by direction */
+async function playCrossing(gate,dir,startAt){
+  await ensureCtx();
+  const F = voiceOf(gate,dir);            // 3 phase freqs
+  const beepDur=0.12, beepGap=0.05, phaseGap=0.10;
+  let t = startAt ?? actx.currentTime+0.05;
+  // carrier shape 3-2-1: counts per phase descend (music, not data) but we voice each phase's tone
+  const counts=[3,2,1];
+  F.forEach((hz,pi)=>{
+    for(let i=0;i<counts[pi];i++){ beep(hz, t, beepDur); t+=beepDur+beepGap; }
+    t+=phaseGap;
+  });
+  return t; // end time
+}
+function beep(hz,at,dur){
+  const o=actx.createOscillator(), g=actx.createGain();
+  o.type="sine"; o.frequency.value=hz;
+  g.gain.setValueAtTime(0,at);
+  g.gain.linearRampToValueAtTime(0.9,at+0.012);
+  g.gain.setValueAtTime(0.9,at+dur-0.02);
+  g.gain.linearRampToValueAtTime(0,at+dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(at); o.stop(at+dur+0.02);
+}
+
+$("play").onclick   = ()=> playCrossing(txGate,txDir);
+$("playline").onclick = async ()=>{
+  await ensureCtx();
+  const demo=[["stile","rise"],["airgap","fall"],["gap","rise"],["close","fall"]];
+  let t=actx.currentTime+0.1;
+  for(const [g,d] of demo){ t = await playCrossing(g,d,t); t+=0.18; }
+};
+
+$("listen").onclick = startListening;
+$("stoplisten").onclick = stopListening;
+
+/* iOS: also resume audio on first touch anywhere, defensively */
+document.body.addEventListener("touchstart", ()=>{ if(actx) actx.resume().catch(()=>{}); }, {once:true,passive:true});
+</script>
+<div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE FIREWALL &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body>
+</html>

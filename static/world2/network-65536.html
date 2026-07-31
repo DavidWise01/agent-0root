@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE 65536 — nested-channel repeater network</title>
+<style>
+  :root{--bg:#0d0b08;--panel:#161210;--ink:#e8e0d4;--dim:#8a7f6e;
+    --org:#ff6a00;--org2:#ffb347;--grn:#7dff6a;--red:#ff4d4d;--cyn:#57d8ff;--gold:#ffd24a;--line:#2a231c}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13px;padding:12px;display:flex;flex-direction:column;gap:10px}
+  h1{font-size:16px;letter-spacing:2px;color:var(--org);border-bottom:3px solid var(--org);display:inline-block;padding-bottom:2px}
+  .sub{color:var(--dim);font-size:11px;line-height:1.5;margin-top:4px}
+  .ctrls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);padding:10px}
+  button{background:transparent;color:var(--org);border:1px solid var(--org);font:inherit;font-weight:bold;padding:6px 12px;cursor:pointer;letter-spacing:1px;font-size:11px}
+  button.on{background:var(--org);color:#000}
+  button.act{border-color:var(--gold);color:var(--gold)}button.act:hover{background:var(--gold);color:#000}
+  label{font-size:10px;color:var(--dim);letter-spacing:1px;display:flex;flex-direction:column;gap:3px}
+  input[type=range]{accent-color:var(--org);width:120px}
+  #stage{background:#161210;border:1px solid var(--line);padding:6px}
+  #stage h2{font-size:10px;letter-spacing:1.5px;color:var(--org2);margin-bottom:4px}
+  canvas{display:block;width:100%;background:#080605;border:1px solid var(--line)}
+  .ros{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+  .ro{background:var(--panel);border:1px solid var(--line);padding:8px}
+  .ro .k{font-size:10px;color:var(--dim);letter-spacing:1px}.ro .v{font-size:15px;margin-top:2px}
+  .num{font-variant-numeric:tabular-nums}
+  #footer{color:var(--dim);font-size:10px;border-left:3px solid var(--org);padding-left:8px;line-height:1.6}
+  #footer b{color:var(--org2)}
+  #failcard{display:none;background:#2a0d0d;border:2px solid var(--red);padding:12px;white-space:pre-wrap;color:#ffb3b3}
+
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 2px,rgba(0,0,0,.16) 3px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.92);border-bottom:3px solid #255c2c;font-family:ui-monospace,monospace;font-weight:700;font-size:11px;letter-spacing:.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#9d00ff}
+.cm-seal{font-family:ui-monospace,monospace;font-size:11px;color:#4c7a54;text-align:center;padding:16px;border-top:2px solid #255c2c;margin-top:30px;position:relative;z-index:20}
+</style></head><body><div class="cm-scan"></div><div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE MAINFRAME</span><span class="sl">&#9670; .dlw.fold</span></div><div style="height:42px"></div>
+<script>
+const PAPER={
+ claim:"THE 65536 \u2014 your a,b,c,0 channel nested six levels deep. 4\u2078 = 65536 leaf nodes, each cluster of 4 joined "+
+  "through its own center, centers joined through higher centers, all the way to the root at 0,0. Pick any two "+
+  "leaves and the network distributes entanglement between them by SWAPPING through their common ancestor \u2014 a "+
+  "path of length \u2264 12 through the hierarchy, ~24 classical strobe bits, logarithmic in 4096. Watch the link "+
+  "route inward to the shared center and back out. The quatrefoil, tiled into a quantum internet.",
+ tier:"LIT: 4\u2078=65536 leaves (87381 nodes), routing exact (swap through lowest common ancestor), swap/strobe cost = "+
+  "2\u00d7depth-to-LCA, and the fidelity model f_swap^(2\u00b7depth) are computed per link. HONEST: routing scales "+
+  "LOG-cheap (verified: 16\u00d7 leaves \u2192 +2 depth); FIDELITY does NOT \u2014 it decays exponentially in swaps, so deep "+
+  "links arrive dead below a per-swap threshold unless you pay PURIFICATION (extra qubits + strobe rounds). "+
+  "RENDER: visible depth is capped for drawing; routing/cost/fidelity use the full 8 levels."
+};
+</script>
+<div><h1>THE 65536</h1><div class="sub" id="subline"></div></div>
+<div class="ctrls">
+  <button id="build" class="on act">\u26a1 distribute a random link</button>
+  <button id="clear">clear links</button>
+  <label>visible depth <output id="od">5</output><input type="range" id="depth" min="3" max="6" value="5"></label>
+  <label>swap fidelity <output id="of">0.97</output><input type="range" id="fid" min="0.85" max="1" step="0.005" value="0.97"></label>
+  <span style="flex:1"></span>
+  <span style="font-size:10px;color:var(--dim)">click any two leaves to link them</span>
+</div>
+<div id="stage"><h2>THE NETWORK \u2014 4\u2078 = 65536 leaves, nested channels, root at 0,0</h2>
+  <canvas id="net" width="820" height="560"></canvas></div>
+<div class="ros" id="ros"></div>
+<div id="footer"></div>
+<div id="failcard"></div>
+<script>
+"use strict";
+function failLoud(w,e){const c=document.getElementById('failcard');c.style.display='block';
+  c.textContent="INSTRUMENT FAULT \u2014 "+w+"\n"+(e&&e.stack?e.stack:String(e));}
+try{
+document.getElementById('subline').textContent=PAPER.claim;
+document.getElementById('footer').innerHTML="<b>TIERS:</b> "+PAPER.tier+
+ " <b>DOES IT SCALE?</b> ROUTING: yes \u2014 log\u2084(65536)=8, so \u226416 swaps join any two of 65536 leaves (16\u00d7 bigger than "+
+ "4096, only +4 swaps). FIDELITY: no \u2014 each swap multiplies the link fidelity, so f_swap^16 can arrive DEAD. "+
+ "the fix is purification, a per-level tax \u2014 same story as staying below the error-correction threshold. "+
+ "the topology is free; the cleanliness is bought.";
+const $=id=>document.getElementById(id);
+const DEPTH=8, BRANCH=4;
+let maxDepth=5, links=[], selected=[]; let fSwap=0.97; const FULLDEPTH=8;
+
+// build the tree geometry: radial. root at center, each level fans its 4 children into an arc.
+const cv=$('net'),g=cv.getContext('2d');
+const W=cv.width,H=cv.height,CX=W/2,CY=H/2;
+const Rstep=(Math.min(W,H)/2-24)/DEPTH;
+
+// node id scheme: path string like "" (root), "0".."3", "01".. etc. depth = length.
+function childPath(p,i){return p+i;}
+function nodeAngleSpan(path){
+  // root spans full circle; each child takes 1/4 of parent's span
+  let a0=-Math.PI/2, a1=-Math.PI/2+2*Math.PI;
+  for(const ch of path){
+    const i=+ch; const span=(a1-a0)/BRANCH;
+    a1=a0+span*(i+1); a0=a0+span*i;
+  }
+  return [a0,a1];
+}
+function nodePos(path){
+  const d=path.length;
+  if(d===0)return [CX,CY];
+  const [a0,a1]=nodeAngleSpan(path); const a=(a0+a1)/2;
+  const r=Rstep*d;
+  return [CX+r*Math.cos(a), CY+r*Math.sin(a)];
+}
+function lca(p1,p2){let i=0;while(i<p1.length&&i<p2.length&&p1[i]===p2[i])i++;return p1.slice(0,i);}
+function pathUp(leaf,anc){ // list of nodes from leaf up to ancestor
+  const out=[];let p=leaf;while(p.length>=anc.length){out.push(p);if(p===anc)break;p=p.slice(0,-1);}return out;}
+
+function draw(){
+  g.fillStyle='#080605';g.fillRect(0,0,W,H);
+  // draw edges up to maxDepth
+  function drawSub(path){
+    const d=path.length;
+    if(d>=maxDepth)return;
+    const [px,py]=nodePos(path);
+    for(let i=0;i<BRANCH;i++){
+      const cp=childPath(path,i); const [cx,cy]=nodePos(cp);
+      g.strokeStyle='#1a1510';g.lineWidth=0.5;g.beginPath();g.moveTo(px,py);g.lineTo(cx,cy);g.stroke();
+      drawSub(cp);
+    }
+  }
+  drawSub("");
+  // draw nodes (only dots at maxDepth leaves + faint centers)
+  function drawNodes(path){
+    const d=path.length;const [x,y]=nodePos(path);
+    if(d===maxDepth){ g.fillStyle='#3a3020';g.fillRect(x-1,y-1,2,2); }
+    else if(d<=2){ g.fillStyle='#5a4a30';g.beginPath();g.arc(x,y,Math.max(1.5,4-d),0,6.28);g.fill(); }
+    if(d<maxDepth)for(let i=0;i<BRANCH;i++)drawNodes(childPath(path,i));
+  }
+  drawNodes("");
+  // root
+  g.fillStyle='#ffd24a';g.beginPath();g.arc(CX,CY,7,0,6.28);g.fill();
+  g.strokeStyle='#ffd24a';g.lineWidth=1.5;g.beginPath();g.arc(CX,CY,11,0,6.28);g.stroke();g.lineWidth=1;
+  g.fillStyle='#000';g.font='bold 9px ui-monospace';g.fillText('0',CX-3,CY+3);
+  // draw active links routed through LCA
+  for(const lk of links){
+    const da=lk.a.slice(0,maxDepth), db=lk.b.slice(0,maxDepth);
+    const anc=lca(da,db);
+    const up1=pathUp(da,anc), up2=pathUp(db,anc);
+    const dead=lk.fid!==undefined&&lk.fid<0.5;
+    g.strokeStyle=dead?'#5a2020':lk.col;g.lineWidth=2;g.globalAlpha=dead?0.6:0.9;
+    g.beginPath();
+    // leaf a up to anc
+    let first=true;
+    for(const n of up1){const [x,y]=nodePos(n);first?(g.moveTo(x,y),first=false):g.lineTo(x,y);}
+    // anc down to leaf b (reverse up2)
+    for(let i=up2.length-1;i>=0;i--){const [x,y]=nodePos(up2[i]);g.lineTo(x,y);}
+    g.stroke();g.globalAlpha=1;g.lineWidth=1;
+    // mark the LCA (the swapping center)
+    const [ax,ay]=nodePos(anc);
+    g.fillStyle=lk.col;g.beginPath();g.arc(ax,ay,4,0,6.28);g.fill();
+    // endpoints
+    for(const leaf of [lk.a,lk.b]){const [x,y]=nodePos(leaf);g.fillStyle=lk.col;g.beginPath();g.arc(x,y,4,0,6.28);g.fill();}
+  }
+  // selected (pending)
+  for(const s of selected){const [x,y]=nodePos(s);g.strokeStyle='#e8e0d4';g.lineWidth=2;g.beginPath();g.arc(x,y,6,0,6.28);g.stroke();g.lineWidth=1;}
+}
+
+function randomLeaf(){let p='';for(let i=0;i<FULLDEPTH;i++)p+=(Math.random()*4|0);return p;}
+const COLS=['#ff6a00','#57d8ff','#7dff6a','#ff4d4d','#ffd24a','#c060e0'];
+function addLink(a,b){
+  if(a===b)return;
+  const anc=lca(a,b), depthToLCA=a.length-anc.length;
+  const swaps=2*depthToLCA, bits=2*swaps;
+  const fid=Math.pow(fSwap,swaps);
+  links.push({a,b,col:COLS[links.length%COLS.length],swaps,bits,lcaDepth:anc.length,fid});
+  if(links.length>6)links.shift();
+  lastStat={swaps,bits,lcaDepth:anc.length,span:depthToLCA,fid};
+  draw();renderRos();
+}
+let lastStat=null;
+$('build').onclick=()=>{addLink(randomLeaf(),randomLeaf());};
+$('clear').onclick=()=>{links=[];selected=[];lastStat=null;draw();renderRos();};
+$('depth').oninput=e=>{maxDepth=+e.target.value;$('od').textContent=maxDepth;selected=[];draw();renderRos();};
+$('fid').oninput=e=>{fSwap=+e.target.value;$('of').textContent=fSwap.toFixed(3);for(const lk of links){lk.fid=Math.pow(fSwap,lk.swaps);} if(lastStat)lastStat.fid=Math.pow(fSwap,lastStat.swaps); draw(); renderRos();};
+
+// click to select leaves
+cv.onclick=(ev)=>{
+  const rect=cv.getBoundingClientRect();
+  const mx=(ev.clientX-rect.left)*(W/rect.width), my=(ev.clientY-rect.top)*(H/rect.height);
+  // find nearest leaf at maxDepth
+  let best=null,bd=1e9;
+  function scan(path){const d=path.length;
+    if(d===maxDepth){const [x,y]=nodePos(path);const dist=(x-mx)**2+(y-my)**2;if(dist<bd){bd=dist;best=path;}return;}
+    for(let i=0;i<BRANCH;i++)scan(childPath(path,i));
+  }
+  // scanning all 4096 is fine
+  scan("");
+  if(best&&bd<400){selected.push(best);if(selected.length===2){addLink(selected[0],selected[1]);selected=[];}else draw();}
+};
+
+function renderRos(){
+  const ro=(k,v,c)=>'<div class="ro"><div class="k">'+k+'</div><div class="v num"'+(c?' style="color:'+c+'"':'')+'>'+v+'</div></div>';
+  let h='';
+  h+=ro('leaves','4\u2078 = 65536','#ffb347');
+  h+=ro('total nodes','87381 (9 levels)','#8a7f6e');
+  h+=ro('active links',links.length,'#7dff6a');
+  if(lastStat){
+    h+=ro('last link \u2014 swaps',lastStat.swaps+' (\u22642\u00d78)','#ffd24a');
+    h+=ro('strobe bits',lastStat.bits,'#57d8ff');
+    const dead=lastStat.fid<0.5;
+    h+=ro('link fidelity',(lastStat.fid*100).toFixed(1)+'%',dead?'#ff4d4d':'#7dff6a');
+    h+=ro('verdict',dead?'<span class="badge b-spent">DEAD \u2014 needs purification</span>':'<span class="badge b-link">usable raw</span>');
+  } else {
+    h+=ro('routing','swap through common ancestor','#8a7f6e');
+    h+=ro('cost','\u2264 16 swaps, ~32 bits','#57d8ff');
+    h+=ro('scaling','log\u2084(65536) = 8 \u2014 routing free','#ff6a00');
+    h+=ro('but fidelity','decays f^(2d) \u2014 not free','#ff4d4d');
+  }
+  $('ros').innerHTML=h;
+}
+draw();renderRos();
+}catch(e){failLoud('init',e);}
+</script><div class="cm-seal">&#9670; sealed .dlw.fold &rarr; ROOT_0 &middot; a sphere of THE MAINFRAME &middot; vendored from David&rsquo;s corpus &middot; David Lee Wise (ROOT0), with AVAN</div></body></html>
