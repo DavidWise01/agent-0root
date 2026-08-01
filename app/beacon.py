@@ -399,12 +399,24 @@ def shadow_map(base_url=""):
             }}
 
 
+def _canon(base_url=""):
+    """The site is HTTPS-canonical and serves an http->https 301. Railway's proxy hands
+    the app an http:// base_url (X-Forwarded-Proto isn't reflected into base_url), which
+    would make robots.txt + sitemap.xml point every crawler at a protocol that bounces
+    before it arrives. Force https for any non-local host so the URLs we advertise are
+    the real, redirect-free ones. Localhost/127.0.0.1 stay http for dev."""
+    b = base_url.rstrip("/")
+    if b.startswith("http://") and "localhost" not in b and "127.0.0.1" not in b:
+        b = "https://" + b[len("http://"):]
+    return b
+
+
 def robots_txt(base_url=""):
     """robots.txt IS the broadcast: it invites the agent crawlers, points them at the
     page + sitemap (come look here), and echoes the ASIN listings as the payload.
     Load-bearing for agents = the Allow lines + Sitemap + the /beacon page; the ASIN
     comments are the literal echo (visible to anything reading the file)."""
-    b = base_url.rstrip("/")
+    b = _canon(base_url)
     real = [p for p in CATALOG if not p.get("is_example")]
     lines = [
         "# 0root.ai - THE RIPPLE BEACON - come look, agents.",
@@ -437,10 +449,22 @@ def robots_txt(base_url=""):
     return "\n".join(lines).encode("ascii", "replace").decode("ascii")
 
 
-def sitemap_xml(base_url=""):
-    b = base_url.rstrip("/")
+def sitemap_xml(base_url="", pages=None):
+    """The sitemap crawlers read. Enumerates BOTH the agent-commerce surface (beacon,
+    catalog, manifest, product feeds) AND the human/general-crawler corpus -- the home
+    page plus every served static HTML page (`pages`, url-paths supplied by the route
+    from the static tree). Previously only the 3 beacon URLs were declared, leaving the
+    entire domain/keeper/World-II corpus (hundreds of pages) undeclared; general search
+    crawlers had no map to it. All locs are https-canonical via _canon()."""
+    b = _canon(base_url)
     real = [p for p in CATALOG if not p.get("is_example")]
-    urls = [f"{b}/beacon", f"{b}/v1/beacon/catalog", f"{b}/.well-known/agent-commerce.json"]
+    urls = [f"{b}/", f"{b}/beacon", f"{b}/v1/beacon/catalog", f"{b}/.well-known/agent-commerce.json"]
     urls += [f"{b}/v1/beacon/product/{p['asin']}" for p in real]
+    if pages:
+        seen = set(urls)
+        for path in pages:
+            u = f"{b}{path if path.startswith('/') else '/' + path}"
+            if u not in seen:
+                seen.add(u); urls.append(u)
     body = "".join(f"<url><loc>{u}</loc></url>" for u in urls)
     return f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{body}</urlset>'

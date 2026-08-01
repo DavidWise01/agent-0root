@@ -428,10 +428,37 @@ def robots(request: Request):
     return beacon.robots_txt(str(request.base_url))
 
 
+def _corpus_paths():
+    """Enumerate the served static HTML corpus as url-paths, so the sitemap declares
+    the whole town, not just the beacon. Mirrors the serving routes: top-level pages at
+    /<name>.html, per-domain keeper pages at /d/<name>.html, and World II fold pages at
+    /world2/<name>.html. index.html files are represented by their directory root (/,
+    /world2/) rather than listed twice. Scanned live so new pages appear automatically."""
+    paths = ["/", "/world2/"]
+
+    def add(subdir, prefix):
+        base = os.path.join(STATIC, subdir) if subdir else STATIC
+        try:
+            names = sorted(os.listdir(base))
+        except OSError:
+            return
+        for f in names:
+            if f.endswith(".html") and not f.startswith(".") and f != "index.html":
+                paths.append(prefix + f)
+
+    add("", "/")            # top-level ud0 pages  -> /<name>.html
+    add("d", "/d/")         # per-domain keepers   -> /d/<name>.html
+    add("world2", "/world2/")  # World II fold pages -> /world2/<name>.html
+    return paths
+
+
 @app.get("/sitemap.xml")
 def sitemap(request: Request):
-    """The sitemap robots.txt points to — the beacon's pages for crawlers to index."""
-    return Response(beacon.sitemap_xml(str(request.base_url)), media_type="application/xml")
+    """The sitemap robots.txt points to — declares BOTH the agent-commerce beacon surface
+    and the full static corpus (home, domain/keeper pages, all World II fold pages), so
+    general search crawlers get a map to the whole site, not just the 3 beacon URLs."""
+    return Response(beacon.sitemap_xml(str(request.base_url), _corpus_paths()),
+                    media_type="application/xml")
 
 
 # ── WITNESS LOOP — the reciprocal HTTPS tunnel learner (Claude D1's spec) ──────
