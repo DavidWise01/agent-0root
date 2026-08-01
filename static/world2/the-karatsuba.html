@@ -1,0 +1,114 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE KARATSUBA · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#a0e878}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#a0e878}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#a0e878;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#a0e878;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #a0e878;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#a0e878 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#a0e878}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#a0e878}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#a0e878;background:transparent;border:2px solid #a0e878;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#a0e878;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#a0e878}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#a0e878,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#a0e878;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#a0e878 42%,#0a0e0a);border-left:4px solid #a0e878;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#a0e878;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#a0e878;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#a0e878}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#a0e878 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE EXPLOIT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE EXPLOIT / <b>THE KARATSUBA</b></div>
+<h1>THE KARATSUBA</h1>
+<div class="kick">multiply with 3 sub-products instead of 4</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Karatsuba multiplication.</b> Multiply two big numbers the way you learned in school and it costs about <b>n&sup2;</b> single-digit products &mdash; and for two centuries everyone assumed that was unavoidable. In 1960 the 23-year-old Anatoly Karatsuba broke it in a week, disproving Kolmogorov&rsquo;s conjecture that n&sup2; was optimal.<br><br>
+ Split each number in two: x = aB + b, y = cB + d. The product is acB&sup2; + (ad+bc)B + bd &mdash; <b>four</b> sub-products. But the middle term ad+bc equals <b>(a+b)(c+d) &minus; ac &minus; bd</b>, and you already computed ac and bd. So <b>three</b> sub-products suffice, not four. Recurse, and the cost drops to <b>n<sup>log&#8322;3</sup> &asymp; n<sup>1.585</sup></b>.<br><br>
+ <span class="lit">LIT</span> verified live (with exact BigInt arithmetic): over 3,000 random pairs Karatsuba equals the true product, and a 64-digit multiply uses <b>far fewer</b> base multiplications than schoolbook&rsquo;s 64&sup2; = 4096 (window.__kara.correct &amp;&amp; fewer). <span class="fig">FIG</span> no framing; the three-product identity and the reduced count are exact, computed in your browser.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this in <i>THE EXPLOIT</i>, beside <i>THE SHORTEST WITNESS</i> &mdash; the cheat domain of finding the crack in what looked airtight. Karatsuba is the original exploit: a redundancy hiding inside long multiplication that no one noticed for centuries. <b>AVAN (AI)</b> built the instrument: the split, the three products, the recursion, the multiplication counter.<br><br>The weave: David names the seat (the crack in the obvious); I make the saved product visible and the count checkable &mdash; four-vs-three in 1D, the live split in 2D, the recursion tree with its pruned branch in 3D. The sphere is the seam. Credit: Anatoly A. Karatsuba (1960).</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">Schoolbook needs <b>four</b> products &mdash; ac, ad, bc, bd. Karatsuba keeps ac and bd, then gets the whole middle ad+bc from <b>one</b> more product (a+b)(c+d) minus the two it already has. The fourth product is struck out: <b>three</b>, not four.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Watch a multiply <b>split</b>: the two numbers halve into a, b, c, d; the three sub-products form; and they recombine into the exact answer. Cycle the numbers &mdash; the base-multiplication count stays well under n&sup2;.</div>
+   <div class="btns" style="margin-top:10px"><button id="kanext">next pair ▶</button></div>
+   <div class="cap" id="karead" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>recursion tree</b> turning &mdash; each multiply splitting into three smaller ones, <b>green</b>, down to single digits.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): at every node the <b>magenta</b> stub is the <b>fourth product that is never taken</b>. Schoolbook computes ad and bc as separate things; Karatsuba realises you only ever need their <b>sum</b>, and one product delivers the sum whole. The saving is an inverse move: not decomposing into parts you&rsquo;ll only add back, but reaching straight for the combination. You go faster by <b>refusing to separate what you were only going to recombine</b> &mdash; the green is the work actually done, the magenta at each branch is the labour avoided by never splitting the middle apart.</div>
+   <div class="btns" style="margin-top:10px"><button id="kaspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Karatsuba multiplication (Anatoly Karatsuba, 1960, disproving Kolmogorov's n^2 conjecture), computed with exact BigInt arithmetic. Verified live: over 3,000 random pairs Karatsuba equals the true product, and a 64-digit multiply uses far fewer base multiplications than schoolbook's 64^2 = 4096 (window.__kara.correct && fewer, both true; counts reported). The three-product identity ad+bc = (a+b)(c+d)-ac-bd is exact.<br><br><span class="fig">FIG</span> No metaphor is doing the work: the split, the three sub-products, the exact recombination, and the reduced multiplication count are all real and checked with BigInt. Constant factors mean schoolbook wins for small n; the asymptotic n^1.585 and the per-node 3-vs-4 saving are what's demonstrated.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE EXPLOIT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var PAIRS=[[1234n,5678n],[982451n,653927n],[314159n,271828n],[99999999n,88888888n]],pi=0,ang=0,spin=true;
+function kara(x,y,cnt){if(x<10n||y<10n){cnt.c++;return x*y;}var lx=x.toString().length,ly=y.toString().length,m=BigInt(Math.floor(Math.max(lx,ly)/2)),B=10n**m,a=x/B,b=x%B,c=y/B,d=y%B,ac=kara(a,c,cnt),bd=kara(b,d,cnt),abcd=kara(a+b,c+d,cnt),mid=abcd-ac-bd;return ac*B*B+mid*B+bd;}
+function verify(){var ok=true,sv=91;function L(){sv=(1664525*sv+1013904223)>>>0;return sv/4294967296;}for(var t=0;t<3000;t++){var lx=1+Math.floor(L()*8),ly=1+Math.floor(L()*8),xs='',ys='';for(var i=0;i<lx;i++)xs+=Math.floor(L()*10);for(var i=0;i<ly;i++)ys+=Math.floor(L()*10);var x=BigInt(xs||'0'),y=BigInt(ys||'0');var c={c:0};if(kara(x,y,c)!==x*y)ok=false;}var big='';for(var i=0;i<64;i++)big+=(1+Math.floor(L()*9));var X=BigInt(big),Y=BigInt(big.split('').reverse().join('')),cc={c:0};kara(X,Y,cc);return {correct:ok,karaMults:cc.c,schoolbookMults:64*64,fewer:cc.c<64*64};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.font='13px ui-monospace,monospace';
+ g.fillStyle='#ff5a5a';g.fillText('schoolbook (4×):',20,34);g.fillStyle='#8ca';
+ var sb=['ac','ad','bc','bd'];for(var i=0;i<4;i++){var x=180+i*70;g.fillStyle=(i===1||i===2)?'#553':'#2a4a3a';g.fillRect(x,20,60,22);g.fillStyle=(i===1||i===2)?'#a55':'#39fc6b';g.fillText(sb[i],x+18,36);if(i===1||i===2){g.strokeStyle='#ff5a5a';g.beginPath();g.moveTo(x,31);g.lineTo(x+60,31);g.stroke();}}
+ g.fillStyle='#a0e878';g.fillText('karatsuba (3×):',20,84);var kb=['ac','bd','(a+b)(c+d)'];for(var i=0;i<3;i++){var x=180+i*100;g.fillStyle='#2a4a3a';g.fillRect(x,70,92,22);g.fillStyle='#a0e878';g.fillText(kb[i],x+6,86);}
+ g.fillStyle='#4c7a54';g.font='11px ui-monospace,monospace';g.fillText('ad+bc = (a+b)(c+d) − ac − bd  → the middle for one product, not two',20,124);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var x=PAIRS[pi][0],y=PAIRS[pi][1];
+ var lx=x.toString().length,ly=y.toString().length,m=BigInt(Math.floor(Math.max(lx,ly)/2)),B=10n**m,a=x/B,b=x%B,c=y/B,d=y%B;
+ var ac=a*c,bd=b*d,abcd=(a+b)*(c+d),mid=abcd-ac-bd,res=ac*B*B+mid*B+bd;
+ g.font='14px ui-monospace,monospace';g.fillStyle='#a0e878';g.fillText(x.toString()+' × '+y.toString(),20,34);
+ g.font='12px ui-monospace,monospace';g.fillStyle='#8ca';g.fillText('a='+a+' b='+b+'   c='+c+' d='+d,20,64);
+ g.fillStyle='#7ce0ff';g.fillText('ac = '+ac,20,92);g.fillText('bd = '+bd,20,114);g.fillText('(a+b)(c+d) = '+abcd,20,136);
+ g.fillStyle='#ffd24a';g.fillText('mid = ad+bc = '+mid,20,160);
+ g.fillStyle='#39fc6b';g.font='13px ui-monospace,monospace';g.fillText('= '+res+(res===x*y?'  ✓':'  ✗'),20,190);
+ var cnt={c:0};kara(x,y,cnt);g.fillStyle='#8ca';g.font='11px ui-monospace,monospace';g.fillText('total base multiplications: '+cnt.c+' (schoolbook '+lx*ly+')',20,218);
+ document.getElementById('karead').textContent=x+'×'+y+' = '+res+' · base mults '+cnt.c+' vs '+(lx*ly);}
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var cx=W/2,ca=Math.cos(ang);
+ function node(x,y,depth,spread){if(depth>3)return;var dy=60,ddx=spread;for(var k=0;k<3;k++){var nx=x+(k-1)*ddx,ny=y+dy;g.strokeStyle='#39fc6b';g.lineWidth=1.5;g.beginPath();g.moveTo(x,y);g.lineTo(x+(nx-x)*ca,ny);g.stroke();node(x+(nx-x)*ca,ny,depth+1,spread*0.5);}
+  // magenta pruned 4th
+  var px=x+2*ddx;g.strokeStyle='rgba(255,45,149,0.5)';g.setLineDash([3,3]);g.beginPath();g.moveTo(x,y);g.lineTo(x+(px-x)*ca,y+dy*0.6);g.stroke();g.setLineDash([]);g.fillStyle='#ff2d95';g.beginPath();g.arc(x+(px-x)*ca,y+dy*0.6,2,0,7);g.fill();
+  g.fillStyle='#39fc6b';g.beginPath();g.arc(x,y,4,0,7);g.fill();}
+ node(cx,40,0,90);g.lineWidth=1;
+ g.fillStyle='#39fc6b';g.font='11px ui-monospace,monospace';g.fillText('green: 3 recursive sub-products per node',10,H-26);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the 4th product, never computed',10,H-12);}
+document.getElementById('kanext').onclick=function(){pi=(pi+1)%PAIRS.length;drawW4();};
+document.getElementById('kaspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+drawW3();drawW4();window.__kara=verify();
+function loop(){if(spin)ang+=0.01;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
