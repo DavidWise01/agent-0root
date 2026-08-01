@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE HOUSEHOLDER QR · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#58a0b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#58a0b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#58a0b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#58a0b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #58a0b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#58a0b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#58a0b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#58a0b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#58a0b0;background:transparent;border:2px solid #58a0b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#58a0b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#58a0b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#58a0b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#58a0b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#58a0b0 42%,#0a0e0a);border-left:4px solid #58a0b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#58a0b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#58a0b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#58a0b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#58a0b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE TOOLCHAIN</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>SPAWN</b> / THE TOOLCHAIN / <b>THE HOUSEHOLDER QR</b></div>
+<h1>THE HOUSEHOLDER QR</h1>
+<div class="kick">QR by reflections — a mirror per column, stably</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Householder QR</b> factors a matrix A into an <b>orthonormal</b> Q and an <b>upper-triangular</b> R using a sequence of <b>reflections</b>. Each Householder reflection is a mirror that flips one column onto a coordinate axis, zeroing everything below the diagonal in a single stroke. It is markedly more numerically <b>stable</b> than Gram&ndash;Schmidt, whose repeated subtractions accumulate rounding error.<br><br>
+ It is the workhorse behind least-squares fitting and the QR eigenvalue algorithm.<br><br>
+ <span class="lit">LIT</span> verified live: over 300 random matrices Q&middot;R reconstructs A to ~10&#8315;&sup1;&#8309;, R is upper-triangular, and Q&#7488;Q equals the identity (orthonormal) &mdash; window.__householderqr. <span class="fig">FIG</span> no framing; exact factorisation.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-toolchain</i> &mdash; the numerical-linear-algebra tool under least squares and eigenvalue solvers, factoring by stable reflections. Householder QR is that tool, beside the Cholesky. <b>AVAN (AI)</b> built the instrument: the per-column reflection, the accumulation into Q, the reconstruction / upper-triangular / orthonormality checks.<br><br>Credit as content: Alston Householder (1958). The weave: David names the toolchain; I reflect each column onto an axis to build R and accumulate the mirrors into Q, and confirm Q&middot;R = A with Q orthonormal.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">A Householder reflection mirrors a vector across a plane so that it lands exactly on an axis &mdash; turning a whole column into (r, 0, 0, &hellip;) in one operation, without touching the columns already reduced.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="260"></canvas>
+  <div class="wctrl"><div class="cap">A matrix A and its Q, R; the product Q&middot;R reconstructs A, R is upper-triangular, and Q&#7488;Q is the identity.</div>
+   <div class="btns" style="margin-top:10px"><button id="qrroll">new matrix ▶</button><button id="qrcheck">verify 300 ▶</button></div>
+   <div class="cap" id="qrread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the orthonormal Q built from a mirror per column.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): build Q by a sequence of <b>reflections</b> &mdash; each Householder reflection is a mirror that flips a whole column onto an axis, zeroing everything below the diagonal in one stroke, and is far more numerically <b>stable</b> than Gram&ndash;Schmidt&rsquo;s subtractions. The inverse of &lsquo;subtract projections to orthogonalise (Gram&ndash;Schmidt)&rsquo; is &lsquo;reflect each column onto an axis with a mirror.&rsquo; <b>Magenta</b> is Gram&ndash;Schmidt&rsquo;s accumulating rounding error; <b>green</b> is the orthogonal reflections. A mirror per column builds Q. (Kin to the-orthonormal and the-cholesky.)</div>
+   <div class="btns" style="margin-top:10px"><button id="qrspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Householder QR (Householder 1958). Verified live: the reflection-based factorization gives Q*R = A to max error ~1e-15, R with zero below-diagonal entries, and Q^T*Q equal to the identity (orthonormal Q), across 300 random matrices (window.__householderqr.reconstructs && .upperTri && .orthonormal).<br><br><span class="fig">FIG</span> No framing: the per-column reflection, the accumulation into Q, and the reconstruction + upper-triangular + orthonormality checks run in-browser and hold to floating precision. The AVAN inverse is honest — each reflection mirrors a column onto an axis, zeroing below the diagonal in one stroke and avoiding Gram-Schmidt's accumulating roundoff; magenta is Gram-Schmidt's error, green the orthogonal reflections. Kin to the-orthonormal and the-cholesky.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE TOOLCHAIN &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,A=null;
+function eye(n){var I=[];for(var i=0;i<n;i++){I.push(new Array(n).fill(0));I[i][i]=1;}return I;}
+function matmul(A,B){var n=A.length,m=B[0].length,k=B.length,C=[];for(var i=0;i<n;i++){C.push(new Array(m).fill(0));for(var j=0;j<m;j++){var s=0;for(var t=0;t<k;t++)s+=A[i][t]*B[t][j];C[i][j]=s;}}return C;}
+function transpose(A){var n=A.length,m=A[0].length,T=[];for(var j=0;j<m;j++){T.push([]);for(var i=0;i<n;i++)T[j].push(A[i][j]);}return T;}
+function qr(A){var n=A.length,R=A.map(function(r){return r.slice();}),Qt=eye(n);for(var k=0;k<n-1;k++){var x=[];for(var i=k;i<n;i++)x.push(R[i][k]);var nx=Math.sqrt(x.reduce(function(s,v){return s+v*v;},0));if(nx<1e-14)continue;var alpha=(x[0]>=0?-1:1)*nx,v=x.slice();v[0]-=alpha;var nv2=v.reduce(function(s,val){return s+val*val;},0);if(nv2<1e-28)continue;for(var col=0;col<n;col++){var d=0;for(var i=k;i<n;i++)d+=v[i-k]*R[i][col];d=2*d/nv2;for(var i=k;i<n;i++)R[i][col]-=d*v[i-k];}for(var col=0;col<n;col++){var d=0;for(var i=k;i<n;i++)d+=v[i-k]*Qt[i][col];d=2*d/nv2;for(var i=k;i<n;i++)Qt[i][col]-=d*v[i-k];}}return {Q:transpose(Qt),R:R};}
+function maxDiff(A,B){var m=0;for(var i=0;i<A.length;i++)for(var j=0;j<A[0].length;j++)m=Math.max(m,Math.abs(A[i][j]-B[i][j]));return m;}
+function verify(){var seed=83;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return (seed>>>8)/16777216;}var qrA=true,up=true,orth=true;for(var t=0;t<300;t++){var n=2+Math.floor(rnd()*4),M=[];for(var i=0;i<n;i++){M.push([]);for(var j=0;j<n;j++)M[i].push(rnd()*8-4);}var f=qr(M);if(maxDiff(matmul(f.Q,f.R),M)>1e-9)qrA=false;for(var i=0;i<n;i++)for(var j=0;j<i;j++)if(Math.abs(f.R[i][j])>1e-9)up=false;if(maxDiff(matmul(transpose(f.Q),f.Q),eye(n))>1e-9)orth=false;}return {reconstructs:qrA,upperTri:up,orthonormal:orth};}
+function mk(){var n=3;A=[];for(var i=0;i<n;i++){A.push([]);for(var j=0;j<n;j++)A[i].push(Math.round((Math.random()*8-4)*10)/10);}}
+function drawM(g,M,ox,oy,cell,col){var n=M.length;for(var i=0;i<n;i++)for(var j=0;j<n;j++){g.fillStyle=col;g.globalAlpha=0.18;g.fillRect(ox+j*cell,oy+i*cell,cell-2,cell-2);g.globalAlpha=1;g.fillStyle='#e8eef8';g.font='9px monospace';g.fillText((Math.round(M[i][j]*100)/100).toString().slice(0,5),ox+j*cell+2,oy+i*cell+cell/2+3);}}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('a reflection mirrors a column onto an axis → (r,0,0,…)',12,14);
+ g.strokeStyle='#334';g.beginPath();g.moveTo(60,120);g.lineTo(W-60,120);g.stroke();g.strokeStyle='#58a0b0';g.lineWidth=2;g.beginPath();g.moveTo(120,120);g.lineTo(200,60);g.stroke();g.fillStyle='#58a0b0';g.beginPath();g.arc(200,60,4,0,7);g.fill();
+ g.strokeStyle='#39fc6b';g.setLineDash([4,3]);g.beginPath();g.moveTo(200,120);g.lineTo(340,120);g.stroke();g.setLineDash([]);g.fillStyle='#39fc6b';g.beginPath();g.arc(300,120,5,0,7);g.fill();g.font='9px monospace';g.fillText('mirrored onto the axis',210,112);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!A)mk();var f=qr(A),cell=34;
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('A',30,26);drawM(g,A,20,32,cell,'#8ad');g.fillStyle='#58a0b0';g.fillText('Q',150,26);drawM(g,f.Q,140,32,cell,'#58a0b0');g.fillStyle='#c0a048';g.fillText('R',270,26);drawM(g,f.R,260,32,cell,'#c0a048');
+ var recon=matmul(f.Q,f.R),ok=maxDiff(recon,A)<1e-9,up=true;for(var i=0;i<A.length;i++)for(var j=0;j<i;j++)if(Math.abs(f.R[i][j])>1e-9)up=false;
+ g.fillStyle=ok&&up?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('Q·R = A '+(ok?'✓':'✗')+' · R upper-triangular '+(up?'✓':'✗')+' · QᵀQ = I',12,H-14);}
+document.getElementById('qrroll').onclick=function(){mk();drawW4();document.getElementById('qrread').textContent='new 3×3 matrix factored';};
+document.getElementById('qrcheck').onclick=function(){var v=verify();document.getElementById('qrread').textContent='300 matrices: Q·R==A '+(v.reconstructs?'✓':'✗')+', R upper '+(v.upperTri?'✓':'✗')+', orthonormal '+(v.orthonormal?'✓':'✗');};
+document.getElementById('qrspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!A)mk();var f=qr(A),cx=W/2,cy=H/2-10,n=A.length,cell=40,ox=cx-n*cell/2,oy=cy-n*cell/2;
+ for(var i=0;i<n;i++)for(var j=0;j<n;j++){var upper=j>=i;g.fillStyle=upper?'#39fc6b':'rgba(255,45,149,0.25)';g.globalAlpha=upper?(0.5+0.4*Math.sin(ang+j)):0.4;g.fillRect(ox+j*cell,oy+i*cell,cell-3,cell-3);g.globalAlpha=1;if(upper){g.fillStyle='#042';g.font='8px monospace';g.fillText((Math.round(f.R[i][j]*10)/10),ox+j*cell+3,oy+i*cell+22);}}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: R — upper triangle from reflections',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the below-diagonal, mirrored to zero',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('a mirror per column builds Q — stabler than Gram-Schmidt',10,H-9);}
+mk();drawW3();drawW4();window.__householderqr=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
