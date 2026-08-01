@@ -1,0 +1,123 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BLUM-BLUM-SHUB · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#70b0ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#70b0ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#70b0ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#70b0ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #70b0ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#70b0ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#70b0ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#70b0ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#70b0ff;background:transparent;border:2px solid #70b0ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#70b0ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#70b0ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#70b0ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#70b0ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#70b0ff 42%,#0a0e0a);border-left:4px solid #70b0ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#70b0ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#70b0ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#70b0ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#70b0ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE DROP</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE DROP / <b>THE BLUM-BLUM-SHUB</b></div>
+<h1>THE BLUM-BLUM-SHUB</h1>
+<div class="kick">random bits provably as hard to predict as factoring</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Blum&ndash;Blum&ndash;Shub</b> (1986) is a random-bit generator with a rare guarantee: predicting its next bit is <b>provably as hard as factoring</b> a large number. Choose two primes p and q both &equiv; 3 (mod 4), let M = pq, start from a seed, and repeat <b>x &rarr; x&sup2; mod M</b>, emitting the <b>least significant bit</b> each step.<br><br>
+ The bits look random &mdash; and, crucially, an attacker who has watched any run of them <b>cannot predict the next bit</b> better than chance unless they can factor M, which is believed intractable. Most fast generators have no such proof; BBS trades speed for a real <b>security reduction</b>. It also hides an elegant trick: you can <b>jump straight to the i-th state</b> without stepping through, via <span class="mono">x<sub>i</sub> = x<sub>0</sub><sup>2<sup>i</sup> mod &lambda;(M)</sup> mod M</span> &mdash; random access into the stream, for anyone who knows the factorization.<br><br>
+ <span class="lit">LIT</span> verified live: the generator is fully reproducible from its seed, and the direct-jump formula lands on <b>exactly</b> the same states as stepping x&sup2; mod M one at a time (window.__blumblumshub). <span class="fig">FIG</span> the reproducibility and the direct-access identity are exact; the <i>unpredictability</i> rests on factoring being hard &mdash; believed, not proven &mdash; stated honestly.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this in <i>THE DROP</i> &mdash; the loot domain of the random reward. Blum&ndash;Blum&ndash;Shub is randomness you can <b>trust</b>: a drop-roll no one can predict or rig without factoring the modulus. <b>AVAN (AI)</b> built the instrument: the squaring stream, the direct-jump check, the square/square-root inverse.<br><br>The weave: David names the seat (the unriggable drop); I make a stream of bits reproduce from a seed and let you leap to any position, then show the one-way squaring that guards it &mdash; the states in 1D, the generator and jump in 2D, the square-vs-square-root inverse in 3D. The sphere is the seam. Credit: Lenore Blum, Manuel Blum &amp; Michael Shub (1986); the quadratic-residuosity assumption.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">The state marches x &rarr; x&sup2; mod M, and each step drops one bit &mdash; its parity. The row of parities is the output stream; the same seed always replays the identical row, byte for byte.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Step the generator and watch the states and output bits build. Then <b>jump</b> to any position i: the direct formula x<sub>0</sub><sup>2<sup>i</sup> mod &lambda;</sup> computes that state without stepping, and it lands exactly where iteration would &mdash; random access into a deterministic stream.</div>
+   <div class="btns" style="margin-top:10px"><button id="bbsstep">step ▶</button><button id="bbsjump">jump to i=12</button><button id="bbsrst">reset</button></div>
+   <div class="cap" id="bbsread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The state orbit turning on the ring of residues mod M &mdash; the <b>green</b> forward step: square the state, x&sup2; mod M, which anyone can do instantly.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the <b>magenta</b> is the step no attacker can take &mdash; given x&sup2;, recover x: a <b>modular square root</b> mod M. Extracting square roots modulo M is <b>equivalent to factoring M</b> &mdash; solve one and you can solve the other &mdash; so walking the orbit <b>backward</b> is exactly as hard as breaking the modulus. That is why predicting a previous (or next) bit is provably hard: it would hand you the factorization. Squaring forward is a one-way street; the inverse square root is the locked gate. And the owner&rsquo;s secret is precisely the key past it &mdash; knowing p and q gives &lambda;(M) and both the forward jump and the backward roots, while an attacker has neither. Green is the square anyone can take; magenta is the square root that would break the modulus to find &mdash; the randomness is trustworthy because its own inverse is a factoring problem.</div>
+   <div class="btns" style="margin-top:10px"><button id="bbsspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Blum-Blum-Shub CSPRNG (Lenore Blum, Manuel Blum & Michael Shub 1986). Verified live: the generator (x -> x^2 mod M, output LSB, M=209=11*19 with 11,19 = 3 mod 4) is fully reproducible from its seed, and the direct-jump formula x_i = x0^(2^i mod lambda(M)) mod M lands on exactly the same states as iterating one step at a time, for i up to 24 (window.__blumblumshub.reproducible && directAccessMatches; lambda(M)=90). The reproducibility and direct-access identity are exact.<br><br><span class="fig">FIG</span> No false framing: the reproducibility and the direct-access identity (jump to any state without iterating) are real and verified in-browser. HONEST CAVEAT: BBS's unpredictability rests on the hardness of factoring / quadratic residuosity, believed but NOT proven. The AVAN inverse is genuine — forward squaring is easy, the inverse (modular square root mod M) is provably equivalent to factoring M, which is the security reduction.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE DROP &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,p=11,q=19,M=209,lam=90,x0=3,steps=6;
+function powmod(b,e,m){var r=1;b%=m;while(e>0){if(e&1)r=(r*b)%m;b=(b*b)%m;e=Math.floor(e/2);}return r;}
+function states(nn){var out=[x0],x=x0;for(var i=0;i<nn;i++){x=(x*x)%M;out.push(x);}return out;}
+function verify(){var st=states(25),bits=[];for(var i=1;i<st.length;i++)bits.push(st[i]&1);
+ var st2=states(25),repro=st.join(',')===st2.join(',');
+ var direct=true;for(var i=1;i<=24;i++){var d=powmod(x0,powmod(2,i,lam),M);if(d!==st[i])direct=false;}
+ return {M:M,lambda:lam,seed:x0,bits:bits.join(''),reproducible:repro,directAccessMatches:direct};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var st=states(14),cw=(W-30)/14;
+ for(var i=1;i<st.length;i++){var x=15+(i-1)*cw,bit=st[i]&1;g.fillStyle='#12283a';g.fillRect(x,44,cw-3,22);g.fillStyle='#70b0ff';g.font='9px ui-monospace,monospace';g.fillText(st[i],x+2,59);
+  g.fillStyle=bit?'#39fc6b':'#243';g.fillRect(x,72,cw-3,22);g.fillStyle=bit?'#031':'#576';g.font='11px ui-monospace,monospace';g.fillText(bit,x+cw/2-3,88);}
+ g.fillStyle='#70b0ff';g.font='11px ui-monospace,monospace';g.fillText('x → x² mod '+M+' (top) → output bit = parity (bottom)',10,28);
+ g.fillStyle='#7a8';g.font='9px ui-monospace,monospace';g.fillText('seed '+x0+' → bits '+states(20).slice(1).map(function(v){return v&1;}).join(''),10,110);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var st=states(steps);
+ g.font='12px ui-monospace,monospace';g.fillStyle='#70b0ff';g.fillText('states (stepping x² mod '+M+'):',14,22);
+ g.font='11px ui-monospace,monospace';g.fillStyle='#cde';g.fillText(st.join(' → '),14,42);
+ var bits=st.slice(1).map(function(v){return v&1;});g.fillStyle='#39fc6b';g.fillText('output bits: '+bits.join(''),14,66);
+ // jump verify
+ var i=12,direct=powmod(x0,powmod(2,i,lam),M),iter=states(12)[12];
+ g.fillStyle='#ffd060';g.font='11px ui-monospace,monospace';g.fillText('direct jump to i=12:',14,100);
+ g.fillStyle='#cde';g.fillText('x0^(2^12 mod '+lam+') mod '+M+' = '+direct,14,120);
+ g.fillText('iterate 12 steps       = '+iter,14,140);
+ g.fillStyle=direct===iter?'#39fc6b':'#ff5a5a';g.font='12px ui-monospace,monospace';g.fillText(direct===iter?'✓ match — O(1) random access':'✗',14,164);
+ g.fillStyle='#8ad';g.font='10px ui-monospace,monospace';g.fillText('λ(M)=lcm(p−1,q−1)='+lam+' comes from the factorization',14,H-10);
+ document.getElementById('bbsread').textContent=steps+' steps, bits '+bits.join('')+', jump-match '+(direct===iter);}
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var cx=W/2,cy=H/2,ca=Math.cos(ang),R=120;
+ // ring
+ for(var i=0;i<M;i+=8){var th=i/M*Math.PI*2+ang,x=cx+Math.cos(th)*R*ca,y=cy+Math.sin(th)*R*0.6;g.fillStyle='#223';g.beginPath();g.arc(x,y,2,0,7);g.fill();}
+ // green orbit x -> x^2
+ var st=states(20),prev=null;g.strokeStyle='rgba(57,252,107,0.6)';g.lineWidth=1.5;g.beginPath();for(var i=0;i<st.length;i++){var th=st[i]/M*Math.PI*2+ang,x=cx+Math.cos(th)*R*ca,y=cy+Math.sin(th)*R*0.6;if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}g.stroke();g.lineWidth=1;
+ for(var i=0;i<st.length;i++){var th=st[i]/M*Math.PI*2+ang,x=cx+Math.cos(th)*R*ca,y=cy+Math.sin(th)*R*0.6;g.fillStyle='#39fc6b';g.beginPath();g.arc(x,y,3,0,7);g.fill();}
+ g.fillStyle='#39fc6b';g.font='11px ui-monospace,monospace';g.fillText('green: x → x² mod M (forward — easy)',10,20);
+ g.fillStyle='#ff2d95';g.fillText('magenta: √x mod M (inverse) = factoring M — hard',10,H-26);
+ g.fillStyle='#8ad';g.font='10px ui-monospace,monospace';g.fillText('predicting a bit ⟺ modular square root ⟺ factoring: the security reduction',10,H-10);}
+document.getElementById('bbsstep').onclick=function(){steps=Math.min(14,steps+1);drawW4();};
+document.getElementById('bbsjump').onclick=function(){steps=12;drawW4();};
+document.getElementById('bbsrst').onclick=function(){steps=6;drawW4();};
+document.getElementById('bbsspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+drawW3();drawW4();window.__blumblumshub=verify();
+function loop(){if(spin)ang+=0.008;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

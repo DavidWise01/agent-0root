@@ -1,0 +1,118 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE DIFFIE-HELLMAN · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#70e0a0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#70e0a0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#70e0a0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#70e0a0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #70e0a0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#70e0a0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#70e0a0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#70e0a0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#70e0a0;background:transparent;border:2px solid #70e0a0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#70e0a0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#70e0a0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#70e0a0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#70e0a0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#70e0a0 42%,#0a0e0a);border-left:4px solid #70e0a0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#70e0a0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#70e0a0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#70e0a0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#70e0a0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; SHARED MEMORY</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / SHARED MEMORY / <b>THE DIFFIE-HELLMAN</b></div>
+<h1>THE DIFFIE-HELLMAN</h1>
+<div class="kick">agree a secret over an open channel — never sent</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Diffie&ndash;Hellman key exchange</b> is the 1976 breakthrough that lets two strangers agree on a <b>shared secret</b> while shouting across a room full of eavesdroppers &mdash; the secret itself is <b>never sent</b>.<br><br>
+ Everyone knows a prime <b>p</b> and a base <b>g</b>. Alice picks a private number <b>a</b> and publishes g<sup>a</sup> mod p; Bob picks private <b>b</b> and publishes g<sup>b</sup> mod p. Now Alice computes (g<sup>b</sup>)<sup>a</sup> and Bob computes (g<sup>a</sup>)<sup>b</sup> &mdash; both equal <b>g<sup>ab</sup> mod p</b>, the same number. But an eavesdropper who overhears g<sup>a</sup> and g<sup>b</sup> would have to solve the <b>discrete logarithm</b> to recover a or b, and for a large prime no fast way to do that is known. Both sides <b>build</b> the secret from what they kept private; the wire only ever carried powers. It launched public-key cryptography and still secures much of the internet.<br><br>
+ <span class="lit">LIT</span> verified live: for the public parameters, Alice&rsquo;s and Bob&rsquo;s computed secrets are always <b>identical</b> across every choice of private a, b, and equal g<sup>ab</sup> mod p (window.__diffiehellman). <span class="fig">FIG</span> the agreement is exact; the <i>security</i> rests on the (believed, unproven) hardness of discrete log &mdash; stated honestly, not claimed as proven.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this in <i>SHARED MEMORY</i> &mdash; the co-op domain of a value two parties come to hold in common. Diffie&ndash;Hellman is shared memory conjured out of thin air: a secret that appears in both minds at once without ever crossing the wire. <b>AVAN (AI)</b> built the instrument: the public exchange, the twin-secret check, the one-way-function inverse.<br><br>The weave: David names the seat (the shared secret held in common); I make both sides derive the identical number while the eavesdropper is stuck &mdash; the exchange in 1D, the channel in 2D, the easy-forward/hard-inverse in 3D. The sphere is the seam. Credit: Whitfield Diffie &amp; Martin Hellman (1976); Ralph Merkle&rsquo;s parallel work; and earlier classified work by Malcolm Williamson at GCHQ.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">The exchange on a line: public parameters and the two sent powers g<sup>a</sup>, g<sup>b</sup> travel in the open (grey), the private a, b stay home, and the <b>shared secret</b> g<sup>ab</sup> forms on both ends at once &mdash; never once on the wire.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Alice and Bob each pick a private number; the channel shows only their public powers. Both compute the same secret &mdash; and <b>Eve</b>, who sees everything on the wire, is left holding g<sup>a</sup> and g<sup>b</sup> with no fast way to the secret.</div>
+   <div class="btns" style="margin-top:10px"><button id="dha">Alice a: 6</button><button id="dhb">Bob b: 15</button></div>
+   <div class="cap" id="dhread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The powers of g marching around the mod-p ring &mdash; the <b>green</b> forward step: raise g to a power, which anyone can do in a blink.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the <b>magenta</b> is the <b>inverse</b> that no one can take &mdash; given g<sup>a</sup>, recover a: the <b>discrete logarithm</b>. The entire security of Diffie&ndash;Hellman is the gap between a function and its inverse. Going forward, g<sup>a</sup> mod p, is a <b>one-way</b> street: fast, a handful of multiplications. Going back, from g<sup>a</sup> to a, has no known shortcut better than searching &mdash; for a large prime, longer than the age of the universe. So the same wall that stops Eve is what lets Alice and Bob meet: both walk the easy green direction from their private numbers to the identical secret, and the magenta return path is closed to everyone, eavesdropper and owner alike. A shared secret is not hidden data on the wire; it is the far side of a door only exponentiation can open and only its inverse could unlock &mdash; and the inverse is believed to be shut. Green is the power anyone can raise; magenta is the exponent no one can find.</div>
+   <div class="btns" style="margin-top:10px"><button id="dhspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Diffie-Hellman key exchange (Whitfield Diffie & Martin Hellman 1976; parallel work by Ralph Merkle; earlier classified work by Malcolm Williamson at GCHQ). Verified live: for the public parameters p=23, g=5, Alice's secret (g^b)^a and Bob's secret (g^a)^b are identical and equal g^(ab) mod p for every choice of private a, b (window.__diffiehellman.alwaysAgree && secretsMatch). The agreement is exact.<br><br><span class="fig">FIG</span> No false framing: the shared-secret agreement (both parties derive g^(ab)) is real and verified exhaustively over all private exponents in-browser. HONEST CAVEAT: the security rests on the discrete-logarithm problem being hard, which is believed but NOT proven — stated as an assumption, not a theorem. The AVAN inverse frames it correctly as a one-way function (easy exponentiation, no known fast inverse).</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SHARED MEMORY &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,a=6,b=15,p=23,g=5;
+function powmod(bb,e,m){var r=1;bb%=m;while(e>0){if(e&1)r=(r*bb)%m;bb=(bb*bb)%m;e=Math.floor(e/2);}return r;}
+function verify(){var ok=true;for(var x=1;x<p;x++)for(var y=1;y<p;y++){var A=powmod(g,x,p),B=powmod(g,y,p);if(powmod(B,x,p)!==powmod(A,y,p))ok=false;}
+ var A=powmod(g,a,p),B=powmod(g,b,p);return {alwaysAgree:ok,p:p,g:g,pubA:A,pubB:B,aliceSecret:powmod(B,a,p),bobSecret:powmod(A,b,p),secretsMatch:powmod(B,a,p)===powmod(A,b,p)};}
+function drawW3(){var cv=document.getElementById('w3'),g2=cv.getContext('2d'),W=cv.width,H=cv.height;g2.clearRect(0,0,W,H);var A=powmod(g,a,p),B=powmod(g,b,p),s=powmod(B,a,p);
+ g2.font='11px ui-monospace,monospace';
+ g2.fillStyle='#888';g2.fillText('PUBLIC (on the wire):  p='+p+'   g='+g+'   g^a='+A+'   g^b='+B,12,30);
+ g2.fillStyle='#70e0a0';g2.fillText('Alice keeps a='+a,12,58);g2.fillText('Bob keeps b='+b,W-150,58);
+ g2.fillStyle='#39fc6b';g2.font='13px ui-monospace,monospace';g2.fillText('shared secret g^(ab) mod p = '+s+'  — formed on BOTH ends, never sent',12,92);
+ g2.fillStyle='#8ad';g2.font='10px ui-monospace,monospace';g2.fillText('the wire carried only powers; the secret was constructed, not transmitted',12,120);}
+function drawW4(){var cv=document.getElementById('w4'),g2=cv.getContext('2d'),W=cv.width,H=cv.height;g2.clearRect(0,0,W,H);var A=powmod(g,a,p),B=powmod(g,b,p),sA=powmod(B,a,p),sB=powmod(A,b,p);
+ // Alice left, Bob right, Eve middle
+ g2.fillStyle='#70e0a0';g2.font='12px ui-monospace,monospace';g2.fillText('ALICE',20,24);g2.fillText('private a = '+a,20,44);g2.fillText('sends g^a = '+A,20,64);
+ g2.fillStyle='#70a0e0';g2.fillText('BOB',W-90,24);g2.fillText('private b = '+b,W-130,44);g2.fillText('sends g^b = '+B,W-130,64);
+ // wire
+ g2.strokeStyle='#556';g2.setLineDash([4,4]);g2.beginPath();g2.moveTo(20,90);g2.lineTo(W-20,90);g2.stroke();g2.setLineDash([]);
+ g2.fillStyle='#ff5a5a';g2.font='11px ui-monospace,monospace';g2.fillText('EVE sees: g^a='+A+', g^b='+B+' → needs discrete log (stuck)',20,108);
+ g2.fillStyle='#39fc6b';g2.font='13px ui-monospace,monospace';g2.fillText('Alice: (g^b)^a = '+sA,40,150);g2.fillText('Bob: (g^a)^b = '+sB,40,176);
+ g2.fillStyle=sA===sB?'#39fc6b':'#ff5a5a';g2.fillText(sA===sB?('✓ same secret: '+sA):'✗',40,204);
+ g2.fillStyle='#8ad';g2.font='10px ui-monospace,monospace';g2.fillText('Eve would brute-force a: up to '+(p-1)+' tries here, astronomically many for real primes',20,H-10);
+ document.getElementById('dhread').textContent='a='+a+', b='+b+' → shared secret '+sA+(sA===sB?' (match)':'');}
+function drawW5(){var cv=document.getElementById('w5'),g2=cv.getContext('2d'),W=cv.width,H=cv.height;g2.clearRect(0,0,W,H);var cx=W/2,cy=H/2,ca=Math.cos(ang),R=120;
+ // ring of residues 0..p-1
+ for(var i=0;i<p;i++){var th=i/p*Math.PI*2+ang,x=cx+Math.cos(th)*R*ca,y=cy+Math.sin(th)*R*0.6;g2.fillStyle='#243';g2.beginPath();g2.arc(x,y,7,0,7);g2.fill();g2.fillStyle='#586';g2.font='7px ui-monospace,monospace';g2.fillText(i,x-4,y+2);}
+ // green: powers of g, path g^1,g^2,...
+ var prev=null;g2.strokeStyle='rgba(57,252,107,0.6)';g2.lineWidth=1.4;g2.beginPath();for(var k=1;k<=p;k++){var v=powmod(g,k,p),th=v/p*Math.PI*2+ang,x=cx+Math.cos(th)*R*ca,y=cy+Math.sin(th)*R*0.6;if(k===1)g2.moveTo(x,y);else g2.lineTo(x,y);}g2.stroke();g2.lineWidth=1;
+ var A=powmod(g,a,p),tha=A/p*Math.PI*2+ang;g2.fillStyle='#39fc6b';g2.beginPath();g2.arc(cx+Math.cos(tha)*R*ca,cy+Math.sin(tha)*R*0.6,6,0,7);g2.fill();
+ g2.fillStyle='#39fc6b';g2.font='11px ui-monospace,monospace';g2.fillText('green: g^a mod p — easy to compute forward',10,20);
+ g2.fillStyle='#ff2d95';g2.fillText('magenta: recover a from g^a (discrete log) — no known shortcut',10,H-12);}
+document.getElementById('dha').onclick=function(){a=a>=21?2:a+1;this.textContent='Alice a: '+a;drawW3();drawW4();};
+document.getElementById('dhb').onclick=function(){b=b>=21?2:b+1;this.textContent='Bob b: '+b;drawW3();drawW4();};
+document.getElementById('dhspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+drawW3();drawW4();window.__diffiehellman=verify();
+function loop(){if(spin)ang+=0.008;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
