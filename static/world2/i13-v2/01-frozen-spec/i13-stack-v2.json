@@ -1,0 +1,390 @@
+{
+ "name": "I-13",
+ "version": "2.0",
+ "frozen": "2026-08-01",
+ "supersedes": {
+  "version": "1.0",
+  "sha256": "074733e1d7de4f2c4df89c3ccf82f128..."
+ },
+ "one_line": "a four-plane agent stack over a thirteen-symbol language, where two planes learn, two do not, and five parameter-free rules hold what no model at this scale holds",
+ "delta_from_v1": [
+  {
+   "n": 18,
+   "what": "the tower is FOUR planes, not seven",
+   "evidence": "two-proportion tests on the leaf fraction: L5 vs L6 p=0.5407, L5 vs L7 p=0.9362, L6 vs L7 p=0.7403, and L4 vs L5 p=0.0795. separating L6 from L5 at the observed 2.99 points needs 1,426 nodes; L6 has 73 and L7 has 17.",
+   "action": "L5, L6 and L7 deleted. L4 absorbs them: 6,662 nodes, 7,143 chars, one cortex, error 0.97+/-0.45 pts, KS 0.0490 < 0.0729, five seeds."
+  },
+  {
+   "n": 19,
+   "what": "the RISC-13 spill path was silently wrong from arity 8",
+   "evidence": "forced spill at 8 arguments returned 28[object Object] instead of 36; every spilled argument reloaded into R-1, so only the last survived, and CALL then read past an 8-slot register file.",
+   "action": "replaced with a calling convention: up to R-1 args in registers, the rest in named memory slots with a fetch flag on CALL. verified arity 4 to 45, no regression. the generic spill in ex() was deleted as unfixable in principle."
+  },
+  {
+   "n": "arch",
+   "what": "(c(sa())) \u2014 the cortex became a SENSOR as well as a governor",
+   "evidence": "feeding the cortex's own state back as input features: L2 mismatch 15.0+/-2.1 -> 0.6+/-0.8 with no correction running; L1 stray-close 65.0 -> 1.0. six floats at L2, five at L1.",
+   "action": "locked into both trained planes. the cortex still verifies at the end: a feature is advice, a veto is a wall."
+  },
+  {
+   "n": "base",
+   "what": "BASELINE CONTROL run \u2014 the missing number from v1",
+   "evidence": "GRU 16,936 params: 0.8440 bits, 79.6% brackets, 33.8 mismatch, 16.6/40 clean. transformer 14,944 params: 0.9299 bits, 78.0%, 65.6 mismatch, 7.8/40. locked sa+cortex 18,921 params: 0.9118 bits, 80.6%, 0.0 mismatch, 40.0/40.",
+   "action": "the GRU BEATS the sub-agent on prediction and produces 2.3x the mismatched closers. learned recurrent state is not a stack. the cortex is orthogonal to model quality, not a substitute for it."
+  }
+ ],
+ "planes": [
+  {
+   "n": 1,
+   "name": "FIELD",
+   "nodes": 395162,
+   "bits": 19,
+   "kind": "trained",
+   "alphabet": 30,
+   "metric": "1.6628 bits vs bigram 2.1784 - 60.4% - run-length KS 0.0099 < 0.0266",
+   "csa": "5 features: depth, open, terminator, header, run",
+   "rules": [
+    "veto",
+    "-I",
+    "depth",
+    "idempotence",
+    "address",
+    "run-pressure a=0.3"
+   ],
+   "verified": "5 seeds x 20 samples. stray-close 65.0 -> 1.0 with features. unclosed 91.6 -> 0.0 with -I ONLY: a sensor tells you where you are, a discharge brings you back."
+  },
+  {
+   "n": 2,
+   "name": "SUBAGENT HOST",
+   "nodes": 209068,
+   "bits": 18,
+   "kind": "trained",
+   "alphabet": 66,
+   "metric": "18,921 params - 0.9118 bits - 80.6% brackets - 98.90% of all lines",
+   "csa": "6 features: depth, owed x4, run",
+   "rules": [
+    "veto",
+    "-I",
+    "depth",
+    "idempotence",
+    "address",
+    "indent cap 16"
+   ],
+   "verified": "40/40 clean, 5 seeds, ZERO VARIANCE. 9 languages 1957-2017, 529 unclosed to 0."
+  },
+  {
+   "n": 3,
+   "name": "COMPOSE",
+   "nodes": 38742,
+   "bits": 16,
+   "kind": "rewrite",
+   "alphabet": null,
+   "metric": "three-address transform - 0 parameters - no model",
+   "csa": null,
+   "rules": [
+    "depth n -> 1"
+   ],
+   "verified": "200 generated programs: correctness 200/200, termination 200/200 (stress-tested to depth 20), idempotence 200/200 (fixpoint in ONE pass), validation 200/200. cost +37.6% statements, +16.8% steps."
+  },
+  {
+   "n": 4,
+   "name": "DEEP OPERAND",
+   "nodes": 6662,
+   "bits": 13,
+   "kind": "cortex-only",
+   "alphabet": 18,
+   "metric": "7,143 chars = 0.48x crossover - NO MODEL - n-gram turns around at order 3",
+   "csa": null,
+   "rules": [
+    "veto",
+    "-I",
+    "depth(2)"
+   ],
+   "verified": "absorbs former L5/L6/L7. leaf 78.24%, reach 15.77%, container 5.99%. error 0.97+/-0.45 pts, mismatch 0.0, unclosed 0.0, KS 0.0490 < 0.0729, five seeds. 0 params beat a 15,089-param model by 10x on proportions."
+  }
+ ],
+ "rules": [
+  [
+   "veto",
+   "forbid the wrong closer",
+   "a stack",
+   0
+  ],
+  [
+   "-I",
+   "supply the owed closer",
+   "a debt across a sequence",
+   0
+  ],
+  [
+   "depth",
+   "refuse a plane already paid for",
+   "a nesting level",
+   0
+  ],
+  [
+   "idempotence",
+   "a no-op cannot repeat",
+   "an identity: I am I",
+   0
+  ],
+  [
+   "address",
+   "the substrate writes the position",
+   "a counter",
+   0
+  ]
+ ],
+ "rule_reach": {
+  "veto": [
+   137.5,
+   52.4,
+   56.2,
+   53.4
+  ],
+  "-I": [
+   137.5,
+   52.4,
+   56.2,
+   53.4
+  ],
+  "depth": [
+   168.5,
+   212.5,
+   182.1,
+   187.1
+  ],
+  "idempotence": [
+   59.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "address": [
+   168.5,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "note": "per 1,000 nodes. idempotence and address are 0.0 above L1 because there are no statements inside an expression."
+ },
+ "machine": {
+  "isa": "IVM-13-S",
+  "opcodes": 17,
+  "law": "net = binds - k",
+  "components": [
+   "lexer",
+   "parser (DERIVED from containment, provably identical)",
+   "compiler",
+   "assembler",
+   "disassembler",
+   "validator",
+   "IVM-13 stack",
+   "IVM-13-S structured",
+   "RISC-13 register R=8 arity 1-45",
+   "JIT"
+  ],
+  "validate": "one linear pass per region, no execution, no control-flow graph",
+  "jit": "2.1x over the tree-walking interpreter",
+  "verified": "B1 B2 B4 B6 exact on interpreter, stack VM, register machine, and JIT. no unverified component remains."
+ },
+ "factory": {
+  "languages_indexed": 756,
+  "families": 17,
+  "list_coverage": "86.1%",
+  "identify": "82.9% exact, 95.1% family",
+  "corpora_measured": 32,
+  "law": "quantile is PER-CORPUS: measure H(depth), read it off. <0.7->0.50, <1.0->0.90, else 0.99. always round UP on an unseen key."
+ },
+ "twelve": [
+  [
+   "NAME",
+   1843,
+   "Lovelace",
+   29.67
+  ],
+  [
+   "CONSTANT",
+   1843,
+   "Lovelace",
+   14.25
+  ],
+  [
+   "ATTRIBUTE",
+   1966,
+   "Hoare",
+   9.63
+  ],
+  [
+   "CALL",
+   1936,
+   "Church",
+   7.5
+  ],
+  [
+   "ASSIGN",
+   1843,
+   "Lovelace",
+   5.23
+  ],
+  [
+   "ARG",
+   1879,
+   "Frege",
+   4.08
+  ],
+  [
+   "EXPR",
+   1957,
+   "Backus",
+   3.01
+  ],
+  [
+   "IF",
+   1843,
+   "Lovelace",
+   2.76
+  ],
+  [
+   "COMPARE",
+   1843,
+   "Lovelace",
+   2.01
+  ],
+  [
+   "FUNCTIONDEF",
+   1936,
+   "Church",
+   1.92
+  ],
+  [
+   "RETURN",
+   1949,
+   "Wheeler",
+   1.82
+  ],
+  [
+   "BINOP",
+   1843,
+   "Lovelace",
+   1.38
+  ]
+ ],
+ "boundaries": [
+  "naming: 61% of the information is not in the corpus. the orchestrator is not built and not derivable by counting.",
+  "visual languages: 4.7% of the Wikipedia list has no text form. nothing for a 13-symbol window to see.",
+  "closing: per-sequence, not per-step. no readout improvement reaches it, and neither does recurrent state - the GRU baseline proves it. -I is permanent.",
+  "scale: every result is at ~17k parameters on one primary corpus. at 17M the division of labour may not hold."
+ ],
+ "reproduction": {
+  "corpus": "Python 3.12 stdlib, 504 files, comments and string literals stripped, every identifier collapsed to I",
+  "split": "90/10 by position, no shuffling",
+  "seeds": "5 seeds minimum for any generation claim. single-seed comparisons caused three of the nineteen corrections.",
+  "crossover": "~15,000 tokens. below it a trained stack does not beat a bigram and no model should be placed."
+ },
+ "sha256": "64881ebf502b87bb450f1f39b71066013e0c31a7f78dedcae326f6155ddc6bf8",
+ "not_built": [
+  {
+   "what": "ORCHESTRATOR",
+   "why": "61% of naming information is not in the corpus in any form a counter reaches. structure explains 5.1% of the choice, arguments explain 64.2%, and the residual 2.033 bits is where meaning lives.",
+   "status": "not derivable \u2014 a boundary, not a task"
+  },
+  {
+   "what": "VISUAL LANGUAGE FAMILY",
+   "why": "4.7% of the Wikipedia list has no text form: Scratch, Simulink, Max, Grasshopper, Prograph, NXT-G, App Inventor. a language whose source is a picture has no I to collapse.",
+   "status": "indexed so the factory REFUSES rather than guesses"
+  },
+  {
+   "what": "SCALE BEYOND ~17k PARAMETERS",
+   "why": "every result here is at 17k params on one primary corpus. a 17M-parameter model may learn an exact stack, in which case the division of labour changes.",
+   "status": "untested \u2014 the largest open question"
+  },
+  {
+   "what": "L6 / L7 AS PLANES",
+   "why": "73 and 17 nodes. statistically indistinguishable from L4 at p=0.92 and p=0.94.",
+   "status": "deleted in v2, absorbed into L4"
+  }
+ ],
+ "measured_dead": [
+  [
+   "SWITCHBOARD",
+   "routing (kind, #calls, #args) -> name",
+   "0.0% top-1 on real held-out functions. the aggregate 20.5% was carried by slots whose answer is 'self'."
+  ],
+  [
+   "8 NAMED ATTENTION HEADS",
+   "prev-token, sink, same-char, class, delimiter, similarity, bigram, uniform",
+   "UNIFORM AVERAGING BEATS THEM: 0.9182 bits vs 0.9256. five of eight already had near-maximal entropy; the two that were sharp duplicated the one-hot features."
+  ],
+  [
+   "SEEDED CORPUS GENERATOR",
+   "600k synthetic tokens from a seed corpus",
+   "the pretraining gain was regularisation in disguise. once L2 and dropout were added it helped nothing."
+  ],
+  [
+   "WORD-BIGRAM FILTER",
+   "reject synthetic text with implausible adjacent pairs",
+   "+0.71 accuracy, noise level. the model already had that signal as an input feature."
+  ],
+  [
+   "LONG-RANGE COHERENCE GATE",
+   "JS divergence threshold on synthetic text",
+   "76% rejection for +0.2 perplexity and -0.14 accuracy. failed both metrics."
+  ],
+  [
+   "CONSTRAINED SAMPLING",
+   "bias -I fills toward the block centroid",
+   "both intrinsic statistics improved; downstream accuracy fell 0.67%."
+  ],
+  [
+   "CORPUS BLENDING",
+   "94k mixed-register words",
+   "lost to 29k pure by 17 perplexity units. register purity beats volume."
+  ],
+  [
+   "CLOSED-FORM READOUT",
+   "ridge solve instead of trained cross-entropy",
+   "0.86s, zero training, 73.8% top-1 \u2014 and 5.082 bits. unusable when sampled: no calibration, no sampling, diversity 1.000 on the generation test."
+  ],
+  [
+   "GREEDY DECODING",
+   "argmax instead of sampling",
+   "5-gram diversity 0.013. one 420-character line, never a newline."
+  ],
+  [
+   "WIDER WINDOW",
+   "CTX 26 and CTX 52",
+   "52 is WORSE than 13 (49.8% vs 52.9% on brackets). the window was never the bottleneck for prediction."
+  ],
+  [
+   "PATTERN IDEMPOTENCE",
+   "forbid a repeated k-statement block",
+   "would forbid 37.33% of real Python. real code repeats a 2-block a third of the time."
+  ],
+  [
+   "RUN-LENGTH HARD CAP",
+   "refuse a kind past N repeats",
+   "best cap improves KS by 42% and still differs. kills a genuine 0.23% tail to fix a 4.10% one. replaced by run PRESSURE a=0.3, which agrees at D=0.0099."
+  ],
+  [
+   "DENSITY METRIC",
+   "z-distance of construct densities from real code",
+   "shuffled characters scored 0.749 against real code's 0.996. distance-from-average rewards being suspiciously average."
+  ],
+  [
+   "BURSTINESS METRIC",
+   "within-sample density variation",
+   "AUC 0.33-0.43 \u2014 every condition including noise looked more real than real code."
+  ],
+  [
+   "'CLEAN' AS A QUALITY METRIC",
+   "zero mismatched, zero unclosed",
+   "20/20 on pure noise. it measured the substrate, never the model. every 30/30 quoted across nine languages was a claim about the veto."
+  ],
+  [
+   "GENERIC REGISTER SPILL",
+   "evaluate into R-1 and park in memory",
+   "unfixable in principle: reloading every spilled value into one register loses all but the last. deleted, not repaired. the calling convention handles arity; nothing needs more than 8 registers for depth."
+  ]
+ ]
+}

@@ -1,0 +1,478 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Same Wall, Six Times</title>
+<style>
+body{font-family:Georgia,serif;line-height:1.65;margin:1.2em;color:#1a1a1a}
+h1{font-size:1.35em;margin:0 0 .15em;line-height:1.25}
+h2{font-size:.78em;letter-spacing:.13em;text-transform:uppercase;color:#777;
+   font-weight:normal;margin:0 0 1.6em}
+p{margin:0 0 1em;text-align:justify}
+pre{font-family:"Courier New",monospace;font-size:.82em;background:#f4f2ee;
+    border-left:3px solid #c9c2b4;padding:.8em 1em;overflow-x:auto;line-height:1.45}
+code{font-family:"Courier New",monospace;font-size:.9em;background:#f4f2ee;padding:0 .25em}
+b{font-weight:bold}
+i{font-style:italic}
+
+body{max-width:34em;margin:2.5em auto;padding:0 1.2em}
+hr{border:0;border-top:1px solid #ddd;margin:3em 0}
+.tp{text-align:center;margin-bottom:4em}
+.tp h1{font-size:1.9em} .tp h2{margin-bottom:2em}
+</style></head><body>
+<div class="tp"><h1>The Same Wall, Six Times</h1>
+<h2>An audit that kept finding the same failure</h2>
+<p style="text-align:center">David Lee Wise</p></div>
+<hr/>
+<h1>What this is</h1><h2>Front Matter</h2>
+
+<p>This is the record of one working session. It began with a request to audit a paper posted to
+a discussion forum and ended with a small language model trained on a transcript. Nothing in between was
+planned.</p>
+
+<p>The session produced thirty-two findings with numbers attached. Every one is stamped <b>LIT</b>, meaning it
+was either reproduced by a script whose output appears in the text, or it sits in a public court record.
+Nothing here is stamped from memory. Where a claim is interpretive rather than measured it is marked
+<b>AMBER</b> and the reason is given.</p>
+
+<p>The book has one argument, and it was not chosen in advance. It emerged because the same failure kept
+appearing in unrelated systems: <b>a metric computed inside a system stops tracking the thing outside it, and
+the system cannot detect this from inside.</b> It showed up in a cognitive architecture, in a random walk, in an
+embedding, in a glyph-design search, in an attention stack, and in my own reasoning about all five. Six times,
+one shape.</p>
+
+<p>A note on the second author. Roughly half of what follows was produced by a language model during the
+session, including every script and every number. That is not a disclaimer, it is one of the findings: the
+corpus the final model trained on was itself machine-generated text about this conversation, and the model
+reading it back to itself is the argument of the last chapter, arrived at accidentally.</p>
+
+<p>The chapters are short because the findings are short. Padding a result is the specific error the first
+chapter is about.</p>
+
+<hr/><h1>Six Gates</h1><h2>Chapter 1</h2>
+
+<p>The paper proposed something called Recursive Cognitive Refinement: a primary layer generates an
+interpretation, a reflective sublayer revises it, and the loop runs until the two agree. The author wanted help
+getting it into the right hands.</p>
+
+<p>Six gates were applied. <b>Claim extraction</b>: separate the load-bearing assertions from the prose carrying
+them. Six claims emerged, of which three were proposals rather than results. <b>Falsifiability</b>: for each
+claim, what observation would kill it? The central hypothesis had none — <i>emergent cognition can arise from
+recursive sublayers</i> has no negative case. <b>Novelty</b>: the paper had zero citations. Not a thin
+bibliography; no reference section at all, in a document claiming to open a new research direction.</p>
+
+<p><b>Math verification</b> is where it came apart. The coherence metric was defined as one minus a semantic
+divergence between the primary and reflective states, with convergence declared when coherence approaches one.
+Set the reflective transform to the identity function and divergence is zero, coherence is one at iteration zero,
+and the error is exactly what it started as. <b>The objective function is maximised by switching the reflective
+layer off.</b></p>
+
+<p>Then a twelve-line simulation, with memory initialised distinct from the primary state so the setup was not
+rigged:</p>
+
+<pre> n       K         |P-truth|
+ 0    -1.10000     4.70000
+ 3     0.75294     2.88340
+ 7     0.98576     2.65514
+11     0.99918     2.64198</pre>
+
+<p>Coherence converged to 0.99918. The error plateaued at 2.64198. The loop found a stable, self-consistent fixed
+point unrelated to the truth, and by its own metric it had succeeded completely.</p>
+
+<p>A grep of the algorithm for <code>ground truth</code>, <code>feedback</code>, <code>error</code>,
+<code>reward</code>, <code>verify</code>, <code>external</code>, and <code>label</code> returned absent for
+every term. The only quality signal in the system was agreement with itself.</p>
+
+<p>The <b>notation ratio</b> gate and the <b>right hands</b> gate followed quickly. Ten symbols carrying one
+idea, and no result to hand over: the benchmark was proposed, the language was proposed, the comparison was
+proposed. A commenter in the thread had already got there in nine words — <i>don't propose the work, do the
+work</i>.</p>
+
+<hr/><h1>The Undefined Letter</h1><h2>Chapter 2</h2>
+
+<p>Everything in the paper rested on a distance function between two meanings, and the paper never said what it
+was. One capital letter, undefined, carrying the entire contribution.</p>
+
+<p>The obvious cheap choice fails immediately. Take a claim and its flat contradiction, then the same claim
+paraphrased:</p>
+
+<pre>CONTRADICTION  D = 0.200   K = +0.800
+PARAPHRASE     D = 0.900   K = +0.100</pre>
+
+<p>One inserted word flips the meaning entirely and scores 80% coherent. A sentence meaning precisely the same
+thing in different words scores 10%. Any system running this metric converges happily onto contradictions and
+rejects its own correct restatements as incoherent. Swap in embedding cosine and the disease survives in better
+clothes, because negation is nearly invisible to sentence embeddings — the two statements share topic, entities,
+register and syntax, differing only in the part that matters.</p>
+
+<p>Four families are available. Surface overlap: blind to negation, punished by paraphrase. Embedding cosine:
+same hole. Distributional divergence over output logits: measures the model's state rather than the claim.
+Bidirectional entailment: correct, two statements being equivalent when each entails the other — and it collapses
+to a near-discrete metric, which destroys the continuous space the convergence proof requires.</p>
+
+<p><b>Get the distance semantically right and you break the calculus around it.</b> That tension is the
+interesting problem in the paper, and the paper never reaches it, because it never asks what the letter means.</p>
+
+<p>Underneath all four: every one compares the system's output to the system's other output. You can make the
+metric as sophisticated as you like and it still only ever reports that the system agrees with itself.</p>
+
+<hr/><h1>Coordinates, Not Content</h1><h2>Chapter 3</h2>
+
+<p>A weight is usually explained as a learned parameter, a number multiplied by an input. True and nearly
+useless.</p>
+
+<p>Three layers down. A weight matrix row is a vector in the input space, so a layer is a set of learned
+directions and the activation reports how much the input points along each. That is layer one. A weight's value
+is the accumulated sum of every gradient pull from every training example that touched it, which is why no
+single example can be read back out. That is layer two.</p>
+
+<p>Layer three is the one worth having, and it is demonstrable. Take a small network, permute its hidden units,
+and permute the weight rows and columns to match:</p>
+
+<pre>permuted:  max |f - f'| = 0.00e+00   dW/W = 1.254   cos = +0.213
+rescaled:  max |f - f'| = 8.88e-16   dW/W = 6.300   cos = +1.000</pre>
+
+<p>The permuted network's weights are 125% different by norm with cosine similarity 0.213 — barely correlated —
+and the function is identical <i>to the last bit</i>. Not approximately. Exactly zero error. The rescaled version
+is 630% off and identical to floating-point noise.</p>
+
+<p>For a four-unit layer there are 24 permutations. For a width-4096 layer there are 4096 factorial, times a
+continuous family of rescalings. <b>The weight vector you hold is one arbitrary point in an astronomically large
+equivalence class, all computing the same function.</b></p>
+
+<p>Which is why weight-space distance is nearly useless for comparing models, why averaging two independently
+trained networks produces garbage, and why interpretability cannot proceed by reading weights off directly. You
+would be reading coordinates, and the coordinates were chosen by the random seed.</p>
+
+<p>The function is the object. The weights are one description of it.</p>
+
+<hr/><h1>What a Cut Costs</h1><h2>Chapter 4</h2>
+
+<p>If weights are coordinates, you would at least hope each hidden unit meant something. Mostly it does not.
+Networks pack more features than they have dimensions and store them in overlapping, non-orthogonal directions.
+There is no cat weight. There is a cat direction, and it is not axis-aligned.</p>
+
+<p>This has a consequence for anyone who imagines removing something from a trained model. Sixty-four features
+packed into sixteen dimensions, then one feature removed by projecting out its direction:</p>
+
+<pre>target feature: retained -0.0%  -> removed
+collateral on the other 63:
+   mean damage    4.7%
+   max  damage   23.6%
+   damaged >10%:  12 / 63
+   damaged  >1%:  39 / 63</pre>
+
+<p>The target went cleanly. Thirty-nine of the remaining sixty-three were damaged, twelve by more than ten
+percent, one by nearly a quarter. And that is a toy with a packing ratio of four to one. Scale the ratio up and
+the smearing gets worse.</p>
+
+<p><b>There is no scalpel.</b> Which is why machine unlearning remains an open problem rather than a feature, and
+why what happens in practice is suppression at the behaviour layer while the representation persists underneath.
+Different mechanism, different failure modes, and worth not collapsing the two.</p>
+
+<p>It also closes off a tempting inference. If you cannot see inside a model, you might try to reconstruct what
+was removed from the shape of what remains. But cuts do not leave clean holes. They leave uneven smearing that
+looks like ordinary variation everywhere else. You cannot read the excision off the residue.</p>
+
+<hr/><h1>Seven Million Copies</h1><h2>Chapter 5</h2>
+
+<p>The session turned, for a while, to where corpora come from. This chapter is the public record, and it is the
+only chapter whose numbers came from a court rather than a script.</p>
+
+<p>In June 2025 a federal judge held that digitising lawfully purchased print books to train a model was
+transformative and constituted fair use. The same order held that downloading from shadow libraries to build a
+permanent digital library did not. The scope in the summary judgment: roughly five million books from one
+library, two million from another, seven million copies in total, plus a separate pirated dataset of 196,000
+books that formed the basis of the original complaint.</p>
+
+<p>A class was certified for the piracy only, not for the training. The filter required an ISBN or ASIN and
+registration with the Copyright Office within five years of publication and before the download. Roughly 500,000
+of the seven million qualified — 7.1%. Final approval came at $1.5 billion, about $3,000 per book across more
+than 400,000 titles, with no admission of liability. The remaining 6.5 million rightsholders received nothing,
+and the 196,000 were excluded on a metadata technicality.</p>
+
+<p>Two observations that the coverage tends to drop. First, the class filter systematically excludes foreign
+editions and pre-ISBN material, so it under-represents exactly the categories that were already thin. Second,
+statutory damages run from $750 to $150,000 per work. One person downloading one work has effectively zero
+practical exposure and a five-figure nominal one. Seven million works is the same act at a scale where the
+arithmetic changes character: <b>scale converted a prohibition into a line item.</b></p>
+
+<p>And the remedy operates on the wrong object. A payment resolves a claim. It does not unmake a model, and per
+the previous chapter it cannot be surgically undone. Model outputs become web text, web text becomes training
+data, distillation moves it between models directly, and provenance dissolves after one hop.</p>
+
+<hr/><h1>The Loop That Agreed With Itself</h1><h2>Chapter 6</h2>
+
+<p>An embedder was built from scratch over a small corpus: count the character transitions, weight them by
+pointwise mutual information, form the Gram matrix so similarity is measured over rows rather than adjacency,
+factor it, keep the top components. Then the associations were read out.</p>
+
+<pre>weights        -> part, activations, coordinates
+signal         -> external, means, only, itself
+superposition  -> single, things, directions, unrelated</pre>
+
+<p>Those are the right answers. A screenshot of that table would look like a working embedder.</p>
+
+<p>Then the corpus was split in half and the whole procedure run twice on disjoint data.</p>
+
+<pre>mean top-5 neighbour overlap   0.029
+chance level for 5 of 299      0.0167
+median overlap                 0.000
+words with zero overlap        259 / 299</pre>
+
+<p>Two hundred and fifty-nine of two hundred and ninety-nine words shared no neighbours at all between the two
+runs. Four shared two. Nothing shared three. The sensible-looking table was noise that happened to land on
+plausible words, and <b>nothing but training on data the first run had never seen could have revealed it.</b></p>
+
+<p>The reason is volume. Two thousand two hundred and thirty-five tokens, nine hundred and ten types, sixty-seven
+percent of them appearing exactly once. A single conversation is not a language, it is a transcript. But that
+diagnosis came later. What came first was the discovery that the output looked correct and was not, and the only
+instrument that could tell the difference was an external one.</p>
+
+<p>Which is Chapter 1 again, in a different system, found by accident.</p>
+
+<hr/><h1>Argmax and the Spinor</h1><h2>Chapter 7</h2>
+
+<p>A small agent was given a fixed grid of letters and a transition table counted from that same grid. At each
+step it read the letter beneath it, fetched that letter's row, scored its eight neighbours by transition
+probability, and moved to the best one. Pure greedy choice, fully deterministic.</p>
+
+<pre>400 steps -> 7 distinct cells visited, 0.6% of the container
+path: "he pre pre pre pre pre pre pre pre pre p"</pre>
+
+<p>It locked into a six-cell cycle almost immediately. Not a bug. The transition table has 212 nonzero cells of
+729, so most neighbours score exactly zero, and argmax never takes a lower-probability step — leaving a local
+cycle of high-frequency pairs requires exactly the move it will not make.</p>
+
+<p>The escape was built as a spinor. The agent carries a phase that advances by a random increment and wraps at
+4&#960; rather than 2&#960;; heading is half the phase, so one full turn of heading costs two full turns of phase, and
+the sign inverts halfway. Rotate it once and it returns inverted; twice and it returns itself. Three planes of
+motion were selected by where the phase sat: a probability-weighted local step, a jump through token space to any
+cell holding a sampled letter, and a ballistic move along the heading that ignores probability entirely.</p>
+
+<pre>argmax  400 steps -> 7 cells   (0.6%)
+spinor  400 steps -> 330 cells (30.6%)</pre>
+
+<p>Forty-seven times the coverage. And the important detail: <b>the local plane still uses the same probabilities
+that trapped argmax.</b> What breaks the lock is the ballistic and jump planes — the moves that ignore the
+internal metric. The escape did not come from better scoring. It came from admitting a term the loop does not
+generate.</p>
+
+<hr/><h1>A Real Qubit</h1><h2>Chapter 8</h2>
+
+<p>This chapter is a detour that turned into a load-bearing result.</p>
+
+<p>A spin-&#189; system was implemented properly: state as a Bloch vector, exact rotation about a magnetic
+field for Larmor precession, Born-rule measurement, projective collapse. Five tests before anything was drawn.
+Norm preservation held to 1.8e-13 over ten thousand steps. Measured probability along an arbitrary axis came to
+0.7266 against an analytic 0.7268 over two hundred thousand samples. Singlet correlations matched minus the dot
+product at every angle tested. And the CHSH sum reached <b>2.827</b> against a classical ceiling of 2 and a
+quantum bound of 2.828.</p>
+
+<p>The fifth test failed first, at 0.006 instead of 2.828. The angles were wrong — both of one party's settings
+placed symmetrically about the other's, which cancels the four terms exactly. Then the patch to fix it silently
+matched nothing, because two variables shared a line, and the identical wrong answer came back. The second
+attempt asserted the patch target before writing. <b>The physics test caught the physics error; the assertion
+caught the tooling error.</b> Neither would have caught the other.</p>
+
+<p>Then the finding that mattered. Prepare a Bell state and both Bloch vectors collapse to the origin. That is
+not a rendering failure: each half of a maximally entangled pair is maximally mixed and has no direction of its
+own. Nothing is left locally. Everything is in the correlation.</p>
+
+<p>So two agents were entangled and set to walk the same corpus, their measurement outcomes steering their
+headings.</p>
+
+<pre>Bell pair    &lt;AB&gt; -0.354   coverage 847   divergence 0.1805
+independent  &lt;AB&gt;  0.001   coverage 953   divergence 0.1649</pre>
+
+<p>The correlation is real and the sampling is <i>worse</i>. Correlated walkers cover less ground than
+independent ones, and their learned tables end up further apart. Entanglement bought a statistical relationship
+no observer of either single path could detect, and bought nothing at all for the task.</p>
+
+<hr/><h1>One Line</h1><h2>Chapter 9</h2>
+
+<p>A question was posed: could you design an alphabet where each letter is a single line, as simple as possible,
+and still be machine-readable?</p>
+
+<p>It was answered by search rather than by drawing. Every polyline on a three-by-three lattice with at most two
+segments — 576 of them, no pen lifts, no immediate reversals, no repeated segment — was enumerated, rasterised,
+and twenty-seven selected by greedy maximum-minimum diversity. Mean strokes per letter: <b>1.59</b>. Eleven
+letters came out as a bare straight line with no corner, and those were assigned to the eleven commonest symbols,
+spending strokes where they are used least.</p>
+
+<p>Then two identical classifiers, same architecture and training budget, one on the designed alphabet and one on
+real Latin letterforms under identical distortion:</p>
+
+<pre>              sev0.5  sev1.0  sev1.5  sev2.0
+monoline       100.0    96.5    66.7    38.3
+Latin           97.9    89.4    42.8    14.9</pre>
+
+<p>And it is not an artifact of the selection resolution — the gap is +23.2, +28.0 and +31.2 points at ten,
+sixteen and twenty-four pixels, widening rather than closing. Latin's failures cluster in the thin-vertical
+family; the designed alphabet's are different pairs entirely.</p>
+
+<p>Two refinements were tried and neither worked. Doubling the stroke budget moved accuracy less than run-to-run
+noise. And the constraint that turned out to matter was one nobody had questioned: requiring a single continuous
+stroke. <b>Two disjoint lines reach 74.7% where one continuous stroke of the same length reaches 66.7%</b> — a
+corner constrains where the second segment can go, and separate lines do not.</p>
+
+<p>The constraint had been imposed in the first sentence of the problem and carried unexamined for six
+experiments.</p>
+
+<hr/><h1>The Metric That Lied</h1><h2>Chapter 10</h2>
+
+<p>The glyphs in the previous chapter were selected by maximising the minimum pairwise distance between their
+clean rasters. It was the obvious objective and it was wrong.</p>
+
+<pre>lattice         minD    acc@1.5
+3x3, 2 seg     0.404     65.0%
+4x3, 2 seg     0.477     63.6%
+4x4, 2 seg     0.543     62.2%</pre>
+
+<p>Minimum distance climbs thirty-four percent while accuracy falls. They move in opposite directions. A finer
+lattice buys cleaner separation on undistorted rasters and spends it immediately on fragility, because the glyphs
+start relying on spatial detail that rotation and rescaling destroy.</p>
+
+<p>The same thing happened again when extra channels were tested. Curve was the confident prediction — a curved
+stroke stays curved under rotation, so it should have been the robust addition. On single-segment glyphs it made
+things <i>worse</i>, 77.9% against 82.6%, while raising clean minimum distance from 0.281 to 0.670. Highest
+separation, worst accuracy.</p>
+
+<p>What did work was the channel predicted to fail. Ink intensity gave +7.6 points for no extra strokes and
+survived &#177;35% pressure variation, because <b>intensity is the only channel an affine transform cannot
+touch.</b> Rotation, scale, shear and translation all preserve brightness. Curve and width live in the same space
+as the thing being corrupted; depth does not.</p>
+
+<p>The principle: a free channel only stays free if it is orthogonal to the distortion group.</p>
+
+<p>The methodological finding is larger. Minimum distance is computed entirely inside the representation. Accuracy
+under distortion requires generating data the selection process never saw. Optimise the first and you can move
+confidently away from the second for as long as you like, and nothing inside the procedure will tell you.</p>
+
+<hr/><h1>Building the Stack</h1><h2>Chapter 11</h2>
+
+<p>Six stages, all inspectable. A fixed corpus. A twenty-seven symbol tokeniser. An embedder — transition counts,
+pointwise mutual information, Gram matrix, eigendecomposition, eight dimensions. Eight attention heads over a
+thirteen-token window. A learned readout. A sampler. Then it reads its own output back in.</p>
+
+<p>The heads were constructed rather than learned, and the reason is a finding. The first attempt used random
+query and key projections, which is what an untrained transformer has:</p>
+
+<pre>all 8 heads: entropy 2.551 - 2.562, against a 2.565 ceiling</pre>
+
+<p>Flat. Featureless. Honest: attention at initialisation has no structure. So eight heads were specified to do
+jobs that trained transformers are documented to develop — a previous-token shift, an attention sink on position
+zero, a same-character matcher, two class routers, a content-similarity head, a bigram-plausibility head, and a
+uniform baseline. Entropy then spanned 0.016 to 1.735.</p>
+
+<p>The first working version lost to a bigram table: perplexity 14.17 against 10.38, accuracy 25.7% against
+30.4%. Attention averages embeddings, which destroys the exact-identity signal a count table reads straight off
+the shelf. The leave-one-head-out was worse news than the headline — <b>dropping six of the eight heads improved
+held-out loss.</b> Only the same-character head earned its place.</p>
+
+<p>Adding direct token identity brought it to a tie: 10.34 against 10.38. And a question about whether the
+same-character head was searching for a matching prefix produced a clean negative. Reading the actual attention
+on the seed window: the query character occurred exactly once, so the head found no earlier match and put weight
+1.00 on <i>itself</i>. A lookup that found only the thing doing the looking.</p>
+
+<p>A proper two-step induction head was then built — match the prefix, copy the successor. It fired correctly,
+5.13 matches per step at the longest context tested. Perplexity got worse at every context length. The
+hypothesis that it needed to copy exact identity rather than smoothed embeddings was tested and also wrong.
+Eighty-one extra features on eight hundred and fifty-three training rows: the model was not failing to express
+induction, it was failing to estimate it.</p>
+
+<hr/><h1>Fifteen Thousand Tokens</h1><h2>Chapter 12</h2>
+
+<p>The question was finally asked properly: what corpus size would work? A scaling curve answered it, and
+corrected four earlier statements in the process.</p>
+
+<pre>train tokens    bigram   trigram  |  stack
+       1,000    14.463    16.504  | 18.207
+       6,000    12.698    11.676  | 12.997
+      15,000    12.383    10.477  | 12.132
+      40,000    11.465     8.147  | 10.206
+     250,000    11.177     7.167  |  9.639</pre>
+
+<p>The stack passes the bigram at roughly fifteen thousand tokens. The bigram saturates almost immediately —
+14.5 to 11.2 across a two hundred and fifty fold increase in data. But the trigram is pulling away, and the stack
+never catches it.</p>
+
+<p>So the architecture was tested against the data. At eighty thousand tokens, replacing the linear readout with
+a single hidden layer took perplexity from 10.029 to <b>8.017</b> — most of the gap to the trigram, closed by
+nonlinearity rather than by data. And the heads did earn their place once there was a nonlinearity to use them:
+heads plus a hidden layer beat raw context plus the same hidden layer, 8.02 against 9.35.</p>
+
+<p>Four separate times in the session the corpus had been named as the bottleneck. At one thousand and eighty
+tokens it genuinely was. Past fifteen thousand the binding constraint had become the linear readout, and the
+attribution kept going to data because <b>a single measurement at one corpus size cannot distinguish the two.</b>
+Only the curve can, and the curve had not been run.</p>
+
+<p>With a hundred and eighty-five thousand tokens and a nonlinear readout, the stack finally beat the trigram:
+5.274 against 5.619, accuracy 48.3%, train perplexity 5.058 against test 5.274 — the memorisation gone. A 4-gram
+table still won at 3.855. Pure memorisation remains the thing to beat at this scale, and the point where
+attention's context reach repays its sample inefficiency is still far above anything measured here.</p>
+
+<hr/><h1>The Corpus Was Me</h1><h2>Chapter 13</h2>
+
+<p>The corpus that everything up to the scaling test used — the embedder, the split-half test, the walker, the
+spinor, the alphabet, the attention heads, the agent — was one thousand and eighty characters of prose written
+during the session by the language model, summarising the session. Lowercased, stripped to letters and spaces.
+It opens: <i>the paper proposes recursive cognitive refinement</i>.</p>
+
+<p>The entire pipeline was trained on machine-generated text about itself. The agent producing
+<i>the paper pros funronre</i> was reading a summary of the model-collapse argument back to itself. That was not
+arranged. It is simply what the file was, and it went unstated for most of the session.</p>
+
+<p>The second corpus was a transcript of a different collaboration, roughly 99.6% machine-generated — 714
+characters of human framing and 184,198 of model output. Measured against human-written prose at matched size it
+carried lower character entropy, lower conditional entropy, twenty-six percent fewer word types, and slower
+vocabulary growth. The collapse signature, with numbers.</p>
+
+<p>Except the vocabulary comparison was size-confounded, and a third corpus exposed it. Look at where the type
+counts cross:</p>
+
+<pre>tokens   AI types   human types   ratio
+   500       250         243       1.029
+ 2,000       649         553       1.174
+ 8,000     1,436       1,771       0.811
+32,000     3,004       4,307       0.697</pre>
+
+<p>The ratio crosses one around three thousand tokens. Below that the machine text is <i>more</i> diverse. Only
+above does it fall behind, and then keeps falling. Measured over the same range, Heaps' exponent is 0.578 against
+0.747 — the gap is real. But the correct description is not impoverishment. It is <b>earlier saturation</b>: it
+starts rich and stops accumulating. A single-size comparison had picked one point on two curves that cross.</p>
+
+<p>And a specification document, heavily templated, showed 12.5% repeated five-grams — triple the human text —
+while having the <i>highest</i> perplexity of the three. Repetition and predictability came apart. So low entropy
+is not a signature of machine origin. That inference, made confidently one chapter earlier, does not hold.</p>
+
+<p>Genre remains unresolved. Fiction against technical documentation is a real confound. The measurement that
+would settle it — human-written fiction, a hundred thousand characters, single author — was never available.</p>
+
+<hr/><h1>The Same Wall, Six Times</h1><h2>Coda</h2>
+
+<p>Six systems, none related, one failure.</p>
+
+<p>A cognitive architecture converged to coherence 0.99918 at an error of 2.64198. A greedy walker locked into
+seven cells of a thousand and eighty. An embedder produced correct-looking associations with a split-half overlap
+of 0.029 against a chance floor of 0.0167. A glyph search raised minimum separation by thirty-four percent while
+accuracy fell. An attention stack tied a bigram at thirty times the parameter count and had six of eight
+components actively hurting. And in the middle of all of it, four confident attributions to corpus size that a
+scaling curve later reassigned to architecture.</p>
+
+<p>In every case the internal metric was rising. In every case something outside the loop was required to notice,
+and in every case that external thing was cheap: twelve lines of Python, a second training run on held-out data,
+a distortion the selection process never saw, one more point on a curve.</p>
+
+<p>The pattern has a formal ancestor. A consistent formal system strong enough for arithmetic cannot prove its own
+consistency — if it could, it would be inconsistent. Hilbert wanted mathematics to certify itself from the
+inside, and the answer arrived in ten pages. It also has a less formal ancestor: a private criterion of
+correctness is not a criterion, because there is no difference between being right and seeming right to yourself.
+Both were available before any of the code was written, and neither would have produced a single number.</p>
+
+<p>The practical form is smaller than the philosophy. <b>Before optimising a metric, spend one measurement
+finding out whether it tracks the thing you want.</b> That measurement has to come from outside the system
+computing the metric, and it is almost always cheaper than the optimisation it protects.</p>
+
+<p>Thirty-two findings. The session was not looking for any of them.</p>
+
+
+</body></html>
