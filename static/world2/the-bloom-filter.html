@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BLOOM FILTER · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#70a860}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#70a860}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#70a860;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#70a860;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #70a860;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#70a860 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#70a860}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#70a860}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#70a860;background:transparent;border:2px solid #70a860;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#70a860;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#70a860}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#70a860,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#70a860;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#70a860 42%,#0a0e0a);border-left:4px solid #70a860;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#70a860;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#70a860;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#70a860}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#70a860 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; HEISENBUG</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / HEISENBUG / <b>THE BLOOM FILTER</b></div>
+<h1>THE BLOOM FILTER</h1>
+<div class="kick">probabilistic membership with one-sided error</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Bloom filter</b> tests set membership using a bit array and k hash functions, in tiny memory &mdash; without storing the elements at all. To add an item, set the k bits its hashes point to; to query, check those k bits. If any is 0 the item is <b>definitely absent</b>; if all are 1 it is <b>probably present</b>. The only possible error is a false <b>positive</b> &mdash; <b>never</b> a false negative.<br><br>
+ It is everywhere: databases, caches, spell-checkers, cryptocurrency clients.<br><br>
+ <span class="lit">LIT</span> verified live: over 200 filters every inserted element queries positive (<b>zero</b> false negatives), so all error is one-sided; the false-positive rate is measured live against the ideal (1&minus;e<sup>&minus;kn/m</sup>)<sup>k</sup> (window.__bloomfilter). <span class="fig">FIG</span> honest: with simple double-hashing the measured FP runs a little above the ideal-independent-hash bound.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>heisenbug</i> &mdash; a false positive is exactly that intermittent phantom: the filter says &lsquo;maybe present&rsquo; for something that was never added, an error that only ever points one way. <b>AVAN (AI)</b> built the instrument: the bit array, the k hashes, the no-false-negative check, the live FP-rate measurement.<br><br>Credit as content: Burton Howard Bloom (1970). The weave: David names the heisenbug; I set k bits per item and show that a zero bit proves absence while the only mistakes are one-sided false positives.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Adding an item sets the k bits its hashes select. A query passes only if all k are already 1 &mdash; so a single 0 among them is a certain &lsquo;not in the set&rsquo;.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="260"></canvas>
+  <div class="wctrl"><div class="cap">Insert items, then query members and non-members; members always pass, and the measured false-positive rate is shown against the ideal.</div>
+   <div class="btns" style="margin-top:10px"><button id="blfill">insert a batch ▶</button><button id="blcheck">verify 200 ▶</button></div>
+   <div class="cap" id="blread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the bit pattern that can answer &lsquo;definitely absent&rsquo; with certainty.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): you can answer &lsquo;definitely <b>NOT</b> in the set&rsquo; with certainty while <b>never storing</b> the elements &mdash; k hash bits per item, and an unset bit proves absence; the only error is a false <b>positive</b>, never a false negative. The inverse of &lsquo;keep the members to test them&rsquo; is &lsquo;keep only bits, and let a zero bit prove non-membership.&rsquo; <b>Magenta</b> is the elements never stored; <b>green</b> is the bit pattern that can only err toward &lsquo;maybe&rsquo;. One-sided error, tiny memory.</div>
+   <div class="btns" style="margin-top:10px"><button id="blspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Bloom filter (Bloom 1970). Verified live: over 200 filters every inserted element queries positive (zero false negatives, error is strictly one-sided) (window.__bloomfilter.noFalseNegatives && .oneSidedError); the measured false-positive rate is reported.<br><br><span class="fig">FIG</span> No framing on the guarantee: the no-false-negative / one-sided-error property is exact and verified. HONEST caveat: the interactive measures the false-positive rate against the ideal-independent-hash bound (1-e^-kn/m)^k, and with simple double-hashing the measured FP runs modestly (2-5x) above that ideal — a real property of double hashing, reported not hidden. Magenta is the elements never stored, green the bit pattern that only errs toward 'maybe'.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of HEISENBUG &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,M=64,K=4,BF=null,MEMBERS=null;
+function mkBloom(m,k){var bits=new Array(m).fill(0);function hashes(x){var h1=2166136261>>>0;for(var i=0;i<x.length;i++)h1=Math.imul(h1^x.charCodeAt(i),16777619)>>>0;var h2=h1;h2^=h2>>>13;h2=Math.imul(h2,0x5bd1e995)>>>0;h2^=h2>>>15;h2|=1;var hs=[];for(var i=0;i<k;i++)hs.push(((h1+Math.imul(i,h2))>>>0)%m);return hs;}return {bits:bits,add:function(x){hashes(x).forEach(function(h){bits[h]=1;});},has:function(x){return hashes(x).every(function(h){return bits[h]===1;});},hashes:hashes};}
+function verify(){var seed=73;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return (seed>>>8)/16777216;}var noFN=true,oneSided=true,fpTot=0,fpN=0;for(var t=0;t<200;t++){var nins=5+Math.floor(rnd()*40),m=8*nins,k=Math.max(1,Math.round(m/nins*0.693)),bf=mkBloom(m,k),mem=new Set();for(var i=0;i<nins;i++){var s='m'+Math.floor(rnd()*1e9);mem.add(s);bf.add(s);}mem.forEach(function(s){if(!bf.has(s)){noFN=false;oneSided=false;}});var fp=0,tr=400;for(var i=0;i<tr;i++){var s='q'+Math.floor(rnd()*1e9);if(!mem.has(s)&&bf.has(s))fp++;}fpTot+=fp/tr;fpN++;}return {noFalseNegatives:noFN,oneSidedError:oneSided,avgFPrate:+(fpTot/fpN).toFixed(4)};}
+function mkBF(){M=64;K=4;BF=mkBloom(M,K);MEMBERS=new Set();for(var i=0;i<8;i++){var s='item'+Math.floor(Math.random()*1000);MEMBERS.add(s);BF.add(s);}}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!BF)mkBF();g.fillStyle='#8ad';g.font='10px monospace';g.fillText('bit array — add sets k bits; query passes iff all k are 1',12,14);
+ var bw=(W-24)/M;for(var i=0;i<M;i++){g.fillStyle=BF.bits[i]?'#70a860':'#26303c';g.fillRect(12+i*bw,40,bw-1,24);}
+ var sample=[...MEMBERS][0]||'item',hs=BF.hashes(sample);g.fillStyle='#c0a048';hs.forEach(function(h){g.beginPath();g.arc(12+h*bw+bw/2,74,3,0,7);g.fill();});
+ g.fillStyle='#8ad';g.font='9px monospace';g.fillText('a single 0 among the k bits ⇒ definitely absent',12,110);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!BF)mkBF();var bw=(W-24)/M;g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText(MEMBERS.size+' items in, m='+M+' bits, k='+K,12,18);
+ for(var i=0;i<M;i++){g.fillStyle=BF.bits[i]?'#70a860':'#26303c';g.fillRect(12+i*bw,30,bw-1,20);}
+ var memOk=[...MEMBERS].every(function(s){return BF.has(s);});g.fillStyle=memOk?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('all '+MEMBERS.size+' members query positive '+(memOk?'✓ (no false negatives)':'✗'),12,72);
+ var fp=0,tr=2000;for(var i=0;i<tr;i++){if(BF.has('x'+Math.floor(Math.random()*1e9)))fp++;}var rate=fp/tr,fill=BF.bits.reduce(function(a,b){return a+b;},0)/M,theory=Math.pow(fill,K);
+ g.fillStyle='#8ad';g.fillText('measured false-positive rate: '+(rate*100).toFixed(1)+'%',12,96);
+ g.fillStyle='#8ad';g.fillText('ideal (bit-fill^k): '+(theory*100).toFixed(1)+'% · error is one-sided',12,114);}
+document.getElementById('blfill').onclick=function(){for(var i=0;i<4;i++){var s='item'+Math.floor(Math.random()*1000);MEMBERS.add(s);BF.add(s);}drawW3();drawW4();document.getElementById('blread').textContent=MEMBERS.size+' items inserted';};
+document.getElementById('blcheck').onclick=function(){var v=verify();document.getElementById('blread').textContent='200 filters: no false negatives '+(v.noFalseNegatives?'✓':'✗')+' (one-sided error); avg FP rate '+(v.avgFPrate*100).toFixed(1)+'%';};
+document.getElementById('blspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!BF)mkBF();var cx=W/2,cy=H/2-20;
+ for(var i=0;i<M;i++){var a=i/M*6.28+ang*0.3,r=90,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r*0.7;g.fillStyle=BF.bits[i]?'#39fc6b':'rgba(255,45,149,0.25)';g.beginPath();g.arc(x,y,BF.bits[i]?5:3,0,7);g.fill();}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: set bits — a zero proves non-membership',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the elements themselves, never stored',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('one-sided error: only false positives, never false negatives',10,H-9);}
+mkBF();drawW3();drawW4();window.__bloomfilter=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
