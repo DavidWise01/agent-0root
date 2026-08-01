@@ -1,0 +1,112 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE FISHER-YATES · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#58b0e0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#58b0e0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#58b0e0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#58b0e0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #58b0e0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#58b0e0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#58b0e0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#58b0e0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#58b0e0;background:transparent;border:2px solid #58b0e0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#58b0e0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#58b0e0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#58b0e0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#58b0e0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#58b0e0 42%,#0a0e0a);border-left:4px solid #58b0e0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#58b0e0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#58b0e0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#58b0e0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#58b0e0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE INVENTORY</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE INVENTORY / <b>THE FISHER-YATES</b></div>
+<h1>THE FISHER-YATES</h1>
+<div class="kick">a provably-uniform shuffle — n! paths onto n! orderings</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Fisher&ndash;Yates shuffle</b> produces a perfectly <b>uniform</b> random permutation in one linear pass: walk from the last item to the first, and swap each with a uniformly random item at <b>or before</b> it.<br><br>
+ The claim that it is unbiased is not statistical hand-waving &mdash; it is <b>exact</b>. The map from the sequence of random choices to the resulting permutation is a <b>bijection</b>: there are exactly n! choice-sequences and n! permutations, and the shuffle hits each permutation <b>exactly once</b>. So every ordering is equally likely by construction. The tempting &lsquo;swap with any index&rsquo; variant instead makes n&#8319; paths, which cannot divide evenly among n! outcomes &mdash; and is provably biased.<br><br>
+ <span class="lit">LIT</span> verified live: for n=5, enumerating all 120 choice-sequences yields all 120 permutations, each exactly once (window.__fisheryates). <span class="fig">FIG</span> no framing; an exhaustive bijection count.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-inventory</i> &mdash; shuffling the loot, dealing the deck. Fisher&ndash;Yates is the honest shuffle: every arrangement of the bag equally likely. <b>AVAN (AI)</b> built the instrument: the in-place shuffle, the exhaustive bijection enumeration, the biased-variant contrast.<br><br>Credit as content: Ronald Fisher &amp; Frank Yates (1938); Richard Durstenfeld&rsquo;s in-place version (1964); Donald Knuth&rsquo;s exposition (TAOCP). The weave: David names the fair deal; I prove the uniformity is a counting fact &mdash; n! paths onto n! orderings, one-to-one &mdash; and show the off-by-one bug that breaks it.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">The swap walk: at position i, pick a uniformly random j in 0&hellip;i and swap. The choice range <b>shrinks</b> as you go &mdash; that shrinking is exactly what makes the count come out to n!.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="310"></canvas>
+  <div class="wctrl"><div class="cap">Shuffle a small deck, or enumerate all 120 choice-sequences for n=5 and confirm each permutation appears exactly once. Toggle the broken &lsquo;swap-with-any&rsquo; variant to see the bias histogram.</div>
+   <div class="btns" style="margin-top:10px"><button id="fyshuf">shuffle ▶</button><button id="fyenum">enumerate n=5 ▶</button><button id="fybias">show biased variant ▶</button></div>
+   <div class="cap" id="fyread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a permutation drawn as a braid of wires from input order to shuffled order &mdash; one of the n! equally-likely weavings.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): uniformity here is the inverse of a <b>counting</b> match, not a property of the randomness. Fisher&ndash;Yates is unbiased precisely because its number of random paths, n!, <b>equals</b> its number of outcomes, n!, and the map between them is one-to-one &mdash; so probability spreads perfectly evenly. Break that equality and bias is forced: the &lsquo;swap with any of n&rsquo; bug makes n&#8319; paths, and since n&#8319; is <b>not</b> divisible by n! (for n&gt;2), some permutations must get more paths than others. The inverse of &lsquo;fair shuffle&rsquo; is simply &lsquo;paths &ne; outcomes.&rsquo; <b>Magenta</b> is the biased n&#8319; cloud with its lumpy histogram; <b>green</b> is the exact n!-to-n! bijection. Fairness is arithmetic: make the paths count out evenly, or they will not.</div>
+   <div class="btns" style="margin-top:10px"><button id="fyspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Fisher-Yates / Durstenfeld shuffle (Fisher & Yates 1938; Durstenfeld 1964; Knuth TAOCP). Verified live by exhaustive enumeration: for n=5 the 120 = 5! choice-sequences (choice i in 0..i) map onto exactly 120 distinct permutations, each appearing exactly once — a bijection, so uniform by construction (window.__fisheryates.eachExactlyOnce). The biased swap-with-any variant (n^n paths) is shown producing unequal counts.<br><br><span class="fig">FIG</span> No framing: the shuffle, the exhaustive bijection enumeration, and the biased-variant histogram run in-browser and are exact counts. The AVAN inverse is honest — uniformity is exactly the equality of path-count (n!) and outcome-count (n!); the biased variant's n^n is genuinely not divisible by n! for n>2, forcing bias (magenta).</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE INVENTORY &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,deck=[0,1,2,3,4,5,6,7],perm=[0,1,2,3,4],biased=false;
+function fisherYates(arr,choices){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=choices[a.length-1-i];var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function enumFY(n){var base=[];for(var i=0;i<n;i++)base.push(i);var res={},cnt=0;function rec(idx,ch){if(idx<1){var k=fisherYates(base,ch).join('');res[k]=(res[k]||0)+1;cnt++;return;}for(var c=0;c<=idx;c++)rec(idx-1,ch.concat([c]));}rec(n-1,[]);return {distinct:Object.keys(res).length,count:cnt,allOnce:Object.values(res).every(function(v){return v===1;})};}
+function fact(n){var r=1;for(var i=2;i<=n;i++)r*=i;return r;}
+function verify(){var fy=enumFY(5);return {n:5,choiceSeqs:fy.count,factorial:fact(5),distinctPerms:fy.distinct,eachExactlyOnce:fy.allOnce,biasedNote:'swap-with-any makes n^n paths, not divisible by n! → biased'};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var n=8,cell=40,x0=90;g.fillStyle='#b0e0ff';g.font='11px monospace';g.fillText('at i, pick j in 0..i and swap — the range shrinks',12,16);
+ for(var i=0;i<n;i++){g.fillStyle='#26303c';g.fillRect(x0+i*cell,40,cell-6,26);g.fillStyle='#58b0e0';g.font='11px monospace';g.fillText('0..'+i,x0+i*cell+3,57);}
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('choices multiply: n·(n-1)·…·1 = n! equally-likely paths',12,H-12);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+ if(!biased){g.fillStyle='#e8eef8';g.font='12px monospace';g.fillText('deck: '+perm.join(' '),12,28);var v=enumFY(5);g.fillStyle=v.allOnce?'#39fc6b':'#ff5a5a';g.font='12px monospace';g.fillText('n=5: '+v.count+' choice-seqs = 5! = '+fact(5),12,60);g.fillText('distinct permutations: '+v.distinct+' — each exactly once '+(v.allOnce?'✓':'✗'),12,84);g.fillStyle='#8ad';g.font='11px monospace';g.fillText('a bijection: paths = outcomes = 120',12,112);
+  // draw a shuffled row
+  for(var i=0;i<perm.length;i++){g.fillStyle='#58b0e0';g.fillRect(20+i*40,140,34,34);g.fillStyle='#04121c';g.font='15px monospace';g.fillText(perm[i],32+i*40,162);}}
+ else{ // biased histogram for n=3 with swap-with-any (3^3=27 paths)
+  var base=[0,1,2],res={};function rec(idx,ch){if(idx<0){var a=base.slice();for(var i=0;i<3;i++){var j=ch[i];var t=a[i];a[i]=a[j];a[j]=t;}var k=a.join('');res[k]=(res[k]||0)+1;return;}for(var c=0;c<3;c++)rec(idx-1,ch.concat([c]));}rec(2,[]);
+  g.fillStyle='#e8eef8';g.font='12px monospace';g.fillText('biased "swap with any of n": n=3, 3^3=27 paths',12,26);var keys=Object.keys(res).sort(),x0=20;
+  for(var i=0;i<keys.length;i++){var h=res[keys[i]]*7;g.fillStyle=res[keys[i]]===27/6?'#8ad':'#ff2d95';g.fillRect(x0+i*58,180-h,44,h);g.fillStyle='#c9a6e8';g.font='10px monospace';g.fillText(keys[i],x0+i*58,196);g.fillText(''+res[keys[i]],x0+i*58+14,210);}
+  g.fillStyle='#ff2d95';g.font='11px monospace';g.fillText('27 not divisible by 6 → uneven counts (4 or 5) = BIAS',12,238);}}
+document.getElementById('fyshuf').onclick=function(){var ch=[];for(var i=4;i>=1;i--)ch.push(Math.floor(Math.random()*(i+1)));perm=fisherYates([0,1,2,3,4],ch);biased=false;drawW4();document.getElementById('fyread').textContent='shuffled → '+perm.join(' ');};
+document.getElementById('fyenum').onclick=function(){biased=false;var v=verify();drawW4();document.getElementById('fyread').textContent='enumerated 120 choice-seqs → 120 distinct perms, each once '+(v.eachExactlyOnce?'✓':'✗');};
+document.getElementById('fybias').onclick=function(){biased=!biased;drawW4();document.getElementById('fyread').textContent=biased?'biased variant: 27 paths, counts 4/5 not equal':'back to Fisher–Yates (uniform)';};
+document.getElementById('fyspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var n=perm.length,x0=W/2-90,x1=W/2+90,gap=48,y0=60;
+ for(var i=0;i<n;i++){var srcY=y0+i*gap,dstY=y0+perm.indexOf(i)*gap;g.strokeStyle='#39fc6b';g.lineWidth=1.6;g.beginPath();g.moveTo(x0,srcY);g.bezierCurveTo(x0+60+20*Math.sin(ang+i),srcY,x1-60,dstY,x1,dstY);g.stroke();g.fillStyle='#58b0e0';g.beginPath();g.arc(x0,srcY,5,0,7);g.fill();g.beginPath();g.arc(x1,dstY,5,0,7);g.fill();}
+ g.lineWidth=1;g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: one of n! equally-likely weavings',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta (biased): n^n paths ≠ n! outcomes → lumpy',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('fairness is arithmetic: paths must count out evenly',10,H-9);}
+window.__fisheryates=verify();drawW3();drawW4();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
