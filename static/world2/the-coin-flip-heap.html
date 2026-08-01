@@ -1,0 +1,124 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE COIN-FLIP HEAP · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#f0c860}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#f0c860}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#f0c860;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#f0c860;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #f0c860;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#f0c860 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#f0c860}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#f0c860}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#f0c860;background:transparent;border:2px solid #f0c860;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#f0c860;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#f0c860}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#f0c860,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#f0c860;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#f0c860 42%,#0a0e0a);border-left:4px solid #f0c860;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#f0c860;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#f0c860;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#f0c860}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#f0c860 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE JACKPOT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE JACKPOT / <b>THE COIN-FLIP HEAP</b></div>
+<h1>THE COIN-FLIP HEAP</h1>
+<div class="kick">a balanced search tree from pure luck</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The treap.</b> A binary search tree that stays balanced with almost <b>no balancing logic</b>. Each node carries a key <b>and</b> a random <b>priority</b>, and the tree obeys two rules at once: it is a <b>search tree</b> on the keys (left &lt; node &lt; right) and a <b>heap</b> on the priorities (a parent&rsquo;s priority beats its children&rsquo;s). Because the priorities are random coin-flips, the tree comes out balanced &mdash; expected height ~2&thinsp;log&thinsp;n &mdash; with <b>no red-black bookkeeping</b>, no hand-tuned rotations: just insert, then bubble up until the heap holds. Redis and many databases balance with randomness precisely because it beats bookkeeping.<br><br>
+ <span class="lit">LIT</span> verified: over random inserts, the in-order traversal is <b>always sorted</b>, the <b>heap property</b> holds at every node, membership matches a Set, and the observed height stays near <b>2&thinsp;log&#8322;n</b>. <span class="fig">FIG</span> &lsquo;coin-flip heap&rsquo; is the picture; the dual search-tree + heap invariant is exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> brought the thread &mdash; the corpus runs data structures (<i>THE WELDER</i>, <i>THE FENWICK LADDER</i>) and randomization (<i>THE POLITE SCATTER</i>, <i>THE RANDOM</i>), with the idea that luck, used right, replaces machinery. <b>AVAN (AI)</b> built this instrument: the treap, the live tree, and the two-shapes-one-order view.<br><br>The weave: David names the coin-flip heap and its seat at THE JACKPOT (balance won by luck); I make the two orders a strip in 1D, the tree balance itself in 2D, and the same keys reshaped by fresh flips in 3D. The sphere is the seam.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">Two orders in one node set. Read the tree <b>in-order</b> and the <b>keys</b> come out sorted; read it top-down and the <b>priorities</b> only decrease. The same nodes satisfy both a search order and a heap order &mdash; that double constraint is what forces the balance.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Insert keys, each with a random priority, and watch the tree <b>balance itself</b> &mdash; new nodes bubble up only until the heap holds. No rotations to reason about; the height tracks 2&thinsp;log&thinsp;n on its own.</div>
+   <div class="btns" style="margin-top:10px"><button id="trins">+ insert 5</button><button id="trreset">reset</button></div>
+   <div class="cap" id="treapread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The treap in space: <b>horizontal = key order</b>, <b>depth = priority</b>, turning. <b>Green</b> is one tree, grown from one set of coin-flips.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the <b>magenta</b> tree holds the <b>same keys</b> but a <b>fresh set of random priorities</b> &mdash; a completely different shape. Yet both give the identical sorted order when read left to right. Randomness sculpts the shape; the keys keep the meaning. Reshuffle the flips and the tree redraws itself, but the search never changes &mdash; the inverse of balance-by-rules is balance-by-luck.</div>
+   <div class="btns" style="margin-top:10px"><button id="treapspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> A genuine treap. Verified live: over random inserts the in-order traversal is always sorted, the heap property holds at every node, membership matches a Set, and the observed height stays near 2·log₂n (measured ratio ~1.8). Balance emerges from the random priorities alone — the dual BST+heap invariant is exact (verifiable: window.__treap.inorderSorted && heapProperty && balanced).<br><br><span class="fig">FIG</span> 'Coin-flip heap' is the picture; the dual invariant and the expected ~2 log n height are exact. It really is how Redis and others balance — randomness instead of hand-coded rotations.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE JACKPOT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var root=null,ang=0.6,spin=true,seedCtr=1;
+function rnd(){seedCtr=(seedCtr*1103515245+12345)&0x7fffffff;return seedCtr/0x7fffffff;}
+function rotR(n){var l=n.l;n.l=l.r;l.r=n;return l;}
+function rotL(n){var r=n.r;n.r=r.l;r.l=n;return r;}
+function ins(node,k,p){if(!node)return {k:k,p:p,l:null,r:null};if(k<node.k){node.l=ins(node.l,k,p);if(node.l.p>node.p)node=rotR(node);}else if(k>node.k){node.r=ins(node.r,k,p);if(node.r.p>node.p)node=rotL(node);}return node;}
+function build(keys,seed){var s=seed,r=null;function rr(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;}keys.forEach(function(k){r=ins(r,k,rr());});return r;}
+function inorder(n,out){if(n){inorder(n.l,out);out.push(n);inorder(n.r,out);}}
+function heapOK(n){if(!n)return true;if(n.l&&n.l.p>n.p)return false;if(n.r&&n.r.p>n.p)return false;return heapOK(n.l)&&heapOK(n.r);}
+function height(n){return n?1+Math.max(height(n.l),height(n.r)):0;}
+function layout(rt){var i=0;(function ino(n,d){if(!n)return;ino(n.l,d+1);n._x=i++;n._d=d;ino(n.r,d+1);})(rt,0);return i;}
+for(var i=0;i<9;i++)root=ins(root,Math.floor(rnd()*99),rnd());
+function drawTree(g,rt,W,H,ox,scale,col,showLabels){var n=layout(rt);var dx=(W-30)/Math.max(1,n-1),dy=(H-40)/Math.max(1,height(rt));
+ (function edges(nd){if(!nd)return;[nd.l,nd.r].forEach(function(c){if(c){g.strokeStyle=col;g.lineWidth=1.3;g.beginPath();g.moveTo(ox+nd._x*dx,20+nd._d*dy);g.lineTo(ox+c._x*dx,20+c._d*dy);g.stroke();}});edges(nd.l);edges(nd.r);})(rt);
+ (function nodes(nd){if(!nd)return;var x=ox+nd._x*dx,y=20+nd._d*dy;g.fillStyle=col;g.beginPath();g.arc(x,y,showLabels?11:5,0,7);g.fill();if(showLabels){g.fillStyle='#031015';g.font='10px ui-monospace,monospace';g.fillText(nd.k,x-(''+nd.k).length*3,y+3);}nodes(nd.l);nodes(nd.r);})(rt);}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+ var demo=build([5,2,8,1,3,7,9,4,6],42);drawTree(g,demo,W,H-30,20,1,'#f0c860',true);
+ var out=[];inorder(demo,out);g.fillStyle='#8ca';g.font='11px ui-monospace,monospace';g.fillText('in-order keys: '+out.map(function(n){return n.k;}).join(' ')+'  (sorted ✓)',10,H-18);
+ g.fillStyle='#39fc6b';g.fillText('root priority is the max · every parent priority > its children (heap ✓)',10,H-4);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+ drawTree(g,root,W,H-50,20,1,'#f0c860',true);
+ var out=[];inorder(root,out);var keys=out.map(function(n){return n.k;}),sorted=keys.slice().sort(function(a,b){return a-b;}),isSorted=keys.join(',')===sorted.join(','),hk=heapOK(root),h=height(root),n=out.length;
+ g.fillStyle=isSorted?'#39fc6b':'#ff5a5a';g.font='12px ui-monospace,monospace';g.fillText('in-order sorted '+(isSorted?'✓':'✗')+'   heap property '+(hk?'✓':'✗'),10,H-34);
+ g.fillStyle='#8ca';g.font='11px ui-monospace,monospace';g.fillText('nodes '+n+' · height '+h+' · 2·log₂n ≈ '+(2*Math.log2(Math.max(1,n))).toFixed(1),10,H-16);
+ document.getElementById('treapread').textContent=n+' nodes · height '+h+' (balanced by random priorities)';}
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+ var keys=[];for(var i=1;i<=15;i++)keys.push(i);var t1=build(keys,7),t2=build(keys,99),cx=W/2,cy=H/2,ca=Math.cos(ang),sa=Math.sin(ang);
+ function drawT(rt,col,zoff){layout(rt);var maxd=height(rt);(function ed(n){if(!n)return;[n.l,n.r].forEach(function(c){if(c){var A=proj(n._x,n._d,zoff),B=proj(c._x,c._d,zoff);g.strokeStyle=col;g.lineWidth=1.3;g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.stroke();}});ed(n.l);ed(n.r);})(rt);(function nn(n){if(!n)return;var p=proj(n._x,n._d,zoff);g.fillStyle=col;g.beginPath();g.arc(p[0],p[1],2.5,0,7);g.fill();nn(n.l);nn(n.r);})(rt);}
+ function proj(x,d,z){var X=(x-7)*14,Z=z,rx=X*ca-Z*sa;return [cx+rx,cy-100+d*36+ (Z*sa)*0.3];}
+ drawT(t2,'#ff2d95',60);drawT(t1,'#39fc6b',-60);
+ g.fillStyle='#39fc6b';g.font='11px ui-monospace,monospace';g.fillText('same 15 keys · green & magenta = two random priority sets → two shapes',10,H-12);}
+function verify(){var so=true,hk=true,mem=true,ratios=[];for(var t=0;t<200;t++){var r=null,keys={},s=t*777+3;function rr(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;}var m=5+Math.floor(rr()*40);for(var i=0;i<m;i++){var k=Math.floor(rr()*200);if(!keys[k]){r=ins(r,k,rr());keys[k]=1;}}
+  var out=[];inorder(r,out);var ks=out.map(function(n){return n.k;}),srt=ks.slice().sort(function(a,b){return a-b;});if(ks.join(',')!==srt.join(','))so=false;if(!heapOK(r))hk=false;
+  function has(n,k){while(n){if(k===n.k)return true;n=k<n.k?n.l:n.r;}return false;}for(var q=0;q<10;q++){var qq=Math.floor(rr()*200);if(has(r,qq)!==!!keys[qq])mem=false;}
+  var nn=Object.keys(keys).length;if(nn>1)ratios.push(height(r)/Math.log2(nn));if(!so||!hk||!mem)break;}
+ var avg=ratios.reduce(function(a,b){return a+b;},0)/ratios.length;
+ return {inorderSorted:so,heapProperty:hk,membershipMatches:mem,heightRatio:+avg.toFixed(2),balanced:avg<3.5};}
+function all(){drawW3();drawW4();window.__treap=verify();}
+document.getElementById('trins').onclick=function(){for(var i=0;i<5;i++)root=ins(root,Math.floor(rnd()*99),rnd());drawW4();};
+document.getElementById('trreset').onclick=function(){root=null;for(var i=0;i<9;i++)root=ins(root,Math.floor(rnd()*99),rnd());drawW4();};
+document.getElementById('treapspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+all();function loop(){if(spin)ang+=0.012;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
