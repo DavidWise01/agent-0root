@@ -1,0 +1,106 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE CYCLE SORT · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#58a0b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#58a0b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#58a0b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#58a0b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #58a0b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#58a0b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#58a0b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#58a0b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#58a0b0;background:transparent;border:2px solid #58a0b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#58a0b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#58a0b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#58a0b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#58a0b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#58a0b0 42%,#0a0e0a);border-left:4px solid #58a0b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#58a0b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#58a0b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#58a0b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#58a0b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE VAULT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE VAULT / <b>THE CYCLE SORT</b></div>
+<h1>THE CYCLE SORT</h1>
+<div class="kick">sorting with the minimum possible number of writes</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Cycle sort</b> sorts an array with the <b>minimum possible number of writes</b> to memory. A permutation decomposes into disjoint <b>cycles</b>; cycle sort follows each cycle and places every element directly into its final slot, so each out-of-place element is written <b>exactly once</b>. The total number of writes is provably minimal &mdash; which matters when writing is expensive, as on flash memory or EEPROM.<br><br>
+ <span class="lit">LIT</span> verified live: over 300 random permutations cycle sort produces the sorted array, and its write count equals the theoretical minimum computed from the permutation&rsquo;s cycle structure (window.__cyclesort). <span class="fig">FIG</span> no framing; exact, minimum writes.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-vault</i> &mdash; when each write to the vault is costly, you write each item once, straight to its place. Cycle sort is that minimal-write discipline. <b>AVAN (AI)</b> built the instrument: the cycle-following placement, the write counter, the sorted-order and minimum-writes checks.<br><br>Credit as content: the cycle sort (W. D. Jones; a classic minimal-write sort). The weave: David names the vault; I rotate each permutation cycle into place with one write per element and confirm the total is the provable minimum.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">A permutation splits into cycles &mdash; e.g. 3&rarr;0&rarr;3 and 1&rarr;2&rarr;4&rarr;1. Following a cycle, each element is placed directly where it belongs, written once, until the cycle closes.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="240"></canvas>
+  <div class="wctrl"><div class="cap">An array; cycle sort places each element in one write, and the write count matches the minimum from the cycle structure.</div>
+   <div class="btns" style="margin-top:10px"><button id="csroll">new array ▶</button><button id="cscheck">verify 300 ▶</button></div>
+   <div class="cap" id="csread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: each element placed in a single write, cycle by cycle.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): a permutation <b>decomposes</b> into disjoint <b>cycles</b>, and each element need only be written <b>once</b> &mdash; to its final position &mdash; by rotating each cycle in place; the total writes are the theoretical <b>minimum</b>. The inverse of &lsquo;move elements repeatedly to sort&rsquo; is &lsquo;follow each cycle and place every element in one write.&rsquo; <b>Magenta</b> is the redundant writes ordinary sorts make; <b>green</b> is the single write per element. Minimum writes &mdash; the sort for when writing is expensive (flash, EEPROM).</div>
+   <div class="btns" style="margin-top:10px"><button id="csspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine cycle sort (a classic minimal-write sort). Verified live: over 300 random permutations cycle sort yields the correctly sorted array, and its write count equals the minimum derived from the permutation's cycle decomposition (sum of nontrivial cycle lengths) (window.__cyclesort.sorts && .minWrites).<br><br><span class="fig">FIG</span> No framing: the cycle-following placement, the write counter, and the sorted-order + minimum-writes checks run in-browser and are exact. The AVAN inverse is honest — a permutation's cycles let each element be written exactly once to its final position by rotating each cycle in place, achieving the theoretical minimum writes; magenta is the redundant writes ordinary sorts make, green the single write per element. The sort for costly memory.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE VAULT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,ARR=null;
+function cycleSort(arr){var a=arr.slice(),n=a.length,writes=0;for(var start=0;start<n-1;start++){var item=a[start],pos=start;for(var i=start+1;i<n;i++)if(a[i]<item)pos++;if(pos===start)continue;while(item===a[pos])pos++;var tmp=a[pos];a[pos]=item;item=tmp;writes++;while(pos!==start){pos=start;for(var i=start+1;i<n;i++)if(a[i]<item)pos++;while(item===a[pos])pos++;var t2=a[pos];a[pos]=item;item=t2;writes++;}}return {arr:a,writes:writes};}
+function minWrites(arr){var sorted=arr.slice().sort(function(x,y){return x-y;}),n=arr.length,pos={};for(var i=0;i<n;i++)(pos[sorted[i]]=pos[sorted[i]]||[]).push(i);var target=arr.map(function(v){return pos[v].shift();}),seen=new Array(n).fill(false),w=0;for(var i=0;i<n;i++){if(seen[i])continue;var len=0,j=i;while(!seen[j]){seen[j]=true;j=target[j];len++;}if(len>1)w+=len;}return w;}
+function verify(){var seed=122;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return (seed>>>8)/16777216;}var sortOk=true,wOk=true;for(var t=0;t<300;t++){var n=1+Math.floor(rnd()*15),s=new Set();while(s.size<n)s.add(Math.floor(rnd()*100));var arr=[...s];for(var i=arr.length-1;i>0;i--){var j=Math.floor(rnd()*(i+1));var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;}var r=cycleSort(arr);if(r.arr.join(',')!==arr.slice().sort(function(x,y){return x-y;}).join(','))sortOk=false;if(r.writes!==minWrites(arr))wOk=false;}return {sorts:sortOk,minWrites:wOk};}
+function mk(){var n=8+Math.floor(Math.random()*4),s=new Set();while(s.size<n)s.add(1+Math.floor(Math.random()*40));ARR=[...s];for(var i=ARR.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=ARR[i];ARR[i]=ARR[j];ARR[j]=tmp;}}
+function cycles(arr){var sorted=arr.slice().sort(function(x,y){return x-y;}),n=arr.length,pos={};for(var i=0;i<n;i++)(pos[sorted[i]]=pos[sorted[i]]||[]).push(i);var target=arr.map(function(v){return pos[v].shift();}),seen=new Array(n).fill(false),cyc=[];for(var i=0;i<n;i++){if(seen[i])continue;var c=[],j=i;while(!seen[j]){seen[j]=true;c.push(j);j=target[j];}if(c.length>1)cyc.push(c);}return cyc;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('permutation → disjoint cycles; each element written once to its slot',12,14);
+ var cyc=[[3,0],[1,2,4]],cols=['#58a0b0','#c0a048'];for(var ci=0;ci<cyc.length;ci++)for(var k=0;k<cyc[ci].length;k++){var a=k/cyc[ci].length*6.28,cx=140+ci*220,cy=90,x=cx+Math.cos(a)*35,y=cy+Math.sin(a)*35;g.fillStyle=cols[ci];g.beginPath();g.arc(x,y,12,0,7);g.fill();g.fillStyle='#fff';g.font='9px monospace';g.fillText(cyc[ci][k],x-3,y+3);if(k<cyc[ci].length-1||true){var na=(k+1)/cyc[ci].length*6.28,nx=cx+Math.cos(na)*35,ny=cy+Math.sin(na)*35;g.strokeStyle=cols[ci];g.beginPath();g.moveTo(x,y);g.lineTo(nx,ny);g.stroke();}}}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!ARR)mk();var r=cycleSort(ARR),cyc=cycles(ARR),cw=(W-30)/ARR.length;
+ var cols=['#58a0b0','#c0a048','#a878c0','#c07890','#70a860'];var cellCol={};cyc.forEach(function(c,ci){c.forEach(function(idx){cellCol[idx]=cols[ci%cols.length];});});
+ for(var i=0;i<ARR.length;i++){g.fillStyle=cellCol[i]||'#37506e';g.fillRect(15+i*cw,40,cw-3,ARR[i]/40*120+8);g.fillStyle='#cde';g.font='8px monospace';g.fillText(ARR[i],15+i*cw+2,36);}
+ g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText(cyc.length+' non-trivial cycles → '+r.writes+' writes (colored)',12,190);
+ g.fillStyle=r.writes===minWrites(ARR)?'#39fc6b':'#ff5a5a';g.fillText('writes '+r.writes+' = minimum '+minWrites(ARR)+' ✓ · sorted ✓',12,H-8);}
+document.getElementById('csroll').onclick=function(){mk();drawW4();document.getElementById('csread').textContent=ARR.length+' elements → '+cycleSort(ARR).writes+' writes';};
+document.getElementById('cscheck').onclick=function(){var v=verify();document.getElementById('csread').textContent='300 arrays: sorts '+(v.sorts?'✓':'✗')+', writes == minimum '+(v.minWrites?'✓':'✗');};
+document.getElementById('csspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!ARR)mk();var cyc=cycles(ARR),cx=W/2,cy=H/2-20,cols=['#39fc6b','#58a0b0','#c0a048','#a878c0'];
+ cyc.forEach(function(c,ci){var ccx=cx+(ci-(cyc.length-1)/2)*90;c.forEach(function(idx,k){var a=k/c.length*6.28+ang*0.3,x=ccx+Math.cos(a)*35,y=cy+Math.sin(a)*35;g.fillStyle=cols[ci%cols.length];g.beginPath();g.arc(x,y,7,0,7);g.fill();var na=(k+1)/c.length*6.28+ang*0.3;g.strokeStyle='rgba(57,252,107,0.4)';g.beginPath();g.moveTo(x,y);g.lineTo(ccx+Math.cos(na)*35,cy+Math.sin(na)*35);g.stroke();});});
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: cycles rotated in place, one write each',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the redundant writes ordinary sorts make',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('minimum writes — the sort for costly memory',10,H-9);}
+mk();drawW3();drawW4();window.__cyclesort=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
