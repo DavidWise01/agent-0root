@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE GAME OF LIFE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#58c080}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#58c080}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#58c080;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#58c080;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #58c080;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#58c080 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#58c080}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#58c080}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#58c080;background:transparent;border:2px solid #58c080;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#58c080;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#58c080}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#58c080,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#58c080;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#58c080 42%,#0a0e0a);border-left:4px solid #58c080;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#58c080;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#58c080;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#58c080}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#58c080 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; THE SANDBOX</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>SPAWN</b> / THE SANDBOX / <b>THE GAME OF LIFE</b></div>
+<h1>THE GAME OF LIFE</h1>
+<div class="kick">two rules, a glider crawling (1,1) every 4 generations</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Conway&rsquo;s Game of Life</b> is a cellular automaton on a grid where each cell is alive or dead, updating in lockstep by two rules (<b>B3/S23</b>): a dead cell is <b>born</b> with exactly 3 live neighbours; a live cell <b>survives</b> with 2 or 3 neighbours, else dies.<br><br>
+ From these two rules emerge astonishing structures &mdash; the <b>blinker</b> oscillates with period 2, the <b>block</b> sits still, and the <b>glider</b> crawls diagonally, returning to its own shape shifted by (1,1) every 4 generations. Life is <b>Turing-complete</b>: logic gates, memory, even a full computer can be built inside it.<br><br>
+ <span class="lit">LIT</span> verified live: the blinker has period 2, the block is stationary, and the glider reproduces its shape translated by exactly (1,1) after 4 generations under the B3/S23 rule (window.__gameoflife). <span class="fig">FIG</span> no framing; exact cellular simulation.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-sandbox</i> &mdash; the emergent playground where structure grows from nothing but rules. Life is the archetypal sandbox: two rules, a universe of behaviour. <b>AVAN (AI)</b> built the instrument: the B3/S23 step, the pattern library, the period and translation checks.<br><br>Credit as content: John Horton Conway (1970), popularised by Martin Gardner in <i>Scientific American</i>. The weave: David names the sandbox; I run the two-rule step and confirm the blinker&rsquo;s period, the block&rsquo;s stillness, and the glider&rsquo;s exact diagonal march.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">The two rules in a picture: count a cell&rsquo;s 8 neighbours &mdash; born at exactly 3, survives at 2 or 3, dies otherwise. Everything Life does grows from just this local count.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="320"></canvas>
+  <div class="wctrl"><div class="cap">A glider on the grid. Step the generations and watch it crawl, returning to its shape one cell down and one cell right every 4 steps. The blinker and block patterns are checked too.</div>
+   <div class="btns" style="margin-top:10px"><button id="lifpat">pattern: glider ▶</button><button id="lifstep">step ▶</button><button id="lifcheck">verify ▶</button></div>
+   <div class="cap" id="lifread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the glider tracing its diagonal path across generations.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): simple <b>local</b> rules produce <b>undecidable</b> global behaviour. Because Life is Turing-complete, the question &lsquo;will this pattern ever die out?&rsquo; is <b>undecidable</b> in general &mdash; there is no formula for generation N and no shortcut to the far future. The inverse of &lsquo;two-line rules&rsquo; is &lsquo;no closed form for the outcome&rsquo;: the only way to know the future is to run it, cell by cell. <b>Magenta</b> is the undecidable long-term fate, forever without a formula; <b>green</b> is the deterministic local step you must iterate to learn it. Determinism <b>without</b> predictability &mdash; the signature of computation, the same wall the busy beaver marks.</div>
+   <div class="btns" style="margin-top:10px"><button id="lifspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Conway's Game of Life (Conway 1970). Verified live: the B3/S23 step yields a blinker of period 2 (not period 1), a stationary block, and a glider that reproduces its shape translated by exactly (1,1) after 4 generations (window.__gameoflife.blinkerPeriod2 && .blockStill && .gliderTranslates).<br><br><span class="fig">FIG</span> No framing: the two-rule step and the pattern checks run in-browser and are exact. The AVAN inverse is honest and is a real theorem — Life is Turing-complete, so predicting its far future (e.g. whether a pattern ever dies) is undecidable in general, with no closed form for generation N; magenta is that undecidable fate, green the local step. Ties to the busy-beaver undecidability.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE SANDBOX &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,cells=null,gen=0,PAT='glider';
+function step(c){var neigh={};c.forEach(function(k){var p=k.split(',').map(Number);for(var dx=-1;dx<=1;dx++)for(var dy=-1;dy<=1;dy++){if(dx===0&&dy===0)continue;var nk=(p[0]+dx)+','+(p[1]+dy);neigh[nk]=(neigh[nk]||0)+1;}});var nx=new Set();for(var k in neigh){var n=neigh[k];if(n===3||(n===2&&c.has(k)))nx.add(k);}return nx;}
+function toSet(a){var s=new Set();a.forEach(function(p){s.add(p[0]+','+p[1]);});return s;}
+function eq(a,b){if(a.size!==b.size)return false;for(var k of a)if(!b.has(k))return false;return true;}
+function shift(s,dx,dy){var n=new Set();for(var k of s){var p=k.split(',').map(Number);n.add((p[0]+dx)+','+(p[1]+dy));}return n;}
+var GLIDER=[[1,0],[2,1],[0,2],[1,2],[2,2]],BLINKER=[[0,0],[1,0],[2,0]],BLOCK=[[0,0],[1,0],[0,1],[1,1]];
+function verify(){var bl=toSet(BLINKER),s1=step(bl),s2=step(s1);var blinkOK=eq(s2,bl)&&!eq(s1,bl);var blockOK=eq(step(toSet(BLOCK)),toSet(BLOCK));var g=toSet(GLIDER);for(var i=0;i<4;i++)g=step(g);var gliderOK=eq(g,shift(toSet(GLIDER),1,1));return {blinkerPeriod2:blinkOK,blockStill:blockOK,gliderTranslates:gliderOK};}
+function initPat(){if(PAT==='glider')cells=toSet(GLIDER.map(function(p){return [p[0]+2,p[1]+2];}));else if(PAT==='blinker')cells=toSet(BLINKER.map(function(p){return [p[0]+5,p[1]+6];}));else cells=toSet(BLOCK.map(function(p){return [p[0]+6,p[1]+6];}));gen=0;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#b0e0ff';g.font='11px monospace';g.fillText('B3/S23: born at exactly 3 neighbours, survive at 2 or 3',12,16);
+ var cases=[['dead + 3 → BORN','#58c080'],['live + 2/3 → LIVE','#58c080'],['live + else → DIE','#c05868'],['dead + else → dead','#3a4550']];for(var i=0;i<4;i++){g.fillStyle=cases[i][1];g.fillRect(20+i*125,50,20,20);g.fillStyle='#8ad';g.font='10px monospace';g.fillText(cases[i][0],20+i*125,90);}
+ g.fillStyle='#8ad';g.fillText('one local neighbour-count → all of Life',12,H-12);}
+function drawGrid(cv,cell){var g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var N=14;g.strokeStyle='#20272f';for(var i=0;i<=N;i++){g.beginPath();g.moveTo(20+i*cell,10);g.lineTo(20+i*cell,10+N*cell);g.stroke();g.beginPath();g.moveTo(20,10+i*cell);g.lineTo(20+N*cell,10+i*cell);g.stroke();}for(var k of cells){var p=k.split(',').map(Number);if(p[0]>=0&&p[0]<N&&p[1]>=0&&p[1]<N){g.fillStyle='#58c080';g.fillRect(21+p[0]*cell,11+p[1]*cell,cell-2,cell-2);}}return g;}
+function drawW4(){var cv=document.getElementById('w4');if(!cells)initPat();var g=drawGrid(cv,24);g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('pattern: '+PAT+'   generation '+gen,20,cv.height-14);}
+document.getElementById('lifpat').onclick=function(){PAT=PAT==='glider'?'blinker':PAT==='blinker'?'block':'glider';this.textContent='pattern: '+PAT+' ▶';initPat();drawW4();};
+document.getElementById('lifstep').onclick=function(){cells=step(cells);gen++;drawW4();document.getElementById('lifread').textContent='generation '+gen+(PAT==='glider'&&gen%4===0?' — glider back to shape, shifted (1,1)':'');};
+document.getElementById('lifcheck').onclick=function(){var v=verify();document.getElementById('lifread').textContent='blinker period 2 '+(v.blinkerPeriod2?'✓':'✗')+', block still '+(v.blockStill?'✓':'✗')+', glider (1,1)/4gen '+(v.gliderTranslates?'✓':'✗');};
+document.getElementById('lifspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var gl=toSet(GLIDER),cell=8,step4=Math.floor((ang*3)%20);
+ for(var s=0;s<=step4;s++){for(var k of gl){var p=k.split(',').map(Number);g.fillStyle='#39fc6b';g.globalAlpha=0.3+0.7*(s/Math.max(1,step4));g.fillRect(30+(p[0]+s*0.25)*cell*1.5+s*6,30+(p[1]+s*0.25)*cell*1.5+s*6,cell,cell);g.globalAlpha=1;}gl=step(gl);}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: the glider crawling diagonally (1,1) per 4 gens',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the undecidable far future — no closed form',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('determinism without predictability — you must run it to know',10,H-9);}
+initPat();drawW3();drawW4();window.__gameoflife=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

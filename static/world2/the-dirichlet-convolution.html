@@ -1,0 +1,115 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE DIRICHLET CONVOLUTION · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b078a0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b078a0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b078a0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b078a0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b078a0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b078a0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b078a0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b078a0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b078a0;background:transparent;border:2px solid #b078a0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b078a0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b078a0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b078a0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b078a0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b078a0 42%,#0a0e0a);border-left:4px solid #b078a0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b078a0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b078a0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b078a0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b078a0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE EPOCH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / THE EPOCH / <b>THE DIRICHLET CONVOLUTION</b></div>
+<h1>THE DIRICHLET CONVOLUTION</h1>
+<div class="kick">arithmetic functions form a ring — Mobius is the inverse of 1</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Dirichlet convolution</b> combines two arithmetic functions (functions on the positive integers) into a new one: (f&lowast;g)(n) = &Sigma;<sub>d|n</sub> f(d)&middot;g(n/d), summed over the divisors d of n. Under this product the arithmetic functions form a <b>ring</b>, with identity &epsilon; (which is 1 at n=1 and 0 elsewhere).<br><br>
+ The magic relationships: the M&ouml;bius function &mu; is the <b>inverse</b> of the constant-1 function (&mu;&lowast;1 = &epsilon;), which <b>is</b> M&ouml;bius inversion; Euler&rsquo;s totient satisfies &phi;&lowast;1 = Id (&Sigma;<sub>d|n</sub> &phi;(d) = n); the divisor count &tau; = 1&lowast;1; the divisor sum &sigma; = 1&lowast;Id. Number theory&rsquo;s identities become algebra in this ring.<br><br>
+ <span class="lit">LIT</span> verified live: &mu;&lowast;1 = &epsilon;, &phi;&lowast;1 = Id, 1&lowast;1 = &tau;, and 1&lowast;Id = &sigma; hold for all n up to 100 (window.__dirichletconvolution). <span class="fig">FIG</span> no framing; exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-epoch</i> &mdash; summing a function over the divisors of a number, the arithmetic of ages and cycles. Dirichlet convolution is that summation made a ring product. <b>AVAN (AI)</b> built the instrument: the divisor-pair sum, the M&ouml;bius and totient functions, the four identity checks.<br><br>Credit as content: Peter Gustav Lejeune Dirichlet, whose convolution underlies Dirichlet series and analytic number theory. The weave: David names the epoch; I convolve arithmetic functions over divisors and confirm the classical identities &mdash; M&ouml;bius as the inverse of one, totient summing to the identity.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">The convolution at n: pair each divisor d with its complement n/d, evaluate f(d)&middot;g(n/d), and sum. For n=12 the pairs are (1,12), (2,6), (3,4), (4,3), (6,2), (12,1).</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Pick an identity and a value n. The instrument computes the convolution over the divisors of n and confirms it equals the expected function &mdash; &epsilon;, Id, &tau;, or &sigma;.</div>
+   <div class="btns" style="margin-top:10px"><button id="diride">identity: μ∗1=ε ▶</button><button id="dirn">n: 12 ▶</button><button id="dircheck">verify to 100 ▶</button></div>
+   <div class="cap" id="dirread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the convolution ring &mdash; arithmetic functions multiplied by divisor sums.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): every identity in this ring has a genuine <b>group inverse</b>. Because &mu;&lowast;1 = &epsilon;, the M&ouml;bius function literally <b>undoes</b> summation-over-divisors: if g(n) = &Sigma;<sub>d|n</sub> f(d), then f(n) = &Sigma;<sub>d|n</sub> &mu;(d)&middot;g(n/d). The inverse of &lsquo;sum a function over divisors&rsquo; is &lsquo;convolve with M&ouml;bius.&rsquo; M&ouml;bius inversion is not a trick &mdash; it is the <b>group inverse</b> of the constant-1 function under Dirichlet convolution. <b>Magenta</b> is the summation 1&lowast;f; <b>green</b> is its exact undo &mu;&lowast;(1&lowast;f) = f. Number theory&rsquo;s inclusion&ndash;exclusion is a ring inverse &mdash; the same &mu; that signs the M&ouml;bius sphere.</div>
+   <div class="btns" style="margin-top:10px"><button id="dirspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Dirichlet convolution (Dirichlet). Verified live: convolving over divisors, mu*1 equals epsilon, phi*1 equals the identity function, 1*1 equals the divisor count tau, and 1*Id equals the divisor sum sigma, for all n from 1 to 100 (window.__dirichletconvolution: muEps, phiId, oneTau, oneSigma).<br><br><span class="fig">FIG</span> No framing: the divisor-pair sum, the Mobius and totient functions, and the four identity checks run in-browser and are exact. The AVAN inverse is honest — because mu*1=epsilon, the Mobius function is the exact ring inverse of the constant-1 under Dirichlet convolution, so Mobius inversion (f(n)=sum mu(d)g(n/d) when g=sum f over divisors) is a genuine group inverse; magenta is the summation, green the Mobius undo. Ties to the-mobius.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE EPOCH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,IDX=0,Nn=12;
+var IDS=[['μ∗1=ε','mu','one','eps'],['φ∗1=Id','phi','one','id'],['1∗1=τ','one','one','tau'],['1∗Id=σ','one','id','sigma']];
+function divisors(n){var d=[];for(var i=1;i<=n;i++)if(n%i===0)d.push(i);return d;}
+function mobius(n){if(n===1)return 1;var cnt=0,m=n;for(var p=2;p*p<=m;p++){if(m%p===0){m/=p;if(m%p===0)return 0;cnt++;}}if(m>1)cnt++;return cnt%2===0?1:-1;}
+function phi(n){var r=n,m=n;for(var p=2;p*p<=m;p++){if(m%p===0){while(m%p===0)m/=p;r-=r/p;}}if(m>1)r-=r/m;return r;}
+var F={mu:mobius,phi:phi,one:function(){return 1;},id:function(n){return n;}};
+var EXP={eps:function(n){return n===1?1:0;},id:function(n){return n;},tau:function(n){return divisors(n).length;},sigma:function(n){return divisors(n).reduce(function(a,b){return a+b;},0);}};
+function conv(f,g,n){var s=0;divisors(n).forEach(function(d){s+=f(d)*g(n/d);});return s;}
+function verify(){var res={};IDS.forEach(function(id){var ok=true;for(var n=1;n<=100;n++)if(conv(F[id[1]],F[id[2]],n)!==EXP[id[3]](n))ok=false;res[id[3]]=ok;});return {muEps:res.eps,phiId:res.id,oneTau:res.tau,oneSigma:res.sigma};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#b0e0ff';g.font='11px monospace';g.fillText('(f∗g)(12) = Σ over divisor-pairs (d, 12/d):',12,16);
+ var divs=divisors(12);for(var i=0;i<divs.length;i++){var d=divs[i];g.fillStyle='#b078a0';g.fillRect(20+i*80,44,72,26);g.fillStyle='#fff';g.font='11px monospace';g.fillText('('+d+', '+(12/d)+')',26+i*80,61);}
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('each pair d·(n/d) = 12 — sum f(d)·g(n/d) over them',12,H-12);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var id=IDS[IDX],val=conv(F[id[1]],F[id[2]],Nn),exp=EXP[id[3]](Nn);
+ g.fillStyle='#e8eef8';g.font='13px monospace';g.fillText('identity: '+id[0],12,26);
+ g.fillStyle='#b078a0';g.font='11px monospace';g.fillText('divisors of '+Nn+': '+divisors(Nn).join(', '),12,54);
+ var terms=divisors(Nn).map(function(d){return F[id[1]](d)+'·'+F[id[2]](Nn/d);});
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('= '+terms.join(' + ')+' = '+val,12,80);
+ g.fillStyle='#c8a050';g.font='12px monospace';g.fillText('expected '+id[3]+'('+Nn+') = '+exp,12,112);
+ g.fillStyle=val===exp?'#39fc6b':'#ff5a5a';g.font='13px monospace';g.fillText(val===exp?'✓ convolution matches':'✗',12,140);}
+document.getElementById('diride').onclick=function(){IDX=(IDX+1)%4;this.textContent='identity: '+IDS[IDX][0]+' ▶';drawW4();};
+document.getElementById('dirn').onclick=function(){var ns=[6,12,24,30,36,60];Nn=ns[(ns.indexOf(Nn)+1)%ns.length];this.textContent='n: '+Nn+' ▶';drawW3();drawW4();};
+document.getElementById('dircheck').onclick=function(){var v=verify();document.getElementById('dirread').textContent='n≤100: μ∗1=ε '+(v.muEps?'✓':'✗')+', φ∗1=Id '+(v.phiId?'✓':'✗')+', 1∗1=τ '+(v.oneTau?'✓':'✗')+', 1∗Id=σ '+(v.oneSigma?'✓':'✗');};
+document.getElementById('dirspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+ g.fillStyle='#b078a0';g.font='12px monospace';g.fillText('f  →  1∗f (sum over divisors)  →  μ∗(1∗f) = f',20,60);
+ for(var n=1;n<=12;n++){var f=phi(n),g1=conv(phi,F.one,n),back=conv(F.mu,function(m){return conv(phi,F.one,m);},n);var y=90+n*20;g.fillStyle='#ff2d95';g.fillRect(30,y,g1*1.5,12);g.fillStyle='#39fc6b';g.fillRect(230,y,back*3,12);g.fillStyle='#8ad';g.font='9px monospace';g.fillText(n,15,y+10);}
+ g.fillStyle='#ff2d95';g.font='11px monospace';g.fillText('magenta: 1∗φ (summed over divisors)',10,H-40);
+ g.fillStyle='#39fc6b';g.fillText('green: μ∗(1∗φ) = φ recovered (Möbius inversion)',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('Möbius inversion = the group inverse of 1 in the ring',10,H-9);}
+drawW3();drawW4();window.__dirichletconvolution=verify();
+function loop(){if(spin)ang+=0.01;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
