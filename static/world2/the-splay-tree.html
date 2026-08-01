@@ -1,0 +1,113 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SPLAY TREE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#c0a048}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#c0a048}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#c0a048;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#c0a048;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #c0a048;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#c0a048 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#c0a048}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#c0a048}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#c0a048;background:transparent;border:2px solid #c0a048;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#c0a048;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#c0a048}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#c0a048,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#c0a048;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#c0a048 42%,#0a0e0a);border-left:4px solid #c0a048;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#c0a048;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#c0a048;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#c0a048}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#c0a048 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; WARM CACHE</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / WARM CACHE / <b>THE SPLAY TREE</b></div>
+<h1>THE SPLAY TREE</h1>
+<div class="kick">a search tree that reshapes itself around what you use</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The splay tree</b> is a self-adjusting binary search tree: every time you touch a node, you <b>splay</b> it &mdash; rotate it all the way to the root. There are no balance rules and no stored heights or colours; the tree simply reshapes itself so that recently and frequently accessed keys sit near the top, giving <b>amortised</b> O(log n) per operation.<br><br>
+ It is a self-optimising cache in tree form, and the basis of link-cut trees.<br><br>
+ <span class="lit">LIT</span> verified live: over 300 random operation sequences the in-order traversal stays sorted, the key set matches a reference, every key is found, and after each access that key is at the root (window.__splaytree). <span class="fig">FIG</span> no framing; exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>warm-cache</i> &mdash; the thing you just used floats to the top, ready to hand, so the next access is cheap. The splay tree is a warm cache built of pointers. <b>AVAN (AI)</b> built the instrument: the top-down splay, the insert/find, the sorted-order + at-root checks.<br><br>Credit as content: Daniel Sleator &amp; Robert Tarjan (1985). The weave: David names the warm cache; I splay each touched key to the root and confirm the tree stays a valid search tree while the workload reshapes it.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">A splay: the accessed node rotates upward step by step (zig, zig-zig, zig-zag) until it becomes the root &mdash; the path it travelled is roughly halved in depth along the way.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="280"></canvas>
+  <div class="wctrl"><div class="cap">Insert or access keys; the touched key splays to the root and the tree rebalances itself around your usage.</div>
+   <div class="btns" style="margin-top:10px"><button id="spins">insert random ▶</button><button id="spacc">access a key ▶</button><button id="spcheck">verify 300 ▶</button></div>
+   <div class="cap" id="spread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the accessed key, splayed to the root, the tree reshaped beneath it.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the tree <b>reshapes itself around what you use</b>. Every access splays the touched node to the root, so recently and frequently used keys drift to the top and repeated access is amortised O(log n) &mdash; with <b>no</b> explicit balance rules, heights, or colours maintained. The inverse of &lsquo;keep the tree balanced by rules&rsquo; is &lsquo;let access itself reshape the tree.&rsquo; <b>Magenta</b> is the rigid AVL/red-black balance conditions you never maintain; <b>green</b> is the self-adjusting path splayed to the root. The structure adapts to the workload.</div>
+   <div class="btns" style="margin-top:10px"><button id="spspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine splay tree (Sleator & Tarjan 1985). Verified live: over 300 random insert/access sequences the in-order traversal is sorted, the key multiset equals a reference set, every inserted key is found, and each accessed key ends at the root (window.__splaytree.sorted && .keysMatch && .accessedAtRoot).<br><br><span class="fig">FIG</span> No framing: the top-down splay, insert/find, and the sorted-order + at-root checks run in-browser and hold exactly. The AVAN inverse is honest — every access splays the touched node to the root so the tree self-adjusts to the workload with no explicit balance rules; magenta is the AVL/red-black conditions never maintained, green the self-adjusting path splayed up. A warm cache built of pointers.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of WARM CACHE &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,TREE=null,LAST=null;
+function splay(root,key){if(!root)return root;var N={key:0,left:null,right:null},l=N,r=N;while(true){if(key<root.key){if(!root.left)break;if(key<root.left.key){var t=root.left;root.left=t.right;t.right=root;root=t;if(!root.left)break;}r.left=root;r=root;root=root.left;}else if(key>root.key){if(!root.right)break;if(key>root.right.key){var t=root.right;root.right=t.left;t.left=root;root=t;if(!root.right)break;}l.right=root;l=root;root=root.right;}else break;}l.right=root.left;r.left=root.right;root.left=N.right;root.right=N.left;return root;}
+function T(){this.root=null;}
+T.prototype.insert=function(key){if(!this.root){this.root={key:key,left:null,right:null};return;}this.root=splay(this.root,key);if(this.root.key===key)return;var n={key:key,left:null,right:null};if(key<this.root.key){n.left=this.root.left;n.right=this.root;this.root.left=null;}else{n.right=this.root.right;n.left=this.root;this.root.right=null;}this.root=n;};
+T.prototype.find=function(key){this.root=splay(this.root,key);return this.root&&this.root.key===key;};
+function inorder(n,o){if(!n)return;inorder(n.left,o);o.push(n.key);inorder(n.right,o);}
+function verify(){var seed=41;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return (seed>>>8)/16777216;}var ok=true,srt=true,ro=true;for(var t=0;t<300;t++){var st=new T(),ref=new Set(),nOps=3+Math.floor(rnd()*20);for(var o=0;o<nOps;o++){var k=Math.floor(rnd()*50);st.insert(k);ref.add(k);}var io=[];inorder(st.root,io);for(var i=1;i<io.length;i++)if(io[i]<=io[i-1])srt=false;if(io.length!==ref.size)ok=false;var arr=[...ref];for(var q=0;q<arr.length;q++){if(!st.find(arr[q]))ok=false;if(st.root.key!==arr[q])ro=false;}}return {sorted:srt,keysMatch:ok,accessedAtRoot:ro};}
+function ensure(){if(!TREE){TREE=new T();[30,15,45,8,22,38,50,4,12].forEach(function(k){TREE.insert(k);});}}
+function layout(node,x,y,dx,arr,depth){if(!node)return;arr.push({key:node.key,x:x,y:y,root:depth===0});layout(node.left,x-dx,y+44,dx*0.55,arr,depth+1);layout(node.right,x+dx,y+44,dx*0.55,arr,depth+1);}
+function drawTree(g,W,H){ensure();var nodes=[];layout(TREE.root,W/2,30,W/4,nodes,0);
+ function edges(node,x,y,dx){if(!node)return;if(node.left){g.strokeStyle='#3a4550';g.beginPath();g.moveTo(x,y);g.lineTo(x-dx,y+44);g.stroke();edges(node.left,x-dx,y+44,dx*0.55);}if(node.right){g.strokeStyle='#3a4550';g.beginPath();g.moveTo(x,y);g.lineTo(x+dx,y+44);g.stroke();edges(node.right,x+dx,y+44,dx*0.55);}}
+ edges(TREE.root,W/2,30,W/4);
+ nodes.forEach(function(nd){g.fillStyle=nd.root?'#39fc6b':(nd.key===LAST?'#c0a048':'#37506e');g.beginPath();g.arc(nd.x,nd.y,13,0,7);g.fill();g.fillStyle=nd.root?'#042':'#fff';g.font='10px monospace';g.fillText(nd.key,nd.x-6,nd.y+4);});}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('splay: rotate the accessed node up to the root (zig · zig-zig · zig-zag)',12,14);
+ for(var i=0;i<4;i++){var y=120-i*24;g.fillStyle=i===3?'#39fc6b':'#c0a048';g.beginPath();g.arc(80+i*100,y,12,0,7);g.fill();if(i<3){g.strokeStyle='#8ad';g.beginPath();g.moveTo(92+i*100,y-6);g.lineTo(168+i*100,120-(i+1)*24+6);g.stroke();}}
+ g.fillStyle='#8ad';g.fillText('depth of the path roughly halves',80,140);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d');drawTree(g,384,280);var st=g;g.fillStyle='#8ad';g.font='10px monospace';g.fillText(LAST!==null?('root = '+TREE.root.key+' (last touched '+LAST+')'):'root = '+TREE.root.key,12,270);}
+document.getElementById('spins').onclick=function(){ensure();var k=Math.floor(Math.random()*60);TREE.insert(k);LAST=k;drawW4();document.getElementById('spread').textContent='inserted '+k+' → splayed to root';};
+document.getElementById('spacc').onclick=function(){ensure();var io=[];inorder(TREE.root,io);var k=io[Math.floor(Math.random()*io.length)];TREE.find(k);LAST=k;drawW4();document.getElementById('spread').textContent='accessed '+k+' → now at root';};
+document.getElementById('spcheck').onclick=function(){var v=verify();document.getElementById('spread').textContent='300 seqs: sorted '+(v.sorted?'✓':'✗')+', keys match '+(v.keysMatch?'✓':'✗')+', accessed at root '+(v.accessedAtRoot?'✓':'✗');};
+document.getElementById('spspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);ensure();var io=[];inorder(TREE.root,io);var cx=W/2,cy=H/2-10;
+ g.fillStyle='#39fc6b';g.beginPath();g.arc(cx,cy-70,14,0,7);g.fill();g.fillStyle='#042';g.font='10px monospace';g.fillText(TREE.root.key,cx-6,cy-66);
+ for(var i=0;i<io.length;i++){var a=i/io.length*6.28+ang*0.3,x=cx+Math.cos(a)*90,y=cy+Math.sin(a)*70;if(io[i]!==TREE.root.key){g.fillStyle='rgba(255,45,149,0.35)';g.beginPath();g.arc(x,y,5,0,7);g.fill();}}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: the accessed key splayed to the root',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: rigid balance rules never maintained',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('access itself reshapes the tree — a cache of pointers',10,H-9);}
+ensure();drawW3();drawW4();window.__splaytree=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
