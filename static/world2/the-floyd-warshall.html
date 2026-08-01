@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE FLOYD-WARSHALL · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#6890d0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#6890d0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#6890d0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#6890d0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #6890d0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#6890d0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#6890d0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#6890d0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#6890d0;background:transparent;border:2px solid #6890d0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#6890d0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#6890d0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#6890d0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#6890d0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#6890d0 42%,#0a0e0a);border-left:4px solid #6890d0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#6890d0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#6890d0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#6890d0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#6890d0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE BROADCAST</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE BROADCAST / <b>THE FLOYD-WARSHALL</b></div>
+<h1>THE FLOYD-WARSHALL</h1>
+<div class="kick">all-pairs shortest paths by admitting one waypoint at a time</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Floyd&ndash;Warshall</b> computes the shortest path between <b>every pair</b> of vertices in a weighted graph with one triple loop and a single idea: consider each vertex as a possible <b>intermediate stop</b>, one at a time. The update <code>dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])</code> &mdash; after trying all k as waypoints, dist holds every shortest path.<br><br>
+ It is O(V&sup3;), handles negative edges (and flags negative cycles), and its three-nested-loops terseness makes it the go-to for dense all-pairs shortest paths and transitive closure.<br><br>
+ <span class="lit">LIT</span> verified live: over 200 random weighted graphs, the Floyd&ndash;Warshall distance matrix matches shortest paths computed independently by Bellman&ndash;Ford from each source (window.__floydwarshall). <span class="fig">FIG</span> no framing; exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-broadcast</i> &mdash; shortest routes from everyone to everyone, the whole network&rsquo;s reach at once. Floyd&ndash;Warshall is that broadcast computed in three loops. <b>AVAN (AI)</b> built the instrument: the waypoint relaxation, the distance matrix, the per-source Bellman&ndash;Ford cross-check.<br><br>Credit as content: Robert Floyd (1962), on Stephen Warshall&rsquo;s transitive-closure algorithm (1962) and Bernard Roy (1959). The weave: David names the broadcast; I grow the set of allowed intermediate stops one vertex at a time and prove the resulting all-pairs distances match a source-by-source shortest-path solver.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">One relaxation: the route from i to j is improved if going i&rarr;k&rarr;j (through the current waypoint k) is shorter. Sweep k over all vertices and every shortest path emerges.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="320"></canvas>
+  <div class="wctrl"><div class="cap">A small weighted graph and its evolving distance matrix. Advance the waypoint index k and watch distances tighten; the final matrix matches a per-source shortest-path solver.</div>
+   <div class="btns" style="margin-top:10px"><button id="flwnew">new graph ▶</button><button id="flwstep">waypoint k+ ▶</button><button id="flwcheck">verify 200 ▶</button></div>
+   <div class="cap" id="flwread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the distance matrix tightening as each waypoint is admitted.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the k-loop is a <b>dynamic program over the set of allowed intermediates</b>. After the k-th pass, dist[i][j] is the shortest path using only vertices {0&hellip;k} as stops &mdash; so the outer loop <b>grows the permitted-waypoint set</b> one vertex at a time until all are allowed. The inverse of &lsquo;find all shortest paths&rsquo; is &lsquo;grow the set of usable intermediate stops.&rsquo; <b>Magenta</b> is the paths still forbidden at each stage (waypoints not yet unlocked); <b>green</b> is the shortest paths as the intermediate set completes. A global optimum built by admitting one waypoint at a time &mdash; dynamic programming over subsets of vertices, hidden inside three innocent loops.</div>
+   <div class="btns" style="margin-top:10px"><button id="flwspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Floyd-Warshall all-pairs shortest paths (Floyd 1962; Warshall transitive closure 1962; Roy 1959). Verified live: the triple-loop with waypoint relaxation produces a distance matrix equal to per-source Bellman-Ford shortest paths for 200 random weighted graphs (window.__floydwarshall.matchesBellmanFord).<br><br><span class="fig">FIG</span> No framing: the waypoint relaxation and the per-source Bellman-Ford cross-check run in-browser and agree exactly. The AVAN inverse is honest — after the k-th pass dist[i][j] is the shortest path using only vertices {0..k} as intermediates, so the k-loop is a DP growing the allowed-waypoint set one vertex at a time; magenta is the still-forbidden routes, green the completed shortest paths.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE BROADCAST &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,NET=null,kstep=0;
+function floyd(n,w,kmax){var d=w.map(function(r){return r.slice();});for(var k=0;k<=kmax&&k<n;k++)for(var i=0;i<n;i++)for(var j=0;j<n;j++)if(d[i][k]+d[k][j]<d[i][j])d[i][j]=d[i][k]+d[k][j];return d;}
+function bellman(n,edges,s){var d=new Array(n).fill(Infinity);d[s]=0;for(var it=0;it<n-1;it++)edges.forEach(function(e){if(d[e[0]]+e[2]<d[e[1]])d[e[1]]=d[e[0]]+e[2];});return d;}
+function verify(){var seed=3;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;}var ok=true;for(var t=0;t<200;t++){var n=3+(rnd()*5|0),w=[],edges=[];for(var i=0;i<n;i++){w.push([]);for(var j=0;j<n;j++)w[i].push(i===j?0:Infinity);}for(var e=0;e<n*2;e++){var a=rnd()*n|0,b=rnd()*n|0,c=1+(rnd()*9|0);if(a!==b){w[a][b]=Math.min(w[a][b],c);edges.push([a,b,c]);}}var d=floyd(n,w,n);for(var s=0;s<n;s++){var bf=bellman(n,edges,s);for(var j=0;j<n;j++){var x=d[s][j]===Infinity?1e9:d[s][j],y=bf[j]===Infinity?1e9:bf[j];if(x!==y)ok=false;}}}return {matchesBellmanFord:ok,trials:200};}
+function mk(){var n=5,pos=[[60,60],[300,60],[340,220],[190,280],[40,220]],w=[],edges=[];for(var i=0;i<n;i++){w.push([]);for(var j=0;j<n;j++)w[i].push(i===j?0:Infinity);}var es=[[0,1,3],[1,2,2],[2,3,4],[3,4,1],[4,0,5],[0,3,7],[1,3,2],[4,2,6]];es.forEach(function(e){w[e[0]][e[1]]=e[2];w[e[1]][e[0]]=e[2];edges.push([e[0],e[1],e[2]]);edges.push([e[1],e[0],e[2]]);});NET={n:n,pos:pos,w:w,edges:edges,es:es};kstep=0;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#b0e0ff';g.font='12px monospace';g.fillText('dist[i][j] = min( dist[i][j],  dist[i][k] + dist[k][j] )',20,44);
+ var pts=[[80,110,'i'],[256,110,'k'],[430,110,'j']];pts.forEach(function(p){g.fillStyle='#6890d0';g.beginPath();g.arc(p[0],p[1],14,0,7);g.fill();g.fillStyle='#fff';g.font='12px monospace';g.fillText(p[2],p[0]-4,p[1]+4);});
+ g.strokeStyle='#6890d0';g.beginPath();g.moveTo(94,110);g.lineTo(242,110);g.moveTo(270,110);g.lineTo(416,110);g.stroke();g.strokeStyle='rgba(104,144,208,0.4)';g.beginPath();g.moveTo(80,124);g.bezierCurveTo(200,160,320,160,430,124);g.stroke();
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('go through waypoint k if it is a shorter detour',20,H-12);}
+function drawMatrix(g,d,ox,oy,cell){var n=d.length;for(var i=0;i<n;i++)for(var j=0;j<n;j++){var v=d[i][j];g.fillStyle=v===Infinity?'#2a2030':(v===0?'#2a3a2a':'#26303c');g.fillRect(ox+j*cell,oy+i*cell,cell-2,cell-2);g.fillStyle=v===Infinity?'#a55':'#c9d0e0';g.font='10px monospace';g.fillText(v===Infinity?'∞':v,ox+j*cell+cell/2-5,oy+i*cell+cell/2+4);}}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!NET)mk();var d=floyd(NET.n,NET.w,kstep);
+ NET.es.forEach(function(e){var a=NET.pos[e[0]],b=NET.pos[e[1]];g.strokeStyle='#3a4550';g.beginPath();g.moveTo(a[0]*0.55,a[1]*0.55+8);g.lineTo(b[0]*0.55,b[1]*0.55+8);g.stroke();g.fillStyle='#8ad';g.font='9px monospace';g.fillText(e[2],(a[0]+b[0])*0.275,(a[1]+b[1])*0.275+8);});
+ for(var i=0;i<NET.n;i++){g.fillStyle=i<=kstep?'#6890d0':'#3a4150';g.beginPath();g.arc(NET.pos[i][0]*0.55,NET.pos[i][1]*0.55+8,10,0,7);g.fill();g.fillStyle='#fff';g.font='10px monospace';g.fillText(i,NET.pos[i][0]*0.55-3,NET.pos[i][1]*0.55+11);}
+ g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('waypoints admitted: 0..'+Math.min(kstep,NET.n-1),12,180);
+ drawMatrix(g,d,180,190,32);
+ g.fillStyle='#8ad';g.font='9px monospace';g.fillText('distance matrix',180,186);}
+document.getElementById('flwnew').onclick=function(){mk();var es=[];for(var i=0;i<6;i++){var a=Math.floor(Math.random()*5),b=Math.floor(Math.random()*5);if(a!==b){es.push([a,b,1+Math.floor(Math.random()*8)]);}}NET.es=es;NET.w=[];for(var i=0;i<5;i++){NET.w.push([]);for(var j=0;j<5;j++)NET.w[i].push(i===j?0:Infinity);}es.forEach(function(e){NET.w[e[0]][e[1]]=e[2];NET.w[e[1]][e[0]]=e[2];});kstep=0;drawW4();document.getElementById('flwread').textContent='new graph';};
+document.getElementById('flwstep').onclick=function(){kstep=(kstep+1)%(NET.n+1);drawW4();document.getElementById('flwread').textContent='waypoints 0..'+Math.min(kstep,NET.n-1)+' admitted';};
+document.getElementById('flwcheck').onclick=function(){var v=verify();document.getElementById('flwread').textContent='200 graphs: Floyd-Warshall == per-source Bellman-Ford '+(v.matchesBellmanFord?'✓':'✗');};
+document.getElementById('flwspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!NET)mk();var k=Math.floor((ang*2)%(NET.n+1)),d=floyd(NET.n,NET.w,k);
+ var cell=40,ox=W/2-NET.n*cell/2,oy=60;for(var i=0;i<NET.n;i++)for(var j=0;j<NET.n;j++){var v=d[i][j],h=v===Infinity?0:Math.max(4,30-v*2);g.fillStyle=v===Infinity?'#3a2a30':'#39fc6b';g.globalAlpha=v===Infinity?0.3:0.8;g.fillRect(ox+j*cell,oy+i*cell,cell-4,cell-4);g.globalAlpha=1;g.fillStyle='#04121c';g.font='10px monospace';g.fillText(v===Infinity?'∞':v,ox+j*cell+12,oy+i*cell+22);}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: shortest paths as waypoints {0..'+Math.min(k,NET.n-1)+'} admitted',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: routes still forbidden (waypoints not yet unlocked)',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('DP over subsets of vertices, hidden in three loops',10,H-9);}
+mk();drawW3();drawW4();window.__floydwarshall=verify();
+function loop(){if(spin)ang+=0.01;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
