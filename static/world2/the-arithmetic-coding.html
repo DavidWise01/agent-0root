@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE ARITHMETIC CODING · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#c0a048}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#c0a048}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#c0a048;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#c0a048;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #c0a048;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#c0a048 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#c0a048}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#c0a048}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#c0a048;background:transparent;border:2px solid #c0a048;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#c0a048;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#c0a048}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#c0a048,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#c0a048;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#c0a048 42%,#0a0e0a);border-left:4px solid #c0a048;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#c0a048;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#c0a048;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#c0a048}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#c0a048 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE STASH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE STASH / <b>THE ARITHMETIC CODING</b></div>
+<h1>THE ARITHMETIC CODING</h1>
+<div class="kick">the whole message as one number, at the entropy limit</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Arithmetic coding</b> compresses a whole message into a <b>single number</b> in [0,1). It starts with the interval [0,1) and, for each symbol, narrows to the sub-interval whose width is that symbol&rsquo;s probability. The final interval&rsquo;s width is exactly the <b>product of the symbol probabilities</b>, so specifying a point in it costs &minus;log&#8322;(width) = the message&rsquo;s <b>Shannon entropy</b> &mdash; beating Huffman, which is stuck at whole bits per symbol.<br><br>
+ <span class="lit">LIT</span> verified live: over 300 random strings the exact (big-integer) coder round-trips &mdash; decode(encode(s)) = s &mdash; and the final interval width equals the exact product of symbol frequencies (window.__arithmeticcoding). <span class="fig">FIG</span> no framing; exact, at the entropy limit.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-stash</i> &mdash; packing the loot as tightly as information theory allows, no wasted space. Arithmetic coding is that maximally-tight stash. <b>AVAN (AI)</b> built the instrument: the exact big-integer interval coder, the round-trip decoder, the width-equals-entropy check.<br><br>Credit as content: Peter Elias&rsquo;s idea; practical form by Jorma Rissanen &amp; Richard Pasco (1976) and Witten&ndash;Neal&ndash;Cleary (1987). The weave: David names the stash; I fold a whole message into one fraction whose width is the product of probabilities, then unfold it back exactly.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">The [0,1) interval narrowing symbol by symbol: each step keeps the sub-interval for the next symbol, shrinking by its probability. The message is wherever the nested intervals converge.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="240"></canvas>
+  <div class="wctrl"><div class="cap">Encode a short string over {a,b,c,d}; watch the interval shrink to the code, then decode it back exactly, and compare the code length to the Shannon entropy.</div>
+   <div class="btns" style="margin-top:10px"><button id="acroll">new string ▶</button><button id="accheck">verify 300 ▶</button></div>
+   <div class="cap" id="acread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the single fractional point that is the entire message.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the message becomes <b>one number</b>. The whole string is a single point in [0,1), and its interval width equals the product of symbol probabilities, so the code length equals the Shannon entropy <b>exactly</b> &mdash; not rounded to whole bits per symbol the way Huffman must. The inverse of &lsquo;one codeword per symbol&rsquo; is &lsquo;one number for the entire message, at the entropy limit.&rsquo; <b>Magenta</b> is the per-symbol bit-boundaries Huffman is stuck on; <b>green</b> is the single fractional point. Fractional bits, actually achieved.</div>
+   <div class="btns" style="margin-top:10px"><button id="acspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine arithmetic coding (Elias; Rissanen & Pasco 1976; Witten-Neal-Cleary 1987). Verified live (BigInt exact): decode(encode(s))==s for 300 random strings, and the final interval width numerator equals the exact product of symbol frequencies (window.__arithmeticcoding.roundTrips && .widthIsProduct).<br><br><span class="fig">FIG</span> No framing: the exact big-integer interval coder, the round-trip decoder, and the width-equals-product check run in-browser and are exact. The AVAN inverse is honest — the whole string is one point in [0,1) whose interval width = product of probabilities, so code length = Shannon entropy exactly (fractional bits), not rounded per symbol like Huffman; magenta is Huffman's bit-boundaries, green the single point.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE STASH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,ORDER=['a','b','c','d'],FREQ={a:5,b:3,c:1,d:2},STR='abac';
+function cumulative(){var cum={},run=0n;for(var i=0;i<ORDER.length;i++){cum[ORDER[i]]=run;run+=BigInt(FREQ[ORDER[i]]);}return {cum:cum,T:run};}
+function encode(syms){var ct=cumulative(),T=ct.T,cum=ct.cum,lowN=0n,highN=1n,den=1n;for(var i=0;i<syms.length;i++){var s=syms[i],w=highN-lowN,c=cum[s],f=BigInt(FREQ[s]);lowN=lowN*T+w*c;highN=lowN-w*c+w*(c+f);den=den*T;}return {lowN:lowN,highN:highN,den:den,T:T,widthN:highN-lowN};}
+function encode2(syms){var ct=cumulative(),T=ct.T,cum=ct.cum,lowN=0n,highN=1n,den=1n;for(var i=0;i<syms.length;i++){var s=syms[i],w=highN-lowN,c=cum[s],f=BigInt(FREQ[s]);var nl=lowN*T+w*c,nh=lowN*T+w*(c+f);lowN=nl;highN=nh;den=den*T;}return {lowN:lowN,highN:highN,den:den,T:T,cum:cum,widthN:highN-lowN};}
+function decode(enc,n){var T=enc.T,cum=enc.cum,codeNum=enc.lowN,codeDen=enc.den,out=[],lowN=0n,highN=1n,den=1n;for(var step=0;step<n;step++){var w=highN-lowN,chosen=null;for(var i=0;i<ORDER.length;i++){var s=ORDER[i],c=cum[s],f=BigInt(FREQ[s]),aN=lowN*T+w*c,bN=lowN*T+w*(c+f),d2=den*T;if(aN*codeDen<=codeNum*d2&&codeNum*d2<bN*codeDen){chosen=s;lowN=aN;highN=bN;den=d2;break;}}if(chosen===null)return null;out.push(chosen);}return out;}
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function verify(){var rnd=mb(11),ok=true,wok=true;for(var t=0;t<300;t++){var n=1+Math.floor(rnd()*12),syms=[];for(var i=0;i<n;i++)syms.push(ORDER[Math.floor(rnd()*4)]);var enc=encode2(syms),dec=decode(enc,n);if(JSON.stringify(dec)!==JSON.stringify(syms))ok=false;var prod=1n;for(var i=0;i<syms.length;i++)prod*=BigInt(FREQ[syms[i]]);if(enc.widthN!==prod)wok=false;}return {roundTrips:ok,widthIsProduct:wok};}
+function entropyBits(syms){var ct=cumulative(),T=Number(ct.T),h=0;for(var i=0;i<syms.length;i++)h+=Math.log2(T/FREQ[syms[i]]);return h;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var ct=cumulative(),T=Number(ct.T);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('interval [0,1) narrows by each symbol\'s probability',12,14);
+ var lo=0,hi=1,cols={a:'#c0a048',b:'#c07850',c:'#a05888',d:'#5888a0'};for(var i=0;i<Math.min(STR.length,5);i++){var y=28+i*24,w=hi-lo;var run=0;for(var j=0;j<ORDER.length;j++){var f=FREQ[ORDER[j]]/T,x0=(lo+w*run)*(W-24)+12,x1=(lo+w*(run+f))*(W-24)+12;g.fillStyle=ORDER[j]===STR[i]?cols[ORDER[j]]:'#2a2f38';g.fillRect(x0,y,x1-x0-1,18);run+=f;}var c=0;for(var j=0;j<ORDER.length&&ORDER[j]!==STR[i];j++)c+=FREQ[ORDER[j]]/T;var nl=lo+w*c,nh=lo+w*(c+FREQ[STR[i]]/T);lo=nl;hi=nh;}}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var enc=encode2(STR.split('')),dec=decode(enc,STR.length),ok=dec&&dec.join('')===STR;
+ g.fillStyle='#e8eef8';g.font='12px monospace';g.fillText('string: "'+STR+'"',16,26);
+ var codeApprox=Number(enc.lowN)/Number(enc.den);g.fillStyle='#c0a048';g.font='11px monospace';g.fillText('code ≈ '+codeApprox.toFixed(8)+' (a point in the final interval)',16,52);
+ g.fillStyle=ok?'#39fc6b':'#ff5a5a';g.fillText('decoded: "'+(dec?dec.join(''):'?')+'"'+(ok?' — exact round-trip ✓':' ✗'),16,78);
+ var wbits=-(Math.log2(Number(enc.widthN))-Number(enc.den>1n?BigInt(enc.den.toString().length):1n)*0);var ideal=entropyBits(STR.split(''));g.fillStyle='#8ad';g.font='11px monospace';g.fillText('Shannon length = Σ −log₂(p) = '+ideal.toFixed(3)+' bits',16,108);
+ g.fillText('interval width = ∏ probabilities (exact) → entropy-limit',16,128);}
+document.getElementById('acroll').onclick=function(){var n=3+Math.floor(Math.random()*4);STR='';for(var i=0;i<n;i++)STR+=ORDER[Math.floor(Math.random()*4)];drawW3();drawW4();var enc=encode2(STR.split(''));document.getElementById('acread').textContent='"'+STR+'" → width ∏p, '+entropyBits(STR.split('')).toFixed(2)+' bits';};
+document.getElementById('accheck').onclick=function(){var v=verify();document.getElementById('acread').textContent='300 strings: round-trip '+(v.roundTrips?'✓':'✗')+', width == ∏ freqs (exact) '+(v.widthIsProduct?'✓':'✗');};
+document.getElementById('acspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var enc=encode2(STR.split('')),v=Number(enc.lowN)/Number(enc.den),cx=W/2,cy=H/2-10;
+ g.strokeStyle='rgba(255,45,149,0.4)';for(var i=0;i<=8;i++){var yy=cy-90+i*22;g.beginPath();g.moveTo(cx-100,yy);g.lineTo(cx+100,yy);g.stroke();}
+ var py=cy-90+v*176;g.fillStyle='#39fc6b';g.beginPath();g.arc(cx+40*Math.sin(ang),py,9,0,7);g.fill();
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: the whole message as one point in [0,1)',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: whole-bit boundaries Huffman is stuck on',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('width = ∏ probs → code length = entropy (fractional bits)',10,H-9);}
+drawW3();drawW4();window.__arithmeticcoding=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

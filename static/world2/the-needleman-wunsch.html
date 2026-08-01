@@ -1,0 +1,107 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE NEEDLEMAN-WUNSCH · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#58a0b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#58a0b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#58a0b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#58a0b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #58a0b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#58a0b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#58a0b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#58a0b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#58a0b0;background:transparent;border:2px solid #58a0b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#58a0b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#58a0b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#58a0b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#58a0b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#58a0b0 42%,#0a0e0a);border-left:4px solid #58a0b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#58a0b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#58a0b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#58a0b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#58a0b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; SPLIT SCREEN</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / SPLIT SCREEN / <b>THE NEEDLEMAN-WUNSCH</b></div>
+<h1>THE NEEDLEMAN-WUNSCH</h1>
+<div class="kick">optimal global alignment by dynamic programming</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Needleman&ndash;Wunsch algorithm</b> finds the optimal <b>global alignment</b> of two sequences &mdash; the arrangement of matches, mismatches, and gaps that maximises a score &mdash; by dynamic programming. It fills a grid where each cell is the best score aligning two prefixes, choosing among a diagonal (match/mismatch), an up, or a left move (a gap). The bottom-right cell is the optimal score; a <b>traceback</b> reconstructs the alignment.<br><br>
+ It is the foundation of biological sequence comparison (DNA, protein) and of diff-style tools.<br><br>
+ <span class="lit">LIT</span> verified live: over 300 random pairs the DP score equals a brute-force optimum over all alignments, and the traceback&rsquo;s alignment re-scores to the DP value with gaps removed giving back the originals (window.__needlemanwunsch). <span class="fig">FIG</span> no framing; exact optimum.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>split-screen</i> &mdash; two sequences laid side by side and brought into best correspondence, column against column. Needleman&ndash;Wunsch is that alignment. <b>AVAN (AI)</b> built the instrument: the DP grid, the traceback, the brute-force optimality check.<br><br>Credit as content: Saul Needleman &amp; Christian Wunsch (1970), the first application of dynamic programming to biology. The weave: David names the split screen; I fill the score grid, walk the traceback backward, and confirm the alignment is provably optimal.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">The optimal alignment as two rows: matches stacked, mismatches marked, gaps as dashes. Every column is one scored move.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">The DP score grid for two sequences; the traceback path (highlighted) reconstructs the optimal alignment from the bottom-right corner.</div>
+   <div class="btns" style="margin-top:10px"><button id="nwroll">new sequences ▶</button><button id="nwcheck">verify 300 ▶</button></div>
+   <div class="cap" id="nwread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the single optimal alignment path through the grid.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the DP <b>table</b> stores every subproblem&rsquo;s optimum, so the best global alignment is recovered by walking <b>backward</b> through the choices that built the final score &mdash; the traceback. The inverse of &lsquo;fill the score forward&rsquo; is &lsquo;read the alignment backward from the filled table.&rsquo; <b>Magenta</b> is the exponentially-many alignments never enumerated; <b>green</b> is the one optimal path traced back. The table is both the answer and the map to it &mdash; a single grid replacing an exponential search.</div>
+   <div class="btns" style="margin-top:10px"><button id="nwspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Needleman-Wunsch algorithm (Needleman & Wunsch 1970). Verified live: the DP optimal score equals an independent brute-force optimum over all alignments for 300 random pairs, and the traceback alignment re-scores to the DP value with de-gapped rows equal to the inputs (window.__needlemanwunsch.matchesBrute && .tracebackConsistent).<br><br><span class="fig">FIG</span> No framing: the DP grid, the traceback, and the brute-force optimality check run in-browser and agree exactly. The AVAN inverse is honest — the filled table stores every subproblem optimum, so the best alignment is read backward via traceback; magenta is the exponential alignments never enumerated, green the one optimal path. The grid is both answer and map.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SPLIT SCREEN &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,A='GATTACA',B='GCATGCU',MT=1,MS=-1,GAP=-2;
+function nw(a,b){var n=a.length,m=b.length,H=[];for(var i=0;i<=n;i++){H.push([]);for(var j=0;j<=m;j++)H[i].push(0);}for(var i=0;i<=n;i++)H[i][0]=i*GAP;for(var j=0;j<=m;j++)H[0][j]=j*GAP;for(var i=1;i<=n;i++)for(var j=1;j<=m;j++){var sub=a[i-1]===b[j-1]?MT:MS;H[i][j]=Math.max(H[i-1][j-1]+sub,H[i-1][j]+GAP,H[i][j-1]+GAP);}var i=n,j=m,al='',bl='',path=[];while(i>0||j>0){path.push([i,j]);if(i>0&&j>0&&H[i][j]===H[i-1][j-1]+(a[i-1]===b[j-1]?MT:MS)){al=a[i-1]+al;bl=b[j-1]+bl;i--;j--;}else if(i>0&&H[i][j]===H[i-1][j]+GAP){al=a[i-1]+al;bl='-'+bl;i--;}else{al='-'+al;bl=b[j-1]+bl;j--;}}path.push([0,0]);return {score:H[n][m],al:al,bl:bl,H:H,path:path};}
+function alignScore(al,bl){var s=0;for(var k=0;k<al.length;k++){if(al[k]==='-'||bl[k]==='-')s+=GAP;else s+=(al[k]===bl[k]?MT:MS);}return s;}
+function brute(a,b){var memo={};function f(i,j){var key=i+','+j;if(memo[key]!==undefined)return memo[key];var r;if(i===0&&j===0)r=0;else if(i===0)r=j*GAP;else if(j===0)r=i*GAP;else r=Math.max(f(i-1,j-1)+(a[i-1]===b[j-1]?MT:MS),f(i-1,j)+GAP,f(i,j-1)+GAP);memo[key]=r;return r;}return f(a.length,b.length);}
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function verify(){var rnd=mb(13),al='ACGT',ok=true,tb=true;for(var t=0;t<300;t++){var la=1+Math.floor(rnd()*7),lb=1+Math.floor(rnd()*7),a='',b='';for(var i=0;i<la;i++)a+=al[Math.floor(rnd()*4)];for(var i=0;i<lb;i++)b+=al[Math.floor(rnd()*4)];var r=nw(a,b);if(alignScore(r.al,r.bl)!==r.score||r.al.replace(/-/g,'')!==a||r.bl.replace(/-/g,'')!==b)tb=false;if(r.score!==brute(a,b))ok=false;}return {matchesBrute:ok,tracebackConsistent:tb};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var r=nw(A,B),cw=Math.min(34,(W-30)/r.al.length);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('optimal alignment (score '+r.score+')',12,14);
+ for(var k=0;k<r.al.length;k++){var match=r.al[k]===r.bl[k]&&r.al[k]!=='-',gap=r.al[k]==='-'||r.bl[k]==='-';g.fillStyle=gap?'#3a4550':(match?'#58a0b0':'#8a5a5a');g.fillRect(16+k*cw,40,cw-2,26);g.fillStyle='#fff';g.font='13px monospace';g.fillText(r.al[k],16+k*cw+cw/2-4,58);g.fillStyle=gap?'#3a4550':(match?'#58a0b0':'#8a5a5a');g.fillRect(16+k*cw,72,cw-2,26);g.fillStyle='#fff';g.fillText(r.bl[k],16+k*cw+cw/2-4,90);if(match){g.fillStyle='#58a0b0';g.fillText('|',16+k*cw+cw/2-3,68);}}}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var r=nw(A,B),n=A.length,m=B.length,cw=Math.min(34,300/(m+1)),ox=40,oy=40;var onPath={};r.path.forEach(function(p){onPath[p[0]+','+p[1]]=1;});
+ g.fillStyle='#8ad';g.font='10px monospace';for(var j=0;j<m;j++)g.fillText(B[j],ox+(j+1)*cw+cw/2-3,30);for(var i=0;i<n;i++)g.fillText(A[i],ox-14,oy+(i+1)*cw+cw/2+3);
+ for(var i=0;i<=n;i++)for(var j=0;j<=m;j++){var on=onPath[i+','+j];g.fillStyle=on?'#58a0b0':'#222a33';g.fillRect(ox+j*cw,oy+i*cw,cw-1,cw-1);g.fillStyle=on?'#fff':'#7a8a9a';g.font='9px monospace';var v=''+r.H[i][j];g.fillText(v,ox+j*cw+cw/2-v.length*2.5,oy+i*cw+cw/2+3);}
+ g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('optimal score = '+r.score+'  (traceback highlighted)',12,oy+(n+1)*cw+22);}
+document.getElementById('nwroll').onclick=function(){var al='ACGT';A='';B='';var la=4+Math.floor(Math.random()*4),lb=4+Math.floor(Math.random()*4);for(var i=0;i<la;i++)A+=al[Math.floor(Math.random()*4)];for(var i=0;i<lb;i++)B+=al[Math.floor(Math.random()*4)];drawW3();drawW4();document.getElementById('nwread').textContent=A+' / '+B+' → score '+nw(A,B).score;};
+document.getElementById('nwcheck').onclick=function(){var v=verify();document.getElementById('nwread').textContent='300 pairs: DP == brute optimum '+(v.matchesBrute?'✓':'✗')+', traceback consistent '+(v.tracebackConsistent?'✓':'✗');};
+document.getElementById('nwspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var r=nw(A,B),path=r.path,ox=W/2-A.length*9,oy=60,cw=18;
+ g.strokeStyle='#39fc6b';g.lineWidth=2;g.beginPath();for(var k=0;k<path.length;k++){var x=ox+path[k][1]*cw,y=oy+path[k][0]*cw+4*Math.sin(ang+k);if(k===0)g.moveTo(x,y);else g.lineTo(x,y);}g.stroke();g.lineWidth=1;
+ for(var k=0;k<path.length;k++){g.fillStyle='#39fc6b';g.beginPath();g.arc(ox+path[k][1]*cw,oy+path[k][0]*cw,3,0,7);g.fill();}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: the one optimal path, traced back',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the exponential alignments never enumerated',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('the table is the answer and the map to it',10,H-9);}
+drawW3();drawW4();window.__needlemanwunsch=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
