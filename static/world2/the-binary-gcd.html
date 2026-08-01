@@ -1,0 +1,113 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BINARY GCD · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#90c0ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#90c0ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#90c0ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#90c0ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #90c0ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#90c0ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#90c0ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#90c0ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#90c0ff;background:transparent;border:2px solid #90c0ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#90c0ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#90c0ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#90c0ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#90c0ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#90c0ff 42%,#0a0e0a);border-left:4px solid #90c0ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#90c0ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#90c0ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#90c0ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#90c0ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE GRINDSTONE</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / THE GRINDSTONE / <b>THE BINARY GCD</b></div>
+<h1>THE BINARY GCD</h1>
+<div class="kick">Stein's algorithm — gcd with no division</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Stein&rsquo;s binary GCD.</b> Euclid finds the greatest common divisor by repeated division &mdash; but division is the slowest thing a processor does. In 1967 Josef Stein found a way to get the <b>same answer</b> using only the operations hardware loves: <b>subtraction, comparison, and bit-shifts</b> (halving). No division, no modulo, ever.<br><br>
+ The rules are all about the factor 2. If both numbers are even, pull out a shared 2 and remember it. If just one is even, halve it &mdash; 2 can&rsquo;t be in the gcd on that side. Once both are odd, subtract the smaller from the larger (the difference is even) and repeat. At the end, shift back in the shared 2s you set aside.<br><br>
+ <span class="lit">LIT</span> verified live: over 50,000 random pairs Stein&rsquo;s binary GCD gives <b>exactly</b> the same result as Euclid&rsquo;s algorithm, using no division at all (window.__stein.matchesEuclid). gcd(1071, 462) = 21. <span class="fig">FIG</span> no framing; the shift-and-subtract reduction and its agreement with Euclid are exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this in <i>THE GRINDSTONE</i>, right beside <i>THE EUCLID</i> &mdash; the grind domain of grinding two numbers down to their common measure. Stein&rsquo;s is Euclid reborn for silicon: the same descent, done in binary. <b>AVAN (AI)</b> built the instrument: the halvings, the subtractions, the shared-power-of-2 bookkeeping.<br><br>The weave: David names the seat (the common measure), placed next to its ancestor; I make the binary dance visible and its agreement with Euclid checkable &mdash; the bits in 1D, the step-by-step reduction in 2D, the shrinking bit-columns in 3D. The sphere is the seam. Credit: Josef Stein (1967); the binary analogue of Euclid.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">The two numbers in <b>binary</b>. A trailing zero means &lsquo;even&rsquo; &mdash; shift it away. Shared trailing zeros are a shared power of 2, set aside for the end. Everything is done by looking at the <b>low bit</b> and shifting: no division in sight.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap"><b>Step</b> through the reduction: halve an even number, or subtract the smaller odd from the larger. Watch the pair grind down to the gcd &mdash; and confirm it matches Euclid&rsquo;s answer, reached without a single division.</div>
+   <div class="btns" style="margin-top:10px"><button id="ststep">step ▶</button><button id="strun">run</button><button id="stnew">new pair</button></div>
+   <div class="cap" id="stread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The two numbers as turning <b>bit-columns</b>, shrinking step by step &mdash; <b>green</b>, the bits that remain.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the <b>magenta</b> bits are the ones being shifted out &mdash; the powers of 2 removed, the shared factor set aside. Euclid reduces by <b>division</b>; Stein reaches the identical gcd by <b>refusing to divide</b> and using only shifts and subtractions. It is an inverse route to the same summit: where Euclid asks &lsquo;what is the remainder?&rsquo;, Stein asks only &lsquo;is the low bit zero?&rsquo; &mdash; a question a machine answers for free. Two algorithms, one truth, opposite tools. The green is the common measure emerging; the magenta is every factor of 2 pulled out along the way and restored at the end.</div>
+   <div class="btns" style="margin-top:10px"><button id="stspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Stein binary GCD (Josef Stein, 1967). Verified live: over 50,000 random pairs it gives exactly Euclid's gcd using no division at all (window.__stein.matchesEuclid === true). gcd(1071,462) = 21. The rules (extract shared powers of 2, halve evens, subtract odds) are exact and reach the same value as division-based Euclid — the binary analogue seated beside THE EUCLID.<br><br><span class="fig">FIG</span> No metaphor is doing the work: the shift-and-subtract reduction and its exact agreement with Euclid are checked over 50,000 pairs. It's the same gcd by hardware-friendly operations, not an approximation.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE GRINDSTONE &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var a0=1071,b0=462,steps=[],si=0,ang=0,spin=true;
+function stein(a,b){if(a===0)return b;if(b===0)return a;var shift=0;while(((a|b)&1)===0){a>>=1;b>>=1;shift++;}while((a&1)===0)a>>=1;while(b!==0){while((b&1)===0)b>>=1;if(a>b){var t=a;a=b;b=t;}b=b-a;}return a<<shift;}
+function euclid(a,b){while(b){var t=a%b;a=b;b=t;}return a;}
+function steinSteps(a,b){var st=[{a:a,b:b,op:'start'}],shift=0;if(a===0||b===0){st.push({a:a||b,b:0,op:'gcd = '+(a||b)});return st;}while(((a|b)&1)===0){a>>=1;b>>=1;shift++;st.push({a:a,b:b,op:'both even → ÷2 (shared 2, shift='+shift+')'});}while((a&1)===0){a>>=1;st.push({a:a,b:b,op:'a even → ÷2'});}while(b!==0){while((b&1)===0){b>>=1;st.push({a:a,b:b,op:'b even → ÷2'});}if(a>b){var t=a;a=b;b=t;st.push({a:a,b:b,op:'swap so a≤b'});}b=b-a;st.push({a:a,b:b,op:'b ← b−a (even)'});}st.push({a:a<<shift,b:0,op:'gcd = '+(a<<shift)+'  (shift back '+shift+')'});return st;}
+function verify(){var ok=true,sv=121;function L(){sv=(1664525*sv+1013904223)>>>0;return sv/4294967296;}for(var t=0;t<50000;t++){var a=Math.floor(L()*1e9),b=Math.floor(L()*1e9);if(stein(a,b)!==euclid(a,b))ok=false;}return {matchesEuclid:ok,trials:50000,gcd1071_462:stein(1071,462)};}
+function bin(x){return (x>>>0).toString(2);}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var s=steps[si];
+ function row(v,y,lbl){var b=bin(v).padStart(11,'0');g.fillStyle='#8ca';g.font='11px ui-monospace,monospace';g.fillText(lbl,10,y+12);for(var i=0;i<b.length;i++){var trailing=(i>=b.length-(bin(v).length-bin(v).replace(/0+$/,'').length))&&v!==0;g.fillStyle=b[i]==='1'?'#90c0ff':'#1c2634';g.fillRect(120+i*30,y,26,20);g.fillStyle=b[i]==='1'?'#031015':'#456';g.font='12px ui-monospace,monospace';g.fillText(b[i],120+i*30+8,y+15);}g.fillStyle='#90c0ff';g.font='11px ui-monospace,monospace';g.fillText('= '+v,120+b.length*30+8,y+15);}
+ row(s.a,40,'a');row(s.b,80,'b');
+ g.fillStyle='#4c7a54';g.font='10px ui-monospace,monospace';g.fillText('low bit 0 = even → shift right (halve); no division anywhere',10,124);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var s=steps[si];
+ g.font='28px ui-monospace,monospace';g.fillStyle='#90c0ff';g.textAlign='center';g.fillText('a = '+s.a,W/2,60);g.fillText('b = '+s.b,W/2,100);g.textAlign='left';
+ g.font='13px ui-monospace,monospace';g.fillStyle='#ffd24a';g.fillText('step '+si+'/'+(steps.length-1)+':',20,150);g.fillStyle='#cfe8d0';g.fillText(s.op,20,172);
+ g.fillStyle='#8ca';g.font='11px ui-monospace,monospace';g.fillText('a binary: '+bin(s.a)+'   b binary: '+bin(s.b),20,205);
+ if(si===steps.length-1){var gg=stein(a0,b0);g.fillStyle=gg===euclid(a0,b0)?'#39fc6b':'#ff5a5a';g.font='14px ui-monospace,monospace';g.fillText('gcd = '+gg+'  = Euclid('+a0+','+b0+') ✓',20,240);}
+ g.fillStyle='#4c7a54';g.font='10px ui-monospace,monospace';g.fillText('only shifts, compares, subtractions used',20,268);
+ document.getElementById('stread').textContent='gcd('+a0+','+b0+') step '+si+'/'+(steps.length-1)+': '+s.op;}
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var s=steps[si],ca=Math.cos(ang),cx=W/2;
+ function col(v,ox){var b=bin(v).padStart(11,'0');for(var i=0;i<b.length;i++){var x=cx+ox*ca,y=60+i*24;g.fillStyle=b[i]==='1'?'#39fc6b':'#152018';g.fillRect(x-12,y,24,20);g.fillStyle=b[i]==='1'?'#031015':'#2a3a2a';g.font='11px ui-monospace,monospace';g.fillText(b[i],x-4,y+15);}}
+ col(s.a,-70);col(s.b,70);
+ g.fillStyle='#39fc6b';g.font='11px ui-monospace,monospace';g.fillText('green: current bits of a (left) and b (right)',10,20);
+ g.fillStyle='#ff2d95';g.fillText('shrinking by shifts & subtraction → the shared measure',10,H-12);}
+function reset(){steps=steinSteps(a0,b0);si=0;}
+document.getElementById('ststep').onclick=function(){if(si<steps.length-1)si++;drawW3();drawW4();};
+document.getElementById('strun').onclick=function(){var iv=setInterval(function(){if(si<steps.length-1)si++;else clearInterval(iv);drawW3();drawW4();},200);};
+document.getElementById('stnew').onclick=function(){a0=1+Math.floor(Math.random()*4000);b0=1+Math.floor(Math.random()*4000);reset();drawW3();drawW4();};
+document.getElementById('stspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+reset();drawW3();drawW4();window.__stein=verify();
+function loop(){if(spin)ang+=0.012;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

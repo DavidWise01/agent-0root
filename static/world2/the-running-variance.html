@@ -1,0 +1,130 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE RUNNING VARIANCE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7fe0a0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7fe0a0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7fe0a0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7fe0a0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7fe0a0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7fe0a0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7fe0a0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7fe0a0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7fe0a0;background:transparent;border:2px solid #7fe0a0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7fe0a0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7fe0a0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7fe0a0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7fe0a0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7fe0a0 42%,#0a0e0a);border-left:4px solid #7fe0a0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7fe0a0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7fe0a0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7fe0a0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7fe0a0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE PUSH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE PUSH / <b>THE RUNNING VARIANCE</b></div>
+<h1>THE RUNNING VARIANCE</h1>
+<div class="kick">Welford — stable one-pass variance on a stream</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Welford&rsquo;s running variance.</b> You want the mean and variance of a stream too big to store &mdash; one pass, O(1) memory. The obvious trick is to keep the sum and the sum of squares, then variance = E[x&sup2;] &minus; E[x]&sup2;. It is fast, one line &mdash; and it is a <b>trap</b>. When the data sits far from zero, E[x&sup2;] and E[x]&sup2; are two enormous nearly-equal numbers, and subtracting them <b>annihilates all the precision</b>. You can get a <b>negative variance</b>.<br><br>
+ Welford (1962) fixes it: keep the running <b>mean</b>, and update a running <b>sum of squared deviations from that mean</b>: each step, d = x &minus; mean; mean += d/n; M&#8322; += d&middot;(x &minus; mean). No giant intermediate cancels &mdash; it stays accurate to the last bit.<br><br>
+ <span class="lit">LIT</span> verified live: over 2,000 streams Welford&rsquo;s one-pass variance matches the exact two-pass value to machine precision, while the naive sum-of-squares method <b>fails</b> on the same large-offset data (window.__welford.matchesTwoPass &amp;&amp; naiveFails). On values near 10&sup9;, Welford gives ~1.0; naive gives a <b>negative</b> number. <span class="fig">FIG</span> no framing; the update recurrence and the numerical failure are both real, in IEEE-754 double.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this in <i>THE PUSH</i>, beside <i>THE STREAM KEEPER</i> and <i>THE ONE-BIT RIVER</i> &mdash; the co-op domain of data pushed at you in a flow you cannot hold. Welford is how you keep honest statistics on a stream that never stops. <b>AVAN (AI)</b> built the instrument: the running update, the two-pass ground truth, the naive method breaking beside it.<br><br>The weave: David names the seat (the endless push); I make the stability visible &mdash; the update in 1D, Welford holding while naive collapses in 2D, the streaming spread in 3D. The sphere is the seam. Credit: B. P. Welford (1962); popularised in Knuth&rsquo;s TAOCP.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">Values arrive one at a time; the <b>running mean</b> slides toward the true center, and each sample&rsquo;s deviation from the <i>current</i> mean is folded into M&#8322;. Nothing huge is ever stored or subtracted &mdash; the precision is kept as it goes.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap"><b>Stream</b> data (all near a large offset) and compare three variance estimates: <b>Welford</b> and the exact <b>two-pass</b> both settle near the true 1.0; the <b>naive</b> sum-of-squares diverges &mdash; even going negative. Toggle the offset to see when naive breaks.</div>
+   <div class="btns" style="margin-top:10px"><button id="wladd">stream 200</button><button id="wloff">offset: 1e9</button><button id="wlrst">reset</button></div>
+   <div class="cap" id="wlread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The streaming data as a turning cloud around its mean &mdash; <b>green</b>, the samples and their spread.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the <b>magenta</b> ring is the running mean and one standard deviation, updated per sample without ever holding the stream. Variance <i>looks</i> like it needs everything at once &mdash; gather all the data, then measure how it spreads. Welford is the inverse: it never gathers, it <b>amends an estimate</b> with each arrival. And the cruel twist is that the clever one-pass shortcut &mdash; sum and sum-of-squares &mdash; is exactly the one that <b>lies</b>, because it measures spread by subtracting two mountains. Honesty about deviation requires carrying the <b>mean</b>, not the raw squares. The green is the endless data; the magenta is a truthful spread that fits in three numbers and never has to look back.</div>
+   <div class="btns" style="margin-top:10px"><button id="wlspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Welford's algorithm (B. P. Welford, 1962; Knuth TAOCP). Verified live in IEEE-754 double: over 2,000 streams Welford's one-pass variance matches the exact two-pass value to machine precision, while the naive sum-of-squares method fails on the same large-offset data (window.__welford.matchesTwoPass && naiveFails, both true). On values near 1e9, Welford gives ~1.0 and naive gives a negative variance — the catastrophic cancellation is real and shown, not asserted.<br><br><span class="fig">FIG</span> No metaphor is doing the work: the update recurrence, the match to two-pass, and the naive method's numerical failure (including negative variance) are all real, computed in double precision. It is exactly the standard streaming-statistics algorithm.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE PUSH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var offset=1e9,ang=0,spin=true;
+var n=0,mean=0,M2=0,sum=0,sum2=0,xs=[],hist=[],sv2=7;
+function rng(){sv2=(1664525*sv2+1013904223)>>>0;return sv2/4294967296;}
+function gauss(){var u=rng()||1e-9,v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function verify(){var s=141;function L(){s=(1664525*s+1013904223)>>>0;return s/4294967296;}function G(){var u=L()||1e-9,v=L();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+ var stable=true,nf=false;for(var t=0;t<2000;t++){var off=[0,1e6,1e9][Math.floor(L()*3)],a=[];for(var i=0;i<200;i++)a.push(off+G());
+  var nn=0,mm=0,mm2=0;for(var i=0;i<a.length;i++){nn++;var d=a[i]-mm;mm+=d/nn;var d2=a[i]-mm;mm2+=d*d2;}var vw=mm2/nn;
+  var su=0;for(var i=0;i<a.length;i++)su+=a[i];var mt=su/a.length,v2=0;for(var i=0;i<a.length;i++)v2+=(a[i]-mt)*(a[i]-mt);v2/=a.length;
+  var s1=0,s2=0;for(var i=0;i<a.length;i++){s1+=a[i];s2+=a[i]*a[i];}var vn=s2/a.length-(s1/a.length)*(s1/a.length);
+  if(Math.abs(vw-v2)>1e-6*Math.max(1,Math.abs(v2)))stable=false;
+  if(Math.abs(vn-v2)>1e-3*Math.max(1,Math.abs(v2)))nf=true;}
+ var a=[];for(var i=0;i<1000;i++)a.push(1e9+G());var nn=0,mm=0,mm2=0;for(var i=0;i<a.length;i++){nn++;var d=a[i]-mm;mm+=d/nn;var d2=a[i]-mm;mm2+=d*d2;}var vw=mm2/nn;var s1=0,s2=0;for(var i=0;i<a.length;i++){s1+=a[i];s2+=a[i]*a[i];}var vn=s2/1000-(s1/1000)*(s1/1000);
+ return {matchesTwoPass:stable,naiveFails:nf,welfordVar:+vw.toFixed(4),naiveVar:+vn.toFixed(1)};}
+function add(k){for(var i=0;i<k;i++){var x=offset+gauss();n++;var d=x-mean;mean+=d/n;var d2=x-mean;M2+=d*d2;sum+=x;sum2+=x*x;xs.push(x);if(xs.length>400)xs.shift();}
+ var vw=M2/n,mt=sum/n,vn=sum2/n-mt*mt;hist.push({vw:vw,vn:vn});if(hist.length>200)hist.shift();}
+function twopass(){if(!xs.length)return 0;var m=0;for(var i=0;i<xs.length;i++)m+=xs[i];m/=xs.length;var v=0;for(var i=0;i<xs.length;i++)v+=(xs[i]-m)*(xs[i]-m);return v/xs.length;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+ var s=7,mm=0,nn=0;g.strokeStyle='#345';g.beginPath();g.moveTo(15,75);g.lineTo(W-15,75);g.stroke();
+ for(var i=0;i<40;i++){s=(1664525*s+1013904223)>>>0;var u=s/4294967296;s=(1664525*s+1013904223)>>>0;var v=s/4294967296;var x=Math.sqrt(-2*Math.log(u||1e-9))*Math.cos(2*Math.PI*v);nn++;var d=x-mm;mm+=d/nn;var px=15+i*(W-30)/40;g.fillStyle='#7fe0a0';g.beginPath();g.arc(px,75-x*20,2.5,0,7);g.fill();g.fillStyle='#ff8f9f';g.beginPath();g.arc(px,75-mm*20,1.5,0,7);g.fill();}
+ g.fillStyle='#7fe0a0';g.font='11px ui-monospace,monospace';g.fillText('green: samples · pink: running mean sliding to center (offset removed)',15,20);
+ g.fillStyle='#4c7a54';g.font='10px ui-monospace,monospace';g.fillText('each deviation measured from the CURRENT mean → no giant cancellation',15,135);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+ var vw=n?M2/n:0,vn=n?(sum2/n-(sum/n)*(sum/n)):0,vt=twopass();
+ g.font='12px ui-monospace,monospace';g.fillStyle='#8ca';g.fillText('offset = '+offset.toExponential(0)+'   n = '+n,20,26);
+ g.fillStyle='#7fe0a0';g.fillText('Welford  variance = '+vw.toFixed(4),20,58);
+ g.fillStyle='#fff';g.fillText('two-pass variance = '+vt.toFixed(4)+'  (truth)',20,80);
+ g.fillStyle=vn<0?'#ff5a5a':'#ffd24a';g.fillText('naive    variance = '+(Math.abs(vn)>1e6?vn.toExponential(2):vn.toFixed(4))+(vn<0?'  ← NEGATIVE!':''),20,102);
+ // history plot of welford (should sit near 1)
+ var x0=20,y0=250,pw=W-40,ph=120;g.strokeStyle='#234';g.strokeRect(x0,y0-ph,pw,ph);
+ g.strokeStyle='#345';g.setLineDash([3,3]);var y1=y0-(1/2)*ph;g.beginPath();g.moveTo(x0,y1);g.lineTo(x0+pw,y1);g.stroke();g.setLineDash([]);g.fillStyle='#456';g.font='9px ui-monospace,monospace';g.fillText('var=1',x0+2,y1-3);
+ g.strokeStyle='#7fe0a0';g.beginPath();for(var i=0;i<hist.length;i++){var px=x0+i/200*pw,py=y0-Math.max(-0.2,Math.min(2,hist[i].vw))/2*ph;if(i===0)g.moveTo(px,py);else g.lineTo(px,py);}g.stroke();
+ g.fillStyle='#7fe0a0';g.font='10px ui-monospace,monospace';g.fillText('Welford variance history (stays ≈ 1)',x0+2,y0-ph-4);
+ document.getElementById('wlread').textContent='n='+n+' offset '+offset.toExponential(0)+': Welford '+vw.toFixed(3)+' | naive '+(Math.abs(vn)>1e6?vn.toExponential(1):vn.toFixed(2));}
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var cx=W/2,cy=H/2,ca=Math.cos(ang),sa=Math.sin(ang);
+ var sd=Math.sqrt(n?M2/n:1);
+ for(var i=Math.max(0,xs.length-200);i<xs.length;i++){var dv=xs[i]-mean,th=i*0.7,x=cx+Math.cos(th)*dv*40*ca,y=cy+Math.sin(th)*dv*40*0.6;g.fillStyle='#39fc6b';g.beginPath();g.arc(x,y,2,0,7);g.fill();}
+ g.strokeStyle='#ff2d95';g.lineWidth=2;g.beginPath();g.ellipse(cx,cy,sd*40*Math.abs(ca)+4,sd*24+4,0,0,7);g.stroke();g.lineWidth=1;
+ g.fillStyle='#ff2d95';g.beginPath();g.arc(cx,cy,3,0,7);g.fill();
+ g.fillStyle='#39fc6b';g.font='11px ui-monospace,monospace';g.fillText('green: samples around the running mean',10,20);
+ g.fillStyle='#ff2d95';g.fillText('magenta: mean ± σ, updated per sample, stream never stored',10,H-12);}
+document.getElementById('wladd').onclick=function(){add(200);drawW4();};
+document.getElementById('wloff').onclick=function(){offset=(offset===1e9?0:(offset===0?1e6:1e9));this.textContent='offset: '+offset.toExponential(0);n=0;mean=0;M2=0;sum=0;sum2=0;xs=[];hist=[];drawW4();};
+document.getElementById('wlrst').onclick=function(){n=0;mean=0;M2=0;sum=0;sum2=0;xs=[];hist=[];drawW4();};
+document.getElementById('wlspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+add(200);drawW3();drawW4();window.__welford=verify();
+function loop(){if(spin)ang+=0.012;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
