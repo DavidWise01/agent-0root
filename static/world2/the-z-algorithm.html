@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE Z-ALGORITHM · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#e06050}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#e06050}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#e06050;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#e06050;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #e06050;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#e06050 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#e06050}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#e06050}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#e06050;background:transparent;border:2px solid #e06050;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#e06050;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#e06050}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#e06050,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#e06050;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#e06050 42%,#0a0e0a);border-left:4px solid #e06050;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#e06050;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#e06050;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#e06050}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#e06050 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE CHOKE POINT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE CHOKE POINT / <b>THE Z-ALGORITHM</b></div>
+<h1>THE Z-ALGORITHM</h1>
+<div class="kick">all prefix matches in O(n) — a pointer that never retreats</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Z-algorithm</b> computes, for every position i of a string, the length of the longest substring starting at i that matches a <b>prefix</b> of the whole string &mdash; the <b>Z-array</b>. Done naively that is O(n&sup2;); the Z-algorithm does it in <b>O(n)</b> by keeping the rightmost match interval [l,r] seen so far and <b>reusing</b> earlier Z-values inside it.<br><br>
+ Concatenate <code>pattern &sect; text</code> and the Z-array instantly locates every occurrence of the pattern (wherever Z equals the pattern length) &mdash; clean linear-time string search, a sibling of KMP.<br><br>
+ <span class="lit">LIT</span> verified live: for 500 random strings, every Z[i] equals a brute-force prefix-match length (window.__zalgorithm). <span class="fig">FIG</span> no framing; exact string matching.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-choke-point</i> &mdash; the bottleneck every search must pass through, where linear time matters. The Z-algorithm is the choke-point cleared: all prefix matches in one pass. <b>AVAN (AI)</b> built the instrument: the [l,r] window, the mirror-reuse, the brute cross-check, the pattern search.<br><br>Credit as content: popularised by Dan Gusfield&rsquo;s <i>Algorithms on Strings, Trees, and Sequences</i> (1997); part of the linear-time string-matching lineage. The weave: David names the choke-point; I compute the Z-array in one forward sweep, verify it against brute force, and show the right pointer that never retreats.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">The current match window [l,r]. Inside it, position i mirrors an earlier position i&minus;l whose Z-value is already known &mdash; so the algorithm copies that answer and only ever extends past r, which moves forward and never back.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Type a string; the Z-array is computed in O(n) and shown as bars. Verify each Z[i] against a brute prefix-match, and use <code>pattern &sect; text</code> to locate every occurrence in linear time.</div>
+   <div class="btns" style="margin-top:10px"><button id="zalroll">new string ▶</button><button id="zalcheck">verify 500 ▶</button></div>
+   <div class="cap" id="zalread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the Z-values as bars along the string &mdash; every prefix match found in a single sweep.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the linear time comes from <b>never re-comparing</b> a character already known to match. Inside the current window [l,r], position i is a <b>mirror</b> of the earlier position i&minus;l, whose Z-value is already computed &mdash; so the algorithm <b>copies</b> the answer and only extends past r. The inverse of &lsquo;recompare from scratch at every i&rsquo; is &lsquo;reuse the mirror, and advance a right pointer that only moves forward.&rsquo; Because r never retreats, the total extra comparisons across the whole string sum to at most n &mdash; amortised linearity from a monotone pointer. <b>Magenta</b> is the O(n&sup2;) redundant comparisons skipped; <b>green</b> is the single forward march of r. Speed from memory of what already matched.</div>
+   <div class="btns" style="margin-top:10px"><button id="zalspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Z-algorithm (popularized by Gusfield 1997; linear-time string matching lineage). Verified live: computing the Z-array with the [l,r] window and mirror-reuse, every Z[i] equals the brute-force longest-common-prefix length for 500 random strings (window.__zalgorithm.matchesBrute); aabaab -> 6,1,0,3,1,0.<br><br><span class="fig">FIG</span> No framing: the O(n) Z-array and the brute cross-check run in-browser and match exactly. The AVAN inverse is honest — linearity comes from reusing the mirror position i-l inside the window and a right pointer r that never retreats, so total extra comparisons sum to <= n (amortized O(n)); magenta is the O(n^2) comparisons skipped, green the single forward march of r.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE CHOKE POINT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,S='aabaabab';
+function zArray(s){var n=s.length,Z=new Array(n).fill(0),l=0,r=0;if(n)Z[0]=n;for(var i=1;i<n;i++){if(i<r)Z[i]=Math.min(r-i,Z[i-l]);while(i+Z[i]<n&&s[Z[i]]===s[i+Z[i]])Z[i]++;if(i+Z[i]>r){l=i;r=i+Z[i];}}return Z;}
+function bruteZ(s,i){var k=0;while(i+k<s.length&&s[k]===s[i+k])k++;return k;}
+function verify(){var seed=7;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return seed;}var ok=true;for(var t=0;t<500;t++){var s='',L=1+rnd()%30;for(var i=0;i<L;i++)s+=String.fromCharCode(97+rnd()%3);var Z=zArray(s);for(var i=1;i<L;i++)if(Z[i]!==bruteZ(s,i))ok=false;}return {matchesBrute:ok,example:zArray('aabaab').join(',')};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var s='aabaabab',cell=40,ox=40;g.fillStyle='#b0e0ff';g.font='11px monospace';g.fillText('window [l,r]: i mirrors i−l, whose Z is known',12,16);
+ for(var i=0;i<s.length;i++){g.fillStyle=(i>=2&&i<=4)?'#e06050':'#3a4150';g.fillRect(ox+i*cell,40,cell-6,30);g.fillStyle='#fff';g.font='15px monospace';g.fillText(s[i],ox+i*cell+13,60);}
+ g.strokeStyle='#e06050';g.lineWidth=2;g.strokeRect(ox+2*cell-2,36,3*cell,38);g.lineWidth=1;g.fillStyle='#e06050';g.font='11px monospace';g.fillText('[l..r]',ox+2*cell,90);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('r only moves forward — total work across the string ≤ n',12,H-12);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var Z=zArray(S),cell=Math.min(40,360/S.length),ox=20;
+ g.fillStyle='#e8eef8';g.font='12px monospace';g.fillText('string: '+S,12,22);
+ var ok=true;for(var i=1;i<S.length;i++)if(Z[i]!==bruteZ(S,i))ok=false;
+ for(var i=0;i<S.length;i++){g.fillStyle='#3a4150';g.fillRect(ox+i*cell,40,cell-4,24);g.fillStyle='#fff';g.font='13px monospace';g.fillText(S[i],ox+i*cell+cell/2-4,57);var h=Z[i]/S.length*90;g.fillStyle='#e06050';g.fillRect(ox+i*cell,180-h,cell-4,h);g.fillStyle='#9ab';g.font='10px monospace';g.fillText(Z[i],ox+i*cell+cell/2-3,178-h-3);}
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('bar height = Z[i] (longest prefix match starting at i)',12,205);
+ g.fillStyle=ok?'#39fc6b':'#ff5a5a';g.font='12px monospace';g.fillText(ok?'✓ Z-array matches brute force':'✗',12,228);}
+document.getElementById('zalroll').onclick=function(){S='';var L=6+Math.floor(Math.random()*4);for(var i=0;i<L;i++)S+=String.fromCharCode(97+Math.floor(Math.random()*2));drawW4();document.getElementById('zalread').textContent=S+' → Z = '+zArray(S).join(',');};
+document.getElementById('zalcheck').onclick=function(){var v=verify();document.getElementById('zalread').textContent='500 strings: Z[i] == brute prefix match '+(v.matchesBrute?'✓':'✗')+' | aabaab → '+v.example;};
+document.getElementById('zalspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var s='aabaabaab',Z=zArray(s),cell=32,ox=W/2-s.length*cell/2;
+ for(var i=0;i<s.length;i++){var h=Z[i]/s.length*80;g.fillStyle='#50c090';g.fillRect(ox+i*cell,H*0.6-h,cell-4,h+2+6*Math.sin(ang+i));}
+ // magenta: skipped comparisons (illustrative diagonal)
+ g.strokeStyle='rgba(255,45,149,0.3)';for(var i=1;i<s.length;i++)for(var j=0;j<Z[i]&&j<3;j++){g.beginPath();g.moveTo(ox+i*cell,40);g.lineTo(ox+j*cell,40);g.stroke();}
+ g.fillStyle='#50c090';g.font='11px monospace';g.fillText('green: Z-values found in one forward sweep of r',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the O(n²) recomparisons the mirror skips',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('amortised O(n): a right pointer that never retreats',10,H-9);}
+drawW3();drawW4();window.__zalgorithm=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
