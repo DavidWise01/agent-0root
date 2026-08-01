@@ -1,0 +1,109 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE LZW · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#d0b040}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#d0b040}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#d0b040;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#d0b040;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #d0b040;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#d0b040 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#d0b040}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#d0b040}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#d0b040;background:transparent;border:2px solid #d0b040;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#d0b040;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#d0b040}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#d0b040,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#d0b040;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#d0b040 42%,#0a0e0a);border-left:4px solid #d0b040;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#d0b040;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#d0b040;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#d0b040}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#d0b040 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE STASH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE STASH / <b>THE LZW</b></div>
+<h1>THE LZW</h1>
+<div class="kick">build a dictionary on the fly — and never send it</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>LZW compression</b> builds a dictionary of substrings <b>on the fly</b> and &mdash; the magic &mdash; never has to send it. Start with all single characters. Scan the input, extending the current match while it stays in the dictionary; when it doesn&rsquo;t, output the code for the longest match, <b>add</b> the new (match + next character) string to the dictionary, and restart from that character.<br><br>
+ The decoder rebuilds the <b>identical</b> dictionary from the code stream alone, so no table is ever transmitted. This ran GIF, early UNIX <code>compress</code>, and PDF/TIFF.<br><br>
+ <span class="lit">LIT</span> verified live: encode then decode reproduces the input exactly &mdash; across fixed strings (including the tricky repeated-pattern case) and 200 random strings &mdash; with the decoder reconstructing the dictionary with no side table (window.__lzw). <span class="fig">FIG</span> no framing; exact reversible coding.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-stash</i> &mdash; the growing hoard of stashed strings you can point back to. LZW is a stash that both sides build the same way, so pointers alone suffice. <b>AVAN (AI)</b> built the instrument: the encoder&rsquo;s dictionary growth, the decoder&rsquo;s mirror reconstruction, the round-trip check including the self-referential case.<br><br>Credit as content: Abraham Lempel &amp; Jacob Ziv (LZ78, 1978); Terry Welch (LZW, 1984). The weave: David names the stash; I grow the dictionary as codes stream out, rebuild the same dictionary on decode from nothing but those codes, and handle the one subtle case where a code refers to itself.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">The dictionary growing as input streams: each time a match breaks, its code is emitted and a new entry (the match plus the next character) is stashed &mdash; so repeated patterns get shorter and shorter codes.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="310"></canvas>
+  <div class="wctrl"><div class="cap">Choose an input; watch LZW encode it to codes while the dictionary fills, then decode back exactly &mdash; rebuilding the same dictionary from the codes alone. Repetitive inputs compress; the decoder never sees the table.</div>
+   <div class="btns" style="margin-top:10px"><button id="lzwinput">input ▶</button><button id="lzwcheck">verify round-trip ▶</button></div>
+   <div class="cap" id="lzwread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the encoder and decoder dictionaries growing in lockstep, entry for entry, from the same code stream.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the decoder reconstructs the dictionary <b>without ever receiving it</b>, because the rule that adds each entry depends only on codes <b>already seen</b> &mdash; encoder and decoder share a deterministic recipe, so the table is <b>implicit in the stream</b>. The inverse of &lsquo;send a codebook&rsquo; is &lsquo;send nothing, and rebuild it from the messages.&rsquo; The one subtlety &mdash; the decoder can receive a code <b>not yet</b> in its dictionary &mdash; is resolved because that code must be the previous string plus its own first character (the KwKwK case), so it is always recoverable. <b>Magenta</b> is the dictionary that is never transmitted; <b>green</b> is the identical table both sides derive. Compression by <b>shared derivation</b>, not shared data.</div>
+   <div class="btns" style="margin-top:10px"><button id="lzwspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine LZW compression (Lempel & Ziv, LZ78 1978; Welch, LZW 1984). Verified live: LZW encode then decode reproduces the input exactly for fixed strings including the tricky repeated-pattern (KwKwK) case and 200 random strings, with the decoder reconstructing the dictionary from the code stream alone (window.__lzw.roundTrip).<br><br><span class="fig">FIG</span> No framing: the encoder's dictionary growth, the decoder's mirror reconstruction, and the round-trip (including the self-referential case) run in-browser and are exact. The AVAN inverse is honest — the decoder rebuilds the dictionary without receiving it because each entry depends only on prior codes; the KwKwK case is genuinely resolved (code = previous string + its first char). Magenta = the never-transmitted table.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE STASH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,INPUTS=['TOBEORNOTTOBEORTOBEORNOT','ABABABABAB','the fold folds the folded fold'],ii=0;
+function enc(s){var dict={},sz=256;for(var i=0;i<256;i++)dict[String.fromCharCode(i)]=i;var w='',out=[],added=[];for(var i=0;i<s.length;i++){var c=s[i],wc=w+c;if(dict[wc]!==undefined)w=wc;else{out.push(dict[w]);dict[wc]=sz++;added.push(wc);w=c;}}if(w!=='')out.push(dict[w]);return {codes:out,added:added};}
+function dec(codes){var dict={},sz=256;for(var i=0;i<256;i++)dict[i]=String.fromCharCode(i);var w=String.fromCharCode(codes[0]),out=w,added=[];for(var i=1;i<codes.length;i++){var k=codes[i],entry;if(dict[k]!==undefined)entry=dict[k];else if(k===sz)entry=w+w[0];else return {out:null};out+=entry;dict[sz++]=w+entry[0];added.push(w+entry[0]);w=entry;}return {out:out,added:added};}
+function verify(){var ok=true,tests=['TOBEORNOTTOBEORTOBEORNOT','ABABABABABAB','aaaaaaaaaa','xyzzyxyzzy'];tests.forEach(function(s){if(dec(enc(s).codes).out!==s)ok=false;});var seed=7;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return seed;}for(var t=0;t<200;t++){var s='';for(var i=0;i<40;i++)s+=String.fromCharCode(97+rnd()%4);if(dec(enc(s).codes).out!==s)ok=false;}return {roundTrip:ok,dictRebuilt:ok,example:enc('TOBEORNOTTOBEORTOBEORNOT').codes.length+' codes for 24 chars'};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var e=enc('ABABABA');g.fillStyle='#b0e0ff';g.font='11px monospace';g.fillText('encoding ABABABA — dictionary entries added:',12,16);
+ for(var i=0;i<e.added.length;i++){g.fillStyle='#d0b040';g.fillRect(14+i*70,40,62,24);g.fillStyle='#04121c';g.font='11px monospace';g.fillText('256+'+i+':'+e.added[i],14+i*70+3,56);}
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('codes out: '+e.codes.join(' ')+'  — repeats get single codes',12,H-14);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var s=INPUTS[ii],e=enc(s),d=dec(e.codes),ok=d.out===s;
+ g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('input ('+s.length+' chars): '+s.slice(0,34),12,22);
+ g.fillStyle='#d0b040';g.fillText('codes ('+e.codes.length+'): '+e.codes.slice(0,16).join(' ')+(e.codes.length>16?'…':''),12,48);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('dictionary entries added: '+e.added.length,12,72);
+ for(var i=0;i<Math.min(e.added.length,20);i++){g.fillStyle='#3a4150';g.fillRect(12+(i%10)*36,84+Math.floor(i/10)*20,33,17);g.fillStyle='#c9a6e8';g.font='9px monospace';g.fillText(e.added[i].slice(0,4),14+(i%10)*36,96+Math.floor(i/10)*20);}
+ g.fillStyle=ok?'#39fc6b':'#ff5a5a';g.font='12px monospace';g.fillText(ok?'✓ decoded exactly (dictionary rebuilt from codes)':'✗',12,H-30);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('compression: '+s.length+' chars → '+e.codes.length+' codes',12,H-12);}
+document.getElementById('lzwinput').onclick=function(){ii=(ii+1)%INPUTS.length;drawW4();document.getElementById('lzwread').textContent='encoded + decoded input '+(ii+1);};
+document.getElementById('lzwcheck').onclick=function(){var v=verify();document.getElementById('lzwread').textContent='round-trip (4 fixed + 200 random): '+(v.roundTrip?'✓':'✗')+' | '+v.example;};
+document.getElementById('lzwspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var e=enc(INPUTS[ii]),n=Math.min(e.added.length,10),step=Math.floor((ang*3)%(n+1));
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('encoder dict',60,30);g.fillText('decoder dict',250,30);
+ for(var i=0;i<n;i++){var on=i<step;g.fillStyle=on?'#39fc6b':'#2a3a34';g.fillRect(40,40+i*26,120,22);g.fillRect(230,40+i*26,120,22);if(on){g.fillStyle='#04121c';g.font='10px monospace';g.fillText('256+'+i+': '+e.added[i].slice(0,6),44,55+i*26);g.fillText('256+'+i+': '+e.added[i].slice(0,6),234,55+i*26);}}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: both dicts grow identically from the codes',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the table is NEVER transmitted',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('compression by shared derivation, not shared data',10,H-9);}
+drawW3();drawW4();window.__lzw=verify();
+function loop(){if(spin)ang+=0.01;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
