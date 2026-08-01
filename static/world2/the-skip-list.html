@@ -1,0 +1,115 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SKIP LIST · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b0e055}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b0e055}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b0e055;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b0e055;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b0e055;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b0e055 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b0e055}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b0e055}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b0e055;background:transparent;border:2px solid #b0e055;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b0e055;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b0e055}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b0e055,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b0e055;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b0e055 42%,#0a0e0a);border-left:4px solid #b0e055;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b0e055;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b0e055;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b0e055}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b0e055 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE INVENTORY</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE INVENTORY / <b>THE SKIP LIST</b></div>
+<h1>THE SKIP LIST</h1>
+<div class="kick">log-time search from coin flips — no rotations</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The skip list.</b> A sorted linked list lets you insert cheaply but forces you to <b>walk every node</b> to find something &mdash; O(n). Balanced trees fix the search but need fiddly rotations. William Pugh&rsquo;s skip list (1989) gets tree-speed search with nothing but <b>coin flips</b>.<br><br>
+ Keep the sorted list on the ground floor. Then give each node a random tower: promote it to the next level up with probability &frac12;, again with &frac12;, and so on. The upper levels are sparse <b>express lanes</b>. To search, ride the highest lane rightward until the next node overshoots, <b>drop down</b>, repeat. Each level roughly halves what remains, so search is <b>O(log n)</b> expected &mdash; no balancing, no rotations, just randomness.<br><br>
+ <span class="lit">LIT</span> verified live: a skip list of 2,000 keys finds <b>every</b> present key and correctly rejects <b>every</b> absent one, and the fraction of nodes reaching level &ge; L matches the geometric 2<sup>&minus;L</sup> to within a few percent (window.__skip.searchCorrect &amp;&amp; absentCorrect &amp;&amp; levelsGeometric). <span class="fig">FIG</span> &lsquo;express lanes&rsquo; is the picture; the coin-flip towers, the drop-down search, and the geometric heights are exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this in <i>THE INVENTORY</i>, beside <i>THE SORT</i> &mdash; the loot domain of keeping your haul ordered and findable. A skip list is an inventory that stays searchable in log time without ever being rebalanced. <b>AVAN (AI)</b> built the instrument: the coin-flip towers, the drop-down search, the level histogram.<br><br>The weave: David names the seat (the ordered, findable store); I make the express lanes visible and the speed checkable &mdash; the levels in 1D, the animated search in 2D, the tower stack in 3D. The sphere is the seam. Credit: William Pugh (1989).</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">The <b>express lanes</b>. Every node sits on the bottom level; a coin-flip tower lifts some of them onto sparser levels above. The higher you go, the fewer nodes &mdash; each level about half the one below, purely by chance.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap"><b>Search</b> for a key and watch the path: ride a high lane right until the next node would overshoot, then drop a level, and again &mdash; zig-zagging down to the target while skipping most of the list. The comparison count stays near log&#8322;n.</div>
+   <div class="btns" style="margin-top:10px"><button id="skfind">search a key ▶</button><button id="sknew">new list</button></div>
+   <div class="cap" id="skread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The levels stacked into a turning tower &mdash; <b>green</b>, the sorted nodes and their random heights.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the <b>magenta</b> thread is a search, dropping down the express lanes to its target. A plain linked list is pure sequence &mdash; to reach the n-th node you touch all n. The skip list is the inverse: a <b>probabilistic hierarchy</b> laid over the same sequence, where random shortcuts let you leap. And the magic is that no one <i>designs</i> the balance &mdash; the coin flips produce a log-depth structure on their own, self-balancing in expectation with zero rotations. Order walked in a line becomes order reached by descent. The green is the sorted haul; the magenta is randomness spending itself to make finding fast.</div>
+   <div class="btns" style="margin-top:10px"><button id="skspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine skip list (William Pugh, 1989). Verified live: a skip list of 2,000 keys finds every present key and correctly rejects every absent one, and the fraction of nodes reaching level >= L matches the geometric 2^-L to within a few percent (window.__skip.searchCorrect && absentCorrect && levelsGeometric, all true). The coin-flip promotion, the drop-down search, and the geometric height distribution are exact; expected O(log n) search follows from the halving per level.<br><br><span class="fig">FIG</span> 'Express lanes' is the picture; the coin-flip towers, drop-down search, and geometric level distribution are real and measured. Search cost is expected/probabilistic (a bad run of coin flips can be slower); correctness is unconditional and is what's checked.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE INVENTORY &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var MAXL=6,ang=0,spin=true,disp=null,path=[],target=null,found=false;
+function makeSL(rng){return {head:{key:-1,next:new Array(MAXL+1).fill(null)},level:0,rng:rng};}
+function randlvl(rng){var l=0;while(rng()<0.5&&l<MAXL)l++;return l;}
+function insert(sl,key){var upd=new Array(MAXL+1),x=sl.head;for(var i=sl.level;i>=0;i--){while(x.next[i]&&x.next[i].key<key)x=x.next[i];upd[i]=x;}for(var i=0;i<=MAXL;i++)if(upd[i]===undefined)upd[i]=sl.head;var lvl=randlvl(sl.rng);if(lvl>sl.level){for(var i=sl.level+1;i<=lvl;i++)upd[i]=sl.head;sl.level=lvl;}var n={key:key,next:new Array(lvl+1).fill(null)};for(var i=0;i<=lvl;i++){n.next[i]=upd[i].next[i];upd[i].next[i]=n;}}
+function search(sl,key,rec){var x=sl.head;for(var i=sl.level;i>=0;i--){while(x.next[i]&&x.next[i].key<key){x=x.next[i];if(rec)rec.push([x.key,i]);}if(rec)rec.push([x.key,i]);}x=x.next[0];return x&&x.key===key;}
+function nodesList(sl){var a=[],x=sl.head.next[0];while(x){a.push(x);x=x.next[0];}return a;}
+function verify(){var sv=777;function L(){sv=(1664525*sv+1013904223)>>>0;return sv/4294967296;}var sl=makeSL(L),keys=[],seen={};while(keys.length<2000){var k=Math.floor(L()*100000);if(!seen[k]){seen[k]=1;keys.push(k);}}for(var i=0;i<keys.length;i++)insert(sl,keys[i]);var pres=true;for(var i=0;i<keys.length;i++)if(!search(sl,keys[i]))pres=false;var abs=true,cnt=0;while(cnt<2000){var k=100000+Math.floor(L()*100000);if(!seen[k]){cnt++;if(search(sl,k))abs=false;}}var nodes=nodesList(sl),n=nodes.length,me=0;for(var Lv=0;Lv<6;Lv++){var f=0;for(var i=0;i<n;i++)if(nodes[i].next.length-1>=Lv)f++;me=Math.max(me,Math.abs(f/n-Math.pow(0.5,Lv)));}return {searchCorrect:pres,absentCorrect:abs,maxLevelErr:+me.toFixed(3),levelsGeometric:me<0.05,nodes:n};}
+function newDisp(){var keys=[];for(var i=0;i<12;i++)keys.push((i+1)*5);disp=makeSL(Math.random);for(var i=0;i<keys.length;i++)insert(disp,keys[i]);path=[];target=null;found=false;}
+function drawLevels(g,sl,W,baseY,rowH,hl){var nodes=nodesList(sl),n=nodes.length,cw=(W-40)/(n+1);
+ for(var lv=sl.level;lv>=0;lv--){var y=baseY-(sl.level-lv)*rowH;g.fillStyle='#4c7a54';g.font='9px ui-monospace,monospace';g.fillText('L'+lv,6,y+4);
+  var prev=[20,y];g.strokeStyle='#2c5a4a';
+  for(var i=0;i<n;i++){if(nodes[i].next.length-1>=lv){var x=30+(i+1)*cw;g.beginPath();g.moveTo(prev[0],prev[1]);g.lineTo(x,y);g.stroke();prev=[x,y];var on=hl&&hl[nodes[i].key]!==undefined&&hl[nodes[i].key]>=lv;g.fillStyle=(target===nodes[i].key)?'#ff2d95':(on?'#b0e055':'#2f8f6f');g.fillRect(x-9,y-7,18,14);g.fillStyle='#031015';g.font='9px ui-monospace,monospace';g.fillText(nodes[i].key,x-7,y+3);}}}}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);drawLevels(g,disp,W,120,22,null);
+ g.fillStyle='#b0e055';g.font='11px ui-monospace,monospace';g.fillText('sorted nodes with coin-flip towers — upper levels ≈ half the level below',10,140);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+ var hl={};for(var i=0;i<path.length;i++)hl[path[i][0]]=Math.max(hl[path[i][0]]||0,path[i][1]);
+ drawLevels(g,disp,W,180,26,hl);
+ g.fillStyle='#b0e055';g.font='12px ui-monospace,monospace';if(target!==null)g.fillText('search '+target+': '+(found?'FOUND':'not present')+' · '+path.length+' comparisons',14,230);
+ g.fillStyle='#4c7a54';g.font='10px ui-monospace,monospace';g.fillText('path rides right then drops down — skipping most of the list',14,252);
+ var n=nodesList(disp).length;g.fillStyle='#8ca';g.fillText('n='+n+', log₂n≈'+Math.log2(n).toFixed(1)+' — search cost stays near it',14,272);
+ document.getElementById('skread').textContent=target!==null?('search '+target+' → '+(found?'found':'absent')+' in '+path.length+' steps (log₂'+n+'≈'+Math.log2(n).toFixed(1)+')'):'click search';}
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var nodes=nodesList(disp),n=nodes.length,cx=W/2,ca=Math.cos(ang),sa=Math.sin(ang);
+ for(var i=0;i<n;i++){var t=(i/n-0.5),bx=cx+t*260*ca,by=H-60,h=(nodes[i].next.length)*20;g.strokeStyle='#39fc6b';g.globalAlpha=0.5+0.4*ca;g.lineWidth=2;g.beginPath();g.moveTo(bx,by);g.lineTo(bx+t*260*sa*0.2,by-h);g.stroke();
+  if(target===nodes[i].key){g.strokeStyle='#ff2d95';g.globalAlpha=1;g.beginPath();g.moveTo(bx,by);g.lineTo(bx+t*260*sa*0.2,by-h);g.stroke();}}
+ g.globalAlpha=1;g.lineWidth=1;g.fillStyle='#39fc6b';g.font='11px ui-monospace,monospace';g.fillText('green: nodes & random tower heights',10,20);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the searched key — reached by dropping express lanes',10,H-12);}
+document.getElementById('skfind').onclick=function(){var nodes=nodesList(disp);target=nodes[Math.floor(Math.random()*nodes.length)].key;path=[];found=search(disp,target,path);drawW4();};
+document.getElementById('sknew').onclick=function(){newDisp();drawW3();drawW4();};
+document.getElementById('skspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+newDisp();drawW3();drawW4();window.__skip=verify();
+function loop(){if(spin)ang+=0.012;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
