@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE RUNGE-KUTTA · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#58a0b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#58a0b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#58a0b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#58a0b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #58a0b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#58a0b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#58a0b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#58a0b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#58a0b0;background:transparent;border:2px solid #58a0b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#58a0b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#58a0b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#58a0b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#58a0b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#58a0b0 42%,#0a0e0a);border-left:4px solid #58a0b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#58a0b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#58a0b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#58a0b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#58a0b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE HOT LOOP</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / THE HOT LOOP / <b>THE RUNGE-KUTTA</b></div>
+<h1>THE RUNGE-KUTTA</h1>
+<div class="kick">fourth-order ODE steps by four slope samples</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Runge&ndash;Kutta method</b> (classic RK4) advances a differential equation one step by <b>sampling the slope four times</b> within the step &mdash; at the start, twice at the midpoint, and at the end &mdash; then taking a weighted average (1, 2, 2, 1)/6. The sampling errors cancel to <b>fourth order</b>, so halving the step size cuts the error roughly <b>16&times;</b>. One clever RK4 step is as accurate as thousands of crude Euler steps.<br><br>
+ It is the default workhorse for simulating physical systems.<br><br>
+ <span class="lit">LIT</span> verified live: RK4 solves y&prime;=y to reproduce e to ~10&#8315;&#8309;, its error shrinks ~16&times; when the step halves (fourth-order), and y&prime;=cos t reproduces sin t (window.__rungekutta). <span class="fig">FIG</span> no framing; genuine fourth-order accuracy.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-hot-loop</i> &mdash; the tight step-loop that advances a simulation, each iteration nudging the state forward accurately. RK4 is that hot loop&rsquo;s heart. <b>AVAN (AI)</b> built the instrument: the four-slope step, the weighted average, the exact-solution and convergence-order checks.<br><br>Credit as content: Carl Runge (1895) &amp; Wilhelm Kutta (1901). The weave: David names the hot loop; I probe the slope four times per step and confirm the error falls at fourth order against known solutions.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Within one step: k&#8321; is the slope at the start, k&#8322; and k&#8323; at the midpoint (each using the last), k&#8324; at the end. Their weighted average 1&middot;2&middot;2&middot;1 fits the curve to fourth order.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="240"></canvas>
+  <div class="wctrl"><div class="cap">RK4 (green) versus Euler (magenta) integrating an ODE against the exact curve; RK4 tracks it where Euler drifts.</div>
+   <div class="btns" style="margin-top:10px"><button id="rkode">switch ODE ▶</button><button id="rkcheck">verify order ▶</button></div>
+   <div class="cap" id="rkread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the four-slope step that tracks the true trajectory.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): <b>sample the slope at four points</b> within the step and take a weighted average &mdash; the errors of the samples <b>cancel</b> to fourth order, so one clever step is as accurate as thousands of Euler steps. The inverse of &lsquo;trust the initial slope&rsquo; is &lsquo;probe the slope four times and let the errors cancel.&rsquo; <b>Magenta</b> is Euler&rsquo;s crude single-slope drift; <b>green</b> is the four-slope weighted step. A Simpson&rsquo;s rule for trajectories &mdash; fourth-order accuracy from one step.</div>
+   <div class="btns" style="margin-top:10px"><button id="rkspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine classic RK4 (Runge 1895; Kutta 1901). Verified live: RK4 solves y'=y to reproduce e to <1e-4, the error ratio when halving the step is ~15-16 (fourth order), and y'=cos t reproduces sin t to <1e-6 (window.__rungekutta.eAccurate && .orderFour && .sinAccurate).<br><br><span class="fig">FIG</span> No framing: the four-slope step, the weighted average, and the exact-solution + convergence-order checks run in-browser and confirm fourth-order accuracy. The AVAN inverse is honest — sampling the slope at four points and averaging makes the errors cancel to fourth order, so one step rivals thousands of Euler steps; magenta is Euler's single-slope drift, green the four-slope step. A Simpson's rule for trajectories.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE HOT LOOP &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,MODE=0;
+var ODES=[{f:function(t,y){return y;},sol:function(t){return Math.exp(t);},y0:1,t1:2,name:"y'=y → eᵗ"},{f:function(t,y){return Math.cos(t);},sol:function(t){return Math.sin(t);},y0:0,t1:6.283,name:"y'=cos t → sin t"},{f:function(t,y){return -2*t*y;},sol:function(t){return Math.exp(-t*t);},y0:1,t1:2.5,name:"y'=−2ty → e^(−t²)"}];
+function rk4(f,t0,y0,h,steps){var t=t0,y=y0,path=[[t,y]];for(var i=0;i<steps;i++){var k1=f(t,y),k2=f(t+h/2,y+h/2*k1),k3=f(t+h/2,y+h/2*k2),k4=f(t+h,y+h*k3);y+=h/6*(k1+2*k2+2*k3+k4);t+=h;path.push([t,y]);}return {y:y,path:path};}
+function euler(f,t0,y0,h,steps){var t=t0,y=y0,path=[[t,y]];for(var i=0;i<steps;i++){y+=h*f(t,y);t+=h;path.push([t,y]);}return {path:path};}
+function verify(){var f=function(t,y){return y;};var e1=Math.abs(rk4(f,0,1,0.1,10).y-Math.E),e2=Math.abs(rk4(f,0,1,0.05,20).y-Math.E);var g=function(t,y){return Math.cos(t);},eg=Math.abs(rk4(g,0,0,0.01,314).y-Math.sin(3.14));var order=e1/e2;return {eAccurate:e1<1e-4,orderFour:(order>10&&order<24),sinAccurate:eg<1e-6,ratio:+order.toFixed(1)};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('one step: k₁ start · k₂,k₃ midpoint · k₄ end → avg (1,2,2,1)/6',12,14);
+ var labels=['k₁','k₂','k₃','k₄'],xs=[60,180,180,320],ys=[110,75,90,60];for(var i=0;i<4;i++){g.fillStyle='#58a0b0';g.beginPath();g.arc(xs[i],ys[i],10,0,7);g.fill();g.fillStyle='#fff';g.font='9px monospace';g.fillText(labels[i],xs[i]-6,ys[i]+3);}
+ g.strokeStyle='#39fc6b';g.lineWidth=2;g.beginPath();g.moveTo(60,110);g.quadraticCurveTo(200,60,320,60);g.stroke();g.lineWidth=1;g.fillStyle='#8ad';g.font='9px monospace';g.fillText('weighted average fits to 4th order',60,145);}
+function toXY(p,t0,t1,ymin,ymax,W,H){return [30+(p[0]-t0)/(t1-t0)*(W-50),H-24-(p[1]-ymin)/(ymax-ymin+1e-9)*(H-50)];}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var o=ODES[MODE],h=(o.t1)/8,rk=rk4(o.f,0,o.y0,h,8),eu=euler(o.f,0,o.y0,h,8);
+ var ys=[];for(var i=0;i<=40;i++)ys.push(o.sol(i/40*o.t1));var ymin=Math.min.apply(0,ys.concat(eu.path.map(function(p){return p[1];}))),ymax=Math.max.apply(0,ys.concat(eu.path.map(function(p){return p[1];})));
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText(o.name+'  (8 steps)',12,16);
+ g.strokeStyle='#556';g.lineWidth=2;g.beginPath();for(var i=0;i<=40;i++){var p=toXY([i/40*o.t1,o.sol(i/40*o.t1)],0,o.t1,ymin,ymax,W,H);if(i===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);}g.stroke();
+ g.strokeStyle='#ff2d95';g.beginPath();eu.path.forEach(function(pt,i){var p=toXY(pt,0,o.t1,ymin,ymax,W,H);if(i===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);});g.stroke();
+ g.strokeStyle='#39fc6b';g.beginPath();rk.path.forEach(function(pt,i){var p=toXY(pt,0,o.t1,ymin,ymax,W,H);if(i===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);});g.stroke();g.lineWidth=1;
+ g.fillStyle='#39fc6b';g.font='9px monospace';g.fillText('RK4 (tracks exact)',W-110,H-24);g.fillStyle='#ff2d95';g.fillText('Euler (drifts)',W-110,H-12);}
+document.getElementById('rkode').onclick=function(){MODE=(MODE+1)%ODES.length;drawW4();document.getElementById('rkread').textContent=ODES[MODE].name;};
+document.getElementById('rkcheck').onclick=function(){var v=verify();document.getElementById('rkread').textContent='e accurate '+(v.eAccurate?'✓':'✗')+', order-4 (ratio '+v.ratio+'≈16) '+(v.orderFour?'✓':'✗')+', sin '+(v.sinAccurate?'✓':'✗');};
+document.getElementById('rkspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var o=ODES[MODE],rk=rk4(o.f,0,o.y0,o.t1/20,20),cx=30,cy=H/2;
+ var ys=rk.path.map(function(p){return p[1];}),ymin=Math.min.apply(0,ys),ymax=Math.max.apply(0,ys);
+ g.strokeStyle='#39fc6b';g.lineWidth=2;g.beginPath();rk.path.forEach(function(pt,i){var x=30+pt[0]/o.t1*(W-60),y=H-40-(pt[1]-ymin)/(ymax-ymin+1e-9)*(H-90)+4*Math.sin(ang+i*0.3);if(i===0)g.moveTo(x,y);else g.lineTo(x,y);g.fillStyle='#39fc6b';g.beginPath();g.arc(x,y,3,0,7);g.fill();});g.stroke();g.lineWidth=1;
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: RK4 four-slope step tracks the trajectory',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: Euler\'s single-slope drift',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('four probes, errors cancel → 4th-order accuracy',10,H-9);}
+drawW4();window.__rungekutta=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
