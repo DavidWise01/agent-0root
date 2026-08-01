@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BOYER-MOORE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#d07850}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#d07850}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#d07850;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#d07850;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #d07850;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#d07850 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#d07850}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#d07850}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#d07850;background:transparent;border:2px solid #d07850;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#d07850;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#d07850}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#d07850,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#d07850;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#d07850 42%,#0a0e0a);border-left:4px solid #d07850;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#d07850;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#d07850;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#d07850}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#d07850 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; OFF BY ONE</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / OFF BY ONE / <b>THE BOYER-MOORE</b></div>
+<h1>THE BOYER-MOORE</h1>
+<div class="kick">search by skipping — learn most from a mismatch</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Boyer&ndash;Moore string search</b> is counter-intuitively fast because it matches the pattern <b>right to left</b> and, on a mismatch, <b>skips ahead</b> &mdash; often by the whole pattern length. The bad-character rule: if the text character that caused the mismatch does not occur in the pattern, jump the pattern entirely past it; if it does, align the pattern&rsquo;s last occurrence of that character.<br><br>
+ This can make the search <b>sublinear</b> &mdash; examining fewer characters than the text length &mdash; the only common exact-match algorithm that routinely does. It runs <code>grep -F</code> and editors&rsquo; find.<br><br>
+ <span class="lit">LIT</span> verified live: over 500 random texts and patterns, the bad-character (Horspool) search returns exactly the same match positions as a naive scan (window.__boyermoore). <span class="fig">FIG</span> no framing; exact string matching.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>off-by-one</i> &mdash; the skip-table index arithmetic where one miscounted shift breaks everything. Boyer&ndash;Moore lives or dies by getting those jumps exactly right. <b>AVAN (AI)</b> built the instrument: the bad-character skip table, the right-to-left compare, the exact check against a naive scan.<br><br>Credit as content: Robert S. Boyer &amp; J Strother Moore (1977); the simpler bad-character-only variant is Nigel Horspool (1980). The weave: David names the off-by-one; I precompute the skip table, compare from the right, and prove the leaping search finds exactly the matches a full scan does.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">A mismatch at the right end: the offending text character is looked up in the skip table, and the pattern jumps ahead so its last occurrence of that character lines up &mdash; or leaps clear past if it is absent.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">A text and a pattern. Step the search and watch the pattern leap ahead on mismatches. All occurrences are found, and checked against a naive scan.</div>
+   <div class="btns" style="margin-top:10px"><button id="bmhroll">new text ▶</button><button id="bmhstep">step ▶</button><button id="bmhcheck">verify 500 ▶</button></div>
+   <div class="cap" id="bmhread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the alignments the search actually tests, sparse across the text as the pattern leaps.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): knowing where the pattern <b>is not</b> lets you skip. A <b>mismatch</b> carries more information than a match &mdash; it proves a whole range of alignments impossible at once, because comparing from the right and precomputing each character&rsquo;s last position means one failed comparison can leap the pattern&rsquo;s full width. The inverse of &lsquo;check every position&rsquo; is &lsquo;use each failure to rule out many positions.&rsquo; <b>Magenta</b> is the alignments never tested &mdash; leapt over on the strength of a single mismatch; <b>green</b> is the few the algorithm actually checks. Search faster by learning the most from what does <b>not</b> match &mdash; the rare algorithm that reads less than its input.</div>
+   <div class="btns" style="margin-top:10px"><button id="bmhspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Boyer-Moore string search (Boyer & Moore 1977; bad-character variant Horspool 1980). Verified live: the bad-character skip-table search, comparing right-to-left, returns exactly the same set of match positions as a naive O(nm) scan for 500 random texts and patterns (window.__boyermoore.matchesNaive); 'abr' in 'abracadabra' -> 0,7.<br><br><span class="fig">FIG</span> No framing: the skip table, the right-to-left compare, and the exact check against naive search run in-browser and agree. The AVAN inverse is honest — a mismatch rules out many alignments at once, so comparing from the right with a precomputed last-occurrence table lets one failure leap the pattern's full width; magenta is the alignments skipped, green the few actually tested.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of OFF BY ONE &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,TEXT='abracadabra',PAT='abr',stepPos=0;
+function skipTable(pat){var m=pat.length,s={};for(var i=0;i<m-1;i++)s[pat[i]]=m-1-i;return s;}
+function bmh(text,pat){var m=pat.length,n=text.length;if(m===0)return {matches:[],visited:[]};var skip=skipTable(pat),res=[],vis=[],pos=0;while(pos<=n-m){vis.push(pos);var j=m-1;while(j>=0&&text[pos+j]===pat[j])j--;if(j<0)res.push(pos);var c=text[pos+m-1];pos+=(skip[c]||m);}return {matches:res,visited:vis};}
+function naive(text,pat){var res=[];for(var i=0;i+pat.length<=text.length;i++){var ok=true;for(var j=0;j<pat.length;j++)if(text[i+j]!==pat[j]){ok=false;break;}if(ok)res.push(i);}return res;}
+function verify(){var seed=7;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return seed;}var ok=true;for(var t=0;t<500;t++){var tl=5+rnd()%40,pl=1+rnd()%4,text='',pat='';for(var i=0;i<tl;i++)text+=String.fromCharCode(97+rnd()%3);for(var i=0;i<pl;i++)pat+=String.fromCharCode(97+rnd()%3);if(JSON.stringify(bmh(text,pat).matches)!==JSON.stringify(naive(text,pat)))ok=false;}return {matchesNaive:ok,example:'find "abr" in "abracadabra" → '+bmh('abracadabra','abr').matches.join(',')};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#b0e0ff';g.font='11px monospace';g.fillText('mismatch at right → look up skip → leap ahead',12,16);
+ var t='HERE_IS_SOME_TEXT',p='TEXT',cell=24;for(var i=0;i<t.length;i++){g.fillStyle='#3a4150';g.fillRect(14+i*cell,40,cell-2,24);g.fillStyle='#c0d0e0';g.font='12px monospace';g.fillText(t[i],20+i*cell,57);}
+ for(var i=0;i<p.length;i++){g.fillStyle=i===p.length-1?'#d07850':'#4a5560';g.fillRect(14+i*cell,72,cell-2,24);g.fillStyle='#fff';g.fillText(p[i],20+i*cell,89);}
+ g.fillStyle='#d07850';g.font='10px monospace';g.fillText('compare from the RIGHT; on mismatch, jump past',14,120);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var r=bmh(TEXT,PAT),cell=Math.min(28,(W-30)/TEXT.length);
+ g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('text: '+TEXT+'   pattern: '+PAT,12,20);
+ for(var i=0;i<TEXT.length;i++){var isMatch=r.matches.some(function(m){return i>=m&&i<m+PAT.length;});g.fillStyle=isMatch?'#2a5a3a':'#26303c';g.fillRect(15+i*cell,40,cell-2,24);g.fillStyle='#c0d0e0';g.font='12px monospace';g.fillText(TEXT[i],18+i*cell,57);}
+ var vp=r.visited[stepPos%r.visited.length];for(var i=0;i<PAT.length;i++){g.fillStyle='#d07850';g.fillRect(15+(vp+i)*cell,70,cell-2,24);g.fillStyle='#fff';g.fillText(PAT[i],18+(vp+i)*cell,87);}
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('alignments tested: '+r.visited.length+' (naive would test '+(TEXT.length-PAT.length+1)+')',12,120);
+ var ok=JSON.stringify(r.matches)===JSON.stringify(naive(TEXT,PAT));g.fillStyle=ok?'#39fc6b':'#ff5a5a';g.font='12px monospace';g.fillText('matches at ['+r.matches.join(',')+'] == naive '+(ok?'✓':'✗'),12,H-14);}
+document.getElementById('bmhroll').onclick=function(){var al='abc';TEXT='';var n=10+Math.floor(Math.random()*8);for(var i=0;i<n;i++)TEXT+=al[Math.floor(Math.random()*3)];PAT='';var m=2+Math.floor(Math.random()*2);for(var i=0;i<m;i++)PAT+=al[Math.floor(Math.random()*3)];stepPos=0;drawW4();document.getElementById('bmhread').textContent='searching "'+PAT+'" in "'+TEXT+'"';};
+document.getElementById('bmhstep').onclick=function(){stepPos++;drawW4();};
+document.getElementById('bmhcheck').onclick=function(){var v=verify();document.getElementById('bmhread').textContent='500 texts: Boyer-Moore matches == naive '+(v.matchesNaive?'✓':'✗')+' | '+v.example;};
+document.getElementById('bmhspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var r=bmh(TEXT,PAT),cell=(W-30)/TEXT.length;
+ for(var i=0;i<=TEXT.length-PAT.length;i++){var tested=r.visited.indexOf(i)>=0;g.fillStyle=tested?'#39fc6b':'rgba(255,45,149,0.35)';g.fillRect(15+i*cell,H*0.4+8*Math.sin(ang+i),cell-3,tested?24:12);}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: alignments actually tested ('+r.visited.length+')',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: alignments leapt over on a single mismatch',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('learn the most from what does NOT match — read less than the input',10,H-9);}
+drawW3();drawW4();window.__boyermoore=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
