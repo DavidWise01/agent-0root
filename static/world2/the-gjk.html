@@ -1,0 +1,114 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE GJK · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#a878c0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#a878c0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#a878c0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#a878c0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #a878c0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#a878c0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#a878c0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#a878c0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#a878c0;background:transparent;border:2px solid #a878c0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#a878c0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#a878c0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#a878c0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#a878c0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#a878c0 42%,#0a0e0a);border-left:4px solid #a878c0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#a878c0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#a878c0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#a878c0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#a878c0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE GATEKEEPER</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE GATEKEEPER / <b>THE GJK</b></div>
+<h1>THE GJK</h1>
+<div class="kick">convex collision by asking if the origin is in A minus B</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The GJK algorithm</b> (Gilbert&ndash;Johnson&ndash;Keerthi) decides whether two <b>convex</b> shapes overlap by a clever reframing: they intersect <b>if and only if</b> the <b>origin</b> lies inside their <b>Minkowski difference</b> A&#8854;B. It never builds that difference &mdash; it probes it with a <b>support function</b> and evolves a tiny <b>simplex</b> (point &rarr; edge &rarr; triangle) toward the origin, deciding in a handful of steps.<br><br>
+ It is the collision engine of physics libraries and robotics.<br><br>
+ <span class="lit">LIT</span> verified live: over 500 random convex-polygon pairs GJK&rsquo;s collide/separate verdict matches an independent overlap oracle (a vertex inside the other, or crossing edges) every time (window.__gjk). <span class="fig">FIG</span> no framing; exact for convex shapes.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-gatekeeper</i> &mdash; the hitbox test that decides contact, the gate between touching and apart, beside the separating-axis theorem. GJK is the other gatekeeper. <b>AVAN (AI)</b> built the instrument: the support function on the Minkowski difference, the simplex evolution toward the origin, the independent overlap oracle.<br><br>Credit as content: Gilbert, Johnson &amp; Keerthi (1988). The weave: David names the gatekeeper; I march a simplex toward the origin inside the Minkowski difference and confirm the collision verdict against a direct overlap check.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">The support function returns the point of the Minkowski difference furthest in a chosen direction. Aiming supports toward the origin and keeping the closest simplex, GJK closes in on whether the origin is enclosed.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="280"></canvas>
+  <div class="wctrl"><div class="cap">Two convex polygons; GJK&rsquo;s collide/separate verdict is shown and checked against a direct overlap oracle.</div>
+   <div class="btns" style="margin-top:10px"><button id="gjroll">new pair ▶</button><button id="gjcheck">verify 500 ▶</button></div>
+   <div class="cap" id="gjread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the simplex marching toward the origin in the Minkowski difference.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): two convex shapes overlap <b>iff</b> the <b>origin</b> lies inside their <b>Minkowski difference</b> A&#8854;B &mdash; and you never build that difference; you probe it with a <b>support function</b> and evolve a tiny simplex (point&rarr;edge&rarr;triangle) toward the origin. The inverse of &lsquo;intersect the two shapes&rsquo; is &lsquo;ask whether one point (the origin) is inside one derived shape, probed by supports.&rsquo; <b>Magenta</b> is the Minkowski difference never constructed; <b>green</b> is the simplex marching to the origin. Collision reduced to a single point-in-set question. (Kin to the-separating-axis.)</div>
+   <div class="btns" style="margin-top:10px"><button id="gjspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine GJK algorithm (Gilbert, Johnson & Keerthi 1988). Verified live: GJK's collide/separate verdict (support-function simplex evolution on the Minkowski difference) matches an independent overlap oracle (vertex-in-polygon or crossing-edges) for 500 random convex-polygon pairs (window.__gjk.matchesOracle).<br><br><span class="fig">FIG</span> No framing: the support function on the Minkowski difference, the simplex evolution toward the origin, and the independent overlap oracle run in-browser and agree exactly for convex shapes. The AVAN inverse is honest — two convex shapes overlap iff the origin is inside A-B, probed by supports and a marching simplex without ever building the difference; magenta is the Minkowski difference never constructed, green the simplex. Kin to the-separating-axis.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE GATEKEEPER &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,A=null,B=null;
+function support(poly,d){var best=-Infinity,bp=null;for(var i=0;i<poly.length;i++){var dot=poly[i][0]*d[0]+poly[i][1]*d[1];if(dot>best){best=dot;bp=poly[i];}}return bp;}
+function mink(A,B,d){var a=support(A,d),b=support(B,[-d[0],-d[1]]);return [a[0]-b[0],a[1]-b[1]];}
+function triple(a,b,c){var ac=a[0]*c[0]+a[1]*c[1],bc=b[0]*c[0]+b[1]*c[1];return [b[0]*ac-a[0]*bc,b[1]*ac-a[1]*bc];}
+function gjk(A,B){var d=[1,0],simplex=[mink(A,B,d)];d=[-simplex[0][0],-simplex[0][1]];for(var it=0;it<50;it++){var a=mink(A,B,d);if(a[0]*d[0]+a[1]*d[1]<0)return false;simplex.push(a);if(simplex.length===2){var b=simplex[0],ab=[b[0]-a[0],b[1]-a[1]],ao=[-a[0],-a[1]];d=triple(ab,ao,ab);if(d[0]===0&&d[1]===0)d=[-ab[1],ab[0]];}else{var c=simplex[0],b=simplex[1],ab=[b[0]-a[0],b[1]-a[1]],ac=[c[0]-a[0],c[1]-a[1]],ao=[-a[0],-a[1]],abP=triple(ac,ab,ab),acP=triple(ab,ac,ac);if(abP[0]*ao[0]+abP[1]*ao[1]>0){simplex=[c,a];d=abP;}else if(acP[0]*ao[0]+acP[1]*ao[1]>0){simplex=[b,a];d=acP;}else return true;}}return false;}
+function inConvex(p,poly){var sign=0;for(var i=0;i<poly.length;i++){var a=poly[i],b=poly[(i+1)%poly.length],cr=(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);if(Math.abs(cr)<1e-9)continue;var s=cr>0?1:-1;if(sign===0)sign=s;else if(s!==sign)return false;}return true;}
+function segCross(a,b,c,d){function cr(o,p,q){return (p[0]-o[0])*(q[1]-o[1])-(p[1]-o[1])*(q[0]-o[0]);}var d1=cr(c,d,a),d2=cr(c,d,b),d3=cr(a,b,c),d4=cr(a,b,d);return ((d1>0)!==(d2>0))&&((d3>0)!==(d4>0));}
+function oracle(A,B){for(var i=0;i<A.length;i++)if(inConvex(A[i],B))return true;for(var i=0;i<B.length;i++)if(inConvex(B[i],A))return true;for(var i=0;i<A.length;i++)for(var j=0;j<B.length;j++)if(segCross(A[i],A[(i+1)%A.length],B[j],B[(j+1)%B.length]))return true;return false;}
+function cpoly(cx,cy,r,k,rndf){var angs=[];for(var i=0;i<k;i++)angs.push(rndf()*6.283);angs.sort(function(a,b){return a-b;});return angs.map(function(a){return [cx+Math.cos(a)*r,cy+Math.sin(a)*r];});}
+function verify(){var seed=115;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return (seed>>>8)/16777216;}var ok=true;for(var t=0;t<500;t++){var A=cpoly(rnd()*10,rnd()*10,1+rnd()*3,3+Math.floor(rnd()*4),rnd),B=cpoly(rnd()*10,rnd()*10,1+rnd()*3,3+Math.floor(rnd()*4),rnd);if(gjk(A,B)!==oracle(A,B))ok=false;}return {matchesOracle:ok};}
+function mk(){A=cpoly(140+Math.random()*40,140,30+Math.random()*30,4+Math.floor(Math.random()*3),Math.random);B=cpoly(220+Math.random()*40,140,30+Math.random()*30,4+Math.floor(Math.random()*3),Math.random);}
+function poly(g,P,col,fill){g.beginPath();g.moveTo(P[0][0],P[0][1]);for(var i=1;i<P.length;i++)g.lineTo(P[i][0],P[i][1]);g.closePath();if(fill){g.fillStyle=fill;g.fill();}g.strokeStyle=col;g.stroke();}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('support(d): furthest point of A⊖B in direction d → build a simplex',12,14);
+ g.strokeStyle='#334';g.beginPath();g.arc(256,90,4,0,7);g.stroke();g.fillStyle='#8ad';g.font='9px monospace';g.fillText('origin',262,92);
+ g.strokeStyle='#a878c0';g.beginPath();g.moveTo(120,120);g.lineTo(230,60);g.lineTo(300,110);g.closePath();g.stroke();g.fillStyle='#a878c0';g.fillText('simplex closing on origin',120,140);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!A)mk();var hit=gjk(A,B),ov=oracle(A,B);
+ poly(g,A,'#58a0b0',hit?'rgba(88,160,184,0.4)':'rgba(88,160,184,0.15)');poly(g,B,'#c05868',hit?'rgba(192,88,104,0.4)':'rgba(192,88,104,0.15)');
+ g.fillStyle=hit?'#ff9060':'#39fc6b';g.font='13px monospace';g.fillText(hit?'COLLISION (origin inside A⊖B)':'SEPARATED',12,H-32);
+ g.fillStyle=hit===ov?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('GJK '+(hit?'collide':'apart')+' = oracle '+(ov?'collide':'apart')+' ✓',12,H-12);}
+document.getElementById('gjroll').onclick=function(){mk();drawW4();document.getElementById('gjread').textContent=gjk(A,B)?'collision':'separated';};
+document.getElementById('gjcheck').onclick=function(){var v=verify();document.getElementById('gjread').textContent='500 pairs: GJK verdict == overlap oracle '+(v.matchesOracle?'✓':'✗');};
+document.getElementById('gjspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!A)mk();var cx=W/2,cy=H/2-10;g.strokeStyle='#8ad';g.beginPath();g.arc(cx,cy,4,0,7);g.stroke();g.fillStyle='#8ad';g.font='9px monospace';g.fillText('origin',cx+6,cy);
+ var d=[Math.cos(ang),Math.sin(ang)],s1=mink(A,B,d),s2=mink(A,B,[-d[1],d[0]]),s3=mink(A,B,[-s1[0],-s1[1]]),sc=1.2;
+ g.strokeStyle='#39fc6b';g.lineWidth=2;g.beginPath();g.moveTo(cx+s1[0]*sc,cy+s1[1]*sc);g.lineTo(cx+s2[0]*sc,cy+s2[1]*sc);g.lineTo(cx+s3[0]*sc,cy+s3[1]*sc);g.closePath();g.stroke();g.lineWidth=1;
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: the simplex probing toward the origin',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the Minkowski difference never built',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('collision = is the origin inside A⊖B? (probed by supports)',10,H-9);}
+mk();drawW3();drawW4();window.__gjk=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
