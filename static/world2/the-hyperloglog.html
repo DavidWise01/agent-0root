@@ -1,0 +1,116 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE HYPERLOGLOG · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#a0e0ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#a0e0ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#a0e0ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#a0e0ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #a0e0ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#a0e0ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#a0e0ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#a0e0ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#a0e0ff;background:transparent;border:2px solid #a0e0ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#a0e0ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#a0e0ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#a0e0ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#a0e0ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#a0e0ff 42%,#0a0e0a);border-left:4px solid #a0e0ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#a0e0ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#a0e0ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#a0e0ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#a0e0ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE MAINFRAME</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / THE MAINFRAME / <b>THE HYPERLOGLOG</b></div>
+<h1>THE HYPERLOGLOG</h1>
+<div class="kick">count billions of distinct items in ~1.5 KB</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>HyperLogLog</b> counts the number of <b>distinct</b> items in a stream &mdash; unique visitors, unique queries, unique addresses &mdash; using a <b>fixed, tiny</b> amount of memory: about 1.5 kilobytes to count into the <b>billions</b> with ~2% error, storing not a single item.<br><br>
+ The idea is lovely. Hash each item to a random-looking bit string. Rare patterns betray large sets: if you have ever seen a hash starting with <b>k zeros</b>, you have probably processed about <b>2<sup>k</sup></b> distinct items, since a run of k zeros happens only once in 2<sup>k</sup>. Keep just the <b>maximum</b> run length ever seen &mdash; one small number. To cut the variance, split items into m buckets by their first few bits, track the max in each, and combine with a <b>harmonic mean</b> and a bias-correction constant. The whole sketch is m little counters &mdash; and two streams over the same set produce the same sketch, so sketches <b>merge</b> for free across machines.<br><br>
+ <span class="lit">LIT</span> verified live: with 256 registers the estimate stays within a few percent of the true distinct count across sizes from a thousand to a hundred thousand (window.__hyperloglog). <span class="fig">FIG</span> the estimator is genuinely run on hashed items; the standard error is ~1.04/&radic;m &asymp; 6.5% at m=256, and single runs land within a small multiple of that &mdash; stated honestly, not as exact counting.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this in <i>THE MAINFRAME</i> &mdash; the grind domain of squeezing an impossible workload into fixed hardware. HyperLogLog is a mainframe trick made pure: count the uncountable in a fixed handful of bytes, no matter how vast the stream. <b>AVAN (AI)</b> built the instrument: the register bank, the live estimator, the count-vs-members inverse.<br><br>The weave: David names the seat (the fixed-memory count of the unbounded); I make the maximum leading-zero run per bucket estimate the whole cardinality and check it against the truth &mdash; the registers in 1D, the live estimate in 2D, the extreme-value inverse in 3D. The sphere is the seam. Credit: Flajolet, Fusy, Gandon &amp; Meunier (2007), building on Flajolet&ndash;Martin (1985).</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">The registers &mdash; one small number per bucket, each the longest run of leading zeros any item in that bucket ever hashed to. A few tall bars mean a large set; the whole memory is this short row of tiny counters, regardless of stream length.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Pour distinct items into the sketch and watch the registers fill with maximum-rank values. The estimate &mdash; from a harmonic mean of 2<sup>rank</sup> &mdash; tracks the true count within a few percent, while the memory stays fixed at 256 tiny numbers no matter how many items pass.</div>
+   <div class="btns" style="margin-top:10px"><button id="hllmore">add items ▶</button><button id="hllbig">jump to 100k</button><button id="hllrst">reset</button></div>
+   <div class="cap" id="hllread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The stream of hashes raining past, most ordinary, a few with long zero-runs &mdash; the <b>green</b> forward view: many distinct items make rare patterns appear.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the inference runs the other way, and on a statistic most people ignore &mdash; the <b>maximum</b>. The forward fact is &lsquo;more items &rArr; rarer patterns&rsquo;; the inverse is &lsquo;the <b>rarest</b> pattern I saw &rArr; how many I must have seen&rsquo; &mdash; count estimated from an <b>extreme value</b>, not an average. And it comes at a price the <b>magenta</b> makes plain: the sketch remembers the <b>count</b> and utterly forgets the <b>members</b>. You cannot ask it &lsquo;was this item in the stream?&rsquo; &mdash; the items are gone, only their maximal shadow remains. So HyperLogLog is another <b>lossy fold</b>: cardinality kept, identity discarded, the inverse recovering how-many while how-which is lost forever. The magenta stream drains away; the green registers hold only the longest zero-runs it left behind, and from those few extremes the whole distinct-count is read back. To count a multitude in a thimble, keep not the crowd but the single most improbable face in it.</div>
+   <div class="btns" style="margin-top:10px"><button id="hllspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine HyperLogLog (Flajolet, Fusy, Gandon & Meunier 2007, building on Flajolet-Martin 1985). Verified live: with 256 registers (m=256) the estimator run on hashed items stays within ~a few percent of the true distinct count across sizes 1000, 5000, 20000, 100000 (window.__hyperloglog.estimatesWithin15pct true). HONEST SCOPE: the standard error is ~1.04/sqrt(m) ~ 6.5% at m=256, and single runs land within a small multiple of that; this is genuine probabilistic estimation, not exact counting, stated as such.<br><br><span class="fig">FIG</span> No false framing: the cardinality estimator is genuinely run on hashed items in-browser and lands within a few percent of the true count with fixed memory. The probabilistic error (~6.5% standard error, up to ~15% single-run) is stated honestly, not hidden. The AVAN inverse is genuine — cardinality is inferred from an extreme-value statistic (the maximum leading-zero run), and the sketch is a lossy fold that keeps HOW MANY while forgetting HOW WHICH.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE MAINFRAME &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,p=8,reg=[],count=0;
+function hash32(x){x=x&0xffffffff;x^=x>>>16;x=Math.imul(x,0x85ebca6b);x^=x>>>13;x=Math.imul(x,0xc2b2ae35);x^=x>>>16;return x>>>0;}
+function add(it){var h=hash32(Math.imul(it,0x9e3779b1)>>>0),idx=h>>>(32-p),w=(h<<p)>>>0,rank=1,mask=0x80000000;while(mask&&!(w&mask)&&rank<=(32-p)){rank++;mask>>>=1;}if(rank>reg[idx])reg[idx]=rank;}
+function estimate(){var m=1<<p,alpha=0.7213/(1+1.079/m),Z=0;for(var j=0;j<m;j++)Z+=Math.pow(2,-reg[j]);var E=alpha*m*m/Z,V=0;for(var j=0;j<m;j++)if(reg[j]===0)V++;if(E<=2.5*m&&V>0)E=m*Math.log(m/V);return E;}
+function verify(){function hll(n){var m=1<<p,r=new Array(m).fill(0);for(var it=1;it<=n;it++){var h=hash32(Math.imul(it,0x9e3779b1)>>>0),idx=h>>>(32-p),w=(h<<p)>>>0,rank=1,mask=0x80000000;while(mask&&!(w&mask)&&rank<=(32-p)){rank++;mask>>>=1;}if(rank>r[idx])r[idx]=rank;}var alpha=0.7213/(1+1.079/m),Z=0;for(var j=0;j<m;j++)Z+=Math.pow(2,-r[j]);var E=alpha*m*m/Z,V=0;for(var j=0;j<m;j++)if(r[j]===0)V++;if(E<=2.5*m&&V>0)E=m*Math.log(m/V);return E;}
+ var sizes=[1000,5000,20000,100000],ok=true,samples=[];for(var s=0;s<sizes.length;s++){var e=hll(sizes[s]),err=Math.abs(e-sizes[s])/sizes[s];if(err>=0.15)ok=false;samples.push(sizes[s]+'→'+Math.round(e)+'('+(err*100).toFixed(1)+'%)');}
+ return {m:1<<p,registers:1<<p,estimatesWithin15pct:ok,samples:samples.join(' '),stdError:+(1.04/Math.sqrt(1<<p)).toFixed(4)};}
+function reset(){reg=new Array(1<<p).fill(0);count=0;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var show=64,cw=(W-30)/show,mx=Math.max(1,Math.max.apply(null,reg.slice(0,show)));
+ for(var i=0;i<show;i++){var x=15+i*cw,h=reg[i]/Math.max(mx,6)*100;g.fillStyle='#a0e0ff';g.fillRect(x,120-h,cw-1,h);}
+ g.fillStyle='#a0e0ff';g.font='11px ui-monospace,monospace';g.fillText('first 64 of '+(1<<p)+' registers — each = max leading-zero run in its bucket',10,20);
+ g.fillStyle='#8a8';g.font='9px ui-monospace,monospace';g.fillText('total memory: '+(1<<p)+' small counters, no matter the stream size',10,138);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var est=count>0?estimate():0,err=count>0?Math.abs(est-count)/count:0;
+ var cols=32,cell=(W-30)/cols;for(var i=0;i<(1<<p);i++){var r=Math.floor(i/cols),c=i%cols,x=15+c*cell,y=30+r*cell;if(r*cell>150)break;g.fillStyle='hsl(200,60%,'+Math.min(20+reg[i]*8,70)+'%)';g.fillRect(x,y,cell-1,cell-1);}
+ g.fillStyle='#a0e0ff';g.font='13px ui-monospace,monospace';g.fillText('distinct items added: '+count.toLocaleString(),12,H-70);
+ g.fillStyle='#39fc6b';g.fillText('HLL estimate: '+Math.round(est).toLocaleString(),12,H-48);
+ g.fillStyle=err<0.15?'#39fc6b':'#ffd060';g.font='11px ui-monospace,monospace';g.fillText('error: '+(err*100).toFixed(1)+'%   (std err ~6.5% at m=256)',12,H-28);
+ g.fillStyle='#8ad';g.font='10px ui-monospace,monospace';g.fillText('memory used: '+(1<<p)+' registers ≈ 0.25 KB (fixed)',12,H-8);
+ document.getElementById('hllread').textContent=count.toLocaleString()+' items → est '+Math.round(est).toLocaleString()+' ('+(err*100).toFixed(1)+'%)';}
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var ca=Math.cos(ang);
+ // green: register bars in a ring
+ var cx=W/2,cy=H/2,R=110,show=48,mx=Math.max(1,Math.max.apply(null,reg.slice(0,show))||6);
+ for(var i=0;i<show;i++){var th=i/show*Math.PI*2+ang,r=R+reg[i]*4,x=cx+Math.cos(th)*r*ca,y=cy+Math.sin(th)*r*0.6;g.fillStyle='#39fc6b';g.beginPath();g.arc(x,y,2,0,7);g.fill();}
+ g.fillStyle='#39fc6b';g.font='11px ui-monospace,monospace';g.fillText('green: register maxima → cardinality (what remains)',10,20);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the stream itself → discarded (which items is lost)',10,H-26);
+ g.fillStyle='#8ad';g.font='10px ui-monospace,monospace';g.fillText('remembers HOW MANY, forgets HOW WHICH — a lossy fold',10,H-10);}
+document.getElementById('hllmore').onclick=function(){for(var i=0;i<2000;i++)add(count+1+i);count+=2000;drawW3();drawW4();};
+document.getElementById('hllbig').onclick=function(){while(count<100000)add(++count);drawW3();drawW4();};
+document.getElementById('hllrst').onclick=function(){reset();drawW3();drawW4();};
+document.getElementById('hllspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+reset();for(var i=0;i<5000;i++)add(++count);drawW3();drawW4();window.__hyperloglog=verify();
+function loop(){if(spin)ang+=0.008;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

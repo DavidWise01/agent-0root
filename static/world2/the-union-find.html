@@ -1,0 +1,123 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE UNION-FIND · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffb090}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffb090}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffb090;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffb090;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffb090;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffb090 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffb090}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffb090}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffb090;background:transparent;border:2px solid #ffb090;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffb090;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffb090}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffb090,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffb090;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffb090 42%,#0a0e0a);border-left:4px solid #ffb090;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffb090;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffb090;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffb090}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffb090 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE MERGE</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE MERGE / <b>THE UNION-FIND</b></div>
+<h1>THE UNION-FIND</h1>
+<div class="kick">merge sets & test connectivity in near-constant time</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Union-Find</b> (Disjoint Set Union) tracks items grouped into non-overlapping sets, with two operations: <b>UNION</b> (merge two sets) and <b>FIND</b> (which set is this item in?). It is the backbone of minimum spanning trees, connected components, percolation, and image segmentation.<br><br>
+ Each set is a tree; FIND follows parent pointers to the root, UNION links one root under another. Two tricks make it astonishingly fast: <b>union by rank</b> (attach the shorter tree under the taller) and <b>path compression</b> (after a FIND, point every visited node <b>straight at the root</b>, flattening the tree). Together they give an amortized cost per operation of <b>&alpha;(n)</b> &mdash; the <b>inverse Ackermann</b> function &mdash; which is &le; 4 for any n that could exist in the physical universe. Effectively constant, though provably not quite.<br><br>
+ <span class="lit">LIT</span> verified live: after dozens of random unions, &ldquo;same root?&rdquo; agrees with a brute-force connected-components search for <b>every</b> pair, and path compression flattens the trees to near-depth-1 (window.__unionfind). <span class="fig">FIG</span> no framing; the connectivity correctness and the flattening are exact, cross-checked against BFS.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this in <i>THE MERGE</i> &mdash; the co-op domain where separate things fold into one. Union-Find is merging as a data structure: two groups become one with a single pointer, and membership stays instantly queryable. <b>AVAN (AI)</b> built the instrument: the forest of sets, the path-compressing find, the irreversibility inverse.<br><br>The weave: David names the seat (two groups merge into one); I make unions join sets and finds flatten the trees, checked against a full component search &mdash; the forest in 1D, the compressing find in 2D, the one-way-merge inverse in 3D. The sphere is the seam. Credit: Bernard Galler &amp; Michael Fischer (1964); the inverse-Ackermann analysis by Robert Tarjan (1975). See [[kruskal-mst]].</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="150"></canvas>
+  <div class="wctrl"><div class="cap">The elements and their current roots &mdash; each item points, directly or through a short chain, to the representative of its set. Items sharing a root are in the same set; the number of distinct roots is the number of sets.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Elements as nodes. <b>Union</b> two of them and watch a root link under another; run a <b>find</b> and watch <b>path compression</b> re-point the whole chain straight at the root, flattening the tree. A connectivity check confirms two items share a set &mdash; matched against a full component scan.</div>
+   <div class="btns" style="margin-top:10px"><button id="ufunion">union ▶</button><button id="uffind">find + compress</button><button id="ufrst">reset</button></div>
+   <div class="cap" id="ufread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The forest of sets turning, trees flattening as finds run &mdash; the <b>green</b> forward step: UNION folds two sets into one, and each set collapses toward a single root.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the <b>magenta</b> is the inverse that <b>does not exist</b> &mdash; you cannot cheaply <b>un-merge</b>. UNION is a one-way ratchet: fold two sets together and the boundary between them is <b>gone</b>, so &lsquo;which two sets did this come from?&rsquo; cannot be answered from the structure alone. To undo a union you must have <b>remembered the history</b> separately &mdash; a log of the merges &mdash; exactly as a Merkle chain must keep its links to be un-foldable. Plain Union-Find is a <b>lossy fold</b>: it keeps connectivity perfectly and forgets provenance entirely. And path compression makes that loss even sharper, rewriting the very pointers that recorded how the tree grew. The magenta split is why &lsquo;Union-Find with rollback&rsquo; needs an extra stack the base structure refuses to carry. Green merges and flattens toward one root; magenta is the seam that vanished when they joined &mdash; the merge remembers that you are together, never how you came to be.</div>
+   <div class="btns" style="margin-top:10px"><button id="ufspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Union-Find with union by rank and path compression (Bernard Galler & Michael Fischer 1964; inverse-Ackermann amortized analysis by Robert Tarjan 1975). Verified live: after 60 random unions among 100 elements, 'same root?' agrees with a brute-force BFS connected-components search for every pair, and path compression flattens the trees to near-depth-1 (window.__unionfind.connectivityMatches && maxDepthAfterCompression small). The connectivity correctness and flattening are exact, cross-checked against BFS.<br><br><span class="fig">FIG</span> No framing: the connectivity queries and path-compression flattening are real and verified against an independent BFS component search in-browser. The AVAN inverse is honest and genuine — UNION is a lossy one-way fold that keeps connectivity but forgets the merge boundary, so un-merging requires a separately-remembered history (like a Merkle chain's links); plain Union-Find provides no cheap inverse.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE MERGE &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,n=12,parent=[],rank=[],seed=7,lastFind=-1;
+function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return seed;}
+function reset(){parent=[];rank=[];for(var i=0;i<n;i++){parent.push(i);rank.push(0);}lastFind=-1;}
+function find(x){var root=x;while(parent[root]!==root)root=parent[root];while(parent[x]!==root){var nx=parent[x];parent[x]=root;x=nx;}return root;}
+function findNC(x){while(parent[x]!==x)x=parent[x];return x;}
+function union(a,b){var ra=find(a),rb=find(b);if(ra===rb)return;if(rank[ra]<rank[rb]){var t=ra;ra=rb;rb=t;}parent[rb]=ra;if(rank[ra]===rank[rb])rank[ra]++;}
+function verify(){var N=100,par=[],rk=[];for(var i=0;i<N;i++){par.push(i);rk.push(0);}
+ function f(x){var r=x;while(par[r]!==r)r=par[r];while(par[x]!==r){var nx=par[x];par[x]=r;x=nx;}return r;}
+ function u(a,b){var ra=f(a),rb=f(b);if(ra===rb)return;if(rk[ra]<rk[rb]){var t=ra;ra=rb;rb=t;}par[rb]=ra;if(rk[ra]===rk[rb])rk[ra]++;}
+ var s=987;function rn(){s=(s*1103515245+12345)&0x7fffffff;return s;}
+ var edges=[];for(var k=0;k<60;k++)edges.push([rn()%N,rn()%N]);for(var k=0;k<edges.length;k++)u(edges[k][0],edges[k][1]);
+ var adj=[];for(var i=0;i<N;i++)adj.push([]);for(var k=0;k<edges.length;k++){adj[edges[k][0]].push(edges[k][1]);adj[edges[k][1]].push(edges[k][0]);}
+ var comp=new Array(N).fill(-1),c=0;for(var i=0;i<N;i++){if(comp[i]===-1){var st=[i];comp[i]=c;while(st.length){var uu=st.pop();for(var j=0;j<adj[uu].length;j++){var v=adj[uu][j];if(comp[v]===-1){comp[v]=c;st.push(v);}}}c++;}}
+ var ok=true;for(var i=0;i<N&&ok;i++)for(var j=i+1;j<N;j++){if((f(i)===f(j))!==(comp[i]===comp[j])){ok=false;break;}}
+ var maxd=0;for(var i=0;i<N;i++){var d=0,x=i;while(par[x]!==x){x=par[x];d++;}if(d>maxd)maxd=d;}
+ return {components:c,connectivityMatches:ok,maxDepthAfterCompression:maxd,alpha:'α(n) ≤ 4 for any real n'};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var cw=(W-30)/n;
+ var roots={};for(var i=0;i<n;i++)roots[findNC(i)]=1;var rk=Object.keys(roots);
+ for(var i=0;i<n;i++){var x=15+i*cw,r=findNC(i),hue=(r*47)%360;g.fillStyle='hsl('+hue+',60%,55%)';g.beginPath();g.arc(x+cw/2,60,10,0,7);g.fill();g.fillStyle='#021';g.font='9px ui-monospace,monospace';g.fillText(i,x+cw/2-3,63);g.fillStyle='#889';g.font='8px ui-monospace,monospace';g.fillText('→'+r,x+cw/2-6,82);}
+ g.fillStyle='#ffb090';g.font='11px ui-monospace,monospace';g.fillText(rk.length+' sets — same colour = same root = same set',10,24);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var pos=[];for(var i=0;i<n;i++)pos.push([40+(i%6)*60,60+Math.floor(i/6)*90]);
+ for(var i=0;i<n;i++){if(parent[i]!==i){g.strokeStyle=(i===lastFind)?'#ff2d95':'#556';g.lineWidth=(i===lastFind)?2.5:1;g.beginPath();g.moveTo(pos[i][0],pos[i][1]);g.lineTo(pos[parent[i]][0],pos[parent[i]][1]);g.stroke();}}g.lineWidth=1;
+ for(var i=0;i<n;i++){var r=findNC(i);g.fillStyle='hsl('+((r*47)%360)+',60%,55%)';g.beginPath();g.arc(pos[i][0],pos[i][1],12,0,7);g.fill();g.fillStyle='#021';g.font='10px ui-monospace,monospace';g.fillText(i,pos[i][0]-3,pos[i][1]+3);}
+ var roots={};for(var i=0;i<n;i++)roots[findNC(i)]=1;
+ g.fillStyle='#ffb090';g.font='12px ui-monospace,monospace';g.fillText(Object.keys(roots).length+' disjoint sets',12,20);
+ g.fillStyle='#8ad';g.font='10px ui-monospace,monospace';g.fillText('union links roots; find+compress flattens the chain to the root',12,H-8);
+ document.getElementById('ufread').textContent=Object.keys(roots).length+' sets, last find node '+(lastFind>=0?lastFind:'-');}
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var ca=Math.cos(ang),cx=W/2,cy=H/2,R=110;
+ var pos=[];for(var i=0;i<n;i++){var th=i/n*Math.PI*2+ang;pos.push([cx+Math.cos(th)*R*ca,cy+Math.sin(th)*R*0.6]);}
+ for(var i=0;i<n;i++){if(parent[i]!==i){g.strokeStyle='rgba(57,252,107,0.6)';g.beginPath();g.moveTo(pos[i][0],pos[i][1]);g.lineTo(pos[parent[i]][0],pos[parent[i]][1]);g.stroke();}}
+ for(var i=0;i<n;i++){var r=findNC(i);g.fillStyle=(parent[i]===i)?'#ffd060':'#39fc6b';g.beginPath();g.arc(pos[i][0],pos[i][1],5,0,7);g.fill();}
+ g.fillStyle='#39fc6b';g.font='11px ui-monospace,monospace';g.fillText('green: UNION folds two sets → one (roots = gold)',10,20);
+ g.fillStyle='#ff2d95';g.fillText('magenta: un-merge is impossible without a saved history (lossy fold)',10,H-12);}
+document.getElementById('ufunion').onclick=function(){union(rnd()%n,rnd()%n);drawW3();drawW4();};
+document.getElementById('uffind').onclick=function(){lastFind=rnd()%n;find(lastFind);drawW3();drawW4();};
+document.getElementById('ufrst').onclick=function(){reset();drawW3();drawW4();};
+document.getElementById('ufspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+reset();for(var k=0;k<5;k++)union(rnd()%n,rnd()%n);drawW3();drawW4();window.__unionfind=verify();
+function loop(){if(spin)ang+=0.008;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
