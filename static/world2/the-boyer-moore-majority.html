@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BOYER-MOORE MAJORITY · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b06868}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b06868}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b06868;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b06868;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b06868;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b06868 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b06868}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b06868}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b06868;background:transparent;border:2px solid #b06868;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b06868;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b06868}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b06868,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b06868;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b06868 42%,#0a0e0a);border-left:4px solid #b06868;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b06868;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b06868;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b06868}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b06868 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; SUDDEN DEATH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / SUDDEN DEATH / <b>THE BOYER-MOORE MAJORITY</b></div>
+<h1>THE BOYER-MOORE MAJORITY</h1>
+<div class="kick">one survivor of pairwise cancellation</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Boyer&ndash;Moore majority vote</b> finds an element appearing in <b>more than half</b> a stream using <b>O(1) memory</b> &mdash; one candidate and one counter. Sweep once: if the counter is zero, adopt the current element as candidate; if the next matches, increment; if not, decrement. Matching and non-matching elements <b>cancel in pairs</b>, so if a true majority exists it cannot be fully cancelled &mdash; it is the last one standing. A single verification pass confirms whether the survivor really is a majority.<br><br>
+ <span class="lit">LIT</span> verified live: over 3000 random arrays (with and without a majority), the O(1)-space vote plus a verify pass returns exactly what a brute frequency count does (window.__majority). <span class="fig">FIG</span> no framing; exact counting comparison.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>sudden-death</i> &mdash; every unlike pair knocks each other out, and one element strikes through them all to survive; if a majority exists, it is the last standing. Boyer&ndash;Moore is that sudden death. <b>AVAN (AI)</b> built the instrument: the candidate/counter cancellation sweep, the verification pass, and the match against a brute frequency count.<br><br>Credit as content: Robert S. Boyer &amp; J Strother Moore (1981). The weave: David names sudden-death; I let each unlike pair cancel, keep the survivor as candidate, verify its true count, and confirm it agrees with a full frequency tally &mdash; a majority found in constant memory.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Counter starts at 0: adopt a candidate; +1 on a match, &minus;1 on a mismatch. Unlike pairs cancel. A true majority (&gt; n/2) can never be fully cancelled &mdash; it survives as the candidate.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="280"></canvas>
+  <div class="wctrl"><div class="cap">A stream with the running candidate and counter; the survivor verified against a brute majority count.</div>
+   <div class="btns" style="margin-top:10px"><button id="bmroll">new stream ▶</button><button id="bmcheck">verify 3000 ▶</button></div>
+   <div class="cap" id="bmread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a majority found in constant memory.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): find the majority element with <b>one counter, not a hash of counts</b> &mdash; cancel unlike pairs so the over-half element survives, then verify in a second pass. The inverse of &lsquo;count every element&rsquo;s frequency&rsquo; is &lsquo;cancel opposites &mdash; the majority is what remains.&rsquo; <b>Magenta</b> is the full frequency table; <b>green</b> is the single surviving candidate. Majority by cancellation.</div>
+   <div class="btns" style="margin-top:10px"><button id="bmspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Boyer–Moore majority vote algorithm (Robert S. Boyer & J Strother Moore 1981). Verified live: over 3000 random arrays (roughly half seeded with a >n/2 majority, half not), the candidate/counter cancellation sweep followed by a verification pass returns exactly the majority element (or none) that a brute frequency count finds (window.__majority.matchesBrute).<br><br><span class="fig">FIG</span> No framing: the candidate/counter cancellation sweep, the verification pass, and the match against a brute frequency count run in-browser and agree. The AVAN inverse is honest — finding the majority with one counter by cancelling unlike pairs (the over-half element survives) genuinely replaces a full frequency table; magenta is that table, green the single surviving candidate. Majority by cancellation.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SUDDEN DEATH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,ARR=[3,3,4,2,3,3,5,3],SYM=['●','▲','■','◆','★'];
+function bm(arr){var cand=null,cnt=0;for(var i=0;i<arr.length;i++){if(cnt===0){cand=arr[i];cnt=1;}else if(arr[i]===cand)cnt++;else cnt--;}var c=0;for(var i=0;i<arr.length;i++)if(arr[i]===cand)c++;return c>arr.length/2?cand:null;}
+function brute(arr){var m={},b=null;for(var i=0;i<arr.length;i++){m[arr[i]]=(m[arr[i]]||0)+1;if(m[arr[i]]>arr.length/2)b=arr[i];}return b;}
+function trace(arr){var cand=null,cnt=0,tr=[];for(var i=0;i<arr.length;i++){if(cnt===0){cand=arr[i];cnt=1;}else if(arr[i]===cand)cnt++;else cnt--;tr.push([cand,cnt]);}return tr;}
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function verify(){var rnd=mb(901),ok=true;for(var t=0;t<3000;t++){var n=1+Math.floor(rnd()*40),arr=[];if(rnd()<0.5){var maj=Math.floor(rnd()*5);for(var i=0;i<n;i++)arr.push(rnd()<0.6?maj:Math.floor(rnd()*5));}else for(var i=0;i<n;i++)arr.push(Math.floor(rnd()*5));if(bm(arr)!==brute(arr))ok=false;}return {matchesBrute:ok};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('+1 on a match, −1 on a mismatch; unlike pairs cancel, the majority survives',12,14);
+ var a=[3,3,4,2,3,3,5,3],tr=trace(a);for(var i=0;i<a.length;i++){g.fillStyle=a[i]===3?'#b06868':'#456';g.beginPath();g.arc(50+i*54,55,13,0,7);g.fill();g.fillStyle='#fff';g.font='11px monospace';g.fillText(a[i],46+i*54,59);g.fillStyle='#8ad';g.font='8px monospace';g.fillText('c'+tr[i][1],42+i*54,80);}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('survivor = 3 (appears 5 of 8 > half) ✓',50,120);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var tr=trace(ARR),cw=Math.min(40,(W-28)/ARR.length),cols=['#b06868','#58a0b0','#e0b020','#a878c0','#70a860'];
+ for(var i=0;i<ARR.length;i++){g.fillStyle=cols[ARR[i]%5];g.beginPath();g.arc(20+i*cw,44,Math.min(13,cw/2-2),0,7);g.fill();g.fillStyle='#012';g.font='10px monospace';g.fillText(ARR[i],17+i*cw,48);g.fillStyle='#8ad';g.font='8px monospace';g.fillText(tr[i][1],17+i*cw,66);}
+ var res=bm(ARR),bru=brute(ARR);
+ g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('candidate survives: '+(res===null?'(no majority)':res),14,100);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('brute majority: '+(bru===null?'(none)':bru),14,122);
+ g.fillStyle=res===bru?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('O(1) vote == brute majority '+(res===bru?'✓':'✗'),14,H-12);}
+document.getElementById('bmroll').onclick=function(){var n=6+Math.floor(Math.random()*10);ARR=[];if(Math.random()<0.6){var m=Math.floor(Math.random()*4);for(var i=0;i<n;i++)ARR.push(Math.random()<0.62?m:Math.floor(Math.random()*4));}else for(var i=0;i<n;i++)ARR.push(Math.floor(Math.random()*4));drawW4();document.getElementById('bmread').textContent='survivor: '+(bm(ARR)===null?'no majority':bm(ARR));};
+document.getElementById('bmcheck').onclick=function(){var v=verify();document.getElementById('bmread').textContent='3000 arrays: O(1) vote == brute majority '+(v.matchesBrute?'✓':'✗');};
+document.getElementById('bmspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var cx=W/2,cy=H/2-10,cols=['#b06868','#58a0b0','#e0b020','#a878c0','#70a860'],res=bm(ARR);
+ for(var i=0;i<ARR.length;i++){var a=i/ARR.length*6.28+ang*0.3,r=70+((ARR[i]===res)?30:0);var x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r*0.8;g.fillStyle=cols[ARR[i]%5];g.beginPath();g.arc(x,y,ARR[i]===res?7:4,0,7);g.fill();if(ARR[i]===res){g.strokeStyle='#39fc6b';g.beginPath();g.arc(x,y,10,0,7);g.stroke();}}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green ring: the surviving majority element',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta idea: the full frequency table',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('majority by cancellation',10,H-9);}
+drawW3();drawW4();window.__majority=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
