@@ -1,0 +1,104 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE LOGISTIC MAP · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#a878c0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#a878c0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#a878c0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#a878c0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #a878c0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#a878c0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#a878c0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#a878c0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#a878c0;background:transparent;border:2px solid #a878c0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#a878c0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#a878c0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#a878c0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#a878c0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#a878c0 42%,#0a0e0a);border-left:4px solid #a878c0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#a878c0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#a878c0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#a878c0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#a878c0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; RACE CONDITION</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / RACE CONDITION / <b>THE LOGISTIC MAP</b></div>
+<h1>THE LOGISTIC MAP</h1>
+<div class="kick">chaos from a one-line rule, by period-doubling</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The logistic map</b> x &rarr; r&middot;x&middot;(1&minus;x) is the simplest equation that becomes <b>chaotic</b>. As the growth rate r rises, the long-run behaviour <b>doubles</b>: a single steady value, then an oscillation between two, then four, then eight &mdash; the <b>period-doubling cascade</b> &mdash; and past r &asymp; 3.5699 it dissolves into deterministic chaos. The intervals between doublings shrink by the universal <b>Feigenbaum constant</b> &delta; &asymp; 4.669, the same for a huge class of systems.<br><br>
+ <span class="lit">LIT</span> verified live: the attractor has period 1 at r=2.8, period 2 at 3.2, period 4 at 3.5, period 8 at 3.55, and no short period at r=3.9 (chaos) &mdash; window.__logistic. <span class="fig">FIG</span> no framing; exact period detection.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>race-condition</i> &mdash; the place where a deterministic rule, nudged, tips into unpredictability. The logistic map is that tipping, from order into chaos by doubling. <b>AVAN (AI)</b> built the instrument: the iteration, the transient burn-in, the attractor period detector, and the checks at known r values.<br><br>Credit as content: Robert May (1976); Mitchell Feigenbaum (universality, 1978). The weave: David names race-condition; I iterate the map past its transient and measure the period of what it settles into, confirming the doublings 1&rarr;2&rarr;4&rarr;8 and the plunge into chaos.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Raise r and the settled behaviour splits: one value &rarr; two &rarr; four &rarr; eight &rarr; chaos. The windows between splits shrink by the Feigenbaum ratio &delta; &asymp; 4.669.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The bifurcation diagram of the logistic map; pick r and read off the period of the attractor, checked at the doubling points.</div>
+   <div class="btns" style="margin-top:10px"><button id="lgr">set r ▶</button><button id="lgcheck">verify ▶</button></div>
+   <div class="cap" id="lgread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: order splitting into chaos by doubling.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): get <b>chaos from a one-line deterministic rule</b> &mdash; raise r and the attractor period-doubles (1&rarr;2&rarr;4&rarr;8&rarr;&hellip;) until it becomes aperiodic, with the gaps shrinking by a universal constant. The inverse of &lsquo;randomness requires a random source&rsquo; is &lsquo;a simple quadratic map generates chaos deterministically.&rsquo; <b>Magenta</b> is the assumed external randomness; <b>green</b> is the deterministic period-doubling road to chaos. Unpredictability with no dice.</div>
+   <div class="btns" style="margin-top:10px"><button id="lgspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine logistic map period-doubling (May 1976; Feigenbaum universality 1978). Verified live: iterating x -> r*x*(1-x) past a transient and measuring the attractor period gives period 1 at r=2.8, 2 at r=3.2, 4 at r=3.5, 8 at r=3.55, and no short period (chaos) at r=3.9 (window.__logistic.ok).<br><br><span class="fig">FIG</span> No framing: the iteration, the transient burn-in, the attractor period detector, and the checks at known r values run in-browser and hold. The AVAN inverse is honest — a one-line deterministic quadratic map period-doubles into chaos as r rises, with gaps shrinking by a universal constant; magenta is the external randomness you do not need, green the deterministic road to chaos. Unpredictability with no dice.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of RACE CONDITION &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,R=3.5;
+function period(r,x0){var x=x0;for(var i=0;i<3000;i++)x=r*x*(1-x);var seq=[];for(var i=0;i<80;i++){x=r*x*(1-x);seq.push(x);}for(var p=1;p<=32;p++){var ok=true;for(var i=0;i<40;i++)if(Math.abs(seq[i]-seq[i+p])>1e-6){ok=false;break;}if(ok)return p;}return -1;}
+function attractor(r,x0){var x=x0;for(var i=0;i<2000;i++)x=r*x*(1-x);var s=[];for(var i=0;i<200;i++){x=r*x*(1-x);s.push(x);}return s;}
+function verify(){var p1=period(2.8,0.4),p2=period(3.2,0.4),p4=period(3.5,0.4),p8=period(3.55,0.4),pc=period(3.9,0.4);return {ok:(p1===1&&p2===2&&p4===4&&p8===8&&(pc===-1||pc>16)),p:[p1,p2,p4,p8,pc]};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('period doubles as r rises: 1 → 2 → 4 → 8 → chaos',12,14);
+ var rs=[[2.8,1],[3.2,2],[3.5,4],[3.55,8],[3.9,'∞']];for(var i=0;i<rs.length;i++){g.fillStyle=['#39fc6b','#58a0b0','#c0a048','#a878c0','#ff2d95'][i];g.fillRect(30+i*95,50,80,30);g.fillStyle='#042';g.font='10px monospace';g.fillText('r='+rs[i][0],38+i*95,64);g.fillText('per '+rs[i][1],38+i*95,76);}
+ g.fillStyle='#8ad';g.font='9px monospace';g.fillText('gaps between doublings shrink by Feigenbaum δ ≈ 4.669',30,120);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
+ for(var px=0;px<W-24;px++){var r=2.5+(px/(W-24))*1.5,s=attractor(r,0.4);for(var i=0;i<s.length;i++){var y=H-40-s[i]*(H-70);g.fillStyle=Math.abs(r-R)<0.008?'#ff2d95':'rgba(57,252,107,0.5)';g.fillRect(12+px,y,1,1);}}
+ var pr=period(R,0.4);g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('r = '+R.toFixed(3)+'  → period '+(pr<0?'chaos':pr),12,18);
+ g.fillStyle='#8ad';g.font='9px monospace';g.fillText('r: 2.5 → 4.0 (magenta line = current r)',12,H-10);}
+document.getElementById('lgr').onclick=function(){R=2.6+Math.random()*1.35;drawW4();var p=period(R,0.4);document.getElementById('lgread').textContent='r='+R.toFixed(3)+' → period '+(p<0?'chaos':p);};
+document.getElementById('lgcheck').onclick=function(){var v=verify();document.getElementById('lgread').textContent='periods [2.8,3.2,3.5,3.55,3.9] = ['+v.p.join(',')+'] → 1,2,4,8,chaos '+(v.ok?'✓':'✗');};
+document.getElementById('lgspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var cx=W/2,cy=H/2-10;
+ var rs=[2.8,3.2,3.5,3.55,3.7,3.9];for(var ri=0;ri<rs.length;ri++){var s=attractor(rs[ri],0.4),r=45+ri*22;for(var i=0;i<s.length;i++){var a=s[i]*6.28+ang*0.3;g.fillStyle='hsl('+(ri*50)+',65%,58%)';g.beginPath();g.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r*0.8,1.5,0,7);g.fill();}}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('rings: attractors from period-1 (inner) to chaos (outer)',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta idea: the external randomness you do not need',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('unpredictability with no dice (deterministic chaos)',10,H-9);}
+drawW3();drawW4();window.__logistic=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
