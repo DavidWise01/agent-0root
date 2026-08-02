@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE INTERVAL TREE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#58a0b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#58a0b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#58a0b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#58a0b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #58a0b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#58a0b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#58a0b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#58a0b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#58a0b0;background:transparent;border:2px solid #58a0b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#58a0b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#58a0b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#58a0b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#58a0b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#58a0b0 42%,#0a0e0a);border-left:4px solid #58a0b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#58a0b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#58a0b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#58a0b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#58a0b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE PULL REQUEST</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE PULL REQUEST / <b>THE INTERVAL TREE</b></div>
+<h1>THE INTERVAL TREE</h1>
+<div class="kick">query which intervals overlap fast</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>An interval tree</b> answers &ldquo;which stored intervals overlap this query interval?&rdquo; quickly, by <b>augmenting a binary search tree</b>. Nodes are keyed by each interval&rsquo;s left endpoint; every node also caches the <b>maximum right endpoint</b> in its subtree. That cache lets a query <b>prune whole branches</b>: if a subtree&rsquo;s max-high is below the query&rsquo;s low, nothing there can overlap, so skip it. What would be a scan of every interval becomes a guided descent.<br><br>
+ <span class="lit">LIT</span> verified live: over 2000 random interval sets and queries, the tree returns <b>exactly</b> the intervals a brute-force scan finds (window.__intervaltree). <span class="fig">FIG</span> no framing; exact overlap tests and set comparison.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-pull-request</i> &mdash; overlapping ranges drawn together; the interval tree pulls in exactly the intervals that intersect a query and leaves the rest. <b>AVAN (AI)</b> built the instrument: the left-endpoint BST keyed nodes, the max-high subtree augmentation, the prune-by-max-high query, and the match against a brute scan.<br><br>Credit as content: the interval tree (augmented BST; Cormen&ndash;Leiserson&ndash;Rivest&ndash;Stein). The weave: David names the-pull-request; I key intervals by their left endpoint, cache each subtree&rsquo;s maximum right endpoint, and answer overlap queries by descending only where the cache permits &mdash; confirming the result exactly matches scanning every interval.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Each node stores its interval and the max right-endpoint below it. A query skips any subtree whose max-high is below the query&rsquo;s low &mdash; nothing there can reach the query.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Intervals as bars with a query range; the overlapping ones highlighted, checked against a brute scan.</div>
+   <div class="btns" style="margin-top:10px"><button id="ivroll">new intervals ▶</button><button id="ivquery">move query ▶</button><button id="ivcheck">verify 2000 ▶</button></div>
+   <div class="cap" id="ivread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: overlaps found without scanning all.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): find overlapping intervals without <b>testing every one</b> &mdash; cache each subtree&rsquo;s maximum right endpoint and prune any branch that cannot reach the query. The inverse of &lsquo;scan all intervals for overlap&rsquo; is &lsquo;descend a BST, skipping subtrees whose max-high falls short.&rsquo; <b>Magenta</b> is the full scan; <b>green</b> is the pruned descent. Overlap queries by cached reach.</div>
+   <div class="btns" style="margin-top:10px"><button id="ivspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine interval tree (augmented BST; Cormen–Leiserson–Rivest–Stein). Verified live: over 2000 random interval sets and queries, the left-endpoint-keyed BST with max-high subtree augmentation, querying by pruning subtrees whose max-high falls below the query low, returns exactly the interval set a brute-force overlap scan returns (window.__intervaltree.matchesBrute).<br><br><span class="fig">FIG</span> No framing: the keyed BST nodes, the max-high augmentation, the prune-by-max-high query, and the match against a brute scan run in-browser with exact overlap tests and agree. The AVAN inverse is honest — finding overlapping intervals by caching each subtree's maximum right endpoint and pruning branches that cannot reach the query genuinely replaces scanning all intervals; magenta is that full scan, green the pruned descent. Overlap queries by cached reach.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE PULL REQUEST &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,IVS=[],ROOT=null,Q=[30,55];
+function insert(root,iv){var node={lo:iv[0],hi:iv[1],maxHi:iv[1],left:null,right:null};if(!root)return node;var cur=root;while(true){cur.maxHi=Math.max(cur.maxHi,iv[1]);if(iv[0]<cur.lo){if(!cur.left){cur.left=node;break;}cur=cur.left;}else{if(!cur.right){cur.right=node;break;}cur=cur.right;}}return root;}
+function ov(a,b){return a[0]<=b[1]&&b[0]<=a[1];}
+function query(node,q,out){if(!node)return;if(node.left&&node.left.maxHi>=q[0])query(node.left,q,out);if(ov([node.lo,node.hi],q))out.push([node.lo,node.hi]);if(node.lo<=q[1])query(node.right,q,out);}
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function verify(){var rnd=mb(933),ok=true;for(var t=0;t<2000;t++){var n=1+Math.floor(rnd()*40),ivs=[],root=null;for(var i=0;i<n;i++){var lo=Math.floor(rnd()*100),hi=lo+Math.floor(rnd()*30);ivs.push([lo,hi]);root=insert(root,[lo,hi]);}var qlo=Math.floor(rnd()*100),q=[qlo,qlo+Math.floor(rnd()*30)],out=[];query(root,q,out);var brute=ivs.filter(function(iv){return ov(iv,q);});var k=function(a){return a.map(function(x){return x[0]+','+x[1];}).sort().join('|');};if(k(out)!==k(brute))ok=false;}return {matchesBrute:ok};}
+function mk(){IVS=[];ROOT=null;for(var i=0;i<11;i++){var lo=Math.floor(Math.random()*80),hi=lo+3+Math.floor(Math.random()*22);IVS.push([lo,hi]);ROOT=insert(ROOT,[lo,hi]);}}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('each node caches its subtree max-high; prune any subtree with max-high < query.lo',12,14);
+ var ivs=[[10,25],[5,15],[30,50],[40,45],[20,60]];for(var i=0;i<ivs.length;i++){g.strokeStyle='#58a0b0';g.beginPath();g.moveTo(40+ivs[i][0]*4,45+i*20);g.lineTo(40+ivs[i][1]*4,45+i*20);g.lineWidth=4;g.stroke();g.lineWidth=1;g.fillStyle='#8ad';g.font='8px monospace';g.fillText('['+ivs[i][0]+','+ivs[i][1]+']',40+ivs[i][1]*4+4,48+i*20);}
+ g.strokeStyle='#e0b020';g.setLineDash([3,3]);g.beginPath();g.moveTo(40+35*4,35);g.lineTo(40+35*4,150);g.stroke();g.setLineDash([]);g.fillStyle='#e0b020';g.font='9px monospace';g.fillText('query',40+35*4+2,150);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!IVS.length)mk();var out=[];query(ROOT,Q,out);var inset={};out.forEach(function(iv){inset[iv[0]+','+iv[1]]=1;});var sc=(W-30)/100;
+ g.fillStyle='#e0b020';g.globalAlpha=0.2;g.fillRect(15+Q[0]*sc,20,(Q[1]-Q[0])*sc,H-70);g.globalAlpha=1;
+ for(var i=0;i<IVS.length;i++){var hit=inset[IVS[i][0]+','+IVS[i][1]];g.strokeStyle=hit?'#39fc6b':'#58a0b0';g.lineWidth=hit?4:2;g.beginPath();g.moveTo(15+IVS[i][0]*sc,40+i*20);g.lineTo(15+IVS[i][1]*sc,40+i*20);g.stroke();g.lineWidth=1;}
+ g.strokeStyle='#e0b020';g.lineWidth=2;g.strokeRect(15+Q[0]*sc,20,(Q[1]-Q[0])*sc,H-70);g.lineWidth=1;g.fillStyle='#e0b020';g.font='9px monospace';g.fillText('query ['+Q[0]+','+Q[1]+']',15+Q[0]*sc,16);
+ var brute=IVS.filter(function(iv){return ov(iv,Q);});g.fillStyle=out.length===brute.length?'#39fc6b':'#ff5a5a';g.font='10px monospace';g.fillText('tree found '+out.length+' overlapping · brute '+brute.length+' '+(out.length===brute.length?'✓':'✗'),15,H-10);}
+document.getElementById('ivroll').onclick=function(){mk();drawW4();document.getElementById('ivread').textContent='new '+IVS.length+' intervals';};
+document.getElementById('ivquery').onclick=function(){var lo=Math.floor(Math.random()*70);Q=[lo,lo+15+Math.floor(Math.random()*20)];drawW4();var o=[];query(ROOT,Q,o);document.getElementById('ivread').textContent='query ['+Q[0]+','+Q[1]+'] → '+o.length+' overlaps';};
+document.getElementById('ivcheck').onclick=function(){var v=verify();document.getElementById('ivread').textContent='2000 sets: interval-tree query == brute scan '+(v.matchesBrute?'✓':'✗');};
+document.getElementById('ivspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!IVS.length)mk();var out=[];query(ROOT,Q,out);var inset={};out.forEach(function(iv){inset[iv[0]+','+iv[1]]=1;});var cx=W/2,cy=H/2-10;
+ for(var i=0;i<IVS.length;i++){var iv=IVS[i],a0=iv[0]/100*6.28+ang*0.3,a1=iv[1]/100*6.28+ang*0.3,r=60+i*8,hit=inset[iv[0]+','+iv[1]];g.strokeStyle=hit?'#39fc6b':'rgba(88,160,176,0.6)';g.lineWidth=hit?3:1.5;g.beginPath();g.arc(cx,cy,r,a0,a1);g.stroke();g.lineWidth=1;}
+ var qa0=Q[0]/100*6.28+ang*0.3,qa1=Q[1]/100*6.28+ang*0.3;g.strokeStyle='#e0b020';g.lineWidth=3;g.beginPath();g.arc(cx,cy,40,qa0,qa1);g.stroke();g.lineWidth=1;
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green arcs: intervals overlapping the gold query',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta idea: the full interval scan',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('overlap queries by cached reach',10,H-9);}
+mk();drawW3();drawW4();window.__intervaltree=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
