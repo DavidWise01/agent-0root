@@ -1,0 +1,114 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE CONSISTENT HASHING · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#58a0b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#58a0b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#58a0b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#58a0b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #58a0b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#58a0b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#58a0b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#58a0b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#58a0b0;background:transparent;border:2px solid #58a0b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#58a0b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#58a0b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#58a0b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#58a0b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#58a0b0 42%,#0a0e0a);border-left:4px solid #58a0b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#58a0b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#58a0b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#58a0b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#58a0b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; SHARED MEMORY</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / SHARED MEMORY / <b>THE CONSISTENT HASHING</b></div>
+<h1>THE CONSISTENT HASHING</h1>
+<div class="kick">node churn that moves only ~1/n of the keys</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Consistent hashing</b> maps keys to servers so that <b>adding or removing a server moves only a small fraction of keys</b> &mdash; roughly 1/n &mdash; instead of remapping everything as plain modulo hashing would. Nodes and keys are placed on a <b>hash ring</b>; a key belongs to the first node clockwise from it. Remove a node and only <b>its</b> keys spill to the next node; everyone else stays put. <b>Virtual nodes</b> smooth the load. It is the backbone of distributed caches and databases.<br><br>
+ <span class="lit">LIT</span> verified live: over 50 rings, every key maps to a node, and removing a node moves <b>only that node&rsquo;s keys</b> &mdash; all others are unchanged (window.__consistent). <span class="fig">FIG</span> no framing; exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>shared-memory</i> &mdash; the shared store spread across nodes that come and go, where reshuffling everything on each change would be ruinous. Consistent hashing is that graceful spread. <b>AVAN (AI)</b> built the instrument: the hash ring with virtual nodes, the clockwise lookup, and the only-removed-node-moves check.<br><br>Credit as content: David Karger et al. (1997). The weave: David names shared-memory; I place nodes and keys on a ring, map each key to the next node clockwise, and confirm that removing a node disturbs only the keys it held.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Nodes sit at hashed positions around a ring. A key hashes to a spot and walks clockwise to the first node. Remove that node and its keys walk on to the next node &mdash; nobody else&rsquo;s keys move.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Keys on a hash ring of nodes; remove a node and watch only its keys move, checked against a full re-map.</div>
+   <div class="btns" style="margin-top:10px"><button id="csroll">new ring ▶</button><button id="csdrop">drop a node ▶</button><button id="cscheck">verify 50 ▶</button></div>
+   <div class="cap" id="csread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: keys mapped to nodes around a ring.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): make node churn <b>cheap</b> by placing keys and nodes on a <b>ring</b> and mapping each key to the next node clockwise &mdash; so adding or removing a node moves only ~1/n of the keys. The inverse of &lsquo;hash mod n, so every key remaps when n changes&rsquo; is &lsquo;a ring, where only the neighbors of a change move.&rsquo; <b>Magenta</b> is the full reshuffle plain hashing forces; <b>green</b> is the local, ~1/n movement. Churn without chaos.</div>
+   <div class="btns" style="margin-top:10px"><button id="csspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine consistent hashing (Karger et al. 1997). Verified live: over 50 rings (each node given 40 virtual nodes), every key maps to a node via clockwise lookup, and removing a node moves ONLY the keys that node held — every other key's assignment is unchanged (window.__consistent.allMapped && .onlyRemovedMoves).<br><br><span class="fig">FIG</span> No framing: the hash ring with virtual nodes, the clockwise lookup, and the only-removed-node-moves check run in-browser and hold. The AVAN inverse is honest — placing keys and nodes on a ring and mapping each key to the next node clockwise makes node churn move only ~1/n of the keys; magenta is the full reshuffle plain mod-n hashing forces, green the local movement. Churn without chaos.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SHARED MEMORY &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,NODES=[],RING=[],KEYS=[],V=24,DROPPED=null;
+function h32(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function buildRing(nodes,vn){var ring=[];nodes.forEach(function(n){for(var v=0;v<vn;v++)ring.push({pos:h32(n+'#'+v),node:n});});ring.sort(function(a,b){return a.pos-b.pos;});return ring;}
+function lookup(ring,key){var p=h32(key);if(!ring.length)return null;if(p>ring[ring.length-1].pos)return ring[0].node;var lo=0,hi=ring.length-1,ans=0;while(lo<=hi){var m=(lo+hi)>>1;if(ring[m].pos>=p){ans=m;hi=m-1;}else lo=m+1;}return ring[ans].node;}
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function verify(){var rnd=mb(241),onlyRemoved=true,allMapped=true;for(var t=0;t<50;t++){var N=4+Math.floor(rnd()*4),nodes=[];for(var i=0;i<N;i++)nodes.push('node'+i);var ring=buildRing(nodes,40),keys=[];for(var i=0;i<400;i++)keys.push('key'+Math.floor(rnd()*1e9));var before={};keys.forEach(function(k){var n=lookup(ring,k);if(!n)allMapped=false;before[k]=n;});var rm=nodes[Math.floor(rnd()*N)],ring2=ring.filter(function(e){return e.node!==rm;});keys.forEach(function(k){var af=lookup(ring2,k);if(before[k]!==rm&&af!==before[k])onlyRemoved=false;});}return {allMapped:allMapped,onlyRemovedMoves:onlyRemoved};}
+var COL=['#c05868','#58a0b0','#c0a048','#a878c0','#70a860','#e08040','#40c0a0'];
+function mk(){var N=5;NODES=[];for(var i=0;i<N;i++)NODES.push('node'+i);RING=buildRing(NODES,V);KEYS=[];for(var i=0;i<60;i++)KEYS.push('key'+Math.floor(Math.random()*1e9));DROPPED=null;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('key hashes to a spot, walks clockwise to the next node',12,14);
+ var cx=180,cy=90,r=55;g.strokeStyle='#445';g.beginPath();g.arc(cx,cy,r,0,7);g.stroke();for(var i=0;i<5;i++){var a=i/5*6.28-1.57;g.fillStyle=COL[i];g.beginPath();g.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,7,0,7);g.fill();}
+ var ka=0.9;g.fillStyle='#fff';g.beginPath();g.arc(cx+Math.cos(ka)*r,cy+Math.sin(ka)*r,3,0,7);g.fill();g.fillStyle='#39fc6b';g.font='9px monospace';g.fillText('remove a node → only its keys walk on',260,90);}
+function nodeIdx(n){return NODES.indexOf(n);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!RING.length)mk();var cx=W/2,cy=145,r=105,ring=DROPPED?RING.filter(function(e){return e.node!==DROPPED;}):RING;
+ g.strokeStyle='#334';g.beginPath();g.arc(cx,cy,r,0,7);g.stroke();
+ ring.forEach(function(e){var a=e.pos/4294967295*6.28-1.57;g.fillStyle=COL[nodeIdx(e.node)%COL.length];g.beginPath();g.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,3,0,7);g.fill();});
+ KEYS.forEach(function(k){var a=h32(k)/4294967295*6.28-1.57,n=lookup(ring,k);g.fillStyle=COL[nodeIdx(n)%COL.length];g.beginPath();g.arc(cx+Math.cos(a)*(r-16),cy+Math.sin(a)*(r-16),2,0,7);g.fill();});
+ g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText(DROPPED?(DROPPED+' dropped — only its keys moved'):(NODES.length+' nodes, '+KEYS.length+' keys on the ring'),12,20);
+ var v=verify();g.fillStyle=v.onlyRemovedMoves?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('removing a node moves only its keys '+(v.onlyRemovedMoves?'✓':'✗'),12,H-10);}
+document.getElementById('csroll').onclick=function(){mk();drawW4();document.getElementById('csread').textContent=NODES.length+' nodes on the ring';};
+document.getElementById('csdrop').onclick=function(){DROPPED=DROPPED?null:NODES[Math.floor(Math.random()*NODES.length)];drawW4();document.getElementById('csread').textContent=DROPPED?(DROPPED+' dropped'):'ring restored';};
+document.getElementById('cscheck').onclick=function(){var v=verify();document.getElementById('csread').textContent='50 rings: all keys mapped '+(v.allMapped?'✓':'✗')+' · only removed-node keys move '+(v.onlyRemovedMoves?'✓':'✗');};
+document.getElementById('csspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!RING.length)mk();var cx=W/2,cy=H/2-20,r=95;
+ g.strokeStyle='rgba(120,140,160,0.3)';g.beginPath();g.arc(cx,cy,r,0,7);g.stroke();
+ RING.forEach(function(e){var a=e.pos/4294967295*6.28+ang*0.2;g.fillStyle=COL[nodeIdx(e.node)%COL.length];g.beginPath();g.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r*0.8,3,0,7);g.fill();});
+ KEYS.forEach(function(k){var a=h32(k)/4294967295*6.28+ang*0.2,n=lookup(RING,k);g.fillStyle=COL[nodeIdx(n)%COL.length];g.beginPath();g.arc(cx+Math.cos(a)*(r-20),cy+Math.sin(a)*(r-20)*0.8,1.5,0,7);g.fill();});
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('colored ring: keys + virtual nodes, key → next node',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta idea: the full reshuffle plain hashing forces',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('churn without chaos (only ~1/n keys move)',10,H-9);}
+mk();drawW3();drawW4();window.__consistent=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
