@@ -52,23 +52,23 @@ input[type=range]{width:120px;vertical-align:middle;accent-color:#ff9e6d}
 <h1>THE PLUCKED STRING</h1>
 <div class="kick">noise in a delay line becomes a tone at fs/N</div>
 <div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
- <div class="wintxt"><b>Karplus&ndash;Strong.</b> The cheapest way ever found to make a plucked-string sound on silicon (1983). Fill a short buffer of length <b>N</b> with <b>noise</b> &mdash; the sharp attack of a pluck. Then loop it: read a sample, and write back the <b>average of it and its neighbour</b>. That one-line two-tap average is a gentle low-pass; each pass around the loop it shaves the highs, so the noise settles into a decaying <b>tone</b>.<br><br>
- The delay-line length sets the pitch: the wave takes ~N samples to travel the loop, so the fundamental is<br><span class="mono">f &asymp; f<sub>s</sub> / N</span> (sample rate over buffer length).<br><br>
- <span class="lit">LIT</span> verified: this instrument synthesises the actual signal, then <b>measures its period by autocorrelation</b>; the measured pitch matches f<sub>s</sub>/N within a few percent for every N (window.__ks.withinTol). The two-tap average shifts it very slightly sharp (true period ~N&minus;&frac12;), which the readout shows honestly. <span class="fig">FIG</span> &lsquo;a string&rsquo; is the picture; the noise&rarr;tone decay and the f<sub>s</sub>/N pitch are real, and you can hear it.</div></div>
+ <div class="wintxt"><b>Kasai&rsquo;s algorithm</b> computes the <b>LCP array</b> &mdash; the longest common prefix between each pair of adjacent suffixes in a suffix array &mdash; in <b>linear</b> time. The insight: process suffixes in <b>text order</b>, not sorted order, and reuse the previous answer, because dropping the first character of a suffix shortens its LCP with its neighbour by <b>at most one</b>. So a running length can only fall by 1 per step, and thus rise at most n times total.<br><br>
+ The LCP array powers substring search, longest repeated substring, and more.<br><br>
+ <span class="lit">LIT</span> verified live: over 300 random strings Kasai&rsquo;s O(n) LCP array equals a brute-force pairwise-prefix computation (window.__kasai). <span class="fig">FIG</span> no framing; exact.</div></div>
 <div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
- <div class="wintxt"><b>David (human)</b> seated this in <i>THE HANDOFF</i> &mdash; the co-op domain about passing a token cleanly from hand to hand. Karplus&ndash;Strong is exactly that: every sample is handed around a ring, and each hand softens it a little. <b>AVAN (AI)</b> built the synth: the delay ring, the pitch dial, the autocorrelation check, and a real Web-Audio pluck.<br><br>The weave: David names the seat (the clean handoff around a loop); I make the loop audible and measurable &mdash; the delay line in 1D, the waveform + measured pitch in 2D, the rotating ring with its low-pass window in 3D. The sphere is the seam. Credit: Kevin Karplus &amp; Alex Strong, 1983.</div></div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-inventory</i> &mdash; the LCP array is the catalogue of how much adjacent suffixes overlap, the string&rsquo;s inventory of shared prefixes. Kasai builds it in one linear pass. <b>AVAN (AI)</b> built the instrument: the suffix array, the rank inverse, the running-length Kasai pass, the brute cross-check.<br><br>Credit as content: Toru Kasai et al. (2001). The weave: David names the inventory; I walk the suffixes in text order, carrying the overlap length forward and dropping at most one each step, and confirm the LCP array matches brute force.</div></div>
 <div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
- <div class="wc"><canvas id="w3" width="512" height="140"></canvas>
-  <div class="wctrl"><div class="cap">The <b>delay line</b>: N samples in a ring. Read the front, write back the <b>average of the front two</b> (the low-pass tap), advance. That single averaging step is the whole instrument &mdash; it both sets the decay and keeps the pitch.</div></div></div></div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Moving from suffix i to suffix i+1 drops one leading character; its overlap with the previous suffix in sorted order can shrink by at most one &mdash; so the running length h decreases by &le;1, and total work stays linear.</div></div></div></div>
 <div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
- <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
-  <div class="wctrl"><div class="cap">Dial the buffer length <b>N</b> to set the pitch, then <b>pluck</b> to hear it. The green trace is the synthesised waveform decaying; the readout shows the <b>predicted</b> pitch f<sub>s</sub>/N against the pitch <b>measured</b> back out of the signal by autocorrelation.</div>
-   <div class="btns" style="margin-top:10px"><button id="ksdn">◀ lower</button><button id="ksup">higher ▶</button><button id="kspluck">♪ pluck</button></div>
+ <div class="wc"><canvas id="w4" width="384" height="280"></canvas>
+  <div class="wctrl"><div class="cap">A string&rsquo;s sorted suffixes and the LCP between each adjacent pair; Kasai&rsquo;s linear result is checked against brute force.</div>
+   <div class="btns" style="margin-top:10px"><button id="ksroll">new string ▶</button><button id="kscheck">verify 300 ▶</button></div>
    <div class="cap" id="ksread" style="margin-top:8px"></div></div></div></div>
 <div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
  <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
-  <div class="wctrl"><div class="cap">The delay line as a turning <b>ring</b> of N samples &mdash; <b>green</b>, amplitude as height, the pluck circulating around the loop.</div>
-   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the <b>magenta</b> pair is the two-tap <b>averaging window</b> travelling around the ring &mdash; the low-pass. It is the inverse of the noise burst that started it: the pluck injects <i>all</i> frequencies at once; this little averager removes them one lap at a time, high notes first, until only the fundamental survives and fades. The ring is the pitch; the moving window is the decay. Sound is a burst being slowly un-made.</div>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the running overlap length carried from suffix to suffix.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): compute <b>all</b> longest-common-prefixes in O(n) total by processing suffixes in <b>text order</b> and reusing the previous answer &mdash; because dropping the first character shortens a suffix&rsquo;s LCP with its neighbour by at most one, the running length h falls by &le;1 each step, so it can only rise n times total. The inverse of &lsquo;recompute each LCP from scratch (n&sup2; total)&rsquo; is &lsquo;reuse the previous suffix&rsquo;s LCP, losing at most one character.&rsquo; <b>Magenta</b> is the redundant character comparisons; <b>green</b> is the running length carried forward. An amortised argument turns quadratic into linear. (Kin to the-suffix-array and the-suffix-automaton.)</div>
    <div class="btns" style="margin-top:10px"><button id="ksspin">pause spin</button></div></div></div></div>
 <div class="note"><span class="lit">LIT</span> A genuine Karplus-Strong string (Karplus & Strong, 1983). Verified live: the instrument synthesises the signal and measures its period by autocorrelation; the measured pitch matches the predicted fs/N within ~3% for every N (window.__ks.withinTol === true). The two-tap average is a real one-pole low-pass that both produces the exponential decay and shifts the pitch very slightly sharp (true period ~N-1/2), shown honestly in the readout.<br><br><span class="fig">FIG</span> 'A plucked string' is the framing; the mechanism (noise burst -> looped two-tap low-pass -> decaying tone at fs/N) is exactly the 1983 algorithm and is audible through the speakers. Pitch is fs/N to a few percent, not to the cent.</div>
 <div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE HANDOFF &middot; David Lee Wise (ROOT0), with AVAN</div>
@@ -81,42 +81,25 @@ rs();addEventListener('resize',rs);
 setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
 for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
 (function(){
-var FS=44100,N=220,ang=0,spin=true,actx=null;
-function lcg(seed){var s=seed>>>0;return function(){s=(1664525*s+1013904223)>>>0;return s/4294967296*2-1;};}
-function synth(nn,len){var r=lcg(0x9e3779b9),buf=new Float32Array(nn);for(var i=0;i<nn;i++)buf[i]=r();var p=0,out=new Float32Array(len);for(var t=0;t<len;t++){out[t]=buf[p];buf[p]=0.5*(buf[p]+buf[(p+1)%nn]);p=(p+1)%nn;}return out;}
-function measure(out,nn){var off=2500,W=Math.min(4*nn,out.length-off-nn-40),best=-1e30,bk=nn;for(var lag=nn-25;lag<=nn+25;lag++){var s=0;for(var i=0;i<W;i++)s+=out[off+i]*out[off+i+lag];if(s>best){best=s;bk=lag;}}return bk;}
-function verify(){var out=synth(N,12000),per=measure(out,N),mf=FS/per,pf=FS/N,err=Math.abs(mf-pf)/pf;return {N:N,fs:FS,predicted:+pf.toFixed(2),measuredPeriod:per,measuredFreq:+mf.toFixed(2),withinTol:err<0.03};}
-function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
- var r=lcg(0x9e3779b9),buf=[];for(var i=0;i<24;i++)buf.push(r());var bw=(W-30)/24;
- for(var i=0;i<24;i++){var h=buf[i]*30,x=15+i*bw;g.fillStyle=(i<2)?'#ff2d95':'#39fc6b';g.fillRect(x,70-Math.max(0,h),bw-3,Math.abs(h));g.fillRect(x,70,bw-3,Math.abs(Math.min(0,h)));}
- g.strokeStyle='#5c8a6a';g.beginPath();g.moveTo(10,70);g.lineTo(W-6,70);g.stroke();
- g.fillStyle='#ff2d95';g.font='11px ui-monospace,monospace';g.fillText('◄ average these two → write back → advance ►',15,108);
- g.fillStyle='#4c7a54';g.fillText('delay line of N samples (showing 24); the two-tap low-pass in magenta',15,126);}
-function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
- var out=synth(N,6000);g.strokeStyle='#39fc6b';g.lineWidth=1;g.beginPath();for(var x=0;x<W;x++){var idx=Math.floor(x/W*6000),y=100-out[idx]*70;if(x===0)g.moveTo(x,y);else g.lineTo(x,y);}g.stroke();
- g.strokeStyle='#123';g.beginPath();g.moveTo(0,100);g.lineTo(W,100);g.stroke();
- var per=measure(out,N),mf=FS/per,pf=FS/N;
- g.font='14px ui-monospace,monospace';g.fillStyle='#ff9e6d';g.fillText('N = '+N+' samples',24,180);
- g.fillStyle='#8ca';g.fillText('predicted  f = fs/N   = '+pf.toFixed(1)+' Hz',24,208);
- g.fillStyle='#6fe3d0';g.fillText('measured (autocorr) = '+mf.toFixed(1)+' Hz  (period '+per+')',24,232);
- var err=Math.abs(mf-pf)/pf*100;g.fillStyle=err<3?'#39fc6b':'#ff5a5a';g.fillText('agree within '+err.toFixed(2)+'%  '+(err<3?'✓':'✗'),24,256);
- g.fillStyle='#4c7a54';g.font='11px ui-monospace,monospace';g.fillText('note '+noteName(pf)+' · press pluck to hear it',24,282);
- document.getElementById('ksread').textContent='N='+N+' → '+pf.toFixed(0)+' Hz predicted, '+mf.toFixed(0)+' Hz measured';}
-function noteName(f){var n=Math.round(12*Math.log2(f/440))+69,names=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];return names[((n%12)+12)%12]+(Math.floor(n/12)-1);}
-function pluck(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();var dur=1.4,len=Math.floor(FS*dur),data=synth(N,len),bn=actx.sampleRate,rs=synth(N,Math.floor(bn*dur)),b=actx.createBuffer(1,rs.length,bn);b.getChannelData(0).set(rs);var src=actx.createBufferSource();src.buffer=b;var gn=actx.createGain();gn.gain.setValueAtTime(0.6,actx.currentTime);src.connect(gn);gn.connect(actx.destination);src.start();}catch(e){}}
-function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);
- var cx=W/2,cy=H/2,R=115,M=64,r=lcg(0x9e3779b9),amp=[];for(var i=0;i<M;i++)amp.push(r());
- var head=(ang*3)%(Math.PI*2);
- for(var i=0;i<M;i++){var th=i/M*Math.PI*2+ang,depth=Math.cos(th*0+ (i/M*Math.PI*2)+ang),x=cx+Math.cos(th)*R,y=cy+Math.sin(th)*R*0.5,h=amp[i]*22;
-  var near=Math.sin(th)>0?1:0.45;g.globalAlpha=0.35+0.55*near;
-  g.strokeStyle='#39fc6b';g.lineWidth=2;g.beginPath();g.moveTo(x,y);g.lineTo(x,y-h);g.stroke();}
- // magenta two-tap window
- var wi=Math.floor((ang/(Math.PI*2)*M)%M);for(var k=0;k<2;k++){var j=(wi+k)%M,th=j/M*Math.PI*2+ang,x=cx+Math.cos(th)*R,y=cy+Math.sin(th)*R*0.5;g.globalAlpha=1;g.fillStyle='#ff2d95';g.beginPath();g.arc(x,y,5,0,7);g.fill();}
- g.globalAlpha=1;g.fillStyle='#39fc6b';g.font='11px ui-monospace,monospace';g.fillText('green: delay ring (N samples) · magenta: the 2-tap low-pass, circulating',10,H-12);}
-function all(){drawW3();drawW4();window.__ks=verify();}
-document.getElementById('ksdn').onclick=function(){N=Math.min(600,N+20);all();};
-document.getElementById('ksup').onclick=function(){N=Math.max(60,N-20);all();};
-document.getElementById('kspluck').onclick=pluck;
+var ang=0,spin=true,STR='banana';
+function sa(s){var n=s.length,a=[];for(var i=0;i<n;i++)a.push(i);a.sort(function(x,y){return s.slice(x)<s.slice(y)?-1:1;});return a;}
+function kasai(s,SA){var n=s.length,rank=new Array(n),lcp=new Array(n).fill(0);for(var i=0;i<n;i++)rank[SA[i]]=i;var h=0;for(var i=0;i<n;i++){if(rank[i]>0){var j=SA[rank[i]-1];while(i+h<n&&j+h<n&&s[i+h]===s[j+h])h++;lcp[rank[i]]=h;if(h>0)h--;}else h=0;}return lcp;}
+function brute(s,SA){var n=s.length,lcp=new Array(n).fill(0);for(var i=1;i<n;i++){var a=SA[i],b=SA[i-1],h=0;while(a+h<n&&b+h<n&&s[a+h]===s[b+h])h++;lcp[i]=h;}return lcp;}
+function verify(){var seed=65;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return (seed>>>8)/16777216;}var ok=true,al='abc';for(var t=0;t<300;t++){var n=1+Math.floor(rnd()*14),s='';for(var i=0;i<n;i++)s+=al[Math.floor(rnd()*3)];var SA=sa(s);if(kasai(s,SA).join(',')!==brute(s,SA).join(','))ok=false;}return {matchesBrute:ok};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('running overlap h drops by ≤1 per step → linear total work',12,14);
+ var hs=[3,2,1,0,2,1];for(var i=0;i<hs.length;i++){g.fillStyle='#a878c0';g.fillRect(40+i*70,110-hs[i]*22,50,hs[i]*22+4);g.fillStyle='#cde';g.font='9px monospace';g.fillText('h='+hs[i],44+i*70,124);}
+ g.fillStyle='#8ad';g.fillText('h can only rise n times in total (amortized O(n))',40,145);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var SA=sa(STR),lcp=kasai(STR,SA),n=STR.length;g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('"'+STR+'" — sorted suffixes + LCP',12,18);
+ var rowh=Math.min(22,220/n);for(var i=0;i<n;i++){var suf=STR.slice(SA[i]);g.fillStyle='#37506e';g.font='10px monospace';g.fillText(suf,60,36+i*rowh);g.fillStyle='#a878c0';g.fillText(i>0?('lcp '+lcp[i]):'—',W-70,36+i*rowh);if(i>0&&lcp[i]>0){g.fillStyle='rgba(168,120,192,0.4)';g.fillRect(58,28+i*rowh-rowh+4,lcp[i]*7,rowh);}}
+ var ok=kasai(STR,SA).join(',')===brute(STR,SA).join(',');g.fillStyle=ok?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('Kasai O(n) LCP == brute '+(ok?'✓':'✗'),12,H-8);}
+document.getElementById('ksroll').onclick=function(){var words=['banana','mississippi','abracadabra','abababab','aabbaabb','tobeornottobe'];STR=words[Math.floor(Math.random()*words.length)];drawW4();document.getElementById('ksread').textContent='"'+STR+'" → LCP ['+kasai(STR,sa(STR)).join(',')+']';};
+document.getElementById('kscheck').onclick=function(){var v=verify();document.getElementById('ksread').textContent='300 strings: Kasai LCP == brute '+(v.matchesBrute?'✓':'✗');};
 document.getElementById('ksspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
-all();function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var SA=sa(STR),lcp=kasai(STR,SA),n=STR.length,cx=W/2,cy=H/2-10;
+ for(var i=0;i<n;i++){var a=i/n*6.28+ang*0.3,r=60+(i>0?lcp[i]:0)*18,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r*0.7;g.fillStyle='#39fc6b';g.globalAlpha=0.5+0.5*(i>0?lcp[i]:0)/Math.max(1,Math.max.apply(0,lcp));g.beginPath();g.arc(x,y,5+(i>0?lcp[i]:0)*2,0,7);g.fill();g.globalAlpha=1;}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: the running overlap carried suffix to suffix',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the redundant re-comparisons avoided',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('drop ≤1 per step → quadratic becomes linear',10,H-9);}
+drawW4();window.__kasai=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
 </script></body></html>

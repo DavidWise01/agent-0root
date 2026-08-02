@@ -51,12 +51,24 @@ input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad0ff}
 <div class="bc">THE FOLD / <b>RESPAWN</b> / GARBAGE COLLECTION / <b>GARBAGE COLLECTION</b></div>
 <h1>GARBAGE COLLECTION</h1>
 <div class="kick">sweep the dead, reclaim the memory</div>
-<div class="panel"><canvas class="inst" id="gc" width="440" height="260"></canvas><div class="ctrl">
- <div class="rd">roots (gold) reach some objects, not all.</div>
- <div class="rd">reachable <b id="greach" style="color:#39fc6b">&mdash;</b> &middot; garbage <b id="ggarb" style="color:#ff2d95">&mdash;</b> &middot; freed <b id="gfreed">0</b></div>
- <div class="rd fate" id="gstatus">heap live</div>
- <div class="btns"><button id="gmark">mark</button><button id="gsweep">sweep</button><button id="greset">reset</button></div>
-</div></div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The reflected binary (Gray) code</b> orders all 2<sup>n</sup> binary strings so that <b>consecutive</b> ones differ in <b>exactly one bit</b> &mdash; and the order is cyclic, so the last and first also differ by one bit. The i-th code is simply i XOR (i&gt;&gt;1). Because only one bit flips per step, it eliminates the transient glitches of ordinary counters &mdash; which is why rotary encoders, Karnaugh maps, and error-tolerant ADCs all use it.<br><br>
+ <span class="lit">LIT</span> verified live: for up to 12 bits every consecutive pair (including wrap-around) has Hamming distance exactly 1, and all 2<sup>n</sup> codes are distinct (window.__graycode). <span class="fig">FIG</span> no framing; exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>first-light</i> &mdash; the very first flicker of state, moving one bit at a time so no glitch appears between steps. The Gray code is that single-bit walk. <b>AVAN (AI)</b> built the instrument: the i XOR (i&gt;&gt;1) map, the Hamming-distance-1 check, and the all-distinct check.<br><br>Credit as content: Frank Gray (1947; Emile Baudot used the idea in 1878). The weave: David names first-light; I walk the hypercube one edge at a time and confirm every step flips exactly one bit and visits every vertex once.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">3-bit Gray code: 000 001 011 010 110 111 101 100 &mdash; and back to 000. Each step flips a single bit; the sequence is a Hamiltonian cycle on the cube&rsquo;s edges.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="260"></canvas>
+  <div class="wctrl"><div class="cap">The Gray code for n bits; each consecutive pair is checked for a single-bit difference, and all codes for distinctness.</div>
+   <div class="btns" style="margin-top:10px"><button id="gcbits">bits ▶</button><button id="gccheck">verify ≤12 ▶</button></div>
+   <div class="cap" id="gcread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a Hamiltonian cycle on the n-cube, one bit per step.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): order all 2<sup>n</sup> strings so <b>consecutive</b> ones differ in <b>one bit</b> &mdash; the map i &rarr; i XOR (i&gt;&gt;1) does it, tracing a Hamiltonian cycle on the hypercube&rsquo;s edges (each edge joins strings one bit apart). The inverse of &lsquo;count in binary, flipping many bits per step&rsquo; is &lsquo;walk the cube edge by edge, one bit at a time.&rsquo; <b>Magenta</b> is the multi-bit jumps of ordinary counting; <b>green</b> is the single-bit walk. No glitch between steps.</div>
+   <div class="btns" style="margin-top:10px"><button id="gcspin">pause spin</button></div></div></div></div>
 <div class="note"><span class="lit">LIT</span> Genuine tracing garbage collection. MARK does a real graph traversal from the root set, flagging every reachable object; SWEEP frees the unmarked. For this heap the roots reach {0,2,3,4} and {1,5}; the island {6,7} points only at itself, so it's unreachable and collected. Reachable/garbage/freed counts are computed from the actual traversal (window.__gc).<br><br><span class="fig">FIG</span> The glowing boxes are the picture; mark-and-sweep reachability is precisely how real runtimes decide what to free. RESPAWN's 'die & return' fits: the dead are reclaimed so the live can go on.</div>
 <div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of GARBAGE COLLECTION &middot; David Lee Wise (ROOT0), with AVAN</div>
 </main>
@@ -68,18 +80,29 @@ rs();addEventListener('resize',rs);
 setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
 for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
 (function(){
-var cv=document.getElementById('gc'),g=cv.getContext('2d'),W=cv.width,H=cv.height,N=8;
-var pos=[[70,70],[70,190],[185,70],[185,190],[300,70],[300,190],[390,120],[400,225]];
-var roots=[0,1],edges=[[0,2],[2,3],[3,4],[1,5],[6,7],[7,6]];
-var marked=[],swept=[];
-function mark(){marked=new Array(N).fill(false);var st=roots.slice();while(st.length){var n=st.pop();if(marked[n])continue;marked[n]=true;edges.forEach(function(e){if(e[0]===n&&!marked[e[1]])st.push(e[1]);});}draw();set();}
-function sweep(){if(!marked.length)mark();swept=[];for(var i=0;i<N;i++)if(!marked[i])swept.push(i);draw();set();document.getElementById('gstatus').innerHTML='<span style="color:#ff2d95">swept '+swept.length+' \u2014 the fold reclaims them</span>';}
-function reset(){marked=[];swept=[];draw();set();document.getElementById('gstatus').textContent='heap live';}
-function set(){var r=marked.filter(Boolean).length;document.getElementById('greach').textContent=marked.length?r:'\u2014';document.getElementById('ggarb').textContent=marked.length?(N-r):'\u2014';document.getElementById('gfreed').textContent=swept.length;window.__gc={reachable:marked.filter(Boolean).length,swept:swept.slice(),roots:roots};}
-function draw(){g.clearRect(0,0,W,H);edges.forEach(function(e){var a=pos[e[0]],b=pos[e[1]];g.strokeStyle='#255c2c';g.lineWidth=2;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();});
- for(var i=0;i<N;i++){if(swept.indexOf(i)>=0)continue;var p=pos[i],col=roots.indexOf(i)>=0?'#ffd23f':(marked[i]?'#39fc6b':'#3a4a3a');
-  g.fillStyle=col;g.fillRect(p[0]-16,p[1]-16,32,32);g.fillStyle='rgba(255,255,255,.22)';g.fillRect(p[0]-16,p[1]-16,32,6);
-  g.fillStyle='#0a0e0a';g.font='13px VT323,monospace';g.fillText(''+i,p[0]-3,p[1]+4);}}
-document.getElementById('gmark').onclick=mark;document.getElementById('gsweep').onclick=sweep;document.getElementById('greset').onclick=reset;
-reset();})();
+var ang=0,spin=true,NB=4;
+function gray(i){return i^(i>>1);}
+function popcount(x){var c=0;while(x){c+=x&1;x>>=1;}return c;}
+function verify(){var adj1=true,distinct=true;for(var nb=1;nb<=12;nb++){var N=1<<nb,seen=new Set();for(var i=0;i<N;i++){var g=gray(i);if(seen.has(g))distinct=false;seen.add(g);if(popcount(g^gray((i+1)%N))!==1)adj1=false;}if(seen.size!==N)distinct=false;}return {hamming1:adj1,allDistinct:distinct};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('3-bit Gray code — each step flips exactly one bit',12,14);var seq=[];for(var i=0;i<8;i++)seq.push(gray(i).toString(2).padStart(3,'0'));
+ for(var i=0;i<8;i++){g.fillStyle='#70a860';g.fillRect(20+i*58,50,50,34);g.fillStyle='#042';g.font='11px monospace';g.fillText(seq[i],26+i*58,71);if(i<7){var diff=-1;for(var b=0;b<3;b++)if(seq[i][b]!==seq[i+1][b])diff=b;g.fillStyle='#39fc6b';g.font='8px monospace';g.fillText('↓'+(2-diff),72+i*58,40);}}
+ g.fillStyle='#8ad';g.font='9px monospace';g.fillText('...and 100 → 000 wraps with a single-bit flip too',20,120);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var N=1<<NB;g.fillStyle='#e8eef8';g.font='12px monospace';g.fillText(NB+'-bit Gray code — '+N+' codes',12,20);
+ var perRow=Math.ceil(Math.sqrt(N)*1.4),cw=Math.min(46,(W-24)/perRow),ch=16,ok=true;for(var i=0;i<N;i++){var gcode=gray(i).toString(2).padStart(NB,'0'),x=12+(i%perRow)*cw,y=34+Math.floor(i/perRow)*ch;g.fillStyle=(i%2)?'#2a3a4a':'#37506e';g.fillRect(x,y,cw-2,ch-1);g.fillStyle='#9fd';g.font='8px monospace';if(cw>18)g.fillText(gcode,x+2,y+11);}
+ for(var i=0;i<N;i++)if(popcount(gray(i)^gray((i+1)%N))!==1)ok=false;
+ g.fillStyle=ok?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('every consecutive pair (incl wrap) differs by 1 bit '+(ok?'✓':'✗'),12,H-12);}
+document.getElementById('gcbits').onclick=function(){NB=NB>=6?2:NB+1;drawW4();document.getElementById('gcread').textContent=NB+'-bit: '+(1<<NB)+' codes, single-bit steps';};
+document.getElementById('gccheck').onclick=function(){var v=verify();document.getElementById('gcread').textContent='nb≤12: Hamming-1 steps '+(v.hamming1?'✓':'✗')+' · all distinct '+(v.allDistinct?'✓':'✗');};
+document.getElementById('gcspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function cube(nb){var v=[];for(var i=0;i<(1<<nb);i++){v.push([(i&1)?1:-1,(i&2)?1:-1,(i&4)?1:-1]);}return v;}
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var nb=3,verts=cube(nb),cx=W/2,cy=H/2-20,s=70;
+ function proj(p){var x=p[0],y=p[1],z=p[2],ry=[x*Math.cos(ang)-z*Math.sin(ang),y,x*Math.sin(ang)+z*Math.cos(ang)],d=3/(3+ry[2]);return [cx+ry[0]*s*d,cy+ry[1]*s*d];}
+ var order=[];for(var i=0;i<8;i++)order.push(gray(i));
+ g.strokeStyle='#39fc6b';g.lineWidth=2;g.beginPath();for(var i=0;i<=8;i++){var p=proj(verts[order[i%8]]);if(i===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);}g.stroke();g.lineWidth=1;
+ for(var i=0;i<8;i++){var p=proj(verts[order[i]]);g.fillStyle='#39fc6b';g.beginPath();g.arc(p[0],p[1],5,0,7);g.fill();g.fillStyle='#cfe';g.font='8px monospace';g.fillText(order[i].toString(2).padStart(3,'0'),p[0]+7,p[1]);}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: Hamiltonian cycle on the 3-cube, one bit per step',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta idea: binary counting jumps many bits at once',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('walk the cube edge by edge — no glitch between steps',10,H-9);}
+drawW3();drawW4();window.__graycode=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
 </script></body></html>
