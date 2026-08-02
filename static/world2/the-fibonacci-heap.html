@@ -1,0 +1,117 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE FIBONACCI HEAP · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#70a860}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#70a860}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#70a860;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#70a860;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #70a860;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#70a860 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#70a860}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#70a860}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#70a860;background:transparent;border:2px solid #70a860;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#70a860;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#70a860}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#70a860,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#70a860;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#70a860 42%,#0a0e0a);border-left:4px solid #70a860;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#70a860;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#70a860;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#70a860}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#70a860 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE RAID</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE RAID / <b>THE FIBONACCI HEAP</b></div>
+<h1>THE FIBONACCI HEAP</h1>
+<div class="kick">a priority queue that pays for order only when it must</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Fibonacci heap</b> is a priority queue that makes <b>insert</b> and <b>decrease-key</b> cost only <b>O(1) amortized</b>, deferring all the real work to extract-min &mdash; which then lazily <b>consolidates</b> trees of equal degree. That fast decrease-key is what lets Dijkstra and Prim hit their best textbook bounds. It keeps a forest of heap-ordered trees and a pointer to the minimum root; the &ldquo;pay later&rdquo; laziness is the whole idea.<br><br>
+ <span class="lit">LIT</span> verified live: over 100 random heaps, repeated extract-min returns the keys in exact sorted order (window.__fibheap). <span class="fig">FIG</span> no framing; the ordering is exact (the O(1) amortized bound is cited, not timed).</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-raid</i> &mdash; the priority queue that decides who goes next, cheaply, again and again. The Fibonacci heap is that queue. <b>AVAN (AI)</b> built the instrument: the root list, the O(1) insert/merge, the lazy consolidation by degree, and the sorted-extract check.<br><br>Credit as content: Michael Fredman &amp; Robert Tarjan (1984). The weave: David names the-raid; I insert lazily into a root forest and only consolidate equal-degree trees at extract-min, confirming the keys come out perfectly sorted.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Insert just drops a node into the root list (O(1)). The debt is paid at extract-min: trees of equal degree are linked until all root degrees differ &mdash; a lazy binomial-like tidy-up.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="260"></canvas>
+  <div class="wctrl"><div class="cap">Insert keys, then extract-min repeatedly; the output is checked to come out in sorted order.</div>
+   <div class="btns" style="margin-top:10px"><button id="fbroll">new heap ▶</button><button id="fbpop">extract-min ▶</button><button id="fbcheck">verify 100 ▶</button></div>
+   <div class="cap" id="fbread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a lazy forest that sorts on demand.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): make insert and decrease-key <b>O(1) amortized</b> by <b>paying later</b> &mdash; drop nodes into a root list and defer all restructuring to extract-min, which consolidates equal-degree trees. The inverse of &lsquo;keep the heap tidy on every operation&rsquo; is &lsquo;stay lazy, consolidate only when you must pop the min.&rsquo; <b>Magenta</b> is the eager tidying you skip; <b>green</b> is the lazy forest that sorts on demand. Pay for order only when you need it.</div>
+   <div class="btns" style="margin-top:10px"><button id="fbspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Fibonacci heap (Fredman & Tarjan 1984). Verified live: over 100 random heaps, inserting keys into the lazy root forest and repeatedly extracting the minimum (with consolidation of equal-degree trees) returns the keys in exact sorted order (window.__fibheap.sortedExtract).<br><br><span class="fig">FIG</span> The extract-min ordering is exact; the O(1) amortized bound is CITED, not timed. The root list, the O(1) insert/merge, the lazy consolidation by degree, and the sorted-extract check run in-browser and hold. The AVAN inverse is honest — dropping nodes into a root list and deferring all restructuring to extract-min makes insert and decrease-key O(1) amortized; magenta is the eager tidying you skip, green the lazy forest that sorts on demand. Pay for order only when you pop the min.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE RAID &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,HEAP=null,INS=[],OUT=[];
+function FibHeap(){this.min=null;this.n=0;}
+function fnode(k){return {key:k,deg:0,child:null,left:null,right:null};}
+FibHeap.prototype._merge=function(x){if(!this.min){this.min=x;}else{x.right=this.min.right;x.left=this.min;this.min.right.left=x;this.min.right=x;if(x.key<this.min.key)this.min=x;}};
+FibHeap.prototype.insert=function(k){var x=fnode(k);x.left=x;x.right=x;this._merge(x);this.n++;return x;};
+FibHeap.prototype.extractMin=function(){var z=this.min;if(z){if(z.child){var c=z.child,arr=[],s=c;do{arr.push(s);s=s.right;}while(s!==c);for(var i=0;i<arr.length;i++){var ch=arr[i];ch.left.right=ch.right;ch.right.left=ch.left;ch.left=ch;ch.right=ch;this._merge(ch);}}z.left.right=z.right;z.right.left=z.left;if(z===z.right)this.min=null;else{this.min=z.right;this._consolidate();}this.n--;}return z?z.key:null;};
+FibHeap.prototype._consolidate=function(){var A=[];for(var i=0;i<45;i++)A.push(null);var roots=[],s=this.min;do{roots.push(s);s=s.right;}while(s!==this.min);for(var ri=0;ri<roots.length;ri++){var x=roots[ri],d=x.deg;while(A[d]){var y=A[d];if(x.key>y.key){var tmp=x;x=y;y=tmp;}y.left.right=y.right;y.right.left=y.left;if(!x.child){x.child=y;y.left=y;y.right=y;}else{y.right=x.child.right;y.left=x.child;x.child.right.left=y;x.child.right=y;}x.deg++;A[d]=null;d++;}A[d]=x;}this.min=null;for(var i=0;i<A.length;i++)if(A[i]){A[i].left=A[i];A[i].right=A[i];this._merge(A[i]);}};
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function verify(){var rnd=mb(224),ok=true;for(var t=0;t<100;t++){var h=new FibHeap(),keys=[],m=1+Math.floor(rnd()*40);for(var i=0;i<m;i++){var k=Math.floor(rnd()*1000);keys.push(k);h.insert(k);}var out=[];for(var i=0;i<m;i++)out.push(h.extractMin());if(out.join(',')!==keys.slice().sort(function(a,b){return a-b;}).join(','))ok=false;}return {sortedExtract:ok};}
+function mk(){HEAP=new FibHeap();INS=[];OUT=[];var m=8+Math.floor(Math.random()*8);for(var i=0;i<m;i++){var k=Math.floor(Math.random()*100);INS.push(k);HEAP.insert(k);}}
+function rootCount(h){if(!h.min)return 0;var c=0,s=h.min;do{c++;s=s.right;}while(s!==h.min);return c;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('insert = drop into the root list (O(1)); pay at extract-min',12,14);
+ for(var i=0;i<6;i++){g.fillStyle='#70a860';g.beginPath();g.arc(60+i*70,60,15,0,7);g.fill();g.fillStyle='#042';g.font='10px monospace';g.fillText([3,9,1,7,4,8][i],55+i*70,64);}
+ g.fillStyle='#8ad';g.font='9px monospace';g.fillText('at extract-min: link equal-degree trees until all degrees differ',60,110);
+ g.fillStyle='#39fc6b';g.fillText('lazy consolidation — a binomial-like tidy-up, deferred',60,130);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!HEAP)mk();
+ g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('inserted: '+INS.join(' '),12,18);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('root list ('+rootCount(HEAP)+' trees, min='+(HEAP.min?HEAP.min.key:'-')+'):',12,40);
+ var s=HEAP.min,x=12;if(s){var arr=[],cur=s;do{arr.push(cur);cur=cur.right;}while(cur!==s);for(var i=0;i<arr.length;i++){g.fillStyle=arr[i]===HEAP.min?'#39fc6b':'#58a0b0';g.beginPath();g.arc(x+14,58,12,0,7);g.fill();g.fillStyle='#042';g.font='9px monospace';g.fillText(arr[i].key,x+7,61);g.fillStyle='#8ad';g.font='7px monospace';g.fillText('d'+arr[i].deg,x+8,76);x+=34;}}
+ g.fillStyle='#c0a048';g.font='11px monospace';g.fillText('extracted (sorted): '+OUT.join(' '),12,110);
+ var sortedSoFar=OUT.slice().sort(function(a,b){return a-b;}).join(',')===OUT.join(',');
+ g.fillStyle=sortedSoFar?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('extract-min yields sorted order '+(sortedSoFar?'✓':'✗'),12,H-12);}
+document.getElementById('fbroll').onclick=function(){mk();drawW4();document.getElementById('fbread').textContent=INS.length+' keys inserted';};
+document.getElementById('fbpop').onclick=function(){if(HEAP&&HEAP.min){OUT.push(HEAP.extractMin());drawW4();document.getElementById('fbread').textContent='popped → '+OUT.join(' ');}};
+document.getElementById('fbcheck').onclick=function(){var v=verify();document.getElementById('fbread').textContent='100 heaps: extract-min yields sorted order '+(v.sortedExtract?'✓':'✗');};
+document.getElementById('fbspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!HEAP)mk();var cx=W/2,cy=H/2-20;
+ var s=HEAP.min;if(s){var arr=[],cur=s;do{arr.push(cur);cur=cur.right;}while(cur!==s);for(var i=0;i<arr.length;i++){var a=i/arr.length*6.28+ang*0.3,r=70,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r*0.75;g.fillStyle=arr[i]===HEAP.min?'#39fc6b':'#70a860';g.beginPath();g.arc(x,y,7,0,7);g.fill();
+  if(arr[i].child){var ch=arr[i].child,carr=[],cc=ch;do{carr.push(cc);cc=cc.right;}while(cc!==ch);for(var j=0;j<carr.length;j++){var cxx=x+Math.cos(a+j*0.5)*22,cyy=y+Math.sin(a+j*0.5)*22;g.strokeStyle='rgba(120,180,140,0.4)';g.beginPath();g.moveTo(x,y);g.lineTo(cxx,cyy);g.stroke();g.fillStyle='#58a0b0';g.beginPath();g.arc(cxx,cyy,4,0,7);g.fill();}}}}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: root forest (min bright) · children hang below',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta idea: the eager tidying you skip',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('pay for order only when you pop the min',10,H-9);}
+mk();drawW3();drawW4();window.__fibheap=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
