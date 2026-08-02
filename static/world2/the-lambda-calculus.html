@@ -1,0 +1,112 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE LAMBDA CALCULUS · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#70a860}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#70a860}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#70a860;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#70a860;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #70a860;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#70a860 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#70a860}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#70a860}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#70a860;background:transparent;border:2px solid #70a860;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#70a860;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#70a860}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#70a860,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#70a860;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#70a860 42%,#0a0e0a);border-left:4px solid #70a860;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#70a860;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#70a860;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#70a860}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#70a860 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; GENESIS BLOCK</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>SPAWN</b> / GENESIS BLOCK / <b>THE LAMBDA CALCULUS</b></div>
+<h1>THE LAMBDA CALCULUS</h1>
+<div class="kick">numbers, and arithmetic, from pure functions</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The lambda calculus</b> builds all of computation from a single idea: <b>functions</b>. There are no numbers built in &mdash; a number is <b>encoded</b> as a function. The <b>Church numeral</b> n is &ldquo;apply f, n times&rdquo;: 0 = &lambda;f.&lambda;x.x, and SUCC wraps one more f around. Astonishingly, addition, multiplication, and exponentiation are then just ways of <b>composing</b> these functions &mdash; MULT m n = &lambda;f. m (n f), EXP m n = n m. Arithmetic falls out of function application alone.<br><br>
+ <span class="lit">LIT</span> verified live: encoding then decoding gives back 0..10; PLUS, MULT, and EXP of Church numerals equal ordinary a+b, a&times;b, a<sup>b</sup>; and SUCC(SUCC 0) = 2 (window.__lambda). <span class="fig">FIG</span> no framing; exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>genesis-block</i> &mdash; the origin from which all computation is generated, here numbers themselves conjured out of pure functions. The lambda calculus is that genesis. <b>AVAN (AI)</b> built the instrument: the Church encodings of 0/SUCC/PLUS/MULT/EXP as real higher-order functions, and the decode-and-compare arithmetic checks.<br><br>Credit as content: Alonzo Church (1936). The weave: David names genesis-block; I encode each numeral as an n-fold application, compose them for PLUS/MULT/EXP, and confirm the decoded results equal ordinary integer arithmetic.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">A Church numeral <b>is</b> repetition: 3 = &lambda;f.&lambda;x. f(f(f x)). To decode, feed it the successor function and the value 0 &mdash; it applies +1 exactly n times, yielding n.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="260"></canvas>
+  <div class="wctrl"><div class="cap">Compose Church numerals with PLUS / MULT / EXP; the encoded function is decoded and checked against ordinary arithmetic.</div>
+   <div class="btns" style="margin-top:10px"><button id="lcroll">new a,b,op ▶</button><button id="lccheck">verify ▶</button></div>
+   <div class="cap" id="lcread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: numbers, and their arithmetic, as pure functions.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): build numbers with <b>no numbers</b> &mdash; encode n as &ldquo;apply f n times,&rdquo; and get +, &times;, and exponent purely by <b>composing</b> those functions (MULT m n = &lambda;f. m(n f); EXP m n = n m). The inverse of &lsquo;arithmetic needs primitive integers and operators&rsquo; is &lsquo;arithmetic emerges from function application alone.&rsquo; <b>Magenta</b> is the built-in integers and operators dispensed with; <b>green</b> is the tower of numerals-as-functions. Computation from one primitive: apply.</div>
+   <div class="btns" style="margin-top:10px"><button id="lcspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Church-encoding lambda calculus (Church 1936). Verified live: Church numerals implemented as real higher-order functions decode to 0..10; PLUS, MULT and EXP of encoded numerals equal ordinary a+b, a*b and a^b over small ranges; SUCC(SUCC ZERO) decodes to 2 (window.__lambda.encode && .plus && .mult && .exp).<br><br><span class="fig">FIG</span> No framing: the Church encodings of 0/SUCC/PLUS/MULT/EXP as actual JS higher-order functions, and the decode-and-compare arithmetic checks run in-browser and hold exactly. The AVAN inverse is honest — encoding n as 'apply f n times' and composing those functions yields +, x and exponent with no primitive integers; magenta is the built-in integers and operators dispensed with, green the tower of numerals-as-functions. Computation from one primitive: apply.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of GENESIS BLOCK &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,A=2,B=3,OP='MULT';
+var ZERO=function(f){return function(x){return x;};};
+var SUCC=function(n){return function(f){return function(x){return f(n(f)(x));};};};
+var PLUS=function(m){return function(n){return function(f){return function(x){return m(f)(n(f)(x));};};};};
+var MULT=function(m){return function(n){return function(f){return m(n(f));};};};
+var EXP=function(m){return function(n){return n(m);};};
+function church(n){var c=ZERO;for(var i=0;i<n;i++)c=SUCC(c);return c;}
+function toInt(c){return c(function(x){return x+1;})(0);}
+function verify(){var enc=true,plus=true,mult=true,exp=true;for(var n=0;n<=10;n++)if(toInt(church(n))!==n)enc=false;for(var a=0;a<=6;a++)for(var b=0;b<=6;b++){if(toInt(PLUS(church(a))(church(b)))!==a+b)plus=false;if(toInt(MULT(church(a))(church(b)))!==a*b)mult=false;}for(var a=1;a<=4;a++)for(var b=0;b<=4;b++)if(toInt(EXP(church(a))(church(b)))!==Math.pow(a,b))exp=false;return {encode:enc,plus:plus,mult:mult,exp:exp};}
+function compute(a,b,op){var ca=church(a),cb=church(b);if(op==='PLUS')return toInt(PLUS(ca)(cb));if(op==='MULT')return toInt(MULT(ca)(cb));return toInt(EXP(ca)(cb));}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('a Church numeral IS repetition: 3 = λf.λx. f(f(f x))',12,14);
+ g.fillStyle='#70a860';g.font='12px monospace';g.fillText('x',40,80);var xx=70;for(var i=0;i<3;i++){g.strokeStyle='#39fc6b';g.beginPath();g.moveTo(xx-18,76);g.lineTo(xx,76);g.stroke();g.fillStyle='#c0a048';g.fillText('f(',xx,80);xx+=26;}g.fillStyle='#70a860';g.fillText('x',xx,80);for(var i=0;i<3;i++){g.fillStyle='#c0a048';g.fillText(')',xx+12+i*8,80);}
+ g.fillStyle='#39fc6b';g.font='10px monospace';g.fillText('decode: feed it (+1) and 0 → applies +1 three times → 3',40,120);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var res=compute(A,B,OP),expct=OP==='PLUS'?A+B:OP==='MULT'?A*B:Math.pow(A,B);
+ var sym=OP==='PLUS'?'+':OP==='MULT'?'×':'^';g.fillStyle='#e8eef8';g.font='15px monospace';g.fillText('church('+A+') '+sym+' church('+B+')',14,40);
+ var formula=OP==='PLUS'?'λf.λx. m f (n f x)':OP==='MULT'?'λf. m (n f)':'n m';g.fillStyle='#70a860';g.font='12px monospace';g.fillText(OP+' = '+formula,14,72);
+ g.fillStyle='#39fc6b';g.font='18px monospace';g.fillText('decodes to '+res,14,110);
+ g.fillStyle='#c0a048';g.font='12px monospace';g.fillText('ordinary '+A+sym+B+' = '+expct,14,140);
+ g.fillStyle=res===expct?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('function composition == integer arithmetic '+(res===expct?'✓':'✗'),14,H-12);}
+document.getElementById('lcroll').onclick=function(){A=Math.floor(Math.random()*5)+1;B=Math.floor(Math.random()*5);OP=['PLUS','MULT','EXP'][Math.floor(Math.random()*3)];drawW4();document.getElementById('lcread').textContent='church('+A+') '+OP+' church('+B+') = '+compute(A,B,OP);};
+document.getElementById('lccheck').onclick=function(){var v=verify();document.getElementById('lcread').textContent='encode/decode '+(v.encode?'✓':'✗')+' · PLUS '+(v.plus?'✓':'✗')+' · MULT '+(v.mult?'✓':'✗')+' · EXP '+(v.exp?'✓':'✗');};
+document.getElementById('lcspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var cx=W/2,cy=H/2-20;
+ for(var n=0;n<=8;n++){var r=25+n*15,a0=ang*0.3;g.strokeStyle='hsl('+(n*36)+',65%,58%)';g.lineWidth=1.5;for(var k=0;k<n;k++){var a=a0+k/Math.max(1,n)*6.28;g.beginPath();g.arc(cx,cy,r,a,a+6.28/Math.max(1,n)*0.7);g.stroke();}if(n===0){g.fillStyle='#70a860';g.beginPath();g.arc(cx,cy,4,0,7);g.fill();}}
+ g.lineWidth=1;g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green rings: numeral n = n arcs (apply f, n times)',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta idea: the built-in integers & operators dropped',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('computation from one primitive: apply',10,H-9);}
+drawW3();drawW4();window.__lambda=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
