@@ -1,0 +1,105 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE LANGTON ANT · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#a878c0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#a878c0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#a878c0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#a878c0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #a878c0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#a878c0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#a878c0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#a878c0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#a878c0;background:transparent;border:2px solid #a878c0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#a878c0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#a878c0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#a878c0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#a878c0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#a878c0 42%,#0a0e0a);border-left:4px solid #a878c0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#a878c0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#a878c0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#a878c0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#a878c0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; HEISENBUG</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / HEISENBUG / <b>THE LANGTON ANT</b></div>
+<h1>THE LANGTON ANT</h1>
+<div class="kick">order emerges from two rules after 10,000 steps of chaos</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Langton&rsquo;s ant</b> is a two-rule cellular automaton: an ant on a grid turns <b>right</b> on a white cell (then flips it black) and <b>left</b> on a black cell (then flips it white), and steps forward. From an all-white grid its path looks utterly <b>chaotic</b> for about ten thousand steps &mdash; then, mysteriously, it locks into a periodic &ldquo;<b>highway</b>&rdquo; that repeats every <b>104 steps</b>, marching off to infinity. Order emerges from two trivial rules with no hint of it in between.<br><br>
+ <span class="lit">LIT</span> verified live: the ant&rsquo;s displacement is <b>constant</b> every 104 steps once the highway forms (net move &minus;2,+2 per period), while the early chaotic phase has no such regularity (window.__langton). <span class="fig">FIG</span> no framing; exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>heisenbug</i> &mdash; the behavior that looks random and irreproducible until, suddenly, a hidden order surfaces. Langton&rsquo;s ant is that surprise. <b>AVAN (AI)</b> built the instrument: the two-rule step, the trail, the period-104 displacement detector, and the chaotic-phase contrast.<br><br>Credit as content: Christopher Langton (1986). The weave: David names heisenbug; I run the two rules from a blank grid and confirm the emergent highway advances by a fixed vector every 104 steps &mdash; regularity the chaotic opening does not have.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Two rules only. White cell: turn right, paint it black, step. Black cell: turn left, paint it white, step. That is the entire program &mdash; yet a highway is hidden inside it.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">The ant&rsquo;s trail; run it forward and watch chaos resolve into the period-104 highway, whose 104-step displacement is checked to be constant.</div>
+   <div class="btns" style="margin-top:10px"><button id="lgstep">+2000 steps ▶</button><button id="lgcheck">verify highway ▶</button></div>
+   <div class="cap" id="lgread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the emergent period-104 highway.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): get <b>global order</b> (a straight highway) out of <b>two local rules</b> and no plan &mdash; the emergent structure is not written into the rules, it appears only after ~10<sup>4</sup> chaotic steps. The inverse of &lsquo;design the highway explicitly&rsquo; is &lsquo;run two trivial rules and let the highway emerge.&rsquo; <b>Magenta</b> is the chaotic opening with no visible pattern; <b>green</b> is the periodic highway that self-assembles. Order no one put there.</div>
+   <div class="btns" style="margin-top:10px"><button id="lgspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Langton's ant (Langton 1986). Verified live: running the two-rule automaton from a blank grid, the ant's displacement over 104 steps is constant once the highway forms (net move -2,+2 per period around step 11000), whereas the early chaotic phase (around step 500) has no constant 104-step displacement (window.__langton.highwayConstant && .chaosVaries).<br><br><span class="fig">FIG</span> No framing: the two-rule step, the trail, the period-104 displacement detector, and the chaotic-phase contrast run in-browser and hold. The AVAN inverse is honest — global order (a straight highway) emerges from two local rules and no plan, appearing only after ~10^4 chaotic steps; magenta is the chaotic opening with no visible pattern, green the periodic highway that self-assembles. Order no one put in the two rules.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of HEISENBUG &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,STEPS=2000;
+function run(steps){var grid={},x=0,y=0,dir=0,DX=[1,0,-1,0],DY=[0,1,0,-1],trail=[];for(var s=0;s<steps;s++){var key=x+','+y,black=grid[key]===1;if(black){dir=(dir+1)&3;grid[key]=0;}else{dir=(dir+3)&3;grid[key]=1;}x+=DX[dir];y+=DY[dir];trail.push([x,y]);}return {trail:trail,grid:grid};}
+function verify(){var r=run(12000),trail=r.trail,disps=[];for(var t=11000;t<11500;t+=104){var a=trail[t],b=trail[t+104];disps.push((b[0]-a[0])+','+(b[1]-a[1]));}var allSame=disps.every(function(d){return d===disps[0];});var early=[];for(var t=500;t<900;t+=104){var a=trail[t],b=trail[t+104];early.push((b[0]-a[0])+','+(b[1]-a[1]));}var earlyVaries=!early.every(function(d){return d===early[0];});return {highwayConstant:allSame,disp:disps[0],chaosVaries:earlyVaries};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('the entire program — two rules',12,14);
+ g.fillStyle='#e8eef8';g.fillRect(40,40,40,40);g.strokeStyle='#8ad';g.strokeRect(40,40,40,40);g.fillStyle='#000';g.font='9px monospace';g.fillText('white',48,64);g.fillStyle='#39fc6b';g.fillText('→ turn RIGHT, flip black, step',95,64);
+ g.fillStyle='#222';g.fillRect(40,95,40,40);g.strokeRect(40,95,40,40);g.fillStyle='#fff';g.fillText('black',48,119);g.fillStyle='#c0a048';g.fillText('→ turn LEFT, flip white, step',95,119);}
+function drawTrail(g,W,H,ox,oy,sc){var r=run(STEPS),trail=r.trail,minx=0,maxx=0,miny=0,maxy=0;trail.forEach(function(p){if(p[0]<minx)minx=p[0];if(p[0]>maxx)maxx=p[0];if(p[1]<miny)miny=p[1];if(p[1]>maxy)maxy=p[1];});
+ for(var k in r.grid)if(r.grid[k]===1){var pc=k.split(',');g.fillStyle='rgba(200,160,72,0.5)';g.fillRect(ox+(+pc[0]-minx)*sc,oy+(+pc[1]-miny)*sc,sc,sc);}
+ g.strokeStyle='#39fc6b';g.lineWidth=1;g.beginPath();for(var i=0;i<trail.length;i+=2){var x=ox+(trail[i][0]-minx)*sc,y=oy+(trail[i][1]-miny)*sc;if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}g.stroke();}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText(STEPS+' steps',12,18);drawTrail(g,W,H,20,28,2);
+ var v=verify();g.fillStyle=STEPS>=11000?(v.highwayConstant?'#39fc6b':'#ff5a5a'):'#8ad';g.font='10px monospace';g.fillText(STEPS>=11000?('highway formed: +2000 shows the diagonal road ✓'):'run past ~10000 steps to see the highway emerge',12,H-10);}
+document.getElementById('lgstep').onclick=function(){STEPS=Math.min(STEPS+2000,14000);drawW4();document.getElementById('lgread').textContent=STEPS+' steps'+(STEPS>=11000?' — on the highway':' — still chaotic');};
+document.getElementById('lgcheck').onclick=function(){var v=verify();document.getElementById('lgread').textContent='highway: displacement constant every 104 steps '+(v.highwayConstant?'✓':'✗')+' (net '+v.disp+') · chaos varies '+(v.chaosVaries?'✓':'✗');};
+document.getElementById('lgspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);var r=run(11800),trail=r.trail,cx=W/2,cy=H/2-20;
+ var minx=1e9,miny=1e9;trail.forEach(function(p){if(p[0]<minx)minx=p[0];if(p[1]<miny)miny=p[1];});
+ g.lineWidth=1.2;for(var i=1;i<trail.length;i+=3){var chaotic=i<9700,px=(trail[i][0])*1.1,py=(trail[i][1])*1.1,a=ang*0.15,x=cx+px*Math.cos(a)-py*Math.sin(a),y=cy+(px*Math.sin(a)+py*Math.cos(a))*0.7+40;g.strokeStyle=chaotic?'rgba(255,45,149,0.35)':'#39fc6b';g.beginPath();g.moveTo(x,y);g.lineTo(x+0.5,y+0.5);g.stroke();}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green: the period-104 highway that self-assembles',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta: the ~10⁴-step chaotic opening',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('order no one put in the two rules',10,H-9);}
+drawW3();drawW4();window.__langton=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

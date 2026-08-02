@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE COUNT-MIN SKETCH · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#d4a017}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#d4a017}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#d4a017;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#d4a017;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #d4a017;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#d4a017 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#d4a017}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#d4a017}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#d4a017;background:transparent;border:2px solid #d4a017;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#d4a017;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#d4a017}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#d4a017,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#d4a017;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#d4a017 42%,#0a0e0a);border-left:4px solid #d4a017;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#d4a017;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#d4a017;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#d4a017}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#d4a017 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE VAULT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE VAULT / <b>THE COUNT-MIN SKETCH</b></div>
+<h1>THE COUNT-MIN SKETCH</h1>
+<div class="kick">count a huge stream in a tiny fixed table</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Count-Min sketch</b> estimates how often each item appears in a huge stream using a <b>tiny fixed table</b> &mdash; d rows &times; w columns of counters &mdash; far smaller than the number of distinct items. Each item is hashed into one counter per row and increments them; its estimate is the <b>minimum</b> of those d counters. Because collisions can only <b>add</b> to a counter, the estimate is <b>never an underestimate</b>, and taking the min squeezes out most of the collision noise.<br><br>
+ <span class="lit">LIT</span> verified live: over an 8000-item stream (400 distinct) the sketch&rsquo;s estimate is <b>&ge; the true count for every item</b> &mdash; it never underestimates (window.__cms). <span class="fig">FIG</span> no framing; exact.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-vault</i> &mdash; the ledger that must tally a torrent of items in a fixed, tiny space. The Count-Min sketch is that thimble-sized tally. <b>AVAN (AI)</b> built the instrument: the d&times;w counter table, the per-row hashes, the min-estimate, and the never-underestimate check against an exact map.<br><br>Credit as content: Graham Cormode &amp; S. Muthukrishnan (2005). The weave: David names the vault; I hash each item into one counter per row, read back the minimum, and confirm the estimate is never below the true count.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="160"></canvas>
+  <div class="wctrl"><div class="cap">Each item hashes to one cell per row and bumps it. To query, read the item&rsquo;s cell in every row and take the smallest &mdash; collisions only inflate cells, so the minimum is the tightest (and never-too-low) estimate.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="270"></canvas>
+  <div class="wctrl"><div class="cap">A d&times;w sketch over a skewed stream; query any item to compare its min-estimate against the true count &mdash; always &ge;, never below.</div>
+   <div class="btns" style="margin-top:10px"><button id="cmroll">new stream ▶</button><button id="cmcheck">verify ▶</button></div>
+   <div class="cap" id="cmread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: frequencies tallied in a fixed tiny table.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): count a <b>stream too big to store</b> in a <b>fixed small</b> table by hashing each item into d rows and reading back the <b>minimum</b> &mdash; since collisions only add, the min never underestimates. The inverse of &lsquo;keep an exact counter per distinct item&rsquo; is &lsquo;keep d&times;w counters and take the min &mdash; a one-sided, bounded error.&rsquo; <b>Magenta</b> is the unbounded exact map you avoid storing; <b>green</b> is the fixed sketch. A torrent counted in a thimble.</div>
+   <div class="btns" style="margin-top:10px"><button id="cmspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Count-Min sketch (Cormode & Muthukrishnan 2005). Verified live: over an 8000-item skewed stream with 400 distinct items, the min-of-d-rows estimate is greater than or equal to the true count for every item — it never underestimates (window.__cms.neverUnderestimates).<br><br><span class="fig">FIG</span> No framing: the d x w counter table, the per-row hashes, the min-estimate, and the never-underestimate check against an exact map run in-browser and hold. The AVAN inverse is honest — hashing each item into d rows and reading back the minimum counts a stream too big to store in a fixed small table, with a one-sided (never-under) bounded error since collisions only add; magenta is the unbounded exact map you avoid, green the fixed sketch. A torrent counted in a thimble.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE VAULT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){
+var ang=0,spin=true,SK=null,TRUTH={},QUERY=0;
+function CMS(d,w){this.d=d;this.w=w;this.t=[];for(var i=0;i<d;i++)this.t.push(new Array(w).fill(0));this.seeds=[];for(var i=0;i<d;i++)this.seeds.push(i*2654435761+1);}
+CMS.prototype.hash=function(row,x){var h=(x^this.seeds[row])>>>0;h=Math.imul(h^(h>>>16),2246822507)>>>0;h=Math.imul(h^(h>>>13),3266489909)>>>0;return (h>>>0)%this.w;};
+CMS.prototype.add=function(x){for(var i=0;i<this.d;i++)this.t[i][this.hash(i,x)]++;};
+CMS.prototype.est=function(x){var m=Infinity;for(var i=0;i<this.d;i++)m=Math.min(m,this.t[i][this.hash(i,x)]);return m;};
+function build(seed){function rng(){seed=(seed*1103515245+12345)&0x7fffffff;return (seed>>>8)/16777216;}var sk=new CMS(4,48),truth={};for(var s=0;s<6000;s++){var x=Math.floor(Math.pow(rng(),2)*300);sk.add(x);truth[x]=(truth[x]||0)+1;}return {sk:sk,truth:truth};}
+function verify(){var seed=172;function rng(){seed=(seed*1103515245+12345)&0x7fffffff;return (seed>>>8)/16777216;}var sk=new CMS(5,64),truth={},N=0;for(var s=0;s<8000;s++){var x=Math.floor(Math.pow(rng(),2)*400);sk.add(x);truth[x]=(truth[x]||0)+1;N++;}var neverUnder=true,maxOver=0;for(var x in truth){var e=sk.est(+x),tc=truth[x];if(e<tc)neverUnder=false;if(e-tc>maxOver)maxOver=e-tc;}return {neverUnderestimates:neverUnder,distinct:Object.keys(truth).length,N:N};}
+function mk(){var r=build((Math.random()*1e9)|0);SK=r.sk;TRUTH=r.truth;QUERY=+Object.keys(TRUTH)[0];}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);g.fillStyle='#8ad';g.font='10px monospace';g.fillText('item → one cell per row; estimate = min of those cells',12,14);
+ for(var r=0;r<3;r++)for(var c=0;c<8;c++){var hit=(c===((r*3+2)%8));g.fillStyle=hit?'#39fc6b':'#37506e';g.fillRect(60+c*40,40+r*32,34,26);}
+ g.fillStyle='#c0a048';g.font='9px monospace';g.fillText('row 0',20,58);g.fillText('row 1',20,90);g.fillText('row 2',20,122);
+ g.fillStyle='#39fc6b';g.font='9px monospace';g.fillText('green = this item\'s cell; estimate = smallest of them',60,150);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!SK)mk();var est=SK.est(QUERY),tc=TRUTH[QUERY]||0;
+ var cw=(W-24)/SK.w,ch=22;for(var r=0;r<SK.d;r++)for(var c=0;c<SK.w;c++){var v=SK.t[r][c],hit=(c===SK.hash(r,QUERY));g.fillStyle=hit?'#39fc6b':'rgba(88,120,150,'+Math.min(0.9,v/20)+')';g.fillRect(12+c*cw,30+r*ch,cw-1,ch-1);}
+ g.fillStyle='#e8eef8';g.font='11px monospace';g.fillText('query item '+QUERY+' (green cells = its hashes)',12,20);
+ g.fillStyle='#39fc6b';g.font='12px monospace';g.fillText('estimate (min) = '+est,12,30+SK.d*ch+18);
+ g.fillStyle='#c0a048';g.fillText('true count = '+tc,12,30+SK.d*ch+38);
+ g.fillStyle=est>=tc?'#39fc6b':'#ff5a5a';g.font='11px monospace';g.fillText('estimate ≥ true count '+(est>=tc?'✓':'✗')+'  (over by '+(est-tc)+')',12,H-10);}
+document.getElementById('cmroll').onclick=function(){mk();QUERY=+Object.keys(TRUTH)[Math.floor(Math.random()*Object.keys(TRUTH).length)];drawW4();document.getElementById('cmread').textContent='item '+QUERY+': est '+SK.est(QUERY)+' ≥ true '+(TRUTH[QUERY]||0);};
+document.getElementById('cmcheck').onclick=function(){var v=verify();document.getElementById('cmread').textContent='stream N='+v.N+', '+v.distinct+' distinct: estimate ≥ true for every item '+(v.neverUnderestimates?'✓':'✗');};
+document.getElementById('cmspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;g.clearRect(0,0,W,H);if(!SK)mk();var cx=W/2,cy=H/2-20,d=SK.d,w=SK.w;
+ for(var r=0;r<d;r++)for(var c=0;c<w;c++){var v=SK.t[r][c],a=c/w*6.28+ang*0.3,rad=40+r*22,x=cx+Math.cos(a)*rad,y=cy+Math.sin(a)*rad*0.72;g.fillStyle='hsl('+(200-Math.min(120,v*6))+',65%,'+(35+Math.min(40,v*3))+'%)';g.fillRect(x-2,y-2,4,4);}
+ g.fillStyle='#39fc6b';g.font='11px monospace';g.fillText('green rings: the fixed d×w counter table',10,H-40);
+ g.fillStyle='#ff2d95';g.fillText('magenta idea: the unbounded exact map you avoid',10,H-24);
+ g.fillStyle='#8ad';g.font='10px monospace';g.fillText('a torrent counted in a thimble — never underestimates',10,H-9);}
+mk();drawW3();drawW4();window.__cms=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
