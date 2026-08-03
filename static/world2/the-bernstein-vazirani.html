@@ -1,0 +1,107 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BERNSTEIN-VAZIRANI · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff8a3c}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff8a3c}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff8a3c;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff8a3c;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff8a3c;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff8a3c 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff8a3c}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff8a3c}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff8a3c;background:transparent;border:2px solid #ff8a3c;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff8a3c;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff8a3c}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff8a3c,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff8a3c;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff8a3c 42%,#0a0e0a);border-left:4px solid #ff8a3c;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff8a3c;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff8a3c;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff8a3c}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff8a3c 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE SPEEDRUN</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE SPEEDRUN / <b>THE BERNSTEIN-VAZIRANI</b></div>
+<h1>THE BERNSTEIN-VAZIRANI</h1>
+<div class="kick">a hidden string in one query</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Bernstein&ndash;Vazirani algorithm</b> extracts a <b>hidden n-bit string s</b> from a black box that computes f(x) = s&middot;x (mod 2) &mdash; and it needs only <b>one</b> query, where any classical strategy needs n (one per bit). Put every input into superposition, let the oracle stamp the phase (&minus;1)<sup>s&middot;x</sup>, and a second layer of Hadamards focuses <i>all</i> the amplitude onto the single basis state |s&rang;. Measure once and read s off directly. It is the cleanest demonstration that quantum parallelism can beat classical query complexity.<br><br>
+ <span class="lit">LIT</span> verified live: simulating the amplitudes, the output is 1 exactly at |s&rang; and 0 everywhere else, so the recovered string equals the hidden s every time (window.__bernstein_vazirani), from a single oracle call. <span class="fig">FIG</span> no framing; the Hadamard&ndash;oracle&ndash;Hadamard amplitudes are computed in-browser.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-speedrun</i> &mdash; one query where the honest route takes n is the ultimate speedrun, skipping straight to the answer. <b>AVAN (AI)</b> built the instrument: the amplitude simulation of the H&ndash;oracle&ndash;H circuit (a Walsh&ndash;Hadamard transform of the phase pattern) and the single-query recovery.<br><br>Credit as content: Ethan Bernstein &amp; Umesh Vazirani (1993). The weave: David names the speedrun; I confirm the amplitude lands entirely on |s&rang;, so one query recovers the whole hidden string.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="190"></canvas>
+  <div class="wctrl"><div class="cap">After H&ndash;oracle&ndash;H, the amplitudes over all 2<sup>n</sup> states: a single spike of height 1 at |s&rang;, zero elsewhere &mdash; measure and read s.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Pick a hidden string s; the algorithm recovers it in one query from the amplitude spike &mdash; classically you would need one query per bit.</div>
+   <div class="btns" style="margin-top:10px"><button id="bvnew">new hidden s ▶</button><button id="bvcheck">verify ▶</button></div>
+   <div class="cap" id="bvread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the amplitude spike at |s&rang;.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t probe bit by bit &mdash; interfere all answers at once. The inverse of &lsquo;query each coordinate of s&rsquo; is &lsquo;phase-stamp every input in superposition, and a Hadamard makes them interfere to a single spike at |s&rang;.&rsquo; <b>Magenta</b> is the n-query classical march; <b>green</b> is the one-query spike. Interfere, don&rsquo;t iterate.</div>
+   <div class="btns" style="margin-top:10px"><button id="bvspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Bernstein–Vazirani algorithm (Ethan Bernstein & Umesh Vazirani, 1993): recovers a hidden s from f(x)=s·x in one quantum query vs n classical. Verified live (amplitude simulation, a Walsh–Hadamard transform of the phase pattern): amplitude 1 at |s⟩ and 0 elsewhere, so recovered==s over 3000 hidden strings (window.__bernstein_vazirani.recoversS).<br><br><span class="fig">FIG</span> Honest scope: this simulates the H–oracle–H amplitudes classically (the algorithm's output distribution is deterministic), it does not run on quantum hardware. The AVAN inverse is honest — phase-stamping every input in superposition so a Hadamard makes them interfere to a single spike at |s⟩ (rather than probing bit by bit) is exactly the quantum speedup; magenta is the n-query classical march, green the one-query spike. Interfere, don't iterate.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE SPEEDRUN &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,OR='#ff8a3c',NB=4,S=11;
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function recover(s,n){var N=1<<n,amp=new Array(N).fill(0);for(var y=0;y<N;y++){var sum=0;for(var x=0;x<N;x++){var d=s^y,dot=0;for(var b=0;b<n;b++)if((d>>b)&(x>>b)&1)dot^=1;sum+=(dot?-1:1);}amp[y]=sum/N;}var best=0;for(var y=1;y<N;y++)if(Math.abs(amp[y])>Math.abs(amp[best]))best=y;return {recovered:best,amp:amp};}
+function verify(){if(VR)return VR;var rnd=mb(2),ok=true;for(var t=0;t<3000;t++){var n=2+Math.floor(rnd()*5),s=Math.floor(rnd()*(1<<n)),r=recover(s,n);if(r.recovered!==s)ok=false;if(Math.abs(Math.abs(r.amp[s])-1)>1e-9)ok=false;for(var y=0;y<(1<<n);y++)if(y!==s&&Math.abs(r.amp[y])>1e-9)ok=false;}VR={recoversS:ok,oneQuery:true};return VR;}
+function bits(v,n){var s='';for(var b=n-1;b>=0;b--)s+=((v>>b)&1);return s;}
+function drawAmp(g,W,H,n,s,y0){var N=1<<n,r=recover(s,n),bw=(W-40)/N,x0=20;ne(g,'rgba(120,140,200,0.4)',1);g.beginPath();g.moveTo(x0,y0);g.lineTo(W-14,y0);g.stroke();ng(g);
+ for(var y=0;y<N;y++){var x=x0+y*bw,h=r.amp[y]*(y0-20),peak=(y===s);nf(g,peak?'#35ffb0':OR);g.globalAlpha=peak?1:0.5;g.fillRect(x,y0-h,bw-2,h);g.globalAlpha=1;ng(g);if(peak){nt(g,'#35ffb0',x-6,y0-h-6,9,'|'+bits(y,n)+'⟩');}}
+ return r;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);nt(g,OR,10,16,10,'amplitudes after H · oracle · H — a single spike of height 1 at |s⟩ (s = 1011)');drawAmp(g,W,H,4,11,H-30);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);var r=drawAmp(g,W,H-50,NB,S,H-80);nt(g,OR,12,20,11,'hidden s = '+bits(S,NB)+' ('+NB+' bits)');nt(g,r.recovered===S?'#39ffb0':'#ff5a5a',12,H-52,11,'recovered = '+bits(r.recovered,NB)+' in ONE query '+(r.recovered===S?'✓':'✗')+' (classical needs '+NB+')');
+ var v=verify();nt(g,v.recoversS?'#39ffb0':'#ff5a5a',12,H-14,9,'amplitude 1 at |s⟩, 0 elsewhere → recovers s (3000 hidden strings) '+(v.recoversS?'✓':'✗'));}
+document.getElementById('bvnew').onclick=function(){NB=2+Math.floor(Math.random()*4);S=Math.floor(Math.random()*(1<<NB));drawW4();document.getElementById('bvread').textContent='hidden s='+bits(S,NB)+' → recovered '+bits(recover(S,NB).recovered,NB)+' (1 query vs '+NB+' classical)';};
+document.getElementById('bvcheck').onclick=function(){var v=verify();document.getElementById('bvread').textContent='single-query recovery: amplitude spike at |s⟩, recovered==s over 3000 strings '+(v.recoversS?'✓':'✗');};
+document.getElementById('bvspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);g.save();g.translate(0,Math.sin(ang*0.5)*3);drawAmp(g,W,H-70,NB,S,H/2+30);g.restore();
+ nt(g,'#ff2fa6',12,40,10,'classical: query bit 1, bit 2, … bit '+NB+' — n separate calls');for(var i=0;i<NB;i++){nf(g,'#ff2fa6');g.globalAlpha=0.6;g.fillRect(30+i*26,50,20,14);g.globalAlpha=1;ng(g);}
+ nt(g,'#35ffb0',10,H-46,11,'green: the one-query amplitude spike at |s⟩');nt(g,'#ff2fa6',10,H-30,10,'magenta: the n classical queries it replaces');nt(g,'#8ad',10,H-13,10,'interfere, don\u2019t iterate');}
+drawW3();drawW4();window.__bernstein_vazirani=verify();
+function loop(){if(spin)ang+=0.03;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
