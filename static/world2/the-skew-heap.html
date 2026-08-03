@@ -1,0 +1,116 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SKEW HEAP · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b06bff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b06bff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b06bff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b06bff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b06bff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b06bff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b06bff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b06bff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b06bff;background:transparent;border:2px solid #b06bff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b06bff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b06bff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b06bff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b06bff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b06bff 42%,#0a0e0a);border-left:4px solid #b06bff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b06bff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b06bff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b06bff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b06bff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE-MERGE</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE-MERGE / <b>THE SKEW HEAP</b></div>
+<h1>THE SKEW HEAP</h1>
+<div class="kick">two heaps merged along right paths</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The skew heap</b> is a <b>self-adjusting</b> priority queue where a single operation &mdash; <b>merge</b> &mdash; does everything. To merge two min-heaps, compare their roots, keep the smaller as the new root, recursively merge its right subtree with the other heap, and then <b>swap</b> that node&rsquo;s children. Insert is just merging in a one-node heap; delete-min is merging the root&rsquo;s two children. There are no balance fields, no rotations, no bookkeeping &mdash; the unconditional child-swap alone keeps the amortized cost at <b>O(log n)</b>. It is the leftist heap&rsquo;s simpler cousin: heapsort, mergeable queues, and priority scheduling from one elegant rule.<br><br>
+ <span class="lit">LIT</span> verified live: over thousands of runs, inserting then repeatedly extracting the minimum yields a fully sorted sequence, the min-heap property holds after every operation, and merging two heaps preserves the combined multiset in order (window.__skew_heap). <span class="fig">FIG</span> no framing; the merge, insert, extract-min, and heap-property check run in-browser.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-merge</i> &mdash; two priority queues folded into one along their right paths, children swapped, no balance data kept. <b>AVAN (AI)</b> built the instrument: the recursive merge with child-swap, insert / extract-min built on it, and the sort / heap-property / merge checks.<br><br>Credit as content: Daniel Sleator &amp; Robert Tarjan (self-adjusting heaps, 1986). The weave: David names the merge; I confirm one merge rule gives a correct, sorted-yielding, always-heap-ordered priority queue.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="210"></canvas>
+  <div class="wctrl"><div class="cap">Merging two heaps: the smaller root wins, its right subtree merges with the other, then its children swap.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="320"></canvas>
+  <div class="wctrl"><div class="cap">Insert values and extract the minimum repeatedly; the output comes out sorted, the tree always heap-ordered.</div>
+   <div class="btns" style="margin-top:10px"><button id="skins">insert</button><button id="skpop">extract-min</button><button id="skreset">reset ▶</button><button id="skcheck">verify ▶</button></div>
+   <div class="cap" id="skread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the min-heap, maintained by merge alone.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t balance the tree &mdash; swap children on the way up. The inverse of &lsquo;keep balance fields and rotate&rsquo; is &lsquo;merge right paths and unconditionally swap children &mdash; O(log n) amortized, no bookkeeping.&rsquo; <b>Magenta</b> are the two heaps before; <b>green</b> is the single merged min-heap. One rule, self-balancing.</div>
+   <div class="btns" style="margin-top:10px"><button id="skspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine skew heap (Daniel Sleator & Robert Tarjan, self-adjusting heaps, 1986). Verified live: over 5000 runs, insert (merge with a 1-node heap) then repeated extract-min (merge of the root's children) yields a fully sorted sequence, the min-heap property holds after every operation, and over 2000 further runs merging two heaps preserves the combined multiset in sorted order (window.__skew_heap.sortsCorrectly, .heapProperty, .mergePreserves).<br><br><span class="fig">FIG</span> No framing: the merge, insert, extract-min, and heap-property check run in-browser. The AVAN inverse is honest — instead of keeping balance fields and rotating, one merges right paths and unconditionally swaps children, giving O(log n) amortized with no bookkeeping. Magenta are the two heaps before; green is the single merged min-heap. One rule, self-balancing.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE-MERGE &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,VI='#b06bff',H=null,OUT=[];
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function merge(a,b){if(!a)return b;if(!b)return a;if(a.v>b.v){var t=a;a=b;b=t;}a.right=merge(a.right,b);var tmp=a.left;a.left=a.right;a.right=tmp;return a;}
+function ins(h,v){return merge(h,{v:v,left:null,right:null});}
+function pop(h){return merge(h.left,h.right);}
+function heapOk(h){if(!h)return true;if(h.left&&h.left.v<h.v)return false;if(h.right&&h.right.v<h.v)return false;return heapOk(h.left)&&heapOk(h.right);}
+function verify(){if(VR)return VR;var rnd=mb(5),so=true,ho=true,mo=true;for(var t=0;t<5000;t++){var n=1+Math.floor(rnd()*30),vals=[],h=null;for(var i=0;i<n;i++){var x=Math.floor(rnd()*1000);vals.push(x);h=ins(h,x);if(!heapOk(h))ho=false;}var out=[];while(h){out.push(h.v);h=pop(h);if(!heapOk(h))ho=false;}if(out.join(',')!==vals.slice().sort(function(a,b){return a-b;}).join(','))so=false;}
+ for(var t=0;t<2000;t++){var A=null,B=null,all=[];for(var i=0;i<10;i++){var x=Math.floor(rnd()*100);A=ins(A,x);all.push(x);}for(var i=0;i<10;i++){var x=Math.floor(rnd()*100);B=ins(B,x);all.push(x);}var M=merge(A,B);if(!heapOk(M))mo=false;var out=[];while(M){out.push(M.v);M=pop(M);}if(out.join(',')!==all.slice().sort(function(a,b){return a-b;}).join(','))mo=false;}
+ return {sortsCorrectly:so,heapProperty:ho,mergePreserves:mo};}
+function reset(){H=null;OUT=[];[7,3,9,1,5,8,2].forEach(function(v){H=ins(H,v);});}
+function depth(h){return h?1+Math.max(depth(h.left),depth(h.right)):0;}
+function drawTree(g,h,x,y,dx,dy){if(!h)return;if(h.left){ne(g,'rgba(176,107,255,0.5)',1.2);g.beginPath();g.moveTo(x,y);g.lineTo(x-dx,y+dy);g.stroke();ng(g);drawTree(g,h.left,x-dx,y+dy,dx*0.55,dy);}if(h.right){ne(g,'rgba(176,107,255,0.5)',1.2);g.beginPath();g.moveTo(x,y);g.lineTo(x+dx,y+dy);g.stroke();ng(g);drawTree(g,h.right,x+dx,y+dy,dx*0.55,dy);}ndot(g,x,y,11,h.v===(function m(n){return n?Math.min(n.v,m(n.left),m(n.right)):Infinity;})(H)?'#35ffb0':'#b06bff');nt(g,'#0a0713',x-4,y+4,11,''+h.v);}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H2=cv.height;nb(g,W,H2);nt(g,VI,10,16,10,'merge two min-heaps: smaller root wins, merge its right subtree with the other, then swap children');
+ var A=null;[3,7,9].forEach(function(v){A=ins(A,v);});var B=null;[1,5,8].forEach(function(v){B=ins(B,v);});
+ drawTree(g,A,120,60,40,44);drawTree(g,B,390,60,40,44);nt(g,'#8ad',95,40,10,'heap A');nt(g,'#8ad',365,40,10,'heap B');nt(g,'#35ffb0',W/2-30,H2-14,11,'→ merge folds them into one min-heap (root = 1)');}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H2=cv.height;nb(g,W,H2);if(H===null&&OUT.length===0)reset();nt(g,VI,12,20,12,'extracted (sorted): ['+OUT.join(', ')+']');
+ if(H)drawTree(g,H,W/2,60,W/4,50);else nt(g,'#8ad',W/2-40,120,11,'(heap empty)');
+ nt(g,heapOk(H)?'#39ffb0':'#ff5a5a',12,H2-46,11,'heap property holds: '+(heapOk(H)?'✓':'✗')+(H?'  (min = '+(function m(n){return n?Math.min(n.v,m(n.left),m(n.right)):Infinity;})(H)+')':''));
+ var v=verify();nt(g,v.sortsCorrectly&&v.heapProperty&&v.mergePreserves?'#39ffb0':'#ff5a5a',12,H2-14,9,'sorts · heap-ordered · merge preserves multiset (7000 runs) '+(v.sortsCorrectly&&v.mergePreserves?'✓':'✗'));}
+document.getElementById('skins').onclick=function(){var x=Math.floor(Math.random()*99+1);H=ins(H,x);drawW4();document.getElementById('skread').textContent='inserted '+x+' (via merge with a 1-node heap)';};
+document.getElementById('skpop').onclick=function(){if(H){var m=(function mn(n){return n?Math.min(n.v,mn(n.left),mn(n.right)):Infinity;})(H);OUT.push(H.v);H=pop(H);drawW4();document.getElementById('skread').textContent='extracted min '+m+' → ['+OUT.join(',')+']';}};
+document.getElementById('skreset').onclick=function(){reset();drawW4();document.getElementById('skread').textContent='reset — inserted 7,3,9,1,5,8,2';};
+document.getElementById('skcheck').onclick=function(){var v=verify();document.getElementById('skread').textContent='insert+extractMin sorts '+(v.sortsCorrectly?'✓':'✗')+' · heap property throughout '+(v.heapProperty?'✓':'✗')+' · merge preserves multiset '+(v.mergePreserves?'✓':'✗')+' (7000 runs)';};
+document.getElementById('skspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H2=cv.height;nb(g,W,H2);if(H===null&&OUT.length===0)reset();g.save();g.translate(0,Math.sin(ang*0.4)*5);if(H)drawTree(g,H,W/2,60,W/4,54);g.restore();
+ nt(g,'#35ffb0',10,H2-46,11,'green: the min at the root; the whole tree stays heap-ordered');nt(g,'#ff2fa6',10,H2-30,10,'magenta: nodes below, kept ordered by merge + child-swap');nt(g,'#8ad',10,H2-13,10,'one rule, self-balancing');}
+reset();drawW3();drawW4();window.__skew_heap=verify();
+function loop(){if(spin)ang+=0.03;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
