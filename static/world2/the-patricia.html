@@ -1,0 +1,110 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE PATRICIA TRIE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b06bff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b06bff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b06bff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b06bff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b06bff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b06bff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b06bff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b06bff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b06bff;background:transparent;border:2px solid #b06bff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b06bff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b06bff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b06bff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b06bff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b06bff 42%,#0a0e0a);border-left:4px solid #b06bff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b06bff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b06bff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b06bff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b06bff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE STASH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE STASH / <b>THE PATRICIA TRIE</b></div>
+<h1>THE PATRICIA TRIE</h1>
+<div class="kick">branching only on the bits that differ</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The PATRICIA trie</b> (a crit-bit tree) stores a set of bit-strings with <b>no wasted nodes</b>. A plain binary trie spends a node per bit; PATRICIA keeps only the branch points. Each internal node records a single <b>critical bit index</b> &mdash; the first bit on which the keys below it diverge &mdash; and you navigate by testing just that bit. The payoff is a sharp invariant: a set of <b>k keys needs exactly k&minus;1 internal branch nodes</b>, no matter how long the keys are, so the structure is as small as a set can be while still supporting prefix search.<br><br>
+ <span class="lit">LIT</span> verified live: over thousands of random key sets, membership queries are exactly correct, and the number of internal branch nodes is always k&minus;1 for k keys (window.__patricia). <span class="fig">FIG</span> no framing; the crit-bit insertion, search, and node count run in-browser.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-stash</i> &mdash; a stash of keys packed with only the branch points kept, nothing redundant stored. <b>AVAN (AI)</b> built the instrument: the crit-bit tree (branch on the first differing bit), membership search, and the k&minus;1 node-count invariant.<br><br>Credit as content: Donald Morrison, PATRICIA (1968); the crit-bit refinement. Honest note: crit-bit trees assume <b>prefix-free</b> keys (here, fixed length) so no key is a zero-extension of another. The weave: David names the stash; I confirm membership is exact and the branch-node count is always k&minus;1.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="200"></canvas>
+  <div class="wctrl"><div class="cap">A crit-bit tree over a few keys; each internal node is labelled by its critical bit &mdash; the only bit you test to branch.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Insert keys and watch the tree grow one branch node per key; membership is exact and the internal-node count stays at k&minus;1.</div>
+   <div class="btns" style="margin-top:10px"><button id="ptins">insert a key ▶</button><button id="ptcheck">verify ▶</button></div>
+   <div class="cap" id="ptread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the branch nodes, one per critical bit.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t store a node per bit &mdash; store only where keys diverge. The inverse of &lsquo;walk every bit of the key&rsquo; is &lsquo;jump straight to the critical bit; k keys leave exactly k&minus;1 branch points.&rsquo; <b>Magenta</b> are the leaves (the keys); <b>green</b> are the k&minus;1 branch nodes. Branch only on the bits that differ.</div>
+   <div class="btns" style="margin-top:10px"><button id="ptspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine PATRICIA / crit-bit tree (Donald Morrison, 1968): branch on the first differing bit; k keys need exactly k−1 internal nodes. Verified live: over 2000 random key sets, membership is exact (window.__patricia.membership) and the internal branch-node count equals k−1 (.compressed).<br><br><span class="fig">FIG</span> Honest scope stated on the sphere: crit-bit trees assume prefix-free keys (here, fixed length) so no key is a zero-extension of another. The AVAN inverse is honest — jumping straight to the critical bit and leaving exactly k−1 branch points for k keys (rather than a node per bit) is the compression; magenta are the leaves (keys), green the k−1 branch nodes. Branch only on the bits that differ.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE STASH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,VI='#b06bff',TREE=null,KEYS=[],LEN=8;
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function getBit(key,i){return i<key.length?(key[i]==='1'?1:0):0;}
+function CritBit(){var root=null,internal=0;function fd(a,b){var L=Math.max(a.length,b.length);for(var i=0;i<L;i++)if(getBit(a,i)!==getBit(b,i))return i;return -1;}
+ return {insert:function(key){if(!root){root={leaf:key};return;}var n=root;while(n.crit!==undefined)n=getBit(key,n.crit)?n.r:n.l;var d=fd(key,n.leaf);if(d<0)return;var parent=null,dir=null,cur=root;while(cur.crit!==undefined&&cur.crit<d){parent=cur;dir=getBit(key,cur.crit)?'r':'l';cur=cur[dir];}var nl={leaf:key},ni={crit:d};if(getBit(key,d)){ni.l=cur;ni.r=nl;}else{ni.l=nl;ni.r=cur;}if(parent===null)root=ni;else parent[dir]=ni;internal++;},
+  has:function(key){if(!root)return false;var n=root;while(n.crit!==undefined)n=getBit(key,n.crit)?n.r:n.l;return n.leaf===key;},
+  internal:function(){return internal;},root:function(){return root;}};}
+function verify(){if(VR)return VR;var rnd=mb(5),memOk=true,cntOk=true;for(var t=0;t<2000;t++){var k=1+Math.floor(rnd()*20),keys={},list=[];while(list.length<k){var s='';for(var i=0;i<10;i++)s+=(rnd()<0.5?'0':'1');if(!keys[s]){keys[s]=1;list.push(s);}}var cb=CritBit();for(var i=0;i<list.length;i++)cb.insert(list[i]);for(var i=0;i<list.length;i++)if(!cb.has(list[i]))memOk=false;for(var q=0;q<10;q++){var s='';for(var i=0;i<10;i++)s+=(rnd()<0.5?'0':'1');if(cb.has(s)!==!!keys[s])memOk=false;}if(cb.internal()!==list.length-1)cntOk=false;}VR={membership:memOk,compressed:cntOk};return VR;}
+function reset(){TREE=CritBit();KEYS=[];var seen={};while(KEYS.length<5){var s='';for(var i=0;i<LEN;i++)s+=(Math.random()<0.5?'0':'1');if(!seen[s]){seen[s]=1;KEYS.push(s);TREE.insert(s);}}}
+function layout(node,x,y,dx,dy,out){if(!node)return;if(node.crit!==undefined){out.push({t:'int',crit:node.crit,x:x,y:y});var lx=x-dx,rx=x+dx;out.push({t:'e',x1:x,y1:y,x2:lx,y2:y+dy});out.push({t:'e',x1:x,y1:y,x2:rx,y2:y+dy});layout(node.l,lx,y+dy,dx*0.58,dy,out);layout(node.r,rx,y+dy,dx*0.58,dy,out);}else out.push({t:'leaf',key:node.leaf,x:x,y:y});}
+function drawTree(g,W,H,y0){if(!TREE)reset();var out=[];layout(TREE.root(),W/2,y0,W/4,46,out);out.forEach(function(o){if(o.t==='e'){ne(g,'rgba(53,255,176,0.4)',1.2);g.beginPath();g.moveTo(o.x1,o.y1);g.lineTo(o.x2,o.y2);g.stroke();ng(g);}});
+ out.forEach(function(o){if(o.t==='int'){ndot(g,o.x,o.y,8,'#35ffb0');nt(g,'#0a0713',o.x-4,o.y+3,9,'b'+o.crit);}else if(o.t==='leaf'){ne(g,'#ff2fa6',1.4);g.strokeRect(o.x-22,o.y-8,44,16);ng(g);nt(g,'#ff2fa6',o.x-20,o.y+4,8,o.key);}});}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!TREE)reset();nt(g,VI,10,16,10,'crit-bit tree · internal node = critical bit index (bN) · leaves = keys');drawTree(g,W,H,44);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!TREE)reset();drawTree(g,W,H-40,44);nt(g,VI,12,H-52,11,KEYS.length+' keys → '+TREE.internal()+' internal nodes (= k−1)');
+ var memOk=true;for(var i=0;i<KEYS.length;i++)if(!TREE.has(KEYS[i]))memOk=false;nt(g,memOk&&TREE.internal()===KEYS.length-1?'#39ffb0':'#ff5a5a',12,H-30,10,'all keys found '+(memOk?'✓':'✗')+' · internal nodes = k−1 '+(TREE.internal()===KEYS.length-1?'✓':'✗'));
+ var v=verify();nt(g,v.membership&&v.compressed?'#39ffb0':'#ff5a5a',12,H-12,9,'membership exact '+(v.membership?'✓':'✗')+' · branch nodes==k−1 '+(v.compressed?'✓':'✗')+' (2000)');}
+document.getElementById('ptins').onclick=function(){var s='',seen={};KEYS.forEach(function(k){seen[k]=1;});do{s='';for(var i=0;i<LEN;i++)s+=(Math.random()<0.5?'0':'1');}while(seen[s]);KEYS.push(s);TREE.insert(s);drawW3();drawW4();document.getElementById('ptread').textContent='inserted '+s+' → '+KEYS.length+' keys, '+TREE.internal()+' branch nodes (k−1)';};
+document.getElementById('ptcheck').onclick=function(){var v=verify();document.getElementById('ptread').textContent='membership exact '+(v.membership?'✓':'✗')+' · internal branch nodes == k−1 for k keys '+(v.compressed?'✓':'✗')+' (2000 sets)';};
+document.getElementById('ptspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!TREE)reset();g.save();g.translate(0,Math.sin(ang*0.4)*3);drawTree(g,W,H-30,44);g.restore();nt(g,'#35ffb0',10,H-46,11,'green: the '+(KEYS.length-1)+' branch nodes (k−1)');nt(g,'#ff2fa6',10,H-30,10,'magenta: the '+KEYS.length+' leaves (the keys)');nt(g,'#8ad',10,H-13,10,'branch only on the bits that differ');}
+drawW3();drawW4();window.__patricia=verify();
+function loop(){if(spin)ang+=0.03;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
