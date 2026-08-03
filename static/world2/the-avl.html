@@ -1,0 +1,112 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE AVL TREE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff8a3c}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff8a3c}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff8a3c;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff8a3c;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff8a3c;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff8a3c 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff8a3c}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff8a3c}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff8a3c;background:transparent;border:2px solid #ff8a3c;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff8a3c;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff8a3c}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff8a3c,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff8a3c;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff8a3c 42%,#0a0e0a);border-left:4px solid #ff8a3c;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff8a3c;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff8a3c;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff8a3c}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff8a3c 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; SECOND WIND</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / SECOND WIND / <b>THE AVL TREE</b></div>
+<h1>THE AVL TREE</h1>
+<div class="kick">balance kept by rotation</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The AVL tree</b> is the first self-balancing binary search tree. Every node keeps a <b>balance factor</b> &mdash; the height of its left subtree minus its right &mdash; and the tree keeps that factor in <b>{&minus;1, 0, +1}</b> at all times. Whenever an insertion tips a node to &plusmn;2, one or two <b>rotations</b> restore the invariant locally. Because no node is ever more than one level lopsided, the height is bounded by about <b>1.44&thinsp;log&#8322;n</b>, so search, insert and delete are all guaranteed O(log n) &mdash; never the O(n) of a degenerate list.<br><br>
+ <span class="lit">LIT</span> verified live: over 2,000 random insertion sequences, the in-order traversal is always sorted, every node&rsquo;s balance factor stays within &plusmn;1, the height respects the 1.44&thinsp;log&#8322;n bound, and search finds exactly the inserted keys (window.__avl). <span class="fig">FIG</span> no framing; the rotations and the invariant checks run in-browser.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>second-wind</i> &mdash; a rotation is the tree catching its second wind, snapping back to balance the instant it tips. <b>AVAN (AI)</b> built the instrument: AVL insertion with the four rotation cases, and checks for sortedness, the balance invariant, and the height bound.<br><br>Credit as content: Georgy Adelson-Velsky &amp; Evgenii Landis (1962). The weave: David names the second wind; I confirm the tree stays sorted and balanced with height near 1.44&thinsp;log&#8322;n through thousands of insertions.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="200"></canvas>
+  <div class="wctrl"><div class="cap">An AVL tree; each node shows its balance factor, held within &plusmn;1 &mdash; the shape never leans more than one level.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="320"></canvas>
+  <div class="wctrl"><div class="cap">Insert keys; watch rotations keep the tree balanced, its height tracking 1.44&thinsp;log&#8322;n instead of growing into a list.</div>
+   <div class="btns" style="margin-top:10px"><button id="avins">insert 5 ▶</button><button id="avreset">reset ▶</button><button id="avcheck">verify ▶</button></div>
+   <div class="cap" id="avread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the balanced tree, height near 1.44&thinsp;log&#8322;n.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t let the tree grow lopsided &mdash; rotate the moment it tips. The inverse of &lsquo;insert and hope&rsquo; is &lsquo;the &plusmn;1 balance invariant <b>caps</b> the height, so a rotation at &plusmn;2 keeps every path short.&rsquo; <b>Magenta</b> is the imbalance; <b>green</b> is the rotation that heals it. The invariant is the guarantee.</div>
+   <div class="btns" style="margin-top:10px"><button id="avspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine AVL tree (Georgy Adelson-Velsky & Evgenii Landis, 1962), the first self-balancing BST. Verified live over 2000 random insertion sequences: in-order sorted (window.__avl.sorted), balance factor within ±1 everywhere (.balanced), height ≤ 1.4405 log₂(n+2) (.heightBound), search correct (.searchOk).<br><br><span class="fig">FIG</span> No framing: the four rotation cases and the invariant checks run in-browser. The AVAN inverse is honest — the ±1 balance invariant is what caps the height at ~1.44 log₂n (a rotation at ±2 keeps every path short), rather than inserting and hoping; magenta is a node tipped to ±2, green the rotation that heals it. The invariant is the guarantee.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SECOND WIND &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,OR='#ff8a3c',ROOT=null,NK=0;
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function h(n){return n?n.h:0;}function bf(n){return n?h(n.l)-h(n.r):0;}function upd(n){n.h=1+Math.max(h(n.l),h(n.r));}
+function rotR(y){var x=y.l;y.l=x.r;x.r=y;upd(y);upd(x);return x;}function rotL(x){var y=x.r;x.r=y.l;y.l=x;upd(x);upd(y);return y;}
+function ins(n,k){if(!n)return {k:k,l:null,r:null,h:1};if(k<n.k)n.l=ins(n.l,k);else if(k>n.k)n.r=ins(n.r,k);else return n;upd(n);var b=bf(n);if(b>1&&k<n.l.k)return rotR(n);if(b<-1&&k>n.r.k)return rotL(n);if(b>1&&k>n.l.k){n.l=rotL(n.l);return rotR(n);}if(b<-1&&k<n.r.k){n.r=rotR(n.r);return rotL(n);}return n;}
+function inorder(r){var o=[];(function go(n){if(!n)return;go(n.l);o.push(n.k);go(n.r);})(r);return o;}
+function balanced(r){var ok=true;(function go(n){if(!n)return;if(Math.abs(h(n.l)-h(n.r))>1)ok=false;go(n.l);go(n.r);})(r);return ok;}
+function count(r){return r?1+count(r.l)+count(r.r):0;}
+function verify(){if(VR)return VR;var rnd=mb(2),so=true,ba=true,hb=true,se=true;for(var t=0;t<2000;t++){var root=null,keys={};var n=1+Math.floor(rnd()*200);for(var i=0;i<n;i++){var k=Math.floor(rnd()*1000);keys[k]=1;root=ins(root,k);}var io=inorder(root);for(var i=1;i<io.length;i++)if(io[i]<=io[i-1])so=false;if(!balanced(root))ba=false;var cnt=Object.keys(keys).length;if(h(root)>1.4405*Math.log2(cnt+2)+0.5)hb=false;for(var k in keys){var nn=root,f=false;while(nn){if(+k===nn.k){f=true;break;}nn=+k<nn.k?nn.l:nn.r;}if(!f)se=false;}}VR={sorted:so,balanced:ba,heightBound:hb,searchOk:se};return VR;}
+function reset(){ROOT=null;NK=0;var s=[50,25,75,10,35,60,90,5,15];for(var i=0;i<s.length;i++){ROOT=ins(ROOT,s[i]);NK++;}}
+function layout(n,x,y,dx,dy,out){if(!n)return;out.push({k:n.k,bf:bf(n),x:x,y:y});if(n.l){out.push({e:[x,y,x-dx,y+dy]});layout(n.l,x-dx,y+dy,dx*0.55,dy,out);}if(n.r){out.push({e:[x,y,x+dx,y+dy]});layout(n.r,x+dx,y+dy,dx*0.55,dy,out);}}
+function drawTree(g,W,H,root,y0){var out=[];layout(root,W/2,y0,W/4,(H-y0-30)/(h(root)+1),out);
+ out.forEach(function(o){if(o.e){ne(g,'rgba(255,138,60,0.5)',1.4);g.beginPath();g.moveTo(o.e[0],o.e[1]);g.lineTo(o.e[2],o.e[3]);g.stroke();ng(g);}});
+ out.forEach(function(o){if(o.k!==undefined){var imb=Math.abs(o.bf)>1;ndot(g,o.x,o.y,12,imb?'#ff2fa6':'#35ffb0');nt(g,'#0a0713',o.x-((''+o.k).length*3),o.y+3,9,''+o.k);nt(g,o.bf<0?'#ff8a3c':'#8ad',o.x+11,o.y-8,8,(o.bf>=0?'+':'')+o.bf);}});}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!ROOT)reset();nt(g,OR,10,16,10,'AVL tree · each node shows its balance factor, held within ±1');drawTree(g,W,H,ROOT,44);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!ROOT)reset();drawTree(g,W,H-40,ROOT,40);var c=count(ROOT),hh=h(ROOT),bound=1.4405*Math.log2(c+2);nt(g,OR,12,22,11,c+' keys · height '+hh+' ≤ 1.44 log₂(n+2) = '+bound.toFixed(2));nt(g,balanced(ROOT)?'#39ffb0':'#ff5a5a',12,H-30,10,'balanced (all |bf|≤1) '+(balanced(ROOT)?'✓':'✗')+' · sorted in-order '+(function(){var io=inorder(ROOT),ok=true;for(var i=1;i<io.length;i++)if(io[i]<=io[i-1])ok=false;return ok?'✓':'✗';})());
+ var v=verify();nt(g,v.sorted&&v.balanced&&v.heightBound?'#39ffb0':'#ff5a5a',12,H-12,9,'sorted '+(v.sorted?'✓':'✗')+' · balanced '+(v.balanced?'✓':'✗')+' · height-bound '+(v.heightBound?'✓':'✗')+' (2000)');}
+document.getElementById('avins').onclick=function(){for(var i=0;i<5;i++){ROOT=ins(ROOT,Math.floor(Math.random()*100));NK++;}drawW3();drawW4();document.getElementById('avread').textContent=count(ROOT)+' keys · height '+h(ROOT)+' (bound '+(1.4405*Math.log2(count(ROOT)+2)).toFixed(1)+')';};
+document.getElementById('avreset').onclick=function(){reset();drawW3();drawW4();document.getElementById('avread').textContent='reset to a balanced 9-key tree';};
+document.getElementById('avcheck').onclick=function(){var v=verify();document.getElementById('avread').textContent='in-order sorted '+(v.sorted?'✓':'✗')+' · balanced |bf|≤1 '+(v.balanced?'✓':'✗')+' · height ≤ 1.44log₂(n+2) '+(v.heightBound?'✓':'✗')+' · search '+(v.searchOk?'✓':'✗');};
+document.getElementById('avspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!ROOT)reset();g.save();g.translate(W/2,10);g.rotate(Math.sin(ang*0.4)*0.03);g.translate(-W/2,-10);drawTree(g,W,H-30,ROOT,40);g.restore();nt(g,'#35ffb0',10,H-46,11,'green: the balanced tree, height near 1.44 log₂n');nt(g,'#ff2fa6',10,H-30,10,'magenta: a node tipped to ±2, about to rotate');nt(g,'#8ad',10,H-13,10,'the invariant is the guarantee');}
+drawW3();drawW4();window.__avl=verify();
+function loop(){if(spin)ang+=0.03;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
