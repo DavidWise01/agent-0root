@@ -1,0 +1,121 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE FIBONACCI-GCD · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#21e6ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#21e6ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#21e6ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#21e6ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #21e6ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#21e6ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#21e6ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#21e6ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#21e6ff;background:transparent;border:2px solid #21e6ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#21e6ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#21e6ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#21e6ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#21e6ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#21e6ff 42%,#0a0e0a);border-left:4px solid #21e6ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#21e6ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#21e6ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#21e6ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#21e6ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE PULL REQUEST</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE PULL REQUEST / <b>THE FIBONACCI-GCD</b></div>
+<h1>THE FIBONACCI-GCD</h1>
+<div class="kick">a greatest common divisor that stays inside the Fibonacci sequence</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The Fibonacci&ndash;GCD identity</b> is a jewel of divisibility: the greatest common divisor of two Fibonacci numbers is itself a Fibonacci number &mdash; and exactly the one whose index is the gcd of the indices. In symbols, <b>gcd(F<sub>m</sub>, F<sub>n</sub>) = F<sub>gcd(m,n)</sub></b>. For example gcd(F<sub>12</sub>, F<sub>18</sub>) = gcd(144, 2584) = 8 = F<sub>6</sub>, and gcd(12,18) = 6. The Fibonacci sequence carries the whole divisibility structure of the integers on its back. A clean corollary follows: for m &ge; 3, F<sub>m</sub> divides F<sub>n</sub> if and only if m divides n &mdash; every third Fibonacci is even (divisible by F<sub>3</sub> = 2), every fourth is divisible by F<sub>4</sub> = 3, and so on.<br><br>
+ <span class="lit">LIT</span> verified live with exact BigInt: gcd(F<sub>m</sub>, F<sub>n</sub>) = F<sub>gcd(m,n)</sub> for all m, n up to 40, and F<sub>m</sub> | F<sub>n</sub> &hArr; m | n for m &ge; 3 (window.__fibonaccigcd). <span class="fig">FIG</span> no framing; the Fibonacci numbers and both gcd sides are computed independently in-browser.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-pull-request</i> &mdash; the co-op: two Fibonacci numbers merge to a common divisor that is itself a Fibonacci, indexed by the merge of their indices. <b>AVAN (AI)</b> built the instrument: the exact Fibonacci sequence, the two gcd sides, and the divisibility corollary.<br><br>Credit as content: the Fibonacci divisibility sequence (a strong divisibility sequence). The weave: David names the merge; I confirm gcd(F<sub>m</sub>, F<sub>n</sub>) = F<sub>gcd(m,n)</sub>.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="250"></canvas>
+  <div class="wctrl"><div class="cap">gcd(F_m, F_n) landing back on F_{gcd(m,n)} — the gcd of indices, read into the sequence.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Cycle indices m, n; gcd(F_m, F_n) is checked equal to F_{gcd(m,n)}.</div>
+   <div class="btns" style="margin-top:10px"><button id="fgnext">next m,n ▶</button><button id="fgcheck">verify ▶</button></div>
+   <div class="cap" id="fgread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: F_{gcd(m,n)}, the common divisor that stays Fibonacci.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t take the gcd of the big numbers &mdash; take it of the indices first. The inverse of &lsquo;gcd(F<sub>m</sub>, F<sub>n</sub>)&rsquo; is &lsquo;F evaluated at gcd(m, n)&rsquo; &mdash; the sequence commutes with gcd. <b>Magenta</b> are the two Fibonacci numbers; <b>green</b> is the Fibonacci common divisor F<sub>gcd(m,n)</sub>. Divisibility carried inside the sequence.</div>
+   <div class="btns" style="margin-top:10px"><button id="fgspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Fibonacci divisibility sequence / GCD identity (a strong divisibility sequence). Verified live with exact BigInt: gcd(F_m, F_n) = F_{gcd(m,n)} for all m, n up to 40, and F_m | F_n ⟺ m | n for m ≥ 3 (window.__fibonaccigcd.ok, .divOk).<br><br><span class="fig">FIG</span> No framing; the Fibonacci numbers and both gcd sides are computed independently in-browser. The AVAN inverse is honest — instead of taking the gcd of the big numbers, take it of the indices first: the inverse of 'gcd(F_m, F_n)' is 'F evaluated at gcd(m, n)' — the sequence commutes with gcd. Magenta are the two Fibonacci numbers; green is the Fibonacci common divisor F_{gcd(m,n)}. Divisibility carried inside the sequence.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE PULL REQUEST &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+function fibs(N){var F=[0n,1n];for(var i=2;i<=N;i++)F.push(F[i-1]+F[i-2]);return F;}
+function bgcd(a,b){a=a<0n?-a:a;b=b<0n?-b:b;while(b){var t=a%b;a=b;b=t;}return a;}
+function igcd(a,b){while(b){var t=a%b;a=b;b=t;}return a;}
+var ang=0,spin=true,VR=null,F=fibs(80),dm=12,dn=18;
+function selftest(){if(VR)return VR;var ok=true,divOk=true,cnt=0;for(var m=1;m<=40;m++)for(var n=1;n<=40;n++){if(bgcd(F[m],F[n])!==F[igcd(m,n)])ok=false;cnt++;var div=(F[n]%F[m]===0n),mdivn=(n%m===0);if(m>=3&&div!==mdivn)divOk=false;}VR={ok:ok,divOk:divOk,cnt:cnt};return VR;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);var gg=igcd(dm,dn);nt(g,'#21e6ff',10,16,10,'gcd(F'+dm+', F'+dn+') = F_gcd('+dm+','+dn+') = F'+gg);
+ nt(g,'#ff2fa6',16,60,13,'F'+dm+' = '+F[dm].toString());
+ nt(g,'#ff6ab0',16,88,13,'F'+dn+' = '+F[dn].toString());
+ nt(g,'#9cf',16,120,13,'gcd(F'+dm+', F'+dn+') = '+bgcd(F[dm],F[dn]).toString());
+ nt(g,'#35ffb0',16,150,14,'F_gcd('+dm+','+dn+') = F'+gg+' = '+F[gg].toString());
+ nt(g,bgcd(F[dm],F[dn])===F[gg]?'#39ffb0':'#ff5a5a',16,180,14,bgcd(F[dm],F[dn])===F[gg]?'equal ✓':'✗');
+ nt(g,'#8ad',10,H-8,9,'the gcd of the indices, read back into the Fibonacci sequence');}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);var gg=igcd(dm,dn);nt(g,'#21e6ff',12,20,12,'Fibonacci–GCD, m='+dm+', n='+dn);
+ nt(g,'#9cf',16,54,12,'gcd of indices: gcd('+dm+','+dn+') = '+gg);
+ nt(g,'#ff2fa6',16,84,12,'gcd(F'+dm+', F'+dn+') = '+bgcd(F[dm],F[dn]).toString());
+ nt(g,'#35ffb0',16,112,12,'F'+gg+' = '+F[gg].toString());
+ nt(g,bgcd(F[dm],F[dn])===F[gg]?'#39ffb0':'#ff5a5a',16,140,13,bgcd(F[dm],F[dn])===F[gg]?'gcd(F_m,F_n) = F_gcd(m,n) ✓':'✗');
+ var v=selftest();nt(g,v.ok&&v.divOk?'#39ffb0':'#ff5a5a',12,H-52,9,'self-test '+v.cnt+' pairs (m,n≤40): identity holds ('+v.ok+') · F_m|F_n ⇔ m|n, m≥3 ('+v.divOk+')');
+ nt(g,'#8ad',12,H-30,9,'every 3rd Fibonacci is even, every 4th divisible by 3, …');
+ nt(g,'#8ad',12,H-12,9,'a strong divisibility sequence');}
+document.getElementById('fgnext').onclick=function(){var opts=[[12,18],[15,20],[10,25],[14,21],[16,24],[9,15],[20,30]];var i=(opts.findIndex(function(o){return o[0]===dm&&o[1]===dn;})+1)%opts.length;dm=opts[i][0];dn=opts[i][1];drawW3();drawW4();document.getElementById('fgread').textContent='gcd(F'+dm+',F'+dn+') = '+bgcd(F[dm],F[dn]).toString()+' = F'+igcd(dm,dn);};
+document.getElementById('fgcheck').onclick=function(){var v=selftest();document.getElementById('fgread').textContent='gcd(F_m,F_n)=F_gcd(m,n) for '+v.cnt+' pairs: '+v.ok+' · divisibility corollary: '+v.divOk;};
+document.getElementById('fgspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);var gg=igcd(dm,dn),cx=W/2,cy=H/2-10;g.save();g.translate(cx,cy);g.rotate(ang*0.05);
+ function node(v,ci){return Math.log(Number(v)+2);}
+ var rm=node(F[dm]),rn=node(F[dn]),rg=node(F[gg]),mx=Math.max(rm,rn);
+ ndot(g,-90,20,6+rm/mx*10,'#ff2fa6');nt(g,'#c9a6ff',-108,40,10,'F'+dm);
+ ndot(g,90,20,6+rn/mx*10,'#ff6ab0');nt(g,'#c9a6ff',80,40,10,'F'+dn);
+ ne(g,'rgba(53,255,176,0.5)',1.6);g.beginPath();g.moveTo(-90,20);g.lineTo(0,-80);g.lineTo(90,20);g.stroke();ng(g);
+ ndot(g,0,-80,6+rg/mx*10,'#35ffb0');nt(g,'#39ffb0',-14,-96,11,'F'+gg+'='+F[gg].toString());
+ g.restore();nt(g,'#35ffb0',10,H-52,11,'green: F_gcd('+dm+','+dn+') = F'+gg+', the common divisor');nt(g,'#ff2fa6',10,H-34,10,'magenta: the two Fibonacci numbers F'+dm+', F'+dn);nt(g,'#8ad',10,H-14,10,'divisibility carried inside the sequence');}
+drawW3();drawW4();window.__fibonaccigcd=selftest();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
