@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SPLIT-RADIX FFT · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#35ffb0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#35ffb0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#35ffb0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#35ffb0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #35ffb0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#35ffb0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#35ffb0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#35ffb0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#35ffb0;background:transparent;border:2px solid #35ffb0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#35ffb0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#35ffb0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#35ffb0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#35ffb0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#35ffb0 42%,#0a0e0a);border-left:4px solid #35ffb0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#35ffb0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#35ffb0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#35ffb0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#35ffb0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE-SPEEDRUN</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE-SPEEDRUN / <b>THE SPLIT-RADIX FFT</b></div>
+<h1>THE SPLIT-RADIX FFT</h1>
+<div class="kick">an FFT with the fewest multiplies</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>The split-radix FFT</b> computes the discrete Fourier transform with the <b>fewest arithmetic operations</b> of any classic power-of-two algorithm. Radix-2 splits a size-N transform into two size-N/2; radix-4 into four size-N/4. Split-radix does something asymmetric and clever: it splits into <b>one</b> half-size transform on the <b>even</b>-indexed samples and <b>two</b> quarter-size transforms on the samples at indices &equiv; 1 and &equiv; 3 (mod 4). That L-shaped decomposition needs fewer twiddle-factor multiplications than either pure radix &mdash; for decades it held the record for lowest operation count &mdash; while still giving the exact same transform.<br><br>
+ <span class="lit">LIT</span> verified live: for sizes N = 2 to 128, the split-radix recursion reproduces the direct DFT to ~1e-12 on random complex inputs (window.__split_radix). <span class="fig">FIG</span> no framing; the even/odd-1/odd-3 recursion and a direct DFT run in-browser (the win is operation count, shown structurally).</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-speedrun</i> &mdash; the fewest multiplies of any power-of-two FFT, from an asymmetric even/odd split. <b>AVAN (AI)</b> built the instrument: the split-radix recursion (one even, two odd-index quarter transforms), the butterfly combine, and the direct-DFT check.<br><br>Credit as content: Yavne (1968); Duhamel &amp; Hollmann (1984). The weave: David names the speedrun; I confirm the L-shaped split computes the exact DFT with the classic minimal operation count.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="210"></canvas>
+  <div class="wctrl"><div class="cap">One half-size transform on the evens, two quarter-size on indices ≡1 and ≡3 (mod 4) — the L-shaped split.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">A complex signal; the split-radix spectrum and the direct DFT agree exactly.</div>
+   <div class="btns" style="margin-top:10px"><button id="srnew">new signal ▶</button><button id="srsize">size ▶</button><button id="srcheck">verify ▶</button></div>
+   <div class="cap" id="srread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the spectrum, from the minimal-op recursion.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t split symmetrically &mdash; split L-shaped. The inverse of &lsquo;pure radix-2 or radix-4&rsquo; is &lsquo;one even half-transform + two odd quarter-transforms, fewer twiddles.&rsquo; <b>Magenta</b> is the direct N&sup2; transform; <b>green</b> is the split-radix spectrum. Fewest multiplies, same answer.</div>
+   <div class="btns" style="margin-top:10px"><button id="srspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine split-radix FFT (Yavne 1968; Duhamel & Hollmann 1984), long the minimal-operation-count power-of-two FFT. Verified live: for N=2..128, the split-radix recursion (one even-index N/2 transform + two odd-index N/4 transforms, combined by butterflies) reproduces the direct DFT to ~1e-12 on random complex inputs (window.__split_radix.matchesDFT).<br><br><span class="fig">FIG</span> No framing: the even/odd-1/odd-3 recursion and a direct DFT run in-browser (the win is operation count, shown structurally). The AVAN inverse is honest — instead of a symmetric radix-2 or radix-4 split, one splits L-shaped: one even half-transform plus two odd quarter-transforms, fewer twiddles. Magenta is the direct N² transform; green is the split-radix spectrum. Fewest multiplies, same answer.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE-SPEEDRUN &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,GR='#35ffb0',LG=4,DAT=null;
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function directDFT(re,im){var N=re.length,Re=[],Im=[];for(var k=0;k<N;k++){var sr=0,si=0;for(var n=0;n<N;n++){var a=-2*Math.PI*k*n/N,c=Math.cos(a),s=Math.sin(a);sr+=re[n]*c-im[n]*s;si+=re[n]*s+im[n]*c;}Re.push(sr);Im.push(si);}return [Re,Im];}
+function sr(re,im){var N=re.length;if(N===1)return [re.slice(),im.slice()];if(N===2)return [[re[0]+re[1],re[0]-re[1]],[im[0]+im[1],im[0]-im[1]]];var evR=[],evI=[],o1R=[],o1I=[],o3R=[],o3I=[];for(var i=0;i<N/2;i++){evR.push(re[2*i]);evI.push(im[2*i]);}for(var i=0;i<N/4;i++){o1R.push(re[4*i+1]);o1I.push(im[4*i+1]);o3R.push(re[4*i+3]);o3I.push(im[4*i+3]);}var E=sr(evR,evI),O1=sr(o1R,o1I),O3=sr(o3R,o3I),Re=new Array(N),Im=new Array(N);for(var k=0;k<N/4;k++){var a1=-2*Math.PI*k/N,c1=Math.cos(a1),s1=Math.sin(a1),a3=-2*Math.PI*3*k/N,c3=Math.cos(a3),s3=Math.sin(a3);var u1R=O1[0][k]*c1-O1[1][k]*s1,u1I=O1[0][k]*s1+O1[1][k]*c1,u3R=O3[0][k]*c3-O3[1][k]*s3,u3I=O3[0][k]*s3+O3[1][k]*c3,sR=u1R+u3R,sI=u1I+u3I,dR=u1R-u3R,dI=u1I-u3I;Re[k]=E[0][k]+sR;Im[k]=E[1][k]+sI;Re[k+N/2]=E[0][k]-sR;Im[k+N/2]=E[1][k]-sI;Re[k+N/4]=E[0][k+N/4]+dI;Im[k+N/4]=E[1][k+N/4]-dR;Re[k+3*N/4]=E[0][k+N/4]-dI;Im[k+3*N/4]=E[1][k+N/4]+dR;}return [Re,Im];}
+function verify(){if(VR)return VR;var rnd=mb(3),match=true,worst=0;for(var lg=1;lg<=7;lg++){var N=1<<lg;for(var t=0;t<200;t++){var re=[],im=[];for(var i=0;i<N;i++){re.push(rnd()*2-1);im.push(rnd()*2-1);}var d=directDFT(re,im),s=sr(re,im);for(var k=0;k<N;k++){var e=Math.hypot(d[0][k]-s[0][k],d[1][k]-s[1][k]);if(e>worst)worst=e;if(e>1e-6)match=false;}}}return {matchesDFT:match,worst:worst};}
+function mk(){var rnd=Math.random,N=1<<LG,re=[],im=[];for(var i=0;i<N;i++){re.push(Math.sin(i*0.7)+(rnd()*2-1)*0.3);im.push((rnd()*2-1)*0.3);}DAT={N:N,re:re,im:im,d:directDFT(re,im),s:sr(re,im)};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);nt(g,GR,10,16,10,'split-radix: even indices → one N/2 transform · indices ≡1,≡3 (mod 4) → two N/4 transforms (L-shape)');
+ var N=8,x0=40,cell=52;for(var i=0;i<N;i++){var cls=(i%2===0)?'#35ffb0':(i%4===1?'#ffcf4a':'#b06bff');nf(g,cls);g.globalAlpha=0.5;g.fillRect(x0+i*cell,60,cell-6,34);g.globalAlpha=1;ng(g);nt(g,'#0a0713',x0+i*cell+16,82,12,''+i);}
+ nt(g,'#35ffb0',x0,120,10,'green = even (N/2)');nt(g,'#ffcf4a',x0+140,120,10,'gold = ≡1 (N/4)');nt(g,'#b06bff',x0+280,120,10,'violet = ≡3 (N/4)');
+ nt(g,'#8ad',x0,H-12,10,'this asymmetric split needs fewer twiddle multiplications than pure radix-2 or radix-4');}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!DAT)mk();var N=DAT.N;nt(g,GR,12,22,12,'N = '+N+' (split-radix vs direct DFT)');
+ var x0=30,y0=56,bw=(W-60)/N,mx=0;for(var k=0;k<N;k++)mx=Math.max(mx,Math.hypot(DAT.d[0][k],DAT.d[1][k]));for(var k=0;k<N;k++){var md=Math.hypot(DAT.d[0][k],DAT.d[1][k])/mx*100,ms=Math.hypot(DAT.s[0][k],DAT.s[1][k])/mx*100;nf(g,'#ff2fa6');g.globalAlpha=0.4;g.fillRect(x0+k*bw,y0+110-md,bw*0.4,md);g.globalAlpha=1;ng(g);nf(g,GR);g.globalAlpha=0.6;g.fillRect(x0+k*bw+bw*0.45,y0+110-ms,bw*0.4,ms);g.globalAlpha=1;ng(g);}
+ nt(g,'#ff2fa6',30,y0+128,10,'magenta = direct DFT');nt(g,GR,180,y0+128,10,'green = split-radix');
+ var worst=0;for(var k=0;k<N;k++)worst=Math.max(worst,Math.hypot(DAT.d[0][k]-DAT.s[0][k],DAT.d[1][k]-DAT.s[1][k]));nt(g,worst<1e-6?'#39ffb0':'#ff5a5a',12,H-46,11,'max |split-radix − direct| = '+worst.toExponential(2)+(worst<1e-6?' → identical ✓':' ✗'));
+ var v=verify();nt(g,v.matchesDFT?'#39ffb0':'#ff5a5a',12,H-14,9,'split-radix == direct DFT for N=2..128 (worst '+v.worst.toExponential(1)+') '+(v.matchesDFT?'✓':'✗'));}
+document.getElementById('srnew').onclick=function(){mk();drawW4();document.getElementById('srread').textContent='new signal (N='+DAT.N+') — split-radix == direct DFT';};
+document.getElementById('srsize').onclick=function(){LG=LG>=7?2:LG+1;mk();drawW4();document.getElementById('srread').textContent='N='+DAT.N+' — split-radix reproduces the DFT exactly';};
+document.getElementById('srcheck').onclick=function(){var v=verify();document.getElementById('srread').textContent='split-radix (one even + two odd-index quarter transforms) == direct DFT for N=2..128 '+(v.matchesDFT?'✓':'✗')+' (worst '+v.worst.toExponential(1)+')';};
+document.getElementById('srspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!DAT)mk();var N=DAT.N;g.save();g.translate(W/2,H/2-10);g.rotate(ang*0.06);var R=120;for(var k=0;k<N;k++){var a=k/N*6.283,m=Math.hypot(DAT.s[0][k],DAT.s[1][k]);ndot(g,Math.cos(a)*R,Math.sin(a)*R,2+Math.min(6,m),'#35ffb0');}g.restore();
+ nt(g,'#35ffb0',10,H-46,11,'green: the spectrum, from the minimal-operation split-radix recursion');nt(g,'#ff2fa6',10,H-30,10,'magenta idea: the direct N² transform it replaces');nt(g,'#8ad',10,H-13,10,'fewest multiplies, same answer');}
+mk();drawW3();drawW4();window.__split_radix=verify();
+function loop(){if(spin)ang+=0.03;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

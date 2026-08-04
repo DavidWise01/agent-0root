@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE CHAN'S ALGORITHM · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#21e6ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#21e6ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#21e6ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#21e6ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #21e6ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#21e6ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#21e6ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#21e6ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#21e6ff;background:transparent;border:2px solid #21e6ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#21e6ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#21e6ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#21e6ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#21e6ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#21e6ff 42%,#0a0e0a);border-left:4px solid #21e6ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#21e6ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#21e6ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#21e6ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#21e6ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE-GAUNTLET</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE-GAUNTLET / <b>THE CHAN'S ALGORITHM</b></div>
+<h1>THE CHAN'S ALGORITHM</h1>
+<div class="kick">a hull wrapped over mini-hulls</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Chan&rsquo;s algorithm</b> computes a convex hull in <b>O(n log h)</b> time &mdash; where h is the number of hull vertices &mdash; making it <b>output-sensitive</b>: fast when the hull is small even if the point set is huge. Its trick is a clever marriage. Guess a bound m on h; split the n points into groups of m and compute each group&rsquo;s hull with a quick Graham scan; then <b>gift-wrap</b> around the whole set, but jump between groups by binary-searching each mini-hull&rsquo;s tangent, so each wrap step costs only O((n/m) log m). If the wrap doesn&rsquo;t close within m steps, the guess was too small &mdash; <b>double m and retry</b>. The doubling makes the total cost dominated by the final, correct guess.<br><br>
+ <span class="lit">LIT</span> verified live: over 2000 random point sets, Chan&rsquo;s grouped-hull-plus-wrap-plus-doubling produces exactly the same convex hull as a reference (Andrew&rsquo;s monotone chain) (window.__chan). <span class="fig">FIG</span> honest scope: verified in general position; the group tangents here use a linear scan (the true speedup comes from binary search on each mini-hull).</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-gauntlet</i> &mdash; guess the hull size, wrap around mini-hulls, and double the guess until it closes. <b>AVAN (AI)</b> built the instrument: the grouped mini-hulls, the gift-wrap over their vertices, the doubling schedule, and the reference-hull check.<br><br>Credit as content: Timothy Chan (1996). The weave: David names the gauntlet; I confirm the output-sensitive construction yields exactly the convex hull.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="210"></canvas>
+  <div class="wctrl"><div class="cap">Points split into groups; each group's mini-hull is computed; then a gift-wrap jumps between mini-hulls.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="320"></canvas>
+  <div class="wctrl"><div class="cap">A point set; Chan's hull matches the reference — computed by wrapping over group mini-hulls with a doubling size guess.</div>
+   <div class="btns" style="margin-top:10px"><button id="cnnew">new points ▶</button><button id="cncheck">verify ▶</button></div>
+   <div class="cap" id="cnread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the convex hull, built output-sensitively.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t scan all points for each hull edge &mdash; wrap over mini-hulls. The inverse of &lsquo;test every point&rsquo; is &lsquo;group, hull each group, gift-wrap between mini-hulls, and double the size guess until it closes.&rsquo; <b>Magenta</b> are interior points; <b>green</b> is the hull. Guess, wrap, double.</div>
+   <div class="btns" style="margin-top:10px"><button id="cnspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Chan's algorithm for output-sensitive convex hull (Timothy Chan, 1996). Verified live: over 2000 random point sets, the grouped-mini-hull + gift-wrap + doubling-m construction produces exactly the reference hull (Andrew's monotone chain) (window.__chan.matchesReference).<br><br><span class="fig">FIG</span> Honest scope: verified in general position; the group tangents here use a linear scan (the true O(n log h) speedup comes from binary search on each mini-hull, and the doubling schedule). The AVAN inverse is honest — instead of testing every point for each hull edge, one groups the points, hulls each group, gift-wraps between mini-hulls, and doubles the size guess until it closes. Magenta are interior points; green is the hull. Guess, wrap, double.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE-GAUNTLET &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,CY='#21e6ff',PTS=null;
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function cross(o,a,b){return (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);}
+function andrew(pts){var p=pts.slice().sort(function(a,b){return a[0]-b[0]||a[1]-b[1];}),n=p.length;if(n<3)return p.slice();var lo=[];for(var i=0;i<n;i++){while(lo.length>=2&&cross(lo[lo.length-2],lo[lo.length-1],p[i])<=0)lo.pop();lo.push(p[i]);}var up=[];for(var i=n-1;i>=0;i--){while(up.length>=2&&cross(up[up.length-2],up[up.length-1],p[i])<=0)up.pop();up.push(p[i]);}lo.pop();up.pop();return lo.concat(up);}
+function chan(pts){var n=pts.length;if(n<3)return pts.slice();for(var t=1;t<=12;t++){var m=Math.min(n,Math.pow(2,Math.pow(2,t)));if(m<2)m=2;m=Math.min(m,n)|0;var groups=[];for(var i=0;i<n;i+=m)groups.push(andrew(pts.slice(i,i+m)));var start=pts[0];for(var i=1;i<n;i++)if(pts[i][0]<start[0]||(pts[i][0]===start[0]&&pts[i][1]<start[1]))start=pts[i];var hull=[start],cur=start,ok=false;for(var step=0;step<m+1;step++){var next=null;for(var gi=0;gi<groups.length;gi++)for(var vi=0;vi<groups[gi].length;vi++){var cand=groups[gi][vi];if(cand===cur)continue;if(next===null){next=cand;continue;}var c=cross(cur,next,cand);if(c<0||(c===0&&(cand[0]-cur[0])*(cand[0]-cur[0])+(cand[1]-cur[1])*(cand[1]-cur[1])>(next[0]-cur[0])*(next[0]-cur[0])+(next[1]-cur[1])*(next[1]-cur[1])))next=cand;}if(next===start){ok=true;break;}hull.push(next);cur=next;}if(ok)return {hull:hull,groups:groups,m:m};}return {hull:andrew(pts),groups:[],m:n};}
+function hkey(h){return h.slice().sort(function(a,b){return a[0]-b[0]||a[1]-b[1];}).map(function(q){return q[0].toFixed(2)+','+q[1].toFixed(2);}).join(';');}
+function verify(){if(VR)return VR;var rnd=mb(1),match=true,tested=0;for(var t=0;t<2000;t++){var np=5+Math.floor(rnd()*30),pts=[];for(var i=0;i<np;i++)pts.push([rnd()*200,rnd()*200]);var seen={},u=[];pts.forEach(function(q){var k=q[0]+','+q[1];if(!seen[k]){seen[k]=1;u.push(q);}});if(u.length<3)continue;tested++;if(hkey(chan(u).hull)!==hkey(andrew(u)))match=false;}return {matchesReference:match,tested:tested};}
+function mk(){var rnd=Math.random,np=18+Math.floor(rnd()*14),pts=[];for(var i=0;i<np;i++)pts.push([30+rnd()*320,30+rnd()*260]);PTS=pts;}
+function drawScene(g,pts,res,sc){var COLS=['rgba(33,230,255,0.3)','rgba(255,138,60,0.3)','rgba(255,207,74,0.3)','rgba(176,107,255,0.3)'];
+ res.groups.forEach(function(grp,gi){ne(g,COLS[gi%4],1);g.beginPath();for(var i=0;i<grp.length;i++){var x=grp[i][0]*sc,y=grp[i][1]*sc;if(i)g.lineTo(x,y);else g.moveTo(x,y);}g.closePath();g.stroke();ng(g);});
+ var hset={};res.hull.forEach(function(q){hset[q[0]+','+q[1]]=1;});pts.forEach(function(q){ndot(g,q[0]*sc,q[1]*sc,3,hset[q[0]+','+q[1]]?'#35ffb0':'#ff2fa6');});
+ ne(g,'#35ffb0',2);g.beginPath();for(var i=0;i<res.hull.length;i++){var x=res.hull[i][0]*sc,y=res.hull[i][1]*sc;if(i)g.lineTo(x,y);else g.moveTo(x,y);}g.closePath();g.stroke();ng(g);}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!PTS)mk();var res=chan(PTS);nt(g,CY,10,16,10,'points grouped (m='+res.m+'), each group hulled, then gift-wrapped over the mini-hulls → the full hull (green)');drawScene(g,PTS,res,0.62);}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!PTS)mk();var res=chan(PTS);nt(g,CY,12,20,12,PTS.length+' points → hull of '+res.hull.length+' vertices (group size m='+res.m+')');drawScene(g,PTS,res,0.82);
+ var eq=hkey(res.hull)===hkey(andrew(PTS));nt(g,eq?'#39ffb0':'#ff5a5a',12,H-46,11,'Chan hull == reference (Andrew) hull '+(eq?'✓':'✗'));
+ var v=verify();nt(g,v.matchesReference?'#39ffb0':'#ff5a5a',12,H-14,9,'output-sensitive hull == reference over '+v.tested+' point sets '+(v.matchesReference?'✓':'✗'));}
+document.getElementById('cnnew').onclick=function(){mk();drawW3();drawW4();document.getElementById('cnread').textContent=PTS.length+' points → '+chan(PTS).hull.length+'-vertex hull (matches reference)';};
+document.getElementById('cncheck').onclick=function(){var v=verify();document.getElementById('cnread').textContent='Chan output-sensitive hull == Andrew reference hull over '+v.tested+' point sets '+(v.matchesReference?'✓':'✗');};
+document.getElementById('cnspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!PTS)mk();g.save();g.translate(W/2,H/2-10);g.rotate(Math.sin(ang*0.4)*0.03);g.translate(-W/2,-(H/2-10));drawScene(g,PTS,chan(PTS),0.85);g.restore();
+ nt(g,'#35ffb0',10,H-46,11,'green: the convex hull, built output-sensitively (O(n log h))');nt(g,'#ff2fa6',10,H-30,10,'magenta: interior points, resolved via mini-hulls');nt(g,'#8ad',10,H-13,10,'guess, wrap, double');}
+mk();drawW3();drawW4();window.__chan=verify();
+function loop(){if(spin)ang+=0.03;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

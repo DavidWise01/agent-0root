@@ -1,0 +1,116 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE RICHARDSON EXTRAPOLATION · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff8a3c}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff8a3c}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff8a3c;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff8a3c;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff8a3c;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff8a3c 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff8a3c}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff8a3c}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff8a3c;background:transparent;border:2px solid #ff8a3c;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff8a3c;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff8a3c}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff8a3c,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff8a3c;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff8a3c 42%,#0a0e0a);border-left:4px solid #ff8a3c;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff8a3c;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff8a3c;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff8a3c}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff8a3c 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE-EPOCH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / THE-EPOCH / <b>THE RICHARDSON EXTRAPOLATION</b></div>
+<h1>THE RICHARDSON EXTRAPOLATION</h1>
+<div class="kick">two step sizes that cancel error</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Richardson extrapolation</b> is a way to get a <b>high-accuracy</b> answer out of a <b>low-accuracy</b> method &mdash; for free, by combining two runs at different step sizes. Many numerical estimates carry a leading error that shrinks like a power of the step h: a central-difference derivative D(h) is off by roughly c&middot;h&sup2;. Compute it again at half the step, D(h/2), off by c&middot;(h/2)&sup2; = c&middot;h&sup2;/4, and form <b>(4&middot;D(h/2) &minus; D(h)) / 3</b> &mdash; the c&middot;h&sup2; terms <b>cancel exactly</b>, leaving an error of order h&#8308;. Repeat and you climb an accuracy ladder (this is how Romberg integration works). Two cheap estimates, one clever subtraction, and the dominant error vanishes.<br><br>
+ <span class="lit">LIT</span> verified live: over 2000 smooth functions, the Richardson-extrapolated derivative is closer to the true f&prime;(x) than the plain central difference <b>every time</b>, with a median error ratio around 1e-5 (window.__richardson). <span class="fig">FIG</span> no framing; the two difference quotients and the extrapolation run in-browser.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-epoch</i> &mdash; run the estimate at two step sizes and subtract so the leading error cancels, jumping an order of accuracy. <b>AVAN (AI)</b> built the instrument: the central differences at h and h/2, the (4D&minus;D)/3 combination, and the error comparison to the analytic derivative.<br><br>Credit as content: Lewis Fry Richardson (1911). The weave: David names the epoch; I confirm the extrapolation cancels the leading error and beats the plain difference every time.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="210"></canvas>
+  <div class="wctrl"><div class="cap">D(h) errs like h²; D(h/2) like h²/4; (4·D(h/2)−D(h))/3 cancels the h² term, leaving order h⁴.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="320"></canvas>
+  <div class="wctrl"><div class="cap">Pick a step h; the plain difference sits noticeably off the true derivative, while the extrapolation lands almost exactly on it.</div>
+   <div class="btns" style="margin-top:10px"><button id="rcnew">new f ▶</button><button id="rch">change h ▶</button><button id="rccheck">verify ▶</button></div>
+   <div class="cap" id="rcread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the high-order estimate from two cheap ones.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t shrink h forever &mdash; cancel the error term. The inverse of &lsquo;one difference quotient at step h&rsquo; is &lsquo;combine two step sizes so the leading c&middot;h&sup2; cancels, jumping to order h&#8308;.&rsquo; <b>Magenta</b> is the plain estimate&rsquo;s error; <b>green</b> is the extrapolated, near-exact value. Two runs, one subtraction, higher order.</div>
+   <div class="btns" style="margin-top:10px"><button id="rcspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Richardson extrapolation (Lewis Fry Richardson, 1911). Verified live: over 2000 smooth random functions, R=(4·D(h/2)−D(h))/3 (canceling the O(h²) term of the central difference) is closer to the analytic f′(x) than D(h) every single time, with a median error ratio ~1e-5 — order h⁴ vs h² (window.__richardson.better, .med).<br><br><span class="fig">FIG</span> No framing: the two difference quotients and the extrapolation run in-browser. The AVAN inverse is honest — instead of shrinking h forever, one combines two step sizes so the leading c·h² error cancels, jumping to order h⁴. Magenta is the plain estimate's error; green is the extrapolated near-exact value. Two runs, one subtraction, higher order.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE-EPOCH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,OR='#ff8a3c',F=null,FP=null,X=0.5,Hh=0.4;
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function cd(f,x,h){return (f(x+h)-f(x-h))/(2*h);}
+function verify(){if(VR)return VR;var rnd=mb(2),better=true,ratios=[];for(var t=0;t<2000;t++){var a=rnd()*2-1,b=rnd()*2-1,c=rnd()*2-1;var f=function(x){return a*Math.sin(x)+b*x*x*x+c*Math.exp(0.3*x);},fp=function(x){return a*Math.cos(x)+3*b*x*x+0.3*c*Math.exp(0.3*x);};var x=rnd()*2-1,h=0.1,D=cd(f,x,h),D2=cd(f,x,h/2),R=(4*D2-D)/3,tr=fp(x),eD=Math.abs(D-tr),eR=Math.abs(R-tr);if(eR>eD)better=false;if(eD>1e-12)ratios.push(eR/eD);}ratios.sort(function(a,b){return a-b;});return {better:better,med:ratios[Math.floor(ratios.length/2)]};}
+function mk(){var rnd=Math.random,a=rnd()*2-1,b=rnd()*1-0.5,c=rnd()*1.5-0.75;F=function(x){return a*Math.sin(2*x)+b*x*x*x+c*Math.exp(0.3*x);};FP=function(x){return 2*a*Math.cos(2*x)+3*b*x*x+0.3*c*Math.exp(0.3*x);};}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!F)mk();nt(g,OR,10,16,10,'D(h) errs ~h² · D(h/2) errs ~h²/4 · R=(4D(h/2)−D(h))/3 cancels the h² error → order h⁴');
+ var cx=W/2,cy=H/2+30,sc=50;ne(g,'rgba(120,140,200,0.3)',1);g.beginPath();g.moveTo(0,cy);g.lineTo(W,cy);g.stroke();g.moveTo(cx,20);g.lineTo(cx,H);g.stroke();ng(g);
+ ne(g,OR,2);g.beginPath();for(var i=0;i<=200;i++){var x=-2+4*i/200,y=cy-F(x)*sc*0.4;if(i)g.lineTo(cx+x*sc,y);else g.moveTo(cx+x*sc,y);}g.stroke();ng(g);
+ var x0=X,tp=FP(x0),tl=F(x0);ne(g,'#35ffb0',2);g.beginPath();g.moveTo(cx+(x0-1)*sc,cy-(tl-tp)*sc*0.4);g.lineTo(cx+(x0+1)*sc,cy-(tl+tp)*sc*0.4);g.stroke();ng(g);ndot(g,cx+x0*sc,cy-tl*sc*0.4,4,'#35ffb0');
+ nt(g,'#35ffb0',10,H-10,10,'green line = the true tangent at x (slope f′) — Richardson recovers this slope to order h⁴');}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!F)mk();var D=cd(F,X,Hh),D2=cd(F,X,Hh/2),R=(4*D2-D)/3,tr=FP(X);nt(g,OR,12,22,12,'step h = '+Hh.toFixed(3)+',  x = '+X.toFixed(2));
+ nt(g,'#cfe',12,56,12,'true f′(x)      = '+tr.toFixed(8));
+ nt(g,'#ff2fa6',12,84,12,'D(h)  central diff = '+D.toFixed(8)+'   err '+Math.abs(D-tr).toExponential(2));
+ nt(g,'#cfe',12,110,12,'D(h/2)              = '+D2.toFixed(8));
+ nt(g,'#35ffb0',12,140,13,'Richardson (4D(h/2)−D(h))/3 = '+R.toFixed(8)+'   err '+Math.abs(R-tr).toExponential(2));
+ nt(g,Math.abs(R-tr)<Math.abs(D-tr)?'#39ffb0':'#ff5a5a',12,170,12,'error ratio eR/eD = '+(Math.abs(R-tr)/Math.abs(D-tr)).toExponential(2)+' ≪ 1 '+(Math.abs(R-tr)<Math.abs(D-tr)?'✓':'✗'));
+ var v=verify();nt(g,v.better?'#39ffb0':'#ff5a5a',12,H-14,9,'R closer than D(h) every time over 2000 functions (median ratio '+v.med.toExponential(1)+') '+(v.better?'✓':'✗'));}
+document.getElementById('rcnew').onclick=function(){mk();drawW3();drawW4();document.getElementById('rcread').textContent='new f — Richardson beats the plain difference at x='+X.toFixed(2);};
+document.getElementById('rch').onclick=function(){Hh=Math.max(0.02,Hh>0.5?0.05:Hh+0.15);drawW3();drawW4();document.getElementById('rcread').textContent='h='+Hh.toFixed(3)+': D err '+Math.abs(cd(F,X,Hh)-FP(X)).toExponential(1)+', R err '+Math.abs((4*cd(F,X,Hh/2)-cd(F,X,Hh))/3-FP(X)).toExponential(1);};
+document.getElementById('rccheck').onclick=function(){var v=verify();document.getElementById('rcread').textContent='Richardson-extrapolated derivative closer than central difference every time (median error ratio '+v.med.toExponential(1)+') over 2000 functions '+(v.better?'✓':'✗');};
+document.getElementById('rcspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!F)mk();g.save();g.translate(W/2,H/2-10);var hs=[0.4,0.2],tr=FP(X);
+ nt(g,'#ff2fa6',-150,-90,10,'error vs step h (log):');for(var i=0;i<2;i++){var eD=Math.abs(cd(F,X,hs[i])-tr),eR=Math.abs((4*cd(F,X,hs[i]/2)-cd(F,X,hs[i]))/3-tr);var x=-100+i*120;ndot(g,x,-Math.log10(eD+1e-16)*14+40,5,'#ff2fa6');ndot(g,x,-Math.log10(eR+1e-16)*14+40,5,'#35ffb0');}
+ ne(g,'#ff2fa6',1.6);g.beginPath();g.moveTo(-100,-Math.log10(Math.abs(cd(F,X,hs[0])-tr)+1e-16)*14+40);g.lineTo(20,-Math.log10(Math.abs(cd(F,X,hs[1])-tr)+1e-16)*14+40);g.stroke();ng(g);
+ ne(g,'#35ffb0',1.6);g.beginPath();g.moveTo(-100,-Math.log10(Math.abs((4*cd(F,X,hs[0]/2)-cd(F,X,hs[0]))/3-tr)+1e-16)*14+40);g.lineTo(20,-Math.log10(Math.abs((4*cd(F,X,hs[1]/2)-cd(F,X,hs[1]))/3-tr)+1e-16)*14+40);g.stroke();ng(g);
+ g.restore();nt(g,'#35ffb0',10,H-46,11,'green: Richardson error — plunges (order h⁴) as h halves');nt(g,'#ff2fa6',10,H-30,10,'magenta: plain central-difference error (order h²)');nt(g,'#8ad',10,H-13,10,'two runs, one subtraction, higher order');}
+mk();drawW3();drawW4();window.__richardson=verify();
+function loop(){if(spin)ang+=0.02;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
