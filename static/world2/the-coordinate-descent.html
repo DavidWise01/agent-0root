@@ -1,0 +1,112 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE COORDINATE DESCENT · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffcf4a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffcf4a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffcf4a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffcf4a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffcf4a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffcf4a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffcf4a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffcf4a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffcf4a;background:transparent;border:2px solid #ffcf4a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffcf4a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffcf4a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffcf4a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffcf4a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffcf4a 42%,#0a0e0a);border-left:4px solid #ffcf4a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffcf4a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffcf4a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffcf4a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffcf4a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; GRADIENT-DESCENT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / GRADIENT-DESCENT / <b>THE COORDINATE DESCENT</b></div>
+<h1>THE COORDINATE DESCENT</h1>
+<div class="kick">a minimizer that moves one axis at a time</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt"><b>Coordinate descent</b> minimizes a function by improving <b>one variable at a time</b>, cycling through the coordinates and holding the rest fixed. For a convex quadratic &frac12;x&#7488;Ax &minus; b&#7488;x, each single-coordinate step has a closed form &mdash; set the partial derivative to zero, so x&#7522; &larr; (b&#7522; &minus; &Sigma;<sub>j&ne;i</sub> A&#7522;&#11388;x&#11388;)/A&#7522;&#7522; &mdash; an <b>exact line search</b> along that axis. No gradient of the whole function, no step size to tune; just sweep the axes and the iterate slides down the bowl to the true minimizer. It is the engine behind LASSO solvers and many large-scale learning methods, precisely because each cheap coordinate update is exact.<br><br>
+ <span class="lit">LIT</span> verified live: over 2000 random symmetric-positive-definite systems, cyclic exact coordinate descent converges to the true minimizer x* = A<sup>&minus;1</sup>b to ~1e-16 (window.__coordinate_descent). <span class="fig">FIG</span> no framing; the per-coordinate exact minimization and a direct linear solve run in-browser.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>gradient-descent</i> &mdash; but the sibling that moves along one axis at a time, each step exact, no step size to tune. <b>AVAN (AI)</b> built the instrument: the closed-form coordinate update, the cyclic sweep, and the convergence check against a direct solve.<br><br>Credit as content: coordinate descent (classical; central to modern LASSO/coordinate-descent solvers, Friedman et&nbsp;al.). The weave: David names gradient descent; I confirm the axis-by-axis exact steps converge to A<sup>&minus;1</sup>b.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="220"></canvas>
+  <div class="wctrl"><div class="cap">Contours of a quadratic bowl; coordinate descent takes axis-aligned steps, each landing exactly at that axis's minimum.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="320"></canvas>
+  <div class="wctrl"><div class="cap">A random quadratic; the zig-zag of coordinate steps converges to the true minimizer A⁻¹b.</div>
+   <div class="btns" style="margin-top:10px"><button id="cdnew">new problem ▶</button><button id="cdstep">step ▶</button><button id="cdcheck">verify ▶</button></div>
+   <div class="cap" id="cdread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the minimizer reached one axis at a time.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t compute the full gradient &mdash; minimize one coordinate exactly. The inverse of &lsquo;solve the whole system at once&rsquo; is &lsquo;set each x&#7522; to its optimum with the rest fixed, and sweep &mdash; it slides to A<sup>&minus;1</sup>b.&rsquo; <b>Magenta</b> is the axis-aligned zig-zag path; <b>green</b> is the minimizer it reaches. One axis at a time, exactly.</div>
+   <div class="btns" style="margin-top:10px"><button id="cdspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine coordinate descent (classical; central to modern LASSO/glmnet coordinate-descent solvers, Friedman et al.). Verified live: over 2000 random SPD systems, cyclic exact coordinate minimization (xᵢ ← (bᵢ − Σ_{j≠i} Aᵢⱼxⱼ)/Aᵢᵢ) converges to the true minimizer x*=A⁻¹b to ~1e-16 (window.__coordinate_descent.converges).<br><br><span class="fig">FIG</span> No framing: the per-coordinate exact minimization and a direct linear solve run in-browser. The AVAN inverse is honest — instead of computing the full gradient, one sets each xᵢ to its optimum with the rest fixed and sweeps, sliding to A⁻¹b. Magenta is the axis-aligned zig-zag path; green is the minimizer it reaches. One axis at a time, exactly.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of GRADIENT-DESCENT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,GD='#ffcf4a',A=null,b=null,X=null,PATH=null,XSTAR=null;
+function mb(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function solveLin(A,b){var n=b.length,M=A.map(function(r,i){return r.concat([b[i]]);});for(var c=0;c<n;c++){var pv=c;for(var r=c;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[pv][c]))pv=r;var t=M[c];M[c]=M[pv];M[pv]=t;var d=M[c][c];for(var j=0;j<=n;j++)M[c][j]/=d;for(var r=0;r<n;r++){if(r===c)continue;var f=M[r][c];for(var j=0;j<=n;j++)M[r][j]-=f*M[c][j];}}return M.map(function(r){return r[n];});}
+function verify(){if(VR)return VR;var rnd=mb(4),conv=true,worst=0;for(var t=0;t<2000;t++){var n=2+Math.floor(rnd()*4),R=[];for(var i=0;i<n;i++){var row=[];for(var j=0;j<n;j++)row.push(rnd()*2-1);R.push(row);}var A=[];for(var i=0;i<n;i++){A.push([]);for(var j=0;j<n;j++){var s=0;for(var k=0;k<n;k++)s+=R[k][i]*R[k][j];A[i].push(s+(i===j?n:0));}}var b=[];for(var i=0;i<n;i++)b.push(rnd()*4-2);var xs=solveLin(A.map(function(r){return r.slice();}),b.slice()),x=new Array(n).fill(0);for(var it=0;it<200;it++)for(var i=0;i<n;i++){var s=b[i];for(var j=0;j<n;j++)if(j!==i)s-=A[i][j]*x[j];x[i]=s/A[i][i];}for(var i=0;i<n;i++){var e=Math.abs(x[i]-xs[i]);if(e>worst)worst=e;if(e>1e-6)conv=false;}}return {converges:conv,worst:worst};}
+function mk(){var rnd=Math.random,r11=rnd()*0.8+0.6,r22=rnd()*0.8+0.6,r12=(rnd()*1.2-0.6);A=[[r11*r11+r12*r12+2,r11*r12+r12*r22],[r11*r12+r12*r22,r12*r12+r22*r22+2]];b=[rnd()*3-1.5,rnd()*3-1.5];XSTAR=solveLin([A[0].slice(),A[1].slice()],b.slice());X=[rnd()*4-2,rnd()*4-2];PATH=[X.slice()];}
+function stepCD(){for(var i=0;i<2;i++){var s=b[i];for(var j=0;j<2;j++)if(j!==i)s-=A[i][j]*X[j];X[i]=s/A[i][i];PATH.push(X.slice());}}
+function f(x){return 0.5*(A[0][0]*x[0]*x[0]+2*A[0][1]*x[0]*x[1]+A[1][1]*x[1]*x[1])-(b[0]*x[0]+b[1]*x[1]);}
+function drawContour(g,W,H,cx,cy,sc){for(var lv=1;lv<=6;lv++){var target=f(XSTAR)+lv*lv*0.4;ne(g,'rgba(120,140,200,0.25)',1);g.beginPath();var first=true;for(var a=0;a<=64;a++){var th=a/64*6.283;var rr=0.1,lo=0.01,hi=6;for(var it=0;it<20;it++){var mid=(lo+hi)/2,px=XSTAR[0]+Math.cos(th)*mid,py=XSTAR[1]+Math.sin(th)*mid;if(f([px,py])<target)lo=mid;else hi=mid;}rr=lo;var x=cx+(XSTAR[0]+Math.cos(th)*rr)*sc,y=cy-(XSTAR[1]+Math.sin(th)*rr)*sc;if(first){g.moveTo(x,y);first=false;}else g.lineTo(x,y);}g.closePath();g.stroke();ng(g);}}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!A)mk();nt(g,GD,10,16,10,'quadratic bowl · coordinate descent: axis-aligned steps, each exact at that axis\'s minimum');var cx=W/2,cy=H/2+6,sc=30;drawContour(g,W,H,cx,cy,sc);
+ var px=X.slice(),pth=[px.slice()];for(var s=0;s<6;s++){for(var i=0;i<2;i++){var ss=b[i];for(var j=0;j<2;j++)if(j!==i)ss-=A[i][j]*px[j];px[i]=ss/A[i][i];pth.push(px.slice());}}
+ ne(g,'#ff2fa6',1.6);g.beginPath();for(var i=0;i<pth.length;i++){var x=cx+pth[i][0]*sc,y=cy-pth[i][1]*sc;if(i)g.lineTo(x,y);else g.moveTo(x,y);}g.stroke();ng(g);ndot(g,cx+XSTAR[0]*sc,cy-XSTAR[1]*sc,5,'#35ffb0');nt(g,'#8ad',10,H-10,10,'each step slides to the exact min along one axis — the path zig-zags to A⁻¹b (green)');}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!A)mk();var cx=W/2,cy=H/2,sc=34;drawContour(g,W,H,cx,cy,sc);
+ ne(g,'#ff2fa6',1.8);g.beginPath();for(var i=0;i<PATH.length;i++){var x=cx+PATH[i][0]*sc,y=cy-PATH[i][1]*sc;if(i)g.lineTo(x,y);else g.moveTo(x,y);}g.stroke();ng(g);for(var i=0;i<PATH.length;i++)ndot(g,cx+PATH[i][0]*sc,cy-PATH[i][1]*sc,3,'#ffcf4a');
+ ndot(g,cx+XSTAR[0]*sc,cy-XSTAR[1]*sc,6,'#35ffb0');ndot(g,cx+X[0]*sc,cy-X[1]*sc,5,'#21e6ff');
+ var err=Math.hypot(X[0]-XSTAR[0],X[1]-XSTAR[1]);nt(g,GD,12,20,11,'‖x − x*‖ = '+err.toExponential(2)+'  ('+(PATH.length-1)+' coordinate steps)');
+ var v=verify();nt(g,v.converges?'#39ffb0':'#ff5a5a',12,H-14,9,'converges to A⁻¹b over 2000 SPD systems (worst '+v.worst.toExponential(1)+') '+(v.converges?'✓':'✗'));}
+document.getElementById('cdnew').onclick=function(){mk();drawW3();drawW4();document.getElementById('cdread').textContent='new quadratic — coordinate descent converges to x*';};
+document.getElementById('cdstep').onclick=function(){stepCD();drawW4();document.getElementById('cdread').textContent='coordinate sweep '+((PATH.length-1)/2)+' → ‖x−x*‖ = '+Math.hypot(X[0]-XSTAR[0],X[1]-XSTAR[1]).toExponential(2);};
+document.getElementById('cdcheck').onclick=function(){var v=verify();document.getElementById('cdread').textContent='cyclic exact coordinate descent converges to A⁻¹b over 2000 SPD systems (worst '+v.worst.toExponential(1)+') '+(v.converges?'✓':'✗');};
+document.getElementById('cdspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);if(!A)mk();var cx=W/2,cy=H/2-10,sc=34;g.save();g.translate(0,Math.sin(ang*0.4)*4);drawContour(g,W,H,cx,cy,sc);ne(g,'#ff2fa6',1.8);g.beginPath();for(var i=0;i<PATH.length;i++){var x=cx+PATH[i][0]*sc,y=cy-PATH[i][1]*sc;if(i)g.lineTo(x,y);else g.moveTo(x,y);}g.stroke();ng(g);ndot(g,cx+XSTAR[0]*sc,cy-XSTAR[1]*sc,6,'#35ffb0');g.restore();
+ nt(g,'#35ffb0',10,H-46,11,'green: the minimizer, reached one axis at a time');nt(g,'#ff2fa6',10,H-30,10,'magenta: the axis-aligned zig-zag path');nt(g,'#8ad',10,H-13,10,'one axis at a time, exactly');}
+mk();drawW3();drawW4();window.__coordinate_descent=verify();
+function loop(){if(spin)ang+=0.03;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
