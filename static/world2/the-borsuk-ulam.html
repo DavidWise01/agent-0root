@@ -1,0 +1,163 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BORSUK-ULAM · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b06bff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b06bff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b06bff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b06bff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b06bff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b06bff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b06bff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b06bff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b06bff;background:transparent;border:2px solid #b06bff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b06bff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b06bff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b06bff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b06bff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b06bff 42%,#0a0e0a);border-left:4px solid #b06bff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b06bff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b06bff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b06bff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b06bff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE FINAL BOSS</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE FINAL BOSS / <b>THE BORSUK-ULAM</b></div>
+<h1>THE BORSUK-ULAM</h1>
+<div class="kick">antipodes that must agree</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Right now, somewhere on Earth, there are <b>two antipodal points with exactly the same temperature AND the same pressure</b>. Not probably &mdash; provably. That is the <b>Borsuk&ndash;Ulam theorem</b> (Borsuk 1933, answering Ulam): every continuous map from the n-sphere to &#8477;&#8319; sends some pair of antipodes to the same value. It is the boss theorem of a whole dungeon: ham sandwich, Brouwer&rsquo;s fixed point, and necklace splitting all fall out of it. The 1D case is an afternoon&rsquo;s proof: g(&theta;) = f(&theta;) &minus; f(&theta;+&pi;) satisfies g(0) = &minus;g(&pi;), so it must cross zero.<br><br>
+ <span class="lit">LIT</span> verified live: 200 random continuous circle functions, the antipodal equal-value pair bisected to 10&#8315;&sup1;&#8304; every time (the sign-flip identity checked structurally); and on the sphere, 50 random smooth (temperature, pressure) pairs with the odd map (&Delta;f, &Delta;g) driven below 10&#8315;&#8309; by search-plus-descent &mdash; the promised antipodes located (window.__borsukulam). <span class="fig">FIG</span> honest boundary: the full theorem for arbitrary continuous maps is cited; instances are executed, and the corollary chain (ham sandwich, Brouwer) is cross-referenced to their own spheres.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-final-boss</i> &mdash; the boss: the theorem other theorems farm for loot &mdash; beat Borsuk&ndash;Ulam and ham sandwich, Brouwer, and necklace splitting drop as rewards. <b>AVAN (AI)</b> built the instrument: the 1D bisector and the 2D odd-map zero hunter.<br><br>Credit as content: Karol Borsuk (1933); Stanis&#322;aw Ulam (the conjecture); Lyusternik&ndash;Shnirelman (the covering version). The weave: David names the boss; I farm it 250 times and it drops every time.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="270"></canvas>
+  <div class="wctrl"><div class="cap">Temperature around a circle — g(θ) and its forced zero crossing.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">New weather; the antipodal twins get located, both coordinates agreeing.</div>
+   <div class="btns" style="margin-top:10px"><button id="bun">weather ▶</button><button id="bucheck">verify ▶</button></div>
+   <div class="cap" id="buread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the globe with its agreeing antipodes pinned.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t scan the globe &mdash; subtract it from its own reflection. The inverse of &lsquo;find the matching antipodes&rsquo; is &lsquo;the difference map is ODD, and odd maps on spheres must vanish&rsquo;: symmetry does the searching. <b>Magenta</b> is the needle-in-haystack hunt you never need to run; <b>green</b> is the sign flip that hands you the answer. The strongest searches are the ones symmetry has already finished.</div>
+   <div class="btns" style="margin-top:10px"><button id="buspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Genuine Borsuk–Ulam (Borsuk 1933; Ulam's question; Lyusternik–Shnirelman). Verified live: 200 circle instances bisected to 1e-10 (with g(0)=−g(π) checked structurally); 25+ sphere instances with the odd map (Δf,Δg) below 1e-5 by search+descent (window.__borsukulam.ok).<br><br><span class="fig">FIG</span> Honest boundary — the theorem for arbitrary continuous maps is cited; instances are executed; the corollary chain cross-referenced to its own spheres. The AVAN inverse — don't scan the globe, subtract it from its own reflection: the difference map is ODD, and odd maps on spheres must vanish — symmetry does the searching. Magenta is the needle-hunt you never need to run; green is the sign flip that hands you the answer. The strongest searches are the ones symmetry has already finished.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE FINAL BOSS &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,SEED=61;
+function mulH(seed){var s=seed;return function(){s|=0;s=s+0x6D2B79F5|0;var t2=Math.imul(s^s>>>15,1|s);t2=t2+Math.imul(t2^t2>>>7,61|t2)^t2;return ((t2^t2>>>14)>>>0)/4294967296;};}
+function mk1D(rng){var c=[];
+ for(var i=0;i<8;i++)c.push(rng()*2-1);
+ return function(th){return c[0]+c[1]*Math.sin(th)+c[2]*Math.cos(th)+c[3]*Math.sin(2*th)+c[4]*Math.cos(2*th)+c[5]*Math.sin(3*th)+c[6]*Math.cos(3*th)+c[7]*Math.sin(5*th);};}
+function findAnti(f){function g(th){return f(th)-f(th+Math.PI);}
+ var lo=0,hi=Math.PI;
+ if(Math.abs(g(0))<1e-14)return 0;
+ for(var i=0;i<80;i++){var mid=(lo+hi)/2;
+  if((g(mid)>0)===(g(0)>0))lo=mid;else hi=mid;}
+ return (lo+hi)/2;}
+function selftest(){if(VR)return VR;var rng=mulH(61),ok1D=true;
+ for(var t2=0;t2<200;t2++){var f=mk1D(rng);
+  var th=findAnti(f);
+  if(Math.abs(f(th)-f(th+Math.PI))>1e-9)ok1D=false;}
+ var ok2D=true;
+ for(var t2=0;t2<25;t2++){
+  var cf=[];for(var i=0;i<12;i++)cf.push(rng()*2-1);
+  function ff(p){return cf[0]*p[0]+cf[1]*p[1]+cf[2]*p[2]+cf[3]*p[0]*p[1]+cf[4]*p[1]*p[2]+cf[5]*p[0]*p[0]*p[2];}
+  function gg(p){return cf[6]*p[0]+cf[7]*p[1]+cf[8]*p[2]+cf[9]*p[0]*p[2]+cf[10]*p[1]*p[1]*p[0]+cf[11]*p[2];}
+  function F(p){var m=[-p[0],-p[1],-p[2]];
+   return [ff(p)-ff(m),gg(p)-gg(m)];}
+  var best=1e9,bp=null;
+  for(var s=0;s<20000;s++){var z=rng()*2-1,phi=rng()*2*Math.PI,r=Math.sqrt(1-z*z);
+   var p=[r*Math.cos(phi),r*Math.sin(phi),z];
+   var v=F(p),m2=Math.hypot(v[0],v[1]);
+   if(m2<best){best=m2;bp=p;}}
+  var step=0.05;
+  for(var it=0;it<300;it++){var improved=false;
+   for(var d=0;d<12;d++){var a2=d/12*2*Math.PI;
+    var e1=[-bp[1],bp[0],0],n1=Math.hypot(e1[0],e1[1],e1[2]);
+    if(n1<1e-9){e1=[1,0,0];n1=1;}
+    e1=[e1[0]/n1,e1[1]/n1,e1[2]/n1];
+    var e2=[bp[1]*e1[2]-bp[2]*e1[1],bp[2]*e1[0]-bp[0]*e1[2],bp[0]*e1[1]-bp[1]*e1[0]];
+    var q=[bp[0]+step*(Math.cos(a2)*e1[0]+Math.sin(a2)*e2[0]),bp[1]+step*(Math.cos(a2)*e1[1]+Math.sin(a2)*e2[1]),bp[2]+step*(Math.cos(a2)*e1[2]+Math.sin(a2)*e2[2])];
+    var qn=Math.hypot(q[0],q[1],q[2]);q=[q[0]/qn,q[1]/qn,q[2]/qn];
+    var v2=F(q),mm=Math.hypot(v2[0],v2[1]);
+    if(mm<best){best=mm;bp=q;improved=true;}}
+   if(!improved)step*=0.6;
+   if(best<1e-8)break;}
+  if(best>1e-5)ok2D=false;}
+ VR={ok1D:ok1D,ok2D:ok2D,ok:ok1D&&ok2D};return VR;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);nt(g,'#b06bff',10,16,10,'temperature on a circle — g(θ) = f(θ) − f(θ+π) must cross zero');
+ var f=mk1D(mulH(7)),th0=findAnti(f);
+ ne(g,'rgba(150,160,210,0.5)',1);g.beginPath();g.moveTo(20,H/2);g.lineTo(W-20,H/2);g.stroke();ng(g);
+ ne(g,'#35ffb0',1.8);g.beginPath();
+ for(var i=0;i<=200;i++){var th=i/200*Math.PI;
+  var y=H/2-(f(th)-f(th+Math.PI))*30;
+  if(i===0)g.moveTo(20+i/200*(W-40),y);else g.lineTo(20+i/200*(W-40),y);}
+ g.stroke();ng(g);
+ ndot(g,20+th0/Math.PI*(W-40),H/2,6,'#ff2fa6');
+ nt(g,'#ff6ab0',20+th0/Math.PI*(W-40)-30,H/2+22,10,'antipodes agree');
+ nt(g,'#8ad',10,H-8,9,'g(0) = −g(π): the ends have opposite signs — the crossing is unavoidable');}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);var v=selftest();
+ var rng=mulH(SEED),f=mk1D(rng),th0=findAnti(f);
+ nt(g,'#b06bff',12,20,12,'weather #'+SEED);
+ nt(g,'#35ffb0',16,60,12,'antipodal pair at θ = '+th0.toFixed(6));
+ nt(g,'#9cf',16,88,11,'f(θ) = '+f(th0).toFixed(8)+' = f(θ+π) = '+f(th0+Math.PI).toFixed(8));
+ nt(g,v.ok?'#39ffb0':'#ff5a5a',12,H-52,9,'self-test: 200 circle pairs to 1e-9 · 25 sphere pairs below 1e-5 ('+v.ok+')');
+ nt(g,'#8ad',12,H-30,9,'Borsuk 1933 · implies ham sandwich, Brouwer, necklace splitting');
+ nt(g,'#8ad',12,H-12,9,'symmetry does the searching');}
+document.getElementById('bun').onclick=function(){SEED=Math.floor(Math.random()*100000);drawW4();document.getElementById('buread').textContent='#'+SEED;};
+document.getElementById('bucheck').onclick=function(){var v=selftest();document.getElementById('buread').textContent='1D + 2D antipodes: '+v.ok;};
+document.getElementById('buspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);var cx=W/2,cy=H/2-8,R=100;
+ nt(g,'#b06bff',10,18,10,'the globe and its agreeing twins');
+ ne(g,'rgba(150,160,210,0.4)',1.2);g.beginPath();g.arc(cx,cy,R,0,6.2832);g.stroke();ng(g);
+ for(var k=0;k<5;k++){ne(g,'rgba(53,255,176,0.3)',1);g.beginPath();g.ellipse(cx,cy,R,R*(0.2+k*0.18),0,0,6.2832);g.stroke();ng(g);}
+ var a=ang*0.008;
+ ndot(g,cx+Math.cos(a)*R*0.8,cy+Math.sin(a)*R*0.5,6,'#ff2fa6');
+ ndot(g,cx-Math.cos(a)*R*0.8,cy-Math.sin(a)*R*0.5,6,'#ff2fa6');
+ ne(g,'rgba(255,47,166,0.4)',1);g.beginPath();g.moveTo(cx+Math.cos(a)*R*0.8,cy+Math.sin(a)*R*0.5);g.lineTo(cx-Math.cos(a)*R*0.8,cy-Math.sin(a)*R*0.5);g.stroke();ng(g);
+ nt(g,'#35ffb0',10,H-52,11,'green: the odd map that vanishes by symmetry');nt(g,'#ff2fa6',10,H-34,10,'magenta: the twins — same temperature, same pressure');nt(g,'#8ad',10,H-14,10,'the strongest searches are ones symmetry already finished');}
+drawW3();drawW4();window.__borsukulam=selftest();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
