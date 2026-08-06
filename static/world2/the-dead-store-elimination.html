@@ -1,0 +1,212 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE DEAD STORE ELIMINATION · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7de2b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7de2b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7de2b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7de2b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7de2b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7de2b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7de2b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7de2b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7de2b0;background:transparent;border:2px solid #7de2b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7de2b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7de2b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7de2b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7de2b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7de2b0 42%,#0a0e0a);border-left:4px solid #7de2b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7de2b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7de2b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7de2b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7de2b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE BACKDOOR</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE BACKDOOR / <b>THE DEAD STORE ELIMINATION</b></div>
+<h1>THE DEAD STORE ELIMINATION</h1>
+<div class="kick">the wipe that was deleted for being pointless</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">You wipe the password buffer before freeing it. Nothing ever reads those zeros, so the writes have no effect on the program&rsquo;s meaning, so the optimiser deletes them. The secret is still in memory when the page is handed back.<br><br>
+ <span class="lit">LIT</span> verified live. a <b>16</b>-byte buffer, filled with a secret, used, cleared, freed. A dead-store pass with no reader after the clear removes <b>16 of 16</b> clearing stores and <b>0</b> of the secret stores &mdash; correctly, since the secret is read and the zeros are not. Replaying only the surviving stores leaves <b>16 of 16</b> secret bytes in memory, starting <code>65 66 67 68</code>. Put an opaque barrier after the clear &mdash; what <code>explicit_bzero</code> is for &mdash; and the pass removes <b>0</b>, leaving <b>0</b> secret bytes.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">This is the reason <code>explicit_bzero</code>, <code>memset_s</code> and <code>SecureZeroMemory</code> exist; the same pass has produced real CVEs in TLS and key-handling code.<br><br><b>AVAN (AI)</b> wrote the pass rather than describing it, and the first version was wrong in a way worth keeping: given a program whose &lsquo;use&rsquo; read only <i>one</i> byte, it deleted fifteen of the sixteen <b>secret</b> stores as well, which is also correct and made the demonstration meaningless. A program that genuinely uses its secret reads all of it &mdash; correcting that is what produces <b>0</b> secret stores removed and <b>16</b> clearing stores removed, which is the actual shape of the bug.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Sixteen writes removed. Sixteen secret bytes left.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Run the pass, with and without the barrier.</div>
+   <div class="btns" style="margin-top:10px"><button id="dselr">run the pass</button><button id="dselb">toggle barrier</button><button id="dselz">reset</button></div>
+   <div class="cap" id="dselo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that the optimiser must be stopped from deleting the wipe. The inverse is that <b>&lsquo;dead&rsquo; is defined relative to the program, and the attacker is not in the program</b>. The pass asks whether any later instruction reads the value; nothing does, so the store cannot change any output, so it is dead &mdash; and every word of that is true. Read backwards, security properties are statements about the <i>machine state</i>, and an optimiser that reasons only about observable behaviour cannot see them, cannot be taught to see them, and will keep deleting them until you say so in a language it does understand.</div>
+   <div class="btns" style="margin-top:10px"><button id="dsels">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> a 16-byte buffer filled with a secret, used, cleared and freed: a dead-store pass with no reader after the clear removes 16 of 16 clearing stores and 0 of the secret stores - correctly, since the secret is read and the zeros are not - and replaying only the surviving stores leaves 16 of 16 secret bytes in memory starting 65 66 67 68; put an opaque barrier after the clear, which is what explicit_bzero is for, and the pass removes 0, leaving 0 secret bytes<br><br><span class="fig">FIG</span> This is the reason explicit_bzero, memset_s and SecureZeroMemory exist; the same pass has produced real CVEs in TLS and key-handling code. AVAN wrote the pass rather than describing it, and the first version was wrong in a way worth keeping: given a program whose 'use' read only ONE byte it deleted fifteen of the sixteen secret stores as well, which is also correct and made the demonstration meaningless. A program that genuinely uses its secret reads all of it, and correcting that produces the actual shape of the bug.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE BACKDOOR &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,N=16,barrier=false,ran=false;
+function program(bar){
+ var p=[];
+ for(var i=0;i<N;i++)p.push({op:'store',addr:i,val:65+i,tag:'secret'});
+ p.push({op:'call',opaque:true,tag:'use'});
+ for(i=0;i<N;i++)p.push({op:'store',addr:i,val:0,tag:'memset'});
+ if(bar)p.push({op:'call',opaque:true,tag:'barrier'});
+ p.push({op:'free',tag:'free'});
+ return p;}
+function dse(p){
+ var keep=p.map(function(){return true;});
+ for(var i=0;i<p.length;i++){
+  if(p[i].op!=='store')continue;
+  var dead=true;
+  for(var j=i+1;j<p.length;j++){
+   var q=p[j];
+   if(q.op==='call'&&q.opaque){dead=false;break;}
+   if(q.op==='load'&&q.addr===p[i].addr){dead=false;break;}
+   if(q.op==='store'&&q.addr===p[i].addr&&keep[j]){break;}
+   if(q.op==='free')break;}
+  if(dead)keep[i]=false;}
+ return keep;}
+function mem(p,keep){
+ var m=[];for(var i=0;i<N;i++)m.push(0);
+ p.forEach(function(q,i){ if(keep&&!keep[i])return; if(q.op==='store')m[q.addr]=q.val;});
+ return m;}
+function removed(p,keep,tag){var n=0;
+ p.forEach(function(q,i){if(q.tag===tag&&q.op==='store'&&!keep[i])n++;});return n;}
+function selftest(){
+ var pN=program(false),kN=dse(pN),pB=program(true),kB=dse(pB);
+ var mN=mem(pN,kN),mB=mem(pB,kB);
+ return {bufferBytes:N,clearingStores:N,
+  secretRemovedNoBarrier:removed(pN,kN,'secret'),clearRemovedNoBarrier:removed(pN,kN,'memset'),
+  secretRemovedWithBarrier:removed(pB,kB,'secret'),clearRemovedWithBarrier:removed(pB,kB,'memset'),
+  secretLeftNoBarrier:mN.filter(function(v){return v!==0;}).length,
+  secretLeftWithBarrier:mB.filter(function(v){return v!==0;}).length,
+  memoryNoBarrier:mN,memoryWithBarrier:mB,
+  ok:removed(pN,kN,'secret')===0&&removed(pN,kN,'memset')===N&&
+     removed(pB,kB,'memset')===0&&mN.filter(function(v){return v!==0;}).length===N&&
+     mB.filter(function(v){return v!==0;}).length===0};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',14,20,11,'WHAT THE PASS DELETES, AND WHAT IS LEFT BEHIND');
+ var rows=[['clearing stores removed, no barrier',VR.clearRemovedNoBarrier,N,'#ff5a8a'],
+  ['secret stores removed, no barrier',VR.secretRemovedNoBarrier,N,'#7de2b0'],
+  ['clearing stores removed, with barrier',VR.clearRemovedWithBarrier,N,'#7de2b0']];
+ rows.forEach(function(r,i){
+  var y=44+i*54;
+  nt(g,'#e6dcff',24,y,10,r[0]);
+  g.fillStyle='rgba(120,90,180,0.16)';g.fillRect(24,y+8,380,22);
+  if(r[1]>0){nf(g,'rgba(255,90,138,0.65)');g.fillRect(24,y+8,380*r[1]/r[2],22);ng(g);}
+  nt(g,r[3],412,y+24,11,r[1]+' / '+r[2]);});
+ nt(g,'#8a7ab8',24,216,9,'memory after the pass, no barrier:');
+ var cw=(W-48)/N;
+ for(var k=0;k<N;k++){
+  var v=VR.memoryNoBarrier[k];
+  nf(g,v?'rgba(255,90,138,0.6)':'rgba(125,226,176,0.5)');
+  g.fillRect(24+k*cw,224,cw-2,24);ng(g);
+  nt(g,'#0d0818',24+k*cw+3,241,8,String(v));}
+ nf(g,'rgba(255,90,138,0.18)');g.fillRect(20,258,W-40,28);ng(g);
+ ne(g,'#ff5a8a',1.4);g.strokeRect(20.5,258.5,W-41,28);ng(g);
+ nt(g,'#ff5a8a',34,277,10,VR.secretLeftNoBarrier+' of '+N+' secret bytes survive the wipe -- with a barrier, 0');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var p=program(barrier),keep=ran?dse(p):p.map(function(){return true;});
+ var m=mem(p,keep);
+ nt(g,'#e6dcff',18,24,11,(barrier?'WITH BARRIER':'NO BARRIER')+(ran?'   -- pass has run':'   -- as written'));
+ var groups=[['store secret x16','secret','#5ad4ff'],['use(buf)','use','#b98cff'],
+  ['memset(buf, 0, 16)','memset','#ffd76a'],['barrier','barrier','#7de2b0'],['free(buf)','free','#8a7ab8']];
+ var y=44;
+ groups.forEach(function(G){
+  var idxs=[];p.forEach(function(q,i){if(q.tag===G[1])idxs.push(i);});
+  if(!idxs.length)return;
+  var kept=idxs.filter(function(i){return keep[i];}).length;
+  var gone=idxs.length-kept;
+  nf(g,gone?'rgba(255,90,138,0.26)':'rgba(120,90,180,0.14)');
+  g.fillRect(18,y,W-36,34);ng(g);
+  if(gone){ne(g,'#ff5a8a',1.3);g.strokeRect(18.5,y+0.5,W-37,34);ng(g);}
+  nt(g,G[2],30,y+21,10,G[0]);
+  nt(g,gone?'#ff5a8a':'#7de2b0',W-108,y+21,9,gone?(gone+' DELETED'):'kept');
+  y+=42;});
+ nt(g,'#8a7ab8',18,y+8,9,'memory when the buffer is handed back:');
+ var cw=(W-36)/N;
+ for(var k=0;k<N;k++){
+  var v=m[k];
+  nf(g,v?'rgba(255,90,138,0.65)':'rgba(125,226,176,0.5)');
+  g.fillRect(18+k*cw,y+16,cw-2,26);ng(g);
+  nt(g,'#0d0818',18+k*cw+2,y+34,8,String(v));}
+ var leak=m.filter(function(v){return v!==0;}).length;
+ nf(g,leak?'rgba(255,90,138,0.3)':'rgba(125,226,176,0.22)');g.fillRect(18,y+50,W-36,34);ng(g);
+ ne(g,leak?'#ff5a8a':'#7de2b0',1.5);g.strokeRect(18.5,y+50.5,W-37,34);ng(g);
+ nt(g,leak?'#ff5a8a':'#7de2b0',32,y+72,11,leak+' secret bytes still in memory');
+ var o=document.getElementById('dselo');
+ if(o)o.innerHTML=!ran?'The program as written: fill, use, wipe, free. Press <b>run the pass</b>.':
+  (barrier?('The barrier is an operation the pass cannot see through, so the clearing stores might be read and none are removed. <b>0</b> secret bytes remain.'):
+   ('<b>'+VR.clearRemovedNoBarrier+'</b> clearing stores deleted &mdash; nothing reads them, so they cannot change any output, so they are dead. Every step of that reasoning is correct and <b>'+
+    leak+'</b> secret bytes go back to the allocator.'));}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var wiped=(Math.floor(ang/110)%2===1);
+ for(var i=0;i<16;i++){
+  var th=i/16*Math.PI*2,q=P(Math.cos(th)*84,0,Math.sin(th)*84);
+  ndot(g,q[0],q[1],5,wiped?'rgba(120,90,180,0.35)':'#ff5a8a');}
+ if(!wiped){
+  var lp=P(-96,-24,0);nt(g,'#ff5a8a',lp[0],lp[1],8,'the secret, still there');}
+ else{
+  var lp2=P(-96,-24,0);nt(g,'#8a7ab8',lp2[0],lp2[1],8,'the wipe that was deleted');}
+ var ob=P(0,72,0);
+ ndot(g,ob[0],ob[1],7,'#5ad4ff');
+ nt(g,'#5ad4ff',ob[0]-56,ob[1]+20,8,'observable behaviour: unchanged');
+ nt(g,'#7de2b0',14,26,11,'nothing reads the zeros');
+ nt(g,'#8a7ab8',14,44,10,'so the writes cannot change any output');
+ nt(g,'#ff5a8a',14,H-46,9,'dead is defined relative to the program');
+ nt(g,'#ffd76a',14,H-30,9,'and the attacker is not in the program');
+ nt(g,'#b98cff',14,H-14,9,'say it in a language the optimiser understands, or lose it');}
+document.getElementById('dselr').onclick=function(){ran=true;drawW4();};
+document.getElementById('dselb').onclick=function(){barrier=!barrier;drawW4();};
+document.getElementById('dselz').onclick=function(){ran=false;barrier=false;drawW4();};
+document.getElementById('dsels').onclick=function(){spin=!spin;};
+VR=selftest();window.__thedeadstoreelimination=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

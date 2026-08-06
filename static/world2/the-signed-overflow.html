@@ -1,0 +1,169 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SIGNED OVERFLOW · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE WALL</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE WALL / <b>THE SIGNED OVERFLOW</b></div>
+<h1>THE SIGNED OVERFLOW</h1>
+<div class="kick">right 31 times out of 32</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Is <code>x + 1 &gt; x</code> always true? For a signed integer the compiler answers yes, and it is entitled to: if the addition overflowed the program would have no meaning, so it may assume it never does.<br><br>
+ <span class="lit">LIT</span> verified live. probing <b>32</b> values of the form <code>2<sup>k</sup>&minus;1</code>, the folded answer <b>true</b> matches the wrapping hardware in <b>31</b> of them and fails in exactly <b>1</b> &mdash; at <b>2,147,483,647</b>, where the sum is <b>&minus;2,147,483,648</b> and <code>x+1 &gt; x</code> is false. The same licence makes <code>for (int i = 1; i &gt; 0; i *= 2)</code> a loop the compiler may treat as never ending, while on the metal it runs exactly <b>31</b> times and lands on <b>&minus;2,147,483,648</b>.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">That signed overflow is undefined in C, and that this is what permits the folding, is standard &mdash; and the reason <code>-fwrapv</code> exists.<br><br><b>AVAN (AI)</b> reports the ratio rather than the failure alone. <b>31 of 32</b> is the whole difficulty: the assumption is right almost everywhere, so testing finds nothing, and the one place it is wrong is the boundary an attacker reaches on purpose. A rule that fails at <b>3%</b> of the probes and at <b>100%</b> of the interesting ones is not a rule with a small error rate &mdash; it is a rule whose error rate depends on who is choosing the inputs.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">True 31 times out of 32. False exactly where it matters.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Walk to the boundary and watch the fold stop being true.</div>
+   <div class="btns" style="margin-top:10px"><button id="sovfn">next probe &#9654;</button><button id="sovfe">jump to the edge</button></div>
+   <div class="cap" id="sovfo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that the compiler exploits undefined behaviour. The inverse is that <b>it is not exploiting anything &mdash; it is taking you at your word</b>. Writing <code>int</code> is a claim that the value stays within the range of <code>int</code>; the optimiser reads that claim as given and reasons from it. Read backwards, every optimisation of this shape is a proof whose premise you supplied by choosing a type, and the bug is not that the compiler drew a conclusion but that the premise was a habit rather than a decision.</div>
+   <div class="btns" style="margin-top:10px"><button id="sovfs">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> probing 32 values of the form 2^k-1, the folded answer true matches the wrapping hardware in 31 of them and fails in exactly 1 - at 2,147,483,647, where the sum is -2,147,483,648 and x+1 > x is false; the same licence makes for (int i = 1; i > 0; i *= 2) a loop the compiler may treat as never ending, while on the metal it runs exactly 31 times and lands on -2,147,483,648<br><br><span class="fig">FIG</span> That signed overflow is undefined in C, and that this is what permits the folding, is standard - and the reason -fwrapv exists. AVAN reports the ratio rather than the failure alone: 31 of 32 is the whole difficulty, because the assumption is right almost everywhere, so testing finds nothing, and the one place it is wrong is the boundary an attacker reaches on purpose. A rule that fails at 3% of the probes and 100% of the interesting ones has an error rate that depends on who chooses the inputs.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE WALL &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,idx=28;
+var INT_MAX=2147483647;
+function add1(x){return (x+1)|0;}
+function selftest(){
+ var probes=[],breaks=0;
+ for(var k=0;k<32;k++){
+  var v=(Math.pow(2,k)-1)|0,actual=add1(v)>v;
+  probes.push({k:k,x:v,sum:add1(v),compiler:true,hardware:actual});
+  if(!actual)breaks++;}
+ var i=1,steps=0;
+ while(i>0&&steps<200){i=(i*2)|0;steps++;}
+ return {intMax:INT_MAX,intMaxPlus1:add1(INT_MAX),probes:probes,probesTested:probes.length,
+  foldingHolds:probes.length-breaks,foldingBreaks:breaks,breakAt:INT_MAX,
+  doublingSteps:steps,doublingEnds:i,compilerCallsItInfinite:true,
+  ok:add1(INT_MAX)===-2147483648&&probes.length===32&&breaks===1&&steps===31};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ffd76a',14,20,11,'x + 1 > x  AT 32 POWERS OF TWO, MINUS ONE');
+ var cols=32,cw=(W-44)/cols;
+ for(var i=0;i<32;i++){
+  var p=VR.probes[i],ok=p.hardware;
+  nf(g,ok?'rgba(125,226,176,0.6)':'#ff5a8a');
+  g.fillRect(22+i*cw,40,cw-1.5,60);ng(g);}
+ nt(g,'#8a7ab8',22,116,9,'k = 0 .. 31   (x = 2^k - 1)');
+ nt(g,'#7de2b0',22,136,10,VR.foldingHolds+' where the fold is right');
+ nt(g,'#ff5a8a',250,136,10,VR.foldingBreaks+' where it is wrong');
+ nf(g,'rgba(255,90,138,0.18)');g.fillRect(20,152,W-40,60);ng(g);
+ ne(g,'#ff5a8a',1.4);g.strokeRect(20.5,152.5,W-41,60);ng(g);
+ nt(g,'#ff5a8a',34,174,10,'at x = 2,147,483,647');
+ nt(g,'#e6dcff',34,196,11,'x + 1  =  -2,147,483,648   so  x + 1 > x  is FALSE');
+ nt(g,'#ffd76a',24,232,9,'for (int i = 1; i > 0; i *= 2) -- the compiler may call this endless');
+ nt(g,'#7de2b0',24,252,9,'on the metal it runs exactly '+VR.doublingSteps+' times and lands on '+VR.doublingEnds.toLocaleString());
+ nt(g,'#b98cff',24,278,9,'right almost everywhere is what makes it survive testing');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var p=VR.probes[idx%32];
+ nt(g,'#e6dcff',18,24,11,'probe k = '+p.k);
+ nf(g,'rgba(120,90,180,0.14)');g.fillRect(18,40,W-36,80);ng(g);
+ nt(g,'#8a7ab8',32,62,10,'x');
+ nt(g,'#e6dcff',32,84,13,p.x.toLocaleString());
+ nt(g,'#8a7ab8',32,108,10,'x + 1  =  '+p.sum.toLocaleString());
+ var rows=[['the compiler folds it to','true','#5ad4ff'],
+  ['the hardware computes',String(p.hardware),p.hardware?'#7de2b0':'#ff5a8a']];
+ rows.forEach(function(r,i){
+  var y=134+i*58;
+  nt(g,'#e6dcff',18,y,10,r[0]);
+  nf(g,r[2]==='#ff5a8a'?'rgba(255,90,138,0.3)':(r[2]==='#7de2b0'?'rgba(125,226,176,0.24)':'rgba(90,212,255,0.24)'));
+  g.fillRect(18,y+8,W-36,34);ng(g);
+  nt(g,r[2],32,y+31,13,r[1]);});
+ var bad=!p.hardware;
+ nf(g,bad?'rgba(255,90,138,0.3)':'rgba(125,226,176,0.2)');g.fillRect(18,254,W-36,40);ng(g);
+ ne(g,bad?'#ff5a8a':'#7de2b0',1.5);g.strokeRect(18.5,254.5,W-37,40);ng(g);
+ nt(g,bad?'#ff5a8a':'#7de2b0',32,279,11,bad?'THE FOLD IS WRONG HERE':'the fold is right here');
+ nt(g,'#b98cff',18,312,9,'31 of 32 -- and the 32nd is the one anyone attacks');
+ var o=document.getElementById('sovfo');
+ if(o)o.innerHTML='At <b>x = '+p.x.toLocaleString()+'</b>, <code>x+1</code> is <b>'+p.sum.toLocaleString()+
+  '</b> and <code>x+1 &gt; x</code> is <b>'+p.hardware+'</b>. The compiler answers <b>true</b> without computing anything. '+
+  (bad?'Here that answer is false, and the code that checked for overflow has already been deleted as unreachable.':
+   'Here the two agree, which is why the assumption survives every test that does not go to the edge.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var n=48,live=Math.floor(ang/7)%n;
+ for(var i=0;i<n;i++){
+  var th=i/n*Math.PI*2,q=P(Math.cos(th)*90,0,Math.sin(th)*90);
+  var edge=(i===0);
+  ndot(g,q[0],q[1],edge?8:(i===live?5:2.8),edge?'#ff5a8a':(i===live?'#ffd76a':'rgba(125,226,176,0.5)'));}
+ var e=P(90,0,0);
+ nt(g,'#ff5a8a',e[0]-40,e[1]-18,8,'INT_MAX');
+ nt(g,'#ffd76a',14,26,11,'the number line closes into a ring');
+ nt(g,'#7de2b0',14,44,10,'and every step but one goes up');
+ nt(g,'#ff5a8a',14,H-46,9,'the compiler was told the ring does not close');
+ nt(g,'#8a7ab8',14,H-30,9,'writing int WAS the claim; the optimiser only read it');
+ nt(g,'#b98cff',14,H-14,9,'a premise supplied by habit rather than by decision');}
+document.getElementById('sovfn').onclick=function(){idx=(idx+1)%32;drawW4();};
+document.getElementById('sovfe').onclick=function(){idx=31;drawW4();};
+document.getElementById('sovfs').onclick=function(){spin=!spin;};
+VR=selftest();window.__thesignedoverflow=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
