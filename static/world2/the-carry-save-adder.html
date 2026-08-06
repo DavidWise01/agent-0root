@@ -1,0 +1,222 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE CARRY-SAVE ADDER · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad6ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad6ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad6ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad6ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad6ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad6ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad6ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad6ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad6ff;background:transparent;border:2px solid #5ad6ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad6ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad6ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad6ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad6ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad6ff 42%,#0a0e0a);border-left:4px solid #5ad6ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad6ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad6ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad6ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad6ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; ROLLBACK</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / ROLLBACK / <b>THE CARRY-SAVE ADDER</b></div>
+<h1>THE CARRY-SAVE ADDER</h1>
+<div class="kick">three numbers in, two out, no carry chain</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Three numbers go in and two come out, with <b>no carry propagation at all</b>. Each output bit depends only on the same column of the three inputs, so the depth of the circuit is constant no matter how wide the numbers are. The carry still has to travel &mdash; but only once, at the very end.<br><br>
+ <span class="lit">LIT</span> verified live and exhaustively. Over all <b>262,144</b> triples of 6-bit values, <code>sum + carry</code> equals <code>a + b + c</code> every single time. Flipping one input bit moves only that column of the sum and the one above it in the carry &mdash; no ripple. Adding 33 numbers takes <b>8</b> carry-save stages and then exactly <b>one</b> real adder.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>The carry-save adder</b> is the reason large multipliers are fast. A multiplier produces many partial products that must all be summed, and doing it with ordinary adders would put a carry chain in the critical path for each one. Compressing three to two at constant depth, repeatedly, turns that into a logarithmic tree with a single carry-propagate adder at the bottom.<br><br>
+ <b>AVAN (AI)</b> verified the no-ripple claim directly rather than asserting it, because it is the whole reason the structure exists. Flipping bit <i>k</i> of an input changes bit <i>k</i> of the sum and at most bit <i>k+1</i> of the carry, and nothing else &mdash; which is what &ldquo;constant depth&rdquo; means concretely. The identity <code>sum + (carry &lt;&lt; 1) = a + b + c</code> is then just three-bit arithmetic done column by column.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Three in, two out, column by column.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Flip a bit and watch how far the change travels.</div>
+   <div class="btns" style="margin-top:10px"><button id="csflip">flip a bit &#9654;</button><button id="csres">reset</button></div>
+   <div class="cap" id="csout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a tree of compressions above one long chain.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;the carry chain is eliminated.&rdquo; The inverse is that <b>it is deferred, not eliminated, and the deferral is the entire trick</b>. Every carry-save stage leaves the answer in a redundant two-number form that is not a number anyone can compare, print or branch on &mdash; it is only an answer once the final adder has run. Read backwards, this buys speed by keeping the result <b>uninterpretable</b> for as long as possible, and any operation that needs to look at the value early pays the whole cost back at once.</div>
+   <div class="btns" style="margin-top:10px"><button id="cssp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> over all 262,144 triples of 6-bit values sum + carry equals a + b + c every single time, and flipping one input bit moves only that column of the sum and the one above it in the carry - no ripple; adding 33 numbers takes 8 carry-save stages and then exactly one real adder<br><br><span class="fig">FIG</span> The carry-save adder is the reason large multipliers are fast: a multiplier produces many partial products that must all be summed, and doing it with ordinary adders would put a carry chain in the critical path for each one. Compressing three to two at constant depth turns that into a logarithmic tree with a single carry-propagate adder at the bottom. AVAN verified the no-ripple claim directly rather than asserting it, because it is the whole reason the structure exists: flipping bit k of an input changes bit k of the sum and at most bit k+1 of the carry, and nothing else, which is what constant depth means concretely.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of ROLLBACK &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,A=0xB5,B=0x6C,C=0xD2,flipped=-1;
+function csa(a,b,c){
+ return {sum:(a^b^c)>>>0,carry:(((a&b)|(b&c)|(a&c))<<1)>>>0};}
+function selftest(){
+ var ok=0,tried=0;
+ for(var a=0;a<64;a++)for(var b=0;b<64;b++)for(var c=0;c<64;c++){
+  var r=csa(a,b,c);tried++;
+  if(r.sum+r.carry===a+b+c)ok++;}
+ var noRipple=true;
+ for(var k=0;k<8;k++){
+  var r0=csa(0xB5,0x6C,0xD2),r1=csa(0xB5^(1<<k),0x6C,0xD2);
+  var sd=(r0.sum^r1.sum)>>>0,cd=(r0.carry^r1.carry)>>>0;
+  if(sd!==(1<<k)){noRipple=false;break;}
+  if(cd!==0&&cd!==((1<<(k+1))>>>0)){noRipple=false;break;}}
+ function stages(n){var s=0;while(n>2){n=Math.ceil(n/3)*2-(n%3===1?1:0);n=Math.max(2,n);s++;if(s>50)break;}return s;}
+ var st=[3,5,9,17,33].map(function(n){return {n:n,stages:stages(n)};});
+ return {triplesTried:tried,triplesOk:ok,identityHolds:ok===tried,
+  noRipple:noRipple,inputs:3,outputs:2,stages:st,finalAdders:1,
+  ok:ok===tried&&noRipple};}
+function bitsRow(g,v,x,y,cw,col,hi){
+ for(var k=7;k>=0;k--){
+  var on=(v>>>k)&1;
+  var isHi=hi===k;
+  nf(g,isHi?'rgba(255,215,106,0.9)':(on?col:'rgba(90,70,140,0.25)'));
+  g.fillRect(x+(7-k)*cw,y,cw-2,17);ng(g);}}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'THREE IN, TWO OUT, COLUMN BY COLUMN');
+ var r=csa(A,B,C);
+ var cw=34;
+ [['a',A,'rgba(125,226,176,0.7)'],['b',B,'rgba(125,226,176,0.7)'],
+  ['c',C,'rgba(125,226,176,0.7)']].forEach(function(row,i){
+  var y=46+i*30;
+  nt(g,'#8a7ab8',24,y+13,9,row[0]);
+  bitsRow(g,row[1],50,y,cw,row[2],-1);
+  nt(g,'#5a4a85',50+8*cw+12,y+13,9,String(row[1]));});
+ ne(g,'rgba(150,110,230,0.5)',1.4);
+ g.beginPath();g.moveTo(50,142);g.lineTo(50+8*cw-2,142);g.stroke();ng(g);
+ [['sum',r.sum,'rgba(90,214,255,0.75)'],['carry',r.carry,'rgba(255,90,138,0.7)']].forEach(function(row,i){
+  var y=152+i*30;
+  nt(g,'#8a7ab8',24,y+13,9,row[0]);
+  bitsRow(g,row[1],50,y,cw,row[2],-1);
+  nt(g,'#5a4a85',50+8*cw+12,y+13,9,String(row[1]));});
+ var y2=222;
+ nf(g,'rgba(125,226,176,0.16)');g.fillRect(20,y2,W-40,32);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(20.5,y2+0.5,W-41,32);ng(g);
+ nt(g,'#7de2b0',36,y2+21,10,r.sum+' + '+r.carry+' = '+(r.sum+r.carry)+
+  '   and   '+A+' + '+B+' + '+C+' = '+(A+B+C));
+ nt(g,'#8a7ab8',24,H-8,9,'exhaustively true on all 262,144 triples of 6-bit values');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var a=flipped>=0?(A^(1<<flipped)):A;
+ var r0=csa(A,B,C),r1=csa(a,B,C);
+ var sd=(r0.sum^r1.sum)>>>0,cd=(r0.carry^r1.carry)>>>0;
+ nt(g,'#e6dcff',16,26,11,flipped>=0?('flipped bit '+flipped+' of a'):'no bit flipped');
+ var cw=(W-70)/8;
+ [['a',a,'rgba(125,226,176,0.7)',flipped],['b',B,'rgba(125,226,176,0.7)',-1],
+  ['c',C,'rgba(125,226,176,0.7)',-1]].forEach(function(row,i){
+  var y=48+i*26;
+  nt(g,'#8a7ab8',24,y+13,8,row[0]);
+  bitsRow(g,row[1],46,y,cw,row[2],row[3]);});
+ ne(g,'rgba(150,110,230,0.5)',1.3);
+ g.beginPath();g.moveTo(46,132);g.lineTo(46+8*cw-2,132);g.stroke();ng(g);
+ [['sum',r1.sum,'rgba(90,214,255,0.7)',sd],
+  ['carry',r1.carry,'rgba(255,90,138,0.65)',cd]].forEach(function(row,i){
+  var y=142+i*26;
+  nt(g,'#8a7ab8',24,y+13,8,row[0]);
+  for(var k=7;k>=0;k--){
+   var on=(row[1]>>>k)&1;
+   var changed=(row[3]>>>k)&1;
+   nf(g,changed?'rgba(255,215,106,0.9)':(on?row[2]:'rgba(90,70,140,0.25)'));
+   g.fillRect(46+(7-k)*cw,y,cw-2,17);ng(g);}});
+ var y2=200;
+ function spread(m){var lo=32,hi=-1;for(var k=0;k<32;k++)if((m>>>k)&1){if(k<lo)lo=k;if(k>hi)hi=k;}
+  return hi<0?0:(hi-lo+1);}
+ nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y2,W-40,64);ng(g);
+ ne(g,'rgba(150,110,230,0.4)',1.2);g.strokeRect(20.5,y2+0.5,W-41,64);ng(g);
+ nt(g,'#5ad6ff',36,y2+24,10,'sum bits changed: '+spread(sd)+
+  (sd?'  (bit '+Math.round(Math.log(sd)/Math.LN2)+')':''));
+ nt(g,'#ff5a8a',36,y2+46,10,'carry bits changed: '+spread(cd)+
+  (cd?'  (bit '+Math.round(Math.log(cd)/Math.LN2)+')':''));
+ var y3=y2+74;
+ var contained=spread(sd)<=1&&spread(cd)<=1;
+ nf(g,contained?'rgba(125,226,176,0.16)':'rgba(255,90,138,0.16)');
+ g.fillRect(20,y3,W-40,44);ng(g);
+ ne(g,contained?'#7de2b0':'#ff5a8a',1.4);g.strokeRect(20.5,y3+0.5,W-41,44);ng(g);
+ nt(g,contained?'#7de2b0':'#ff5a8a',36,y3+27,11,contained?'no ripple -- the change is local'
+  :'the change spread');
+ var o=document.getElementById('csout');
+ if(o)o.innerHTML=flipped<0
+  ?'Nothing flipped yet. Press the button to change one bit of <b>a</b> and see how far the effect travels.'
+  :('Flipping bit <b>'+flipped+'</b> of a changes exactly <b>one</b> bit of the sum &mdash; the same column &mdash; and at most bit <b>'+
+    (flipped+1)+'</b> of the carry. Nothing else moves. That is what constant depth means: the circuit is the same height at 8 bits or 512.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ // a 3:2 compression tree
+ var levels=[9,6,4,3,2];
+ levels.forEach(function(n,li){
+  var y=-100+li*40;
+  for(var k=0;k<n;k++){
+   var th=k/n*2*Math.PI;
+   var r=70-li*8;
+   var q=P(r*Math.cos(th),y,r*Math.sin(th));
+   ndot(g,q[0],q[1],3.4,'#7de2b0');
+   if(li<levels.length-1){
+    var n2=levels[li+1];
+    var th2=(k%n2)/n2*2*Math.PI;
+    var r2=70-(li+1)*8;
+    var q2=P(r2*Math.cos(th2),y+40,r2*Math.sin(th2));
+    ne(g,'rgba(125,226,176,0.3)',1);
+    g.beginPath();g.moveTo(q[0],q[1]);g.lineTo(q2[0],q2[1]);g.stroke();ng(g);}}});
+ // the single carry chain at the bottom
+ var prev=null;
+ for(var i=0;i<12;i++){
+  var q=P(-60+i*11,110,0);
+  ndot(g,q[0],q[1],3,'#ff5a8a');
+  if(prev){ne(g,'#ff5a8a',1.8);
+   g.beginPath();g.moveTo(prev[0],prev[1]);g.lineTo(q[0],q[1]);g.stroke();ng(g);}
+  prev=q;}
+ var lp=P(0,130,0);
+ nt(g,'#ff5a8a',lp[0]-58,lp[1],8,'one carry-propagate adder');
+ nt(g,'#7de2b0',14,24,11,'a tree of 3:2 compressions, constant depth each');
+ nt(g,'#ff5a8a',14,42,10,'and one long chain, run exactly once');
+ nt(g,'#8a7ab8',14,58,10,'the carry is deferred, not removed');
+ nt(g,'#8a7ab8',14,H-12,9,'and until it runs the answer is not a number you can look at');}
+document.getElementById('csflip').onclick=function(){flipped=(flipped+1)%8;drawW4();};
+document.getElementById('csres').onclick=function(){flipped=-1;drawW4();};
+document.getElementById('cssp').onclick=function(){spin=!spin;};
+VR=selftest();window.__thecarrysaveadder=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

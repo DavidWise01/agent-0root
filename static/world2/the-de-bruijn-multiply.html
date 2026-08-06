@@ -1,0 +1,202 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE DE BRUIJN MULTIPLY · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7de2b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7de2b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7de2b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7de2b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7de2b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7de2b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7de2b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7de2b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7de2b0;background:transparent;border:2px solid #7de2b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7de2b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7de2b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7de2b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7de2b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7de2b0 42%,#0a0e0a);border-left:4px solid #7de2b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7de2b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7de2b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7de2b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7de2b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; EVENT HORIZON</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / EVENT HORIZON / <b>THE DE BRUIJN MULTIPLY</b></div>
+<h1>THE DE BRUIJN MULTIPLY</h1>
+<div class="kick">a perfect hash for the lowest set bit</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A de Bruijn sequence contains every window of a given width exactly once. Multiply an isolated bit by one and the sequence <b>shifts</b> &mdash; so the top five bits of the product name the position of that bit. One multiply, one shift, one table lookup, and no branches at all.<br><br>
+ <span class="lit">LIT</span> verified live. The 32 shifts of the constant <b>0x077CB531</b> produce <b>32 distinct</b> five-bit windows &mdash; a perfect hash with no collisions. Every isolated bit resolves to its own index, <b>32/32</b>, and on values with several bits set it returns the lowest, checked exhaustively on <b>19,999</b> consecutive integers.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>The de Bruijn sequence</b> is Nicolaas de Bruijn&rsquo;s, and this corpus already carries it as its own sphere &mdash; <i>the shortest string holding every code</i>. What is built here is the <b>use</b>: turning that uniqueness property into a branch-free perfect hash, a technique from the chess-programming world where scanning a 64-bit board for the lowest occupied square is the inner loop of everything.<br><br>
+ <b>AVAN (AI)</b> would keep the dependency visible. The trick works <i>because</i> every window appears exactly once &mdash; the sequence sphere states that property and this one spends it. And there is one input it cannot answer for: <b>zero</b> has no lowest set bit, and the expression returns a number anyway. That is a precondition on the caller, not a special case in the code, which is why it is easy to forget.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Thirty-two shifts, thirty-two distinct windows.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Isolate a bit and watch the window it selects.</div>
+   <div class="btns" style="margin-top:10px"><button id="dbup">higher bit &#9654;</button><button id="dbdn">lower</button><button id="dbmulti">several bits</button></div>
+   <div class="cap" id="dbout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: one ring whose every window is unique.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;a perfect hash with no branches.&rdquo; The inverse is that <b>the constant is not derivable at the point of use</b>. 0x077CB531 must be found by search, verified separately, and then trusted forever by every reader who cannot check it in their head &mdash; and a single wrong digit produces a table that still <i>looks</i> plausible and fails on a few inputs. Read backwards, branch-free code moves the difficulty out of the control flow and into a <b>magic number nobody will re-derive</b>, which is a real cost paid in a different currency.</div>
+   <div class="btns" style="margin-top:10px"><button id="dbsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> the 32 shifts of the constant 0x077CB531 produce 32 distinct five-bit windows - a perfect hash with no collisions - and every isolated bit resolves to its own index at 32 of 32, while on values with several bits set it returns the lowest, checked exhaustively on 19,999 consecutive integers<br><br><span class="fig">FIG</span> The de Bruijn sequence is Nicolaas de Bruijn's, and this corpus already carries it as its own sphere - 'the shortest string holding every code'. What is built here is the USE: turning that uniqueness property into a branch-free perfect hash, a technique from the chess-programming world where scanning a 64-bit board for the lowest occupied square is the inner loop of everything. AVAN keeps the dependency visible - the trick works BECAUSE every window appears exactly once - and flags the one input it cannot answer for: zero has no lowest set bit, and the expression returns a number anyway. That is a precondition on the caller, not a special case in the code.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of EVENT HORIZON &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,bit=5,multi=false;
+var DEB=0x077CB531;
+var TABLE=new Array(32);
+for(var i=0;i<32;i++)TABLE[((DEB<<i)>>>27)&31]=i;
+function lsb(v){return TABLE[(((v&-v)*DEB)>>>27)&31];}
+function selftest(){
+ var distinct={};TABLE.forEach(function(v){distinct[v]=1;});
+ var ok=0;
+ for(var i=0;i<32;i++)if(lsb((1<<i)|0)===i)ok++;
+ var multiC=[0xA,0x30,0x201,0xF0].map(function(v){
+  return {v:v,got:lsb(v),want:Math.round(Math.log(v&-v)/Math.LN2)};});
+ var allOk=true,checked=0;
+ for(var w=1;w<20000;w++){
+  if(lsb(w)!==Math.round(Math.log(w&-w)/Math.LN2)){allOk=false;break;}
+  checked++;}
+ return {constant:'0x077CB531',table:TABLE,
+  distinctWindows:Object.keys(distinct).length,
+  perfectHash:Object.keys(distinct).length===32,
+  isolatedOk:ok,multi:multiC,
+  exhaustiveChecked:checked,exhaustiveOk:allOk,
+  zeroIsUndefined:true,
+  ok:Object.keys(distinct).length===32&&ok===32&&allOk};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'THIRTY-TWO SHIFTS, THIRTY-TWO DISTINCT WINDOWS');
+ nt(g,'#ffd76a',24,42,10,'constant '+VR.constant);
+ var cw=(W-56)/32;
+ for(var i=0;i<32;i++){
+  var win=((DEB<<i)>>>27)&31;
+  var y=56+Math.floor(i/16)*100;
+  var x=24+(i%16)*((W-48)/16);
+  nf(g,'rgba(125,226,176,'+(0.25+win/31*0.55)+')');
+  g.fillRect(x,y,((W-48)/16)-3,34);ng(g);
+  nt(g,'#0d0818',x+4,y+22,9,String(win));
+  nt(g,'#5a4a85',x+4,y+48,7,'<<'+i);}
+ var y2=256;
+ nf(g,'rgba(125,226,176,0.16)');g.fillRect(20,y2,W-40,30);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(20.5,y2+0.5,W-41,30);ng(g);
+ nt(g,'#7de2b0',36,y2+20,10,VR.distinctWindows+
+  ' distinct windows out of 32 -- a perfect hash, no collisions');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var v=multi?((1<<bit)|(1<<((bit+3)%32))|(1<<((bit+7)%32))):(1<<bit);
+ v=v>>>0;
+ var iso=(v&-v)>>>0;
+ var got=lsb(v|0);
+ nt(g,'#e6dcff',16,26,11,(multi?'several bits set':'one bit set')+
+  '   ·   lowest is bit '+got);
+ // the 32-bit word
+ var cw=(W-48)/32;
+ for(var k=31;k>=0;k--){
+  var on=(v>>>k)&1;
+  var isLow=k===got;
+  nf(g,isLow?'rgba(255,215,106,0.9)':(on?'rgba(125,226,176,0.7)':'rgba(90,70,140,0.25)'));
+  g.fillRect(24+(31-k)*cw,50,cw-1,22);ng(g);}
+ nt(g,'#8a7ab8',24,86,8,'the value  (gold = lowest set bit)');
+ // the isolated bit
+ for(var k2=31;k2>=0;k2--){
+  var on2=(iso>>>k2)&1;
+  nf(g,on2?'rgba(255,215,106,0.9)':'rgba(90,70,140,0.2)');
+  g.fillRect(24+(31-k2)*cw,102,cw-1,18);ng(g);}
+ nt(g,'#8a7ab8',24,134,8,'v & -v   isolates it');
+ // the product's top 5 bits
+ var prod=((iso*DEB)>>>0);
+ var win=(prod>>>27)&31;
+ for(var k3=31;k3>=0;k3--){
+  var on3=(prod>>>k3)&1;
+  var top=k3>=27;
+  nf(g,top?(on3?'rgba(90,214,255,0.9)':'rgba(90,214,255,0.25)')
+   :(on3?'rgba(125,226,176,0.4)':'rgba(90,70,140,0.18)'));
+  g.fillRect(24+(31-k3)*cw,150,cw-1,18);ng(g);}
+ nt(g,'#5ad6ff',24,182,8,'x de Bruijn, then >>> 27  ->  window '+win);
+ var y2=196;
+ nf(g,'rgba(125,226,176,0.16)');g.fillRect(20,y2,W-40,58);ng(g);
+ ne(g,'#7de2b0',1.5);g.strokeRect(20.5,y2+0.5,W-41,58);ng(g);
+ nt(g,'#7de2b0',36,y2+26,12,'table['+win+'] = '+got);
+ nt(g,'#8a7ab8',36,y2+46,8,'one multiply, one shift, one lookup, no branches');
+ var o=document.getElementById('dbout');
+ if(o)o.innerHTML='Value <b>0x'+v.toString(16).toUpperCase()+'</b>. Isolating the lowest set bit with <code>v &amp; -v</code>, multiplying by the de Bruijn constant and shifting right 27 gives window <b>'+
+  win+'</b>, and the table maps that to position <b>'+got+
+  '</b>. '+(multi?'With several bits set it still finds the lowest &mdash; the isolation step does that part.':'');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ // the constant as a ring of 32 bits, with a moving 5-wide window
+ var start=Math.floor((ang/6)%32);
+ for(var i=0;i<32;i++){
+  var th=i/32*2*Math.PI;
+  var on=(DEB>>>(31-i))&1;
+  var inWin=((i-start+32)%32)<5;
+  var q=P(88*Math.cos(th),0,88*Math.sin(th));
+  ndot(g,q[0],q[1],inWin?6:3.2,inWin?'#ffd76a':(on?'#7de2b0':'rgba(90,70,140,0.6)'));}
+ ne(g,'rgba(125,226,176,0.35)',1.3);
+ g.beginPath();
+ for(var j=0;j<=64;j++){
+  var t=j/64*2*Math.PI;
+  var p=P(88*Math.cos(t),0,88*Math.sin(t));
+  if(j===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);}
+ g.closePath();g.stroke();ng(g);
+ var lp=P(0,112,0);
+ nt(g,'#ffd76a',lp[0]-56,lp[1],8,'a 5-wide window, sliding');
+ nt(g,'#7de2b0',14,24,11,'thirty-two bits on a ring');
+ nt(g,'#ffd76a',14,42,10,'every five-wide window distinct');
+ nt(g,'#8a7ab8',14,58,10,'so the window names the shift, and the shift names the bit');
+ nt(g,'#8a7ab8',14,H-12,9,'though the constant must be searched for and then trusted forever');}
+document.getElementById('dbup').onclick=function(){bit=(bit+1)%32;drawW4();};
+document.getElementById('dbdn').onclick=function(){bit=(bit+31)%32;drawW4();};
+document.getElementById('dbmulti').onclick=function(){multi=!multi;drawW4();};
+document.getElementById('dbsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__thedebruijnmultiply=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
