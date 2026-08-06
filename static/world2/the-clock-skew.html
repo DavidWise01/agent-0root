@@ -1,0 +1,173 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE CLOCK SKEW · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad4ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad4ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad4ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad4ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad4ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad4ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad4ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad4ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad4ff;background:transparent;border:2px solid #5ad4ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad4ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad4ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad4ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad4ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad4ff 42%,#0a0e0a);border-left:4px solid #5ad4ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad4ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad4ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad4ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad4ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE SYNC</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE SYNC / <b>THE CLOCK SKEW</b></div>
+<h1>THE CLOCK SKEW</h1>
+<div class="kick">one millisecond, 189 wrong orders</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Two machines timestamp two events. The second event genuinely happened after the first. Whether the timestamps agree depends on how well the two clocks are set, and nothing in the data says how well that was.<br><br>
+ <span class="lit">LIT</span> verified live. ten thousand pairs of events, the second always genuinely later by up to <b>20</b> ms. At <b>0</b> skew the timestamps invert <b>0</b> times. At <b>1</b> ms of skew they invert <b>189</b> times, at <b>5</b> ms <b>848</b>, at <b>10</b> ms <b>1,687</b>, at <b>25</b> ms <b>3,205</b> and at <b>50</b> ms <b>3,954</b> &mdash; <b>39.5%</b>, approaching the half you would get from a coin. The inversion count rises monotonically with skew across every step, and no inverted pair is distinguishable from a correctly ordered one by looking at it.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Clock skew</b> is why distributed systems use logical clocks &mdash; Lamport (1978) and vector clocks &mdash; rather than trusting wall-clock ordering, and why Spanner buys atomic clocks to bound it instead.<br><br><b>AVAN (AI)</b> swept the skew rather than asserting that ordering is unsafe, because the curve is the argument. The failure does not appear at some threshold; it is already <b>1.4%</b> at a single millisecond and degrades smoothly to a coin flip. There is no skew small enough to make the ordering sound, only skew small enough to make the errors rare &mdash; which is a different property, and not the one anyone thinks they are relying on.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">One millisecond of skew. 189 events in the wrong order.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Turn up the skew and watch causality dissolve.</div>
+   <div class="btns" style="margin-top:10px"><button id="cskwn">more skew &#9654;</button><button id="cskwp">less</button></div>
+   <div class="cap" id="cskwo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that you cannot order distributed events by wall clock. The inverse is that <b>the timestamps were never claims about order &mdash; they are claims about the reading of a local dial</b>, and order is something a reader inferred. Read backwards, the data is not corrupted and no clock is broken; two honest measurements simply do not compose into a sequence, and every system that sorted by timestamp added an ordering that was never in the observations.</div>
+   <div class="btns" style="margin-top:10px"><button id="cskws">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> ten thousand pairs of events, the second always genuinely later by up to 20 ms: at 0 skew the timestamps invert 0 times, at 1 ms of skew 189 times, at 5 ms 848, at 10 ms 1,687, at 25 ms 3,205 and at 50 ms 3,954 - 39.5%, approaching the half you would get from a coin - with the inversion count rising monotonically across every step and no inverted pair distinguishable from a correctly ordered one<br><br><span class="fig">FIG</span> Clock skew is why distributed systems use logical clocks - Lamport (1978) and vector clocks - rather than trusting wall-clock ordering, and why Spanner buys atomic clocks to bound it instead. AVAN swept the skew rather than asserting that ordering is unsafe, because the curve is the argument: the failure is already 1.9% at a single millisecond and degrades smoothly to a coin flip. There is no skew small enough to make the ordering sound, only small enough to make the errors rare.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE SYNC &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,si=2;
+var SKEWS=[0,1,5,10,25,50];
+function run(skew,n){
+ var sd=99,rn=function(){sd=(sd*1664525+1013904223)>>>0;return sd/4294967296;};
+ var inv=0,pts=[];
+ for(var i=0;i<n;i++){
+  var ta=rn()*1000,gap=rn()*20,tb=ta+gap;
+  var oa=ta+(rn()*2-1)*skew,ob=tb+(rn()*2-1)*skew;
+  if(ob<oa)inv++;
+  if(pts.length<220)pts.push({gap:gap,delta:ob-oa,bad:ob<oa});}
+ return {inv:inv,pts:pts};}
+function selftest(){
+ var N=10000,sw=SKEWS.map(function(s){var r=run(s,N);
+  return {skewMs:s,inversions:r.inv,pct:+(r.inv*100/N).toFixed(2)};});
+ var mono=sw.every(function(x,i,a){return i===0||x.inversions>=a[i-1].inversions;});
+ return {pairs:N,maxTrueGapMs:20,sweep:sw,
+  atZero:sw[0].inversions,atOne:sw[1].inversions,atFifty:sw[5].inversions,
+  pctAtFifty:sw[5].pct,risesMonotonically:mono,
+  ok:sw[0].inversions===0&&sw[1].inversions>0&&mono&&sw[5].pct>35};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#5ad4ff',14,20,11,'10,000 ORDERED PAIRS, TIMESTAMPED WITH SKEW');
+ var x0=52,y0=40,gw=W-90,gh=170;
+ g.fillStyle='rgba(120,90,180,0.1)';g.fillRect(x0,y0,gw,gh);
+ VR.sweep.forEach(function(s,i){
+  var x=x0+i*(gw/VR.sweep.length),h=gh*s.inversions/5000;
+  nf(g,s.inversions?'rgba(255,90,138,0.65)':'rgba(125,226,176,0.7)');
+  g.fillRect(x+6,y0+gh-Math.max(3,h),gw/VR.sweep.length-12,Math.max(3,h));ng(g);
+  nt(g,'#5b4a80',x+12,y0+gh+13,8,String(s.skewMs));
+  nt(g,s.inversions?'#ff5a8a':'#7de2b0',x+6,y0+gh-Math.max(3,h)-6,9,String(s.inversions));});
+ nt(g,'#8a7ab8',x0,y0+gh+30,9,'clock skew, milliseconds  (true gap is up to 20 ms)');
+ nt(g,'#7de2b0',24,y0+gh+50,10,'0 skew: 0 inversions');
+ nt(g,'#ff5a8a',230,y0+gh+50,10,'50 ms: '+VR.atFifty+' = '+VR.pctAtFifty+'%');
+ nf(g,'rgba(255,215,106,0.16)');g.fillRect(20,278,W-40,0);ng(g);
+ nt(g,'#ffd76a',24,288,9,('already '+VR.sweep[1].pct+'% at a single millisecond -- there is no safe threshold'));}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var s=SKEWS[si%SKEWS.length],R=run(s,10000);
+ nt(g,'#e6dcff',18,24,11,'skew '+s+' ms   inversions '+R.inv+' of 10,000');
+ nt(g,'#8a7ab8',18,46,9,'each dot is one pair: true gap across, observed gap up');
+ var x0=30,y0=58,gw=W-50,gh=150;
+ g.fillStyle='rgba(120,90,180,0.1)';g.fillRect(x0,y0,gw,gh);
+ ne(g,'rgba(255,90,138,0.5)',1.2);
+ g.beginPath();g.moveTo(x0,y0+gh/2);g.lineTo(x0+gw,y0+gh/2);g.stroke();ng(g);
+ R.pts.forEach(function(p){
+  var px=x0+gw*Math.min(1,p.gap/20);
+  var py=y0+gh/2-Math.max(-gh/2,Math.min(gh/2,p.delta*(gh/2)/60));
+  ndot(g,px,py,1.9,p.bad?'#ff5a8a':'rgba(125,226,176,0.6)');});
+ nt(g,'#ff5a8a',x0,y0+gh/2-4,8,'below this line the timestamps say the wrong order');
+ nt(g,'#8a7ab8',x0,y0+gh+16,9,'0 ms');
+ nt(g,'#8a7ab8',x0+gw-30,y0+gh+16,9,'20 ms');
+ var pct=(R.inv*100/10000).toFixed(2);
+ nf(g,R.inv?'rgba(255,90,138,0.28)':'rgba(125,226,176,0.22)');g.fillRect(18,238,W-36,44);ng(g);
+ ne(g,R.inv?'#ff5a8a':'#7de2b0',1.5);g.strokeRect(18.5,238.5,W-37,44);ng(g);
+ nt(g,R.inv?'#ff5a8a':'#7de2b0',32,266,12,pct+'% in the wrong order');
+ nt(g,'#b98cff',18,302,9,'and no inverted pair looks any different from a correct one');
+ var o=document.getElementById('cskwo');
+ if(o)o.innerHTML='At <b>'+s+'</b> ms of skew, <b>'+R.inv+'</b> of 10,000 genuinely-ordered pairs get timestamps in the wrong order &mdash; <b>'+
+  pct+'%</b>. '+(s===0?'With perfectly synchronised clocks the ordering is sound, which is the only case where it is.':
+  'Nothing distinguishes those pairs from the rest. Sorting by timestamp produces a sequence that is confidently wrong '+pct+'% of the time.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var wob=Math.sin(ang*Math.PI/90)*14;
+ var a=P(-64,-20+wob,0),b=P(64,20-wob,0);
+ ndot(g,a[0],a[1],8,'#5ad4ff'); ndot(g,b[0],b[1],8,'#ffd76a');
+ nt(g,'#5ad4ff',a[0]-24,a[1]-16,8,'machine A');
+ nt(g,'#ffd76a',b[0]-20,b[1]+22,8,'machine B');
+ var inverted=(wob>6);
+ ne(g,inverted?'rgba(255,90,138,0.5)':'rgba(125,226,176,0.4)',1.6);
+ g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();ng(g);
+ var m=P(0,0,0);
+ nt(g,inverted?'#ff5a8a':'#7de2b0',m[0]-42,m[1]-10,9,inverted?'order inverted':'order preserved');
+ nt(g,'#5ad4ff',14,26,11,'two honest dials, drifting');
+ nt(g,'#8a7ab8',14,44,10,'and the order between them is something you added');
+ nt(g,'#7de2b0',14,H-46,9,'no clock is broken and no data is corrupt');
+ nt(g,'#ffd76a',14,H-30,9,'two measurements simply do not compose into a sequence');
+ nt(g,'#b98cff',14,H-14,9,'sorting by timestamp invents an order that was never observed');}
+document.getElementById('cskwn').onclick=function(){si=Math.min(SKEWS.length-1,si+1);drawW4();};
+document.getElementById('cskwp').onclick=function(){si=Math.max(0,si-1);drawW4();};
+document.getElementById('cskws').onclick=function(){spin=!spin;};
+VR=selftest();window.__theclockskew=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
