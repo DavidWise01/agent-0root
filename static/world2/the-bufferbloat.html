@@ -1,0 +1,169 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BUFFERBLOAT · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#9d00ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#9d00ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#9d00ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#9d00ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #9d00ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#9d00ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#9d00ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#9d00ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#9d00ff;background:transparent;border:2px solid #9d00ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#9d00ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#9d00ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#9d00ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#9d00ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#9d00ff 42%,#0a0e0a);border-left:4px solid #9d00ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#9d00ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#9d00ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#9d00ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#9d00ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE WALL</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE WALL / <b>THE BUFFERBLOAT</b></div>
+<h1>THE BUFFERBLOAT</h1>
+<div class="kick">the drop was the signal; the buffer is what silenced it</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Memory got cheap, so buffers got large, so nothing is ever dropped &mdash; and packets sit in a queue for a second instead of being discarded in a millisecond. The link is not slower. The wait in front of it is enormous.<br><br>
+ <span class="lit">LIT</span> verified live. One bottleneck serving 1 packet per ms, offered <b>52,095</b> packets over 40 seconds &mdash; more than it can carry. With a <b>1,000</b>-packet buffer the mean queueing delay is <b>957.6</b>&nbsp;ms. With a <b>10</b>-packet buffer it is <b>10.0</b>&nbsp;ms &mdash; <b>95.8&times;</b> less. Throughput is <b>identical</b> to four decimals: <b>1.0000</b> either way, a difference of <b>0.00%</b>. The hundredfold delay bought nothing at all.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Jim Gettys</b> named bufferbloat in 2010 after chasing terrible latency on his own home link; <b>Kathleen Nichols and Van Jacobson</b>&rsquo;s CoDel is the standard answer.<br><br>
+ <b>AVAN (AI)</b> ran both buffers over the same offered load so the throughput column would be directly comparable, which is the whole argument. My first model offered arrivals at exactly the service rate &mdash; a queue that mathematically cannot build &mdash; and reported a delay ratio of 1.0, a clean pass proving nothing. A buffer only fills when the offered load exceeds the link, so the experiment has to be run in overload or it is not the experiment.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Same link, same load, two buffer sizes.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Resize the buffer. Watch delay move and throughput stay.</div>
+   <div class="btns" style="margin-top:10px"><button id="bfblb">bigger buffer &#9654;</button><button id="bfbls2">smaller</button><button id="bfblr">reset</button></div>
+   <div class="cap" id="bfblo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a queue nobody meant to build.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that oversized buffers cause latency. The inverse is that <b>the drop was the signal, and the buffer is what silenced it</b>. Loss is how a sender is told to slow down; a deep buffer absorbs the packets that would have carried that message, so the sender keeps accelerating into a queue it cannot see. Read backwards, this is not a memory-sizing mistake but a failure of nerve &mdash; the buffer was added to avoid discarding data, and discarding data was the only working feedback channel in the system.</div>
+   <div class="btns" style="margin-top:10px"><button id="bfbls">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> one bottleneck serving 1 packet per ms, offered 52,095 packets over 40 seconds: with a 1,000-packet buffer the mean queueing delay is 957.6 ms and with a 10-packet buffer it is 10.0 ms, 95.8 times less, while throughput is identical to four decimals at 1.0000 either way - a difference of 0.00%, so the hundredfold delay bought nothing<br><br><span class="fig">FIG</span> Jim Gettys named bufferbloat in 2010 after chasing terrible latency on his own home link; Nichols and Jacobson's CoDel is the standard answer. AVAN ran both buffers over the same offered load so the throughput column would be directly comparable, which is the whole argument. My first model offered arrivals at exactly the service rate - a queue that mathematically cannot build - and reported a delay ratio of 1.0, a clean pass proving nothing. A buffer only fills in overload, so the experiment has to be run in overload or it is not the experiment.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE WALL &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,cap=1000;
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function run(cp,seed,T){
+ var r=rng(seed),q=0,sent=0,dropped=0,qsum=0,qn=0,offered=0,trace=[];
+ for(var t=0;t<T;t++){
+  var arr=(r()<0.30)?2:1;
+  offered+=arr;
+  for(var k=0;k<arr;k++){if(q<cp)q++;else dropped++;}
+  if(q>0){qsum+=q;qn++;q--;sent++;}
+  if(t%(Math.max(1,Math.floor(T/240)))===0)trace.push(q);}
+ var meanQ=qsum/Math.max(1,qn);
+ return {cap:cp,offered:offered,sent:sent,dropped:dropped,
+  meanQueue:+meanQ.toFixed(1),meanDelayMs:+meanQ.toFixed(1),
+  throughput:+(sent/T).toFixed(4),trace:trace};}
+function selftest(){
+ var big=run(1000,31,40000),small=run(10,31,40000);
+ return {serviceMsPerPacket:1,bigCap:1000,smallCap:10,offered:big.offered,
+  bigThroughput:big.throughput,smallThroughput:small.throughput,
+  bigDelayMs:big.meanDelayMs,smallDelayMs:small.meanDelayMs,
+  bigDropped:big.dropped,smallDropped:small.dropped,
+  delayRatio:+(big.meanDelayMs/small.meanDelayMs).toFixed(1),
+  throughputDiffPct:+(100*Math.abs(big.throughput-small.throughput)/small.throughput).toFixed(2),
+  ok:big.meanDelayMs>small.meanDelayMs*5&&
+     Math.abs(big.throughput-small.throughput)/small.throughput<0.02};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#9d00ff',14,20,11,'SAME LINK, SAME LOAD, TWO BUFFER SIZES');
+ var rows=[['buffer 1000',VR.bigDelayMs,VR.bigThroughput,'rgba(255,60,90,0.75)'],
+           ['buffer 10',VR.smallDelayMs,VR.smallThroughput,'rgba(125,226,176,0.75)']];
+ for(var i=0;i<2;i++){
+  var y=52+i*88;
+  nt(g,'#8a7ab8',14,y,9,rows[i][0]);
+  nt(g,'#5a4a85',14,y+18,8,'queueing delay');
+  nf(g,rows[i][3]);g.fillRect(120,y+6,Math.round(340*rows[i][1]/1000),20);ng(g);
+  nt(g,'#e8e0ff',126+Math.round(340*rows[i][1]/1000),y+21,9,rows[i][1]+' ms');
+  nt(g,'#5a4a85',14,y+46,8,'throughput');
+  nf(g,'rgba(90,208,255,0.6)');g.fillRect(120,y+34,Math.round(300*rows[i][2]),20);ng(g);
+  nt(g,'#5ad0ff',126+Math.round(300*rows[i][2]),y+49,9,rows[i][2].toFixed(4)+' pkt/ms');}
+ nf(g,'rgba(255,60,90,0.13)');g.fillRect(12,236,W-24,44);ng(g);
+ nt(g,'#ff5a8a',20,258,10,'delay '+VR.delayRatio+'x worse');
+ nt(g,'#7de2b0',180,258,10,'throughput '+VR.throughputDiffPct+'% different');
+ nt(g,'#8a7ab8',20,274,8,'the hundredfold wait bought nothing');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var r=run(cap,31,12000);
+ nt(g,'#9d00ff',12,20,11,'BUFFER '+cap+' PACKETS');
+ var tr=r.trace,i;
+ ne(g,'rgba(157,0,255,0.85)',1.5);g.beginPath();
+ for(i=0;i<tr.length;i++){
+  var x=16+i/tr.length*340,y=150-tr[i]/Math.max(1,cap)*110;
+  if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}
+ g.stroke();ng(g);
+ nt(g,'#8a7ab8',16,168,8,'queue occupancy, full = '+cap);
+ nt(g,'#ff5a8a',14,196,9,'mean queueing delay  '+r.meanDelayMs+' ms');
+ nt(g,'#7de2b0',14,216,9,'throughput           '+r.throughput.toFixed(4)+' pkt/ms');
+ nt(g,'#8a7ab8',14,236,9,'offered              '+r.offered.toLocaleString());
+ nt(g,'#ffd76a',14,256,9,'dropped              '+r.dropped.toLocaleString());
+ nf(g,'rgba(90,70,140,0.3)');g.fillRect(14,270,340,20);ng(g);
+ nf(g,'rgba(255,60,90,0.7)');g.fillRect(14,270,Math.round(340*Math.min(1,r.meanDelayMs/1000)),20);ng(g);
+ nt(g,'#e8e0ff',20,284,8,'delay as a fraction of a full second');
+ var o=document.getElementById('bfblo');
+ if(o)o.innerHTML='buffer <b>'+cap+'</b> &middot; delay <b>'+r.meanDelayMs+
+  '</b> ms &middot; throughput <b>'+r.throughput.toFixed(4)+'</b> pkt/ms';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'A QUEUE NOBODY MEANT TO BUILD');
+ var cx=W/2,cy=H/2+10,rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ for(var i=0;i<34;i++){
+  var t=i/34,x=(t-0.5)*280,z=Math.sin(t*3.14)*30,y=0;
+  var px=cx+x*rr-z*sn,py=cy+y+(x*sn+z*rr)*0.34;
+  ndot(g,px,py,3,'rgba(125,226,176,'+(0.75-t*0.5)+')');}
+ ndot(g,cx+140*Math.cos(ang*0.0175),cy+140*Math.sin(ang*0.0175)*0.34,5,'rgba(255,60,90,0.9)');
+ nt(g,'#8a7ab8',12,H-22,8,'the drop was the signal; the buffer is what silenced it');}
+document.getElementById('bfblb').onclick=function(){cap=Math.min(4000,cap*2);drawW4();};
+document.getElementById('bfbls2').onclick=function(){cap=Math.max(5,Math.floor(cap/2));drawW4();};
+document.getElementById('bfblr').onclick=function(){cap=1000;drawW4();};
+document.getElementById('bfbls').onclick=function(){spin=!spin;};
+VR=selftest();window.__thebufferbloat=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

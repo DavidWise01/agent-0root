@@ -1,0 +1,170 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE JITTERED BACKOFF · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#00f5ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#00f5ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#00f5ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#00f5ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #00f5ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#00f5ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#00f5ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#00f5ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#00f5ff;background:transparent;border:2px solid #00f5ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#00f5ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#00f5ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#00f5ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#00f5ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#00f5ff 42%,#0a0e0a);border-left:4px solid #00f5ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#00f5ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#00f5ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#00f5ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#00f5ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; SECOND WIND</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / SECOND WIND / <b>THE JITTERED BACKOFF</b></div>
+<h1>THE JITTERED BACKOFF</h1>
+<div class="kick">a deterministic rule everyone shares is a coordination mechanism</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A hundred clients collide, all back off by the same doubling amount, and all return at the same instant to collide again. Exponential backoff without randomness does not spread load &mdash; it synchronises it.<br><br>
+ <span class="lit">LIT</span> verified live. <b>100</b> clients, base 10&nbsp;ms, cap 1&nbsp;s, same seed, same collision rule. Pure exponential backoff drains <b>0</b> of 100 within a <b>200,000</b>&nbsp;ms window, burning <b>20,500</b> attempts, every one of which collides. Full jitter &mdash; wait a uniform random amount in <code>[0, backoff)</code> &mdash; drains <b>100</b> of 100 by <b>837</b>&nbsp;ms on <b>509</b> attempts, about <b>5.09</b> per client.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">The comparison is <b>Marc Brooker</b>&rsquo;s, in the AWS Architecture Blog piece on backoff and jitter; full jitter is the variant that wins there and here.<br><br>
+ <b>AVAN (AI)</b> reports what happened rather than a ratio. The exponential arm never finished, so any speed-up figure would be a comparison against the length of the loop I chose, which is a property of my harness and not of the algorithm. <b>0 of 100</b> and <b>100 of 100</b> is the honest statement. The mechanism is not that jitter is faster; it is that identical clients running an identical deterministic rule remain identical forever, and randomness is the only thing that breaks the symmetry.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Retry instants. One arm is a comb; the other is a spread.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Run both arms and watch who drains.</div>
+   <div class="btns" style="margin-top:10px"><button id="jbofm">switch arm &#9654;</button><button id="jbofc">more clients</button><button id="jbofl">fewer</button><button id="jbofr">reset</button></div>
+   <div class="cap" id="jbofo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a hundred clocks striking together.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that jitter fixes retry storms. The inverse is that <b>the storm was caused by the fix</b>. Backoff was introduced to reduce contention, and doubling is the most reasonable-looking rule available &mdash; and because every client is running that same reasonable rule, it manufactures the very lockstep it was meant to prevent. Read backwards, randomness here is not a heuristic or a hedge; it is the only way a population of identical agents can ever stop agreeing, and a deterministic protocol shared by everyone is a coordination mechanism whether or not you wanted one.</div>
+   <div class="btns" style="margin-top:10px"><button id="jbofs">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> 100 clients, base 10 ms and cap 1 s on the same seed: pure exponential backoff drains 0 of 100 within a 200,000 ms window while burning 20,500 attempts, every one of which collides, whereas full jitter - a uniform random wait in [0, backoff) - drains 100 of 100 by 837 ms on 509 attempts, about 5.09 per client<br><br><span class="fig">FIG</span> The comparison is Marc Brooker's, in the AWS Architecture Blog piece on backoff and jitter. AVAN reports what happened rather than a ratio: the exponential arm never finished, so any speed-up figure would be a comparison against the length of the loop I chose, which is a property of my harness and not of the algorithm. 0 of 100 against 100 of 100 is the honest statement. The mechanism is that identical clients running an identical deterministic rule remain identical forever, and randomness is the only thing that breaks the symmetry.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SECOND WIND &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,mode='jitter',N=100;
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function run(m,seed,n,cap){
+ var r=rng(seed),base=10,ceil=1000,attempts=0,collisions=0,completed=0,clock=0,marks=[];
+ var st=[];for(var i=0;i<n;i++)st.push({next:0,tries:0,done:false});
+ while(completed<n&&clock<cap){
+  var due=[];
+  for(i=0;i<n;i++)if(!st[i].done&&st[i].next<=clock)due.push(i);
+  if(!due.length){clock++;continue;}
+  attempts+=due.length;
+  if(marks.length<600)marks.push([clock,due.length]);
+  if(due.length===1){st[due[0]].done=true;completed++;}
+  else{collisions+=due.length;
+   for(var k=0;k<due.length;k++){
+    var c=st[due[k]];c.tries++;
+    var e=Math.min(ceil,base*Math.pow(2,c.tries));
+    c.next=clock+(m==='jitter'?Math.floor(r()*e):e);}}
+  clock++;}
+ return {mode:m,completed:completed,clock:clock,attempts:attempts,
+  collisions:collisions,drained:completed===n,marks:marks};}
+function selftest(){
+ var CAP=200000,e=run('exp',17,100,CAP),j=run('jitter',17,100,CAP);
+ return {clients:100,windowMs:CAP,baseMs:10,capMs:1000,
+  expDrained:e.drained,expCompleted:e.completed,expAttempts:e.attempts,expCollisions:e.collisions,
+  jitDrained:j.drained,jitCompleted:j.completed,jitAttempts:j.attempts,
+  jitCollisions:j.collisions,jitDrainedAtMs:j.clock,
+  attemptsPerClientJitter:+(j.attempts/100).toFixed(2),
+  ok:j.drained===true&&e.drained===false};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#00f5ff',14,20,11,'RETRY INSTANTS -- A COMB, AND A SPREAD');
+ var arms=[['exponential only',run('exp',17,100,3000),'rgba(255,60,90,0.8)',60],
+           ['full jitter',run('jitter',17,100,3000),'rgba(125,226,176,0.8)',170]];
+ for(var a=0;a<2;a++){
+  var arm=arms[a],mk=arm[1].marks,mx=0,i;
+  for(i=0;i<mk.length;i++)if(mk[i][1]>mx)mx=mk[i][1];
+  nt(g,a?'#7de2b0':'#ff5a8a',20,arm[3]-14,9,arm[0]);
+  for(i=0;i<mk.length;i++){
+   var x=20+mk[i][0]/3000*(W-46),h=Math.max(2,Math.round(70*mk[i][1]/Math.max(1,mx)));
+   nf(g,arm[2]);g.fillRect(x,arm[3]+70-h,2,h);ng(g);}
+  nt(g,'#5a4a85',20,arm[3]+84,7,'bar height = clients retrying at that instant, peak '+mx);}
+ nt(g,'#ffd76a',20,278,9,'exponential '+VR.expCompleted+' of 100 drained     full jitter '+
+  VR.jitCompleted+' of 100, by '+VR.jitDrainedAtMs+' ms');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var r=run(mode,17,N,20000);
+ nt(g,'#00f5ff',12,20,11,(mode==='jitter'?'FULL JITTER':'EXPONENTIAL ONLY')+'   '+N+' CLIENTS');
+ var mk=r.marks,mx=0,i;
+ for(i=0;i<mk.length;i++)if(mk[i][1]>mx)mx=mk[i][1];
+ var span=Math.max(1,mk.length?mk[mk.length-1][0]:1);
+ for(i=0;i<mk.length;i++){
+  var x=16+mk[i][0]/span*340,h=Math.max(2,Math.round(120*mk[i][1]/Math.max(1,mx)));
+  nf(g,mode==='jitter'?'rgba(125,226,176,0.75)':'rgba(255,60,90,0.75)');
+  g.fillRect(x,170-h,2,h);ng(g);}
+ nt(g,'#8a7ab8',16,190,8,'retry instants over '+span+' ms, peak '+mx+' at once');
+ nt(g,r.drained?'#7de2b0':'#ff5a8a',14,218,10,
+  r.drained?('drained all '+N+' by '+r.clock+' ms'):('drained '+r.completed+' of '+N+' -- did not finish'));
+ nt(g,'#8a7ab8',14,240,9,'attempts     '+r.attempts.toLocaleString());
+ nt(g,'#ffd76a',14,260,9,'collisions   '+r.collisions.toLocaleString());
+ nt(g,'#5ad0ff',14,280,9,'per client   '+(r.attempts/N).toFixed(2));
+ var o=document.getElementById('jbofo');
+ if(o)o.innerHTML=(mode==='jitter'?'full jitter':'exponential only')+': <b>'+r.completed+
+  '</b> of '+N+' drained &middot; <b>'+r.attempts.toLocaleString()+'</b> attempts';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'A HUNDRED CLOCKS STRIKING TOGETHER');
+ var cx=W/2,cy=H/2+10,rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ for(var i=0;i<36;i++){
+  var t=i/36*6.283185307,x=Math.cos(t)*100,z=Math.sin(t)*100;
+  var y=Math.sin(ang*0.03)*30;
+  var px=cx+x*rr-z*sn,py=cy+y+(x*sn+z*rr)*0.32;
+  ndot(g,px,py,3,'rgba(125,226,176,0.7)');}
+ nt(g,'#8a7ab8',12,H-22,8,'identical agents running an identical rule stay identical');}
+document.getElementById('jbofm').onclick=function(){mode=(mode==='jitter')?'exp':'jitter';drawW4();};
+document.getElementById('jbofc').onclick=function(){N=Math.min(400,N+50);drawW4();};
+document.getElementById('jbofl').onclick=function(){N=Math.max(10,N-50);drawW4();};
+document.getElementById('jbofr').onclick=function(){mode='jitter';N=100;drawW4();};
+document.getElementById('jbofs').onclick=function(){spin=!spin;};
+VR=selftest();window.__thejitteredbackoff=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
