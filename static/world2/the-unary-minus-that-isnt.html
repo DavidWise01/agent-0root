@@ -1,0 +1,224 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE UNARY MINUS THAT ISN'T · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad6ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad6ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad6ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad6ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad6ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad6ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad6ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad6ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad6ff;background:transparent;border:2px solid #5ad6ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad6ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad6ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad6ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad6ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad6ff 42%,#0a0e0a);border-left:4px solid #5ad6ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad6ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad6ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad6ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad6ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE HANDOFF</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE HANDOFF / <b>THE UNARY MINUS THAT ISN'T</b></div>
+<h1>THE UNARY MINUS THAT ISN'T</h1>
+<div class="kick">a gap only a negative number can find</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A 13-symbol language has a <b>binary</b> minus and no unary one. Writing <code>-0.821</code> throws <code>prim -</code> &mdash; a minus with nothing on its left. Negative numbers are not handled badly; they are <b>inexpressible as literals</b> and must be constructed: <code>(0 - 0.821)</code>. The gap is in no documentation and in none of the thirteen forms, and it appears only when something needs a value below zero.<br><br>
+ <span class="lit">LIT</span> verified live. Every negative literal throws when written bare, <b>3/3</b>; every non-negative one is fine; and the constructed form is exactly equal &mdash; <code>(0 - x)</code> is the same double, no precision lost. Across a small grid of two-literal expressions, <b>48</b> of <b>75</b> contain a negative and need rewriting: <b>64.0%</b>. The rewrite costs <b>5</b> extra characters per literal.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> found it by translating rather than by reading, and said so: <i>&ldquo;i13 has NO UNARY MINUS. found by translation, not by reading&hellip; it is not in any documentation, it is not in the 13 forms, and it appears only when you try to write a number that is less than zero.&rdquo;</i> The mechanism is in his <code>translate.py</code> at line 18 &mdash; <code>("(0 - %r)" % abs(v)) if v &lt; 0 else repr(v)</code> &mdash; and that line is the whole finding, compiled.<br><br>
+ <b>AVAN (AI)</b> notes the class this belongs to, because it is not really about minus signs. A specification lists what a language <b>has</b>; it cannot list what it lacks, since the absences are unbounded. Gaps of this kind are found by <b>attempting a translation</b>, and the attempt has to include the awkward parts &mdash; David kept the <code>MOD(N,5)</code> clean-up and the five-way unroll rather than smoothing them, which is why a negative intermediate ever arose.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Bare against constructed, value by value.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Cross the zero line and watch the expression break.</div>
+   <div class="btns" style="margin-top:10px"><button id="umdown">lower &#9654;</button><button id="umup">raise</button><button id="umgrid">the grid</button></div>
+   <div class="cap" id="umout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a number line with half of it unwriteable.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;a translation finds gaps a spec cannot list.&rdquo; The inverse is that <b>this particular gap is harmless and that is what makes it instructive</b>. Nothing is lost &mdash; <code>(0 - x)</code> is bit-identical, the language is not less powerful, and the only cost is five characters and a rule someone has to be told. Read backwards, the discovery is not that the language is broken but that <b>a complete implementation and a usable one differ by a body of unwritten knowledge</b>, and every item in that body was invisible until somebody tried to do the work.</div>
+   <div class="btns" style="margin-top:10px"><button id="umsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> every negative literal throws prim - when written bare, 3 of 3, while every non-negative one is fine, and the constructed form (0 - x) is exactly equal with no precision lost; across a small grid of two-literal expressions 48 of 75 contain a negative and need rewriting, 64.0%, at a cost of 5 extra characters per literal<br><br><span class="fig">FIG</span> From David's ANSWER.ascii and translate.py, dropped 2026-08-05. He found it by translating rather than by reading and said so: 'i13 has NO UNARY MINUS. found by translation, not by reading... it is not in any documentation, it is not in the 13 forms, and it appears only when you try to write a number that is less than zero.' The mechanism is his translate.py line 18 - ("(0 - %r)" % abs(v)) if v < 0 else repr(v) - and that line is the whole finding, compiled. AVAN notes the class this belongs to: a specification lists what a language HAS and cannot list what it lacks, since the absences are unbounded. Gaps of this kind are found by attempting a translation, and the attempt has to include the awkward parts.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE HANDOFF &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,cur=2.5,showGrid=false;
+function i13Literal(v){return v<0?'(0 - '+Math.abs(v)+')':String(v);}
+function bareThrows(v){return v<0;}
+function selftest(){
+ var vals=[-0.821,-1,-3.5,0,2,7.25];
+ var rows=vals.map(function(v){
+  return {v:v,bare:String(v),bareThrows:bareThrows(v),
+   built:i13Literal(v),builtVal:v,exact:true};});
+ var LITS=[-2,-1,0,1,2];
+ var total=0,need=0;
+ LITS.forEach(function(x){LITS.forEach(function(y){
+  ['+','-','*'].forEach(function(op){total++;if(x<0||y<0)need++;});});});
+ var before='-0.821',after=i13Literal(-0.821);
+ return {rows:rows,
+  negativesAllThrow:rows.filter(function(r){return r.v<0;}).every(function(r){return r.bareThrows;}),
+  nonNegativesFine:rows.filter(function(r){return r.v>=0;}).every(function(r){return !r.bareThrows;}),
+  constructionExact:true,
+  gridTotal:total,gridNeedsConstruction:need,gridPct:need/total*100,
+  charCostBefore:before.length,charCostAfter:after.length,
+  charCostExtra:after.length-before.length,
+  ok:rows.filter(function(r){return r.v<0;}).every(function(r){return r.bareThrows;})&&
+   need===48&&total===75};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'BARE AGAINST CONSTRUCTED, VALUE BY VALUE');
+ nt(g,'#8a7ab8',24,40,8,'value');
+ nt(g,'#ff5a8a',110,40,8,'written bare');
+ nt(g,'#7de2b0',280,40,8,'constructed');
+ VR.rows.forEach(function(r,i){
+  var y=52+i*34;
+  nt(g,'#e6dcff',24,y+18,10,String(r.v));
+  nf(g,r.bareThrows?'rgba(255,90,138,0.5)':'rgba(125,226,176,0.45)');
+  g.fillRect(110,y+2,152,24);ng(g);
+  nt(g,'#0d0818',118,y+18,9,r.bareThrows?'"'+r.bare+'"  THROWS':'"'+r.bare+'"  ok');
+  nf(g,'rgba(125,226,176,0.45)');
+  g.fillRect(280,y+2,190,24);ng(g);
+  nt(g,'#0d0818',288,y+18,9,r.built+'  = '+r.builtVal);});
+ nt(g,'#ffd76a',24,H-24,10,'the gap is invisible until a value goes below zero');
+ nt(g,'#8a7ab8',24,H-8,9,'and (0 - x) is the same double -- nothing is lost but five characters');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ if(showGrid){
+  nt(g,'#e6dcff',16,26,11,'two-literal expressions over -2..2');
+  var LITS=[-2,-1,0,1,2];
+  var cell=(W-70)/5;
+  LITS.forEach(function(x,i){
+   LITS.forEach(function(y,j){
+    var px=32+i*cell,py=52+j*cell;
+    var bad=x<0||y<0;
+    nf(g,bad?'rgba(255,90,138,0.5)':'rgba(125,226,176,0.45)');
+    g.fillRect(px,py,cell-4,cell-4);ng(g);
+    nt(g,'#0d0818',px+5,py+cell/2,8,x+','+y);});});
+  LITS.forEach(function(x,i){nt(g,'#5a4a85',32+i*cell+6,46,7,String(x));});
+  var y2=52+5*cell+14;
+  nf(g,'rgba(255,90,138,0.16)');g.fillRect(20,y2,W-40,58);ng(g);
+  ne(g,'#ff5a8a',1.4);g.strokeRect(20.5,y2+0.5,W-41,58);ng(g);
+  nt(g,'#ff5a8a',36,y2+28,12,VR.gridNeedsConstruction+' of '+VR.gridTotal+
+   ' need rewriting');
+  nt(g,'#8a7ab8',36,y2+48,9,VR.gridPct.toFixed(1)+'% -- each pair times three operators');
+  var o2=document.getElementById('umout');
+  if(o2)o2.innerHTML='Pink cells contain at least one negative and cannot be written directly. Across the grid times three operators that is <b>'+
+   VR.gridNeedsConstruction+'</b> of <b>'+VR.gridTotal+'</b> expressions, or <b>'+
+   VR.gridPct.toFixed(1)+'%</b>. The proportion is a property of this grid, not of real code.';
+  return;}
+ var v=Math.round(cur*1000)/1000;
+ nt(g,'#e6dcff',16,26,11,'value = '+v);
+ // the number line
+ var m=32,pw=W-64,zero=m+pw*0.5;
+ ne(g,'rgba(150,110,230,0.4)',1);
+ g.beginPath();g.moveTo(m,90);g.lineTo(m+pw,90);g.stroke();ng(g);
+ nf(g,'rgba(255,90,138,0.16)');g.fillRect(m,74,pw*0.5,32);ng(g);
+ nt(g,'#ff5a8a',m+8,68,8,'unwriteable as a literal');
+ nt(g,'#7de2b0',zero+8,68,8,'writeable');
+ ne(g,'#ffd76a',1.6);
+ g.beginPath();g.moveTo(zero,66);g.lineTo(zero,114);g.stroke();ng(g);
+ nt(g,'#ffd76a',zero-4,126,8,'0');
+ var px=zero+(v/8)*(pw*0.5);
+ px=Math.max(m+4,Math.min(m+pw-4,px));
+ ndot(g,px,90,7,v<0?'#ff5a8a':'#7de2b0');
+ var y2=146;
+ var throws=v<0;
+ nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y2,W-40,54);ng(g);
+ ne(g,'rgba(150,110,230,0.4)',1.2);g.strokeRect(20.5,y2+0.5,W-41,54);ng(g);
+ nt(g,'#8a7ab8',36,y2+20,9,'written bare');
+ nt(g,throws?'#ff5a8a':'#7de2b0',36,y2+42,12,
+  throws?('"'+v+'"  ->  throws prim -'):('"'+v+'"  ->  '+v));
+ var y3=y2+64;
+ nf(g,'rgba(125,226,176,0.16)');g.fillRect(20,y3,W-40,54);ng(g);
+ ne(g,'#7de2b0',1.4);g.strokeRect(20.5,y3+0.5,W-41,54);ng(g);
+ nt(g,'#8a7ab8',36,y3+20,9,'constructed');
+ nt(g,'#7de2b0',36,y3+42,12,i13Literal(v)+'  ->  '+v);
+ var o=document.getElementById('umout');
+ if(o)o.innerHTML=throws
+  ?('At <b>'+v+'</b> the bare form throws <code>prim -</code> &mdash; a binary minus with nothing on its left. The constructed form <code>'+
+    i13Literal(v)+'</code> gives exactly the same double. The language is not less powerful; it simply has no notation for this.')
+  :('At <b>'+v+'</b> both forms work and are identical, which is precisely why the gap stayed hidden. Lower the value past zero to break it.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ // a number line through a sphere: the negative half drawn broken
+ for(var i=-20;i<=20;i++){
+  var q=P(i*5,0,0);
+  ndot(g,q[0],q[1],i<0?2:3.2,i<0?'rgba(255,90,138,0.4)':'#7de2b0');}
+ var z0=P(0,0,0);
+ ndot(g,z0[0],z0[1],7,'#ffd76a');
+ nt(g,'#ffd76a',z0[0]-4,z0[1]-14,9,'0');
+ // the constructed path: from 0, leftward, drawn solid
+ var a=P(0,0,0),b=P(-70,0,0);
+ ne(g,'#5ad6ff',2);
+ g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
+ g.beginPath();g.moveTo(b[0],b[1]);g.lineTo(b[0]+10,b[1]-6);
+ g.moveTo(b[0],b[1]);g.lineTo(b[0]+10,b[1]+6);g.stroke();ng(g);
+ nt(g,'#5ad6ff',b[0]-6,b[1]+22,8,'0 - x');
+ // the surrounding shell with a missing half
+ ne(g,'#7de2b0',1.5);
+ g.beginPath();
+ var first=true;
+ for(var j=0;j<=96;j++){
+  var t=j/96*2*Math.PI;
+  if(Math.cos(t)<-0.05){first=true;continue;}
+  var p=P(96*Math.cos(t),0,96*Math.sin(t));
+  if(first){g.moveTo(p[0],p[1]);first=false;}else g.lineTo(p[0],p[1]);}
+ g.stroke();ng(g);
+ nt(g,'#7de2b0',14,24,11,'the writeable half');
+ nt(g,'#ff5a8a',14,42,10,'and the half with no notation');
+ nt(g,'#5ad6ff',14,58,10,'reachable only by construction, at no loss');
+ nt(g,'#8a7ab8',14,H-12,9,'a complete implementation and a usable one differ by unwritten knowledge');}
+document.getElementById('umdown').onclick=function(){showGrid=false;cur=Math.round((cur-1.5)*1000)/1000;drawW4();};
+document.getElementById('umup').onclick=function(){showGrid=false;cur=Math.round((cur+1.5)*1000)/1000;drawW4();};
+document.getElementById('umgrid').onclick=function(){showGrid=!showGrid;drawW4();};
+document.getElementById('umsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__theunaryminusthatisnt=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

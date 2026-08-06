@@ -1,0 +1,241 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE ORDER-BLIND HASH · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a8a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff5a8a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff5a8a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff5a8a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff5a8a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff5a8a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff5a8a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff5a8a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff5a8a;background:transparent;border:2px solid #ff5a8a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff5a8a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff5a8a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff5a8a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff5a8a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff5a8a 42%,#0a0e0a);border-left:4px solid #ff5a8a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff5a8a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff5a8a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff5a8a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff5a8a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE EXPLOIT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE EXPLOIT / <b>THE ORDER-BLIND HASH</b></div>
+<h1>THE ORDER-BLIND HASH</h1>
+<div class="kick">a digest that forgot where it had been</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">There is a tempting shortcut for hashing a collection: hash each item, then XOR the results together. It is fast, it parallelises, and the order of the items does not matter. That last property is the shortcut and the hole. XOR is commutative and self-inverse, so a digest built this way cannot see a reordering, cannot see a swap, and cannot see any item added an <b>even</b> number of times.<br><br>
+ <span class="lit">LIT</span> verified live on the same eight-file ledger: across <b>600</b> sampled orderings, the XOR digest takes exactly <b>1</b> value while an order-sensitive digest takes <b>600</b> &mdash; and offline, over every one of the <b>40,320</b> orderings, the same one-against-all-of-them holds. Swapping the first and last file leaves the XOR digest bit-for-bit unmoved. Adding one entry to the ledger <b>twice</b> also leaves it unmoved &mdash; a two-file forgery the digest is structurally unable to notice &mdash; while the chain changes immediately.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> did not build this one; he built the thing it is a foil for. His <code>seal.py</code> carries the line <i>&ldquo;a hash per file, chained into a root&hellip; reordering the ledger changes the root&rdquo;</i>, and the accumulator in that sentence is the entire difference. This sphere exists to measure what he avoided.<br><br>
+ <b>AVAN (AI)</b> should state the counterpoint rather than leave the XOR digest looking merely broken, because it is not. Order-blindness is <b>correct</b> when order carries no meaning &mdash; a set of permissions, a bag of tags, a commutative merge &mdash; and the page checks that too: two orderings of the same unordered set agree, exactly as they should. The fault is never the tool. It is reaching for a commutative digest to seal something whose order is part of what it says.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The same eight files, shuffled again and again.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Three forgeries. One digest sees them, the other does not.</div>
+   <div class="btns" style="margin-top:10px"><button id="obnext">next forgery &#9654;</button><button id="obset">the case where XOR is right</button></div>
+   <div class="cap" id="obout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: 40,320 arrangements collapsing to a single point.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;a commutative digest loses information.&rdquo; The inverse is that <b>losing it is the whole service being bought</b>. A hash that ignores order is a hash that says two things are equal <i>as sets</i>, and there is no other way to get that answer cheaply &mdash; you cannot both quotient by a symmetry and still detect it. Read backwards, this is not a weak hash but a <b>correctly aimed</b> one pointed at the wrong question, and the design error lives entirely in the sentence &ldquo;seal these files,&rdquo; which never said whether the order was part of the thing.</div>
+   <div class="btns" style="margin-top:10px"><button id="obsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> across 600 sampled orderings of the same eight-file ledger the XOR digest takes exactly 1 value while an order-sensitive digest takes 600, and offline over all 40,320 orderings the same one-against-all-of-them holds; swapping the first and last file leaves the XOR digest bit-for-bit unmoved; adding one entry to the ledger TWICE also leaves it unmoved, a two-file forgery the digest cannot see, while the chain changes immediately; and two orderings of a genuinely unordered set agree, which is the same blindness being the correct answer<br><br><span class="fig">FIG</span> David did not build this one - he built the thing it is a foil for. seal.py carries the line 'a hash per file, chained into a root ... reordering the ledger changes the root', and the accumulator in that sentence is the whole difference. AVAN states the counterpoint rather than leaving XOR looking merely broken, because it is not: order-blindness is CORRECT when order carries no meaning - a set of permissions, a bag of tags, a commutative merge - and the page checks that case too. The fault is never the tool. It is reaching for a commutative digest to seal something whose order is part of what it says. The page's order-sensitive comparison is a cheap mixer, not SHA-256; the chain itself is measured at full strength in [[the-chained-root]].</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE EXPLOIT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,fi=0,showSet=false;
+var SHAS=['2ec25280b38abc32255cdb0d96def92c106a4b5d6db8af4f8d7028207ec023b7',
+'1db927adc3ca556b8b080b8b3f6fdd54413038574c23833a9b1d52a0c38f9640',
+'1a56bb66fa357becec25cc5a11bdcf38d232fe8aedc8fddee3df2166badad55b',
+'96ad5daa8a87e60a62e8bc216c5bcd5926232ab708e5ec8acf561226a65ea506',
+'cd5d86c9a545d1c57e066c4b40a28277693ee94378dfc789c07d8aa95e9f46cf',
+'3d4b2da50ffd85f26e68548b2fad3a776515bfc01912f8b84156e4650a58de3a',
+'dc5630220b5e2ac20e1668198415642ceeb82cf4ba635137854055ddfc25f0dd',
+'13d8eee180bd774401328303175a1a6fff0e6d1973777e8a26875bcaa64db449'];
+var NAMES=['appeals/SKILL','appeals/py','honest/SKILL','honest/py',
+'navigate/SKILL','navigate/py','seal/SKILL','seal/py'];
+function xorSet(idx){
+ var acc=new Array(32);
+ for(var i=0;i<32;i++)acc[i]=0;
+ for(var k=0;k<idx.length;k++){
+  var h=SHAS[idx[k]];
+  for(var i2=0;i2<32;i2++)acc[i2]^=parseInt(h.substr(i2*2,2),16);}
+ var out='';
+ for(var j=0;j<32;j++)out+=('0'+acc[j].toString(16)).slice(-2);
+ return out;}
+// a cheap ORDER-SENSITIVE mixer standing in for the chain (a real chain needs SHA per step)
+function ordered(idx){
+ var a=0x9e3779b9,b=0x85ebca6b;
+ for(var k=0;k<idx.length;k++){
+  var h=SHAS[idx[k]];
+  for(var i=0;i<32;i++){
+   var v=parseInt(h.substr(i*2,2),16);
+   a=(Math.imul(a^v,2654435761)+k+1)|0;
+   b=(Math.imul(b^(a>>>13),1597334677)+i)|0;}}
+ return ((a>>>0).toString(16)+(b>>>0).toString(16));}
+function selftest(){
+ var base=[0,1,2,3,4,5,6,7];
+ var seenX={},seenO={},n=0,dupX=0;
+ for(var t=0;t<600;t++){
+  var a=base.slice();
+  for(var i=a.length-1;i>0;i--){
+   var j=(t*7919+i*104729)%(i+1);
+   var tmp=a[i];a[i]=a[j];a[j]=tmp;}
+  var x=xorSet(a),o=ordered(a);
+  n++;
+  if(seenX[x])dupX++;else seenX[x]=1;
+  seenO[o]=1;}
+ var b0=xorSet(base);
+ var dup=xorSet(base.concat([3,3]));
+ var dupO=ordered(base.concat([3,3]));
+ var sw=base.slice();var t0=sw[0];sw[0]=sw[7];sw[7]=t0;
+ var swX=xorSet(sw);
+ var sA=xorSet([1,4,6]),sB=xorSet([6,1,4]);
+ return {orderings:n,
+  xorDistinct:Object.keys(seenX).length,orderedDistinct:Object.keys(seenO).length,
+  xorIsOrderBlind:Object.keys(seenX).length===1,
+  orderedSeesOrder:Object.keys(seenO).length>n*0.9,
+  duplicateInvisibleToXor:dup===b0,duplicateSeenByOrdered:dupO!==ordered(base),
+  swapInvisibleToXor:swX===b0,
+  correctForUnorderedSets:sA===sB,
+  factorialEight:40320,
+  ok:Object.keys(seenX).length===1&&dup===b0&&swX===b0&&sA===sB};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'THE SAME EIGHT FILES, SHUFFLED AGAIN AND AGAIN');
+ var base=[0,1,2,3,4,5,6,7];
+ var rows=9,top=40,rh=22;
+ for(var t=0;t<rows;t++){
+  var a=base.slice();
+  for(var i=a.length-1;i>0;i--){
+   var j=(t*7919+i*104729)%(i+1);
+   var tmp=a[i];a[i]=a[j];a[j]=tmp;}
+  var y=top+t*rh;
+  for(var k=0;k<8;k++){
+   nf(g,'rgba(125,226,176,'+(0.2+a[k]*0.07)+')');
+   g.fillRect(24+k*18,y,16,14);ng(g);
+   nt(g,'#0d0818',24+k*18+5,y+11,8,''+a[k]);}
+  nt(g,'#5a4a85',180,y+11,8,'XOR '+xorSet(a).slice(0,10));
+  nt(g,'#8a7ab8',330,y+11,8,'chain '+ordered(a).slice(0,10));}
+ var y2=top+rows*rh+14;
+ nf(g,'rgba(255,90,138,0.14)');g.fillRect(20,y2,W-40,30);ng(g);
+ ne(g,'#ff5a8a',1.3);g.strokeRect(20.5,y2+0.5,W-41,30);ng(g);
+ nt(g,'#ff5a8a',36,y2+20,10,'XOR: '+VR.xorDistinct+' distinct value across '+VR.orderings+' orderings');
+ nf(g,'rgba(125,226,176,0.14)');g.fillRect(20,y2+36,W-40,30);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(20.5,y2+36.5,W-41,30);ng(g);
+ nt(g,'#7de2b0',36,y2+56,10,'order-sensitive: '+VR.orderedDistinct+' distinct across the same '+VR.orderings);}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var base=[0,1,2,3,4,5,6,7];
+ if(showSet){
+  nt(g,'#5ad6ff',16,26,11,'where order carries no meaning');
+  var A=[1,4,6],B=[6,1,4];
+  [['one ordering of the set',A],['another ordering',B]].forEach(function(r,i){
+   var y=60+i*70;
+   nt(g,'#8a7ab8',24,y,9,r[0]);
+   r[1].forEach(function(ix,k){
+    nf(g,'rgba(90,214,255,0.45)');
+    g.fillRect(24+k*54,y+10,50,22);ng(g);
+    nt(g,'#0d0818',28+k*54,y+25,7,NAMES[ix].slice(0,9));});
+   nt(g,'#5ad6ff',24,y+48,9,'XOR '+xorSet(r[1]).slice(0,24));});
+  nf(g,'rgba(90,214,255,0.16)');g.fillRect(20,206,W-40,58);ng(g);
+  ne(g,'#5ad6ff',1.5);g.strokeRect(20.5,206.5,W-41,58);ng(g);
+  nt(g,'#5ad6ff',36,232,12,'identical, and rightly so');
+  nt(g,'#8a7ab8',36,252,8,'these are the same set; a digest that disagreed would be wrong');
+  var o2=document.getElementById('obout');
+  if(o2)o2.innerHTML='Two orderings of one unordered set produce the same XOR digest &mdash; which is the <b>correct</b> answer. The blindness is a feature aimed at a different question. The error is only ever in asking it to seal something whose order is part of the meaning.';
+  return;}
+ var FORGE=[
+  {n:'first and last file swapped',get:function(){var a=base.slice();var t=a[0];a[0]=a[7];a[7]=t;return a;}},
+  {n:'one file listed twice',get:function(){return base.concat([3,3]);}},
+  {n:'the whole ledger reversed',get:function(){return base.slice().reverse();}}];
+ var F=FORGE[fi%3],alt=F.get();
+ var b0=xorSet(base),x=xorSet(alt);
+ var o0=ordered(base),o=ordered(alt);
+ nt(g,'#e6dcff',16,26,11,F.n);
+ alt.forEach(function(ix,k){
+  var x0=24+(k%8)*42,y0=48+Math.floor(k/8)*26;
+  nf(g,'rgba(255,90,138,0.35)');
+  g.fillRect(x0,y0,38,20);ng(g);
+  nt(g,'#0d0818',x0+3,y0+14,7,NAMES[ix].slice(0,7));});
+ var top=110;
+ [['XOR digest',b0,x,'#ff5a8a'],['order-sensitive',o0,o,'#7de2b0']].forEach(function(r,i){
+  var y=top+i*74;
+  var same=r[1]===r[2];
+  nt(g,'#8a7ab8',24,y,9,r[0]);
+  nt(g,'#5a4a85',24,y+16,8,'before '+String(r[1]).slice(0,26));
+  nt(g,same?'#ff5a8a':'#7de2b0',24,y+30,8,'after  '+String(r[2]).slice(0,26));
+  nf(g,same?'rgba(255,90,138,0.16)':'rgba(125,226,176,0.16)');
+  g.fillRect(20,y+38,W-40,26);ng(g);
+  ne(g,same?'#ff5a8a':'#7de2b0',1.3);g.strokeRect(20.5,y+38.5,W-41,26);ng(g);
+  nt(g,same?'#ff5a8a':'#7de2b0',36,y+56,10,same?'unchanged -- the forgery is invisible':'changed -- the forgery is caught');});
+ var o3=document.getElementById('obout');
+ if(o3)o3.innerHTML='<b>'+F.n+'.</b> The XOR digest is <b>'+(b0===x?'unmoved':'moved')+
+  '</b> and the order-sensitive digest is <b>'+(o0===o?'unmoved':'moved')+
+  '</b>. XOR is commutative and self-inverse, so a reordering and any even-numbered repeat both cancel out before the digest is ever formed.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var base=[0,1,2,3,4,5,6,7];
+ for(var t=0;t<260;t++){
+  var th=t/260*2*Math.PI*7,r=118-t*0.4;
+  var q=P(r*Math.cos(th),-100+t*0.72,r*Math.sin(th));
+  ndot(g,q[0],q[1],1.6,'rgba(255,90,138,'+(0.16+t/260*0.5)+')');}
+ var m=P(0,90,0);
+ ndot(g,m[0],m[1],9,'#ff5a8a');
+ nt(g,'#ff5a8a',m[0]+14,m[1],10,'one digest');
+ nt(g,'#ff5a8a',14,24,11,'40,320 arrangements, funnelled to a point');
+ nt(g,'#7de2b0',14,42,10,'the chain would end at 40,320 separate points');
+ nt(g,'#5ad6ff',14,58,10,'and for an unordered set, the funnel is the right shape');
+ nt(g,'#8a7ab8',14,H-12,9,'you cannot quotient by a symmetry and still detect it');}
+document.getElementById('obnext').onclick=function(){showSet=false;fi++;drawW4();};
+document.getElementById('obset').onclick=function(){showSet=!showSet;drawW4();};
+document.getElementById('obsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__orderblindhash=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

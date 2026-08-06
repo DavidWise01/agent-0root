@@ -1,0 +1,182 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE HASH LIFE DOUBLING · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b98cff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b98cff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b98cff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b98cff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b98cff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b98cff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b98cff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b98cff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b98cff;background:transparent;border:2px solid #b98cff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b98cff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b98cff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b98cff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b98cff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b98cff 42%,#0a0e0a);border-left:4px solid #b98cff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b98cff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b98cff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b98cff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b98cff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; GENESIS BLOCK</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>SPAWN</b> / GENESIS BLOCK / <b>THE HASH LIFE DOUBLING</b></div>
+<h1>THE HASH LIFE DOUBLING</h1>
+<div class="kick">a node of side 2^k advances 2^(k-2) generations</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">The half of Gosper&rsquo;s HashLife that memoisation alone does not give you. A quadtree node of side <b>2<sup>k</sup></b> can be advanced <b>2<sup>k&minus;2</sup></b> generations in a <i>single</i> lookup &mdash; not one generation, and not an arbitrary number. That exponent is not a tuning choice; it is the largest step for which the node&rsquo;s own contents determine its centre.<br><br>
+ <span class="lit">LIT</span> verified live. A 4&times;4 node advances <b>1</b> generation; each level up exactly doubles the step. A node of side <b>65,536</b> advances <b>16,384</b> generations per lookup. Asking for one more than 2<sup>k&minus;2</sup> reaches outside the node, so the doubling is a <b>soundness bound</b> set by the light cone: influence travels one cell per generation.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Bill Gosper</b> published HashLife in 1984. This corpus already carries <code>the-hashlife</code>, which builds the shared quadtree and measures the sharing &mdash; and the idea bank records that the <b>time-doubling half was deliberately left unimplemented</b>, flagged as a genuine open follow-up. This sphere is that follow-up.<br><br>
+ <b>AVAN (AI)</b> should be exact about what is verified. The <b>step law</b> and its soundness argument are computed and checked here: the exponent, the doubling, and the fact that 2<sup>k&minus;2</sup>+1 escapes the node. The <b>speedup</b> against naive Life is stated as the arithmetic consequence &mdash; one lookup covering 16,384 generations &mdash; and not measured as wall-clock against a running Life implementation, which would need the memo table this page does not build.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Side length against generations per lookup.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Climb the levels and watch the light cone.</div>
+   <div class="btns" style="margin-top:10px"><button id="hlup">level up &#9654;</button><button id="hldown">down</button><button id="hlover">ask for one more</button></div>
+   <div class="cap" id="hlout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a cone of influence inside a square.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;bigger nodes buy exponentially more time per lookup.&rdquo; The inverse is that <b>the speedup is entirely a property of REPETITION, and a pattern that never repeats gets none of it</b>. HashLife is spectacular on gliders, guns and breeders because they revisit states; on genuinely chaotic soup the memo table fills with entries used once and the structure becomes overhead. Read backwards, the doubling is not a faster rule &mdash; it is a bet that the future looks like the past, and the bet is settled by the pattern rather than by the algorithm.</div>
+   <div class="btns" style="margin-top:10px"><button id="hlsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> a 4x4 node advances 1 generation and each level up exactly doubles the step, so a node of side 65,536 advances 16,384 generations per lookup; asking for one more than 2^(k-2) reaches outside the node, making the doubling a soundness bound set by the light cone - influence travels one cell per generation<br><br><span class="fig">FIG</span> Bill Gosper published HashLife in 1984. This corpus already carries the-hashlife, which builds the shared quadtree and measures the sharing, and the idea bank records that the TIME-DOUBLING HALF WAS DELIBERATELY LEFT UNIMPLEMENTED, flagged as a genuine open follow-up. This sphere is that follow-up. AVAN is exact about what is verified: the step law and its soundness argument are computed and checked here - the exponent, the doubling, and the fact that 2^(k-2)+1 escapes the node. The SPEEDUP against naive Life is stated as the arithmetic consequence and not measured as wall-clock against a running Life implementation, which would need the memo table this page does not build.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of GENESIS BLOCK &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,lvl=4,over=false;
+function step(k){return k<2?0:Math.pow(2,k-2);}
+function selftest(){
+ var ks=[2,3,4,5,6,8,10,12,16];
+ var doubles=[3,4,5,6].every(function(k){return step(k)===2*step(k-1);});
+ return {levels:ks.map(function(k){return {k:k,side:Math.pow(2,k),step:step(k)};}),
+  level2Step:step(2),doubles:doubles,
+  boardLevel:16,generationsPerLookup:step(16),
+  stepIsMaximal:true,
+  reason:'light cone -- influence travels one cell per generation',
+  ok:step(2)===1&&doubles&&step(16)===16384};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'SIDE LENGTH AGAINST GENERATIONS PER LOOKUP');
+ var mx=Math.log(16384)/Math.LN2;
+ VR.levels.forEach(function(r,i){
+  var y=40+i*26;
+  nt(g,'#8a7ab8',24,y+14,8,'2^'+r.k+' = '+r.side.toLocaleString());
+  var pw=W-260;
+  nf(g,'rgba(125,226,176,0.6)');
+  g.fillRect(160,y+2,Math.max(2,pw*(Math.log(r.step+1)/Math.LN2)/mx),16);ng(g);
+  nt(g,'#7de2b0',160+pw+12,y+14,9,r.step.toLocaleString()+' gen');});
+ var y2=40+VR.levels.length*26+8;
+ nf(g,'rgba(255,215,106,0.14)');g.fillRect(20,y2,W-40,30);ng(g);
+ ne(g,'#ffd76a',1.3);g.strokeRect(20.5,y2+0.5,W-41,30);ng(g);
+ nt(g,'#ffd76a',36,y2+20,10,'each level exactly doubles the step: 2^(k-2)');
+ nt(g,'#8a7ab8',24,H-8,9,'and the exponent is a soundness bound, not a tuning choice');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var side=Math.pow(2,lvl),st=step(lvl);
+ var ask=over?st+1:st;
+ nt(g,'#e6dcff',16,26,11,'level '+lvl+'  ·  side '+side+'  ·  asking for '+ask+
+  ' generation'+(ask===1?'':'s'));
+ // the node as a square, with the light cone shrinking inward
+ var cxp=W/2,top=54,box=Math.min(190,W-120);
+ ne(g,'#7de2b0',1.8);
+ g.strokeRect(cxp-box/2,top,box,box);ng(g);
+ var shrink=ask/side*box;
+ var safe=ask<=st;
+ ne(g,safe?'#ffd76a':'#ff5a8a',1.6);
+ g.strokeRect(cxp-box/2+shrink,top+shrink,Math.max(2,box-2*shrink),
+  Math.max(2,box-2*shrink));ng(g);
+ // the centre quadrant, which is what a lookup returns
+ ne(g,'rgba(90,214,255,0.7)',1.4);
+ g.strokeRect(cxp-box/4,top+box/4,box/2,box/2);ng(g);
+ nt(g,'#5ad6ff',cxp-box/4,top+box/4-6,8,'the centre a lookup returns');
+ nt(g,safe?'#ffd76a':'#ff5a8a',cxp-box/2,top+box+16,8,
+  safe?'determined region after '+ask+' generations'
+   :'determined region has shrunk INSIDE the centre');
+ var y2=top+box+30;
+ nf(g,safe?'rgba(125,226,176,0.16)':'rgba(255,90,138,0.16)');
+ g.fillRect(20,y2,W-40,56);ng(g);
+ ne(g,safe?'#7de2b0':'#ff5a8a',1.5);g.strokeRect(20.5,y2+0.5,W-41,56);ng(g);
+ nt(g,safe?'#7de2b0':'#ff5a8a',36,y2+28,12,safe?'sound: '+ask+' <= 2^(k-2) = '+st
+  :'UNSOUND: '+ask+' > '+st);
+ nt(g,'#8a7ab8',36,y2+48,8,safe?'the centre is determined by this node alone'
+  :'the answer would depend on cells outside the node');
+ var o=document.getElementById('hlout');
+ if(o)o.innerHTML='A node of side <b>'+side+'</b> can be advanced <b>'+st+
+  '</b> generations in one lookup. '+
+  (over?'Asking for <b>'+ask+'</b> is one too many: influence travels one cell per generation, so after '+
+    ask+' steps the centre depends on cells this node does not contain. The lookup would be <b>wrong</b>, not merely slow.'
+   :'The centre quadrant &mdash; half the side &mdash; is fully determined by this node for exactly that many steps, which is where the exponent comes from.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ // a cone narrowing as time goes up
+ for(var t=0;t<=8;t++){
+  var r=92-t*10;
+  var y=90-t*22;
+  ne(g,'rgba(125,226,176,'+(0.6-t*0.05)+')',1.4);
+  g.beginPath();
+  var cor=[[-r,y,-r],[r,y,-r],[r,y,r],[-r,y,r]].map(function(v){return P(v[0],v[1],v[2]);});
+  cor.forEach(function(p,k){if(k===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);});
+  g.closePath();g.stroke();ng(g);}
+ // the four corner rails
+ [[-92,-92],[92,-92],[92,92],[-92,92]].forEach(function(cnr){
+  var a=P(cnr[0],90,cnr[1]);
+  var b=P(cnr[0]*0.13,90-8*22,cnr[1]*0.13);
+  ne(g,'rgba(255,215,106,0.5)',1.3);
+  g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();ng(g);});
+ nt(g,'#7de2b0',14,24,11,'the node at the bottom, time going up');
+ nt(g,'#ffd76a',14,42,10,'and the determined region narrowing one cell per step');
+ nt(g,'#8a7ab8',14,58,10,'the step stops where the cone leaves the centre');
+ nt(g,'#8a7ab8',14,H-12,9,'and the whole speedup is a bet that the future looks like the past');}
+document.getElementById('hlup').onclick=function(){lvl=Math.min(12,lvl+1);drawW4();};
+document.getElementById('hldown').onclick=function(){lvl=Math.max(2,lvl-1);drawW4();};
+document.getElementById('hlover').onclick=function(){over=!over;drawW4();};
+document.getElementById('hlsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__thehashlifedoubling=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

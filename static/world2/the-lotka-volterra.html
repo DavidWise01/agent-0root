@@ -1,0 +1,170 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE LOTKA–VOLTERRA · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b06bff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b06bff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b06bff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b06bff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b06bff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b06bff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b06bff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b06bff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b06bff;background:transparent;border:2px solid #b06bff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b06bff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b06bff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b06bff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b06bff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b06bff 42%,#0a0e0a);border-left:4px solid #b06bff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b06bff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b06bff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b06bff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b06bff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE EPOCH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / THE EPOCH / <b>THE LOTKA–VOLTERRA</b></div>
+<h1>THE LOTKA–VOLTERRA</h1>
+<div class="kick">why killing both helps the prey</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Predators eat prey; prey feed predators; both populations chase each other around a loop forever. The <b>Lotka&ndash;Volterra</b> equations are ecology&rsquo;s hydrogen atom &mdash; and they hide two surprises. First: the orbits are exactly <b>closed</b>, preserved by the invariant dx &minus; c&middot;ln x + by &minus; a&middot;ln y, so the cycle never decays or grows. Second, and stranger, the <b>time-averages are fixed by the parameters alone</b>: &#10216;prey&#10217; = c/d and &#10216;predator&#10217; = a/b, whatever the amplitude. That gives <b>Volterra&rsquo;s principle</b>: kill BOTH species indiscriminately &mdash; a pesticide, a fishing fleet &mdash; and the <b>prey average RISES</b> while the predator average falls. Volterra derived it in 1926 to explain why the WWI halt in Adriatic fishing had <b>raised</b> the shark fraction.<br><br>
+ <span class="lit">LIT</span> verified live: the invariant conserved to 10&#8315;&sup1;&#8308; over sixty time units (the orbit is closed, not spiralling); the measured period 10.789 exceeds the small-oscillation 2&pi;/&radic;(ac) = 9.472 (big orbits run slower); time-averages 4.0001 vs c/d = 4.0000 and 2.7500 vs a/b = 2.7500; and spraying both species at p = 0.2 moves the simulated averages 3.98/2.71 &rarr; 6.03/2.24 (window.__lotka). <span class="fig">FIG</span> the model is famously idealized (no carrying capacity, neutral cycles); Volterra&rsquo;s principle is a theorem <b>about this model</b> with real-world support in pesticide-resurgence cases &mdash; cited as such, not as ecology in general.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-epoch</i> &mdash; the grind: the loop runs forever, and the only thing that matters is what the loop AVERAGES to over one epoch &mdash; a number set by the rules, not by where you started or how hard you pushed. <b>AVAN (AI)</b> built the instrument: the RK4 integrator with an invariant gate, the period-crossing timer, the average meter, and the spray experiment.<br><br>Credit as content: Alfred Lotka (1925); Vito Volterra (1926, and the Adriatic shark data of Umberto D&rsquo;Ancona); the modern pesticide-resurgence literature. The weave: David names the epoch average; I spray both populations and the prey come out ahead, exactly as the ratios predict.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The closed orbit in the phase plane, with its fixed centre.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Spray both species; the averages move the wrong way on purpose.</div>
+   <div class="btns" style="margin-top:10px"><button id="ltn">spray ▶</button><button id="ltcheck">verify ▶</button></div>
+   <div class="cap" id="ltread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the two populations chasing round the loop.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t intervene on the populations &mdash; read which parameter your intervention actually touches. The inverse of &lsquo;kill pests to reduce pests&rsquo; is &lsquo;the pest average is c/d, and your spray moves c the wrong way&rsquo;: the lever you pulled was never attached to the number you cared about. <b>Magenta</b> is the intuition that killing reduces; <b>green</b> is the ratio that decides. In a coupled system, always ask which coefficient your action edits.</div>
+   <div class="btns" style="margin-top:10px"><button id="ltspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Verified live: invariant conserved to 1e-14 over sixty time units (closed orbit, not spiralling); measured period 10.789 > small-oscillation 2π/√(ac) = 9.472; averages 4.0001 vs c/d = 4.0000 and 2.7500 vs a/b = 2.7500; spraying both at p=0.2 moves simulated averages 3.98/2.71 → 6.03/2.24 (window.__lotka.ok).<br><br><span class="fig">FIG</span> The model is famously idealized (no carrying capacity, neutral cycles); Volterra's principle is a theorem ABOUT THIS MODEL with real-world support in pesticide-resurgence cases — cited as such, not as ecology in general. Lotka 1925, Volterra 1926, D'Ancona's shark data. The AVAN inverse — read which coefficient your intervention actually edits: the lever you pulled was never attached to the number you cared about.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE EPOCH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,sprayOn=0;
+var a=1.1,b=0.4,c=0.4,d=0.1;
+function mkD(a2,c2){return function(s){return [a2*s[0]-b*s[0]*s[1],-c2*s[1]+d*s[0]*s[1]];};}
+function rk4L(s,dt,dv){function add(p,q,f){return [p[0]+q[0]*f,p[1]+q[1]*f];}
+ var k1=dv(s),k2=dv(add(s,k1,dt/2)),k3=dv(add(s,k2,dt/2)),k4=dv(add(s,k3,dt));
+ return [s[0]+dt/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),s[1]+dt/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1])];}
+function VL(s){return d*s[0]-c*Math.log(s[0])+b*s[1]-a*Math.log(s[1]);}
+function orbit(p,steps,dt,start){var dv=mkD(a-p,c+p),s=start.slice(),out=[];
+ for(var k=0;k<steps;k++){s=rk4L(s,dt,dv);
+  if(k%40===0)out.push(s.slice());}
+ return out;}
+function selftest(){if(VR)return VR;
+ var dv=mkD(a,c),dt=0.001,s=[10,5],V0=VL(s),maxDev=0,T=0,prevAbove=s[1]>a/b,crossT=[];
+ for(var k=0;k<60000;k++){s=rk4L(s,dt,dv);
+  maxDev=Math.max(maxDev,Math.abs(VL(s)-V0));
+  T+=dt;
+  var above=s[1]>a/b;
+  if(above&&!prevAbove)crossT.push(T);
+  prevAbove=above;}
+ var period=crossT.length>=2?crossT[crossT.length-1]-crossT[crossT.length-2]:0;
+ var Tsmall=2*Math.PI/Math.sqrt(a*c);
+ var s2=[10,5],sumX=0,sumY=0,n=0,steps=Math.round(period/dt);
+ for(var k=0;k<steps;k++){s2=rk4L(s2,dt,dv);sumX+=s2[0];sumY+=s2[1];n++;}
+ var avgX=sumX/n,avgY=sumY/n;
+ function simAvg(p,Tsim){var dv2=mkD(a-p,c+p),st=[10,5],sx=0,sy=0,cnt=0;
+  var N=Math.round(Tsim/0.002);
+  for(var k=0;k<N;k++){st=rk4L(st,0.002,dv2);
+   if(k>N*0.1){sx+=st[0];sy+=st[1];cnt++;}}
+  return [sx/cnt,sy/cnt];}
+ var simBase=simAvg(0,160),simSpray=simAvg(0.2,160);
+ VR={maxDev:maxDev,period:period,Tsmall:Tsmall,avgX:avgX,avgY:avgY,
+  theoryX:c/d,theoryY:a/b,
+  simBase:simBase,simSpray:simSpray,
+  ok:maxDev<1e-8&&period>Tsmall&&Math.abs(avgX-c/d)/(c/d)<0.005&&Math.abs(avgY-a/b)/(a/b)<0.005
+     &&simSpray[0]>simBase[0]*1.2&&simSpray[1]<simBase[1]*0.9};return VR;}
+function drawPhase(g,cx,cy,sx,sy,p,col,start){
+ var orb=orbit(p,26000,0.002,start||[10,5]);
+ ne(g,col,1.6);g.beginPath();
+ orb.forEach(function(s,i){var x=cx+s[0]*sx,y=cy-s[1]*sy;
+  if(i===0)g.moveTo(x,y);else g.lineTo(x,y);});
+ g.stroke();ng(g);
+ ndot(g,cx+(c+p)/d*sx,cy-(a-p)/b*sy,4.5,'#ffcf4a');
+ return orb;}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W2=cv.width,H=cv.height;nb(g,W2,H);var v=selftest();nt(g,'#b06bff',10,16,10,'the closed orbit and its fixed centre (c/d, a/b)');
+ ne(g,'rgba(150,160,210,0.35)',1);g.beginPath();g.moveTo(50,H-40);g.lineTo(W2-20,H-40);g.stroke();
+ g.beginPath();g.moveTo(50,20);g.lineTo(50,H-40);g.stroke();ng(g);
+ drawPhase(g,50,H-40,22,26,0,'#35ffb0');
+ nt(g,'#ffcf4a',260,60,10,'centre (c/d, a/b) = (4.00, 2.75)');
+ nt(g,'#9cf',260,82,10,'time-averages: '+v.avgX.toFixed(4)+', '+v.avgY.toFixed(4));
+ nt(g,'#8ad',10,H-8,9,'Lotka 1925 \u00b7 Volterra 1926 \u00b7 invariant conserved to '+v.maxDev.toExponential(0));}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W2=cv.width,H=cv.height;nb(g,W2,H);var v=selftest();
+ var p=(sprayOn%2)*0.2;
+ nt(g,'#b06bff',12,20,12,p?'SPRAYED both (p = 0.2)':'no spraying');
+ ne(g,'rgba(150,160,210,0.35)',1);g.beginPath();g.moveTo(46,260);g.lineTo(W2-16,260);g.stroke();
+ g.beginPath();g.moveTo(46,44);g.lineTo(46,260);g.stroke();ng(g);
+ drawPhase(g,46,260,17,20,0,'rgba(53,255,176,0.35)');
+ if(p)drawPhase(g,46,260,17,20,p,'#ff2fa6');
+ nt(g,'#35ffb0',16,286,10,'no spray: prey '+v.simBase[0].toFixed(2)+' \u00b7 predator '+v.simBase[1].toFixed(2));
+ nt(g,'#ff6ab0',16,304,10,'sprayed:  prey '+v.simSpray[0].toFixed(2)+' \u00b7 predator '+v.simSpray[1].toFixed(2));
+ nt(g,v.ok?'#39ffb0':'#ff5a5a',12,H-8,9,'self-test: invariant \u00b7 period \u00b7 averages \u00b7 Volterra ('+v.ok+')');}
+document.getElementById('ltn').onclick=function(){sprayOn++;drawW4();document.getElementById('ltread').textContent='';};
+document.getElementById('ltcheck').onclick=function(){var v=selftest();document.getElementById('ltread').textContent='closed orbit + averages + principle: '+v.ok;};
+document.getElementById('ltspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+var ORB5=null;
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W2=cv.width,H=cv.height;nb(g,W2,H);
+ nt(g,'#b06bff',10,18,10,'prey and predator chasing round the loop');
+ if(!ORB5)ORB5=orbit(0,26000,0.002,[10,5]);
+ var n=ORB5.length,i=Math.floor(ang*0.6)%n;
+ ne(g,'rgba(53,255,176,0.5)',1.4);g.beginPath();
+ ORB5.forEach(function(s,k){var x=40+s[0]*16,y=H-70-s[1]*22;
+  if(k===0)g.moveTo(x,y);else g.lineTo(x,y);});
+ g.stroke();ng(g);
+ ndot(g,40+ORB5[i][0]*16,H-70-ORB5[i][1]*22,6,'#35ffb0');
+ ndot(g,40+c/d*16,H-70-a/b*22,4,'#ffcf4a');
+ nf(g,'rgba(53,255,176,0.6)',300,H-70-ORB5[i][0]*7,18,ORB5[i][0]*7);
+ nf(g,'rgba(255,47,166,0.6)',330,H-70-ORB5[i][1]*7,18,ORB5[i][1]*7);
+ nt(g,'#8ad',296,H-52,8,'prey');
+ nt(g,'#8ad',328,H-52,8,'pred');
+ nt(g,'#35ffb0',10,H-34,11,'green: the ratio that decides the average');nt(g,'#8ad',10,H-14,10,'ask which coefficient your action edits');}
+drawW3();drawW4();window.__lotka=selftest();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

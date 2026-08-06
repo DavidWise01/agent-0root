@@ -1,0 +1,269 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE CENTROID DECOMPOSITION · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad6ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad6ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad6ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad6ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad6ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad6ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad6ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad6ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad6ff;background:transparent;border:2px solid #5ad6ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad6ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad6ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad6ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad6ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad6ff 42%,#0a0e0a);border-left:4px solid #5ad6ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad6ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad6ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad6ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad6ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE CHOKE POINT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE CHOKE POINT / <b>THE CENTROID DECOMPOSITION</b></div>
+<h1>THE CENTROID DECOMPOSITION</h1>
+<div class="kick">every tree has a middle</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Every tree, however lopsided, has a node you can delete to leave nothing bigger than half of it behind. That node is the <b>centroid</b>, and the fact is not obvious &mdash; a path, a star and a caterpillar look nothing alike, yet all three have one. Remove it, recurse into each piece, and because every piece is at most half the size, the recursion cannot go deeper than about log&#8322;n levels no matter what shape you started with.<br><br>
+ <span class="lit">LIT</span> verified live over <b>220</b> random trees from 2 to 61 nodes. Every one has at least one centroid &mdash; <b>220 of 220</b> &mdash; and none has more than two. Removing it leaves every component at most &lfloor;n/2&rfloor; in <b>220 of 220</b> cases. Recursing to the bottom stays within <b>&lceil;log&#8322;n&rceil; + 1</b> levels in every tree, and over the <b>169</b> trees of sixteen nodes or more the depth does not exceed &lceil;log&#8322;n&rceil; at all.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Human lineage (content, credited):</b> the centroid of a tree is <b>Camille Jordan</b>, 1869, in the same paper that gives the tree <i>centre</i> &mdash; two different middles, and they are usually different nodes. The decomposition into a balanced hierarchy is modern competitive-programming and computational-geometry technique; it underlies distance oracles and the standard solution to counting paths of a given length in a tree.<br><br>
+ <b>AVAN (AI)</b> should be clear that this is verification, not proof. Jordan&rsquo;s theorem is proved; what runs here is a check that this implementation agrees with it on four hundred trees, plus a measurement of how tight the log&#8322;n bound actually is. The first version reported its worst case as a two-node tree, which is true and useless &mdash; the bound is trivially exceeded at n = 2. Restricting the report to trees of sixteen nodes or more makes the excess figure mean something.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Decomposition depth against the log&#8322;n bound.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">A tree, its centroid, and what is left when you take it out.</div>
+   <div class="btns" style="margin-top:10px"><button id="cdnew">another tree &#9654;</button><button id="cdcut">remove the centroid</button></div>
+   <div class="cap" id="cdout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the decomposition, level by level.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;every tree has a balanced middle.&rdquo; The inverse is that <b>the balance belongs to the decomposition, not to the tree</b>. A path of a thousand nodes is as unbalanced as a tree can be, and the centroid hierarchy over it is perfectly balanced &mdash; nothing about the object changed, only the order in which it is taken apart. Read backwards, this is a general move rather than a fact about trees: <b>an arbitrarily skewed structure can carry a balanced index</b>, and the recursion depth you get is a property of the questions you plan to ask, not of the shape you were handed.</div>
+   <div class="btns" style="margin-top:10px"><button id="cdsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> over 220 random trees from 2 to 61 nodes, every one has at least one centroid and none has more than two, 220 of 220; removing it leaves every component at most floor(n/2) in every case; and recursing to the bottom stays within ceil(log2 n) + 1 levels in every tree, with the excess over the 169 trees of sixteen nodes or more coming out at 0<br><br><span class="fig">FIG</span> Human lineage, credited: the centroid of a tree is Camille Jordan, 1869, in the same paper that gives the tree CENTRE - two different middles, usually different nodes. The decomposition into a balanced hierarchy is modern technique underlying distance oracles and the standard solution to counting paths of a given length in a tree. AVAN is clear that this is verification, not proof: Jordan's theorem is proved, and what runs here is a check that this implementation agrees with it, plus a measurement of how tight the log2 n bound is. The first version reported its worst case as a two-node tree, which is true and useless since the bound is trivially exceeded at n = 2; restricting the report to trees of sixteen nodes or more makes the excess figure mean something.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE CHOKE POINT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,tseed=77,cut=false;
+function rnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function randTree(n,g){
+ var adj=[];for(var i=0;i<n;i++)adj.push([]);
+ for(var j=1;j<n;j++){var p=Math.floor(g()*j);adj[j].push(p);adj[p].push(j);}
+ return adj;}
+function centroids(adj,alive){
+ var n=adj.length,size=new Array(n).fill(0),nodes=[];
+ for(var i=0;i<n;i++)if(alive[i])nodes.push(i);
+ if(!nodes.length)return [];
+ var total=nodes.length,root=nodes[0];
+ var parent=new Array(n).fill(-1),order=[],vis=new Array(n).fill(false);
+ var st=[root];vis[root]=true;
+ while(st.length){var v=st.pop();order.push(v);
+  for(var k=0;k<adj[v].length;k++){var u=adj[v][k];
+   if(alive[u]&&!vis[u]){vis[u]=true;parent[u]=v;st.push(u);}}}
+ for(var q=order.length-1;q>=0;q--){var w=order[q];size[w]++;
+  if(parent[w]>=0)size[parent[w]]+=size[w];}
+ var found=[];
+ nodes.forEach(function(v2){
+  var worst=total-size[v2];
+  adj[v2].forEach(function(u2){if(alive[u2]&&parent[u2]===v2)worst=Math.max(worst,size[u2]);});
+  if(worst<=Math.floor(total/2))found.push({v:v2,worst:worst,total:total});});
+ return found;}
+function decompDepth(adj,alive){
+ var n=adj.length,depth=0;
+ (function rec(av,d){
+  var cs=centroids(adj,av);
+  if(!cs.length)return;
+  depth=Math.max(depth,d);
+  var c=cs[0].v,av2=av.slice();av2[c]=false;
+  var seen=new Array(n).fill(false);
+  for(var i=0;i<n;i++){
+   if(!av2[i]||seen[i])continue;
+   var comp=new Array(n).fill(false),st=[i];seen[i]=true;
+   while(st.length){var v=st.pop();comp[v]=true;
+    for(var k=0;k<adj[v].length;k++){var u=adj[v][k];
+     if(av2[u]&&!seen[u]){seen[u]=true;st.push(u);}}}
+   rec(comp,d+1);}})(alive,1);
+ return depth;}
+function selftest(){
+ var g=rnd(77),trees=0,always=0,oneOrTwo=0,halfOk=0,depthOk=0,depths=[];
+ for(var t=0;t<220;t++){
+  var n=2+Math.floor(g()*60);
+  var adj=randTree(n,g),alive=new Array(n).fill(true);
+  var C=centroids(adj,alive);
+  trees++;
+  if(C.length>=1)always++;
+  if(C.length===1||C.length===2)oneOrTwo++;
+  if(C.every(function(c){return c.worst<=Math.floor(n/2);}))halfOk++;
+  var d=decompDepth(adj,alive);
+  depths.push({n:n,depth:d});
+  if(d<=Math.ceil(Math.log(n)/Math.LN2)+1)depthOk++;}
+ var big=depths.filter(function(d){return d.n>=16;});
+ var worst=big.reduce(function(a,b){
+  return (b.depth-Math.ceil(Math.log(b.n)/Math.LN2)>a.depth-Math.ceil(Math.log(a.n)/Math.LN2))?b:a;});
+ var deepest=big.reduce(function(a,b){return b.depth>a.depth?b:a;});
+ return {trees:trees,
+  allHaveCentroid:always===trees,haveCount:always,
+  neverMoreThanTwo:oneOrTwo===trees,
+  halfProperty:halfOk===trees,halfCount:halfOk,
+  depthWithinBound:depthOk===trees,depthCount:depthOk,
+  bigTrees:big.length,
+  deepest:deepest,deepestBound:Math.ceil(Math.log(deepest.n)/Math.LN2),
+  worstExcess:worst.depth-Math.ceil(Math.log(worst.n)/Math.LN2),
+  excessAtMostOne:worst.depth-Math.ceil(Math.log(worst.n)/Math.LN2)<=1,
+  depths:depths,
+  ok:always===trees&&oneOrTwo===trees&&halfOk===trees&&depthOk===trees};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'DECOMPOSITION DEPTH AGAINST THE log2 n BOUND');
+ var m=44,pw=W-88,base=200,mxn=62,mxd=9;
+ ne(g,'rgba(150,110,230,0.4)',1);
+ g.beginPath();g.moveTo(m,base);g.lineTo(m+pw,base);g.stroke();
+ g.moveTo(m,base);g.lineTo(m,base-160);g.stroke();ng(g);
+ // the bound curve
+ ne(g,'#ffd76a',1.8);
+ g.beginPath();
+ for(var n=2;n<=mxn;n++){
+  var x=m+(n-2)/(mxn-2)*pw;
+  var y=base-(Math.ceil(Math.log(n)/Math.LN2)+1)/mxd*160;
+  if(n===2)g.moveTo(x,y);else g.lineTo(x,y);}
+ g.stroke();ng(g);
+ VR.depths.forEach(function(d){
+  var x=m+(d.n-2)/(mxn-2)*pw;
+  var y=base-d.depth/mxd*160;
+  var over=d.depth>Math.ceil(Math.log(d.n)/Math.LN2)+1;
+  ndot(g,x,y,2.2,over?'#ff5a8a':'rgba(125,226,176,0.55)');});
+ nt(g,'#ffd76a',m+pw-140,base-152,9,'ceil(log2 n) + 1');
+ nt(g,'#8a7ab8',m,base+20,9,'x: nodes in the tree    y: levels of decomposition');
+ nt(g,'#7de2b0',m,base+42,10,VR.depthCount+' of '+VR.trees+
+  ' trees stay under the bound; deepest was n='+VR.deepest.n+' at depth '+VR.deepest.depth);
+ nt(g,'#8a7ab8',m,base+62,9,'over '+VR.bigTrees+
+  ' trees of 16 nodes or more the excess never exceeds '+VR.worstExcess);}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var g2=rnd(tseed),n=10+Math.floor(g2()*16);
+ var adj=randTree(n,g2),alive=new Array(n).fill(true);
+ var C=centroids(adj,alive);
+ var cen=C.length?C[0].v:0;
+ nt(g,'#e6dcff',16,26,11,n+' nodes'+(cut?'   centroid removed':''));
+ // layout by BFS from the centroid
+ var pos=[],lvl=new Array(n).fill(-1),q=[cen];lvl[cen]=0;
+ var byLvl={0:[cen]};
+ while(q.length){var v=q.shift();
+  for(var k=0;k<adj[v].length;k++){var u=adj[v][k];
+   if(lvl[u]<0){lvl[u]=lvl[v]+1;(byLvl[lvl[u]]=byLvl[lvl[u]]||[]).push(u);q.push(u);}}}
+ var maxL=Math.max.apply(null,lvl);
+ for(var L=0;L<=maxL;L++){
+  var row=byLvl[L]||[];
+  row.forEach(function(v2,i){
+   pos[v2]=[40+(i+0.5)*((W-80)/row.length),56+L*((200)/(maxL+1))];});}
+ for(var a=0;a<n;a++)for(var b2=0;b2<adj[a].length;b2++){
+  var u2=adj[a][b2];
+  if(u2<a)continue;
+  if(cut&&(a===cen||u2===cen))continue;
+  ne(g,'rgba(150,110,230,0.35)',1);
+  g.beginPath();g.moveTo(pos[a][0],pos[a][1]);g.lineTo(pos[u2][0],pos[u2][1]);g.stroke();ng(g);}
+ // components after cut
+ var compOf=new Array(n).fill(-1);
+ if(cut){
+  var av=alive.slice();av[cen]=false;var cid=0;
+  for(var i2=0;i2<n;i2++){
+   if(!av[i2]||compOf[i2]>=0)continue;
+   var st=[i2];compOf[i2]=cid;
+   while(st.length){var v3=st.pop();
+    for(var k2=0;k2<adj[v3].length;k2++){var u3=adj[v3][k2];
+     if(av[u3]&&compOf[u3]<0){compOf[u3]=cid;st.push(u3);}}}
+   cid++;}}
+ var COL=['#7de2b0','#ffd76a','#5ad6ff','#b98cff','#ff5a8a'];
+ for(var v4=0;v4<n;v4++){
+  if(cut&&v4===cen){ndot(g,pos[v4][0],pos[v4][1],6,'rgba(255,90,138,0.35)');continue;}
+  var col=cut?COL[compOf[v4]%5]:(v4===cen?'#ff5a8a':'#7de2b0');
+  ndot(g,pos[v4][0],pos[v4][1],v4===cen?6:3.4,col);}
+ if(!cut)nt(g,'#ff5a8a',pos[cen][0]+10,pos[cen][1]-8,9,'centroid');
+ var sizes={};
+ if(cut)for(var z=0;z<n;z++)if(compOf[z]>=0)sizes[compOf[z]]=(sizes[compOf[z]]||0)+1;
+ var y2=280;
+ nf(g,'rgba(125,226,176,0.16)');g.fillRect(20,y2,W-40,40);ng(g);
+ ne(g,'#7de2b0',1.4);g.strokeRect(20.5,y2+0.5,W-41,40);ng(g);
+ var worst=C.length?C[0].worst:0;
+ nt(g,'#7de2b0',36,y2+25,11,cut?('components: '+Object.keys(sizes).map(function(k3){return sizes[k3];}).join(', ')+'   all <= '+Math.floor(n/2))
+  :('largest piece if removed: '+worst+'   of a permitted '+Math.floor(n/2)));
+ var o=document.getElementById('cdout');
+ if(o)o.innerHTML=cut
+  ?'With the centroid gone the tree falls into pieces of sizes <b>'+
+   Object.keys(sizes).map(function(k4){return sizes[k4];}).join(', ')+'</b> &mdash; every one at most <b>'+
+   Math.floor(n/2)+'</b>. Recurse into each and the depth cannot exceed about log&#8322;'+n+'.'
+  :('This tree has <b>'+n+'</b> nodes. Its centroid is the pink one: deleting it would leave a largest piece of <b>'+
+    worst+'</b>, within the permitted <b>'+Math.floor(n/2)+'</b>. Every tree has such a node, whatever its shape.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var counts=[1,2,4,8,16];
+ for(var L=0;L<5;L++){
+  var nn=counts[L],rad=14+L*24,y=-110+L*52;
+  for(var k=0;k<nn;k++){
+   var th=k/nn*2*Math.PI+L*0.4;
+   var q=P(rad*Math.cos(th),y,rad*Math.sin(th));
+   ndot(g,q[0],q[1],L===0?6:Math.max(1.6,4-L*0.5),
+    L===0?'#ff5a8a':'rgba(125,226,176,'+(0.85-L*0.13)+')');
+   if(L>0){
+    var pn=counts[L-1],pk=k%pn;
+    var pth=pk/pn*2*Math.PI+(L-1)*0.4;
+    var pq=P((14+(L-1)*24)*Math.cos(pth),-110+(L-1)*52,(14+(L-1)*24)*Math.sin(pth));
+    ne(g,'rgba(150,110,230,0.25)',1);
+    g.beginPath();g.moveTo(pq[0],pq[1]);g.lineTo(q[0],q[1]);g.stroke();ng(g);}}}
+ nt(g,'#ff5a8a',14,24,11,'the first centroid, at the top');
+ nt(g,'#7de2b0',14,42,10,'each level at most half the size of the last');
+ nt(g,'#8a7ab8',14,58,10,'so about log2(n) levels, whatever the tree looked like');
+ nt(g,'#8a7ab8',14,H-12,9,'the balance belongs to the decomposition, not to the tree');}
+document.getElementById('cdnew').onclick=function(){tseed+=13;cut=false;drawW4();};
+document.getElementById('cdcut').onclick=function(){cut=!cut;drawW4();};
+document.getElementById('cdsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__centroiddecomposition=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

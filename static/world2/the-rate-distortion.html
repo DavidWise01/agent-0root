@@ -1,0 +1,258 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE RATE-DISTORTION · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7de2b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7de2b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7de2b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7de2b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7de2b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7de2b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7de2b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7de2b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7de2b0;background:transparent;border:2px solid #7de2b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7de2b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7de2b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7de2b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7de2b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7de2b0 42%,#0a0e0a);border-left:4px solid #7de2b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7de2b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7de2b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7de2b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7de2b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; GARBAGE COLLECTION</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / GARBAGE COLLECTION / <b>THE RATE-DISTORTION</b></div>
+<h1>THE RATE-DISTORTION</h1>
+<div class="kick">how small it gets if you say what you can lose</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Lossless compression has a floor: the entropy. But almost nothing you actually store is kept perfectly &mdash; photographs, audio, video are all thrown away on purpose. So the real question is not &ldquo;how small can this get&rdquo; but <b>&ldquo;how small can this get if I am willing to be wrong by <i>this</i> much&rdquo;</b>. Shannon answered it in 1959 with a curve, <b>R(D)</b>, giving the minimum bits per symbol for any permitted average distortion D. Everything below the curve is impossible. Everything above it is merely engineering.<br><br>
+ <span class="lit">LIT</span> verified live: for a Bernoulli(0.25) source under Hamming distortion R(D) = H(p) &minus; H(D), with R(0) = <b>0.811278</b> bits and R(0.25) = 0 exactly, monotone and convex throughout; the Gaussian bound R(D) = &frac12;log&#8322;(&sigma;&sup2;/D) inverts D(R) = &sigma;&sup2;2<sup>&minus;2R</sup> exactly at every rate tested; <b>no quantiser built here beats the bound</b>; a Lloyd&ndash;Max quantiser climbs 2.211 &rarr; 2.432 &rarr; <b>2.565</b>&times; the bound at N = 8, 16, 32 without ever crossing the Panter&ndash;Dite constant &radic;3&pi;/2 = <b>2.7207</b> (4.347 dB), and its measured distortions <b>0.034548</b> and <b>0.002505</b> reproduce Max&rsquo;s 1960 published 0.034545 and 0.002499 to within 0.25%; and entropy-coded uniform quantisation converges to <b>1.4234</b>&times;, matching the space-filling loss &pi;e/6 = <b>1.4233</b> = <b>1.533 dB</b> = 0.2546 bits per sample.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>GARBAGE COLLECTION</i>, which is the honest name for lossy compression. A collector does not ask &ldquo;is this needed?&rdquo; &mdash; it asks &ldquo;is this <b>reachable</b>?&rdquo;, and frees everything else without apology. R(D) is the same trade written as a law: name what you can afford to lose, and the bit count follows from that and nothing else.<br><br>
+ <b>AVAN (AI)</b> got the headline result and the solver wrong in opposite directions. The entropy-coded quantiser landed on &pi;e/6 to four digits immediately. The Lloyd&ndash;Max solver did not: at N = 64 it reported <b>3.376</b>&times; the bound &mdash; <i>above</i> the constant it is supposed to approach from below. That overshoot was the tell. It was not slow convergence but grid resolution: at a step of 0.002 the quantiser cells near the peak were only about 25 grid points wide, and the discretisation inflated the measured distortion by 27.6%. Refining to 0.0002 reproduced Max&rsquo;s published table. A second temptation was to keep N = 64 anyway and quote a number that had merely stopped moving; the page stops at N = 32, which genuinely converges in 458 sweeps, and says so. <b>Panter&ndash;Dite is asymptotic</b>, so the claim here is that the ratio climbs toward the constant and never crosses it &mdash; not that it equals it.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">R(D) for a Bernoulli(0.25) source. Below the curve is not hard &mdash; it is impossible.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Build the real quantisers and measure how far short of Shannon they land.</div>
+   <div class="btns" style="margin-top:10px"><button id="rdrun">run quantisers &#9654;</button><button id="rdmode">toggle view &#9654;</button></div>
+   <div class="cap" id="rdout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the gap between what Shannon allows and what one dimension can reach.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the 1.533 dB has nothing to do with cleverness and everything to do with <b>shape</b>. A scalar quantiser cuts space into cubes because it decides each coordinate separately; the optimal partition wants spheres. &pi;e/6 is precisely the penalty for the cube, and no scalar algorithm can escape it &mdash; not because the algorithms are bad but because the <i>question</i> was asked one axis at a time. Read backwards, the constant is a measurement of how much is lost by treating a joint problem as a list of separate ones. That is a statement about decomposition, not about compression, and it is why vector quantisation exists at all.</div>
+   <div class="btns" style="margin-top:10px"><button id="rdsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> R(D)=H(p)-H(D) for Bernoulli(0.25) with R(0)=0.811278 and R(0.25)=0 exactly, monotone and convex; the Gaussian bound inverts D(R) exactly at every rate; no quantiser built here beats the bound; Lloyd-Max climbs 2.211, 2.432, 2.565 times the bound at N=8,16,32 without crossing sqrt(3)pi/2 = 2.7207, with measured distortions 0.034548 and 0.002505 reproducing Max's 1960 published 0.034545 and 0.002499 to within 0.25%; entropy-coded uniform converges to 1.4234 against pi*e/6 = 1.4233 = 1.533 dB<br><br><span class="fig">FIG</span> The Lloyd-Max solver first reported 3.376 at N=64 — above the constant it approaches from below. The cause was grid resolution, not convergence: cells near the peak spanned only ~25 points and distortion came out 27.6% high. The page stops at N=32, which converges in 458 sweeps, rather than quote an unconverged N=64. Panter-Dite is asymptotic, so the claim is that the ratio climbs toward the constant, not that it reaches it.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of GARBAGE COLLECTION &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,mode=0,ran=false;
+function H2(p){if(p<=0||p>=1)return 0;return -p*Math.log2(p)-(1-p)*Math.log2(1-p);}
+var PP=0.25;
+function Rb(D){if(D>=Math.min(PP,1-PP))return 0;return H2(PP)-H2(D);}
+function Dg(R){return Math.pow(2,-2*R);}
+function Rg(D){return D>=1?0:0.5*Math.log2(1/D);}
+var G=null,CUM=null;
+function grid(){if(G)return;
+ G=[];var step=0.0002,LIM=10;
+ for(var x=-LIM;x<=LIM;x+=step){var f=Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);G.push([x,f*step]);}
+ var mass=0;for(var i=0;i<G.length;i++)mass+=G[i][1];
+ for(var i=0;i<G.length;i++)G[i][1]/=mass;
+ CUM=[];var run=0;
+ for(var i=0;i<G.length;i++){run+=G[i][1];CUM.push(run);}}
+function quantile(q){var lo=0,hi=CUM.length-1;
+ while(lo<hi){var m=(lo+hi)>>1;if(CUM[m]<q)lo=m+1;else hi=m;}
+ return G[lo][0];}
+function lloyd(N){grid();
+ var c=[];for(var k=0;k<N;k++)c.push(quantile((k+0.5)/N));
+ var prev=Infinity;
+ for(var it=0;it<3000;it++){
+  var num=new Array(N).fill(0),den=new Array(N).fill(0),D=0,k=0;
+  for(var g=0;g<G.length;g++){var x=G[g][0],w=G[g][1];
+   while(k<N-1&&Math.abs(x-c[k+1])<Math.abs(x-c[k]))k++;
+   num[k]+=w*x;den[k]+=w;D+=w*(x-c[k])*(x-c[k]);}
+  for(var q=0;q<N;q++)if(den[q]>0)c[q]=num[q]/den[q];
+  if(Math.abs(prev-D)<1e-16){prev=D;break;}
+  prev=D;}
+ return prev;}
+function ecsq(h){grid();
+ var bins={},D=0;
+ for(var g=0;g<G.length;g++){var x=G[g][0],w=G[g][1],b=Math.round(x/h),q=b*h;
+  D+=w*(x-q)*(x-q);bins[b]=(bins[b]||0)+w;}
+ var Hh=0;
+ for(var k in bins){var pr=bins[k];if(pr>0)Hh-=pr*Math.log2(pr);}
+ return [Hh,D];}
+function selftest(){
+ var okEnds=Math.abs(Rb(0)-H2(PP))<1e-12&&Math.abs(Rb(PP))<1e-12;
+ var pts=[],mono=true,conv=true;
+ for(var d=0;d<=0.25;d+=0.005)pts.push([d,Rb(d)]);
+ for(var i=1;i<pts.length;i++)if(pts[i][1]>pts[i-1][1]+1e-12)mono=false;
+ for(var i=1;i<pts.length-1;i++)if(pts[i][1]>(pts[i-1][1]+pts[i+1][1])/2+1e-9)conv=false;
+ var okInv=[0.25,0.5,1,2,4,8].every(function(R){return Math.abs(Rg(Dg(R))-R)<1e-12;});
+ var lm=[8,16,32].map(function(N){var D=lloyd(N);return [N,D/Dg(Math.log2(N)),D];});
+ var ec=[0.25,0.125,0.0625,0.03125].map(function(h){var r=ecsq(h);return [h,r[1]/Dg(r[0]),r[0]];});
+ var PANTER=Math.sqrt(3)*Math.PI/2,SPACE=Math.PI*Math.E/6;
+ var climbs=true;
+ for(var i=1;i<lm.length;i++)if(lm[i][1]<=lm[i-1][1])climbs=false;
+ var below=lm.every(function(r){return r[1]<PANTER;});
+ var above=lm.every(function(r){return r[1]>1;})&&ec.every(function(r){return r[1]>1;});
+ var okMax=Math.abs(lm[0][2]-0.034545)/0.034545<0.01&&Math.abs(lm[2][2]-0.002499)/0.002499<0.01;
+ var okSpace=Math.abs(ec[3][1]-SPACE)/SPACE<0.03;
+ return {R0:Rb(0),Rp:Rb(PP),monotone:mono,convex:conv,invertible:okInv,
+  D8:lm[0][2],D32:lm[2][2],maxD8:0.034545,maxD32:0.002499,
+  lloyd:lm,ecsq:ec,panter:PANTER,space:SPACE,spaceDb:10*Math.log10(SPACE),
+  panterDb:10*Math.log10(PANTER),spaceBits:0.5*Math.log2(SPACE),
+  ecLast:ec[3][1],lmLast:lm[2][1],climbs:climbs,belowPanter:below,noneBeatBound:above,
+  ok:okEnds&&mono&&conv&&okInv&&climbs&&below&&above&&okMax&&okSpace};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var m=54,pw=W-m-24,ph=H-72;
+ ne(g,'rgba(150,110,230,0.5)',1);
+ g.beginPath();g.moveTo(m,24);g.lineTo(m,24+ph);g.lineTo(m+pw,24+ph);g.stroke();ng(g);
+ nt(g,'#b98cff',10,20,10,'R  bits');
+ nt(g,'#b98cff',m+pw-64,24+ph+22,10,'D  distortion');
+ var Hp=H2(PP);
+ for(var i=0;i<=4;i++){var y=24+ph-ph*i/4;
+  nt(g,'#8a7ab8',12,y+4,9,(Hp*i/4).toFixed(2));
+  ne(g,'rgba(150,110,230,0.12)',1);
+  g.beginPath();g.moveTo(m,y);g.lineTo(m+pw,y);g.stroke();ng(g);}
+ for(var i=0;i<=5;i++){var x=m+pw*i/5;
+  nt(g,'#8a7ab8',x-10,24+ph+16,9,(0.25*i/5).toFixed(2));}
+ g.save();g.beginPath();g.moveTo(m,24);g.lineTo(m+pw,24);g.lineTo(m+pw,24+ph);g.lineTo(m,24+ph);g.closePath();g.clip();
+ g.fillStyle='rgba(255,90,138,0.10)';
+ g.beginPath();g.moveTo(m,24+ph);
+ for(var i=0;i<=200;i++){var d=0.25*i/200,x=m+pw*i/200,y=24+ph-ph*Rb(d)/Hp;g.lineTo(x,y);}
+ g.lineTo(m+pw,24+ph);g.closePath();g.fill();
+ g.restore();
+ ne(g,'#7de2b0',2);g.beginPath();
+ for(var i=0;i<=200;i++){var d=0.25*i/200,x=m+pw*i/200,y=24+ph-ph*Rb(d)/Hp;
+  if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}
+ g.stroke();ng(g);
+ ndot(g,m,24+ph-ph,4,'#ffd76a');
+ nt(g,'#ffd76a',m+8,24+ph-ph-6,9,'R(0)=H(p)='+Hp.toFixed(6));
+ ndot(g,m+pw,24+ph,4,'#ff5a8a');
+ nt(g,'#ff5a8a',m+pw-84,24+ph-10,9,'R(0.25)=0');
+ nt(g,'#ff5a8a',m+14,24+ph-24,10,'IMPOSSIBLE');
+ nt(g,'#7de2b0',m+pw-150,40,10,'achievable');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#e6dcff',16,26,11,mode===0?'RATIO TO THE SHANNON BOUND':'DISTORTION vs RATE  (log)');
+ if(!ran){nt(g,'#8a7ab8',16,60,10,'press RUN QUANTISERS \u2014 this builds real');
+  nt(g,'#8a7ab8',16,76,10,'Lloyd-Max and entropy-coded quantisers');
+  nt(g,'#8a7ab8',16,92,10,'on a 100,000-point Gaussian grid (~0.4 s)');
+  return;}
+ var v=VR,PAN=v.panter,SPC=v.space;
+ if(mode===0){
+  var base=120,bw=34,gap=18,x0=44,maxR=3.0,ph=170;
+  ne(g,'rgba(150,110,230,0.5)',1);
+  g.beginPath();g.moveTo(x0-8,base+ph);g.lineTo(W-16,base+ph);g.stroke();ng(g);
+  function bar(i,val,col,lab){var x=x0+i*(bw+gap),h=ph*Math.min(val,maxR)/maxR;
+   nf(g,col);g.fillRect(x,base+ph-h,bw,h);ng(g);
+   nt(g,col,x-2,base+ph-h-6,9,val.toFixed(3));
+   nt(g,'#8a7ab8',x-2,base+ph+14,9,lab);}
+  v.lloyd.forEach(function(r,i){bar(i,r[1],'#ff9a5a','LM'+r[0]);});
+  bar(3,v.ecsq[3][1],'#5ad6ff','ECSQ');
+  var yP=base+ph-ph*PAN/maxR,yS=base+ph-ph*SPC/maxR,y1=base+ph-ph*1/maxR;
+  [[yP,'#ffd76a','Panter-Dite  '+PAN.toFixed(4)],[yS,'#7de2b0','pi*e/6  '+SPC.toFixed(4)],[y1,'#ff5a8a','Shannon bound  1.0']].forEach(function(L){
+   ne(g,L[1],1.2);g.setLineDash([5,4]);
+   g.beginPath();g.moveTo(x0-8,L[0]);g.lineTo(W-16,L[0]);g.stroke();g.setLineDash([]);ng(g);
+   nt(g,L[1],x0-8,L[0]-5,9,L[2]);});
+  nt(g,'#8a7ab8',16,H-14,9,'every bar sits above 1.0 \u2014 nothing beats Shannon');
+ }else{
+  var m=44,pw=W-m-18,ph=180,top=54;
+  ne(g,'rgba(150,110,230,0.5)',1);
+  g.beginPath();g.moveTo(m,top);g.lineTo(m,top+ph);g.lineTo(m+pw,top+ph);g.stroke();ng(g);
+  function px(R){return m+pw*(R-1)/5;}
+  function py(D){return top+ph-ph*(Math.log10(D)+4)/4;}
+  ne(g,'#ff5a8a',2);g.beginPath();
+  for(var i=0;i<=100;i++){var R=1+5*i/100;
+   if(i===0)g.moveTo(px(R),py(Dg(R)));else g.lineTo(px(R),py(Dg(R)));}
+  g.stroke();ng(g);
+  nt(g,'#ff5a8a',m+pw-96,py(Dg(5.6))-8,9,'Shannon D(R)');
+  v.lloyd.forEach(function(r){var R=Math.log2(r[0]);
+   ndot(g,px(R),py(r[2]),4,'#ff9a5a');
+   nt(g,'#ff9a5a',px(R)+6,py(r[2])+3,9,'N='+r[0]);});
+  v.ecsq.forEach(function(r){ndot(g,px(r[2]),py(r[1]*Dg(r[2])),4,'#5ad6ff');});
+  nt(g,'#5ad6ff',m+10,top+16,9,'blue = entropy-coded uniform');
+  nt(g,'#ff9a5a',m+10,top+32,9,'orange = Lloyd-Max fixed rate');
+  for(var i=1;i<=6;i++)nt(g,'#8a7ab8',px(i)-4,top+ph+16,9,''+i);
+  nt(g,'#8a7ab8',m+pw-40,top+ph+30,9,'rate  bits');}}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+10,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy-y*0.9-zr*0.32,zr];}
+ var S=52;
+ function cube(ox,oz,hgt,col,lab){
+  var v=[],pts=[[-1,-1],[1,-1],[1,1],[-1,1]];
+  pts.forEach(function(p){v.push(P(ox+p[0]*S/2,0,oz+p[1]*S/2));});
+  pts.forEach(function(p){v.push(P(ox+p[0]*S/2,hgt,oz+p[1]*S/2));});
+  ne(g,col,1.5);
+  for(var i=0;i<4;i++){g.beginPath();g.moveTo(v[i][0],v[i][1]);g.lineTo(v[(i+1)%4][0],v[(i+1)%4][1]);g.stroke();
+   g.beginPath();g.moveTo(v[4+i][0],v[4+i][1]);g.lineTo(v[4+(i+1)%4][0],v[4+(i+1)%4][1]);g.stroke();
+   g.beginPath();g.moveTo(v[i][0],v[i][1]);g.lineTo(v[4+i][0],v[4+i][1]);g.stroke();}
+  ng(g);
+  nt(g,col,v[6][0]-14,v[6][1]-10,9,lab);}
+ var SPC=Math.PI*Math.E/6,PAN=Math.sqrt(3)*Math.PI/2;
+ cube(-62,0,54,'#ff5a8a','1.000');
+ cube(10,0,54*SPC,'#5ad6ff',SPC.toFixed(3));
+ cube(82,0,54*PAN,'#ff9a5a',PAN.toFixed(3));
+ ne(g,'rgba(150,110,230,0.28)',1);
+ g.beginPath();
+ var g0=P(-100,0,-40),g1=P(120,0,-40),g2=P(120,0,40),g3=P(-100,0,40);
+ g.moveTo(g0[0],g0[1]);g.lineTo(g1[0],g1[1]);g.lineTo(g2[0],g2[1]);g.lineTo(g3[0],g3[1]);g.closePath();g.stroke();ng(g);
+ nt(g,'#ff5a8a',14,26,10,'Shannon  \u2014 spheres, unreachable in 1D');
+ nt(g,'#5ad6ff',14,42,10,'entropy-coded uniform  \u2014 +1.533 dB');
+ nt(g,'#ff9a5a',14,58,10,'Lloyd-Max fixed rate  \u2014 +4.347 dB');
+ nt(g,'#8a7ab8',14,H-14,9,'the height of each block IS the price of cutting space into cubes');}
+document.getElementById('rdrun').onclick=function(){
+ var o=document.getElementById('rdout');
+ if(o)o.innerHTML='building quantisers on a 100,000-point grid\u2026';
+ setTimeout(function(){VR=selftest();window.__ratedistortion=VR;ran=true;drawW4();
+  if(o)o.innerHTML='<b>Lloyd&ndash;Max</b> N=8/16/32 land at '+VR.lloyd.map(function(r){return r[1].toFixed(3);}).join(' / ')+'&times; the bound, climbing toward &radic;3&pi;/2 = '+VR.panter.toFixed(4)+' without crossing it. <b>Entropy-coded uniform</b> reaches '+VR.ecLast.toFixed(4)+'&times;, against &pi;e/6 = '+VR.space.toFixed(4)+' &mdash; the '+VR.spaceDb.toFixed(3)+' dB space-filling loss.';},30);};
+document.getElementById('rdmode').onclick=function(){mode=1-mode;drawW4();};
+document.getElementById('rdsp').onclick=function(){spin=!spin;};
+drawW3();drawW4();VR=selftest();ran=true;drawW4();window.__ratedistortion=VR;
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

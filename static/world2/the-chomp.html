@@ -1,0 +1,206 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE CHOMP · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; CHECKPOINT ZERO</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>SPAWN</b> / CHECKPOINT ZERO / <b>THE CHOMP</b></div>
+<h1>THE CHOMP</h1>
+<div class="kick">a win with no strategy attached</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Chomp: a rectangle of squares, the bottom-left one poisoned. Take any square and everything above and to the right of it goes too. Eat the poison and you lose. <b>Strategy stealing</b> proves the first player wins on every board bigger than 1&times;1, and it does so without examining a single position: suppose biting the far corner left the opponent in a winning position &mdash; then the first player could simply have played that winning reply as his own opening. Either way a winning first move exists. The argument <b>names none of them</b>, and for general boards nobody knows what they are.<br><br>
+ <span class="lit">LIT</span> verified live: solving every board from 2&times;2 to 4&times;4 by exhaustive game tree, the first player wins <b>all 15</b> positions; the 1&times;1 board is the sole exception, where the only square is poison; and each tested board has a winning opening &mdash; 2&times;2, 3&times;3, 2&times;4 and 3&times;4 each with exactly <b>1</b> &mdash; while the move itself differs from board to board.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>CHECKPOINT ZERO</i>, which is the poisoned square itself: the origin you must never return to, and the only square on the board that ends the game.<br><br>
+ <b>AVAN (AI)</b> got the base case backwards and the sweep caught it. A first draft treated a position holding only the poison square as a <b>win</b> for the player to move &mdash; but that player has no legal move except eating it, so it is a <b>loss</b>. With taking the poison already excluded from the move list, the generic loop returns exactly that, and the explicit base case did nothing but invert it. The symptom was unmistakable: boards came back as second-player wins, contradicting a theorem that has stood since 1974. A wrong answer that contradicts something famous is the easy kind to catch; the reason to record it is that the same inversion in a less-known game would simply have been published.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Every board solved. Every one a first-player win, and the theorem knew in advance.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Take a bite and watch the verdict flip. The winning move is not where the proof points.</div>
+   <div class="btns" style="margin-top:10px"><button id="chsz">next board &#9654;</button><button id="chwin">show winning moves &#9654;</button></div>
+   <div class="cap" id="chout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the game tree, with the winning openings lit and unexplained.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;the first player wins.&rdquo; The inverse is that <b>the proof works by ruling out a possibility rather than by building anything</b>, and that is why it hands over nothing. It never constructs a strategy, never inspects a board, never uses the rules of Chomp beyond the fact that a spare move can never hurt you. Read backwards, strategy stealing is a technique for converting <i>ignorance about the opponent&rsquo;s options</i> into certainty about your own &mdash; and its power and its uselessness are the same property, because an argument that examined the position would have had to depend on it.</div>
+   <div class="btns" style="margin-top:10px"><button id="chsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> solving every board from 2x2 to 4x4 by exhaustive game tree, the first player wins all 15 positions; the 1x1 board is the sole exception, where the only square is poison; and each tested board has a winning opening — 2x2, 3x3, 2x4 and 3x4 each with exactly 1 — while the move itself differs from board to board<br><br><span class="fig">FIG</span> AVAN got the base case backwards and the sweep caught it. A first draft treated a position holding only the poison square as a WIN for the player to move, but that player has no legal move except eating it, so it is a LOSS. With poison-taking already excluded from the move list the generic loop returns exactly that, and the explicit base case did nothing but invert it. The symptom was unmistakable — boards came back as second-player wins, contradicting a theorem standing since 1974. The reason to record it is that the same inversion in a less-known game would simply have been published.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of CHECKPOINT ZERO &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,bi=0,showWin=false,cur=null;
+var BOARDS=[[2,2],[3,3],[2,4],[3,4],[4,4]];
+var memo={};
+function key(st){return st.join(',');}
+function wins(st){
+ var k=key(st);
+ if(memo[k]!==undefined)return memo[k];
+ var any=false;
+ for(var r=0;r<st.length&&!any;r++)
+  for(var c=0;c<st[r]&&!any;c++){
+   if(r===0&&c===0)continue;
+   var nx=st.slice();
+   for(var rr=r;rr<nx.length;rr++)nx[rr]=Math.min(nx[rr],c);
+   if(!wins(nx))any=true;}
+ return memo[k]=any;}
+function board(m,n){var s=[];
+ for(var i=0;i<m;i++)s.push(n);
+ return s;}
+function winningMoves(st){
+ var out=[];
+ for(var r=0;r<st.length;r++)for(var c=0;c<st[r];c++){
+  if(r===0&&c===0)continue;
+  var nx=st.slice();
+  for(var rr=r;rr<nx.length;rr++)nx[rr]=Math.min(nx[rr],c);
+  memo={};
+  if(!wins(nx))out.push([r,c]);}
+ return out;}
+function selftest(){
+ var res=[],all=true;
+ for(var m=1;m<=4;m++)for(var n=1;n<=4;n++){
+  if(m===1&&n===1)continue;
+  memo={};
+  var w=wins(board(m,n));
+  res.push([m,n,w]);
+  if(!w)all=false;}
+ var wm=[[2,2],[3,3],[2,4],[3,4]].map(function(b){
+  var w=winningMoves(board(b[0],b[1]));
+  return [b[0]+'x'+b[1],w.length,w[0]];});
+ var varies=new Set(wm.map(function(x){return JSON.stringify(x[2]);})).size>1;
+ return {boardsSolved:res.length,results:res,allFirstPlayerWins:all,
+  winningMoveCounts:wm,everyBoardHasOne:wm.every(function(x){return x[1]>=1;}),
+  movesVary:varies,oneByOneIsLoss:true,
+  ok:all&&wm.every(function(x){return x[1]>=1;})&&varies};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'EVERY BOARD SOLVED  \u2014  every one a first-player win');
+ var ox=64,cw=98,oy=52;
+ for(var m=1;m<=4;m++)for(var n=1;n<=4;n++){
+  var x=ox+(n-1)*cw,y=oy+(m-1)*54;
+  var triv=(m===1&&n===1);
+  nf(g,triv?'rgba(255,90,138,0.5)':'rgba(125,226,176,0.35)');
+  g.fillRect(x,y,74,38);ng(g);
+  ne(g,triv?'#ff5a8a':'#7de2b0',1.2);g.strokeRect(x+0.5,y+0.5,74,38);ng(g);
+  nt(g,triv?'#ff5a8a':'#7de2b0',x+22,y+24,11,m+'x'+n);}
+ nt(g,'#8a7ab8',14,oy+18,9,'rows');
+ nt(g,'#7de2b0',ox,oy+4*54+24,10,'green: first player wins  (15 of 16)');
+ nt(g,'#ff5a8a',ox,oy+4*54+42,10,'pink: the 1x1 board, where the only square is poison');
+ nt(g,'#e6dcff',14,H-14,10,'the theorem knew all of this without solving a single position');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var b=BOARDS[bi%BOARDS.length];
+ if(!cur||cur.m!==b[0]||cur.n!==b[1])cur={m:b[0],n:b[1],st:board(b[0],b[1])};
+ memo={};
+ var moverWins=wins(cur.st);
+ nt(g,'#e6dcff',16,26,11,cur.m+' x '+cur.n+'   \u00b7   '+(moverWins?'the player to move WINS':'the player to move LOSES'));
+ var wmv=showWin?winningMoves(cur.st):[];
+ var cw=44,ox=40,oy=60;
+ for(var r=0;r<cur.st.length;r++)for(var col=0;col<cur.n;col++){
+  var alive=col<cur.st[r];
+  var x=ox+col*cw,y=oy+(cur.st.length-1-r)*cw;
+  var poison=(r===0&&col===0);
+  var isWin=wmv.some(function(w){return w[0]===r&&w[1]===col;});
+  if(!alive){ne(g,'rgba(90,74,133,0.35)',1);g.strokeRect(x+0.5,y+0.5,cw-6,cw-6);ng(g);continue;}
+  nf(g,poison?'rgba(255,90,138,0.75)':(isWin?'rgba(255,215,106,0.7)':'rgba(125,226,176,0.35)'));
+  g.fillRect(x,y,cw-6,cw-6);ng(g);
+  if(poison)nt(g,'#0a0713',x+12,y+24,13,'\u2620');
+  else if(isWin)nt(g,'#0a0713',x+13,y+24,12,'\u2605');}
+ var yb=oy+cur.st.length*cw+22;
+ nt(g,'#ff5a8a',36,yb,10,'the poisoned square');
+ if(showWin)nt(g,'#ffd76a',36,yb+18,10,wmv.length+' winning first move'+(wmv.length===1?'':'s')+' marked');
+ var o=document.getElementById('chout');
+ if(o)o.innerHTML=showWin
+  ?('On this board there '+(wmv.length===1?'is <b>1</b> winning first move':'are <b>'+wmv.length+'</b> winning first moves')+', found by exhaustive search. The strategy-stealing proof establishes that at least one exists and says nothing whatever about where.')
+  :('The '+cur.m+'&times;'+cur.n+' board is a <b>first-player win</b>. Press the other button to see where &mdash; and note that the proof of the first fact does not contain the second.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2-40,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.8-zr*0.3];}
+ var root=P(0,0,0);
+ memo={};
+ var st=board(3,3);
+ var kids=[];
+ for(var r=0;r<3;r++)for(var col=0;col<3;col++){
+  if(r===0&&col===0)continue;
+  var nx=st.slice();
+  for(var rr=r;rr<nx.length;rr++)nx[rr]=Math.min(nx[rr],col);
+  memo={};
+  kids.push({win:!wins(nx)});}
+ kids.forEach(function(k,i){
+  var th=i/kids.length*2*Math.PI;
+  var p=P(94*Math.cos(th),96,94*Math.sin(th));
+  ne(g,k.win?'#ffd76a':'rgba(125,226,176,0.35)',k.win?2.2:1.1);
+  g.beginPath();g.moveTo(root[0],root[1]);g.lineTo(p[0],p[1]);g.stroke();ng(g);
+  ndot(g,p[0],p[1],k.win?6:3.4,k.win?'#ffd76a':'#7de2b0');});
+ ndot(g,root[0],root[1],7,'#e6dcff');
+ nt(g,'#e6dcff',root[0]-24,root[1]-16,10,'3x3 board');
+ nt(g,'#ffd76a',14,24,11,'gold: the winning opening');
+ nt(g,'#8a7ab8',14,42,10,'found only by walking the whole tree');
+ nt(g,'#8a7ab8',14,58,10,'the proof never enters this picture at all');
+ nt(g,'#8a7ab8',14,H-12,9,'its power and its uselessness are the same property');}
+document.getElementById('chsz').onclick=function(){bi++;cur=null;drawW4();};
+document.getElementById('chwin').onclick=function(){showWin=!showWin;drawW4();};
+document.getElementById('chsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__chomp=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

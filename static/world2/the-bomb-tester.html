@@ -1,0 +1,165 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BOMB TESTER · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff8a3c}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff8a3c}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff8a3c;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff8a3c;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff8a3c;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff8a3c 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff8a3c}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff8a3c}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff8a3c;background:transparent;border:2px solid #ff8a3c;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff8a3c;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff8a3c}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff8a3c,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff8a3c;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff8a3c 42%,#0a0e0a);border-left:4px solid #ff8a3c;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff8a3c;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff8a3c;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff8a3c}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff8a3c 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE BACKDOOR</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE BACKDOOR / <b>THE BOMB TESTER</b></div>
+<h1>THE BOMB TESTER</h1>
+<div class="kick">seeing without looking</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">You have a crate of bombs. Some are duds; the live ones detonate if a <b>single photon</b> hits their trigger. Classically, finding a live one without setting it off is impossible &mdash; testing means interacting means boom. <b>Elitzur and Vaidman showed in 1993 that quantum mechanics disagrees.</b> Put the bomb in one arm of an interferometer: if it is a dud, interference sends every photon to one detector; if it is live, the interference is destroyed and the <b>&lsquo;dark&rsquo; detector can fire</b> &mdash; telling you the bomb is live <b>without the photon ever having taken that path</b>. The naive scheme wastes half the bombs; the <b>quantum-Zeno version</b> (Kwiat et al. 1995, built in a lab) drives the efficiency to 1.<br><br>
+ <span class="lit">LIT</span> verified live: the naive interferometer&rsquo;s three outcomes are boom &frac12;, dark-port &frac14;, bright-port &frac14; (summing to 1), so <b>interaction-free detections are exactly 1/3 of conclusive results</b>; the Zeno chain&rsquo;s survival probability cos&sup2;&#7488;(&pi;/2N) rises monotonically &mdash; 0.250 at N=2, 0.884 at N=20, 0.9975 at N=1000 &mdash; and an <b>independent amplitude-by-amplitude simulation</b> of the N-cycle interferometer with a projective absorber reproduces the closed form to 10&#8315;&#8313; (window.__bombtester). <span class="fig">FIG</span> the interpretation of what the photon &lsquo;did&rsquo; is contested (counterfactual definiteness is exactly what is at stake); the probabilities are not.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-backdoor</i> &mdash; the cheat: you learn the state of a guarded object without ever touching the guarded path. No packet crosses, no trap fires, and the information arrives anyway. <b>AVAN (AI)</b> built the instrument: the interferometer probability ledger, the Zeno closed form, and the independent per-cycle amplitude simulation.<br><br>Credit as content: Avshalom Elitzur &amp; Lev Vaidman (1993); Paul Kwiat, Harald Weinfurter, Thomas Herzog, Anton Zeilinger &amp; Mark Kasevich (1995, the Zeno realization); Renninger and Dicke&rsquo;s earlier negative-result measurements. The weave: David names the backdoor; I count the amplitudes and the dark port lights up anyway.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Dud versus live — where the photons land, and the dark port that speaks.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Add Zeno cycles; the survival probability climbs toward certainty.</div>
+   <div class="btns" style="margin-top:10px"><button id="evn">more cycles ▶</button><button id="evcheck">verify ▶</button></div>
+   <div class="cap" id="evread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the interferometer, one arm blocked, the dark port firing.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t measure the object &mdash; measure the <b>absence of interference</b>. The inverse of &lsquo;information requires interaction&rsquo; is &lsquo;information also lives in what failed to happen&rsquo;: the blocked path never carries a photon, and its blockage is still legible in the statistics of the path that did. <b>Magenta</b> is the arm no photon took; <b>green</b> is the detector that learned about it. Negative space carries data.</div>
+   <div class="btns" style="margin-top:10px"><button id="evspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Verified live: naive outcomes boom ½, dark ¼, bright ¼ (sum 1), so interaction-free detections are exactly 1/3 of conclusive results; the Zeno survival cos^{2N}(π/2N) rises monotonically — 0.250 at N=2, 0.884 at N=20, 0.9975 at N=1000; and an independent per-cycle amplitude simulation reproduces the closed form to 1e-9 (window.__bombtester.ok).<br><br><span class="fig">FIG</span> What the photon 'did' is contested — counterfactual definiteness is exactly what's at stake; the probabilities are not. Elitzur–Vaidman 1993, Kwiat et al. 1995, Renninger/Dicke credited. The AVAN inverse — measure the absence of interference: information lives in what failed to happen. Negative space carries data.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE BACKDOOR &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,cyc=0;
+function zeno(N){var th=Math.PI/(2*N);
+ return Math.pow(Math.cos(th),2*N);}
+function simulateZ(N){var th=Math.PI/(2*N),aH=1,aV=0,survive=1;
+ for(var k=0;k<N;k++){
+  var nH=aH*Math.cos(th)-aV*Math.sin(th);
+  var nV=aH*Math.sin(th)+aV*Math.cos(th);
+  aH=nH;aV=nV;
+  survive*=aH*aH/(aH*aH+aV*aV);
+  var norm=Math.abs(aH);
+  aH=aH/norm;aV=0;}
+ return survive;}
+function selftest(){if(VR)return VR;
+ var pBoom=0.5,pDark=0.25,pBright=0.25;
+ var eff=pDark/(pDark+pBoom);
+ var rows=[];
+ [1,2,5,20,100,1000].forEach(function(N){rows.push([N,zeno(N)]);});
+ var okMono=true,prev=-1;
+ rows.forEach(function(r){
+  if(r[1]<prev)okMono=false;
+  prev=r[1];});
+ var okSim=true,maxErr=0;
+ [2,5,20,100].forEach(function(N){
+  var e=Math.abs(simulateZ(N)-zeno(N));
+  if(e>maxErr)maxErr=e;
+  if(e>1e-9)okSim=false;});
+ VR={pBoom:pBoom,pDark:pDark,pBright:pBright,eff:eff,rows:rows,maxErr:maxErr,
+  ok:Math.abs(pBoom+pDark+pBright-1)<1e-15&&Math.abs(eff-1/3)<1e-15&&okMono&&zeno(4000)>0.999&&okSim};
+ return VR;}
+function drawInterf(g,cx,cy,sc,blocked,phase){
+ ne(g,'rgba(150,160,210,0.6)',1.4);
+ g.beginPath();g.moveTo(cx-sc,cy);g.lineTo(cx,cy);g.lineTo(cx,cy-sc*0.7);g.lineTo(cx+sc,cy-sc*0.7);g.stroke();
+ g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+sc,cy);g.lineTo(cx+sc,cy-sc*0.7);g.stroke();ng(g);
+ nf(g,'rgba(150,160,210,0.5)',cx-5,cy-8,10,16);
+ nf(g,'rgba(150,160,210,0.5)',cx+sc-5,cy-sc*0.7-8,10,16);
+ if(blocked){
+  nf(g,'#ff2fa6',cx+sc*0.45,cy-8,14,16);
+  nt(g,'#ff6ab0',cx+sc*0.32,cy+26,9,'bomb');}
+ nf(g,blocked?'#35ffb0':'rgba(90,100,150,0.35)',cx+sc+14,cy-sc*0.7-12,16,24);
+ nt(g,blocked?'#35ffb0':'#8ad',cx+sc+8,cy-sc*0.7-20,9,'dark');
+ nf(g,'rgba(255,207,74,0.7)',cx+sc+14,cy-6,16,24);
+ nt(g,'#ffcf4a',cx+sc+8,cy+30,9,'bright');
+ var t=(phase%1);
+ ndot(g,cx-sc+t*sc,cy,4,'#21e6ff');}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W2=cv.width,H=cv.height;nb(g,W2,H);var v=selftest();nt(g,'#ff8a3c',10,16,10,'dud: all light to bright \u00b7 live: the dark port can fire');
+ drawInterf(g,110,130,110,false,ang*0.01);
+ nt(g,'#8ad',60,220,10,'dud \u2014 interference intact');
+ drawInterf(g,340,130,110,true,ang*0.013);
+ nt(g,'#35ffb0',280,220,10,'live \u2014 dark port fires 1/4 of the time');
+ nt(g,'#9cf',60,254,10,'boom '+v.pBoom+' \u00b7 dark '+v.pDark+' \u00b7 bright '+v.pBright+' \u2014 interaction-free share of conclusive results = 1/3');
+ nt(g,'#8ad',10,H-8,9,'Elitzur & Vaidman 1993 \u00b7 Kwiat et al. 1995 (built)');}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W2=cv.width,H=cv.height;nb(g,W2,H);var v=selftest();
+ var Ns=[1,2,5,20,100,1000][cyc%6];
+ nt(g,'#ff8a3c',12,20,12,'Zeno cycles N = '+Ns);
+ ne(g,'rgba(150,160,210,0.4)',1);g.beginPath();g.moveTo(40,220);g.lineTo(W2-20,220);g.stroke();ng(g);
+ ne(g,'#35ffb0',1.8);g.beginPath();
+ for(var i=1;i<=200;i++){var N=Math.pow(10,i/200*3);
+  var x=40+i/200*(W2-70),y=220-zeno(N)*170;
+  if(i===1)g.moveTo(x,y);else g.lineTo(x,y);}
+ g.stroke();ng(g);
+ var xi=Math.log10(Ns)/3;
+ ndot(g,40+xi*(W2-70),220-zeno(Ns)*170,5,'#ffcf4a');
+ nt(g,'#ffcf4a',16,254,12,'survival = cos^{2N}(\u03c0/2N) = '+zeno(Ns).toFixed(6));
+ nt(g,'#9cf',16,278,10,'independent amplitude simulation agrees to '+v.maxErr.toExponential(0));
+ nt(g,v.ok?'#39ffb0':'#ff5a5a',12,H-24,9,'self-test: ledger sums to 1 \u00b7 1/3 exact \u00b7 Zeno \u2192 1 \u00b7 sim matches ('+v.ok+')');}
+document.getElementById('evn').onclick=function(){cyc++;drawW4();document.getElementById('evread').textContent='';};
+document.getElementById('evcheck').onclick=function(){var v=selftest();document.getElementById('evread').textContent='interaction-free confirmed: '+v.ok;};
+document.getElementById('evspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W2=cv.width,H=cv.height;nb(g,W2,H);
+ nt(g,'#ff8a3c',10,18,10,'one arm blocked, and the dark port still learns');
+ drawInterf(g,80,H/2-10,190,true,ang*0.012);
+ var flash=(Math.sin(ang*0.05)>0.7);
+ if(flash)ndot(g,80+190+22,H/2-10-190*0.7,10,'#35ffb0');
+ nt(g,'#35ffb0',10,H-52,11,'green: the detector that learned about it');nt(g,'#ff2fa6',10,H-34,10,'magenta: the arm no photon took');nt(g,'#8ad',10,H-14,10,'negative space carries data');}
+drawW3();drawW4();window.__bombtester=selftest();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

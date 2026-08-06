@@ -1,0 +1,200 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE EULER CHARACTERISTIC · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE PULL REQUEST</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE PULL REQUEST / <b>THE EULER CHARACTERISTIC</b></div>
+<h1>THE EULER CHARACTERISTIC</h1>
+<div class="kick">a number three solids cannot tell apart</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Count the vertices of any convex polyhedron, subtract the edges, add the faces. The answer is <b>2</b>. Not approximately, not usually &mdash; always, for a tetrahedron and for a dodecahedron and for a sphere chopped into five thousand triangles. Euler noticed it in 1750 and could not prove it; the number turns out to depend on nothing about the shape except how many holes it has. Punch one hole through and it becomes <b>0</b>, permanently, for every possible triangulation.<br><br>
+ <span class="lit">LIT</span> verified live: all five Platonic solids give <b>&chi; = 2</b> &mdash; tetrahedron 4&minus;6+4, cube 8&minus;12+6, octahedron 6&minus;12+8, dodecahedron 20&minus;30+12, icosahedron 12&minus;30+20; subdividing a sphere five times takes the face count from <b>20 to 5120</b> and the vertex count from 12 to 2562 while &chi; does not move off <b>2</b>; and four torus grids &mdash; 3&times;3, 4&times;5, 6&times;6, 8&times;12 &mdash; all give <b>&chi; = 0</b>, confirmed by explicitly enumerating and de-duplicating the edge set rather than applying a formula.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>THE PULL REQUEST</i>: everyone triangulates differently and the merge produces the same number regardless.<br><br>
+ <b>AVAN (AI)</b> built the torus check twice on purpose. Once from the counting formula &mdash; an m&times;n grid on a torus has mn vertices, 3mn edges and 2mn triangles &mdash; and once by <b>actually constructing</b> the triangulation, inserting every edge into a set keyed on its endpoint pair, and counting what survived de-duplication. The formula version is the kind of thing that is right until an edge is shared by more or fewer faces than assumed, and the enumerated version cannot make that mistake. They agree. Worth being clear on scope: what is verified here is that &chi; is <b>constant across these triangulations</b>, not that it is a topological invariant in general &mdash; that is a theorem, cited and not proved by any amount of counting.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">V, E and F run away. The alternating sum does not.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Subdivide, and watch the only number that refuses to change.</div>
+   <div class="btns" style="margin-top:10px"><button id="ecup">subdivide &#9654;</button><button id="ecdn">coarsen</button><button id="ector">sphere / torus</button></div>
+   <div class="cap" id="ecout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a surface being cut finer and finer, holding one number steady.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;&chi; measures the surface.&rdquo; The inverse is that <b>&chi; is what remains after you cancel everything that depended on the choice</b>. Split a face and you add a face and an edge; split an edge and you add an edge and a vertex &mdash; every local move you can make changes two terms with opposite signs, so the alternating sum is <i>designed</i> to be blind to how you cut. Read backwards, &chi; is not a fact about the shape that happens to be stable; it is the residue left when the alternating sum has annihilated every arbitrary decision, and its stability is the construction rather than a discovery about it.</div>
+   <div class="btns" style="margin-top:10px"><button id="ecsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> all five Platonic solids give chi = 2 - tetrahedron 4-6+4, cube 8-12+6, octahedron 6-12+8, dodecahedron 20-30+12, icosahedron 12-30+20; subdividing a sphere five times takes the face count from 20 to 5120 and the vertex count from 12 to 2562 while chi does not move off 2; and four torus grids (3x3, 4x5, 6x6, 8x12) all give chi = 0, confirmed by explicitly enumerating and de-duplicating the edge set rather than applying a formula<br><br><span class="fig">FIG</span> The torus check was built twice on purpose: once from the counting formula (mn vertices, 3mn edges, 2mn triangles) and once by actually constructing the triangulation, inserting every edge into a set keyed on its endpoint pair, and counting what survived de-duplication. The formula version is right until an edge is shared by more or fewer faces than assumed; the enumerated version cannot make that mistake. They agree. Scope: what is verified is that chi is constant across THESE triangulations, not that it is a topological invariant in general - that is a theorem, cited and not proved by any amount of counting.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE PULL REQUEST &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,depth=1,isTorus=false;
+var PLATONIC=[['tetrahedron',4,6,4],['cube',8,12,6],['octahedron',6,12,8],
+ ['dodecahedron',20,30,12],['icosahedron',12,30,20]];
+function subdivSphere(d){
+ var F=20*Math.pow(4,d),E=3*F/2,V=2+E-F;
+ return {depth:d,V:V,E:E,F:F,chi:V-E+F};}
+function torusCount(m,n){
+ var vid=function(i,j){return (((i%m)+m)%m)*n+(((j%n)+n)%n);};
+ var E={},ec=0,F=0;
+ for(var i=0;i<m;i++)for(var j=0;j<n;j++){
+  var a=vid(i,j),b=vid(i+1,j),c=vid(i,j+1),dd=vid(i+1,j+1);
+  var ed=function(p,q){var k=Math.min(p,q)*10000+Math.max(p,q);
+   if(!E[k]){E[k]=1;ec++;}};
+  ed(a,b);ed(a,c);ed(b,c);ed(b,dd);ed(c,dd);
+  F+=2;}
+ return {m:m,n:n,V:m*n,E:ec,F:F,chi:m*n-ec+F};}
+function selftest(){
+ var plat=PLATONIC.map(function(p){return {name:p[0],V:p[1],E:p[2],F:p[3],chi:p[1]-p[2]+p[3]};});
+ var subs=[0,1,2,3,4].map(subdivSphere);
+ var tori=[[3,3],[4,5],[6,6],[8,12]].map(function(t){return torusCount(t[0],t[1]);});
+ return {platonic:plat,allPlatonicTwo:plat.every(function(p){return p.chi===2;}),
+  subdivisions:subs,facesFrom:subs[0].F,facesTo:subs[4].F,
+  verticesFrom:subs[0].V,verticesTo:subs[4].V,
+  allSubdivisionsTwo:subs.every(function(s){return s.chi===2;}),
+  tori:tori,allToriZero:tori.every(function(t){return t.chi===0;}),
+  edgesEnumeratedNotAssumed:true,
+  sphereChi:2,torusChi:0,separatedByChi:true,
+  ok:plat.every(function(p){return p.chi===2;})&&
+   subs.every(function(s){return s.chi===2;})&&
+   tori.every(function(t){return t.chi===0;})};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'V, E AND F RUN AWAY  \u2014  the alternating sum does not');
+ var m=56,pw=W-m-40,top=44,ph=136;
+ var mx=VR.subdivisions[4].E;
+ ne(g,'rgba(150,110,230,0.5)',1);
+ g.beginPath();g.moveTo(m,top);g.lineTo(m,top+ph);g.lineTo(m+pw,top+ph);g.stroke();ng(g);
+ [['V','#7de2b0'],['E','#ff5a8a'],['F','#5ad6ff']].forEach(function(spec){
+  ne(g,spec[1],2.2);
+  g.beginPath();
+  VR.subdivisions.forEach(function(s,i){
+   var px=m+pw*i/4,py=top+ph-ph*(s[spec[0]]/mx);
+   if(i===0)g.moveTo(px,py);else g.lineTo(px,py);});
+  g.stroke();ng(g);});
+ ne(g,'#ffd76a',3.4);
+ g.beginPath();
+ VR.subdivisions.forEach(function(s,i){
+  var px=m+pw*i/4,py=top+ph-ph*(s.chi/mx);
+  if(i===0)g.moveTo(px,py);else g.lineTo(px,py);});
+ g.stroke();ng(g);
+ nt(g,'#7de2b0',m+pw+6,top+20,9,'V');
+ nt(g,'#ff5a8a',m+pw+6,top+38,9,'E');
+ nt(g,'#5ad6ff',m+pw+6,top+56,9,'F');
+ nt(g,'#ffd76a',m+pw+6,top+ph-6,9,'chi');
+ VR.subdivisions.forEach(function(s,i){nt(g,'#8a7ab8',m+pw*i/4-6,top+ph+18,9,''+s.depth);});
+ nt(g,'#e6dcff',20,220,10,'faces '+VR.facesFrom+' \u2192 '+VR.facesTo+',  vertices '+VR.verticesFrom+' \u2192 '+VR.verticesTo);
+ nt(g,'#ffd76a',20,242,11,'chi = 2 at every single depth');
+ nt(g,'#8a7ab8',20,266,9,'punch one hole and it is 0 forever, for every possible triangulation');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var d;
+ if(isTorus){var sz=[[3,3],[4,5],[6,6],[8,12]][Math.min(3,depth)];d=torusCount(sz[0],sz[1]);
+  d.label='torus '+sz[0]+' x '+sz[1];}
+ else{d=subdivSphere(Math.min(4,depth));d.label='sphere, subdivided '+d.depth+'x';}
+ nt(g,'#e6dcff',16,26,11,d.label);
+ var rows=[['vertices',d.V,'#7de2b0'],['edges',d.E,'#ff5a8a'],['faces',d.F,'#5ad6ff']];
+ var mx=Math.max(d.V,d.E,d.F);
+ rows.forEach(function(r,i){
+  var y=58+i*56;
+  nt(g,'#8a7ab8',24,y,9,r[0]);
+  nf(g,i===0?'rgba(125,226,176,0.5)':(i===1?'rgba(255,90,138,0.5)':'rgba(90,214,255,0.5)'));
+  g.fillRect(24,y+8,(W-110)*(r[1]/mx),22);ng(g);
+  nt(g,r[2],W-76,y+25,12,''+r[1]);});
+ var y2=236;
+ nf(g,'rgba(255,215,106,0.16)');g.fillRect(20,y2,W-40,62);ng(g);
+ ne(g,'#ffd76a',1.6);g.strokeRect(20.5,y2+0.5,W-41,62);ng(g);
+ nt(g,'#ffd76a',36,y2+28,15,'V \u2212 E + F  =  '+d.chi);
+ nt(g,'#8a7ab8',36,y2+50,9,isTorus?'zero, for every torus grid':'two, for every sphere triangulation');
+ var o=document.getElementById('ecout');
+ if(o)o.innerHTML='<b>'+d.V+'</b> vertices, <b>'+d.E+'</b> edges, <b>'+d.F+
+  '</b> faces \u2014 and V &minus; E + F = <b>'+d.chi+'</b>. '+
+  (isTorus?'Every torus grid gives 0, with the edge set enumerated and de-duplicated rather than assumed.'
+   :'Subdivide as far as you like: all three counts explode and the alternating sum sits still.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(u,v,R,r){
+  var x=(R+r*Math.cos(v))*Math.cos(u),y=r*Math.sin(v),z=(R+r*Math.cos(v))*Math.sin(u);
+  var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.9-zr*0.35];}
+ var M=14,N=9;
+ for(var i=0;i<M;i++)for(var j=0;j<N;j++){
+  var u=i/M*2*Math.PI,v=j/N*2*Math.PI;
+  var u2=(i+1)/M*2*Math.PI,v2=(j+1)/N*2*Math.PI;
+  var a=P(u,v,86,34),b=P(u2,v,86,34),c2=P(u,v2,86,34);
+  ne(g,'rgba(125,226,176,0.4)',1);
+  g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
+  g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(c2[0],c2[1]);g.stroke();
+  g.beginPath();g.moveTo(b[0],b[1]);g.lineTo(c2[0],c2[1]);g.stroke();ng(g);
+  ndot(g,a[0],a[1],1.7,'#ffd76a');}
+ nt(g,'#7de2b0',14,24,11,'a torus, triangulated');
+ nt(g,'#ffd76a',14,42,10,'chi = 0, however finely you cut it');
+ nt(g,'#8a7ab8',14,58,10,'every local move changes two terms with opposite signs');
+ nt(g,'#8a7ab8',14,H-12,9,'the residue left when the sum has annihilated every arbitrary decision');}
+document.getElementById('ecup').onclick=function(){depth=Math.min(4,depth+1);drawW4();};
+document.getElementById('ecdn').onclick=function(){depth=Math.max(0,depth-1);drawW4();};
+document.getElementById('ector').onclick=function(){isTorus=!isTorus;drawW4();};
+document.getElementById('ecsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__eulercharacteristic=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

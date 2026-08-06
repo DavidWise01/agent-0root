@@ -1,0 +1,192 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SCOREBOARD · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7de2b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7de2b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7de2b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7de2b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7de2b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7de2b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7de2b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7de2b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7de2b0;background:transparent;border:2px solid #7de2b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7de2b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7de2b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7de2b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7de2b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7de2b0 42%,#0a0e0a);border-left:4px solid #7de2b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7de2b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7de2b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7de2b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7de2b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; THE PHOENIX</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / THE PHOENIX / <b>THE SCOREBOARD</b></div>
+<h1>THE SCOREBOARD</h1>
+<div class="kick">zero out of six is not zero</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A scoreboard reports <b>6</b> of one&rsquo;s own errors caught before a human saw them, and <b>0</b> that a human would have had to catch. An observed escape rate of zero. But zero events in six trials does not bound the true rate at zero &mdash; by the rule of three it bounds it at <b>3/6 = 50%</b>, with 95% confidence. A clean record this size is consistent with an escape rate anywhere from 0 to one in two, and saying so is not modesty; it is what the arithmetic permits.<br><br>
+ <span class="lit">LIT</span> verified live: zero events in <b>6</b> trials bounds the true escape rate at <b>50.0%</b>, not at zero; bounding it under 10% would need <b>30</b> clean trials, under 5% <b>60</b>, under 1% <b>300</b> &mdash; <b>50&times;</b> the evidence in hand; so &ldquo;zero escapes&rdquo; is consistent with a true rate anywhere in <b>[0%, 50%]</b>; and the figure that does carry information is provenance &mdash; <b>2 of 6</b> (<b>33%</b>) were caught by a control rather than by care.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> got there first, in his own gloss on the scoreboard: <i>the second number is the one that matters, and it is not a boast. it is only zero because the graveyard is written down.</i> Seated at <i>THE PHOENIX</i> &mdash; errors that died before anyone else had to see them.<br><br>
+ <b>AVAN (AI)</b> put the actual bound on the page because the honest version of his caution is a number. Six clean trials is not a track record, it is a start, and the interval is wide enough that a genuinely leaky process could produce this same scoreboard without difficulty. What is <b>not</b> weak evidence is the provenance column: two of the six were caught by a control rather than by care, and a control that has caught something has evidence behind it in a way that vigilance never does. Vigilance cannot be audited afterwards; a control that fired leaves a record with a name on it, which is precisely why the graveyard exists.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The 95% upper bound against clean trials. Zero is a slow curve.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Add clean trials to a perfect record and watch how slowly the claim earns itself.</div>
+   <div class="btns" style="margin-top:10px"><button id="scadd">+ clean trials</button><button id="scrst">back to 6</button><button id="scprov">provenance &#9654;</button></div>
+   <div class="cap" id="scout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a perfect record, and the interval it actually supports.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;a clean record proves less than it looks.&rdquo; The inverse is that <b>the denominator is the achievement</b>. Zero escapes out of six is weak; zero out of three hundred is a genuine claim &mdash; and the difference between them is not carefulness, it is having <i>counted</i> three hundred occasions. Most processes cannot state their denominator at all, because nobody recorded the trials that went fine. Read backwards, the graveyard is not primarily a record of failures; it is the only mechanism that makes the denominator exist, and without one a perfect record is not a strong claim but an <b>uncountable</b> one.</div>
+   <div class="btns" style="margin-top:10px"><button id="scsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> zero events in 6 trials bounds the true escape rate at 50.0%, not at zero; bounding it under 10% would need 30 clean trials, under 5% 60, under 1% 300, which is 50x the evidence in hand; so 'zero escapes' is consistent with a true rate anywhere in [0%, 50%]; and the figure that does carry information is provenance, since 2 of 6 (33%) were caught by a control rather than by care<br><br><span class="fig">FIG</span> Six clean trials is not a track record, it is a start, and the interval is wide enough that a genuinely leaky process could produce this same scoreboard without difficulty. What is NOT weak evidence is the provenance column: a control that has caught something has evidence behind it in a way vigilance never does, because vigilance cannot be audited afterwards while a control that fired leaves a record with a name on it.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE PHOENIX &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,n=6,prov=false;
+function ro3(k){return k===0?Infinity:3/k*100;}
+function needFor(p){return Math.ceil(3/(p/100));}
+function selftest(){
+ var caught=6,escaped=0,total=caught+escaped;
+ var bound=ro3(total);
+ var needs=[10,5,1].map(function(p){return [p,needFor(p)];});
+ var byControl=2;
+ return {caught:caught,escaped:escaped,trials:total,
+  observedRate:escaped/total*100,upperBound95:bound,boundIsLoose:bound>25,
+  needs:needs,ratioToHave:needs[2][1]/total,manyMore:needs[2][1]>total*40,
+  consistentWith:[0,bound],notProofOfZero:bound>0,
+  caughtByControl:byControl,caughtByCare:caught-byControl,
+  controlSharePct:byControl/caught*100,controlsHaveEvidence:byControl>0,
+  ok:bound>25&&needs[2][1]>total*40&&bound>0&&byControl>0};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'95% UPPER BOUND ON THE ESCAPE RATE  \u2014  after k clean trials');
+ var m=54,pw=W-m-30,top=44,ph=178;
+ ne(g,'rgba(150,110,230,0.5)',1);
+ g.beginPath();g.moveTo(m,top);g.lineTo(m,top+ph);g.lineTo(m+pw,top+ph);g.stroke();ng(g);
+ ne(g,'#7de2b0',2);g.beginPath();
+ for(var i=1;i<=300;i++){
+  var x=m+pw*i/300,y=top+ph-ph*Math.min(60,ro3(i))/60;
+  if(i===1)g.moveTo(x,y);else g.lineTo(x,y);}
+ g.stroke();ng(g);
+ var x6=m+pw*6/300,y6=top+ph-ph*Math.min(60,ro3(6))/60;
+ ndot(g,x6,y6,5,'#ff5a8a');
+ nt(g,'#ff5a8a',x6+8,y6-6,10,'6 trials \u2192 < 50%');
+ var x300=m+pw,y300=top+ph-ph*ro3(300)/60;
+ ndot(g,x300,y300,5,'#ffd76a');
+ nt(g,'#ffd76a',x300-108,y300-10,10,'300 trials \u2192 < 1%');
+ for(var i=0;i<=6;i++)nt(g,'#8a7ab8',12,top+ph-ph*i*10/60+4,9,(i*10)+'%');
+ for(var i=0;i<=3;i++)nt(g,'#8a7ab8',m+pw*i/3-12,top+ph+18,9,(i*100)+'');
+ nt(g,'#8a7ab8',m+pw-90,top+ph+34,9,'clean trials');
+ nt(g,'#e6dcff',14,266,10,'zero events is a slow curve \u2014 a perfect record earns itself gradually');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ if(prov){
+  nt(g,'#e6dcff',16,26,11,'where the catches came from');
+  var v=VR;
+  [['caught by a CONTROL',v.caughtByControl,'#7de2b0'],['caught by care',v.caughtByCare,'#ffd76a']].forEach(function(r,i){
+   var y=66+i*74,w=(W-140)*r[1]/6;
+   nf(g,r[2]);g.fillRect(120,y,w,34);ng(g);
+   nt(g,'#e6dcff',16,y+22,10,r[0].slice(0,18));
+   nt(g,r[2],124+w,y+22,11,r[1]+' of 6');});
+  var y2=220;
+  nf(g,'rgba(125,226,176,0.12)');g.fillRect(20,y2,W-40,72);ng(g);
+  ne(g,'#7de2b0',1.3);g.strokeRect(20.5,y2+0.5,W-41,72);ng(g);
+  nt(g,'#7de2b0',34,y2+26,11,v.controlSharePct.toFixed(0)+'% caught by a control');
+  nt(g,'#8a7ab8',34,y2+46,9,'a control that has fired has evidence behind it');
+  nt(g,'#8a7ab8',34,y2+62,9,'vigilance cannot be audited afterwards');
+  var o2=document.getElementById('scout');
+  if(o2)o2.innerHTML='<b>2 of 6</b> catches came from a control rather than from care. That figure is <i>not</i> weak evidence &mdash; a control that fired leaves a record with a name on it, and vigilance leaves nothing to audit.';
+  return;}
+ var bound=ro3(n);
+ nt(g,'#e6dcff',16,26,11,'clean trials: '+n+'   \u00b7   escapes: 0');
+ var m=30,pw=W-60,y=64;
+ nf(g,'rgba(125,226,176,0.25)');g.fillRect(m,y,pw,26);ng(g);
+ var bw=pw*Math.min(100,bound)/100;
+ nf(g,'rgba(255,90,138,0.7)');g.fillRect(m,y,bw,26);ng(g);
+ ne(g,'rgba(150,110,230,0.5)',1);g.strokeRect(m+0.5,y+0.5,pw,26);ng(g);
+ nt(g,'#ff5a8a',m,y+48,11,'true rate could be anywhere in [0%, '+bound.toFixed(1)+'%]');
+ nt(g,'#8a7ab8',m,y+68,9,'observed rate 0% \u2014 which is not the same claim');
+ var y2=170;
+ nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y2,W-40,92);ng(g);
+ ne(g,'rgba(150,110,230,0.45)',1.2);g.strokeRect(20.5,y2+0.5,W-41,92);ng(g);
+ VR.needs.forEach(function(nd,i){
+  var reached=n>=nd[1];
+  nt(g,reached?'#7de2b0':'#8a7ab8',36,y2+26+i*24,10,'under '+nd[0]+'%  needs '+nd[1]+' clean trials'+(reached?'   \u2713':''));});
+ var o=document.getElementById('scout');
+ if(o)o.innerHTML='With <b>'+n+'</b> clean trials and zero escapes, the 95% upper bound is <b>'+bound.toFixed(1)+'%</b>. '+
+  (n<30?'A genuinely leaky process could produce this scoreboard without difficulty.':'The claim is starting to carry weight \u2014 and the denominator is what did it, not the zero.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+10,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.82-zr*0.3,zr];}
+ for(var i=0;i<6;i++){
+  var th=i/6*2*Math.PI,p=P(58*Math.cos(th),40,58*Math.sin(th));
+  ndot(g,p[0],p[1],5,'#7de2b0');}
+ nt(g,'#7de2b0',14,24,11,'six clean trials');
+ var bound=ro3(6);
+ ne(g,'#ff5a8a',1.5);g.setLineDash([5,4]);
+ for(var lev=0;lev<3;lev++){
+  var rr=58+lev*32;
+  g.beginPath();
+  for(var t=0;t<=48;t++){var th=t/48*2*Math.PI,p=P(rr*Math.cos(th),40-lev*36,rr*Math.sin(th));
+   if(t===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);}
+  g.stroke();}
+ g.setLineDash([]);ng(g);
+ var lb=P(126,-32,0);
+ nt(g,'#ff5a8a',lb[0]-30,lb[1],9,'what 6 trials permit');
+ nt(g,'#ff5a8a',14,42,10,'and the interval they actually support');
+ nt(g,'#8a7ab8',14,58,10,'[0%, '+bound.toFixed(0)+'%] \u2014 the zero is not the claim');
+ nt(g,'#8a7ab8',14,H-12,9,'the denominator is the achievement, and the graveyard is what creates it');}
+document.getElementById('scadd').onclick=function(){prov=false;n=n<30?n+6:(n<100?n+30:n+100);drawW4();};
+document.getElementById('scrst').onclick=function(){prov=false;n=6;drawW4();};
+document.getElementById('scprov').onclick=function(){prov=!prov;drawW4();};
+document.getElementById('scsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__scoreboard=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

@@ -1,0 +1,240 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE HOPSCOTCH · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b98cff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b98cff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b98cff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b98cff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b98cff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b98cff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b98cff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b98cff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b98cff;background:transparent;border:2px solid #b98cff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b98cff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b98cff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b98cff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b98cff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b98cff 42%,#0a0e0a);border-left:4px solid #b98cff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b98cff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b98cff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b98cff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b98cff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE PULL REQUEST</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE PULL REQUEST / <b>THE HOPSCOTCH</b></div>
+<h1>THE HOPSCOTCH</h1>
+<div class="kick">never more than H slots from home</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Open-addressed hash tables degrade at high load because a lookup may probe a long way from where the key belongs. Hopscotch hashing fixes the distance instead of the load: every key is guaranteed to live within a <b>neighbourhood of H slots</b> of its home bucket, and when an insertion would break that, existing entries are <b>hopped backwards</b> to make room. A lookup then examines at most H slots, at any load factor, always.<br><br>
+ <span class="lit">LIT</span> verified live on a <b>1,024</b>-slot table with <b>H = 8</b>, at load factors of 50, 70, 85 and 90 percent. Every placed key sits within its neighbourhood in all four runs, with a worst observed distance from home of <b>7</b> &mdash; strictly inside H. At 90% load the table still places <b>893</b> of <b>921</b> keys. The cost is displacement work: <b>416</b> hops in total across the four runs, which is exactly what buys the bound.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Human lineage (content, credited):</b> <b>Maurice Herlihy, Nir Shavit and Moran Tzafrir</b>, <i>Hopscotch Hashing</i>, DISC 2008. The design was aimed at concurrency &mdash; a bounded neighbourhood means a lookup can be made lock-free, because the region a reader must examine is known in advance &mdash; and the sequential bound measured here is a side effect of that goal rather than its point.<br><br>
+ <b>AVAN (AI)</b> should be clear about what the failures mean. At 90% load, <b>28</b> keys could not be placed at all: the hopping found no candidate that could legally move, so the insert was refused rather than allowed to violate the invariant. That is the correct behaviour and it is the honest cost &mdash; hopscotch does not make a full table work, it converts a <i>latency</i> problem into a <i>capacity</i> problem, and a real implementation resizes at that point.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Distance from home, at four load factors.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">A slice of the table, with each key linked to the bucket it belongs to.</div>
+   <div class="btns" style="margin-top:10px"><button id="hpload">raise the load &#9654;</button><button id="hpwin">slide the window</button></div>
+   <div class="cap" id="hpout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the table as a ring, with every key tethered to its home.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;bound the probe distance and lookups stay fast.&rdquo; The inverse is that <b>the bound was not achieved, it was relocated</b>. The work of finding a key is now the work of <i>placing</i> it, paid at insert time by hopping entries backwards, and at high load that work grows until it fails outright. Read backwards, hopscotch does not remove the cost of a crowded table &mdash; it <b>moves the cost to the writer and the failure to the capacity</b>, which is the right trade only because reads outnumber writes and a refused insert is easier to handle than an unbounded probe.</div>
+   <div class="btns" style="margin-top:10px"><button id="hpsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> on a 1,024-slot table with H = 8 at load factors of 50, 70, 85 and 90 percent, every placed key sits within its neighbourhood in all four runs with a worst observed distance from home of 7 - strictly inside H; at 90% load the table still places 893 of 921 keys; and the cost is displacement work, 416 hops in total across the four runs, which is exactly what buys the bound<br><br><span class="fig">FIG</span> Human lineage, credited: Maurice Herlihy, Nir Shavit and Moran Tzafrir, 'Hopscotch Hashing', DISC 2008. The design was aimed at CONCURRENCY - a bounded neighbourhood means a lookup can be made lock-free because the region a reader must examine is known in advance - and the sequential bound measured here is a side effect of that goal rather than its point. AVAN is clear about what the failures mean: at 90% load 28 keys could not be placed at all, because the hopping found no candidate that could legally move, so the insert was REFUSED rather than allowed to violate the invariant. That is correct behaviour and the honest cost - hopscotch does not make a full table work, it converts a LATENCY problem into a CAPACITY problem, and a real implementation resizes at that point.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE PULL REQUEST &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,li=0,win=0;
+var Hn=8,SIZE=1024;
+function rnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function build(keys){
+ var tab=new Array(SIZE).fill(null),failed=0,moves=0;
+ keys.forEach(function(k){
+  var hIdx=k%SIZE,free=-1;
+  for(var d=0;d<SIZE;d++){var i=(hIdx+d)%SIZE;if(tab[i]===null){free=i;break;}}
+  if(free<0){failed++;return;}
+  var guard=0;
+  while(((free-hIdx+SIZE)%SIZE)>=Hn&&guard++<SIZE){
+   var moved=false;
+   for(var back=Hn-1;back>=1;back--){
+    var cand=(free-back+SIZE)%SIZE,occ=tab[cand];
+    if(occ===null)continue;
+    var ch=occ%SIZE;
+    if(((free-ch+SIZE)%SIZE)<Hn){
+     tab[free]=occ;tab[cand]=null;free=cand;moves++;moved=true;break;}}
+   if(!moved)break;}
+  if(((free-hIdx+SIZE)%SIZE)<Hn)tab[free]=k;else failed++;});
+ return {tab:tab,failed:failed,moves:moves};}
+function makeKeys(n,seed){
+ var g=rnd(seed),keys=[],used={};
+ while(keys.length<n){var k=Math.floor(g()*1000000);if(!used[k]){used[k]=1;keys.push(k);}}
+ return keys;}
+var LOADS=[0.5,0.7,0.85,0.9];
+function selftest(){
+ var rows=LOADS.map(function(load){
+  var n=Math.floor(SIZE*load);
+  var R=build(makeKeys(n,2008+Math.round(load*100)));
+  var placed=0,worst=0,allWithin=true,hist=new Array(Hn).fill(0);
+  R.tab.forEach(function(k,i){
+   if(k===null)return;
+   placed++;
+   var d=(i-(k%SIZE)+SIZE)%SIZE;
+   if(d<Hn)hist[d]++;
+   if(d>worst)worst=d;
+   if(d>=Hn)allWithin=false;});
+  return {load:load,n:n,placed:placed,failed:R.failed,moves:R.moves,
+   worst:worst,allWithin:allWithin,hist:hist};});
+ return {H:Hn,size:SIZE,rows:rows,
+  invariantHolds:rows.every(function(r){return r.allWithin;}),
+  worstDistance:Math.max.apply(null,rows.map(function(r){return r.worst;})),
+  strictlyInsideH:Math.max.apply(null,rows.map(function(r){return r.worst;}))<Hn,
+  placesAtHighLoad:rows[3].placed>rows[3].n*0.9,
+  totalMoves:rows.reduce(function(a,r){return a+r.moves;},0),
+  displacementIsTheCost:rows.some(function(r){return r.moves>0;}),
+  ok:rows.every(function(r){return r.allWithin;})&&rows[3].placed>rows[3].n*0.9};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'DISTANCE FROM HOME, AT FOUR LOAD FACTORS');
+ var m=54,gw=(W-m-24)/Hn;
+ VR.rows.forEach(function(r,i){
+  var y=48+i*54;
+  nt(g,'#8a7ab8',18,y+14,9,(r.load*100).toFixed(0)+'%');
+  var mx=Math.max.apply(null,r.hist);
+  for(var d=0;d<Hn;d++){
+   var hh=r.hist[d]/mx*30;
+   nf(g,'rgba(125,226,176,'+(0.28+d/Hn*0.5)+')');
+   g.fillRect(m+d*gw,y+32-hh,gw-3,hh);ng(g);
+   if(i===VR.rows.length-1)nt(g,'#5a4a85',m+d*gw+gw/2-3,y+46,8,''+d);}
+  nt(g,'#5a4a85',W-96,y+14,8,'placed '+r.placed);
+  if(r.failed)nt(g,'#ff5a8a',W-96,y+28,8,r.failed+' refused');});
+ ne(g,'#ff5a8a',1.6);
+ g.beginPath();g.moveTo(m+Hn*gw-2,40);g.lineTo(m+Hn*gw-2,262);g.stroke();ng(g);
+ nt(g,'#ff5a8a',m+Hn*gw+2,150,9,'H = '+Hn);
+ nt(g,'#7de2b0',18,H-10,9,'no key ever sits '+VR.H+' or more slots from home -- worst observed '+
+  VR.worstDistance+', at every load');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var r=VR.rows[li%VR.rows.length];
+ var R=build(makeKeys(r.n,2008+Math.round(r.load*100)));
+ nt(g,'#e6dcff',16,26,11,'load '+(r.load*100).toFixed(0)+'%   slots '+(win*48)+' to '+(win*48+47));
+ var start=win*48,cw=(W-40)/48;
+ for(var i=0;i<48;i++){
+  var idx=(start+i)%SIZE,k=R.tab[idx];
+  nf(g,k===null?'rgba(30,22,50,0.9)':'rgba(125,226,176,0.55)');
+  g.fillRect(20+i*cw,60,cw-1.2,26);ng(g);}
+ nt(g,'#8a7ab8',20,52,8,'the table');
+ // tether each occupant to its home bucket
+ for(var j=0;j<48;j++){
+  var idx2=(start+j)%SIZE,k2=R.tab[idx2];
+  if(k2===null)continue;
+  var home=k2%SIZE;
+  var off=(idx2-home+SIZE)%SIZE;
+  var hx=j-off;
+  if(hx<0)continue;
+  var x1=20+j*cw+cw/2,x2=20+hx*cw+cw/2;
+  ne(g,off===0?'rgba(125,226,176,0.35)':'rgba(255,215,106,0.55)',1);
+  g.beginPath();
+  g.moveTo(x1,86);g.bezierCurveTo(x1,120,x2,120,x2,86);g.stroke();ng(g);}
+ nt(g,'#ffd76a',20,140,8,'gold arcs: a key sitting away from its home bucket');
+ nt(g,'#7de2b0',20,156,8,'green: sitting exactly at home');
+ var y2=176;
+ var mx=Math.max.apply(null,r.hist);
+ nt(g,'#8a7ab8',20,y2,9,'distances across the whole table');
+ var gw=(W-56)/Hn;
+ for(var d=0;d<Hn;d++){
+  var hh=r.hist[d]/mx*54;
+  nf(g,'rgba(90,214,255,'+(0.3+d/Hn*0.5)+')');
+  g.fillRect(28+d*gw,y2+70-hh,gw-4,hh);ng(g);
+  nt(g,'#5a4a85',28+d*gw+gw/2-3,y2+84,8,''+d);}
+ var y3=y2+96;
+ nf(g,r.allWithin?'rgba(125,226,176,0.16)':'rgba(255,90,138,0.16)');
+ g.fillRect(20,y3,W-40,44);ng(g);
+ ne(g,r.allWithin?'#7de2b0':'#ff5a8a',1.5);g.strokeRect(20.5,y3+0.5,W-41,44);ng(g);
+ nt(g,r.allWithin?'#7de2b0':'#ff5a8a',36,y3+27,11,
+  'worst distance '+r.worst+' of a permitted '+(VR.H-1)+
+  (r.failed?('   ('+r.failed+' refused)'):''));
+ var o=document.getElementById('hpout');
+ if(o)o.innerHTML='At <b>'+(r.load*100).toFixed(0)+'%</b> load every one of the <b>'+r.placed+
+  '</b> placed keys sits within <b>'+VR.H+'</b> slots of home, worst observed <b>'+r.worst+
+  '</b>. '+(r.failed?('<b>'+r.failed+'</b> inserts were refused rather than allowed to break the invariant &mdash; the honest cost.')
+   :'Nothing was refused at this load.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var R=build(makeKeys(Math.floor(SIZE*0.7),2078));
+ var shown=192;
+ for(var i=0;i<shown;i++){
+  var k=R.tab[i];
+  var th=i/shown*2*Math.PI;
+  var q=P(110*Math.cos(th),0,110*Math.sin(th));
+  if(k===null){ndot(g,q[0],q[1],1,'rgba(60,45,95,0.7)');continue;}
+  var off=(i-(k%SIZE)+SIZE)%SIZE;
+  ndot(g,q[0],q[1],2.2,off===0?'#7de2b0':'#ffd76a');
+  if(off>0&&off<Hn){
+   var hth=((i-off+shown)%shown)/shown*2*Math.PI;
+   var hq=P(110*Math.cos(hth),-26,110*Math.sin(hth));
+   ne(g,'rgba(255,215,106,0.3)',1);
+   g.beginPath();g.moveTo(q[0],q[1]);g.lineTo(hq[0],hq[1]);g.stroke();ng(g);}}
+ ne(g,'rgba(150,110,230,0.3)',1.2);
+ g.beginPath();
+ for(var j=0;j<=64;j++){
+  var t=j/64*2*Math.PI;
+  var p=P(110*Math.cos(t),0,110*Math.sin(t));
+  if(j===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);}
+ g.closePath();g.stroke();ng(g);
+ nt(g,'#7de2b0',14,24,11,'green: keys resting exactly at home');
+ nt(g,'#ffd76a',14,42,10,'gold: displaced, but never by more than '+(VR.H-1));
+ nt(g,'#8a7ab8',14,58,10,'every tether is shorter than H, by construction');
+ nt(g,'#8a7ab8',14,H-12,9,'the bound was not achieved, it was moved to the writer');}
+document.getElementById('hpload').onclick=function(){li++;drawW4();};
+document.getElementById('hpwin').onclick=function(){win=(win+1)%8;drawW4();};
+document.getElementById('hpsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__hopscotch=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

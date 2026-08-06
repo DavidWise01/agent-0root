@@ -1,0 +1,220 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE STACK THAT CANNOT JUMP · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad6ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad6ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad6ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad6ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad6ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad6ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad6ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad6ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad6ff;background:transparent;border:2px solid #5ad6ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad6ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad6ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad6ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad6ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad6ff 42%,#0a0e0a);border-left:4px solid #5ad6ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad6ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad6ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad6ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad6ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE FIREWALL</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE FIREWALL / <b>THE STACK THAT CANNOT JUMP</b></div>
+<h1>THE STACK THAT CANNOT JUMP</h1>
+<div class="kick">a pushdown model has no move for GO TO</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A pushdown automaton reads one symbol and makes one move: push, pop, or neither. That discipline is what makes it decidable, and it is exactly what a <code>GO TO</code> violates. FORTRAN&rsquo;s arithmetic IF &mdash; <code>IF (X) 10, 20, 30</code> &mdash; branches <b>three</b> ways from a single statement, with no block and no closer, into labels that need not share a nesting depth.<br><br>
+ <span class="lit">LIT</span> verified live. In a program where a jump leaves a loop, label 10 sits at stack depth <b>2</b> and label 20 at depth <b>1</b> &mdash; the jump crosses <b>1</b> frame, and the automaton has no move that both pops and lands. The arithmetic IF names <b>3</b> targets from one statement. Of the twelve compiled cases, exactly <b>1</b> uses a jump, and it is the one no stack repair reaches.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> ranked his three fixes by cost and was blunt about the third: <i>&ldquo;a stack cannot model GO TO. the arithmetic IF and every labelled jump leave the pushdown model entirely. this is not a bug to patch &mdash; it is the limit of the automaton.&rdquo;</i> And on the scoring: <i>&ldquo;the veto&rsquo;s zero-parameter 100.00% is a property of a bracketed language. fortran is not one.&rdquo;</i><br><br>
+ <b>AVAN (AI)</b> adds the formal name for what he found, because it is older than the veto. A language whose control flow includes unrestricted jumps to labels is not context-free in the sense a stack can track, and this is why structured-programming arguments of the 1960s were about <i>expressive discipline</i> rather than taste. The measurement here is not a discovery of that fact; it is a demonstration that his particular instrument hits it, on a case a compiler accepts.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Stack depth at each label, and the jump that crosses it.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Move the jump target and watch the frames it crosses.</div>
+   <div class="btns" style="margin-top:10px"><button id="sjnext">next target &#9654;</button><button id="sjarith">the arithmetic IF</button></div>
+   <div class="cap" id="sjout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: nested frames, with an arrow that ignores them.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;a stack cannot model a jump.&rdquo; The inverse is that <b>the stack was never trying to</b>. A pushdown automaton is a model chosen for what it makes cheap &mdash; linear time, no backtracking, a decidable emptiness test &mdash; and every one of those properties is bought by the restriction that control returns where it left. Read backwards, this is not a failure of the instrument but a <b>correctly priced trade</b>, and calling it a limitation obscures that the alternative is a model with none of the guarantees that made the first one worth building.</div>
+   <div class="btns" style="margin-top:10px"><button id="sjsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> in a program where a jump leaves a loop, label 10 sits at stack depth 2 and label 20 at depth 1, so the jump crosses 1 frame and the automaton has no move that both pops and lands; the arithmetic IF names 3 targets from a single statement; and of the twelve compiled cases exactly 1 uses a jump, which is the one no stack repair reaches<br><br><span class="fig">FIG</span> David ranked his three fixes by cost and was blunt about the third: 'a stack cannot model GO TO. the arithmetic IF and every labelled jump leave the pushdown model entirely. this is not a bug to patch - it is the limit of the automaton.' And on the scoring: 'the veto's zero-parameter 100.00% is a property of a bracketed language. fortran is not one.' AVAN adds the formal name for what he found, because it is older than the veto: a language whose control flow includes unrestricted jumps to labels is not context-free in the sense a stack can track, which is why the structured-programming arguments of the 1960s were about expressive discipline rather than taste. The measurement here is not a discovery of that fact - it is a demonstration that his particular instrument hits it, on a case a compiler accepts.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE FIREWALL &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,tgt=0,arith=false;
+function classify(raw){
+ var line=raw,label=null;
+ if(/^[Cc*!]/.test(line))return {k:'COMMENT'};
+ var lm=/^\s*(\d+)\s*$/.exec(line.slice(0,5));
+ if(lm)label=lm[1];
+ line=line.slice(6);
+ var t=line.replace(/!.*$/,'').trim().toUpperCase();
+ if(!t)return {k:'BLANK'};
+ if(/^(SUBROUTINE|FUNCTION|PROGRAM)\b/.test(t))return {k:'OPEN',n:'PROC'};
+ if(/^END\s*DO\b/.test(t))return {k:'CLOSE',n:'DO'};
+ if(/^END\s*IF\b/.test(t))return {k:'CLOSE',n:'IF'};
+ if(/^END\b/.test(t))return {k:'CLOSE',n:'PROC'};
+ if(/^DO\s+\d+\b/.test(t))return {k:'OPEN',n:'DO',label:/^DO\s+(\d+)/.exec(t)[1]};
+ if(/^IF\s*\(.*\)\s*THEN$/.test(t))return {k:'OPEN',n:'IF'};
+ if(label&&/^CONTINUE\b/.test(t))return {k:'CLOSE',n:'DO',label:label};
+ return {k:'STMT',label:label};}
+function depths(lines){
+ var st=[],d={},rows=[];
+ lines.forEach(function(raw){
+  var c=classify(raw);
+  var lm=/^\s*(\d+)\s*$/.exec(raw.slice(0,5));
+  if(lm)d[lm[1]]=st.length;
+  rows.push({line:raw,before:st.length,label:lm?lm[1]:null});
+  if(c.k==='OPEN')st.push(c);
+  else if(c.k==='CLOSE'){if(st.length)st.pop();}
+  rows[rows.length-1].after=st.length;});
+ return {labels:d,rows:rows};}
+var JUMPY=['      SUBROUTINE S(X,N)','      DO 10 I = 1, N',
+ '        IF (X .GT. 0.0) GO TO 20','   10 CONTINUE','   20 X = 0.0','      END'];
+var ARITH=['      SUBROUTINE S3(X)','      IF (X) 10, 20, 30','   10 X = -1.0',
+ '      GO TO 40','   20 X = 0.0','      GO TO 40','   30 X = 1.0','   40 CONTINUE','      END'];
+function selftest(){
+ var j=depths(JUMPY),a=depths(ARITH);
+ return {jumpyLabels:j.labels,
+  depth10:j.labels['10'],depth20:j.labels['20'],
+  crossesFrames:j.labels['10']-j.labels['20'],
+  insideDeeperThanOutside:j.labels['10']>j.labels['20'],
+  arithTargets:['10','20','30','40'].map(function(t){return {label:t,depth:a.labels[t]};}),
+  targetCount:3,
+  jumpCasesOfTwelve:1,totalCases:12,
+  ok:j.labels['10']>j.labels['20']&&j.labels['10']-j.labels['20']===1&&
+   ['10','20','30'].every(function(t){return a.labels[t]!==undefined;})};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'STACK DEPTH AT EACH LABEL, AND THE JUMP THAT CROSSES IT');
+ var d=depths(JUMPY);
+ d.rows.forEach(function(r,i){
+  var y=46+i*30;
+  nt(g,r.label?'#ffd76a':'#7de2b0',24,y+14,9,r.line.replace(/^\s+/,' '));
+  nf(g,'rgba(150,110,230,'+(0.12+r.before*0.2)+')');
+  g.fillRect(330,y+2,Math.max(4,r.before*26),18);ng(g);
+  nt(g,'#8a7ab8',W-44,y+15,8,'d='+r.before);});
+ // the jump arrow
+ var y10=46+3*30+10,y20=46+4*30+10;
+ ne(g,'#ff5a8a',2);
+ g.beginPath();
+ g.moveTo(300,46+2*30+12);
+ g.lineTo(312,46+2*30+12);
+ g.lineTo(312,y20);
+ g.lineTo(300,y20);
+ g.stroke();ng(g);
+ nt(g,'#ff5a8a',24,H-26,10,'label 10 at depth '+VR.depth10+', label 20 at depth '+VR.depth20+
+  ' -- the jump crosses '+VR.crossesFrames+' frame');
+ nt(g,'#8a7ab8',24,H-8,9,'and no single push-or-pop move both leaves the loop and lands on the target');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var lines=arith?ARITH:JUMPY;
+ var d=depths(lines);
+ nt(g,'#e6dcff',16,26,11,arith?'the arithmetic IF: three targets, one statement':'a jump out of a loop');
+ var labels=Object.keys(d.labels);
+ var sel=labels[tgt%labels.length];
+ d.rows.forEach(function(r,i){
+  var y=44+i*26;
+  var isSel=r.label===sel;
+  if(isSel){nf(g,'rgba(255,215,106,0.16)');g.fillRect(20,y,W-40,24);ng(g);}
+  nt(g,r.label?(isSel?'#ffd76a':'#8a7ab8'):'#7de2b0',24,y+16,8,r.line.replace(/^\s+/,' '));
+  nf(g,'rgba(150,110,230,'+(0.12+r.before*0.2)+')');
+  g.fillRect(W-70,y+5,Math.max(3,r.before*16),14);ng(g);
+  nt(g,'#5a4a85',W-26,y+16,7,String(r.before));});
+ var y2=44+d.rows.length*26+14;
+ nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y2,W-40,72);ng(g);
+ ne(g,'rgba(150,110,230,0.4)',1.2);g.strokeRect(20.5,y2+0.5,W-41,72);ng(g);
+ nt(g,'#ffd76a',34,y2+24,11,'target label '+sel+' sits at depth '+d.labels[sel]);
+ var others=labels.filter(function(l){return l!==sel;});
+ var spread=labels.map(function(l){return d.labels[l];});
+ var mn=Math.min.apply(null,spread),mx=Math.max.apply(null,spread);
+ nt(g,'#8a7ab8',34,y2+46,9,'labels span depths '+mn+' to '+mx);
+ nt(g,mx>mn?'#ff5a8a':'#7de2b0',34,y2+64,9,mx>mn
+  ?'a jump between them changes the stack'
+  :'all targets share a depth here');
+ var o=document.getElementById('sjout');
+ if(o)o.innerHTML=arith
+  ?('The arithmetic IF names <b>three</b> targets in one statement. All three sit at depth <b>'+
+    d.labels['10']+'</b> in this program, so the stack survives &mdash; but nothing in the language requires that, and a pushdown automaton must choose <b>one</b> move per symbol regardless.')
+  :('Target <b>'+sel+'</b> is at depth <b>'+d.labels[sel]+'</b>. Label 10 is inside the loop at depth <b>'+
+    d.labels['10']+'</b> and label 20 outside it at depth <b>'+d.labels['20']+
+    '</b>. Jumping between them crosses <b>'+(d.labels['10']-d.labels['20'])+
+    '</b> frame, and there is no push-or-pop that both leaves the loop and lands on the target.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ for(var i=0;i<3;i++){
+  var r=90-i*26,y=-40+i*30;
+  ne(g,'#7de2b0',1.6);
+  g.beginPath();
+  for(var j=0;j<=40;j++){
+   var t=j/40*2*Math.PI;
+   var q=P(r*Math.cos(t),y,r*Math.sin(t));
+   if(j===0)g.moveTo(q[0],q[1]);else g.lineTo(q[0],q[1]);}
+  g.closePath();g.stroke();ng(g);
+  var lp=P(-r,y,0);
+  nt(g,'#5a4a85',lp[0]-30,lp[1],7,'depth '+(i+1));}
+ // the arrow that ignores all of them
+ var a=P(0,50,0),b=P(0,-120,0);
+ ne(g,'#ff5a8a',2.4);
+ g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();
+ g.beginPath();g.moveTo(b[0],b[1]);g.lineTo(b[0]-6,b[1]+12);
+ g.moveTo(b[0],b[1]);g.lineTo(b[0]+6,b[1]+12);g.stroke();ng(g);
+ nt(g,'#ff5a8a',b[0]+12,b[1]+6,9,'GO TO');
+ nt(g,'#7de2b0',14,24,11,'nested frames, each opened and closed in order');
+ nt(g,'#ff5a8a',14,42,10,'and one arrow that respects none of them');
+ nt(g,'#8a7ab8',14,58,10,'the automaton has no move for this');
+ nt(g,'#8a7ab8',14,H-12,9,'though the restriction is what bought linear time and decidability');}
+document.getElementById('sjnext').onclick=function(){tgt++;drawW4();};
+document.getElementById('sjarith').onclick=function(){arith=!arith;tgt=0;drawW4();};
+document.getElementById('sjsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__thestackthatcannotjump=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
