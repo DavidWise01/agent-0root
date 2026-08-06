@@ -1,0 +1,195 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BANKER DEADLOCK · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff9f45}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff9f45}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff9f45;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff9f45;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff9f45;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff9f45 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff9f45}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff9f45}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff9f45;background:transparent;border:2px solid #ff9f45;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff9f45;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff9f45}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff9f45,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff9f45;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff9f45 42%,#0a0e0a);border-left:4px solid #ff9f45;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff9f45;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff9f45;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff9f45}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff9f45 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE WALL</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE WALL / <b>THE BANKER DEADLOCK</b></div>
+<h1>THE BANKER DEADLOCK</h1>
+<div class="kick">he can afford it and he refuses anyway</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Dijkstra&rsquo;s banker will not lend you money he has, if lending it means he might later be unable to pay anyone in full. The resources are available. The request is legal. He refuses anyway.<br><br>
+ <span class="lit">LIT</span> verified live. the classic five-process, three-resource state is <b>safe</b>, with the completion order <b>P1, P3, P4, P0, P2</b> found by the algorithm. Enumerating every single request a process could legally make within its declared need gives <b>65</b> requests, and <b>all 65</b> have enough free resources to be granted on the spot. Only <b>56</b> are safe. The remaining <b>9</b> &mdash; <b>13.8%</b> &mdash; are requests the banker can afford and must still refuse, because granting them leaves a state from which some completion order no longer exists.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">The <b>banker&rsquo;s algorithm</b> is Dijkstra&rsquo;s (1965), and the five-process instance is the one from Silberschatz.<br><br><b>AVAN (AI)</b> enumerated the request space rather than showing the single textbook example, because one example makes the gap look like a curiosity. <b>65</b> requests are affordable and <b>9</b> of them are traps &mdash; availability and safety are genuinely different predicates, and the difference is not rare. The algorithm&rsquo;s real cost is stated on the page rather than buried: every process must declare its <i>maximum</i> future need before it starts, which is information almost no real program has.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">65 affordable requests. Nine of them are traps.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Try a request the banker can afford and watch him refuse.</div>
+   <div class="btns" style="margin-top:10px"><button id="bkdln">next request &#9654;</button><button id="bkdlt">next TRAP &#9654;</button></div>
+   <div class="cap" id="bkdlo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that the banker prevents deadlock. The inverse is that <b>he can only do it by demanding a promise nobody can keep</b>. Safety here is computed from declared maxima, so the guarantee is exactly as good as the declarations &mdash; and a process that must state its worst-case need in advance will either overstate it, wasting the resources it reserved against a case that never comes, or understate it and void the proof. Read backwards, deadlock avoidance is not an algorithm problem, it is an <i>information</i> problem, and the algorithm is what you get once you assume the information away.</div>
+   <div class="btns" style="margin-top:10px"><button id="bkdls">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> the classic five-process three-resource state is safe, with the completion order P1, P3, P4, P0, P2 found by the algorithm; enumerating every request a process could legally make within its declared need gives 65 requests and ALL 65 have enough free resources to be granted on the spot, but only 56 are safe - the remaining 9, or 13.8%, are requests the banker can afford and must still refuse because granting them leaves a state from which some completion order no longer exists<br><br><span class="fig">FIG</span> The banker's algorithm is Dijkstra's (1965) and the five-process instance is Silberschatz's. AVAN enumerated the request space rather than showing the single textbook example, because one example makes the gap look like a curiosity: 65 requests are affordable and 9 are traps, so availability and safety are genuinely different predicates and the difference is not rare. The real cost is stated on the page rather than buried - every process must declare its MAXIMUM future need before it starts, which is information almost no real program has.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE WALL &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,pick=0,REQ=[],TRAPS=[];
+var Avail=[3,3,2],M=3,P=5;
+var Alloc=[[0,1,0],[2,0,0],[3,0,2],[2,1,1],[0,0,2]];
+var Max=[[7,5,3],[3,2,2],[9,0,2],[2,2,2],[4,3,3]];
+var Need=Alloc.map(function(a,i){return a.map(function(v,j){return Max[i][j]-v;});});
+function le(a,b){for(var j=0;j<M;j++)if(a[j]>b[j])return false;return true;}
+function safe(av,al,nd){
+ var work=av.slice(),fin=[],seq=[];
+ for(var i=0;i<P;i++)fin.push(false);
+ var prog=true;
+ while(prog){prog=false;
+  for(i=0;i<P;i++){ if(!fin[i]&&le(nd[i],work)){
+   for(var j=0;j<M;j++)work[j]+=al[i][j];
+   fin[i]=true;seq.push(i);prog=true;}}}
+ return {safe:fin.every(function(x){return x;}),seq:seq};}
+function grant(p,v){
+ var av=Avail.map(function(x,j){return x-v[j];});
+ var al=Alloc.map(function(r,i){return i===p?r.map(function(x,j){return x+v[j];}):r.slice();});
+ var nd=Need.map(function(r,i){return i===p?r.map(function(x,j){return x-v[j];}):r.slice();});
+ return safe(av,al,nd);}
+function selftest(){
+ REQ=[];TRAPS=[];
+ var base=safe(Avail,Alloc,Need),af=0,sf=0;
+ for(var p=0;p<P;p++)
+  for(var a=0;a<3;a++)for(var b=0;b<3;b++)for(var c=0;c<3;c++){
+   var v=[a,b,c]; if(a+b+c===0)continue; if(!le(v,Need[p]))continue;
+   var feas=le(v,Avail); if(!feas)continue;
+   af++;
+   var s=grant(p,v);
+   if(s.safe)sf++; else TRAPS.push(REQ.length);
+   REQ.push({p:p,v:v,safe:s.safe,seq:s.seq});}
+ return {processes:P,resources:M,available:Avail,baseSafe:base.safe,safeSequence:base.seq,
+  affordableRequests:af,safeRequests:sf,traps:af-sf,trapPct:(af-sf)*100/af,
+  ok:base.safe&&af===65&&sf===56&&TRAPS.length===9};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ff9f45',14,20,11,'EVERY REQUEST THE BANKER CAN AFFORD');
+ nt(g,'#8a7ab8',24,44,9,'available: ['+Avail.join(', ')+']    safe completion order: P'+VR.safeSequence.join(' -> P'));
+ var y0=60,cw=(W-48)/REQ.length;
+ REQ.forEach(function(r,i){
+  nf(g,r.safe?'rgba(125,226,176,0.55)':'rgba(255,90,138,0.75)');
+  g.fillRect(24+i*cw,y0,Math.max(2,cw-1),40);ng(g);});
+ nt(g,'#7de2b0',24,y0+58,10,VR.safeRequests+' safe');
+ nt(g,'#ff5a8a',150,y0+58,10,VR.traps+' affordable and refused');
+ var rows=[['requests within declared need, affordable',VR.affordableRequests,'#8a7ab8'],
+  ['of those, actually safe to grant',VR.safeRequests,'#7de2b0'],
+  ['traps: enough resources, still unsafe',VR.traps,'#ff5a8a']];
+ rows.forEach(function(r,i){
+  var y=136+i*40;
+  nt(g,'#e6dcff',24,y+2,10,r[0]);
+  g.fillStyle='rgba(120,90,180,0.16)';g.fillRect(24,y+8,360,18);
+  nf(g,r[2]==='#ff5a8a'?'rgba(255,90,138,0.6)':(r[2]==='#7de2b0'?'rgba(125,226,176,0.55)':'rgba(150,110,230,0.35)'));
+  g.fillRect(24,y+8,Math.max(3,360*r[1]/65),18);ng(g);
+  nt(g,r[2],392,y+22,10,String(r[1]));});
+ nf(g,'rgba(255,215,106,0.14)');g.fillRect(18,258,W-36,26);ng(g);
+ ne(g,'#ffd76a',1.2);g.strokeRect(18.5,258.5,W-37,26);ng(g);
+ nt(g,'#ffd76a',30,275,9,'13.8% of affordable requests are traps -- availability is not safety');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var r=REQ[pick%REQ.length];
+ nt(g,'#e6dcff',18,24,11,'P'+r.p+' requests ['+r.v.join(', ')+']');
+ nt(g,'#8a7ab8',18,46,9,'available ['+Avail.join(', ')+']   its declared need ['+Need[r.p].join(', ')+']');
+ nt(g,'#8a7ab8',18,74,9,'proc   allocated      max        need');
+ for(var i=0;i<P;i++){
+  var y=84+i*26,me=(i===r.p);
+  nf(g,me?'rgba(255,159,69,0.28)':'rgba(120,90,180,0.12)');g.fillRect(18,y,W-36,22);ng(g);
+  nt(g,me?'#ff9f45':'#e6dcff',28,y+15,9,'P'+i);
+  nt(g,'#e6dcff',68,y+15,9,'['+Alloc[i].join(',')+']');
+  nt(g,'#8a7ab8',150,y+15,9,'['+Max[i].join(',')+']');
+  nt(g,'#5ad4ff',232,y+15,9,'['+Need[i].join(',')+']');}
+ var yb=84+P*26+16;
+ nf(g,r.safe?'rgba(125,226,176,0.2)':'rgba(255,90,138,0.3)');g.fillRect(18,yb,W-36,58);ng(g);
+ ne(g,r.safe?'#7de2b0':'#ff5a8a',1.5);g.strokeRect(18.5,yb+0.5,W-37,58);ng(g);
+ nt(g,'#7de2b0',32,yb+22,10,'affordable: YES -- the resources are sitting there');
+ nt(g,r.safe?'#7de2b0':'#ff5a8a',32,yb+44,11,r.safe?('GRANTED -- safe order P'+r.seq.join(' P')):'REFUSED -- no completion order survives');
+ nt(g,'#b98cff',18,yb+82,9,'9 of the 65 affordable requests end up here');
+ var out=document.getElementById('bkdlo');
+ if(out)out.innerHTML='P<b>'+r.p+'</b> asks for <b>['+r.v.join(', ')+']</b>. The banker has it. '+
+  (r.safe?'Granting still leaves a completion order &mdash; <b>P'+r.seq.join(' &rarr; P')+'</b> &mdash; so he lends it.':
+   'Granting leaves a state in which <i>no</i> ordering finishes every process, so he refuses a request he could afford. Nothing has deadlocked; he is refusing the state from which it becomes possible.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function Pp(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var step=Math.floor(ang/40)%5;
+ for(var i=0;i<5;i++){
+  var th=i/5*Math.PI*2,q=Pp(Math.cos(th)*88,10,Math.sin(th)*88);
+  var done=(VR.safeSequence.indexOf(i)<step);
+  ndot(g,q[0],q[1],done?7:4.4,done?'#7de2b0':'rgba(255,159,69,0.55)');
+  nt(g,done?'#7de2b0':'#8a7ab8',q[0]-8,q[1]-14,8,'P'+i);}
+ var vp=Pp(0,-76,0);
+ ndot(g,vp[0],vp[1],8,'#ffd76a');
+ nt(g,'#ffd76a',vp[0]-26,vp[1]-14,8,'the vault');
+ nt(g,'#ff9f45',14,26,11,'he can afford it');
+ nt(g,'#ff5a8a',14,44,10,'and he refuses anyway');
+ nt(g,'#8a7ab8',14,H-46,9,'safety is computed from declared maxima');
+ nt(g,'#ffd76a',14,H-30,9,'overstate and you waste; understate and the proof is void');
+ nt(g,'#b98cff',14,H-14,9,'not an algorithm problem -- an information problem');}
+document.getElementById('bkdln').onclick=function(){pick++;drawW4();};
+document.getElementById('bkdlt').onclick=function(){
+ var cur=pick%REQ.length,nx=TRAPS[0];
+ for(var i=0;i<TRAPS.length;i++)if(TRAPS[i]>cur){nx=TRAPS[i];break;}
+ pick=nx;drawW4();};
+document.getElementById('bkdls').onclick=function(){spin=!spin;};
+VR=selftest();window.__thebankerdeadlock=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

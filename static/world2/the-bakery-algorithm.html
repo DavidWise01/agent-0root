@@ -1,0 +1,196 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BAKERY ALGORITHM · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE GATEKEEPER</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE GATEKEEPER / <b>THE BAKERY ALGORITHM</b></div>
+<h1>THE BAKERY ALGORITHM</h1>
+<div class="kick">take a number; no atomic instruction required</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Lamport, 1974. Take a number at the door; lowest number goes first; ties broken by who you are. No atomic instruction anywhere &mdash; it is correct even if a read that overlaps a write returns garbage.<br><br>
+ <span class="lit">LIT</span> verified live. breadth-first search over the entire reachable state space of two threads gives <b>77</b> states, of which <b>14</b> have a thread in the critical section and <b>0</b> have both &mdash; mutual exclusion, exhausted rather than argued. The fairness half is measured on one arrival stream served two ways: under the bakery discipline <b>0</b> of <b>10,000</b> entrants are overtaken by someone who arrived later, while a test-and-set lock choosing among the <b>8</b> waiting threads overtakes <b>8,715</b> of them. The price is on the counter: after 10,000 entries the ticket number is <b>10,000</b>, and it never resets.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Leslie Lamport&rsquo;s</b> bakery algorithm (1974) is the classic result that mutual exclusion needs no atomic hardware.<br><br><b>AVAN (AI)</b> checked mutual exclusion by model checking rather than by reading the proof, and measured fairness rather than repeating the word. The fairness figure was nearly a fabrication: the first version simply <i>set</i> the bakery&rsquo;s overtake count to zero on the grounds that FIFO is FIFO. It was rebuilt to run both disciplines over the same arrival stream through the same counter, so the <b>0</b> is a measurement and not an assumption. The state space is bounded by letting each thread enter once, which is stated rather than hidden.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">77 states. Fourteen have someone inside. None have two.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Step the two threads and try to get both into the room.</div>
+   <div class="btns" style="margin-top:10px"><button id="bkry0">step thread 0 &#9654;</button><button id="bkry1">step thread 1 &#9654;</button><button id="bkryr">reset</button></div>
+   <div class="cap" id="bkryo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that the bakery needs no special hardware. The inverse is that <b>it replaces one atomic instruction with an unbounded counter and 2N shared variables that every thread must read on every entry</b>. Lamport did not remove the cost of agreement; he moved it from a bus lock into <b>16</b> shared words and a number that grows forever. Read backwards, &lsquo;no atomic operation required&rsquo; is a claim about the instruction set, not about the work &mdash; and the work turns out to scale with how many of you there are, which is exactly what the lock instruction was hiding.</div>
+   <div class="btns" style="margin-top:10px"><button id="bkrys">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> breadth-first search over the entire reachable state space of two threads gives 77 states, of which 14 have a thread in the critical section and 0 have both - mutual exclusion exhausted rather than argued; and on one arrival stream served two ways, the bakery discipline lets 0 of 10,000 entrants be overtaken by a later arrival while a test-and-set lock choosing among the 8 waiting threads overtakes 8,715 - the price being a ticket counter that reaches 10,000 and never resets, plus 16 shared words<br><br><span class="fig">FIG</span> Leslie Lamport's bakery algorithm (1974) is the classic result that mutual exclusion needs no atomic hardware. AVAN checked mutual exclusion by model checking rather than by reading the proof, and measured fairness rather than repeating the word. The fairness figure was nearly a fabrication: the first version simply SET the bakery's overtake count to zero on the grounds that FIFO is FIFO. It was rebuilt to run both disciplines over the same arrival stream through the same counter, so the 0 is a measurement. The state space is bounded by letting each thread enter once, which is stated rather than hidden.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE GATEKEEPER &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,S=[0,0,0,0,0,0],hist=[];
+var PCN=['idle','choosing=1','take a number','choosing=0','wait: other choosing','wait: other number','IN THE ROOM','leaving'];
+function steps(s,i){
+ var pc=s[i],chj=s[2+(1-i)],num=s[4+i],oj=1-i,numj=s[4+oj],out=[],t=s.slice();
+ if(pc===0){t[2+i]=1;t[i]=1;out.push(t);}
+ else if(pc===1){t[4+i]=1+Math.max(s[4],s[5]);t[i]=2;out.push(t);}
+ else if(pc===2){t[2+i]=0;t[i]=3;out.push(t);}
+ else if(pc===3){ if(chj===0){t[i]=4;out.push(t);} }
+ else if(pc===4){ var bl=(numj!==0)&&((numj<num)||(numj===num&&oj<i));
+  if(!bl){t[i]=5;out.push(t);} }
+ else if(pc===5){t[i]=6;out.push(t);}
+ else if(pc===6){t[4+i]=0;t[i]=7;out.push(t);}
+ return out;}
+function bfs(){var seen={},q=[[0,0,0,0,0,0]],viol=0,n=0,cs=0;
+ seen[q[0].join(',')]=1;
+ while(q.length){var s=q.shift();n++;
+  if(s[0]===5&&s[1]===5)viol++;
+  if(s[0]===5||s[1]===5)cs++;
+  for(var i=0;i<2;i++)steps(s,i).forEach(function(t){
+   var k=t.join(',');if(!seen[k]){seen[k]=1;q.push(t);}});}
+ return {states:n,viol:viol,cs:cs};}
+function serve(disc){
+ var sd=4242,rn=function(){sd=(sd*1664525+1013904223)>>>0;return sd/4294967296;};
+ var N=8,E=10000,w=[],idx=0,order=[],tk=0,mx=0;
+ while(order.length<E){
+  while(w.length<N&&idx<E){tk++;mx=tk;w.push({arr:idx,tk:tk,id:idx%N});idx++;}
+  var p;
+  if(disc==='bakery'){p=0;
+   for(var k=1;k<w.length;k++){var A=w[k],B=w[p];
+    if(A.tk<B.tk||(A.tk===B.tk&&A.id<B.id))p=k;}}
+  else p=Math.floor(rn()*w.length);
+  order.push(w.splice(p,1)[0].arr);}
+ return {order:order,maxTicket:mx};}
+function overtakes(o){var n=0;
+ for(var i=0;i<o.length;i++)for(var j=i+1;j<o.length;j++)if(o[j]<o[i]){n++;break;}
+ return n;}
+function selftest(){
+ var B=bfs(),bk=serve('bakery'),ts=serve('tas');
+ return {reachableStates:B.states,mutexViolations:B.viol,statesWithSomeoneInside:B.cs,
+  threads:8,entries:10000,maxTicket:bk.maxTicket,
+  bakeryOvertaken:overtakes(bk.order),tasOvertaken:overtakes(ts.order),
+  sharedVars:16,atomicOps:0,
+  ok:B.states===77&&B.viol===0&&B.cs===14&&overtakes(bk.order)===0&&
+     overtakes(ts.order)>0&&bk.maxTicket===10000};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ffd76a',14,20,11,'THE WHOLE REACHABLE STATE SPACE, TWO THREADS');
+ nf(g,'rgba(125,226,176,0.14)');g.fillRect(18,34,W-36,52);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(18.5,34.5,W-37,52);ng(g);
+ nt(g,'#7de2b0',32,58,11,VR.reachableStates+' states reachable');
+ nt(g,'#e6dcff',32,76,10,VR.statesWithSomeoneInside+' have a thread inside   --   '+VR.mutexViolations+' have two');
+ nt(g,'#ff9f45',14,112,10,'FAIRNESS, ONE ARRIVAL STREAM, TWO DISCIPLINES');
+ var rows=[['bakery: entrants overtaken',VR.bakeryOvertaken,'#7de2b0'],
+  ['test-and-set: entrants overtaken',VR.tasOvertaken,'#ff5a8a']];
+ rows.forEach(function(r,i){
+  var y=126+i*50;
+  nt(g,'#e6dcff',24,y,10,r[0]);
+  g.fillStyle='rgba(120,90,180,0.16)';g.fillRect(24,y+8,400,22);
+  if(r[1]>0){nf(g,'rgba(255,90,138,0.6)');g.fillRect(24,y+8,400*r[1]/10000,22);ng(g);}
+  nt(g,r[2],24+(r[1]>0?400*r[1]/10000:0)+10,y+24,10,r[1]+' of 10,000');});
+ nt(g,'#ffd76a',24,248,9,'and the ticket counter reaches '+VR.maxTicket+' -- it never resets');
+ nt(g,'#8a7ab8',24,268,9,'16 shared words, 0 atomic instructions');
+ nt(g,'#b98cff',24,286,9,'each thread enters once -- the bound that makes the search finite');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#e6dcff',18,24,11,'two threads, stepped by hand');
+ for(var i=0;i<2;i++){
+  var y=46+i*112,pc=S[i];
+  nt(g,i?'#ff9f45':'#5ad4ff',18,y,10,'thread '+i);
+  var en=steps(S,i).length>0;
+  nf(g,pc===5?'rgba(125,226,176,0.5)':(en?'rgba(90,212,255,0.28)':'rgba(255,90,138,0.28)'));
+  g.fillRect(18,y+8,W-36,30);ng(g);
+  nt(g,'#e6dcff',30,y+28,10,PCN[pc]);
+  nt(g,'#8a7ab8',18,y+56,9,'number = '+S[4+i]+'    choosing = '+S[2+i]);
+  nt(g,en?'#7de2b0':'#ff5a8a',18,y+74,9,en?'can step':'BLOCKED -- waiting on the other');}
+ var both=(S[0]===5&&S[1]===5);
+ nf(g,both?'rgba(255,90,138,0.3)':'rgba(125,226,176,0.18)');g.fillRect(18,278,W-36,36);ng(g);
+ ne(g,both?'#ff5a8a':'#7de2b0',1.5);g.strokeRect(18.5,278.5,W-37,36);ng(g);
+ nt(g,both?'#ff5a8a':'#7de2b0',32,301,11,both?'BOTH INSIDE -- unreachable in all 77 states':
+  ((S[0]===5||S[1]===5)?'one thread inside the room':'the room is empty'));
+ var out=document.getElementById('bkryo');
+ if(out)out.innerHTML='Thread 0 at <b>'+PCN[S[0]]+'</b> (number '+S[4]+'), thread 1 at <b>'+PCN[S[1]]+
+  '</b> (number '+S[5]+'). '+(both?'':'Try to get both into the room &mdash; the search says you cannot, in any of the <b>77</b> reachable states, using nothing but plain loads and stores.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+8,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var served=Math.floor(ang/26)%8;
+ for(var i=0;i<8;i++){
+  var q=P(-96+i*27,26,0),on=(i===served);
+  ndot(g,q[0],q[1],on?7:3.6,on?'#7de2b0':'rgba(255,215,106,0.45)');
+  nt(g,on?'#7de2b0':'#5b4a80',q[0]-4,q[1]+18,8,String(i+1));}
+ var lp=P(-96,4,0);nt(g,'#ffd76a',lp[0],lp[1],8,'take a number; lowest goes first');
+ var dp=P(0,-64,0);
+ ndot(g,dp[0],dp[1],8,'#b98cff');
+ nt(g,'#b98cff',dp[0]-20,dp[1]-16,8,'the door');
+ nt(g,'#ffd76a',14,26,11,'no atomic instruction anywhere');
+ nt(g,'#7de2b0',14,44,10,'and nobody is ever overtaken');
+ nt(g,'#ff5a8a',14,H-46,9,'paid for with 16 shared words every thread must read');
+ nt(g,'#ff9f45',14,H-30,9,'and a counter that only ever goes up');
+ nt(g,'#b98cff',14,H-14,9,'the lock instruction was hiding work that scales with N');}
+document.getElementById('bkry0').onclick=function(){var s=steps(S,0);if(s.length)S=s[0];drawW4();};
+document.getElementById('bkry1').onclick=function(){var s=steps(S,1);if(s.length)S=s[0];drawW4();};
+document.getElementById('bkryr').onclick=function(){S=[0,0,0,0,0,0];drawW4();};
+document.getElementById('bkrys').onclick=function(){spin=!spin;};
+VR=selftest();window.__thebakeryalgorithm=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

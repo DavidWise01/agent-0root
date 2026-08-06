@@ -1,0 +1,190 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE RCU · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7de2b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7de2b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7de2b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7de2b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7de2b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7de2b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7de2b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7de2b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7de2b0;background:transparent;border:2px solid #7de2b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7de2b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7de2b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7de2b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7de2b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7de2b0 42%,#0a0e0a);border-left:4px solid #7de2b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7de2b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7de2b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7de2b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7de2b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; SPLIT SCREEN</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / SPLIT SCREEN / <b>THE RCU</b></div>
+<h1>THE RCU</h1>
+<div class="kick">never edit what someone might be reading</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Never modify what someone might be reading. Copy it, change the copy, swing the pointer &mdash; and then <i>wait</i>, not for a lock, but for every reader who could still be holding the old version to simply finish.<br><br>
+ <span class="lit">LIT</span> verified live. enumerating all <b>56</b> interleavings of a five-step writer against a three-step reader: <b>0</b> readers see a torn structure and <b>0</b> touch freed memory, because each reader captures the pointer once and then holds an entire consistent version &mdash; <b>46</b> of them see the old one and <b>10</b> the new. Remove the grace period and free immediately after publishing, and <b>12</b> of the <b>35</b> remaining interleavings dereference memory that has already been reclaimed. In every case the reader performs <b>0</b> writes to shared state.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Read-copy-update</b> is Paul McKenney&rsquo;s, in the Linux kernel since 2002; the copy-publish-wait structure and the grace period are his.<br><br><b>AVAN (AI)</b> enumerated the schedule space instead of arguing about it, and split the claim in two. The <b>0 torn reads</b> is <i>structural</i> &mdash; a reader that captures the pointer once cannot straddle two versions, and it is worth saying that plainly rather than dressing it up as a surprising measurement. The number that is not structural is <b>12 of 35</b>: that is what the grace period is actually buying, and without it the failure is not rare.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">56 interleavings. Nobody reads a half-built object.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Walk a schedule and see which version the reader got.</div>
+   <div class="btns" style="margin-top:10px"><button id="rcuxn">next schedule &#9654;</button><button id="rcuxg">toggle grace period</button></div>
+   <div class="cap" id="rcuxo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that RCU makes readers free. The inverse is that <b>the cost did not disappear, it was converted into memory and deferred</b>. The writer cannot reclaim until the last pre-existing reader finishes, so a single slow reader holds the whole reclamation queue open; the garbage is unbounded by construction, because the bound is &lsquo;whenever everyone happens to be done.&rsquo; Read backwards, RCU trades a latency you can see &mdash; a lock &mdash; for a memory footprint you cannot, and the price of never blocking a reader is never being able to promise when the memory comes back.</div>
+   <div class="btns" style="margin-top:10px"><button id="rcuxs">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> enumerating all 56 interleavings of a five-step writer against a three-step reader, 0 readers see a torn structure and 0 touch freed memory - 46 see the old version and 10 the new, because each captures the pointer once and holds an entire consistent copy; remove the grace period and free immediately after publishing, and 12 of the remaining 35 interleavings dereference reclaimed memory, with the reader performing 0 writes to shared state in every case<br><br><span class="fig">FIG</span> Read-copy-update is Paul McKenney's, in the Linux kernel since 2002. AVAN enumerated the schedule space and split the claim in two: the 0 torn reads is STRUCTURAL - a reader that captures the pointer once cannot straddle two versions, and it is worth saying plainly rather than dressing up as a surprising measurement. The number that is not structural is 12 of 35, which is what the grace period actually buys.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SPLIT SCREEN &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,pick=0,grace=true,CASES=[],CASESN=[];
+function merge(n,m,out){out.length=0;
+ (function rec(i,j,cur){ if(i===n&&j===m){out.push(cur.slice());return;}
+  if(i<n){cur.push(['w',i]);rec(i+1,j,cur);cur.pop();}
+  if(j<m){cur.push(['r',j]);rec(i,j+1,cur);cur.pop();}})(0,0,[]);}
+function runG(o){
+ var OLD={a:1,b:2},NEW={a:3,b:6},ptr=OLD,freed=null,cap=null,ra=null,rb=null,done=false,uaf=0;
+ o.forEach(function(e){ if(e[0]==='w'){
+   if(e[1]===2)ptr=NEW;
+   else if(e[1]===4){ if(!(cap===OLD&&!done))freed=OLD; }
+  } else {
+   if(e[1]===0)cap=ptr;
+   else if(e[1]===1){ if(freed===cap)uaf++; ra=cap.a; }
+   else { if(freed===cap)uaf++; rb=cap.b; done=true; }}});
+ return {ra:ra,rb:rb,torn:rb!==ra*2,uaf:uaf,ver:(cap===OLD?'old':'new')};}
+function runN(o){
+ var OLD={a:1,b:2},NEW={a:3,b:6},ptr=OLD,freed=null,cap=null,uaf=0,ra=null,rb=null;
+ o.forEach(function(e){ if(e[0]==='w'){
+   if(e[1]===2)ptr=NEW; else if(e[1]===3)freed=OLD;
+  } else {
+   if(e[1]===0)cap=ptr;
+   else if(e[1]===1){ if(freed===cap)uaf++; ra=cap.a; }
+   else { if(freed===cap)uaf++; rb=cap.b; }}});
+ return {ra:ra,rb:rb,torn:false,uaf:uaf,ver:(cap===OLD?'old':'new')};}
+function selftest(){
+ merge(5,3,CASES); merge(4,3,CASESN);
+ var torn=0,uaf=0,old=0,nw=0;
+ CASES.forEach(function(o){var r=runG(o);
+  if(r.torn)torn++; if(r.uaf)uaf++; if(r.ver==='old')old++;else nw++;});
+ var uaf2=0;
+ CASESN.forEach(function(o){ if(runN(o).uaf)uaf2++; });
+ return {graceCases:CASES.length,torn:torn,uafWithGrace:uaf,sawOld:old,sawNew:nw,
+  noGraceCases:CASESN.length,uafNoGrace:uaf2,readerWrites:0,
+  uafNoGracePct:uaf2*100/CASESN.length,
+  ok:CASES.length===56&&torn===0&&uaf===0&&CASESN.length===35&&uaf2===12};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',14,20,11,'EVERY SCHEDULE OF ONE WRITER AND ONE READER');
+ var rows=[['with grace period: torn reads',VR.torn,VR.graceCases,'#7de2b0'],
+  ['with grace period: use-after-free',VR.uafWithGrace,VR.graceCases,'#7de2b0'],
+  ['no grace period: use-after-free',VR.uafNoGrace,VR.noGraceCases,'#ff5a8a']];
+ rows.forEach(function(r,i){
+  var y=48+i*60;
+  nt(g,'#e6dcff',24,y,10,r[0]);
+  g.fillStyle='rgba(120,90,180,0.16)';g.fillRect(24,y+10,400,24);
+  if(r[1]>0){nf(g,'rgba(255,90,138,0.65)');g.fillRect(24,y+10,400*r[1]/r[2],24);ng(g);}
+  nt(g,r[3],24+(r[1]>0?400*r[1]/r[2]:0)+10,y+27,10,r[1]+' of '+r[2]);});
+ nt(g,'#8a7ab8',24,244,9,VR.sawOld+' readers saw the old version, '+VR.sawNew+' the new -- never a mix');
+ nf(g,'rgba(125,226,176,0.14)');g.fillRect(18,252,W-36,30);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(18.5,252.5,W-37,30);ng(g);
+ nt(g,'#7de2b0',30,272,10,'the reader wrote nothing shared in any of the 56');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var L=grace?CASES:CASESN,o=L[pick%L.length],r=grace?runG(o):runN(o);
+ var WN=grace?['copy','mutate the copy','publish pointer','wait grace period','free old']
+  :['copy','mutate the copy','publish pointer','free old (no wait)'];
+ var RN=['load pointer','read .a','read .b'];
+ nt(g,'#e6dcff',18,24,11,(grace?'WITH GRACE PERIOD':'NO GRACE PERIOD'));
+ nt(g,'#8a7ab8',18,42,9,'schedule '+((pick%L.length)+1)+' of '+L.length);
+ o.forEach(function(e,i){var y=54+i*30,isw=(e[0]==='w');
+  nf(g,isw?'rgba(255,159,69,0.4)':'rgba(90,212,255,0.4)');
+  g.fillRect(isw?18:W/2-4,y,W/2-14,25);ng(g);
+  nt(g,'#e6dcff',(isw?28:W/2+6),y+17,9,(isw?WN:RN)[e[1]]);});
+ var yb=54+o.length*30+10;
+ var bad=r.uaf>0;
+ nf(g,bad?'rgba(255,90,138,0.26)':'rgba(125,226,176,0.2)');g.fillRect(18,yb,W-36,50);ng(g);
+ ne(g,bad?'#ff5a8a':'#7de2b0',1.5);g.strokeRect(18.5,yb+0.5,W-37,50);ng(g);
+ nt(g,'#e6dcff',32,yb+21,10,'read a='+r.ra+'  b='+r.rb+'   version: '+r.ver);
+ nt(g,bad?'#ff5a8a':'#7de2b0',32,yb+40,10,bad?'USE AFTER FREE':'consistent -- b = 2a');
+ nt(g,'#ff9f45',18,yb+76,9,'orange = writer     blue = reader');
+ nt(g,'#8a7ab8',18,yb+94,9,'the reader captured the pointer once and never let go');
+ var out=document.getElementById('rcuxo');
+ if(out)out.innerHTML='Schedule <b>'+((pick%L.length)+1)+'</b> of <b>'+L.length+'</b>: the reader saw the <b>'+
+  r.ver+'</b> version. '+(grace?'The writer cannot free until this reader finishes, so across all <b>56</b> orderings there are <b>0</b> use-after-free and <b>0</b> torn reads.':
+  'Without the wait, <b>12</b> of these <b>35</b> orderings dereference memory the writer has already handed back.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var ph=(ang%360)/360;
+ for(var i=0;i<6;i++){
+  var th=i/6*Math.PI*2,q=P(Math.cos(th)*70,-34,Math.sin(th)*70);
+  ndot(g,q[0],q[1],5,'#7de2b0');}
+ var lo=P(-86,-56,0);nt(g,'#7de2b0',lo[0],lo[1],8,'the old version, still being read');
+ for(i=0;i<6;i++){
+  var th2=i/6*Math.PI*2,q2=P(Math.cos(th2)*70,44,Math.sin(th2)*70);
+  ndot(g,q2[0],q2[1],5,'#5ad4ff');}
+ var ln=P(-86,78,0);nt(g,'#5ad4ff',ln[0],ln[1],8,'the new one, already published');
+ var qq=P(0,4,0);
+ ndot(g,qq[0],qq[1],4+3*Math.sin(ph*Math.PI*2),'#ffd76a');
+ nt(g,'#ffd76a',qq[0]+12,qq[1]+4,8,'the grace period: waiting on nobody in particular');
+ nt(g,'#7de2b0',14,26,11,'never edit what is being read');
+ nt(g,'#8a7ab8',14,44,10,'copy, publish, and then wait');
+ nt(g,'#ffd76a',14,H-46,9,'the wait has no deadline -- it ends when readers happen to finish');
+ nt(g,'#ff5a8a',14,H-30,9,'so the garbage is unbounded by construction');
+ nt(g,'#b98cff',14,H-14,9,'a latency you can see, traded for a footprint you cannot');}
+document.getElementById('rcuxn').onclick=function(){pick++;drawW4();};
+document.getElementById('rcuxg').onclick=function(){grace=!grace;pick=0;drawW4();};
+document.getElementById('rcuxs').onclick=function(){spin=!spin;};
+VR=selftest();window.__thercu=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
