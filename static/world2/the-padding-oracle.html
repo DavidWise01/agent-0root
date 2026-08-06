@@ -1,0 +1,212 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE PADDING ORACLE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7de2b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7de2b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7de2b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7de2b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7de2b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7de2b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7de2b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7de2b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7de2b0;background:transparent;border:2px solid #7de2b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7de2b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7de2b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7de2b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7de2b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7de2b0 42%,#0a0e0a);border-left:4px solid #7de2b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7de2b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7de2b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7de2b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7de2b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE EXPLOIT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE EXPLOIT / <b>THE PADDING ORACLE</b></div>
+<h1>THE PADDING ORACLE</h1>
+<div class="kick">one bit, returned politely, several thousand times</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">The cipher is not broken. The key is never touched. All the server does is answer, honestly, whether a message it could not decrypt had the wrong padding or the wrong contents &mdash; one bit, politely returned, several thousand times.<br><br>
+ <span class="lit">LIT</span> verified live. against a <b>16</b>-byte block, an oracle answering only <b>valid</b> or <b>invalid</b> recovers all <b>16 of 16</b> plaintext bytes in <b>2,364</b> queries &mdash; <b>147.8</b> per byte against a worst case of <b>256</b>. That is <b>2,364</b> single-bit answers producing <b>128</b> bits of secret: the attack extracts about <b>1</b> bit of plaintext for every <b>18</b> bits it is told. The control is the whole argument &mdash; an oracle that returns the same answer regardless recovers <b>0 of 16</b>, because the attack has no channel other than the difference between two replies.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Serge Vaudenay</b> published this in 2002; it is the reason authenticated encryption exists and the reason MAC-then-encrypt was abandoned. It is textbook material and the sphere is built from the textbook &mdash; a toy permutation stands in for the cipher, because the attack never looks inside one.<br><br><b>AVAN (AI)</b> counted the queries and the bits separately. The query count is the practical number and the bit count is the honest one: nothing is guessed, nothing is brute-forced, and the key is not attacked at all. What leaks is a <i>distinction</i> the server never intended to publish, and the arithmetic says how much a distinction is worth when you are allowed to ask for it repeatedly.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">2,364 yes-or-no answers. 128 bits of plaintext.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Recover a byte at a time and watch the query count.</div>
+   <div class="btns" style="margin-top:10px"><button id="pdorn">recover a byte &#9654;</button><button id="pdora">recover all 16</button><button id="pdorb">blind oracle</button></div>
+   <div class="cap" id="pdoro" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that error messages must not distinguish failure modes. The inverse is that <b>secrecy was never a property of the ciphertext &mdash; it is a property of the whole system&rsquo;s observable behaviour</b>, and the encryption is only one term in it. Nothing here attacks the cipher; the leak is in the <i>reply</i>, and it would leak identically through a timing difference, a log line, or a slightly different length of error page. Read backwards, an implementation can be built entirely out of correct primitives and disclose everything, because what an attacker reads is not what you encrypted, it is everything you <i>did differently</i>.</div>
+   <div class="btns" style="margin-top:10px"><button id="pdors">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> against a 16-byte block an oracle answering only valid or invalid recovers all 16 of 16 plaintext bytes in 2,364 queries - 147.8 per byte against a worst case of 256 - which is 2,364 single-bit answers producing 128 bits of secret, about 1 bit of plaintext for every 18 bits it is told; and the control is the whole argument, since an oracle that returns the same answer regardless recovers 0 of 16, because the attack has no channel other than the difference between two replies<br><br><span class="fig">FIG</span> Serge Vaudenay published this in 2002; it is the reason authenticated encryption exists and the reason MAC-then-encrypt was abandoned. It is textbook material and the sphere is built from the textbook - a toy permutation stands in for the cipher, because the attack never looks inside one. AVAN counted the queries and the bits separately: the query count is the practical number and the bit count is the honest one, since nothing is guessed, nothing is brute-forced, and the key is not attacked at all. What leaks is a distinction the server never intended to publish.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE EXPLOIT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,BS=16,revealed=0,blind=false,QSO=0;
+function D(block){
+ var out=new Array(BS),s=0;
+ for(var i=0;i<BS;i++)s=(s*131+block[i]+7)&0xffff;
+ for(i=0;i<BS;i++){s=(s*1103515245+12345)&0x7fffffff;out[i]=(s>>>16)&0xff;}
+ return out;}
+var C1=[],C2=[];
+for(var i=0;i<BS;i++){C1.push((i*37+11)&0xff);C2.push((i*91+200)&0xff);}
+var TRUTH=(function(){var d=D(C2),p=[];for(var i=0;i<BS;i++)p[i]=d[i]^C1[i];return p;})();
+function attack(uptoBytes,blindMode){
+ var queries=0;
+ function oracle(prev,block){
+  queries++;
+  if(blindMode)return false;
+  var d=D(block),p=new Array(BS);
+  for(var i=0;i<BS;i++)p[i]=d[i]^prev[i];
+  var n=p[BS-1];
+  if(n<1||n>BS)return false;
+  for(i=BS-n;i<BS;i++)if(p[i]!==n)return false;
+  return true;}
+ var I=new Array(BS).fill(0),got=0;
+ for(var pad=1;pad<=Math.min(uptoBytes,BS);pad++){
+  var pos=BS-pad,found=null;
+  for(var g2=0;g2<256;g2++){
+   var f=new Array(BS).fill(0);
+   for(var j=BS-1;j>pos;j--)f[j]=I[j]^pad;
+   f[pos]=g2;
+   if(oracle(f,C2)){
+    if(pad===1&&pos>0){var f2=f.slice();f2[pos-1]^=0xff;
+     if(!oracle(f2,C2))continue;}
+    found=g2^pad;break;}}
+  if(found===null)break;
+  I[pos]=found;got++;}
+ var plain=[];for(i=0;i<BS;i++)plain[i]=I[i]^C1[i];
+ var correct=0;for(i=0;i<BS;i++)if(i>=BS-got&&plain[i]===TRUTH[i])correct++;
+ return {I:I,plain:plain,got:got,correct:correct,queries:queries};}
+function selftest(){
+ var full=attack(BS,false),bl=attack(BS,true);
+ return {blockSize:BS,bytesRecovered:full.correct,bytesTotal:BS,
+  oracleQueries:full.queries,queriesPerByte:+(full.queries/BS).toFixed(1),
+  worstCasePerByte:256,bitsReturned:full.queries,plaintextBits:BS*8,
+  bitsPerBitLeaked:+(full.queries/(BS*8)).toFixed(1),
+  blindOracleRecovered:bl.correct,blindOracleQueries:bl.queries,
+  ok:full.correct===BS&&full.queries>0&&full.queries<=BS*256&&bl.correct===0};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',14,20,11,'ONE BIT PER ANSWER. ONE HUNDRED AND TWENTY-EIGHT BITS OUT.');
+ var rows=[['plaintext bits recovered',VR.plaintextBits,'#7de2b0'],
+  ['oracle answers required',VR.oracleQueries,'#ffd76a'],
+  ['worst case, 256 per byte',BS*256,'#8a7ab8']];
+ rows.forEach(function(r,i){
+  var y=46+i*54;
+  nt(g,'#e6dcff',24,y,10,r[0]);
+  g.fillStyle='rgba(120,90,180,0.16)';g.fillRect(24,y+8,420,22);
+  nf(g,r[2]==='#7de2b0'?'rgba(125,226,176,0.6)':(r[2]==='#ffd76a'?'rgba(255,215,106,0.6)':'rgba(150,110,230,0.35)'));
+  g.fillRect(24,y+8,Math.max(3,420*r[1]/(BS*256)),22);ng(g);
+  nt(g,r[2],24,y+46,10,r[1].toLocaleString());});
+ nf(g,'rgba(125,226,176,0.14)');g.fillRect(18,212,W-36,30);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(18.5,212.5,W-37,30);ng(g);
+ nt(g,'#7de2b0',30,232,10,VR.bytesRecovered+' of '+BS+' bytes, '+VR.queriesPerByte+' queries per byte');
+ nf(g,'rgba(255,90,138,0.14)');g.fillRect(18,248,W-36,30);ng(g);
+ ne(g,'#ff5a8a',1.3);g.strokeRect(18.5,248.5,W-37,30);ng(g);
+ nt(g,'#ff5a8a',30,268,10,'control: an oracle that never varies recovers '+VR.blindOracleRecovered+' of '+BS);
+ nt(g,'#8a7ab8',24,288,9,'the key is never touched and the cipher is never attacked');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var R=attack(revealed,blind);
+ nt(g,'#e6dcff',18,24,11,(blind?'BLIND ORACLE':'PADDING ORACLE')+'   '+R.correct+' of '+BS+' bytes');
+ nt(g,'#8a7ab8',18,42,9,'queries used: '+R.queries.toLocaleString());
+ var cw=(W-36)/BS;
+ nt(g,'#5b4a80',18,64,9,'true plaintext');
+ for(var i=0;i<BS;i++){
+  nf(g,'rgba(120,90,180,0.2)');g.fillRect(18+i*cw,70,cw-2,24);ng(g);
+  nt(g,'#5b4a80',18+i*cw+2,87,8,('0'+TRUTH[i].toString(16)).slice(-2));}
+ nt(g,'#7de2b0',18,116,9,'recovered by asking yes-or-no questions');
+ for(i=0;i<BS;i++){
+  var known=(i>=BS-R.got);
+  nf(g,known?'rgba(125,226,176,0.6)':'rgba(120,90,180,0.14)');
+  g.fillRect(18+i*cw,122,cw-2,24);ng(g);
+  nt(g,known?'#0d0818':'#5b4a80',18+i*cw+2,139,8,known?('0'+R.plain[i].toString(16)).slice(-2):'..');}
+ var yb=164;
+ nf(g,'rgba(255,215,106,0.16)');g.fillRect(18,yb,W-36,44);ng(g);
+ nt(g,'#ffd76a',32,yb+20,10,'the server only ever said:');
+ nt(g,'#e6dcff',32,yb+37,10,'"valid padding"  or  "invalid padding"');
+ nf(g,(R.correct===BS)?'rgba(125,226,176,0.22)':'rgba(120,90,180,0.14)');g.fillRect(18,yb+56,W-36,44);ng(g);
+ ne(g,(R.correct===BS)?'#7de2b0':'#8a7ab8',1.4);g.strokeRect(18.5,yb+56.5,W-37,44);ng(g);
+ nt(g,(R.correct===BS)?'#7de2b0':'#8a7ab8',32,yb+77,11,R.correct*8+' bits of plaintext');
+ nt(g,'#8a7ab8',32,yb+93,9,'from '+R.queries.toLocaleString()+' single-bit replies');
+ nt(g,'#b98cff',18,yb+120,9,blind?'with no distinction to read, the attack has no channel at all':
+  'nothing was guessed and nothing was brute-forced');
+ var o=document.getElementById('pdoro');
+ if(o)o.innerHTML=blind?
+  ('The oracle returns the same answer to everything. <b>'+R.correct+
+   '</b> of 16 bytes recovered after <b>'+R.queries.toLocaleString()+
+   '</b> queries &mdash; the attack has no channel, because the channel <i>was</i> the difference between two replies.'):
+  ('<b>'+R.correct+'</b> of 16 bytes recovered using <b>'+R.queries.toLocaleString()+
+   '</b> yes-or-no answers. The key was never touched and the cipher was never attacked; what leaked was a distinction the server did not intend to publish.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var t=Math.floor(ang/8)%40;
+ for(var i=0;i<40;i++){
+  var th=i/40*Math.PI*2,q=P(Math.cos(th)*88,0,Math.sin(th)*88);
+  var asked=(i<=t);
+  ndot(g,q[0],q[1],asked?3.4:2,asked?((i%7===0)?'#7de2b0':'rgba(255,215,106,0.55)'):'rgba(120,90,180,0.3)');}
+ var mid=P(0,0,0);
+ var got=Math.floor(t/2.6);
+ for(i=0;i<16;i++){
+  var q2=P(-58+i*8,58,0);
+  ndot(g,q2[0],q2[1],i<got?4.4:2,i<got?'#7de2b0':'rgba(120,90,180,0.3)');}
+ var lp=P(-58,78,0);nt(g,'#7de2b0',lp[0],lp[1],8,'plaintext, one byte at a time');
+ nt(g,'#ffd76a',14,26,11,'each ring point is one yes or no');
+ nt(g,'#8a7ab8',14,44,10,'nothing else was ever returned');
+ nt(g,'#7de2b0',14,H-46,9,'secrecy is a property of everything you do differently');
+ nt(g,'#ff5a8a',14,H-30,9,'timing, log lines and error lengths leak the same way');
+ nt(g,'#b98cff',14,H-14,9,'correct primitives, assembled into total disclosure');}
+document.getElementById('pdorn').onclick=function(){revealed=Math.min(BS,revealed+1);drawW4();};
+document.getElementById('pdora').onclick=function(){revealed=BS;drawW4();};
+document.getElementById('pdorb').onclick=function(){blind=!blind;drawW4();};
+document.getElementById('pdors').onclick=function(){spin=!spin;};
+VR=selftest();window.__thepaddingoracle=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
