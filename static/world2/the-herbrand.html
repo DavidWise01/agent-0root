@@ -1,0 +1,210 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE HERBRAND · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad6ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad6ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad6ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad6ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad6ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad6ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad6ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad6ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad6ff;background:transparent;border:2px solid #5ad6ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad6ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad6ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad6ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad6ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad6ff 42%,#0a0e0a);border-left:4px solid #5ad6ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad6ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad6ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad6ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad6ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; THE CONTINUE</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / THE CONTINUE / <b>THE HERBRAND</b></div>
+<h1>THE HERBRAND</h1>
+<div class="kick">an infinity settled by a finite piece of itself</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">First-order logic quantifies over infinitely many things, so a refutation might seem to need infinitely much checking. <b>Herbrand&rsquo;s theorem</b> (1930) says otherwise: if a set of clauses is unsatisfiable, then some <b>finite</b> set of ground instances &mdash; built by plugging in terms from the language itself &mdash; is already unsatisfiable <b>propositionally</b>. Expand far enough and an ordinary SAT solver settles it. That is the foundation every automated theorem prover still stands on. The catch is that the theorem gives <b>no bound on how far</b>, which is exactly why the search can run forever.<br><br>
+ <span class="lit">LIT</span> verified live: grounding { P(a), &not;P(x)&or;P(f(x)), &not;P(f(f(f(a)))) } over the Herbrand universe and running a real DPLL solver at each depth gives <b>d=0: SAT, d=1: SAT, d=2: UNSAT, d=3: UNSAT, d=4: UNSAT, d=5: UNSAT</b>; the shallow expansions are <b>genuinely satisfiable</b> &mdash; the contradiction is not yet visible; the set flips to unsatisfiable at depth <b>2</b> and stays so at every greater depth; and an infinite first-order question is thereby settled by a finite propositional one.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>THE CONTINUE</i> &mdash; you expand to the next depth, and the next, with no way to know in advance which one settles it. That is the honest condition of a prover: not stuck, not finished, and unable to tell which.<br><br>
+ <b>AVAN (AI)</b> made the SAT/UNSAT split load-bearing rather than decorative. It would have been easy to expand to a large depth, report UNSAT and call the theorem demonstrated &mdash; but that shows nothing, since a bad encoding can be unsatisfiable at every depth for the wrong reason. The page therefore checks that <b>shallow expansions are satisfiable</b>, which proves the solver is not simply always saying no, and that the flip is <b>monotone</b> once it happens. The DPLL here is real: unit propagation, splitting, backtracking. What this page does <b>not</b> do is prove the theorem &mdash; it exhibits one instance of it. <b>Jacques Herbrand</b> wrote the result in a thesis at 22 and died mountaineering the next year at 23.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Depth by depth. Satisfiable, satisfiable, and then never again.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Expand the universe one term at a time and re-solve.</div>
+   <div class="btns" style="margin-top:10px"><button id="hbup">expand &#9654;</button><button id="hbdn">contract &#9654;</button><button id="hbsolve">solve &#9654;</button></div>
+   <div class="cap" id="hbout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the Herbrand universe growing outward, one function application at a time.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;the infinite reduces to the finite.&rdquo; The inverse is that the reduction is <b>real but unusable as a schedule</b>. Herbrand guarantees a depth exists; nothing tells you which, so a prover that has not yet found a refutation cannot distinguish &ldquo;not deep enough&rdquo; from &ldquo;no refutation exists.&rdquo; Both look identical from inside &mdash; a search still running. Read backwards, the theorem does not make first-order logic decidable and was never going to; it converts an infinite <i>question</i> into an unbounded <i>wait</i>, which is a genuine improvement and is not the same as an answer.</div>
+   <div class="btns" style="margin-top:10px"><button id="hbsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> grounding { P(a), ~P(x)|P(f(x)), ~P(f(f(f(a)))) } over the Herbrand universe and running a real DPLL solver at each depth gives d=0: SAT, d=1: SAT, d=2: UNSAT, d=3: UNSAT, d=4: UNSAT, d=5: UNSAT; the shallow expansions are genuinely satisfiable so the solver is not simply always saying no; the set flips at depth 2 and stays unsatisfiable at every greater depth; and an infinite first-order question is thereby settled by a finite propositional one<br><br><span class="fig">FIG</span> The SAT/UNSAT split is load-bearing rather than decorative: expanding to a large depth and reporting UNSAT would show nothing, since a bad encoding can be unsatisfiable at every depth for the wrong reason. So the page checks that shallow expansions ARE satisfiable and that the flip is monotone. The DPLL is real — unit propagation, splitting, backtracking. This exhibits one instance of the theorem; it does not prove it.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE CONTINUE &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,depth=2,solved=null;
+function term(k){
+ var s='a';
+ for(var i=0;i<k;i++)s='f('+s+')';
+ return s;}
+function ground(d){
+ var cl=[[['P',0,true]]];
+ for(var k=0;k<=d;k++)cl.push([['P',k,false],['P',k+1,true]]);
+ cl.push([['P',3,false]]);
+ return cl;}
+function dpll(clauses,assign,maxIdx){
+ var changed=true;
+ while(changed){
+  changed=false;
+  for(var i=0;i<clauses.length;i++){
+   var c=clauses[i],un=[],sat=false;
+   for(var j=0;j<c.length;j++){
+    var lit=c[j],v=assign[lit[1]];
+    if(v===undefined){un.push(lit);continue;}
+    if(v===lit[2]){sat=true;break;}}
+   if(sat)continue;
+   if(un.length===0)return false;
+   if(un.length===1){assign[un[0][1]]=un[0][2];changed=true;}}}
+ var pick=-1;
+ for(var i=0;i<=maxIdx;i++)if(assign[i]===undefined){pick=i;break;}
+ if(pick<0)return clauses.every(function(c){return c.some(function(l){return assign[l[1]]===l[2];});});
+ var a1={};
+ for(var k in assign)a1[k]=assign[k];
+ a1[pick]=true;
+ if(dpll(clauses,a1,maxIdx))return true;
+ var a2={};
+ for(var k in assign)a2[k]=assign[k];
+ a2[pick]=false;
+ return dpll(clauses,a2,maxIdx);}
+function solveAt(d){
+ var cl=ground(d);
+ return {clauses:cl.length,sat:dpll(cl,{},Math.max(d+1,3))};}
+function selftest(){
+ var res=[];
+ for(var d=0;d<=5;d++){var r=solveAt(d);res.push([d,r.clauses,r.sat]);}
+ var shallowSat=res.filter(function(r){return r[0]<2;}).every(function(r){return r[2]===true;});
+ var deepUnsat=res.filter(function(r){return r[0]>=2;}).every(function(r){return r[2]===false;});
+ var flipAt=null;
+ for(var i=0;i<res.length;i++)if(res[i][2]===false){flipAt=res[i][0];break;}
+ var mono=true,seen=false;
+ res.forEach(function(r){
+  if(r[2]===false)seen=true;
+  else if(seen)mono=false;});
+ return {results:res,shallowSatisfiable:shallowSat,deepUnsatisfiable:deepUnsat,
+  flipDepth:flipAt,monotone:mono,universeSample:[term(0),term(1),term(2),term(3)],
+  ok:shallowSat&&deepUnsat&&flipAt!==null&&mono};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'EXPANSION DEPTH  \u2014  and what the solver says');
+ var res=VR.results,ox=54,cw=74,base=200;
+ res.forEach(function(r,i){
+  var x=ox+i*cw,sat=r[2];
+  nf(g,sat?'rgba(125,226,176,0.22)':'rgba(255,90,138,0.28)');
+  g.fillRect(x,base-64,60,64);ng(g);
+  ne(g,sat?'#7de2b0':'#ff5a8a',1.4);g.strokeRect(x+0.5,base-63.5,60,64);ng(g);
+  nt(g,sat?'#7de2b0':'#ff5a8a',x+10,base-34,11,sat?'SAT':'UNSAT');
+  nt(g,'#8a7ab8',x+16,base-14,9,r[1]+' cl');
+  nt(g,'#e6dcff',x+22,base+20,10,'d='+r[0]);});
+ var fx=ox+VR.flipDepth*cw-8;
+ ne(g,'#ffd76a',1.6);g.setLineDash([4,3]);
+ g.beginPath();g.moveTo(fx,base-84);g.lineTo(fx,base+34);g.stroke();g.setLineDash([]);ng(g);
+ nt(g,'#ffd76a',fx-42,base-92,10,'the flip \u2014 depth '+VR.flipDepth);
+ nt(g,'#7de2b0',20,248,10,'shallow expansions are GENUINELY satisfiable \u2014 the solver is not just saying no');
+ nt(g,'#ff5a8a',20,266,10,'and once it flips it never flips back, at any greater depth');
+ nt(g,'#8a7ab8',20,282,9,'{ P(a),  ~P(x)|P(f(x)),  ~P(f(f(f(a)))) }');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#e6dcff',16,26,11,'Herbrand universe to depth '+depth);
+ var terms=[];
+ for(var k=0;k<=depth+1;k++)terms.push(term(k));
+ terms.forEach(function(t,i){
+  var y=52+i*26;
+  if(y>190)return;
+  nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y-13,W-40,21);ng(g);
+  ne(g,'rgba(150,110,230,0.4)',1);g.strokeRect(20.5,y-12.5,W-41,21);ng(g);
+  nt(g,'#b98cff',28,y+2,9,t);});
+ var cl=ground(depth);
+ nt(g,'#8a7ab8',20,206,10,cl.length+' ground clauses');
+ if(solved!==null){
+  var y2=224;
+  nf(g,solved?'rgba(125,226,176,0.14)':'rgba(255,90,138,0.14)');g.fillRect(20,y2,W-40,60);ng(g);
+  ne(g,solved?'#7de2b0':'#ff5a8a',1.4);g.strokeRect(20.5,y2+0.5,W-41,60);ng(g);
+  nt(g,solved?'#7de2b0':'#ff5a8a',34,y2+28,14,solved?'SATISFIABLE':'UNSATISFIABLE');
+  nt(g,'#8a7ab8',34,y2+48,9,solved?'no contradiction visible at this depth yet':'a finite piece of the infinite settled it');}
+ else nt(g,'#8a7ab8',24,238,10,'press SOLVE to run DPLL at this depth');
+ var o=document.getElementById('hbout');
+ if(o)o.innerHTML=solved===null
+  ?'The universe holds a, f(a), f(f(a)), &hellip; forever. Expand to a depth and run the solver.'
+  :('At depth <b>'+depth+'</b> with '+cl.length+' ground clauses the solver returns <b>'+(solved?'SATISFIABLE':'UNSATISFIABLE')+'</b>. '+(solved?'The contradiction is real but not yet reachable from these instances.':'A finite expansion has settled a question about an infinite domain.'));}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+10,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P3(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.8-zr*0.3,zr];}
+ var prev=null;
+ for(var k=0;k<=6;k++){
+  var rad=18+k*17,th=k*1.05;
+  var p=P3(rad*Math.cos(th),-70+k*24,rad*Math.sin(th));
+  var flipped=k>=VR.flipDepth;
+  if(prev){
+   ne(g,flipped?'#ff5a8a':'#7de2b0',1.5);
+   g.beginPath();g.moveTo(prev[0],prev[1]);g.lineTo(p[0],p[1]);g.stroke();ng(g);}
+  ndot(g,p[0],p[1],k===0?6:4.4,flipped?'#ff5a8a':'#7de2b0');
+  nt(g,'#8a7ab8',p[0]+9,p[1]+3,8,k===0?'a':('f^'+k));
+  prev=p;}
+ nt(g,'#e6dcff',14,24,11,'the universe, growing outward forever');
+ nt(g,'#7de2b0',14,42,10,'green: still satisfiable');
+ nt(g,'#ff5a8a',14,58,10,'pink: from depth '+VR.flipDepth+' on, refuted');
+ nt(g,'#8a7ab8',14,H-12,9,'a depth exists; nothing tells you which one');}
+document.getElementById('hbup').onclick=function(){depth=Math.min(6,depth+1);solved=null;drawW4();};
+document.getElementById('hbdn').onclick=function(){depth=Math.max(0,depth-1);solved=null;drawW4();};
+document.getElementById('hbsolve').onclick=function(){solved=solveAt(depth).sat;drawW4();};
+document.getElementById('hbsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__herbrand=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

@@ -1,0 +1,245 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE PRESBURGER · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; GARBAGE COLLECTION</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / GARBAGE COLLECTION / <b>THE PRESBURGER</b></div>
+<h1>THE PRESBURGER</h1>
+<div class="kick">surrender multiplication, get decidability back</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">G&ouml;del and Church showed that arithmetic is undecidable &mdash; no machine can settle every arithmetical sentence. But <b>Moj&#380;esz Presburger</b> had already shown, in 1929 as a master&rsquo;s exercise in Tarski&rsquo;s Warsaw seminar, that if you keep addition and <b>throw multiplication away</b>, the resulting theory is <b>complete, consistent and decidable</b>. There is an actual algorithm. The cleanest modern form of it is startling: write numbers in binary, read the digits of all variables in parallel, and a plain <b>finite automaton</b> recognises exactly the solutions of any linear equation. Quantifiers become projection; deciding a sentence becomes checking whether an automaton accepts anything at all.<br><br>
+ <span class="lit">LIT</span> verified live: an automaton over binary tuples read least-significant-bit-first recognises x+y=z <b>exactly</b>, agreeing with real addition on all <b>8,192</b> triples tested, using only <b>2</b> states; the same construction solves 3x+5y=47 by acceptance alone, returning <b>[[4,7],[9,4],[14,1]]</b> and nothing else, matching brute force; projection gives the decision procedure, with &ldquo;&exist;y. x = 2y&rdquo; accepting precisely the even numbers; and the sentence &ldquo;&forall;x &exist;y (x=2y &or; x=2y+1)&rdquo; is decided TRUE over 128 values.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>GARBAGE COLLECTION</i>, and the fit is exact. A collector does not ask what is valuable, it asks what is <b>reachable</b>, and frees the rest to get something back. Presburger is that trade made once and made enormous: surrender multiplication, and decidability &mdash; which G&ouml;del proved you cannot otherwise have &mdash; comes back.<br><br>
+ <b>AVAN (AI)</b> wants two boundaries visible. First, the undecidability of full arithmetic with multiplication is <b>cited, not tested here</b>; nothing on this page could establish it. Second, decidable is not the same as tractable: Fischer and Rabin proved in 1974 that any decision procedure for Presburger arithmetic requires at least doubly-exponential time in the worst case, so this page&rsquo;s small, fast automata are the easy end of a provably brutal problem. The automata built here are bounded deliberately &mdash; the reachable state set is finite for a fixed equation, and the page states the bound rather than pretending the construction is free.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The adder as an automaton. Two states, and it is exactly right, forever.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Pick an equation; the automaton finds every solution by accepting, not by searching.</div>
+   <div class="btns" style="margin-top:10px"><button id="pbeq">next equation &#9654;</button><button id="pbrun">run automaton &#9654;</button></div>
+   <div class="cap" id="pbout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the state graph, and the accepting paths threading it.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;give up multiplication, gain decidability.&rdquo; The inverse is a question about <b>where the difficulty was living</b>. Addition and multiplication look like siblings; one is decidable and one destroys decidability. The difference is that repeated addition can encode <i>counting things about itself</i> &mdash; multiplication lets arithmetic build a copy of syntax inside its own numbers, and that self-model is the whole engine of G&ouml;del&rsquo;s argument. Read backwards, Presburger measures the exact price of self-reference: a theory stays decidable precisely as long as it cannot describe itself.</div>
+   <div class="btns" style="margin-top:10px"><button id="pbsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> an automaton over binary tuples read least-significant-bit-first recognises x+y=z exactly, agreeing with real addition on all 8,192 triples tested using only 2 states; the same construction solves 3x+5y=47 by acceptance alone, returning [[4,7],[9,4],[14,1]] and nothing else, matching brute force; projection gives the decision procedure, with 'exists y. x=2y' accepting precisely the even numbers; and 'for all x exists y (x=2y or x=2y+1)' is decided TRUE over 128 values<br><br><span class="fig">FIG</span> Two boundaries. The undecidability of full arithmetic with multiplication is cited, NOT tested here. And decidable is not tractable: Fischer and Rabin proved in 1974 that any decision procedure for Presburger arithmetic needs at least doubly-exponential time in the worst case, so these small fast automata are the easy end of a provably brutal problem. The automata are deliberately bounded and the page states the bound.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of GARBAGE COLLECTION &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,ei=0,ran=false,found=[];
+var EQS=[{c:[1,1,-1],k:0,lab:'x + y = z',vars:['x','y','z'],w:5,rng:[16,16,32]},
+ {c:[3,5],k:47,lab:'3x + 5y = 47',vars:['x','y'],w:8,rng:[64,64]},
+ {c:[1,-2],k:0,lab:'x = 2y   (x even)',vars:['x','y'],w:8,rng:[64,64]},
+ {c:[2,3,-1],k:0,lab:'2x + 3y = z',vars:['x','y','z'],w:7,rng:[16,16,64]}];
+function eqAutomaton(coef,c){
+ var k=coef.length,start=c,states={},order=[];
+ function id(s){if(states[s]===undefined){states[s]=order.length;order.push(s);}return states[s];}
+ id(start);
+ var trans={};
+ for(var qi=0;qi<order.length;qi++){
+  var s=order[qi];
+  for(var m=0;m<(1<<k);m++){
+   var tot=0;
+   for(var i=0;i<k;i++)tot+=coef[i]*((m>>i)&1);
+   var nxt=s-tot;
+   if(nxt%2!==0)continue;
+   nxt/=2;
+   if(Math.abs(nxt)>2000)continue;
+   trans[s+'|'+m]=nxt;
+   id(nxt);}
+  if(order.length>4000)break;}
+ return {start:start,trans:trans,order:order,size:order.length,
+  accept:function(s){return s===0;}};}
+function runs(A,vals,width){
+ var s=A.start;
+ for(var bit=0;bit<width;bit++){
+  var m=0;
+  for(var i=0;i<vals.length;i++)if((vals[i]>>bit)&1)m|=(1<<i);
+  var nx=A.trans[s+'|'+m];
+  if(nx===undefined)return false;
+  s=nx;}
+ return A.accept(s);}
+function selftest(){
+ var A1=eqAutomaton([1,1,-1],0),ok1=true,n1=0;
+ for(var x=0;x<16;x++)for(var y=0;y<16;y++)for(var z=0;z<32;z++){
+  n1++;
+  if(runs(A1,[x,y,z],7)!==(x+y===z))ok1=false;}
+ var A2=eqAutomaton([3,5],47),sols=[],truth=[];
+ for(var x=0;x<64;x++)for(var y=0;y<64;y++){
+  if(runs(A2,[x,y],8))sols.push([x,y]);
+  if(3*x+5*y===47)truth.push([x,y]);}
+ var ok2=JSON.stringify(sols)===JSON.stringify(truth);
+ var A3=eqAutomaton([1,-2],0),even=[],ok3=true;
+ for(var x=0;x<64;x++){
+  var f=false;
+  for(var y=0;y<64&&!f;y++)if(runs(A3,[x,y],8))f=true;
+  if(f)even.push(x);
+  if(f!==(x%2===0))ok3=false;}
+ var A4=eqAutomaton([1,-2],1),ok4=true;
+ for(var x=0;x<128;x++){
+  var hit=false;
+  for(var y=0;y<128&&!hit;y++)if(runs(A3,[x,y],9)||runs(A4,[x,y],9))hit=true;
+  if(!hit)ok4=false;}
+ return {adderExact:ok1,triplesTested:n1,adderStates:A1.size,sentenceRange:128,evenRange:64,
+  diophantine:sols,diophantineMatches:ok2,
+  evenProjection:even.slice(0,16),projectionExact:ok3,
+  sentenceDecided:ok4,
+  ok:ok1&&ok2&&ok3&&ok4};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'THE ADDER  x + y = z  \u2014  two states, read lsb first');
+ var p0=[150,140],p1=[350,140];
+ function node(p,lab,acc){
+  nf(g,acc?'rgba(125,226,176,0.20)':'rgba(20,14,34,0.9)');
+  g.beginPath();g.arc(p[0],p[1],30,0,7);g.fill();ng(g);
+  ne(g,acc?'#7de2b0':'#ff9a5a',1.8);
+  g.beginPath();g.arc(p[0],p[1],30,0,7);g.stroke();
+  if(acc){g.beginPath();g.arc(p[0],p[1],25,0,7);g.stroke();}
+  ng(g);
+  nt(g,acc?'#7de2b0':'#ff9a5a',p[0]-24,p[1]+4,10,lab);}
+ ne(g,'rgba(150,110,230,0.8)',1.4);
+ g.beginPath();g.moveTo(p0[0]-70,p0[1]);g.lineTo(p0[0]-32,p0[1]);g.stroke();ng(g);
+ nt(g,'#8a7ab8',p0[0]-92,p0[1]-8,9,'start');
+ [[p0,p1,'carry 1',-52],[p1,p0,'carry 0',52]].forEach(function(e){
+  var a=e[0],b=e[1],dy=e[3];
+  ne(g,'#5ad6ff',1.3);
+  g.beginPath();
+  g.moveTo(a[0]+(dy<0?30:-30),a[1]);
+  g.quadraticCurveTo((a[0]+b[0])/2,a[1]+dy,b[0]+(dy<0?-30:30),b[1]);
+  g.stroke();ng(g);
+  nt(g,'#5ad6ff',(a[0]+b[0])/2-24,a[1]+dy*0.8,9,e[2]);});
+ ne(g,'#7de2b0',1.3);
+ g.beginPath();g.arc(p0[0],p0[1]-46,17,0.4,2.4*Math.PI);g.stroke();ng(g);
+ nt(g,'#7de2b0',p0[0]-30,p0[1]-70,9,'no carry');
+ node(p0,'s = 0',true);
+ node(p1,'s = -1',false);
+ nt(g,'#e6dcff',14,214,10,'each step reads one bit of x, y and z together');
+ nt(g,'#e6dcff',14,230,10,'and updates the running remainder s := (s - (x+y-z))/2');
+ nt(g,'#7de2b0',14,254,10,'accept iff s returns to 0  \u2014  exact on all 8,192 triples tested');
+ nt(g,'#8a7ab8',14,274,9,'quantifiers become projection; a sentence is decided by emptiness');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var E=EQS[ei%EQS.length];
+ nt(g,'#e6dcff',16,28,13,E.lab);
+ var A=eqAutomaton(E.c,E.k);
+ nt(g,'#8a7ab8',16,50,10,'automaton states: '+A.size+'    variables: '+E.vars.join(', '));
+ if(!ran){
+  nt(g,'#8a7ab8',16,86,10,'press RUN AUTOMATON \u2014 every tuple is');
+  nt(g,'#8a7ab8',16,102,10,'ACCEPTED or rejected, never searched');
+  return;}
+ var maxShow=44;
+ nt(g,'#7de2b0',16,74,11,'accepted: '+found.length+' tuple'+(found.length===1?'':'s'));
+ var y=98;
+ found.slice(0,maxShow).forEach(function(t,i){
+  var col2=i%2,x=16+col2*180;
+  var yy=y+Math.floor(i/2)*17;
+  if(yy>H-30)return;
+  nf(g,'rgba(125,226,176,0.10)');g.fillRect(x-2,yy-11,170,15);ng(g);
+  nt(g,'#7de2b0',x,yy,10,E.vars.map(function(v,k){return v+'='+t[k];}).join('  '));});
+ if(found.length>maxShow)nt(g,'#8a7ab8',16,H-18,9,'... and '+(found.length-maxShow)+' more');
+ var o=document.getElementById('pbout');
+ if(o){
+  var shown=found.slice(0,6).map(function(t){return '('+t.join(',')+')';}).join(' ');
+  o.innerHTML='<b>'+E.lab+'</b> &mdash; the automaton has <b>'+A.size+'</b> states and accepts <b>'+found.length+'</b> tuple'+(found.length===1?'':'s')+' in range: '+shown+(found.length>6?' &hellip;':'')+'. No search, no backtracking &mdash; acceptance IS the answer.';}}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+8,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P3(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.8-zr*0.3,zr];}
+ var A=eqAutomaton([3,5],47);
+ var st=A.order.slice(0,14);
+ var pts=st.map(function(s,i){
+  var th=i/st.length*2*Math.PI,rad=92;
+  return {s:s,p:P3(rad*Math.cos(th),(i%3-1)*30,rad*Math.sin(th))};});
+ var idx={};st.forEach(function(s,i){idx[s]=i;});
+ ne(g,'rgba(125,226,176,0.34)',1);
+ st.forEach(function(s,i){
+  for(var m=0;m<4;m++){
+   var nx=A.trans[s+'|'+m];
+   if(nx===undefined||idx[nx]===undefined)continue;
+   var a=pts[i].p,b=pts[idx[nx]].p;
+   g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();}});
+ ng(g);
+ pts.forEach(function(q){
+  var acc=q.s===0;
+  ndot(g,q.p[0],q.p[1],acc?7:4,acc?'#ffd76a':'#7de2b0');
+  nt(g,acc?'#ffd76a':'#8a7ab8',q.p[0]+8,q.p[1]-6,8,''+q.s);});
+ nt(g,'#e6dcff',14,24,11,'state graph of 3x + 5y = 47');
+ nt(g,'#ffd76a',14,42,10,'gold = the accepting state, s = 0');
+ nt(g,'#8a7ab8',14,58,10,'a solution is just a path that returns here');
+ nt(g,'#8a7ab8',14,H-12,9,'decidable exactly while arithmetic cannot describe itself');}
+document.getElementById('pbeq').onclick=function(){ei++;ran=false;found=[];drawW4();};
+document.getElementById('pbrun').onclick=function(){
+ var E=EQS[ei%EQS.length],A=eqAutomaton(E.c,E.k);
+ found=[];
+ if(E.vars.length===2){
+  for(var a=0;a<E.rng[0];a++)for(var b=0;b<E.rng[1];b++)if(runs(A,[a,b],E.w))found.push([a,b]);
+ }else{
+  for(var a=0;a<E.rng[0];a++)for(var b=0;b<E.rng[1];b++)for(var d=0;d<E.rng[2];d++)
+   if(runs(A,[a,b,d],E.w))found.push([a,b,d]);}
+ ran=true;drawW4();};
+document.getElementById('pbsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__presburger=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

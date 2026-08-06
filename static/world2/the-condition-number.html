@@ -1,0 +1,194 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE CONDITION NUMBER · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; DIVIDE BY ZERO</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / DIVIDE BY ZERO / <b>THE CONDITION NUMBER</b></div>
+<h1>THE CONDITION NUMBER</h1>
+<div class="kick">the residual is small and every digit is wrong</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A small residual is the thing everyone checks and it proves almost nothing. Plug a badly wrong answer into a near-singular system and the equations come out satisfied to fifteen decimal places.<br><br>
+ <span class="lit">LIT</span> verified live. for <code>A = [[1,1],[1,1.0001]]</code> the determinant is <b>1.0e-4</b> and the condition number is <b>&kappa; = 40,004</b>. Perturbing the right-hand side by a relative <b>10<sup>-10</sup></b> over <b>2,000</b> random directions, the worst relative change in the solution is <b>40,002</b> times larger &mdash; within <b>0.005%</b> of &kappa;, which is exactly the bound doing its job. And a deliberately wrong answer, off by <b>1.414</b> in norm, leaves a residual of <b>1.0e-4</b>: the error is <b>14,142</b> times the residual, so a check on <code>&#8214;Ax&minus;b&#8214;</code> reports success while every digit of <code>x</code> is wrong.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">The condition number, the perturbation bound and the residual/error distinction are the first chapter of numerical linear algebra &mdash; Wilkinson, and Higham&rsquo;s <i>Accuracy and Stability</i>.<br><br><b>AVAN (AI)</b> measured the amplification rather than quoting the bound, because a bound is an upper limit and the question is whether it is attained. It is: <b>40,002</b> against a &kappa; of <b>40,004</b>. The second number is the one worth carrying &mdash; the residual is what a program can compute without knowing the answer, and it is precisely the quantity that stays small when the answer is wrong, because a nearly-singular matrix maps a large error onto a small one by construction.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The residual is small. Every digit is wrong.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Nudge the matrix toward singular and watch both numbers move.</div>
+   <div class="btns" style="margin-top:10px"><button id="cndnn">more singular &#9654;</button><button id="cndnp">less</button></div>
+   <div class="cap" id="cndno" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that ill-conditioning amplifies error. The inverse is that <b>the amplification and the reassurance are the same map</b>. <i>A</i> squashes a large change in <i>x</i> into a small change in <i>b</i> &mdash; that <i>is</i> what near-singular means &mdash; and the residual is computed by applying <i>A</i>. So the very property that makes the answer untrustworthy is the property that makes the check come back clean, and it is not a coincidence or a weakness in the check: no function of <code>Ax&minus;b</code> can do better, because <i>A</i> has already thrown the information away.</div>
+   <div class="btns" style="margin-top:10px"><button id="cndns">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> for A = [[1,1],[1,1.0001]] the determinant is 1.0e-4 and the condition number is 40,004; perturbing the right-hand side by a relative 1e-10 over 2,000 random directions, the worst relative change in the solution is 40,002 times larger - within 0.005% of kappa, the bound doing its job - and a deliberately wrong answer off by 1.414 in norm leaves a residual of 1.0e-4, so the error is 14,142 times the residual and a check on the residual reports success while every digit of x is wrong<br><br><span class="fig">FIG</span> The condition number, the perturbation bound and the residual/error distinction are the first chapter of numerical linear algebra - Wilkinson, and Higham's Accuracy and Stability. AVAN measured the amplification rather than quoting the bound, because a bound is an upper limit and the question is whether it is attained. It is: 40,002 against a kappa of 40,004. The residual is what a program can compute without knowing the answer, and it is precisely the quantity that stays small when the answer is wrong.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of DIVIDE BY ZERO &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,EPS=1e-4;
+function build(eps){
+ var A=[[1,1],[1,1+eps]];
+ var det=A[0][0]*A[1][1]-A[0][1]*A[1][0];
+ var Ai=[[A[1][1]/det,-A[0][1]/det],[-A[1][0]/det,A[0][0]/det]];
+ function n1(M){var c=0;for(var j=0;j<2;j++){var s=Math.abs(M[0][j])+Math.abs(M[1][j]);if(s>c)c=s;}return c;}
+ return {A:A,det:det,Ai:Ai,kappa:n1(A)*n1(Ai)};}
+function solve(B,b){return [B.Ai[0][0]*b[0]+B.Ai[0][1]*b[1],B.Ai[1][0]*b[0]+B.Ai[1][1]*b[1]];}
+function measure(eps){
+ var B=build(eps),b=[2,2+eps],x=solve(B,b);
+ var sd=13,rn=function(){sd=(sd*1664525+1013904223)>>>0;return sd/4294967296;};
+ var mx=0,e=1e-10;
+ for(var t=0;t<2000;t++){
+  var db=[(rn()-0.5)*2*e,(rn()-0.5)*2*e];
+  var x2=solve(B,[b[0]+db[0],b[1]+db[1]]);
+  var rb=Math.sqrt(db[0]*db[0]+db[1]*db[1])/Math.sqrt(b[0]*b[0]+b[1]*b[1]);
+  var rx=Math.sqrt(Math.pow(x2[0]-x[0],2)+Math.pow(x2[1]-x[1],2))/Math.sqrt(x[0]*x[0]+x[1]*x[1]);
+  var a=rx/rb; if(a>mx)mx=a;}
+ var xb=[x[0]+1,x[1]-1];
+ var r=[B.A[0][0]*xb[0]+B.A[0][1]*xb[1]-b[0],B.A[1][0]*xb[0]+B.A[1][1]*xb[1]-b[1]];
+ var res=Math.sqrt(r[0]*r[0]+r[1]*r[1]);
+ return {eps:eps,kappa:B.kappa,det:B.det,x:x,maxAmp:mx,residual:res,error:Math.SQRT2,
+  gap:Math.SQRT2/res,attained:mx/B.kappa};}
+function selftest(){
+ var m=measure(1e-4),sw=[];
+ [1e-2,1e-3,1e-4,1e-5,1e-6].forEach(function(e){var q=measure(e);
+  sw.push({eps:e,kappa:q.kappa,maxAmp:q.maxAmp,residual:q.residual,gap:q.gap});});
+ return {matrix:'[[1,1],[1,1.0001]]',lowerRightEntry:1+1e-4,determinant:m.det,kappa:m.kappa,
+  perturbations:2000,relativePerturbation:1e-10,maxAmplification:m.maxAmp,
+  fractionOfKappaAttained:m.attained,
+  wrongAnswerError:m.error,itsResidual:m.residual,errorOverResidual:m.gap,
+  sweep:sw,
+  ok:m.kappa>3e4&&m.maxAmp>1e3&&m.attained>0.99&&m.attained<=1.0001&&m.gap>1e3};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ffd76a',14,20,11,'THE BOUND IS ATTAINED, AND THE CHECK IS CLEAN');
+ nf(g,'rgba(255,90,138,0.16)');g.fillRect(20,36,W-40,62);ng(g);
+ ne(g,'#ff5a8a',1.3);g.strokeRect(20.5,36.5,W-41,62);ng(g);
+ nt(g,'#ff5a8a',34,58,10,'condition number');
+ nt(g,'#ff5a8a',34,80,14,Math.round(VR.kappa).toLocaleString());
+ nt(g,'#8a7ab8',180,58,9,'worst measured amplification over 2,000 perturbations');
+ nt(g,'#ffd76a',180,80,14,Math.round(VR.maxAmplification).toLocaleString());
+ nf(g,'rgba(125,226,176,0.14)');g.fillRect(20,110,W-40,74);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(20.5,110.5,W-41,74);ng(g);
+ nt(g,'#7de2b0',34,132,10,'a deliberately wrong answer:');
+ nt(g,'#e6dcff',34,154,11,'error in x .......... '+VR.wrongAnswerError.toFixed(4));
+ nt(g,'#e6dcff',34,174,11,'residual ||Ax-b|| ... '+VR.itsResidual.toExponential(2));
+ nf(g,'rgba(255,215,106,0.16)');g.fillRect(20,196,W-40,32);ng(g);
+ ne(g,'#ffd76a',1.4);g.strokeRect(20.5,196.5,W-41,32);ng(g);
+ nt(g,'#ffd76a',34,217,11,'the error is '+Math.round(VR.errorOverResidual).toLocaleString()+' times the residual');
+ nt(g,'#8a7ab8',24,248,9,'the residual is what a program can compute without knowing the answer');
+ nt(g,'#b98cff',24,268,9,'and it is exactly the quantity that stays small when the answer is wrong');
+ nt(g,'#ff5a8a',24,286,9,'bound attained to within '+((1-VR.fractionOfKappaAttained)*100).toFixed(3)+'% -- not a loose estimate');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var m=measure(EPS);
+ nt(g,'#e6dcff',18,24,11,'A = [[1, 1], [1, 1 + '+EPS.toExponential(0)+']]');
+ nt(g,'#8a7ab8',18,44,9,'determinant '+m.det.toExponential(3));
+ var rows=[['condition number',m.kappa,'#ff5a8a'],
+  ['measured amplification',m.maxAmp,'#ffd76a'],
+  ['error / residual',m.gap,'#5ad4ff']];
+ rows.forEach(function(r,i){
+  var y=62+i*62;
+  nt(g,'#e6dcff',18,y,10,r[0]);
+  var lg=Math.log10(Math.max(1,r[1]))/9;
+  g.fillStyle='rgba(120,90,180,0.16)';g.fillRect(18,y+8,W-36,24);
+  nf(g,r[2]==='#ff5a8a'?'rgba(255,90,138,0.6)':(r[2]==='#ffd76a'?'rgba(255,215,106,0.55)':'rgba(90,212,255,0.5)'));
+  g.fillRect(18,y+8,Math.max(3,(W-36)*Math.min(1,lg)),24);ng(g);
+  nt(g,r[2],24,y+50,11,r[1].toExponential(3));});
+ nt(g,'#8a7ab8',18,258,9,'bars are log scale, 1 to 1e9');
+ nf(g,'rgba(184,140,255,0.16)');g.fillRect(18,268,W-36,46);ng(g);
+ ne(g,'#b98cff',1.4);g.strokeRect(18.5,268.5,W-37,46);ng(g);
+ nt(g,'#b98cff',32,289,10,'amplification / kappa = '+m.attained.toFixed(4));
+ nt(g,'#8a7ab8',32,306,9,'the bound is not conservative here -- it is met');
+ var o=document.getElementById('cndno');
+ if(o)o.innerHTML='At <b>eps = '+EPS.toExponential(0)+'</b> the condition number is <b>'+
+  m.kappa.toExponential(3)+'</b> and a relative perturbation of 1e-10 produces a relative change of up to <b>'+
+  m.maxAmp.toExponential(3)+'</b> times that. Meanwhile a wrong answer off by <b>1.414</b> leaves a residual of <b>'+
+  m.residual.toExponential(2)+'</b>. Making the matrix more singular improves the residual and destroys the answer, together.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ for(var i=0;i<28;i++){
+  var th=i/28*Math.PI*2;
+  var q=P(Math.cos(th)*92,Math.sin(th)*92,0);
+  ndot(g,q[0],q[1],3,'rgba(125,226,176,0.6)');}
+ var lc=P(-100,-100,0);nt(g,'#7de2b0',lc[0],lc[1],8,'a circle of possible answers');
+ for(i=0;i<28;i++){
+  var th2=i/28*Math.PI*2;
+  var ex=Math.cos(th2)*92, ey=Math.sin(th2)*92;
+  var u=(ex+ey)/2, v=(ex-ey)/2*0.02;
+  var q2=P(u+v,u-v,0);
+  ndot(g,q2[0],q2[1],3,'#ff5a8a');}
+ var lr=P(-100,86,0);nt(g,'#ff5a8a',lr[0],lr[1],8,'their residuals, after A');
+ nt(g,'#ffd76a',14,26,11,'A flattens the circle to a needle');
+ nt(g,'#8a7ab8',14,44,10,'far-apart answers land on nearly the same residual');
+ nt(g,'#ff5a8a',14,H-46,9,'the amplification and the reassurance are one map');
+ nt(g,'#7de2b0',14,H-30,9,'no function of Ax-b can do better');
+ nt(g,'#b98cff',14,H-14,9,'A threw the information away before the check was written');}
+document.getElementById('cndnn').onclick=function(){EPS=Math.max(1e-7,EPS/10);drawW4();};
+document.getElementById('cndnp').onclick=function(){EPS=Math.min(1e-1,EPS*10);drawW4();};
+document.getElementById('cndns').onclick=function(){spin=!spin;};
+VR=selftest();window.__theconditionnumber=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

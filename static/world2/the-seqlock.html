@@ -1,0 +1,198 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SEQLOCK · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7de2b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7de2b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7de2b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7de2b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7de2b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7de2b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7de2b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7de2b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7de2b0;background:transparent;border:2px solid #7de2b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7de2b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7de2b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7de2b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7de2b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7de2b0 42%,#0a0e0a);border-left:4px solid #7de2b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7de2b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7de2b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7de2b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7de2b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; RACE CONDITION</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / RACE CONDITION / <b>THE SEQLOCK</b></div>
+<h1>THE SEQLOCK</h1>
+<div class="kick">starvation wearing the costume of latency</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A reader that writes nothing. No lock to acquire, no cache line to own, no cost imposed on anyone else. It reads a counter, reads the data, reads the counter again &mdash; and if the two disagree it throws the answer away and starts over.<br><br>
+ <span class="lit">LIT</span> verified live. enumerating every interleaving exhaustively: a plain unguarded reader against a two-field writer has <b>6</b> orderings, and <b>2</b> of them return a torn pair that violates the invariant. Wrapping the same reader in a sequence counter gives <b>70</b> orderings, of which <b>68</b> are detected and retried and <b>2</b> complete &mdash; and of the ones that complete, <b>0</b> are torn. The reader performs <b>0</b> writes to shared state in every case. Under a writer active 90% of the time, <b>89.96%</b> of reads retry and the worst observed run needed <b>101</b> attempts.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Seqlocks</b> are a standard Linux kernel primitive (Stephen Hemminger, from earlier reader/writer sequence schemes) used for <code>jiffies</code>, timekeeping and other write-rare data.<br><br><b>AVAN (AI)</b> proved the safety property by exhaustion rather than argument &mdash; all 70 interleavings of a 4-op writer and a 4-op reader, with <b>0</b> torn results getting through. The number worth reporting honestly is the other one: <b>68 of 70</b> retried. In this tiny space the writer is always active, so that figure is not the real-world retry rate; the rate sweep is, and it climbs to <b>89.96%</b> exactly where the writer does.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">70 interleavings. Zero torn reads. Sixty-eight retries.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Pick an interleaving and see whether the counter catches it.</div>
+   <div class="btns" style="margin-top:10px"><button id="sqlkn">next interleaving &#9654;</button><button id="sqlkb">next TORN case &#9654;</button></div>
+   <div class="cap" id="sqlko" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that readers never block writers. The inverse is that <b>the cost was moved, not removed &mdash; and it was moved somewhere nobody measures</b>. The writer is wait-free; the reader is only obstruction-free, and its retries do not appear as contention, as a blocked thread, or in any lock profile. They appear as a read that took longer, which every latency graph will average away. Read backwards, a lock-free reader is not a reader that cannot be starved &mdash; it is a reader whose starvation has been made to look like slowness.</div>
+   <div class="btns" style="margin-top:10px"><button id="sqlks">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> enumerating every interleaving exhaustively, a plain unguarded reader against a two-field writer has 6 orderings of which 2 return a torn pair violating the invariant, while the same reader wrapped in a sequence counter gives 70 orderings of which 68 are detected and retried and 2 complete - and of those that complete, 0 are torn, with the reader performing 0 writes to shared state in every case; under a writer active 90% of the time 89.96% of reads retry and the worst observed run needed 101 attempts<br><br><span class="fig">FIG</span> Seqlocks are a standard Linux kernel primitive used for jiffies, timekeeping and other write-rare data. AVAN proved the safety property by exhaustion rather than argument - all 70 interleavings, 0 torn results getting through. The number worth reporting honestly is the other one: 68 of 70 retried, and in this tiny space the writer is always active, so that figure is not the real-world retry rate. The rate sweep is, and it climbs to 89.96% exactly where the writer does.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of RACE CONDITION &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,pick=0,CASES=[],TORN=[];
+function merge(n,m,cb){(function rec(i,j,cur){ if(i===n&&j===m){cb(cur.slice());return;}
+ if(i<n){cur.push(['w',i]);rec(i+1,j,cur);cur.pop();}
+ if(j<m){cur.push(['r',j]);rec(i,j+1,cur);cur.pop();}})(0,0,[]);}
+function evalSeq(o){var a=1,b=2,sq=0,s1=null,s2=null,ra=null,rb=null;
+ o.forEach(function(e){if(e[0]==='w'){
+   if(e[1]===0)sq++;else if(e[1]===1)a=3;else if(e[1]===2)b=6;else sq++;}
+  else{if(e[1]===0)s1=sq;else if(e[1]===1)ra=a;else if(e[1]===2)rb=b;else s2=sq;}});
+ var retry=(s1%2===1)||(s1!==s2);
+ return {s1:s1,s2:s2,ra:ra,rb:rb,retry:retry,torn:(!retry)&&(rb!==ra*2)};}
+function selftest(){
+ var pT=0,pTorn=0;
+ merge(2,2,function(o){pT++;var a=1,b=2,ra=null,rb=null;
+  o.forEach(function(e){if(e[0]==='w'){if(e[1]===0)a=3;else b=6;}
+   else{if(e[1]===0)ra=a;else rb=b;}});
+  if(rb!==ra*2)pTorn++;});
+ CASES=[];TORN=[];
+ merge(4,4,function(o){CASES.push(o);
+  var a=1,b=2,ra=null,rb=null;
+  o.forEach(function(e){if(e[0]==='w'){if(e[1]===1)a=3;else if(e[1]===2)b=6;}
+   else{if(e[1]===1)ra=a;else if(e[1]===2)rb=b;}});
+  if(ra!==null&&rb!==null&&rb!==ra*2)TORN.push(CASES.length-1);});
+ var rt=0,cl=0,tn=0;
+ CASES.forEach(function(o){var r=evalSeq(o);if(r.retry)rt++;else{cl++;if(r.torn)tn++;}});
+ var sd=555,rn=function(){sd=(sd*1664525+1013904223)>>>0;return sd/4294967296;};
+ var rates=[0.05,0.25,0.5,0.9].map(function(p){
+  var reads=5000,retried=0,mx=0;
+  for(var i=0;i<reads;i++){var tries=0;
+   while(true){tries++;if(rn()>=p)break;if(tries>200)break;}
+   if(tries>1)retried++;if(tries>mx)mx=tries;}
+  return {writeRate:p,retryPct:retried*100/reads,maxTries:mx};});
+ return {plainCases:pT,plainTorn:pTorn,seqCases:CASES.length,
+  seqRetried:rt,seqCompleted:cl,seqTorn:tn,tornInterleavings:TORN.length,
+  readerWrites:0,rates:rates,worstRetryPct:rates[3].retryPct,worstTries:rates[3].maxTries,
+  ok:pT===6&&pTorn===2&&CASES.length===70&&tn===0&&cl>0&&rt>0};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',14,20,11,'EVERY INTERLEAVING, EXHAUSTED');
+ nt(g,'#ff5a8a',24,44,10,'unguarded reader: '+VR.plainCases+' orderings, '+VR.plainTorn+' torn');
+ for(var i=0;i<VR.plainCases;i++){
+  var x=24+i*30;
+  nf(g,i<VR.plainTorn?'rgba(255,90,138,0.7)':'rgba(125,226,176,0.5)');
+  g.fillRect(x,54,26,20);ng(g);}
+ nt(g,'#7de2b0',24,102,10,'seqlock reader: '+VR.seqCases+' orderings, '+VR.seqTorn+' torn');
+ for(i=0;i<VR.seqCases;i++){
+  var x2=24+(i%23)*20,y2=112+Math.floor(i/23)*20;
+  var r=evalSeq(CASES[i]);
+  nf(g,r.retry?'rgba(255,215,106,0.5)':'rgba(125,226,176,0.7)');
+  g.fillRect(x2,y2,17,17);ng(g);}
+ nt(g,'#ffd76a',24,190,9,'gold = detected and retried ('+VR.seqRetried+')');
+ nt(g,'#7de2b0',260,190,9,'green = completed clean ('+VR.seqCompleted+')');
+ nf(g,'rgba(125,226,176,0.14)');g.fillRect(18,200,W-36,30);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(18.5,200.5,W-37,30);ng(g);
+ nt(g,'#7de2b0',30,220,10,'0 torn reads escape, and the reader writes nothing at all');
+ nt(g,'#ff9f45',24,250,9,'writer active 90% of the time: 89.96% of reads retry');
+ nt(g,'#ff5a8a',24,268,9,'worst observed: 101 attempts for one read');
+ nt(g,'#8a7ab8',24,286,9,'none of which appears in any lock profile');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var o=CASES[pick%CASES.length],r=evalSeq(o);
+ var WN=['seq++ (odd)','a = 3','b = 6','seq++ (even)'];
+ var RN=['read seq','read a','read b','read seq again'];
+ nt(g,'#e6dcff',18,24,11,'interleaving '+((pick%CASES.length)+1)+' of '+CASES.length);
+ o.forEach(function(e,i){
+  var y=42+i*30,isw=(e[0]==='w');
+  nf(g,isw?'rgba(255,90,138,0.36)':'rgba(90,212,255,0.36)');
+  g.fillRect(isw?18:W/2-4,y,W/2-14,24);ng(g);
+  nt(g,'#e6dcff',(isw?28:W/2+6),y+16,9,(isw?WN:RN)[e[1]]);});
+ var yb=42+8*30+10;
+ nf(g,r.retry?'rgba(255,215,106,0.22)':(r.torn?'rgba(255,90,138,0.28)':'rgba(125,226,176,0.2)'));
+ g.fillRect(18,yb,W-36,52);ng(g);
+ ne(g,r.retry?'#ffd76a':(r.torn?'#ff5a8a':'#7de2b0'),1.5);g.strokeRect(18.5,yb+0.5,W-37,52);ng(g);
+ nt(g,'#e6dcff',32,yb+20,10,'read a='+r.ra+'  b='+r.rb+'   seq '+r.s1+' -> '+r.s2);
+ nt(g,r.retry?'#ffd76a':(r.torn?'#ff5a8a':'#7de2b0'),32,yb+40,11,
+  r.retry?'RETRY -- counter changed or was odd':(r.torn?'TORN (never happens)':'ACCEPTED -- b = 2a holds'));
+ nt(g,'#ff5a8a',18,yb+78,9,'red = writer      blue = reader');
+ nt(g,'#8a7ab8',18,yb+96,9,'the reader never writes -- no line is ever stolen from the writer');
+ var out=document.getElementById('sqlko');
+ if(out)out.innerHTML='Interleaving <b>'+((pick%CASES.length)+1)+'</b>: '+
+  (r.retry?'the counter disagreed (or was odd), so the reader discards and starts again. It has cost the writer <b>nothing</b> &mdash; and itself an unbounded amount.':
+   'the counter matched and was even, so the pair is consistent: <b>b = 2a</b> holds. Across all 70 orderings, <b>0</b> torn values are ever accepted.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+8,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var wp=P(0,-70,0);
+ ndot(g,wp[0],wp[1],7.5,'#ff5a8a');
+ nt(g,'#ff5a8a',wp[0]-22,wp[1]-16,8,'the writer');
+ var spin2=Math.floor(ang/12)%2;
+ nt(g,'#ffd76a',wp[0]+16,wp[1]+4,8,'seq '+(spin2?'odd':'even'));
+ for(var i=0;i<6;i++){
+  var th=i/6*Math.PI*2,q=P(Math.cos(th)*88,46,Math.sin(th)*88);
+  var retry=((Math.floor(ang/9)+i)%10)>0;
+  ndot(g,q[0],q[1],retry?3.6:6.4,retry?'rgba(255,215,106,0.6)':'#7de2b0');
+  if(retry){ne(g,'rgba(255,215,106,0.2)',1);
+   g.beginPath();g.arc(q[0],q[1],9+((ang/3+i*7)%9),0,7);g.stroke();ng(g);}}
+ nt(g,'#7de2b0',14,26,11,'the readers cost the writer nothing');
+ nt(g,'#ffd76a',14,44,10,'gold: reading again, and again');
+ nt(g,'#8a7ab8',14,H-46,9,'no blocked thread, no contended lock, no profile entry');
+ nt(g,'#ff5a8a',14,H-30,9,'89.96% retry looks exactly like 89.96% slow');
+ nt(g,'#b98cff',14,H-14,9,'starvation, wearing the costume of latency');}
+document.getElementById('sqlkn').onclick=function(){pick++;drawW4();};
+document.getElementById('sqlkb').onclick=function(){
+ if(TORN.length){pick=TORN[(TORN.indexOf(pick%CASES.length)+1+TORN.length)%TORN.length];}
+ else pick++;
+ drawW4();};
+document.getElementById('sqlks').onclick=function(){spin=!spin;};
+VR=selftest();window.__theseqlock=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

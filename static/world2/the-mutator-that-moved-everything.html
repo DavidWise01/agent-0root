@@ -1,0 +1,231 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE MUTATOR THAT MOVED EVERYTHING · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; THE BLUE SCREEN</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / THE BLUE SCREEN / <b>THE MUTATOR THAT MOVED EVERYTHING</b></div>
+<h1>THE MUTATOR THAT MOVED EVERYTHING</h1>
+<div class="kick">a shift that shifts nothing that matters</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">To test whether an assertion depends on its subject, perturb the subject and see whether the answer moves. The first attempt bumped <b>every number by one at once</b>. That leaves equality untouched &mdash; 6 == 6 becomes 7 == 7 &mdash; so a perfectly sensitive assertion was reported as insensitive. A mutation that moves everything moves nothing that matters.<br><br>
+ <span class="lit">LIT</span> verified live over <b>2,000</b> random pairs and six predicate forms. A global +1 leaves <b>3 of 6</b> completely unmoved: <code>a == b</code>, <code>a &lt; b</code> and <code>a &minus; b</code>. Asked the right way &mdash; one field at a time, both directions, on assertions that actually hold &mdash; <b>5 of 6</b> forms are reached at <b>100%</b>. The exception is strict ordering, which a &plusmn;1 nudge flips only when the operands are adjacent: <b>9.1%</b> measured against <b>10.0%</b> predicted by counting adjacent pairs.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> found and named it: <i>&ldquo;the first mutator bumped EVERY number by one at once. that preserves every equality (6==6 becomes 7==7) and every ratio, so it reported correct assertions as insensitive. a mutator that moves everything moves nothing that matters. one field at a time now, and sensitive if ANY single perturbation moves the answer.&rdquo;</i><br><br>
+ <b>AVAN (AI)</b> should correct one clause of that note and add one finding to it. A <b>ratio is not</b> shift-invariant &mdash; <code>a/b</code> moves under a global +1 about <b>94.6%</b> of the time, and is preserved only in the special case a == b where the ratio is 1. And the repaired mutator has a limit the note does not state: a fixed &plusmn;1 step reaches an assertion only within its <b>margin</b>, so a wide inequality is simply out of range. That reach is exactly predictable, and predicting it is the honest way to report a probe&rsquo;s power.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Six forms, two mutators.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Shift everything, or nudge one field, and see what survives.</div>
+   <div class="btns" style="margin-top:10px"><button id="mtmode">global / single &#9654;</button><button id="mtform">next form</button></div>
+   <div class="cap" id="mtout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the diagonal a global shift travels along.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;perturb one field at a time.&rdquo; The inverse is that <b>a global shift is invisible precisely because it is the symmetry the assertions were written in</b>. Equality, ordering and difference are all translation-invariant, so moving along that direction is moving inside the space the predicate cannot see &mdash; and every useful predicate has such a direction. Read backwards, a mutator is only as good as its <b>choice of direction</b>, and the directions that reveal nothing are exactly the ones the code was designed not to care about.</div>
+   <div class="btns" style="margin-top:10px"><button id="mtsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> over 2,000 random pairs and six predicate forms, a global +1 leaves 3 of 6 completely unmoved - a == b, a < b and a - b; asked the right way, one field at a time in both directions on assertions that hold, 5 of 6 forms are reached at 100%; and the exception is strict ordering, which a plus-or-minus-one nudge flips only when the operands are adjacent, measured at 9.1% against 10.0% predicted by counting adjacent pairs<br><br><span class="fig">FIG</span> David found and named it: 'the first mutator bumped EVERY number by one at once. that preserves every equality (6==6 becomes 7==7) and every ratio, so it reported correct assertions as insensitive. a mutator that moves everything moves nothing that matters.' AVAN corrects one clause and adds one finding. A RATIO IS NOT shift-invariant - a/b moves under a global +1 about 94.6% of the time, and is preserved only in the special case a == b where the ratio is 1. And the repaired mutator has a limit the note does not state: a fixed step reaches an assertion only within its MARGIN, so a wide inequality is out of range. That reach is exactly predictable, and predicting it is the honest way to report a probe's power.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE BLUE SCREEN &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,global_=true,fi=0;
+var FORMS=[{name:'a == b',f:function(a,b){return a===b;},bool:true},
+ {name:'a < b',f:function(a,b){return a<b;},bool:true},
+ {name:'a - b',f:function(a,b){return a-b;},bool:false},
+ {name:'a / b',f:function(a,b){return a/b;},bool:false},
+ {name:'a + b',f:function(a,b){return a+b;},bool:false},
+ {name:'a * b',f:function(a,b){return a*b;},bool:false}];
+function rnd(x){return function(){x|=0;x=x+0x6D2B79F5|0;
+ var t=Math.imul(x^x>>>15,1|x);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function selftest(){
+ var g=rnd(88),N=2000;
+ var rows=FORMS.map(function(F){
+  var gm=0,sm=0;
+  for(var t=0;t<N;t++){
+   var a=1+Math.floor(g()*20),b=1+Math.floor(g()*20);
+   var base=F.f(a,b);
+   if(F.f(a+1,b+1)!==base)gm++;
+   if(F.f(a+1,b)!==base)sm++;}
+  return {name:F.name,global:gm/N,single:sm/N};});
+ var g2=rnd(88);
+ var held=FORMS.map(function(F){
+  var sat=0,mov=0;
+  for(var t=0;t<N;t++){
+   var a=1+Math.floor(g2()*20),b=1+Math.floor(g2()*20);
+   var base=F.f(a,b);
+   if(F.bool&&base!==true)continue;
+   sat++;
+   var any=false;
+   [1,-1].forEach(function(d){
+    if(F.f(a+d,b)!==base)any=true;
+    if(F.f(a,b+d)!==base)any=true;});
+   if(any)mov++;}
+  return {name:F.name,satisfied:sat,rate:sat?mov/sat:1};});
+ var inv=rows.filter(function(r){return r.global===0;});
+ var full=held.filter(function(r){return r.rate===1;});
+ var partial=held.filter(function(r){return r.rate<1;});
+ var K=20,satisfied=0,adjacent=0;
+ for(var a2=1;a2<=K;a2++)for(var b2=1;b2<=K;b2++){
+  if(a2<b2){satisfied++;if(b2-a2===1)adjacent++;}}
+ var predicted=adjacent/satisfied;
+ return {trials:N,rows:rows,held:held,
+  invariantUnderGlobal:inv.length,invariantNames:inv.map(function(r){return r.name;}),
+  equalityInvariant:rows[0].global===0,
+  orderingAndDifferenceInvariant:rows[1].global===0&&rows[2].global===0,
+  ratioMovesUnderGlobal:rows[3].global,ratioIsNotInvariant:rows[3].global>0.5,
+  fullyReached:full.length,fullReachPercent:100,
+  orderingReach:partial.length?partial[0].rate:1,
+  predictedReach:predicted,adjacentPairs:adjacent,satisfiedPairs:satisfied,
+  reachMatchesPrediction:partial.length?Math.abs(partial[0].rate-predicted)<0.03:false,
+  ok:inv.length>=3&&rows[3].global>0.5&&full.length>=4&&
+   (partial.length?Math.abs(partial[0].rate-predicted)<0.03:false)};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'SIX FORMS, TWO MUTATORS');
+ nt(g,'#ff5a8a',210,40,9,'global +1');
+ nt(g,'#7de2b0',330,40,9,'single field, both ways');
+ VR.rows.forEach(function(r,i){
+  var y=54+i*34;
+  nt(g,'#e6dcff',24,y+14,9,r.name);
+  var pw=100;
+  nf(g,'rgba(255,90,138,0.55)');
+  g.fillRect(210,y,Math.max(1.5,pw*r.global),18);ng(g);
+  ne(g,'rgba(150,110,230,0.3)',1);g.strokeRect(210.5,y+0.5,pw,18);ng(g);
+  nt(g,r.global===0?'#ff5a8a':'#8a7ab8',210+pw+6,y+13,8,(r.global*100).toFixed(0)+'%');
+  var hv=VR.held[i].rate;
+  nf(g,'rgba(125,226,176,0.55)');
+  g.fillRect(330,y,Math.max(1.5,pw*hv),18);ng(g);
+  ne(g,'rgba(150,110,230,0.3)',1);g.strokeRect(330.5,y+0.5,pw,18);ng(g);
+  nt(g,hv===1?'#7de2b0':'#ffd76a',330+pw+6,y+13,8,(hv*100).toFixed(0)+'%');});
+ nt(g,'#ff5a8a',24,264,9,VR.invariantUnderGlobal+' forms are completely blind to a global shift: '+
+  VR.invariantNames.join(', '));
+ nt(g,'#ffd76a',24,282,9,'a < b is reached only '+(VR.orderingReach*100).toFixed(1)+
+  '% -- predicted '+(VR.predictedReach*100).toFixed(1)+'% by counting adjacent pairs');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var F=FORMS[fi%FORMS.length];
+ nt(g,'#e6dcff',16,26,11,F.name+'   ·   '+(global_?'global +1':'single field, both ways'));
+ var a=6,b=6;
+ if(F.name==='a < b'){a=6;b=9;}
+ var pairs=global_?[[a,b],[a+1,b+1]]:[[a,b],[a+1,b],[a,b+1],[a-1,b],[a,b-1]];
+ var base=F.f(a,b);
+ var top=52;
+ pairs.forEach(function(p,i){
+  var y=top+i*40;
+  var v=F.f(p[0],p[1]);
+  var moved=i>0&&v!==base;
+  nf(g,i===0?'rgba(20,14,34,0.9)':(moved?'rgba(125,226,176,0.16)':'rgba(255,90,138,0.16)'));
+  g.fillRect(20,y,W-40,34);ng(g);
+  ne(g,i===0?'rgba(150,110,230,0.4)':(moved?'#7de2b0':'#ff5a8a'),1.2);
+  g.strokeRect(20.5,y+0.5,W-41,34);ng(g);
+  nt(g,'#8a7ab8',32,y+14,8,i===0?'as written':('perturbed: a='+p[0]+', b='+p[1]));
+  nt(g,'#e6dcff',32,y+29,10,'a='+p[0]+' b='+p[1]+'   ->   '+String(v));
+  if(i>0)nt(g,moved?'#7de2b0':'#ff5a8a',W-84,y+22,9,moved?'MOVED':'unmoved');});
+ var anyMoved=pairs.slice(1).some(function(p){return F.f(p[0],p[1])!==base;});
+ var y2=top+pairs.length*40+12;
+ nf(g,anyMoved?'rgba(125,226,176,0.16)':'rgba(255,90,138,0.16)');
+ g.fillRect(20,y2,W-40,50);ng(g);
+ ne(g,anyMoved?'#7de2b0':'#ff5a8a',1.5);g.strokeRect(20.5,y2+0.5,W-41,50);ng(g);
+ nt(g,anyMoved?'#7de2b0':'#ff5a8a',36,y2+26,12,
+  anyMoved?'SENSITIVE -- the answer moved':'reported INSENSITIVE');
+ nt(g,'#8a7ab8',36,y2+44,8,anyMoved?'the assertion does depend on its subject'
+  :'and the assertion is perfectly good');
+ var o=document.getElementById('mtout');
+ if(o)o.innerHTML=global_
+  ?('Bumping every number at once takes <b>'+F.name+'</b> along the direction the predicate cannot see. For equality, ordering and difference the answer does not move at all &mdash; and a correct assertion is reported insensitive.')
+  :('Nudging one field at a time, in both directions, moves <b>'+F.name+
+    '</b>'+(anyMoved?' immediately':' only when the operands are adjacent')+
+    '. That is the repaired probe: sensitive if ANY single perturbation moves the answer.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ // the a==b diagonal, which a global shift slides along
+ ne(g,'#ff5a8a',2);
+ g.beginPath();
+ for(var t=-8;t<=8;t++){
+  var p=P(t*14,0,t*14);
+  if(t===-8)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);}
+ g.stroke();ng(g);
+ for(var a=-6;a<=6;a++)for(var b=-6;b<=6;b++){
+  var q=P(a*14,0,b*14);
+  var onDiag=a===b;
+  ndot(g,q[0],q[1],onDiag?3.4:1.4,onDiag?'#ff5a8a':'rgba(125,226,176,0.4)');}
+ var s0=P(0,0,0),s1=P(14,0,14);
+ ne(g,'#ffd76a',2.2);
+ g.beginPath();g.moveTo(s0[0],s0[1]);g.lineTo(s1[0],s1[1]);g.stroke();ng(g);
+ nt(g,'#ffd76a',s1[0]+8,s1[1],8,'global +1');
+ var n0=P(0,0,0),n1=P(14,0,0);
+ ne(g,'#7de2b0',2.2);
+ g.beginPath();g.moveTo(n0[0],n0[1]);g.lineTo(n1[0],n1[1]);g.stroke();ng(g);
+ nt(g,'#7de2b0',n1[0]+6,n1[1]-8,8,'single field');
+ nt(g,'#ff5a8a',14,24,11,'the pink diagonal is where a == b');
+ nt(g,'#ffd76a',14,42,10,'a global shift slides ALONG it and never leaves');
+ nt(g,'#7de2b0',14,58,10,'a single-field nudge steps off it immediately');
+ nt(g,'#8a7ab8',14,H-12,9,'the invisible direction is the symmetry the predicate was written in');}
+document.getElementById('mtmode').onclick=function(){global_=!global_;drawW4();};
+document.getElementById('mtform').onclick=function(){fi++;drawW4();};
+document.getElementById('mtsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__mutatorthatmovedeverything=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

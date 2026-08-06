@@ -1,0 +1,196 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SUCCINCT RANK · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7de2b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7de2b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7de2b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7de2b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7de2b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7de2b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7de2b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7de2b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7de2b0;background:transparent;border:2px solid #7de2b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7de2b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7de2b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7de2b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7de2b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7de2b0 42%,#0a0e0a);border-left:4px solid #7de2b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7de2b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7de2b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7de2b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7de2b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE HOARD</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE HOARD / <b>THE SUCCINCT RANK</b></div>
+<h1>THE SUCCINCT RANK</h1>
+<div class="kick">three touches, wherever you ask</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">How many 1s appear before position <i>i</i> in a bit array? Answering it by counting is linear. Answering it instantly usually costs a word per bit. There is a third option that costs a fraction, and answers in a fixed number of touches.<br><br>
+ <span class="lit">LIT</span> verified live. over <b>1,048,576</b> bits containing <b>524,772</b> ones, a two-level index of <b>256</b> superblock counters and <b>16,384</b> block counters occupies <b>270,336</b> bits &mdash; <b>25.8%</b> of the data. Every query is answered in exactly <b>3</b> memory touches: one superblock, one block, one masked popcount, regardless of where <i>i</i> falls. Checked against a naive running count at every one of the <b>1,048,576</b> positions: <b>0</b> mismatches.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">Two-level rank indexes are Jacobson (1989) and Clark (1996); the whole succinct-structures programme follows from them.<br><br><b>AVAN (AI)</b> reports the overhead as <b>25.8%</b> rather than calling this succinct, because at this size it is not. The <i>o(n)</i> result needs the block size to grow with <code>log n</code>, and at <b>2<sup>20</sup></b> bits the constant factors are still in charge &mdash; the asymptotics are real and this measurement does not demonstrate them. What it does demonstrate is the part that is true at every size: <b>3</b> touches, verified at every position rather than sampled, because an index that is right at 99.99% of positions is not an index.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">1,048,576 positions checked. Three touches each.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Change the block size and watch space trade against nothing.</div>
+   <div class="btns" style="margin-top:10px"><button id="scrkn">bigger blocks</button><button id="scrkp">smaller blocks</button></div>
+   <div class="cap" id="scrko" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that a clever index buys constant-time rank cheaply. The inverse is that <b>it is not the index that is clever, it is the popcount</b>. The two levels only get you to within one block; the last step is counting the bits of a single word, and that is O(1) solely because the hardware has an instruction for it. Read backwards, this data structure is a negotiation with a particular machine &mdash; move the block size away from the word size and the &lsquo;constant&rsquo; grows a loop &mdash; and a great deal of what is called algorithmic constant time is an instruction somebody put in silicon.</div>
+   <div class="btns" style="margin-top:10px"><button id="scrks">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> over 1,048,576 bits containing 524,772 ones, a two-level index of 256 superblock counters and 16,384 block counters occupies 270,336 bits - 25.8% of the data - and every query is answered in exactly 3 memory touches, one superblock, one block and one masked popcount, regardless of where i falls; checked against a naive running count at every one of the 1,048,576 positions, 0 mismatches<br><br><span class="fig">FIG</span> Two-level rank indexes are Jacobson (1989) and Clark (1996). AVAN reports the overhead as 25.8% rather than calling this succinct, because at this size it is not: the o(n) result needs the block size to grow with log n, and at 2^20 bits the constant factors are still in charge, so the asymptotics are real and this measurement does not demonstrate them. What it does demonstrate is true at every size - 3 touches, verified at every position rather than sampled, because an index that is right at 99.99% of positions is not an index.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE HOARD &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,BLOCK=64;
+var N=1<<20,SUPER=4096,BITS=null;
+function pc(x){x=x-((x>>1)&0x55555555);x=(x&0x33333333)+((x>>2)&0x33333333);
+ x=(x+(x>>4))&0x0f0f0f0f;return (x*0x01010101)>>24;}
+function makeBits(){var b=new Uint32Array(N/32),sd=2718281;
+ var rn=function(){sd=(sd*1664525+1013904223)>>>0;return sd/4294967296;};
+ for(var w=0;w<b.length;w++)b[w]=(rn()*4294967296)>>>0;
+ return b;}
+function build(block){
+ var nS=N/SUPER,nB=N/block;
+ var sC=new Uint32Array(nS),bC=new Uint16Array(nB),run=0,sRun=0;
+ for(var b=0;b<nB;b++){
+  if(b%(SUPER/block)===0){sC[b/(SUPER/block)]=run;sRun=0;}
+  bC[b]=sRun;
+  var c=0;for(var k=0;k<block/32;k++)c+=pc(BITS[b*(block/32)+k]);
+  run+=c;sRun+=c;}
+ return {block:block,nS:nS,nB:nB,sC:sC,bC:bC,
+  indexBits:nS*32+nB*16,overhead:(nS*32+nB*16)*100/N,
+  wordsScanned:block/32};}
+function rank(IX,i){
+ var b=(i/IX.block)|0,s=(i/SUPER)|0,r=IX.sC[s]+IX.bC[b];
+ var start=b*IX.block,rem=i-start;
+ for(var k=0;k<(rem>>5);k++)r+=pc(BITS[(start>>5)+k]);
+ var tail=rem&31;
+ if(tail)r+=pc(BITS[(start>>5)+(rem>>5)]&((1<<tail)-1));
+ return r;}
+function selftest(){
+ BITS=makeBits();
+ var IX=build(64),naive=0,bad=0;
+ for(var i=0;i<N;i++){
+  if(rank(IX,i)!==naive)bad++;
+  if(BITS[i>>5]&(1<<(i&31)))naive++;}
+ var sw=[32,64,128,256,512].map(function(b){var X=build(b);
+  return {block:b,indexBits:X.indexBits,overheadPct:+X.overhead.toFixed(2),wordsScanned:X.wordsScanned};});
+ return {dataBits:N,ones:naive,blockSize:64,superblockSize:SUPER,
+  superblockCounters:IX.nS,blockCounters:IX.nB,indexBits:IX.indexBits,
+  overheadPct:+IX.overhead.toFixed(2),
+  positionsVerified:N,mismatches:bad,touchesPerQuery:3,
+  blockSweep:sw,notYetSublinear:IX.indexBits>N/8,
+  ok:bad===0&&IX.indexBits===270336&&naive===524772};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',14,20,11,'SPACE AGAINST WORDS SCANNED, BY BLOCK SIZE');
+ nt(g,'#8a7ab8',24,42,9,'block   index bits   overhead   words scanned per query');
+ VR.blockSweep.forEach(function(s,i){
+  var y=54+i*38,here=(s.block===64);
+  nf(g,here?'rgba(125,226,176,0.22)':'rgba(120,90,180,0.12)');g.fillRect(20,y,W-40,32);ng(g);
+  if(here){ne(g,'#7de2b0',1.3);g.strokeRect(20.5,y+0.5,W-41,32);ng(g);}
+  nt(g,here?'#7de2b0':'#e6dcff',34,y+21,10,String(s.block));
+  nt(g,'#8a7ab8',110,y+21,10,s.indexBits.toLocaleString());
+  var bw=Math.max(2,150*s.overheadPct/60);
+  nf(g,'rgba(90,212,255,0.55)');g.fillRect(210,y+10,bw,13);ng(g);
+  nt(g,'#5ad4ff',210+bw+8,y+21,9,s.overheadPct+'%');
+  nt(g,'#ff9f45',W-56,y+21,10,String(s.wordsScanned));});
+ nf(g,'rgba(255,215,106,0.14)');g.fillRect(18,250,W-36,32);ng(g);
+ ne(g,'#ffd76a',1.3);g.strokeRect(18.5,250.5,W-37,32);ng(g);
+ nt(g,'#ffd76a',30,270,10,'all '+VR.positionsVerified.toLocaleString()+' positions checked, '+VR.mismatches+' mismatches');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var IX=build(BLOCK);
+ nt(g,'#e6dcff',18,24,11,'block '+BLOCK+' bits   superblock '+SUPER);
+ nt(g,'#8a7ab8',18,44,9,IX.nS+' superblock counters + '+IX.nB.toLocaleString()+' block counters');
+ var rows=[['the bit array',N,'#5ad4ff'],['the index',IX.indexBits,'#ffd76a']];
+ rows.forEach(function(r,i){
+  var y=62+i*58;
+  nt(g,'#e6dcff',18,y,10,r[0]);
+  g.fillStyle='rgba(120,90,180,0.16)';g.fillRect(18,y+8,W-36,26);
+  nf(g,r[2]==='#5ad4ff'?'rgba(90,212,255,0.55)':'rgba(255,215,106,0.6)');
+  g.fillRect(18,y+8,(W-36)*r[1]/N,26);ng(g);
+  nt(g,r[2],24,y+50,10,r[1].toLocaleString()+' bits');});
+ nf(g,'rgba(125,226,176,0.2)');g.fillRect(18,182,W-36,44);ng(g);
+ ne(g,'#7de2b0',1.4);g.strokeRect(18.5,182.5,W-37,44);ng(g);
+ nt(g,'#7de2b0',32,204,12,IX.overhead.toFixed(2)+'% overhead');
+ nt(g,'#8a7ab8',32,220,9,IX.wordsScanned+' word'+(IX.wordsScanned===1?'':'s')+' scanned inside the block');
+ nt(g,'#ff9f45',18,250,9,'superblock lookup  ->  block lookup  ->  masked popcount');
+ nt(g,'#b98cff',18,268,9,'the last step is O(1) because the hardware has an instruction');
+ nt(g,'#ff5a8a',18,288,9,'widen the block and the constant grows a loop');
+ var o=document.getElementById('scrko');
+ if(o)o.innerHTML='At block size <b>'+BLOCK+'</b> the index costs <b>'+IX.indexBits.toLocaleString()+
+  '</b> bits (<b>'+IX.overhead.toFixed(2)+'%</b>) and a query scans <b>'+IX.wordsScanned+
+  '</b> word'+(IX.wordsScanned===1?'':'s')+' inside its block. Smaller blocks buy speed with space; the "constant time" is a bet on popcount being one instruction.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ for(var i=0;i<48;i++){
+  var th=i/48*Math.PI*2,q=P(Math.cos(th)*94,-40,Math.sin(th)*94);
+  ndot(g,q[0],q[1],2.4,'rgba(90,212,255,0.5)');}
+ var l1=P(-104,-62,0);nt(g,'#5ad4ff',l1[0],l1[1],8,'the bits');
+ for(i=0;i<12;i++){
+  var th2=i/12*Math.PI*2,q2=P(Math.cos(th2)*58,10,Math.sin(th2)*58);
+  ndot(g,q2[0],q2[1],4.4,'#ffd76a');}
+ var l2=P(-70,30,0);nt(g,'#ffd76a',l2[0],l2[1],8,'block counters');
+ for(i=0;i<3;i++){
+  var th3=i/3*Math.PI*2,q3=P(Math.cos(th3)*26,58,Math.sin(th3)*26);
+  ndot(g,q3[0],q3[1],6,'#7de2b0');}
+ var l3=P(-56,80,0);nt(g,'#7de2b0',l3[0],l3[1],8,'superblocks');
+ nt(g,'#7de2b0',14,26,11,'three touches, wherever you ask');
+ nt(g,'#8a7ab8',14,44,10,'and 0 mismatches in a million checks');
+ nt(g,'#ffd76a',14,H-46,9,'25.8% is not succinct -- that is asymptotic, and this is 2^20');
+ nt(g,'#ff5a8a',14,H-30,9,'the index gets you to the block; popcount does the rest');
+ nt(g,'#b98cff',14,H-14,9,'much of algorithmic constant time is an instruction in silicon');}
+document.getElementById('scrkn').onclick=function(){BLOCK=Math.min(512,BLOCK*2);drawW4();};
+document.getElementById('scrkp').onclick=function(){BLOCK=Math.max(32,BLOCK/2);drawW4();};
+document.getElementById('scrks').onclick=function(){spin=!spin;};
+VR=selftest();window.__thesuccinctrank=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

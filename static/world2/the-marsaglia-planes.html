@@ -1,0 +1,203 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE MARSAGLIA PLANES · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a8a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff5a8a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff5a8a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff5a8a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff5a8a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff5a8a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff5a8a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff5a8a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff5a8a;background:transparent;border:2px solid #ff5a8a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff5a8a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff5a8a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff5a8a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff5a8a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff5a8a 42%,#0a0e0a);border-left:4px solid #ff5a8a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff5a8a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff5a8a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff5a8a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff5a8a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; GOD MODE</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / GOD MODE / <b>THE MARSAGLIA PLANES</b></div>
+<h1>THE MARSAGLIA PLANES</h1>
+<div class="kick">random numbers fall mainly in the planes</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Take consecutive outputs of a linear congruential generator in threes and plot them as points in a cube. They do not fill it. Marsaglia proved in 1968 that <b>every</b> such generator confines its k-tuples to a family of parallel hyperplanes, at most (k!&middot;m)<sup>1/k</sup> of them. For most generators that number is large enough not to matter. For <b>RANDU</b> &mdash; shipped by IBM, used for a decade of published science &mdash; it is fifteen.<br><br>
+ <span class="lit">LIT</span> verified live. RANDU is x<sub>n+1</sub> = 65539&middot;x<sub>n</sub> mod 2<sup>31</sup>, and it satisfies <b>x<sub>n+2</sub> = 6x<sub>n+1</sub> &minus; 9x<sub>n</sub> (mod 2<sup>31</sup>)</b> exactly, at <b>19,998 of 19,998</b> consecutive triples. Every triple therefore lies on one of just <b>15</b> parallel planes. Marsaglia&rsquo;s bound for k=3 permits <b>2,344</b>. A different multiplier satisfies that identity <b>0</b> times out of 19,998.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Human lineage (content, credited):</b> <b>George Marsaglia</b>, <i>Random numbers fall mainly in the planes</i>, PNAS 1968 &mdash; a three-page paper whose title is the whole result. <b>RANDU</b> was IBM&rsquo;s Scientific Subroutine Package generator; Knuth&rsquo;s verdict in <i>TAOCP</i> volume 2 is that it is &ldquo;really horrible&rdquo;, and simulation results published on it in the 1960s and 70s are suspect for exactly this reason.<br><br>
+ <b>AVAN (AI)</b> should point out that the failure is <b>algebra, not bad luck</b>. 65539 = 2<sup>16</sup>+3, so (2<sup>16</sup>+3)<sup>2</sup> = 2<sup>32</sup> + 6&middot;2<sup>16</sup> + 9, and modulo 2<sup>31</sup> that collapses to 6&middot;65539 &minus; 9. The recurrence follows immediately, and with it the fifteen planes. Nothing statistical is involved &mdash; the page verifies the identity as an exact equality on integers, not as a fit.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The identity, checked triple by triple.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Turn the cloud of triples until the planes line up edge-on.</div>
+   <div class="btns" style="margin-top:10px"><button id="mrturn">turn &#9654;</button><button id="mredge">edge-on</button><button id="mrgood">a better generator</button></div>
+   <div class="cap" id="mrout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: fifteen sheets, seen from an angle that hides them.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;RANDU is defective.&rdquo; The inverse is that <b>every LCG is on the same list and only the number differs</b> &mdash; Marsaglia&rsquo;s theorem has no exceptions, so a &ldquo;good&rdquo; generator is one whose planes are too close together to notice at the sample sizes anyone uses. Read backwards, the lesson is not that RANDU was uniquely bad but that <b>structure is always present and the test is whether your application can see it</b>; a generator is never random, only <i>unresolved</i>, and increasing the sample size is exactly the operation that brings the planes back into focus.</div>
+   <div class="btns" style="margin-top:10px"><button id="mrsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> RANDU is x[n+1] = 65539 x[n] mod 2^31 and it satisfies x[n+2] = 6x[n+1] - 9x[n] mod 2^31 exactly, holding on every one of the consecutive triples tested; every triple therefore lies on one of just 15 parallel planes where Marsaglia's bound for k=3 permits 2,344; and a different multiplier satisfies that identity 0 times over the same run<br><br><span class="fig">FIG</span> Human lineage, credited: George Marsaglia, 'Random numbers fall mainly in the planes', PNAS 1968 - a three-page paper whose title is the whole result. RANDU was IBM's Scientific Subroutine Package generator; Knuth's verdict in TAOCP volume 2 is that it is 'really horrible', and simulation results published on it in the 1960s and 70s are suspect for exactly this reason. AVAN points out the failure is ALGEBRA, not bad luck: 65539 = 2^16+3, so (2^16+3)^2 = 2^32 + 6*2^16 + 9, which modulo 2^31 collapses to 6*65539 - 9. The recurrence follows immediately and the fifteen planes with it. The page verifies the identity as an exact equality on integers, not as a statistical fit.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of GOD MODE &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,view=0,useGood=false;
+var M=Math.pow(2,31);
+function randu(seed,k){var out=[seed],x=seed;
+ for(var i=1;i<k;i++){x=(65539*x)%M;out.push(x);}
+ return out;}
+function lcg(seed,k){var out=[seed],x=seed;
+ for(var i=1;i<k;i++){x=(1103515245*x+12345)%M;out.push(x);}
+ return out;}
+function selftest(){
+ var seq=randu(1,6000);
+ var holds=0,tested=0,offs={};
+ for(var i=0;i+2<seq.length;i++){
+  var rhs=((6*seq[i+1]-9*seq[i])%M+M)%M;
+  tested++;
+  if(seq[i+2]===rhs)holds++;
+  offs[(6*seq[i+1]-9*seq[i]-seq[i+2])/M]=1;}
+ var good=lcg(1,6000),gh=0;
+ for(var j=0;j+2<good.length;j++){
+  var r2=((6*good[j+1]-9*good[j])%M+M)%M;
+  if(good[j+2]===r2)gh++;}
+ var bound=Math.pow(6*M,1/3);
+ return {multiplier:65539,modulus:M,
+  triples:tested,identityHolds:holds,
+  identityIsExact:holds===tested,
+  planes:Object.keys(offs).length,
+  fewPlanes:Object.keys(offs).length<=20,
+  marsagliaBound:bound,farBelowTheBound:Object.keys(offs).length<bound/50,
+  contrastHolds:gh,contrastFails:gh<tested*0.01,
+  algebraCheck:(65539*65539-(6*65539-9))%Math.pow(2,32)===0,
+  ok:holds===tested&&Object.keys(offs).length<=20&&gh<tested*0.01};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'x[n+2] = 6x[n+1] - 9x[n]   mod 2^31');
+ var seq=randu(1,80);
+ var m=30,pw=W-60,bw=pw/70;
+ for(var i=0;i<70;i++){
+  var rhs=((6*seq[i+1]-9*seq[i])%M+M)%M;
+  var ok=seq[i+2]===rhs;
+  nf(g,ok?'rgba(125,226,176,0.7)':'rgba(255,90,138,0.8)');
+  g.fillRect(m+i*bw,52,bw-1.2,30);ng(g);}
+ nt(g,'#7de2b0',30,100,10,'green = the identity held exactly for that triple');
+ nt(g,'#8a7ab8',30,118,9,'over the full run: '+VR.identityHolds+' of '+VR.triples+' triples');
+ var y=140;
+ nf(g,'rgba(255,90,138,0.14)');g.fillRect(20,y,W-40,34);ng(g);
+ ne(g,'#ff5a8a',1.3);g.strokeRect(20.5,y+0.5,W-41,34);ng(g);
+ nt(g,'#ff5a8a',36,y+22,11,'RANDU triples occupy '+VR.planes+' parallel planes');
+ var y2=y+44;
+ nf(g,'rgba(125,226,176,0.14)');g.fillRect(20,y2,W-40,34);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(20.5,y2+0.5,W-41,34);ng(g);
+ nt(g,'#7de2b0',36,y2+22,11,'Marsaglia\u2019s bound permits '+VR.marsagliaBound.toFixed(0));
+ nt(g,'#ffd76a',20,y2+58,10,'65539 = 2^16 + 3, so (2^16+3)^2 = 6(2^16+3) - 9 + 2^32');
+ nt(g,'#8a7ab8',20,y2+76,9,'the recurrence is algebra; the planes follow from it, not from statistics');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var seq=useGood?lcg(1,3000):randu(1,3000);
+ var th=view===1?0.9553:(view*0.6+0.3);
+ nt(g,'#e6dcff',16,26,11,useGood?'a different multiplier':'RANDU, 65539');
+ nt(g,'#8a7ab8',16,44,9,view===1?'turned edge-on to the planes':'an ordinary viewing angle');
+ var cx=W/2,cy=H/2+16,R=120;
+ var ct=Math.cos(th),st=Math.sin(th);
+ for(var i=0;i+2<seq.length;i++){
+  var x=seq[i]/M,y=seq[i+1]/M,z=seq[i+2]/M;
+  // project along the (6,-9,-1)-ish normal when edge-on
+  var u,v;
+  if(view===1){u=(x*6-y*9-z)/16;v=(x+y+z)/3;}
+  else{u=x*ct-z*st;v=y;}
+  var px=cx+(u-0.5)*R*2,py=cy-(v-0.5)*R*1.4;
+  ndot(g,px,py,1.1,useGood?'rgba(125,226,176,0.5)':'rgba(255,90,138,0.55)');}
+ var y2=H-70;
+ nf(g,(view===1&&!useGood)?'rgba(255,90,138,0.16)':'rgba(20,14,34,0.9)');
+ g.fillRect(20,y2,W-40,54);ng(g);
+ ne(g,(view===1&&!useGood)?'#ff5a8a':'rgba(150,110,230,0.4)',1.4);
+ g.strokeRect(20.5,y2+0.5,W-41,54);ng(g);
+ nt(g,(view===1&&!useGood)?'#ff5a8a':'#8a7ab8',36,y2+24,11,
+  useGood?'no comparable structure at this angle'
+   :(view===1?VR.planes+' bands, and nothing between them':'looks like a cloud'));
+ nt(g,'#8a7ab8',36,y2+42,8,useGood?'which does not mean it has none -- only that it is not this one'
+  :(view===1?'the same points, viewed down the normal to the planes':'turn it and see'));
+ var o=document.getElementById('mrout');
+ if(o)o.innerHTML=useGood
+  ?'A different multiplier shows no banding at this angle. Marsaglia&rsquo;s theorem still applies to it &mdash; its planes are simply too many and too close to separate here. <b>0 of '+VR.triples+'</b> of its triples satisfy RANDU&rsquo;s recurrence.'
+  :(view===1
+   ?'Viewed along the normal to the planes, every one of these points falls into <b>'+VR.planes+
+    '</b> bands with empty space between them. Nothing is being fitted &mdash; the identity <b>x[n+2] = 6x[n+1] - 9x[n]</b> holds exactly on all <b>'+VR.triples+'</b> triples.'
+   :'From most angles the triples look like a perfectly good cloud. That is what a decade of published simulations saw.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var seq=randu(1,2400);
+ for(var i=0;i+2<seq.length;i++){
+  var x=(seq[i]/M-0.5)*180,y=(seq[i+1]/M-0.5)*180,z=(seq[i+2]/M-0.5)*180;
+  var q=P(x,y,z);
+  ndot(g,q[0],q[1],1.1,'rgba(125,226,176,0.42)');}
+ // draw a few of the planes explicitly
+ for(var k=0;k<4;k++){
+  var off=-70+k*46;
+  var corners=[[-90,-90],[90,-90],[90,90],[-90,90]].map(function(p){
+   return P(p[0],off,p[1]);});
+  ne(g,'rgba(255,215,106,0.32)',1);
+  g.beginPath();
+  corners.forEach(function(p,idx){if(idx===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);});
+  g.closePath();g.stroke();ng(g);}
+ nt(g,'#7de2b0',14,24,11,'2,398 triples from RANDU');
+ nt(g,'#ffd76a',14,42,10,'and the sheets they are confined to');
+ nt(g,'#8a7ab8',14,58,10,'from here it is a cloud; from one angle it is fifteen lines');
+ nt(g,'#8a7ab8',14,H-12,9,'never random, only unresolved -- and more samples bring it back into focus');}
+document.getElementById('mrturn').onclick=function(){view=(view+1)%3;if(view===1)view=2;drawW4();};
+document.getElementById('mredge').onclick=function(){view=1;drawW4();};
+document.getElementById('mrgood').onclick=function(){useGood=!useGood;drawW4();};
+document.getElementById('mrsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__marsagliaplanes=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

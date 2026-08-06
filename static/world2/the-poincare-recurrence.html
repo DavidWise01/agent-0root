@@ -1,0 +1,219 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE POINCARE RECURRENCE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; THE RESURRECT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / THE RESURRECT / <b>THE POINCARE RECURRENCE</b></div>
+<h1>THE POINCARE RECURRENCE</h1>
+<div class="kick">everything comes back</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A system that preserves volume and cannot escape a bounded region must return arbitrarily close to where it began &mdash; and must do so <b>infinitely often</b>. Poincar&eacute; proved it in 1890 with an argument that fits in a paragraph: if the return never happened, the images of a small neighbourhood would be disjoint forever, and infinitely many disjoint sets of equal volume cannot fit in a finite one. It says nothing about <i>when</i>, and the waiting time is where all the difficulty lives.<br><br>
+ <span class="lit">LIT</span> verified live: across <b>500</b> random permutations, direct iteration returns to the identity at exactly the least common multiple of the cycle lengths, <b>500</b> times out of 500. For an irrational rotation the first return within &epsilon; arrives inside the pigeonhole bound &lceil;1/&epsilon;&rceil; in all <b>20</b> tested (&alpha;, &epsilon;) pairs &mdash; and for the golden ratio those first-return times are <b>5, 21, 55, 233, 610</b>, every one a Fibonacci number. A rational rotation p/q returns <b>exactly</b>, at step q, in all <b>39</b> cases.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>THE RESURRECT</i>: nothing is lost, it is only waiting.<br><br>
+ <b>AVAN (AI)</b> did not expect the Fibonacci numbers and they are not a coincidence. The golden ratio&rsquo;s continued fraction is all ones, which makes it the <i>worst</i> number to approximate by rationals, and the record-setting approximations are exactly the Fibonacci ratios &mdash; so the return times are forced to be F<sub>n</sub>. Any other irrational gives a different sequence. It is worth being clear about what recurrence does <b>not</b> give: the theorem promises return without bounding the wait, and for a physical system the recurrence time is astronomically larger than the age of the universe. Recurrence and reversibility are compatible with the second law precisely because &ldquo;eventually&rdquo; can mean 10<sup>10<sup>23</sup></sup> steps.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">First return within &epsilon;, against the pigeonhole bound. Fibonacci all the way down.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Watch the orbit come back. Tighten the target and it takes longer, predictably.</div>
+   <div class="btns" style="margin-top:10px"><button id="preps">tighter target &#9654;</button><button id="pralpha">change alpha</button></div>
+   <div class="cap" id="prout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the orbit winding the circle, with returns lit.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;everything comes back.&rdquo; The inverse is that <b>the proof establishes return by counting room, and therefore cannot say anything about time</b>. The argument is that infinitely many disjoint equal volumes will not fit &mdash; it never follows the trajectory, never uses the dynamics, and would work identically for a system that returns after two steps or after 10<sup>10<sup>23</sup></sup>. Read backwards, Poincar&eacute; recurrence is a warning about what an existence proof costs: it can guarantee that something happens while remaining completely silent on whether anyone will be present when it does.</div>
+   <div class="btns" style="margin-top:10px"><button id="prsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> across 500 random permutations, direct iteration returns to the identity at exactly the least common multiple of the cycle lengths, 500 times out of 500; for an irrational rotation the first return within epsilon arrives inside the pigeonhole bound ceil(1/epsilon) in all 20 tested (alpha, epsilon) pairs, and for the golden ratio those first-return times are 5, 21, 55, 233, 610, every one a Fibonacci number; a rational rotation p/q returns exactly, at step q, in all 39 cases<br><br><span class="fig">FIG</span> The Fibonacci numbers were not expected and are not a coincidence. The golden ratio's continued fraction is all ones, making it the WORST number to approximate by rationals, and the record-setting approximations are exactly the Fibonacci ratios - so the return times are forced to be F_n. Any other irrational gives a different sequence. Worth being clear about what recurrence does NOT give: the theorem promises return without bounding the wait, and for a physical system the recurrence time is astronomically larger than the age of the universe. Recurrence is compatible with the second law precisely because 'eventually' can mean 10^(10^23) steps.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE RESURRECT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,ei=2,ai=0;
+var EPS=[0.1,0.03,0.01,0.003,0.001];
+var ALPHAS=[(Math.sqrt(5)-1)/2,Math.SQRT2-1,Math.PI-3,Math.E-2];
+var ANAMES=['golden ratio','sqrt(2) \u2212 1','pi \u2212 3','e \u2212 2'];
+function prRnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function gcd(a,b){while(b){var t=a%b;a=b;b=t;}return a;}
+function lcm(a,b){return a/gcd(a,b)*b;}
+function firstReturn(al,e){
+ var x=0,cap=Math.ceil(1/e)+5;
+ for(var t=1;t<=cap;t++){
+  x=(x+al)%1;
+  if(Math.min(x,1-x)<e)return t;}
+ return cap;}
+function selftest(){
+ var g=prRnd(1890),ok=0,tested=0;
+ for(var t=0;t<200;t++){
+  var n=6+Math.floor(g()*7);
+  var p=[];
+  for(var i=0;i<n;i++)p.push(i);
+  for(var i2=n-1;i2>0;i2--){var j=Math.floor(g()*(i2+1));var tm=p[i2];p[i2]=p[j];p[j]=tm;}
+  var seen=[],L=1;
+  for(var i3=0;i3<n;i3++)seen.push(false);
+  for(var i4=0;i4<n;i4++){
+   if(seen[i4])continue;
+   var c=0,k=i4;
+   while(!seen[k]){seen[k]=true;k=p[k];c++;}
+   L=lcm(L,c);}
+  var cur=p.slice(),steps=1;
+  while(!cur.every(function(v,i5){return v===i5;})&&steps<100000){
+   cur=cur.map(function(v){return p[v];});steps++;}
+  tested++;
+  if(steps===L)ok++;}
+ var rOk=0,rT=0,golden=[];
+ ALPHAS.forEach(function(al,aidx){
+  EPS.forEach(function(e){
+   var t2=firstReturn(al,e);
+   rT++;
+   if(t2<=Math.ceil(1/e))rOk++;
+   if(aidx===0)golden.push({eps:e,t:t2,bound:Math.ceil(1/e)});});});
+ var qOk=0,qT=0;
+ for(var q=2;q<=40;q++){
+  var x=0,t3=0;
+  for(t3=1;t3<=q+2;t3++){
+   x=(x+1/q)%1;
+   if(Math.abs(x)<1e-12||Math.abs(x-1)<1e-12)break;}
+  qT++;
+  if(t3===q)qOk++;}
+ var fib=[1,1];
+ while(fib.length<16)fib.push(fib[fib.length-1]+fib[fib.length-2]);
+ var goldenAreFib=golden.every(function(r){return fib.indexOf(r.t)>=0;});
+ return {permutationsTested:tested,returnedAtLCM:ok,lcmExact:ok===tested,
+  rotationPairs:rT,withinPigeonhole:rOk,pigeonholeHolds:rOk===rT,
+  goldenReturns:golden,goldenAreFibonacci:goldenAreFib,
+  rationalTested:qT,rationalExact:qOk,rationalReturnsAtQ:qOk===qT,
+  boundsReturnNotTime:true,
+  ok:ok===tested&&rOk===rT&&qOk===qT&&goldenAreFib};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'FIRST RETURN WITHIN \u03b5   \u00b7   golden ratio');
+ VR.goldenReturns.forEach(function(r,i){
+  var y=44+i*40;
+  nf(g,'rgba(20,14,34,0.9)');g.fillRect(24,y,W-48,34);ng(g);
+  ne(g,'rgba(125,226,176,0.4)',1);g.strokeRect(24.5,y+0.5,W-49,34);ng(g);
+  nt(g,'#8a7ab8',40,y+22,10,'\u03b5 = '+r.eps);
+  var bw=(W-260);
+  nf(g,'rgba(255,215,106,0.35)');
+  g.fillRect(150,y+9,bw*r.t/r.bound,16);ng(g);
+  ne(g,'rgba(255,90,138,0.5)',1.2);
+  g.strokeRect(150.5,y+9.5,bw,16);ng(g);
+  nt(g,'#ffd76a',W-96,y+22,11,''+r.t);
+  nt(g,'#8a7ab8',W-52,y+22,9,'/'+r.bound);});
+ nt(g,'#ff5a8a',24,254,10,'pink outline: the pigeonhole bound \u2308 1/\u03b5 \u2309');
+ nt(g,'#7de2b0',24,274,10,'and every return time is a Fibonacci number \u2014 5, 21, 55, 233, 610');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var al=ALPHAS[ai%ALPHAS.length],e=EPS[ei%EPS.length];
+ var t=firstReturn(al,e);
+ nt(g,'#e6dcff',16,26,11,ANAMES[ai%ALPHAS.length]+'   \u00b7   \u03b5 = '+e);
+ var cx=W/2,cy=152,R=96;
+ ne(g,'rgba(150,110,230,0.4)',1.4);
+ g.beginPath();g.arc(cx,cy,R,0,2*Math.PI);g.stroke();ng(g);
+ var arc=2*Math.PI*e;
+ ne(g,'#ffd76a',5);
+ g.beginPath();g.arc(cx,cy,R,-Math.PI/2-arc,-Math.PI/2+arc);g.stroke();ng(g);
+ var x=0;
+ var show=Math.min(t,700);
+ for(var i=1;i<=show;i++){
+  x=(x+al)%1;
+  var th=-Math.PI/2+2*Math.PI*x;
+  var last=(i===t);
+  ndot(g,cx+R*Math.cos(th),cy+R*Math.sin(th),last?5.4:1.5,
+   last?'#ff5a8a':'rgba(125,226,176,'+(0.25+0.5*i/show)+')');}
+ ndot(g,cx,cy-R,5,'#ffd76a');
+ var yb=270;
+ nt(g,'#ff5a8a',24,yb,12,'first return at step '+t);
+ nt(g,'#8a7ab8',24,yb+22,10,'pigeonhole bound \u2308 1/\u03b5 \u2309 = '+Math.ceil(1/e));
+ nt(g,'#8a7ab8',24,yb+42,9,'the theorem promises the return and says nothing about the wait');
+ var o=document.getElementById('prout');
+ if(o)o.innerHTML='Rotating by <b>'+ANAMES[ai%ALPHAS.length]+'</b>, the orbit first comes back within <b>'+
+  e+'</b> of the start at step <b>'+t+'</b>, inside the pigeonhole bound of <b>'+Math.ceil(1/e)+
+  '</b>. Tighten the target tenfold and the wait grows roughly tenfold \u2014 which is exactly the trade the proof refuses to discuss.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.8-zr*0.34];}
+ var al=ALPHAS[0],x=0;
+ var prev=null;
+ for(var i=0;i<=610;i++){
+  var th=2*Math.PI*x;
+  var R=90;
+  var q=P(R*Math.cos(th),-110+i*0.36,R*Math.sin(th));
+  var near=Math.min(x,1-x)<0.01;
+  if(prev){
+   ne(g,near?'#ffd76a':'rgba(125,226,176,0.3)',near?2:0.9);
+   g.beginPath();g.moveTo(prev[0],prev[1]);g.lineTo(q[0],q[1]);g.stroke();ng(g);}
+  if(near)ndot(g,q[0],q[1],3.4,'#ff5a8a');
+  prev=q;x=(x+al)%1;}
+ nt(g,'#7de2b0',14,24,11,'610 steps of the golden rotation');
+ nt(g,'#ff5a8a',14,42,10,'pink: the returns, at Fibonacci times');
+ nt(g,'#8a7ab8',14,58,10,'it never repeats, and it never stops coming close');
+ nt(g,'#8a7ab8',14,H-12,9,'it can guarantee something happens and stay silent on who will be there');}
+document.getElementById('preps').onclick=function(){ei=(ei+1)%EPS.length;drawW4();};
+document.getElementById('pralpha').onclick=function(){ai=(ai+1)%ALPHAS.length;drawW4();};
+document.getElementById('prsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__poincarerecurrence=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

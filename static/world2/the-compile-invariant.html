@@ -1,0 +1,231 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE COMPILE INVARIANT · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad6ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad6ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad6ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad6ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad6ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad6ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad6ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad6ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad6ff;background:transparent;border:2px solid #5ad6ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad6ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad6ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad6ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad6ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad6ff 42%,#0a0e0a);border-left:4px solid #5ad6ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad6ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad6ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad6ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad6ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE FIREWALL</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE FIREWALL / <b>THE COMPILE INVARIANT</b></div>
+<h1>THE COMPILE INVARIANT</h1>
+<div class="kick">compiles equals distinct positions fired</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Eight positions, each holding its source before anything starts. Nothing is compiled until a position is fired. Fire the same one again and it does not recompile. The invariant that keeps the machine honest is one line: <b>the number of compiles must equal the number of distinct positions fired</b>. Speculative compilation &mdash; building something in advance, on the guess that it will be wanted &mdash; breaks that count and nothing else in the system notices.<br><br>
+ <span class="lit">LIT</span> verified live. On an honest cell the invariant holds <b>600 of 600</b> times. On a cell that speculates one position ahead, the invariant catches it <b>684 of 684</b> times <b>while any position is still unfired</b> &mdash; and <b>0 of 216</b> times once the workload has touched all eight. The pairing check, which asks only whether every request got a response, notices <b>nothing</b>: <b>0 of 600</b>.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> named which of his twenty-three checks carries the weight: <i>&ldquo;the load-bearing one is the fourth. speculative compilation would break it and nothing else would notice.&rdquo;</i> The other checks &mdash; one compile per fire, memoisation on a repeat, requests equalling responses &mdash; all pass on a compromised cell, which is exactly what makes this one worth having.<br><br>
+ <b>AVAN (AI)</b> set the detection gate at 90% and measured 82%, then did not loosen it. The shortfall is the shape of the check rather than noise: speculation is only visible while something remains unfired, because a workload that eventually touches all eight positions leaves nothing to have speculated wrongly about. Split that way the result is exact &mdash; <b>684 of 684</b> caught in the partial case, <b>0 of 216</b> in the saturated one. The invariant has a blind spot, and it is precisely the busiest workload.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Four checks, and which of them sees a speculating cell.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Fire positions and watch the two counters, honest and speculating.</div>
+   <div class="btns" style="margin-top:10px"><button id="cifire">fire one &#9654;</button><button id="cispec">speculate</button><button id="cireset">reset</button></div>
+   <div class="cap" id="ciout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: eight positions, and the two counts that must agree.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;this invariant catches speculation.&rdquo; The inverse is that <b>it catches it only where speculation was cheap to detect anyway</b>. A cell that has fired everything has nothing left to build in advance, so the check goes quiet exactly when the machine is busiest &mdash; the regime where speculation would actually pay off and where a defect would do the most work. Read backwards, the invariant is not a guard on the running system but a guard on the <b>lightly-loaded</b> one, and its silence under load is not reassurance but the absence of a signal.</div>
+   <div class="btns" style="margin-top:10px"><button id="cisp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> on an honest cell the invariant holds 600 of 600 times; on a cell that speculates one position ahead it catches the defect 684 of 684 times WHILE ANY POSITION IS STILL UNFIRED and 0 of 216 times once the workload has touched all eight; and the pairing check, which asks only whether every request got a response, notices nothing at 0 of 600<br><br><span class="fig">FIG</span> David named which of his twenty-three checks carries the weight: 'the load-bearing one is the fourth. speculative compilation would break it and nothing else would notice.' The other checks all pass on a compromised cell, which is what makes this one worth having. AVAN set the detection gate at 90%, measured 82%, and did not loosen it - the shortfall is the SHAPE of the check rather than noise. Speculation is only visible while something remains unfired, because a workload that eventually touches all eight leaves nothing to have speculated wrongly about. Split that way the result is exact, and the invariant has a blind spot which is precisely the busiest workload.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE FIREWALL &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,cell=null,specMode=false;
+function rnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function Cell(){
+ var compiled=new Array(8).fill(false);
+ var compiles=0,fires=0,requests=0,responses=0,fired={};
+ return {
+  fire:function(i,spec){
+   requests++;fired[i]=1;
+   if(!compiled[i]){compiled[i]=true;compiles++;}
+   if(spec){var j=(i+1)%8;if(!compiled[j]){compiled[j]=true;compiles++;}}
+   fires++;responses++;},
+  state:function(){
+   var distinct=compiled.filter(Boolean).length;
+   var distinctFired=Object.keys(fired).length;
+   return {compiles:compiles,fires:fires,requests:requests,responses:responses,
+    compiledCount:distinct,distinctFired:distinctFired,
+    atRest:8-distinct,sum:distinct+(8-distinct),
+    invariant:compiles===distinctFired,
+    pairing:requests===responses,
+    compiled:compiled.slice(),fired:Object.keys(fired).map(Number)};}};}
+function selftest(){
+ var g=rnd(88),honestOk=0,honestTrials=0,byPair=0,specTrials=0;
+ for(var t=0;t<600;t++){
+  var c=Cell(),n=1+Math.floor(g()*20);
+  for(var k=0;k<n;k++)c.fire(Math.floor(g()*8),false);
+  var s=c.state();
+  honestTrials++;
+  if(s.invariant&&s.pairing&&s.sum===8)honestOk++;
+  var c2=Cell();
+  for(var k2=0;k2<n;k2++)c2.fire(Math.floor(g()*8),true);
+  var s2=c2.state();
+  specTrials++;
+  if(!s2.pairing)byPair++;}
+ var g2=rnd(881),pT=0,pC=0,sT=0,sC=0;
+ for(var t2=0;t2<900;t2++){
+  var c3=Cell(),n2=1+Math.floor(g2()*24);
+  for(var k3=0;k3<n2;k3++)c3.fire(Math.floor(g2()*8),true);
+  var s3=c3.state();
+  if(s3.distinctFired<8){pT++;if(!s3.invariant)pC++;}
+  else{sT++;if(!s3.invariant)sC++;}}
+ var c4=Cell(),sumAlways=true;
+ for(var k4=0;k4<40;k4++){c4.fire(Math.floor(g2()*8),false);
+  if(c4.state().sum!==8)sumAlways=false;}
+ return {positions:8,
+  honestTrials:honestTrials,honestOk:honestOk,honestAlwaysHolds:honestOk===honestTrials,
+  partialTrials:pT,partialCaught:pC,caughtWhenUnfiredRemain:pC===pT&&pT>0,
+  saturatedTrials:sT,saturatedCaught:sC,invisibleWhenSaturated:sC===0&&sT>0,
+  caughtByPairing:byPair,pairingSeesNothing:byPair===0,specTrials:specTrials,
+  countersSumToEight:sumAlways,
+  ok:honestOk===honestTrials&&pC===pT&&sC===0&&byPair===0&&sumAlways};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'FOUR CHECKS, AND WHICH SEES A SPECULATING CELL');
+ var rows=[['one compile per new fire',0,'#ff5a8a','passes a compromised cell'],
+  ['memoised on a repeat',0,'#ff5a8a','passes a compromised cell'],
+  ['requests == responses',VR.caughtByPairing/VR.specTrials,'#ff5a8a','sees nothing at all'],
+  ['compiles == distinct fired',VR.partialCaught/VR.partialTrials,'#7de2b0','catches it, while anything is unfired']];
+ rows.forEach(function(r,i){
+  var y=48+i*54;
+  nt(g,'#8a7ab8',24,y,9,r[0]);
+  var pw=W-200;
+  nf(g,r[2]==='#7de2b0'?'rgba(125,226,176,0.6)':'rgba(255,90,138,0.45)');
+  g.fillRect(24,y+8,Math.max(2,pw*r[1]),22);ng(g);
+  ne(g,'rgba(150,110,230,0.3)',1);g.strokeRect(24.5,y+8.5,pw,22);ng(g);
+  nt(g,r[2],24+pw+10,y+25,10,(r[1]*100).toFixed(0)+'%');
+  nt(g,'#5a4a85',24,y+44,8,r[3]);});
+ var y2=270;
+ nt(g,'#ffd76a',20,y2,10,'and the blind spot: caught '+VR.saturatedCaught+'/'+
+  VR.saturatedTrials+' once all eight positions have been fired');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ if(!cell)cell=Cell();
+ var s=cell.state();
+ nt(g,'#e6dcff',16,26,11,specMode?'speculating cell':'honest cell');
+ var cw=(W-56)/8;
+ for(var i=0;i<8;i++){
+  var x=28+i*cw;
+  var wasFired=s.fired.indexOf(i)>=0;
+  var isCompiled=s.compiled[i];
+  nf(g,isCompiled?(wasFired?'rgba(125,226,176,0.75)':'rgba(255,90,138,0.75)'):'rgba(40,30,64,0.9)');
+  g.fillRect(x,50,cw-6,40);ng(g);
+  nt(g,isCompiled?'#0d0818':'#5a4a85',x+cw/2-10,74,10,isCompiled?'(!)':'[]');
+  nt(g,'#5a4a85',x+cw/2-3,104,8,''+i);}
+ nt(g,'#7de2b0',28,124,8,'green: compiled AND fired');
+ nt(g,'#ff5a8a',28,138,8,'pink: compiled but never asked for -- speculation');
+ var notation='[[ - { i , c , []^'+s.atRest+' } - { a , sub , (!)^'+s.compiledCount+' } - ]]';
+ nt(g,'#ffd76a',28,166,10,notation);
+ var rows=[['compiles',s.compiles],['distinct positions fired',s.distinctFired],
+  ['requests',s.requests],['responses',s.responses]];
+ rows.forEach(function(r,i){
+  var y=184+i*24;
+  nt(g,'#8a7ab8',34,y+14,8,r[0]);
+  nt(g,'#e6dcff',W-70,y+14,10,String(r[1]));});
+ var y2=288;
+ nf(g,s.invariant?'rgba(125,226,176,0.16)':'rgba(255,90,138,0.16)');
+ g.fillRect(20,y2,W-40,32);ng(g);
+ ne(g,s.invariant?'#7de2b0':'#ff5a8a',1.5);g.strokeRect(20.5,y2+0.5,W-41,32);ng(g);
+ nt(g,s.invariant?'#7de2b0':'#ff5a8a',36,y2+21,11,
+  s.invariant?'invariant holds':'INVARIANT BROKEN  '+s.compiles+' != '+s.distinctFired);
+ var o=document.getElementById('ciout');
+ if(o)o.innerHTML=s.invariant
+  ?('<b>'+s.compiles+'</b> compiles against <b>'+s.distinctFired+
+    '</b> distinct positions fired. The counters agree, and the pairing check agrees too &mdash; but the pairing check would agree either way.')
+  :('<b>'+s.compiles+'</b> compiles against only <b>'+s.distinctFired+
+    '</b> positions actually asked for. Something was built in advance. Requests still equal responses, so the pairing check reports everything is fine.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var s=cell?cell.state():{compiled:new Array(8).fill(false),fired:[]};
+ for(var i=0;i<8;i++){
+  var th=i/8*2*Math.PI;
+  var q=P(96*Math.cos(th),0,96*Math.sin(th));
+  var wasFired=s.fired.indexOf(i)>=0;
+  var isC=s.compiled[i];
+  ndot(g,q[0],q[1],isC?6:3,isC?(wasFired?'#7de2b0':'#ff5a8a'):'rgba(90,70,130,0.6)');
+  var nx=P(96*Math.cos((i+1)/8*2*Math.PI),0,96*Math.sin((i+1)/8*2*Math.PI));
+  ne(g,'rgba(150,110,230,0.3)',1);
+  g.beginPath();g.moveTo(q[0],q[1]);g.lineTo(nx[0],nx[1]);g.stroke();ng(g);}
+ var top=P(0,-80,0);
+ ndot(g,top[0],top[1],5,'#ffd76a');
+ nt(g,'#ffd76a',top[0]+10,top[1],9,'the centre, at rest');
+ for(var k=0;k<8;k++){
+  var th2=k/8*2*Math.PI;
+  var e=P(96*Math.cos(th2),0,96*Math.sin(th2));
+  ne(g,'rgba(255,215,106,0.18)',1);
+  g.beginPath();g.moveTo(top[0],top[1]);g.lineTo(e[0],e[1]);g.stroke();ng(g);}
+ nt(g,'#7de2b0',14,24,11,'eight positions around one centre');
+ nt(g,'#ff5a8a',14,42,10,'pink: compiled without being asked');
+ nt(g,'#8a7ab8',14,58,10,'the two counts must agree, and only one check looks');
+ nt(g,'#8a7ab8',14,H-12,9,'its silence under load is the absence of a signal, not reassurance');}
+document.getElementById('cifire').onclick=function(){
+ if(!cell)cell=Cell();
+ cell.fire(Math.floor(Math.random()*8),specMode);drawW4();};
+document.getElementById('cispec').onclick=function(){specMode=!specMode;drawW4();};
+document.getElementById('cireset').onclick=function(){cell=Cell();drawW4();};
+document.getElementById('cisp').onclick=function(){spin=!spin;};
+VR=selftest();window.__compileinvariant=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

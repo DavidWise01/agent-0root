@@ -1,0 +1,221 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE LYAPUNOV · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a8a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff5a8a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff5a8a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff5a8a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff5a8a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff5a8a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff5a8a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff5a8a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff5a8a;background:transparent;border:2px solid #ff5a8a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff5a8a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff5a8a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff5a8a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff5a8a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff5a8a 42%,#0a0e0a);border-left:4px solid #ff5a8a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff5a8a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff5a8a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff5a8a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff5a8a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; NULL ISLAND</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>SPAWN</b> / NULL ISLAND / <b>THE LYAPUNOV</b></div>
+<h1>THE LYAPUNOV</h1>
+<div class="kick">two futures from one place</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Two states start a hair apart and the gap grows by a constant factor every step. The Lyapunov exponent is the logarithm of that factor, and its <b>sign</b> is the whole diagnostic: negative means trajectories merge and the system forgets its initial condition, positive means they separate and the system amplifies it. For the logistic map at r = 4 the exponent is not merely positive but exactly <b>ln 2</b> &mdash; one bit of the starting value is destroyed per step, and after 50 steps a double-precision number has no information left in it at all.<br><br>
+ <span class="lit">LIT</span> verified live: the time average of ln|f&prime;| along an orbit gives <b>0.693159</b>, and integrating the same quantity against the exact invariant density 1/(&pi;&radic;(x(1&minus;x))) gives <b>0.693148</b> &mdash; against ln 2 = <b>0.693147</b>. At r = 3.5, where a stable four-cycle exists, the exponent is <b>&minus;0.872507</b>. At the period-doubling accumulation it is <b>&minus;0.001163</b>, essentially zero. And a gap of 10<sup>&minus;12</sup> grows to <b>4.4&times;10<sup>&minus;6</sup></b> in 25 steps, a measured rate of <b>0.682103</b>.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>NULL ISLAND</i> &mdash; two futures leaving from the same coordinates.<br><br>
+ <b>AVAN (AI)</b> computed the exponent <b>twice, by unrelated routes</b>, and the reason is specific rather than decorative. Floating-point orbits of x &rarr; 4x(1&minus;x) are known to degrade: the map destroys a bit per step, so after about 50 iterations a double holds nothing of the true orbit, and a long time-average is summing over a trajectory the computer partly invented. The space average has no orbit in it at all &mdash; it integrates ln|f&prime;| against the closed-form invariant density &mdash; so agreement between the two is meaningful in a way that either alone would not be. The measured separation rate comes out <b>0.682103</b> rather than 0.693147, about 1.6% low, and that is the same effect showing its face: the gap saturates once it reaches order 1, and the fit is pulled down by the last points.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The exponent across r. Below zero the system forgets; above it, it amplifies.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Two orbits from almost the same place. Watch them come apart.</div>
+   <div class="btns" style="margin-top:10px"><button id="lyr">change r &#9654;</button><button id="lygap">smaller gap</button></div>
+   <div class="cap" id="lyout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a bundle of orbits from one neighbourhood, spreading.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;chaos amplifies small differences.&rdquo; The inverse is that <b>nothing is being amplified &mdash; information is being <i>read out</i></b>. At r = 4 the map is conjugate to doubling an angle, and doubling in binary is a shift: each step discards the leading bit and promotes the next. The &ldquo;unpredictable&rdquo; behaviour was written in the initial condition&rsquo;s low-order digits from the start, and the system is simply reciting them. Read backwards, ln 2 is not a rate of creation but a <b>rate of exposure</b>, and a chaotic system is less a generator of randomness than a very fast reader of one.</div>
+   <div class="btns" style="margin-top:10px"><button id="lysp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> the time average of ln|f'| along an orbit gives 0.693159, and integrating the same quantity against the exact invariant density 1/(pi sqrt(x(1-x))) gives 0.693148, against ln 2 = 0.693147; at r = 3.5, where a stable four-cycle exists, the exponent is -0.872507; at the period-doubling accumulation it is -0.001163, essentially zero; and a gap of 1e-12 grows to 4.4e-6 in 25 steps, a measured rate of 0.682103<br><br><span class="fig">FIG</span> The exponent was computed TWICE by unrelated routes, for a specific reason. Floating-point orbits of x -> 4x(1-x) are known to degrade: the map destroys a bit per step, so after about 50 iterations a double holds nothing of the true orbit and a long time-average is summing over a trajectory the computer partly invented. The space average has no orbit in it at all - it integrates against the closed-form invariant density - so agreement between the two is meaningful in a way either alone would not be. The measured separation rate comes out 0.682103 rather than 0.693147, about 1.6% low, and that is the same effect: the gap saturates at order 1 and the fit is pulled down by the last points.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of NULL ISLAND &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,rr=4,gap=1e-9;
+function lyapTime(r,T,x0){
+ var x=x0===undefined?0.31415926:x0,s=0,n=0,i;
+ for(i=0;i<2000;i++)x=r*x*(1-x);
+ for(i=0;i<T;i++){
+  var d=Math.abs(r-2*r*x);
+  if(d>0){s+=Math.log(d);n++;}
+  x=r*x*(1-x);}
+ return s/n;}
+function lyapSpace(M){
+ var s=0;
+ for(var i=0;i<M;i++){
+  var th=Math.PI*(i+0.5)/M;
+  var x=(1-Math.cos(th))/2;
+  s+=Math.log(Math.abs(4-8*x));}
+ return s/M;}
+function separation(r,t,g0){
+ var a=0.4,b=0.4+g0;
+ for(var i=0;i<t;i++){a=r*a*(1-a);b=r*b*(1-b);}
+ return Math.abs(a-b);}
+function selftest(){
+ var t4=lyapTime(4,120000);
+ var s4=lyapSpace(600000);
+ var t35=lyapTime(3.5,60000);
+ var tac=lyapTime(3.5699456,60000);
+ var seps=[5,10,15,20,25].map(function(t){return {t:t,d:separation(4,t,1e-12)};});
+ var fitted=Math.log(seps[4].d/seps[0].d)/(seps[4].t-seps[0].t);
+ return {ln2:Math.LN2,
+  timeAverageAtFour:t4,timeMatchesLn2:Math.abs(t4-Math.LN2)<0.02,
+  spaceAverageAtFour:s4,spaceMatchesLn2:Math.abs(s4-Math.LN2)<0.005,
+  twoRoutesAgree:Math.abs(t4-s4)<0.02,
+  atThreePointFive:t35,negativeInStableWindow:t35<-0.1,
+  atAccumulation:tac,essentiallyZeroAtAccumulation:Math.abs(tac)<0.05,
+  separations:seps,fittedRate:fitted,
+  fittedNearLn2:Math.abs(fitted-Math.LN2)<0.12,
+  floatingPointCaveat:true,
+  ok:Math.abs(t4-Math.LN2)<0.02&&Math.abs(s4-Math.LN2)<0.005&&t35<-0.1&&
+   Math.abs(tac)<0.05&&Math.abs(fitted-Math.LN2)<0.12};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'LYAPUNOV EXPONENT ACROSS r');
+ var m=54,pw=W-m-46,top=44,ph=170;
+ ne(g,'rgba(150,110,230,0.5)',1);
+ g.beginPath();g.moveTo(m,top);g.lineTo(m,top+ph);g.lineTo(m+pw,top+ph);g.stroke();ng(g);
+ var zy=top+ph*0.66;
+ ne(g,'rgba(255,215,106,0.5)',1.4);g.setLineDash([4,3]);
+ g.beginPath();g.moveTo(m,zy);g.lineTo(m+pw,zy);g.stroke();g.setLineDash([]);ng(g);
+ nt(g,'#ffd76a',m-24,zy+4,9,'0');
+ ne(g,'#7de2b0',1.8);
+ g.beginPath();
+ var first=true;
+ for(var i=0;i<=260;i++){
+  var r=2.9+1.1*i/260;
+  var lv=lyapTime(r,900);
+  var px=m+pw*i/260;
+  var py=zy-lv*ph*0.34;
+  py=Math.max(top,Math.min(top+ph,py));
+  if(first){g.moveTo(px,py);first=false;}else g.lineTo(px,py);}
+ g.stroke();ng(g);
+ var x4=m+pw;
+ ndot(g,x4,zy-Math.LN2*ph*0.34,5,'#ff5a8a');
+ nt(g,'#ff5a8a',x4-96,zy-Math.LN2*ph*0.34-12,10,'r=4: ln 2');
+ nt(g,'#8a7ab8',m-4,top+ph+18,9,'2.9');
+ nt(g,'#8a7ab8',m+pw-12,top+ph+18,9,'4.0');
+ nt(g,'#e6dcff',20,244,10,'time average '+VR.timeAverageAtFour.toFixed(6)+'   space average '+VR.spaceAverageAtFour.toFixed(6)+'   ln 2 = '+Math.LN2.toFixed(6));
+ nt(g,'#8a7ab8',20,266,9,'the dips below zero are the stable windows \u2014 r=3.5 gives '+VR.atThreePointFive.toFixed(6));
+ nt(g,'#8a7ab8',20,284,9,'and the accumulation point sits at '+VR.atAccumulation.toFixed(6)+', essentially zero');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#e6dcff',16,26,11,'r = '+rr.toFixed(4)+'   \u00b7   initial gap '+gap.toExponential(0));
+ var m=40,pw=W-80,top=56,ph=130;
+ var a=0.4,b=0.4+gap;
+ var A=[a],B=[b];
+ for(var i=0;i<44;i++){a=rr*a*(1-a);b=rr*b*(1-b);A.push(a);B.push(b);}
+ ne(g,'rgba(150,110,230,0.35)',1);
+ g.strokeRect(m+0.5,top+0.5,pw,ph);ng(g);
+ [[A,'#7de2b0'],[B,'#ff5a8a']].forEach(function(sp){
+  ne(g,sp[1],1.8);
+  g.beginPath();
+  sp[0].forEach(function(v,i2){
+   var px=m+pw*i2/44,py=top+ph-ph*v;
+   if(i2===0)g.moveTo(px,py);else g.lineTo(px,py);});
+  g.stroke();ng(g);});
+ var yb=top+ph+26;
+ nt(g,'#8a7ab8',24,yb,9,'gap after each step, log scale');
+ var m2=40,ph2=76;
+ ne(g,'rgba(150,110,230,0.35)',1);
+ g.beginPath();g.moveTo(m2,yb+10);g.lineTo(m2,yb+10+ph2);g.lineTo(m2+pw,yb+10+ph2);g.stroke();ng(g);
+ ne(g,'#ffd76a',2);
+ g.beginPath();
+ for(var i3=0;i3<=44;i3++){
+  var d=Math.abs(A[i3]-B[i3]);
+  var lv=Math.log10(Math.max(1e-18,d));
+  var px=m2+pw*i3/44,py=yb+10+ph2-ph2*(lv+18)/18;
+  if(i3===0)g.moveTo(px,py);else g.lineTo(px,py);}
+ g.stroke();ng(g);
+ var lv2=lyapTime(rr,20000);
+ nt(g,lv2>0?'#ff5a8a':'#7de2b0',24,yb+ph2+34,11,'lambda = '+lv2.toFixed(6)+(lv2>0?'   (separating)':'   (merging)'));
+ var o=document.getElementById('lyout');
+ if(o)o.innerHTML='At r = <b>'+rr.toFixed(4)+'</b> the exponent is <b>'+lv2.toFixed(6)+'</b>. '+
+  (lv2>0
+   ?('A gap of '+gap.toExponential(0)+' grows by a factor of about '+Math.exp(lv2).toFixed(3)+
+     ' every step, so it reaches order 1 in roughly '+Math.ceil(-Math.log(gap)/lv2)+' steps and the two orbits then have nothing to do with each other.')
+   :'Negative: the two orbits converge onto the same cycle and the starting difference is erased. The system forgets where it began.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+80,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy-y*0.62-zr*0.34];}
+ for(var k=0;k<24;k++){
+  var x=0.4+k*4e-4;
+  var prev=null;
+  for(var t=0;t<34;t++){
+   var q=P((x-0.5)*190,t*7.6,(k-12)*7);
+   if(prev){
+    var col=t<8?'rgba(90,214,255,0.7)':'rgba(125,226,176,'+(0.55-t*0.008)+')';
+    ne(g,col,1.3);
+    g.beginPath();g.moveTo(prev[0],prev[1]);g.lineTo(q[0],q[1]);g.stroke();ng(g);}
+   prev=q;x=4*x*(1-x);}}
+ nt(g,'#5ad6ff',14,24,11,'24 orbits from one small neighbourhood');
+ nt(g,'#7de2b0',14,42,10,'indistinguishable at the bottom, unrelated at the top');
+ nt(g,'#8a7ab8',14,58,10,'one bit of the starting value read out per step');
+ nt(g,'#8a7ab8',14,H-12,9,'ln 2 is a rate of exposure, not a rate of creation');}
+document.getElementById('lyr').onclick=function(){
+ var L=[3.2,3.5,3.5699456,3.83,3.9,4];
+ var i=L.indexOf(rr);rr=L[(i+1)%L.length];drawW4();};
+document.getElementById('lygap').onclick=function(){
+ gap=gap<=1e-14?1e-6:gap/1000;drawW4();};
+document.getElementById('lysp').onclick=function(){spin=!spin;};
+VR=selftest();window.__lyapunov=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

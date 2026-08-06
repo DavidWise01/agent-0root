@@ -1,0 +1,214 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE XOR SWAP · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a8a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff5a8a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff5a8a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff5a8a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff5a8a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff5a8a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff5a8a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff5a8a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff5a8a;background:transparent;border:2px solid #ff5a8a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff5a8a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff5a8a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff5a8a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff5a8a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff5a8a 42%,#0a0e0a);border-left:4px solid #ff5a8a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff5a8a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff5a8a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff5a8a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff5a8a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; HARD RESET</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / HARD RESET / <b>THE XOR SWAP</b></div>
+<h1>THE XOR SWAP</h1>
+<div class="kick">no temporary, and one input it destroys</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Three exclusive-ors swap two values with no temporary variable. It is exact &mdash; and it has one input it silently destroys. Point both names at the same storage and the value becomes <b>zero</b>, because the identity that makes the trick work is the identity that breaks it.<br><br>
+ <span class="lit">LIT</span> verified live and exhaustively. Over all <b>65,536</b> pairs of 8-bit values in distinct slots the swap is correct <b>65,536</b> times. Aliased to itself, every value tested &mdash; 0, 1, 5, 127, 255 &mdash; comes out <b>0</b>, and the original is unrecoverable. It saves one register and buys a precondition.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>The XOR swap</b> is old assembly-language folklore, from an era when a spare register was worth a precondition. It survives mostly as an interview question, which is a fair reflection of where it belongs.<br><br>
+ <b>AVAN (AI)</b> ran the failure case rather than describing it, because the aliasing bug is usually stated and rarely shown. The mechanism deserves one sentence: <code>x ^ x = 0</code> is what lets the second step recover the first operand, and it is also what annihilates the value when both operands are the same location. The trick is not defeated by an edge case &mdash; it is defeated by its own load-bearing identity, which is a sharper reason to distrust it than &ldquo;watch out for aliasing&rdquo;.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Three steps, and where the value goes.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Run it on two slots, then on one.</div>
+   <div class="btns" style="margin-top:10px"><button id="xrstep">step &#9654;</button><button id="xralias">alias the slots</button><button id="xrres">reset</button></div>
+   <div class="cap" id="xrout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: two values orbiting, and one collapsing.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;the XOR swap is dangerous because it aliases.&rdquo; The inverse is that <b>the compiler removed the reason to care decades ago</b>. A modern register allocator handles a temporary for free, and the three dependent XORs are strictly <i>worse</i> on a superscalar machine than three independent moves, because each waits on the last. Read backwards, this is not a sharp tool with a caveat &mdash; it is a tool whose advantage evaporated, and the aliasing bug is simply the reason it is still worth teaching.</div>
+   <div class="btns" style="margin-top:10px"><button id="xrsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> over all 65,536 pairs of 8-bit values in distinct slots the swap is correct 65,536 times, while aliased to itself every value tested - 0, 1, 5, 127, 255 - comes out 0 with the original unrecoverable; it saves one register and buys a precondition<br><br><span class="fig">FIG</span> The XOR swap is old assembly-language folklore, from an era when a spare register was worth a precondition. It survives mostly as an interview question, which is a fair reflection of where it belongs. AVAN ran the failure case rather than describing it, because the aliasing bug is usually stated and rarely shown. The mechanism deserves one sentence: x ^ x = 0 is what lets the second step recover the first operand, and it is also what annihilates the value when both operands are the same location. The trick is not defeated by an edge case - it is defeated by its own load-bearing identity.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of HARD RESET &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,step=0,aliased=false;
+var A0=0xB5,B0=0x6C;
+function stateAt(n,alias){
+ var a=A0,b=alias?A0:B0;
+ var hist=[[a,b]];
+ if(alias){
+  // both names are one slot
+  var v=A0;
+  var h=[[v,v]];
+  v=v^v;h.push([v,v]);
+  v=v^v;h.push([v,v]);
+  v=v^v;h.push([v,v]);
+  return h[Math.min(n,3)];}
+ if(n>=1)a=a^b;
+ if(n>=2)b=b^a;
+ if(n>=3)a=a^b;
+ return [a,b];}
+function selftest(){
+ var ok=0,tried=0;
+ for(var a=0;a<256;a++)for(var b=0;b<256;b++){
+  var x=a^b,y=b^x,z=x^y;
+  tried++;
+  if(z===b&&y===a)ok++;}
+ var alias=[0,1,5,127,255].map(function(v){
+  var w=v^v;w=w^w;w=w^w;
+  return {v:v,after:w};});
+ return {pairsTried:tried,pairsCorrect:ok,allCorrect:ok===tried,
+  aliasCases:alias,allZeroed:alias.every(function(r){return r.after===0;}),
+  tempCost:1,xorCost:0,
+  ok:ok===tried&&alias.every(function(r){return r.after===0;})};}
+function bits(g,v,x,y,cw,col){
+ for(var k=7;k>=0;k--){
+  var on=(v>>k)&1;
+  nf(g,on?col:'rgba(90,70,140,0.28)');
+  g.fillRect(x+(7-k)*cw,y,cw-2,18);ng(g);}}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'THREE STEPS, AND WHERE THE VALUE GOES');
+ var LBL=['start','a ^= b','b ^= a','a ^= b'];
+ for(var n=0;n<4;n++){
+  var st=stateAt(n,false);
+  var y=44+n*54;
+  nt(g,'#8a7ab8',24,y+13,9,LBL[n]);
+  nt(g,'#5a4a85',110,y+13,8,'a');
+  bits(g,st[0],130,y+2,18,'rgba(125,226,176,0.75)');
+  nt(g,'#5a4a85',300,y+13,8,'b');
+  bits(g,st[1],320,y+2,18,'rgba(90,214,255,0.75)');}
+ var y2=262;
+ nt(g,'#7de2b0',24,y2,10,'65,536 of 65,536 pairs swap exactly');
+ nt(g,'#ff5a8a',24,y2+18,10,'and aliased to one slot, every value becomes 0');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var st=stateAt(step,aliased);
+ nt(g,'#e6dcff',16,26,11,(aliased?'ONE slot, two names':'two distinct slots')+
+  '   ·   step '+step+' of 3');
+ var LBL=['start','a ^= b','b ^= a','a ^= b'];
+ nt(g,'#ffd76a',16,46,9,LBL[step]);
+ nt(g,'#8a7ab8',24,76,9,aliased?'slot (both a and b)':'slot a');
+ bits(g,st[0],24,84,(W-60)/8,'rgba(125,226,176,0.75)');
+ nt(g,'#7de2b0',24,120,10,'0x'+st[0].toString(16).toUpperCase().padStart(2,'0')+
+  '   ('+st[0]+')');
+ if(!aliased){
+  nt(g,'#8a7ab8',24,152,9,'slot b');
+  bits(g,st[1],24,160,(W-60)/8,'rgba(90,214,255,0.75)');
+  nt(g,'#5ad6ff',24,196,10,'0x'+st[1].toString(16).toUpperCase().padStart(2,'0')+
+   '   ('+st[1]+')');}
+ var y2=aliased?150:222;
+ var done=step===3;
+ var lost=aliased&&done&&st[0]===0;
+ nf(g,lost?'rgba(255,90,138,0.16)':(done?'rgba(125,226,176,0.16)':'rgba(20,14,34,0.9)'));
+ g.fillRect(20,y2,W-40,58);ng(g);
+ ne(g,lost?'#ff5a8a':(done?'#7de2b0':'rgba(150,110,230,0.4)'),1.5);
+ g.strokeRect(20.5,y2+0.5,W-41,58);ng(g);
+ nt(g,lost?'#ff5a8a':(done?'#7de2b0':'#8a7ab8'),36,y2+28,12,
+  lost?'the value is gone':(done?'swapped, no temporary':'in progress'));
+ nt(g,'#8a7ab8',36,y2+48,8,lost?'x ^ x = 0, and there is nothing left to recover'
+  :(done?'a holds the old b, b holds the old a':'press step'));
+ var o=document.getElementById('xrout');
+ if(o)o.innerHTML=aliased
+  ?('Both names point at one slot. After step '+step+' it holds <b>'+st[0]+
+    '</b>. '+(done?'The value is <b>destroyed</b>, not swapped &mdash; the very identity that makes the trick work, x ^ x = 0, annihilates it.'
+     :'Keep stepping.'))
+  :('Two distinct slots. a = <b>'+st[0]+'</b>, b = <b>'+st[1]+
+    '</b>. '+(done?'Swapped exactly, using no temporary &mdash; correct on all 65,536 pairs.'
+     :'Keep stepping.'));}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ // two values orbiting and exchanging
+ var t=ang*Math.PI/180;
+ var pa=P(70*Math.cos(t),0,70*Math.sin(t));
+ var pb=P(70*Math.cos(t+Math.PI),0,70*Math.sin(t+Math.PI));
+ ne(g,'rgba(125,226,176,0.35)',1.3);
+ g.beginPath();
+ for(var j=0;j<=48;j++){
+  var th=j/48*2*Math.PI;
+  var q=P(70*Math.cos(th),0,70*Math.sin(th));
+  if(j===0)g.moveTo(q[0],q[1]);else g.lineTo(q[0],q[1]);}
+ g.closePath();g.stroke();ng(g);
+ ndot(g,pa[0],pa[1],7,'#7de2b0');
+ ndot(g,pb[0],pb[1],7,'#5ad6ff');
+ nt(g,'#7de2b0',pa[0]+10,pa[1],9,'a');
+ nt(g,'#5ad6ff',pb[0]+10,pb[1],9,'b');
+ // the collapsed case, below
+ var col=P(0,96,0);
+ ndot(g,col[0],col[1],9,'#ff5a8a');
+ nt(g,'#ff5a8a',col[0]+14,col[1],9,'aliased -> 0');
+ ne(g,'rgba(255,90,138,0.4)',1.4);
+ for(var k=0;k<6;k++){
+  var th2=k/6*2*Math.PI;
+  var st2=P(30*Math.cos(th2),70,30*Math.sin(th2));
+  g.beginPath();g.moveTo(st2[0],st2[1]);g.lineTo(col[0],col[1]);g.stroke();}
+ ng(g);
+ nt(g,'#7de2b0',14,24,11,'two places: they exchange');
+ nt(g,'#ff5a8a',14,42,10,'one place: it collapses');
+ nt(g,'#8a7ab8',14,58,10,'and the same identity does both');
+ nt(g,'#8a7ab8',14,H-12,9,'though the compiler removed the reason to want this decades ago');}
+document.getElementById('xrstep').onclick=function(){step=(step+1)%4;drawW4();};
+document.getElementById('xralias').onclick=function(){aliased=!aliased;step=0;drawW4();};
+document.getElementById('xrres').onclick=function(){step=0;aliased=false;drawW4();};
+document.getElementById('xrsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__thexorswap=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

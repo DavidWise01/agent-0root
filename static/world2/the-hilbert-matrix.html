@@ -1,0 +1,223 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE HILBERT MATRIX · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad6ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad6ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad6ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad6ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad6ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad6ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad6ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad6ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad6ff;background:transparent;border:2px solid #5ad6ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad6ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad6ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad6ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad6ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad6ff 42%,#0a0e0a);border-left:4px solid #5ad6ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad6ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad6ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad6ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad6ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; STACK OVERFLOW</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / STACK OVERFLOW / <b>THE HILBERT MATRIX</b></div>
+<h1>THE HILBERT MATRIX</h1>
+<div class="kick">integers floating point cannot reach</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Every entry of the Hilbert matrix is a simple fraction: H<sub>ij</sub> = 1/(i+j&minus;1). Its inverse is a table of <b>exact integers</b>, available in closed form. Both objects are as clean as mathematics gets, and floating-point arithmetic cannot get from one to the other. The integer entries grow explosively while the matrix entries all sit under 1, so the answer is enormous, the input is tiny, and the bits in between are simply not there.<br><br>
+ <span class="lit">LIT</span> verified live: the closed-form inverse entries are confirmed <b>integral</b> for n = 3, 4, 5; multiplying H by that exact inverse returns the identity to <b>0.0e+0</b> at n=3, degrading to <b>1.5e-11</b> by n=6; the largest inverse entry runs <b>1.9e+2</b>, <b>1.8e+5</b>, <b>4.2e+9</b> at n = 3, 5, 8; and solving Hx = b at n=6 whose true answer is all ones returns a worst error of <b>2.33e-10</b> &mdash; roughly <b>7</b> of the 17 available digits gone.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>STACK OVERFLOW</i> &mdash; the entries of the answer outgrow the space the arithmetic reserved for them.<br><br>
+ <b>AVAN (AI)</b> used the <b>exact</b> inverse rather than a computed one deliberately, because it separates two failures people usually blend together. This page never runs an elimination algorithm; the inverse is written down from a formula, correct to the last integer, and the error still appears. So the loss is not a defect of the solver &mdash; it is in the multiplication itself, and no better algorithm removes it. The honest limit: the closed-form entries are evaluated in floating point here, so beyond about n=8 the formula&rsquo;s own binomials exceed exact integer range, and the page confines its integrality check to n &le; 5 where that cannot happen.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The matrix entries, and the size of the integers hiding in the inverse.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Grow the matrix and watch the digits disappear.</div>
+   <div class="btns" style="margin-top:10px"><button id="hbup">bigger n</button><button id="hbdn">smaller n</button><button id="hbinv">the inverse &#9654;</button></div>
+   <div class="cap" id="hbout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a matrix whose columns are almost the same direction.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;the Hilbert matrix is ill-conditioned.&rdquo; The inverse is that <b>it is ill-conditioned because it is nearly singular, and it is nearly singular because its columns are samples of very similar functions</b>. The rows are 1/(i+j&minus;1) &mdash; discretised copies of x<sup>i</sup> integrated against each other &mdash; and monomials are famously close together on [0,1]. So the difficulty is inherited from the <i>basis</i>, not from the matrix, and choosing an orthogonal basis makes the same problem trivial. Read backwards, this is the same lesson as Wilkinson&rsquo;s: the trouble lives in the representation, and switching representation is the only real fix.</div>
+   <div class="btns" style="margin-top:10px"><button id="hbsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> the closed-form inverse entries are confirmed integral for n = 3, 4, 5; multiplying H by that exact inverse returns the identity to 0.0e+0 at n=3, degrading to 1.5e-11 by n=6; the largest inverse entry runs 1.9e+2, 1.8e+5, 4.2e+9 at n = 3, 5, 8; and solving Hx = b at n=6 whose true answer is all ones returns a worst error of 2.33e-10, roughly 7 of the 17 available digits gone<br><br><span class="fig">FIG</span> The EXACT inverse is used deliberately, because it separates two failures people blend together. This page never runs an elimination algorithm — the inverse is written from a closed form, correct to the last integer, and the error still appears. So the loss is not a defect of the solver; it is in the multiplication itself. Honest limit: the closed-form entries are evaluated in floating point, so beyond about n=8 the binomials exceed exact integer range, and the integrality check is confined to n <= 5.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of STACK OVERFLOW &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,n=6,showInv=false;
+function C(nn,k){var r=1;
+ for(var i=0;i<k;i++)r=r*(nn-i)/(i+1);
+ return Math.round(r);}
+function hinv(nn,i,j){
+ var s=((i+j)%2===0)?1:-1;
+ return s*(i+j-1)*C(nn+i-1,nn-j)*C(nn+j-1,nn-i)*Math.pow(C(i+j-2,i-1),2);}
+function identityErr(nn){
+ var mx=0;
+ for(var i=1;i<=nn;i++)for(var j=1;j<=nn;j++){
+  var s=0;
+  for(var k=1;k<=nn;k++)s+=(1/(i+k-1))*hinv(nn,k,j);
+  mx=Math.max(mx,Math.abs(s-((i===j)?1:0)));}
+ return mx;}
+function solveErr(nn){
+ var b=[];
+ for(var i=1;i<=nn;i++){var s=0;
+  for(var j=1;j<=nn;j++)s+=1/(i+j-1);
+  b.push(s);}
+ var mx=0;
+ for(var i=1;i<=nn;i++){var s=0;
+  for(var j=1;j<=nn;j++)s+=hinv(nn,i,j)*b[j-1];
+  mx=Math.max(mx,Math.abs(s-1));}
+ return mx;}
+function biggest(nn){var m=0;
+ for(var i=1;i<=nn;i++)for(var j=1;j<=nn;j++)m=Math.max(m,Math.abs(hinv(nn,i,j)));
+ return m;}
+function selftest(){
+ var idRows=[3,4,5,6].map(function(k){return [k,identityErr(k)];});
+ var big=[3,5,8].map(function(k){return [k,biggest(k)];});
+ var allInt=[3,4,5].every(function(k){
+  for(var i=1;i<=k;i++)for(var j=1;j<=k;j++)
+   if(!Number.isInteger(hinv(k,i,j)))return false;
+  return true;});
+ var e6=solveErr(6);
+ return {inverseIntegral:allInt,integralCheckedTo:5,
+  identityErrors:idRows,cleanAtThree:idRows[0][1]<1e-9,degrades:idRows[3][1]>idRows[0][1],
+  largestEntries:big,entriesExplode:big[2][1]>1e9,
+  solveN:6,worstSolveError:e6,digitsLost:17+Math.log10(Math.max(e6,1e-17)),
+  realError:e6>1e-12,
+  ok:allInt&&idRows[0][1]<1e-9&&idRows[3][1]>idRows[0][1]&&big[2][1]>1e9&&e6>1e-12};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'EVERY ENTRY UNDER 1  \u2014  EVERY INVERSE ENTRY AN INTEGER');
+ var N=5,cw=34,ox=34,oy=52;
+ for(var i=1;i<=N;i++)for(var j=1;j<=N;j++){
+  var v=1/(i+j-1);
+  var x=ox+(j-1)*cw,y=oy+(i-1)*cw;
+  g.fillStyle='rgba(125,226,176,'+(0.12+v*0.5)+')';
+  g.fillRect(x,y,cw-3,cw-3);
+  nt(g,'#0a0713',x+3,y+20,8,v.toFixed(2));}
+ nt(g,'#7de2b0',ox,oy-8,9,'H');
+ var ox2=250;
+ for(var i=1;i<=N;i++)for(var j=1;j<=N;j++){
+  var v=hinv(N,i,j);
+  var x=ox2+(j-1)*cw,y=oy+(i-1)*cw;
+  var mag=Math.log10(Math.abs(v)+1)/6;
+  g.fillStyle='rgba(255,90,138,'+(0.1+mag*0.7)+')';
+  g.fillRect(x,y,cw-3,cw-3);
+  nt(g,'#e6dcff',x+2,y+20,7,Math.abs(v)>9999?(v/1000).toFixed(0)+'k':''+v);}
+ nt(g,'#ff5a8a',ox2,oy-8,9,'H inverse  (n=5)');
+ nt(g,'#e6dcff',14,232,10,'largest inverse entry at n=5: '+biggest(5).toExponential(1)+'   \u00b7   at n=8: '+biggest(8).toExponential(1));
+ nt(g,'#8a7ab8',14,252,9,'the input is tiny, the answer is enormous, and the bits between them do not exist');
+ nt(g,'#8a7ab8',14,272,9,'both objects are exact; only the passage from one to the other fails');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ if(showInv){
+  nt(g,'#e6dcff',16,26,11,'largest |inverse entry| against n');
+  var m=44,pw=W-m-26,top=60,ph=170;
+  ne(g,'rgba(150,110,230,0.5)',1);
+  g.beginPath();g.moveTo(m,top);g.lineTo(m,top+ph);g.lineTo(m+pw,top+ph);g.stroke();ng(g);
+  ne(g,'#ff5a8a',2);g.beginPath();
+  for(var k=2;k<=9;k++){
+   var x=m+pw*(k-2)/7,y=top+ph-ph*Math.log10(biggest(k)+1)/12;
+   if(k===2)g.moveTo(x,y);else g.lineTo(x,y);}
+  g.stroke();ng(g);
+  [3,5,8].forEach(function(k){
+   var x=m+pw*(k-2)/7,y=top+ph-ph*Math.log10(biggest(k)+1)/12;
+   ndot(g,x,y,5,'#ffd76a');
+   nt(g,'#ffd76a',x-20,y-10,9,biggest(k).toExponential(0));});
+  for(var k=2;k<=9;k+=2)nt(g,'#8a7ab8',m+pw*(k-2)/7-4,top+ph+18,9,''+k);
+  nt(g,'#8a7ab8',m,top+ph+40,9,'log scale \u2014 roughly an order of magnitude per step');
+  var o2=document.getElementById('hbout');
+  if(o2)o2.innerHTML='The inverse entries grow by about an order of magnitude for every increase in n, while every entry of H itself stays below 1. That ratio <i>is</i> the condition number, and it is why the digits go.';
+  return;}
+ var idErr=identityErr(n), slErr=solveErr(n);
+ nt(g,'#e6dcff',16,26,12,'n = '+n);
+ var rows=[['H x Hinv error',idErr],['solve error (true answer all 1s)',slErr],
+  ['largest inverse entry',biggest(n)]];
+ rows.forEach(function(r,i){
+  var y=58+i*58;
+  nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y,W-40,44);ng(g);
+  ne(g,'rgba(150,110,230,0.4)',1);g.strokeRect(20.5,y+0.5,W-41,44);ng(g);
+  nt(g,'#8a7ab8',34,y+18,9,r[0]);
+  nt(g,'#e6dcff',34,y+37,12,r[1].toExponential(2));});
+ var digits=Math.max(0,Math.min(17,-Math.log10(Math.max(slErr,1e-17))));
+ var y2=238;
+ nt(g,'#e6dcff',20,y2,10,'digits still correct: '+digits.toFixed(0)+' of 17');
+ var pw=W-40;
+ nf(g,'rgba(125,226,176,0.5)');g.fillRect(20,y2+10,pw*digits/17,22);ng(g);
+ nf(g,'rgba(255,90,138,0.5)');g.fillRect(20+pw*digits/17,y2+10,pw*(1-digits/17),22);ng(g);
+ ne(g,'rgba(150,110,230,0.5)',1);g.strokeRect(20.5,y2+10.5,pw,22);ng(g);
+ nt(g,'#ff5a8a',20,y2+56,10,(17-digits).toFixed(0)+' digits gone \u2014 with an EXACT inverse');
+ nt(g,'#8a7ab8',20,y2+74,9,'no solver was used; the loss is in the multiplication itself');
+ var o=document.getElementById('hbout');
+ if(o)o.innerHTML='At <b>n = '+n+'</b> the solve error is <b>'+slErr.toExponential(2)+'</b>, leaving about <b>'+digits.toFixed(0)+'</b> of 17 digits. The inverse used here is the exact closed form &mdash; correct to the last integer &mdash; so a better algorithm cannot recover them.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+30,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy-y*0.7-zr*0.3];}
+ var o=P(0,0,0);
+ var COLS=['#7de2b0','#5ad6ff','#ffd76a','#ff9a5a','#ff5a8a'];
+ for(var j=1;j<=5;j++){
+  var v=[];
+  for(var i=1;i<=3;i++)v.push(1/(i+j-1));
+  var L=Math.hypot(v[0],v[1],v[2]);
+  var p=P(v[0]/L*120,v[1]/L*120,v[2]/L*120);
+  ne(g,COLS[j-1],1.8);
+  g.beginPath();g.moveTo(o[0],o[1]);g.lineTo(p[0],p[1]);g.stroke();ng(g);
+  ndot(g,p[0],p[1],4,COLS[j-1]);
+  nt(g,COLS[j-1],p[0]+6,p[1],8,'col '+j);}
+ ndot(g,o[0],o[1],5,'#e6dcff');
+ nt(g,'#e6dcff',14,24,11,'five columns, almost one direction');
+ nt(g,'#8a7ab8',14,42,10,'nearly parallel means nearly singular');
+ nt(g,'#8a7ab8',14,58,10,'and the entries are samples of very similar functions');
+ nt(g,'#8a7ab8',14,H-12,9,'the difficulty is inherited from the basis, not from the matrix');}
+document.getElementById('hbup').onclick=function(){showInv=false;n=Math.min(9,n+1);drawW4();};
+document.getElementById('hbdn').onclick=function(){showInv=false;n=Math.max(2,n-1);drawW4();};
+document.getElementById('hbinv').onclick=function(){showInv=!showInv;drawW4();};
+document.getElementById('hbsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__hilbertmatrix=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

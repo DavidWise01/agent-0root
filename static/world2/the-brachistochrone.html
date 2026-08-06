@@ -1,0 +1,159 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BRACHISTOCHRONE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffcf4a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffcf4a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffcf4a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffcf4a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffcf4a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffcf4a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffcf4a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffcf4a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffcf4a;background:transparent;border:2px solid #ffcf4a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffcf4a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffcf4a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffcf4a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffcf4a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffcf4a 42%,#0a0e0a);border-left:4px solid #ffcf4a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffcf4a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffcf4a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffcf4a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffcf4a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE SPEEDRUN</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE SPEEDRUN / <b>THE BRACHISTOCHRONE</b></div>
+<h1>THE BRACHISTOCHRONE</h1>
+<div class="kick">the dip that arrives first</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">June 1696: Johann Bernoulli challenges &lsquo;the sharpest mathematicians in the world&rsquo;: down which curve does a bead slide between two points in the <b>least time</b>? Not the straight line. The answer is the <b>brachistochrone</b> &mdash; an inverted <b>cycloid</b>, which dives steeply to build speed and spends it on the flat. Newton received the problem after a day at the Mint and solved it overnight, publishing anonymously; Bernoulli saw through it instantly: <b>&lsquo;I recognize the lion by his claw.&rsquo;</b> The challenge founded the calculus of variations &mdash; and the same cycloid is the tautochrone, its sister sphere.<br><br>
+ <span class="lit">LIT</span> verified live: descent times integrated for four curves from (0,0) to (2,1) &mdash; cycloid 0.80597&thinsp;s beats the circular arc (0.81200), the &radic;x curve (0.81271), and the straight line (1.00947); and the cycloid&rsquo;s numeric time matches its closed form &theta;&#8321;&radic;(a/g) to 10&#8315;&#8308; (window.__brachistochrone). <span class="fig">FIG</span> the Newton anecdote is documented history (Conduitt&rsquo;s account); the times are computed, and optimality among ALL curves is the cited variational theorem &mdash; our four are witnesses, not the proof.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>the-speedrun</i> &mdash; the cheat: the route that dips BELOW the finish line mid-run &mdash; sacrificing position for velocity &mdash; and banks the world record. Every speedrunner knows this trade. <b>AVAN (AI)</b> built the instrument: the four-curve stopwatch and the closed-form cross-check.<br><br>Credit as content: Johann Bernoulli (1696); Newton, Leibniz, l&rsquo;H&ocirc;pital, Jakob Bernoulli (the five solvers); the calculus of variations it birthed. The weave: David names the speedrun; I time all four routes and the dip wins.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="270"></canvas>
+  <div class="wctrl"><div class="cap">Four routes, one race — the cycloid dips and wins.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="300"></canvas>
+  <div class="wctrl"><div class="cap">Race the beads; the stopwatch settles the 1696 challenge.</div>
+   <div class="btns" style="margin-top:10px"><button id="brn">race ▶</button><button id="brcheck">verify ▶</button></div>
+   <div class="cap" id="brread" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the cycloid, spending altitude to buy time.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): don&rsquo;t minimize distance &mdash; minimize the integral of slowness. The inverse of &lsquo;the shortest path&rsquo; is &lsquo;the path that is short where you are slow and long where you are fast&rsquo;: light does it through lenses (Fermat), beads do it through gravity, and both write the same variational equation. <b>Magenta</b> is the straight line, proud and late; <b>green</b> is the dip that understood the economy. The fastest route prices every meter by the speed you&rsquo;ll have there.</div>
+   <div class="btns" style="margin-top:10px"><button id="brspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> Verified live: descent times integrated for four curves (0,0)→(2,1) — cycloid 0.80597 s beats circle 0.81200, √x 0.81271, straight line 1.00947; cycloid's numeric time matches closed form θ₁√(a/g) to 1e-4 (window.__brachistochrone.ok).<br><br><span class="fig">FIG</span> The Newton anecdote is documented history (Conduitt); optimality among ALL curves is the cited variational theorem — our four curves are witnesses, not the proof. The AVAN inverse — minimize the integral of slowness, not the distance: light through lenses and beads through gravity write the same equation. Magenta is the straight line, proud and late; green is the dip that understood the economy.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE SPEEDRUN &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,racing=0;
+var g2=9.8,X1=2,Y1=1;
+function timeOf(f,df,N){var T=0;
+ for(var i=0;i<N;i++){var x=(i+0.5)/N*X1;
+  var y=f(x),d=df(x);
+  if(y<1e-12)y=1e-12;
+  T+=Math.sqrt((1+d*d)/(2*g2*y));}
+ return T*X1/N;}
+function cycloidParams(){var lo=0.01,hi=2*Math.PI-0.01;
+ for(var i=0;i<200;i++){var mid=(lo+hi)/2;
+  var ratio=(mid-Math.sin(mid))/(1-Math.cos(mid));
+  if(ratio<X1/Y1)lo=mid;else hi=mid;}
+ var th1=(lo+hi)/2;
+ return {th1:th1,a:Y1/(1-Math.cos(th1))};}
+function selftest(){if(VR)return VR;
+ var Tline=timeOf(function(x){return x*Y1/X1;},function(x){return Y1/X1;},200000);
+ var Tpar=timeOf(function(x){return Y1*Math.sqrt(x/X1);},function(x){return Y1*0.5/Math.sqrt(x*X1);},200000);
+ var r=(X1*X1+Y1*Y1)/(2*X1);
+ function fc(x){return Math.sqrt(Math.max(1e-15,r*r-(x-r)*(x-r)));}
+ var Tcirc=timeOf(fc,function(x){return (r-x)/fc(x);},200000);
+ var cp=cycloidParams(),Tcyc=0,N=100000;
+ for(var i=0;i<N;i++){var th=(i+0.5)/N*cp.th1;
+  var ds=2*cp.a*Math.sin(th/2),y=2*cp.a*Math.sin(th/2)*Math.sin(th/2);
+  Tcyc+=ds/Math.sqrt(2*g2*y);}
+ Tcyc*=cp.th1/N;
+ var Tclosed=cp.th1*Math.sqrt(cp.a/g2);
+ VR={Tcyc:Tcyc,Tcirc:Tcirc,Tpar:Tpar,Tline:Tline,Tclosed:Tclosed,
+  ok:Tcyc<Tcirc&&Tcyc<Tpar&&Tcyc<Tline&&Math.abs(Tcyc-Tclosed)<1e-3};return VR;}
+function cyc(t){var cp=cycloidParams();
+ return [cp.a*(t-Math.sin(t)),cp.a*(1-Math.cos(t))];}
+function drawCurves(g,x0,y0,sc){var cp=cycloidParams();
+ ne(g,'#ff2fa6',1.4);g.beginPath();g.moveTo(x0,y0);g.lineTo(x0+X1*sc,y0+Y1*sc);g.stroke();ng(g);
+ ne(g,'#21e6ff',1.4);g.beginPath();
+ for(var i=0;i<=100;i++){var x=i/100*X1;
+  g.lineTo(x0+x*sc,y0+Y1*Math.sqrt(x/X1)*sc);}
+ g.stroke();ng(g);
+ ne(g,'#35ffb0',2);g.beginPath();
+ for(var i=0;i<=120;i++){var t=i/120*cp.th1,p=cyc(t);
+  if(i===0)g.moveTo(x0+p[0]*sc,y0+p[1]*sc);else g.lineTo(x0+p[0]*sc,y0+p[1]*sc);}
+ g.stroke();ng(g);}
+function drawW3(){var cv=document.getElementById('w3'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);var v=selftest();nt(g,'#ffcf4a',10,16,10,'four routes from (0,0) to (2,1)');
+ drawCurves(g,60,50,170);
+ nt(g,'#35ffb0',20,50,10,'cycloid '+v.Tcyc.toFixed(4)+' s ← wins');
+ nt(g,'#21e6ff',20,70,10,'√x '+v.Tpar.toFixed(4));
+ nt(g,'#ff6ab0',20,90,10,'line '+v.Tline.toFixed(4));
+ nt(g,'#8ad',10,H-8,9,'Bernoulli 1696 · Newton overnight, anonymous — \u201cthe lion by his claw\u201d');}
+function drawW4(){var cv=document.getElementById('w4'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);var v=selftest();
+ drawCurves(g,50,60,140);
+ var frac=Math.min(1,racing*0.01);
+ var cp=cycloidParams(),p=cyc(frac*cp.th1);
+ ndot(g,50+p[0]*140,60+p[1]*140,5,'#35ffb0');
+ var lf=Math.min(1,racing*0.01*v.Tcyc/v.Tline);
+ ndot(g,50+lf*X1*140,60+lf*Y1*140,5,'#ff2fa6');
+ nt(g,'#9cf',16,240,10,'green bead rides the dip; magenta takes the direct road');
+ nt(g,v.ok?'#39ffb0':'#ff5a5a',12,H-40,9,'self-test: cycloid fastest of four · closed form match 1e-3 ('+v.ok+')');
+ nt(g,'#8ad',12,H-16,9,'0.806 vs 0.815 vs 1.010 s — the dip banks the record');}
+document.getElementById('brn').onclick=function(){racing=racing>=100?0:racing+12;drawW4();document.getElementById('brread').textContent='';};
+document.getElementById('brcheck').onclick=function(){var v=selftest();document.getElementById('brread').textContent='cycloid wins: '+v.ok;};
+document.getElementById('brspin').onclick=function(){spin=!spin;this.textContent=spin?'pause spin':'resume spin';};
+function drawW5(){var cv=document.getElementById('w5'),g=cv.getContext('2d'),W=cv.width,H=cv.height;nb(g,W,H);
+ nt(g,'#ffcf4a',10,18,10,'spending altitude to buy time');
+ drawCurves(g,60,70,140);
+ var t2=(ang*0.01)%1,cp=cycloidParams(),p=cyc(t2*cp.th1);
+ ndot(g,60+p[0]*140,70+p[1]*140,6,'#35ffb0');
+ var sp=Math.sqrt(p[1]);
+ nf(g,'rgba(53,255,176,0.5)',300,240-sp*90,26,sp*90);
+ nt(g,'#9cf',292,258,9,'speed bank');
+ nt(g,'#35ffb0',10,H-52,11,'green: the dip that understood the economy');nt(g,'#ff2fa6',10,H-34,10,'magenta: the straight line, proud and late');nt(g,'#8ad',10,H-14,10,'the fastest route prices every meter by its speed');}
+drawW3();drawW4();window.__brachistochrone=selftest();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

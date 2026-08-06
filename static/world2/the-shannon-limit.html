@@ -1,0 +1,197 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SHANNON LIMIT · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff9a5a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff9a5a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff9a5a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff9a5a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff9a5a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff9a5a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff9a5a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff9a5a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff9a5a;background:transparent;border:2px solid #ff9a5a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff9a5a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff9a5a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff9a5a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff9a5a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff9a5a 42%,#0a0e0a);border-left:4px solid #ff9a5a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff9a5a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff9a5a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff9a5a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff9a5a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; GOD MODE</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / GOD MODE / <b>THE SHANNON LIMIT</b></div>
+<h1>THE SHANNON LIMIT</h1>
+<div class="kick">error-free, through noise, at a rate that does not vanish</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Before 1948 the assumption was obvious and wrong: to make a noisy channel more reliable, you must send more slowly. Repeat each bit three times, five times, nine times &mdash; the errors fall, and so does your rate, toward zero. Reliability looked like something you <b>bought with throughput</b>. Shannon proved that below a specific rate, the <b>channel capacity C</b>, you can make the error probability as small as you like <i>without</i> the rate going to zero. Above C, you cannot, at any price. The wall is sharp and it sits at C = 1 &minus; H(p) for a binary symmetric channel.<br><br>
+ <span class="lit">LIT</span> verified live: capacity is computed across the range &mdash; p = 0.01 gives <b>0.919207</b>, p = 0.1 gives <b>0.531004</b>, p = 0.25 gives 0.188722, and p = 0.5 gives exactly <b>0</b>; capacity is symmetric about p = &frac12;; repetition coding at p = 0.1 is measured exactly by the binomial and drives error from 1.0e-1 down to <b>6.9e-9</b> while rate collapses from 1.000 to 0.032; and the counting behind the theorem is checked directly &mdash; at n = 200, p = 0.1 the typical set holds 2<sup>93.8</sup> of 2<sup>200</sup> sequences, a fraction of <b>1.1e-32</b>, and that emptiness is the room a code hides in.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>GOD MODE</i>, and it earns the seat more literally than most. Arbitrarily reliable communication across an unreliable channel, at a rate that does not vanish, reads exactly like a cheat code &mdash; the noise is still there, every symbol still gets corrupted at rate p, and the message still arrives perfect.<br><br>
+ <b>AVAN (AI)</b> wrote a false claim into the first draft and the test caught it. The assertion was that every repetition-coding rate sits below capacity &ldquo;as it must&rdquo;. It failed immediately: the n = 1 point has rate 1.000, and capacity at p = 0.1 is 0.531004. Rate 1 is <b>above</b> C. That is not a flaw in the experiment, it is the entire lesson &mdash; uncoded transmission is above capacity, which is precisely why its error sticks at 0.1 and cannot be driven down. The page now states it that way. One further boundary, stated plainly: <b>this page does not prove the coding theorem</b>. It computes capacity, measures a real code against it, and verifies the typical-set counting that makes the theorem plausible. The achievability proof itself is Shannon&rsquo;s, cited and not reproduced here.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">C = 1 &minus; H(p). Perfect at p = 0, zero at p = &frac12;, and perfect again at p = 1.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Move the noise and watch repetition coding buy reliability with rate it cannot afford.</div>
+   <div class="btns" style="margin-top:10px"><button id="shup">noise + &#9654;</button><button id="shdn">noise &minus; &#9654;</button></div>
+   <div class="cap" id="shout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the typical set as a thin shell inside an enormous cube.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;the channel has a capacity.&rdquo; The inverse is that the theorem is not really about channels &mdash; it is about <b>how empty high-dimensional spaces are</b>. Almost every long binary sequence is atypical and will simply never occur; the ones that do occur cluster in a vanishing shell, 1.1e-32 of the whole at n = 200. A code works because it can place its words in that overwhelming emptiness far enough apart that noise cannot bridge them. Read backwards, capacity is a measurement of available <i>room</i>, and the surprise is not that reliable communication is possible but that we ever imagined the space was full.</div>
+   <div class="btns" style="margin-top:10px"><button id="shsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> capacity 1-H(p) computed across the range: p=0.01 gives 0.919207, p=0.1 gives 0.531004, p=0.25 gives 0.188722, p=0.5 gives exactly 0, symmetric about one half; repetition coding at p=0.1 measured exactly by the binomial drives error from 1.0e-1 to 6.9e-9 while rate collapses 1.000 to 0.032; at n=200, p=0.1 the typical set holds 2^93.8 of 2^200 sequences, a fraction of 1.1e-32<br><br><span class="fig">FIG</span> A first draft asserted every repetition rate sits below capacity and failed its own test: the uncoded n=1 point has rate 1.000 against a capacity of 0.531004. That is the lesson rather than a bug — uncoded transmission is above capacity, which is why its error sticks at 0.1. This page does not prove the coding theorem; it computes capacity, measures a real code against it, and verifies the typical-set counting. Achievability is Shannon's, cited not reproduced.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of GOD MODE &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,pn=0.10;
+function H2(p){if(p<=0||p>=1)return 0;return -p*Math.log2(p)-(1-p)*Math.log2(1-p);}
+function cap(p){return 1-H2(p);}
+function repErr(p,n){var e=0;
+ for(var k=Math.floor(n/2)+1;k<=n;k++){var c=1;
+  for(var i=0;i<k;i++)c=c*(n-i)/(i+1);
+  e+=c*Math.pow(p,k)*Math.pow(1-p,n-k);}
+ return e;}
+function selftest(){
+ var rows=[0.01,0.05,0.1,0.11,0.25,0.5].map(function(p){return [p,cap(p)];});
+ var okCap=Math.abs(rows[5][1])<1e-12&&rows[0][1]>0.9;
+ var okSym=Math.abs(cap(0.3)-cap(0.7))<1e-12;
+ var rep=[1,3,5,9,15,31].map(function(n){return [n,1/n,repErr(0.1,n)];});
+ var rateFalls=true,errFalls=true;
+ for(var i=1;i<rep.length;i++){
+  if(rep[i][1]>=rep[i-1][1])rateFalls=false;
+  if(rep[i][2]>=rep[i-1][2])errFalls=false;}
+ var c01=cap(0.1);
+ var above=rep.filter(function(r){return r[1]>c01+1e-12;});
+ var coded=rep.slice(1);
+ var okWall=coded.every(function(r){return r[1]<=c01+1e-12;})&&above.length===1&&above[0][0]===1;
+ var n=200,typExp=n*H2(0.1),frac=Math.pow(2,typExp-n);
+ // n itself is a published number ("at n = 200 ..."), so it must be visible to the seam gate
+ return {cap:rows,capZeroAtHalf:okCap,symmetric:okSym,rep:rep,
+  rateFalls:rateFalls,errFalls:errFalls,capAt01:c01,uncodedAboveC:okWall,
+  typicalN:n,typicalExp:typExp,typicalFraction:frac,
+  ok:okCap&&okSym&&rateFalls&&errFalls&&okWall&&frac<1e-10};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var m=52,pw=W-m-22,ph=H-76,top=26;
+ ne(g,'rgba(150,110,230,0.5)',1);
+ g.beginPath();g.moveTo(m,top);g.lineTo(m,top+ph);g.lineTo(m+pw,top+ph);g.stroke();ng(g);
+ nt(g,'#b98cff',8,18,10,'C  bits/use');
+ nt(g,'#b98cff',m+pw-70,top+ph+24,10,'p  crossover');
+ for(var i=0;i<=4;i++){var y=top+ph-ph*i/4;
+  nt(g,'#8a7ab8',14,y+4,9,(i/4).toFixed(2));
+  ne(g,'rgba(150,110,230,0.12)',1);
+  g.beginPath();g.moveTo(m,y);g.lineTo(m+pw,y);g.stroke();ng(g);}
+ for(var i=0;i<=4;i++)nt(g,'#8a7ab8',m+pw*i/4-10,top+ph+16,9,(i/4).toFixed(2));
+ ne(g,'#7de2b0',2);g.beginPath();
+ for(var i=0;i<=300;i++){var p=i/300,x=m+pw*p,y=top+ph-ph*cap(p);
+  if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}
+ g.stroke();ng(g);
+ var xh=m+pw*0.5;
+ ne(g,'#ff5a8a',1.2);g.setLineDash([4,4]);
+ g.beginPath();g.moveTo(xh,top);g.lineTo(xh,top+ph);g.stroke();g.setLineDash([]);ng(g);
+ ndot(g,xh,top+ph,4.5,'#ff5a8a');
+ nt(g,'#ff5a8a',xh-58,top+ph-12,10,'C = 0 exactly');
+ nt(g,'#8a7ab8',xh-40,top+16,9,'a coin, not a channel');
+ var xp=m+pw*0.1,yp=top+ph-ph*cap(0.1);
+ ndot(g,xp,yp,4,'#ffd76a');
+ nt(g,'#ffd76a',xp+8,yp-6,9,'p=0.1  C=0.531004');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var C=cap(pn);
+ nt(g,'#e6dcff',16,26,12,'p = '+pn.toFixed(2)+'    C = '+C.toFixed(6)+' bits');
+ var m=48,pw=W-m-20,top=54,ph=180;
+ ne(g,'rgba(150,110,230,0.5)',1);
+ g.beginPath();g.moveTo(m,top);g.lineTo(m,top+ph);g.lineTo(m+pw,top+ph);g.stroke();ng(g);
+ var yC=top+ph-ph*Math.min(C,1);
+ ne(g,'#ff5a8a',1.4);g.setLineDash([5,4]);
+ g.beginPath();g.moveTo(m,yC);g.lineTo(m+pw,yC);g.stroke();g.setLineDash([]);ng(g);
+ nt(g,'#ff5a8a',m+4,yC-6,9,'capacity  '+C.toFixed(4));
+ var ns=[1,3,5,9,15,31],bw=32,gap=16;
+ ns.forEach(function(n,i){
+  var rate=1/n,err=repErr(pn,n);
+  var x=m+14+i*(bw+gap),h=ph*rate;
+  var over=rate>C;
+  nf(g,over?'rgba(255,90,138,0.55)':'rgba(125,226,176,0.5)');
+  g.fillRect(x,top+ph-h,bw,h);ng(g);
+  nt(g,over?'#ff5a8a':'#7de2b0',x-1,top+ph-h-6,9,rate.toFixed(2));
+  nt(g,'#8a7ab8',x+2,top+ph+14,9,'n='+n);
+  nt(g,'#ffd76a',x-3,top+ph+28,8,err<1e-3?err.toExponential(0):err.toFixed(3));});
+ nt(g,'#8a7ab8',m,top+ph+48,9,'bar height = rate    yellow = error probability');
+ nt(g,'#ff5a8a',m,top+ph+64,9,'pink = above capacity, error cannot be driven to zero');
+ var o=document.getElementById('shout');
+ if(o)o.innerHTML='At p = '+pn.toFixed(2)+' the capacity is <b>'+C.toFixed(6)+'</b> bits per use. Uncoded (n=1) transmission runs at rate 1.000 &mdash; '+(1>C?'<b>above</b> capacity, so its error stays at '+pn.toFixed(2):'below capacity')+'. Repetition at n=31 reaches error '+repErr(pn,31).toExponential(1)+' but only at rate 0.032, a small fraction of what Shannon says is available.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.82-zr*0.3,zr];}
+ var S=104;
+ var vs=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+ var pj=vs.map(function(v){return P(v[0]*S,v[1]*S,v[2]*S);});
+ var ed=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+ ne(g,'rgba(150,110,230,0.3)',1.2);
+ ed.forEach(function(e){g.beginPath();g.moveTo(pj[e[0]][0],pj[e[0]][1]);g.lineTo(pj[e[1]][0],pj[e[1]][1]);g.stroke();});
+ ng(g);
+ var R=52;
+ ne(g,'#7de2b0',1.6);
+ for(var ring=0;ring<7;ring++){
+  var ph2=-Math.PI/2+Math.PI*(ring+0.5)/7,rr=R*Math.cos(ph2),zz=R*Math.sin(ph2);
+  g.beginPath();
+  for(var t=0;t<=48;t++){var th=t/48*2*Math.PI,p=P(rr*Math.cos(th),zz,rr*Math.sin(th));
+   if(t===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);}
+  g.stroke();}
+ ng(g);
+ nt(g,'#e6dcff',14,24,11,'2^200 sequences in the cube');
+ nt(g,'#7de2b0',14,42,10,'2^93.8 typical  \u2014  a shell of 1.1e-32');
+ nt(g,'#8a7ab8',14,58,10,'the code lives in the emptiness, not the shell');
+ nt(g,'#8a7ab8',14,H-14,9,'capacity measures room, not signal strength');}
+document.getElementById('shup').onclick=function(){pn=Math.min(0.49,Math.round((pn+0.02)*100)/100);drawW4();};
+document.getElementById('shdn').onclick=function(){pn=Math.max(0.01,Math.round((pn-0.02)*100)/100);drawW4();};
+document.getElementById('shsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__shannonlimit=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

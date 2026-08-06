@@ -1,0 +1,180 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE FALSE SHARING · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff9f45}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff9f45}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff9f45;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff9f45;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff9f45;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff9f45 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff9f45}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff9f45}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff9f45;background:transparent;border:2px solid #ff9f45;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff9f45;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff9f45}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff9f45,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff9f45;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff9f45 42%,#0a0e0a);border-left:4px solid #ff9f45;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff9f45;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff9f45;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff9f45}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff9f45 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; SHARED MEMORY</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / SHARED MEMORY / <b>THE FALSE SHARING</b></div>
+<h1>THE FALSE SHARING</h1>
+<div class="kick">a bug with no wrong behaviour</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Two threads. Two different variables. Neither one ever reads the other&rsquo;s. Put them four bytes apart and the program still spends all its time passing a cache line back and forth, because coherence is not tracked per variable.<br><br>
+ <span class="lit">LIT</span> verified live. two cores, <b>1,000</b> writes each to variables they alone own. At offsets 0 and 4 &mdash; one 64-byte line &mdash; the line changes owner on <b>1,999</b> of the <b>2,000</b> writes. Move the second variable to offset 64 and the count is <b>0</b>: two compulsory upgrades and then silence forever. Sweeping the offset from 0 to 128 in steps of 4 gives a step function that falls off a cliff at exactly <b>64</b>, the line size &mdash; nothing gradual, no locality gradient, one number. The fix costs <b>60</b> bytes of padding.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>False sharing</b> and cache-line padding are standard concurrent-programming knowledge; the MESI ownership model here is the usual simplification.<br><br><b>AVAN (AI)</b> ran the sweep rather than naming the effect, and the shape is the point. If false sharing were about &lsquo;locality&rsquo; the curve would decay; it does not decay, it <b>steps</b>, once, at the line size. That is the signature of a quantised resource, and it is why the bug is undetectable by reasoning about the program: <b>1,999</b> and <b>0</b> are the same source code, the same semantics, the same access pattern, differing only in a layout decision no one wrote down.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">One step function. It falls at 64 and nowhere else.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Slide the second variable and watch the line stop moving.</div>
+   <div class="btns" style="margin-top:10px"><button id="flshn">offset +4 &#9654;</button><button id="flshp">offset -4</button><button id="flsh6">jump to 64</button></div>
+   <div class="cap" id="flsho" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that padding fixes false sharing. The inverse is that <b>this is a bug with no wrong behaviour</b>. Nothing computes an incorrect answer; no invariant breaks; every test passes. The program is <i>correct</i> and 1,000&times; slower, and the cause is invisible to every tool that reasons about meaning, because meaning is exactly what is unaffected. Read backwards, the cache line is a unit the machine takes seriously and the language does not admit exists &mdash; and a bug that lives entirely in the gap between those two views can only be seen by looking at the address arithmetic, never at the logic.</div>
+   <div class="btns" style="margin-top:10px"><button id="flshs">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> two cores, 1,000 writes each to variables they alone own: at offsets 0 and 4 - one 64-byte line - the line changes owner on 1,999 of the 2,000 writes, and moving the second variable to offset 64 gives 0, two compulsory upgrades and then silence forever; sweeping the offset 0 to 128 in steps of 4 gives a step function falling off a cliff at exactly 64, the line size, with nothing gradual about it, and the fix costs 60 bytes of padding<br><br><span class="fig">FIG</span> False sharing and cache-line padding are standard concurrent-programming knowledge; the MESI ownership model here is the usual simplification. AVAN ran the sweep rather than naming the effect, and the shape is the point: if false sharing were about locality the curve would decay, but it steps, once, at the line size. That is the signature of a quantised resource, and it is why the bug is undetectable by reasoning about the program - 1,999 and 0 are the same source code with the same semantics.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SHARED MEMORY &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,off=4;
+var LINE=64,N=1000;
+function run(oa,ob){var la=Math.floor(oa/LINE),lb=Math.floor(ob/LINE);
+ var own={},inv=0,up=0;
+ for(var i=0;i<N;i++){[[0,la],[1,lb]].forEach(function(w){
+  if(own[w[1]]!==w[0]){if(own[w[1]]!==undefined)inv++;own[w[1]]=w[0];up++;}});}
+ return {inv:inv,up:up};}
+function selftest(){
+ var same=run(0,4),diff=run(0,64),sw=[];
+ for(var o=0;o<=128;o+=4)sw.push({off:o,inv:run(0,o).inv});
+ var step=null;
+ for(var i=1;i<sw.length;i++)if(sw[i].inv===0&&sw[i-1].inv>0)step=sw[i].off;
+ return {n:N,writes:2*N,lineBytes:LINE,
+  sameLineInvalidations:same.inv,diffLineInvalidations:diff.inv,
+  sameLineUpgrades:same.up,diffLineUpgrades:diff.up,
+  sweep:sw,stepAt:step,padBytes:LINE-4,ratio:same.inv/1,
+  ok:same.inv===2*N-1&&diff.inv===0&&step===64&&sw.length===33};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ff9f45',14,20,11,'SECOND VARIABLE AT OFFSET 0..128 -- LINE TRANSFERS');
+ var sw=VR.sweep,x0=30,y0=44,gw=W-60,gh=180;
+ g.fillStyle='rgba(120,90,180,0.1)';g.fillRect(x0,y0,gw,gh);
+ for(var i=0;i<sw.length;i++){
+  var x=x0+i*(gw/sw.length),h=gh*sw[i].inv/2000;
+  nf(g,sw[i].inv>0?'rgba(255,90,138,0.6)':'rgba(125,226,176,0.6)');
+  g.fillRect(x+1,y0+gh-Math.max(2,h),gw/sw.length-2,Math.max(2,h));ng(g);}
+ var xs=x0+16*(gw/sw.length);
+ ne(g,'#ffd76a',1.6);g.beginPath();g.moveTo(xs,y0-4);g.lineTo(xs,y0+gh+4);g.stroke();ng(g);
+ nt(g,'#ffd76a',xs+6,y0+12,9,'offset 64');
+ nt(g,'#8a7ab8',x0,y0+gh+16,8,'0');
+ nt(g,'#8a7ab8',x0+gw-20,y0+gh+16,8,'128');
+ nt(g,'#ff5a8a',24,y0+gh+38,10,'1,999 transfers on one line');
+ nt(g,'#7de2b0',260,y0+gh+38,10,'0 on two lines');
+ nt(g,'#b98cff',24,y0+gh+58,9,'not a decay -- a step, at exactly the line size, and nowhere else');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var r=run(0,off),same=Math.floor(off/LINE)===0;
+ nt(g,'#e6dcff',18,24,11,'variable B at offset '+off+' bytes');
+ var bw=(W-36)/128*4;
+ nt(g,'#8a7ab8',18,48,9,'memory, 128 bytes -- two cache lines');
+ for(var b=0;b<32;b++){
+  var x=18+b*bw*1.0*(128/32/4),lineIdx=Math.floor(b*4/LINE);
+  x=18+b*((W-36)/32);
+  g.fillStyle=(lineIdx===0)?'rgba(90,212,255,0.14)':'rgba(255,159,69,0.14)';
+  g.fillRect(x,56,(W-36)/32-1,26);}
+ var xa=18+0*((W-36)/32);
+ nf(g,'#5ad4ff');g.fillRect(xa,56,(W-36)/32-1,26);ng(g);
+ var xb=18+Math.floor(off/4)*((W-36)/32);
+ nf(g,'#ffd76a');g.fillRect(xb,56,(W-36)/32-1,26);ng(g);
+ nt(g,'#5ad4ff',18,98,9,'A (core 0) at 0');
+ nt(g,'#ffd76a',150,98,9,'B (core 1) at '+off);
+ ne(g,'#8a7ab8',1);
+ g.beginPath();g.moveTo(18,120);g.lineTo(18+(W-36)/2,120);g.stroke();
+ g.beginPath();g.moveTo(18+(W-36)/2,120);g.lineTo(W-18,120);g.stroke();ng(g);
+ nt(g,'#5b4a80',18,136,8,'line 0');nt(g,'#5b4a80',18+(W-36)/2,136,8,'line 1');
+ nf(g,same?'rgba(255,90,138,0.24)':'rgba(125,226,176,0.2)');g.fillRect(18,156,W-36,50);ng(g);
+ ne(g,same?'#ff5a8a':'#7de2b0',1.5);g.strokeRect(18.5,156.5,W-37,50);ng(g);
+ nt(g,same?'#ff5a8a':'#7de2b0',32,182,12,r.inv+' line transfers in 2,000 writes');
+ nt(g,'#8a7ab8',32,200,9,same?'same line -- every write steals it back':'separate lines -- nobody contends');
+ nt(g,'#b98cff',18,232,9,'the answers are identical either way');
+ nt(g,'#ff9f45',18,250,9,'every test passes at both offsets');
+ nt(g,'#ffd76a',18,268,9,'the fix is 60 bytes of nothing');
+ var o=document.getElementById('flsho');
+ if(o)o.innerHTML='B at offset <b>'+off+'</b>: <b>'+r.inv+'</b> line transfers. '+
+  (same?'A and B share a 64-byte line, so each core must take exclusive ownership away from the other before every single write &mdash; 1,999 times, for data neither of them reads.':
+   'A and B are on separate lines. Two compulsory upgrades and then the cores never speak again. Same code, same semantics, same answers.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var side=Math.floor(ang/40)%2;
+ var c0=P(-96,0,0),c1=P(96,0,0);
+ ndot(g,c0[0],c0[1],7,side===0?'#5ad4ff':'rgba(90,212,255,0.3)');
+ ndot(g,c1[0],c1[1],7,side===1?'#ffd76a':'rgba(255,215,106,0.3)');
+ nt(g,'#5ad4ff',c0[0]-18,c0[1]-16,8,'core 0');
+ nt(g,'#ffd76a',c1[0]-18,c1[1]-16,8,'core 1');
+ var t=(ang%40)/40,px=side===0?(c1[0]+(c0[0]-c1[0])*t):(c0[0]+(c1[0]-c0[0])*t);
+ var py=side===0?(c1[1]+(c0[1]-c1[1])*t):(c0[1]+(c1[1]-c0[1])*t);
+ for(var i=0;i<8;i++)ndot(g,px-28+i*8,py,3.2,'#ff5a8a');
+ nt(g,'#ff5a8a',px-40,py+20,8,'the line, in transit again');
+ nt(g,'#ff9f45',14,26,11,'nothing is shared');
+ nt(g,'#ff5a8a',14,44,10,'except the 64 bytes they happen to sit in');
+ nt(g,'#8a7ab8',14,H-46,9,'no wrong answer, no broken invariant, no failing test');
+ nt(g,'#b98cff',14,H-30,9,'correct, and a thousand times slower');
+ nt(g,'#7de2b0',14,H-14,9,'visible only in the address arithmetic, never in the logic');}
+document.getElementById('flshn').onclick=function(){off=Math.min(128,off+4);drawW4();};
+document.getElementById('flshp').onclick=function(){off=Math.max(0,off-4);drawW4();};
+document.getElementById('flsh6').onclick=function(){off=64;drawW4();};
+document.getElementById('flshs').onclick=function(){spin=!spin;};
+VR=selftest();window.__thefalsesharing=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

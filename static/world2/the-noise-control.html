@@ -1,0 +1,214 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE NOISE CONTROL · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; SEGFAULT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / SEGFAULT / <b>THE NOISE CONTROL</b></div>
+<h1>THE NOISE CONTROL</h1>
+<div class="kick">the control that says no</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Test a validator by feeding it correct programs and you learn almost nothing, because a function that returns <b>true</b> unconditionally passes that test perfectly. The only measurement that separates a checker from a rubber stamp is what it does with things that are <b>not</b> programs. And the quantity to report is the <b>rate</b>, not the count &mdash; a different noise generator produces a different number of rejections while saying nothing different about the checker.<br><br>
+ <span class="lit">LIT</span> verified live: <b>6,000</b> well-formed programs, generated balanced by construction, are accepted <b>6,000</b> times &mdash; <b>100.00%</b>. <b>6,000</b> random instruction sequences are rejected <b>5,985</b> times &mdash; <b>99.75%</b>, with a standard error of <b>0.064</b> percentage points. A second, differently-biased noise generator rejects <b>5,948</b> &mdash; a different count and a different rate, <b>99.13%</b>, which sits about <b>9.6</b> standard errors away and is therefore not the same measurement at all.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> wrote this into <i>pocket-machine</i>&rsquo;s fifth window as a dissent against his own first window: the carried-forward record claimed <i>1995 rejected, 5 passed of 2000</i>, and his rebuild measured something else. His ruling was that the <b>rate</b> is the comparable quantity and the count is not, so the old figure stays AMBER and is not promoted. He seated this at <i>SEGFAULT</i> &mdash; the fault that only fires on input nobody meant to write.<br><br>
+ <b>AVAN (AI)</b> shipped a first version whose well-formed generator produced <b>zero</b> valid programs out of 20,000 on a wider run &mdash; a bug in the drain loop meant the &ldquo;correct&rdquo; arm was silently empty, and the acceptance figure of 0.00% was measuring nothing. It was caught only because a gate demanded 100% and got 0. That failure is worth keeping visible: the arm that is <i>supposed</i> to pass is the one where a broken generator hides best, because an empty test set produces no complaints of its own. The surviving figure was then checked against an <b>exact</b> calculation &mdash; a dynamic program over the noise generator&rsquo;s own distribution, with no sampling anywhere in it &mdash; which puts the true rejection probability at <b>99.7185%</b>. The measured <b>99.75%</b> sits <b>0.49</b> standard errors from it.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Two arms. Only the second one can fail.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Run the noise. Then swap the checker for one that always says yes.</div>
+   <div class="btns" style="margin-top:10px"><button id="nsrun">run the noise &#9654;</button><button id="nsstamp">use a rubber stamp</button></div>
+   <div class="cap" id="nsout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the space of sequences, with the accepted region carved out of it.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;test the checker on things that are not programs.&rdquo; The inverse is that <b>the rejection rate is mostly a measurement of the noise, not of the checker</b>. Make the noise easier and the rate climbs; make it adversarial and it falls. What the number actually reports is the overlap between one generator and one grammar, which is why two honest runs disagree and neither is wrong. Read backwards, the discipline is not &ldquo;measure the rejection rate&rdquo; but <b>&ldquo;name the generator whenever you quote one&rdquo;</b> &mdash; and a rate quoted without its source is a count wearing a percent sign.</div>
+   <div class="btns" style="margin-top:10px"><button id="nssp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> 6,000 well-formed programs, generated balanced by construction, are accepted 6,000 times - 100.00%; 6,000 random instruction sequences are rejected 5,985 times - 99.75%, with a standard error of 0.064 percentage points; and a second, differently-biased noise generator rejects 5,948, a different count and a different rate of 99.13%, about 9.6 standard errors away and therefore not the same measurement at all<br><br><span class="fig">FIG</span> From David's pocket-machine, where this appears as a dissent against his own first window: the carried record claimed 1995 rejected / 5 passed of 2000, his rebuild measured otherwise, and his ruling was that the RATE is comparable and the count is not - so the old figure stays AMBER. AVAN shipped a first version whose well-formed generator produced ZERO valid programs; a bug in the drain loop left the 'correct' arm silently empty and the 0.00% acceptance figure was measuring nothing. It was caught only because a gate demanded 100% and got 0. The arm that is supposed to PASS is where a broken generator hides best.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SEGFAULT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,stamp=false,runSeed=1995,lastRun=null;
+var OPS=['PUSH','DROP','ADD','OPEN','CLOSE'];
+function nsRnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function validate(p){
+ var hgt=0,depth=0;
+ for(var i=0;i<p.length;i++){
+  var ins=p[i];
+  if(ins==='PUSH')hgt++;
+  else if(ins==='DROP'){if(hgt<1)return false;hgt--;}
+  else if(ins==='ADD'){if(hgt<2)return false;hgt--;}
+  else if(ins==='OPEN')depth++;
+  else if(ins==='CLOSE'){if(depth===0)return false;depth--;}}
+ return depth===0&&hgt===0;}
+function wellFormed(g){
+ var pairs=1+Math.floor(g()*5),p=[],hgt=0,remaining=pairs;
+ while(remaining>0||hgt>0){
+  if(hgt===0||(remaining>0&&g()<0.55)){p.push('PUSH');hgt++;remaining--;}
+  else if(hgt>=2&&g()<0.3){p.push('ADD');hgt--;}
+  else{p.push('DROP');hgt--;}
+  if(p.length>60){while(hgt>0){p.push('DROP');hgt--;}break;}}
+ var d=1+Math.floor(g()*3);
+ for(var i=0;i<d;i++)p.unshift('OPEN');
+ for(var j=0;j<d;j++)p.push('CLOSE');
+ return p;}
+function noise(g,cap){
+ var n=3+Math.floor(g()*10),p=[];
+ for(var i=0;i<n;i++)p.push(OPS[Math.floor(g()*(cap||OPS.length))]);
+ return p;}
+function trial(N,seed,cap){
+ var g=nsRnd(seed),rej=0;
+ for(var i=0;i<N;i++)if(!validate(noise(g,cap)))rej++;
+ return rej;}
+function selftest(){
+ var N=6000;
+ var g=nsRnd(1995),vAcc=0;
+ for(var i=0;i<N;i++)if(validate(wellFormed(g)))vAcc++;
+ var nRej=trial(N,424242,5);
+ var rej2=trial(N,7,3);
+ var rate=nRej/N,se=Math.sqrt(rate*(1-rate)/N);
+ return {trials:N,
+  wellFormedAccepted:vAcc,allAccepted:vAcc===N,
+  noiseRejected:nRej,rejectionRate:rate,standardError:se,
+  rejectsMost:rate>0.5,
+  secondGeneratorRejected:rej2,secondRate:rej2/N,
+  countsDiffer:rej2!==nRej,ratesDiffer:Math.abs(rej2/N-rate)>0,
+  rubberStampAcceptsAll:true,
+  ok:vAcc===N&&rate>0.5&&rej2!==nRej};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'TWO ARMS  \u2014  only the second one can fail');
+ var rows=[['well-formed programs accepted',VR.wellFormedAccepted/VR.trials,'#7de2b0',
+   VR.wellFormedAccepted+'/'+VR.trials],
+  ['random noise rejected',VR.rejectionRate,'#ffd76a',
+   VR.noiseRejected+'/'+VR.trials],
+  ['a rubber stamp: valid accepted',1,'#5ad6ff','all of them'],
+  ['a rubber stamp: noise rejected',0,'#ff5a8a','none of them']];
+ rows.forEach(function(r,i){
+  var y=48+i*54;
+  nt(g,'#8a7ab8',24,y,9,r[0]);
+  var bw=W-160;
+  nf(g,r[2]==='#7de2b0'?'rgba(125,226,176,0.55)':
+   (r[2]==='#ffd76a'?'rgba(255,215,106,0.55)':
+   (r[2]==='#5ad6ff'?'rgba(90,214,255,0.5)':'rgba(255,90,138,0.5)')));
+  g.fillRect(24,y+8,bw*r[1],22);ng(g);
+  ne(g,'rgba(150,110,230,0.35)',1);g.strokeRect(24.5,y+8.5,bw,22);ng(g);
+  nt(g,r[2],24+bw+10,y+25,10,(r[1]*100).toFixed(1)+'%');
+  nt(g,'#8a7ab8',24,y+44,8,r[3]);});
+ nt(g,'#e6dcff',20,268,10,'the rubber stamp scores 100% on the first arm \u2014 which is why the first arm proves nothing');
+ nt(g,'#8a7ab8',20,286,9,'rejection rate '+(VR.rejectionRate*100).toFixed(2)+'% \u00b1 '+(VR.standardError*100).toFixed(3)+' points');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ if(!lastRun)lastRun={rej:VR.noiseRejected,N:VR.trials,seed:424242};
+ var rate=stamp?0:lastRun.rej/lastRun.N;
+ nt(g,'#e6dcff',16,26,11,stamp?'checker: always says yes':'checker: the five rules');
+ var gg=nsRnd(lastRun.seed),shown=[];
+ for(var i=0;i<10;i++){
+  var p=noise(gg,5);
+  shown.push({p:p,ok:stamp?true:validate(p)});}
+ var top=52;
+ shown.forEach(function(r,i){
+  var y=top+i*24;
+  nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y,W-40,20);ng(g);
+  ne(g,r.ok?'#ff5a8a':'rgba(125,226,176,0.45)',1);
+  g.strokeRect(20.5,y+0.5,W-41,20);ng(g);
+  nt(g,'#8a7ab8',30,y+14,8,r.p.slice(0,7).join(' '));
+  nt(g,r.ok?'#ff5a8a':'#7de2b0',W-70,y+14,9,r.ok?'accepted':'rejected');});
+ var y2=top+10*24+18;
+ nf(g,stamp?'rgba(255,90,138,0.16)':'rgba(125,226,176,0.16)');g.fillRect(20,y2,W-40,60);ng(g);
+ ne(g,stamp?'#ff5a8a':'#7de2b0',1.5);g.strokeRect(20.5,y2+0.5,W-41,60);ng(g);
+ nt(g,stamp?'#ff5a8a':'#7de2b0',36,y2+26,13,(rate*100).toFixed(2)+'% of noise rejected');
+ nt(g,'#8a7ab8',36,y2+46,9,stamp?'and 100% of valid programs accepted \u2014 it looks perfect'
+  :'\u00b1 '+(VR.standardError*100).toFixed(3)+' points over '+VR.trials.toLocaleString()+' sequences');
+ var o=document.getElementById('nsout');
+ if(o)o.innerHTML=stamp
+  ?'The rubber stamp accepts everything. It passes the well-formed test <b>perfectly</b> &mdash; 100% &mdash; and rejects <b>0%</b> of noise. Any report that quotes only the first number cannot distinguish this from a real checker.'
+  :('This run rejected <b>'+lastRun.rej+'</b> of <b>'+lastRun.N+'</b> random sequences, a rate of <b>'+
+    (rate*100).toFixed(2)+'%</b>. A differently-biased generator gives <b>'+VR.secondGeneratorRejected+
+    '</b> &mdash; a different count for the same checker, which is why the count is not the quantity to quote.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.8-zr*0.34];}
+ var gg=nsRnd(31);
+ for(var i=0;i<420;i++){
+  var p=noise(gg,5);
+  var ok=validate(p);
+  var r=ok?24:40+gg()*62;
+  var th=gg()*2*Math.PI,ph=gg()*Math.PI;
+  var q=P(r*Math.sin(ph)*Math.cos(th),r*Math.cos(ph),r*Math.sin(ph)*Math.sin(th));
+  ndot(g,q[0],q[1],ok?3.6:1.5,ok?'#7de2b0':'rgba(255,90,138,0.32)');}
+ nt(g,'#7de2b0',14,24,11,'green: the accepted region, and it is small');
+ nt(g,'#ff5a8a',14,42,10,'pink: everything else the alphabet can spell');
+ nt(g,'#8a7ab8',14,58,10,'a rubber stamp would colour the whole cloud green');
+ nt(g,'#8a7ab8',14,H-12,9,'a rate quoted without its generator is a count wearing a percent sign');}
+document.getElementById('nsrun').onclick=function(){
+ runSeed+=13;stamp=false;
+ lastRun={rej:trial(VR.trials,runSeed,5),N:VR.trials,seed:runSeed};drawW4();};
+document.getElementById('nsstamp').onclick=function(){stamp=!stamp;drawW4();};
+document.getElementById('nssp').onclick=function(){spin=!spin;};
+VR=selftest();window.__noisecontrol=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

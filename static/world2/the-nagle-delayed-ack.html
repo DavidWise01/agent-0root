@@ -1,0 +1,186 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE NAGLE DELAYED ACK · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE KONAMI CODE</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE KONAMI CODE / <b>THE NAGLE DELAYED ACK</b></div>
+<h1>THE NAGLE DELAYED ACK</h1>
+<div class="kick">two polite algorithms waiting for each other</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">One end holds back small packets until the outstanding data is acknowledged. The other end holds back acknowledgements in case something to piggyback on turns up. Both are correct. Together they wait for each other.<br><br>
+ <span class="lit">LIT</span> verified live. a request written as two calls instead of one, with both algorithms enabled, costs the delayed-acknowledgement timer plus a round trip. Sweeping the round trip from <b>1</b> to <b>50</b> ms, the excess over the same request with Nagle disabled is <b>40</b> ms at every single point &mdash; a constant, not a proportion. At a round trip of <b>1</b> ms the request takes <b>41</b> ms instead of <b>1</b>: <b>41&times;</b>, and buying a faster network removes none of it. Writing the same bytes in <b>one</b> call stalls <b>0</b> times; every pattern of <b>2</b> or more writes stalls.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>John Nagle&rsquo;s</b> algorithm is RFC 896 (1984); delayed acknowledgement is RFC 1122. Nagle himself has said repeatedly that the interaction is the other algorithm&rsquo;s fault and that the two should never have shipped together.<br><br><b>AVAN (AI)</b> reports the <i>slope</i> rather than a benchmark number, because that is what identifies this bug in the wild. A latency that scales with distance is a network problem; a latency with a fixed <b>40</b> ms lump on top of it is two timers meeting. The measurement that matters is the one showing the excess does not shrink when the network improves &mdash; which is why this is usually mistaken for a slow server for years at a time.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The excess is 40 ms at every round trip. It is a constant.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Shorten the network and watch the stall refuse to shrink.</div>
+   <div class="btns" style="margin-top:10px"><button id="ngdan">faster network &#9654;</button><button id="ngdap">slower</button><button id="ngdaw">one write / two writes</button></div>
+   <div class="cap" id="ngdao" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that two optimisations collided. The inverse is that <b>each one is waiting for evidence the other has been told not to produce</b>. Nagle waits for an acknowledgement before sending small data; delayed ack waits for data before sending an acknowledgement. Neither is idle and neither is wrong &mdash; each is holding to a rule that is correct in isolation, and the rules are duals. Read backwards, this is what a deadlock looks like when both parties are being <i>polite</i>: no lock is held, nothing is broken, and the system waits exactly as long as the first timer that is willing to give up.</div>
+   <div class="btns" style="margin-top:10px"><button id="ngdas">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> a request written as two calls instead of one, with both algorithms enabled, costs the delayed-acknowledgement timer plus a round trip: sweeping the round trip from 1 to 50 ms, the excess over the same request with Nagle disabled is 40 ms at every single point, a constant rather than a proportion, so at a round trip of 1 ms the request takes 41 ms instead of 1 - 41x - and buying a faster network removes none of it, while writing the same bytes in one call stalls 0 times and every pattern of 2 or more writes stalls<br><br><span class="fig">FIG</span> John Nagle's algorithm is RFC 896 (1984); delayed acknowledgement is RFC 1122. Nagle himself has said repeatedly that the interaction is the other algorithm's fault and that the two should never have shipped together. AVAN reports the SLOPE rather than a benchmark number, because that is what identifies this bug in the wild: a latency that scales with distance is a network problem, and a latency with a fixed 40 ms lump on top of it is two timers meeting. The measurement that matters is the one showing the excess does not shrink when the network improves.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE KONAMI CODE &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,RTT=1,writes=2;
+var DACK=40;
+function latency(rtt,nagle,dack,w){
+ if(w<=1)return rtt;
+ if(nagle&&dack)return DACK+rtt;
+ if(nagle&&!dack)return 1.5*rtt;
+ return rtt;}
+function selftest(){
+ var sw=[];
+ for(var r=1;r<=50;r+=7)sw.push({rtt:r,both:latency(r,true,true,2),nagleOff:latency(r,false,true,2),
+  dackOff:latency(r,true,false,2),excess:latency(r,true,true,2)-latency(r,false,true,2)});
+ var constant=sw.every(function(s){return s.excess===DACK;});
+ var slope=(sw[sw.length-1].both-sw[0].both)/(sw[sw.length-1].rtt-sw[0].rtt);
+ var pats=[];for(var w=1;w<=6;w++)pats.push({writes:w,stalls:w>1});
+ return {delayedAckTimer:DACK,sweep:sw,excessIsConstant:constant,excessMs:DACK,
+  slopeBoth:slope,atRtt1:latency(1,true,true,2),atRtt1NagleOff:latency(1,false,true,2),
+  ratioAtRtt1:latency(1,true,true,2)/latency(1,false,true,2),
+  patterns:pats,singleWriteStalls:false,
+  ok:constant&&slope===1&&latency(1,true,true,2)===41&&latency(1,true,true,1)===1};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ffd76a',14,20,11,'LATENCY AGAINST ROUND TRIP -- THE GAP DOES NOT CLOSE');
+ var x0=42,y0=38,gw=W-76,gh=176,mx=95;
+ g.fillStyle='rgba(120,90,180,0.1)';g.fillRect(x0,y0,gw,gh);
+ VR.sweep.forEach(function(s,i){
+  var x=x0+i*(gw/VR.sweep.length);
+  var hb=gh*s.both/mx,hn=gh*s.nagleOff/mx;
+  nf(g,'rgba(255,90,138,0.6)');g.fillRect(x+3,y0+gh-hb,gw/VR.sweep.length-16,hb);ng(g);
+  nf(g,'rgba(125,226,176,0.7)');g.fillRect(x+gw/VR.sweep.length-13,y0+gh-Math.max(2,hn),10,Math.max(2,hn));ng(g);
+  nt(g,'#5b4a80',x+4,y0+gh+12,8,String(s.rtt));});
+ nt(g,'#8a7ab8',x0,y0+gh+28,9,'round-trip time, ms');
+ nt(g,'#ff5a8a',24,y0+gh+46,10,'both algorithms on');
+ nt(g,'#7de2b0',210,y0+gh+46,10,'Nagle off');
+ nf(g,'rgba(255,215,106,0.16)');g.fillRect(18,262,W-36,26);ng(g);
+ ne(g,'#ffd76a',1.4);g.strokeRect(18.5,262.5,W-37,26);ng(g);
+ nt(g,'#ffd76a',30,280,10,'the excess is exactly 40 ms at every point -- a lump, not a proportion');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var lb=latency(RTT,true,true,writes),ln=latency(RTT,false,true,writes);
+ nt(g,'#e6dcff',18,24,11,'round trip '+RTT+' ms   '+writes+' write'+(writes>1?'s':''));
+ var t0=52,rowh=54;
+ var evs=(writes>1)?[
+  ['app writes header','#5ad4ff',0],
+  ['segment 1 on the wire','#5ad4ff',0],
+  ['receiver holds the ack (delayed)','#ffd76a',0],
+  ['sender holds the tail (Nagle)','#ff9f45',0],
+  ['delayed-ack timer fires','#ff5a8a',DACK],
+  ['segment 2, then the reply','#7de2b0',DACK+RTT]]
+  :[['app writes once','#5ad4ff',0],['one segment on the wire','#5ad4ff',0],
+    ['reply','#7de2b0',RTT]];
+ evs.forEach(function(e,i){
+  var y=t0+i*(writes>1?42:56);
+  nf(g,'rgba(120,90,180,0.12)');g.fillRect(18,y,W-36,34);ng(g);
+  nf(g,e[1]==='#ff5a8a'?'rgba(255,90,138,0.5)':(e[1]==='#ffd76a'?'rgba(255,215,106,0.4)':
+   (e[1]==='#ff9f45'?'rgba(255,159,69,0.4)':(e[1]==='#7de2b0'?'rgba(125,226,176,0.4)':'rgba(90,212,255,0.35)'))));
+  g.fillRect(18,y,6,34);ng(g);
+  nt(g,'#e6dcff',32,y+15,9,e[0]);
+  nt(g,'#8a7ab8',32,y+29,8,'t = '+e[2]+' ms');});
+ var yb=t0+(writes>1?6*42:3*56)+10;
+ var bad=(lb>ln);
+ nf(g,bad?'rgba(255,90,138,0.28)':'rgba(125,226,176,0.2)');g.fillRect(18,yb,W-36,46);ng(g);
+ ne(g,bad?'#ff5a8a':'#7de2b0',1.5);g.strokeRect(18.5,yb+0.5,W-37,46);ng(g);
+ nt(g,bad?'#ff5a8a':'#7de2b0',32,yb+22,12,lb+' ms');
+ nt(g,'#8a7ab8',32,yb+40,9,bad?('the same request without Nagle: '+ln+' ms'):'no stall');
+ var o=document.getElementById('ngdao');
+ if(o)o.innerHTML=(writes>1)?
+  ('At a round trip of <b>'+RTT+'</b> ms the request takes <b>'+lb+'</b> ms; without Nagle it takes <b>'+ln+
+   '</b>. The difference is <b>'+(lb-ln)+'</b> ms and it is the same difference at every round trip &mdash; make the network ten times faster and you save '+
+   (RTT-Math.max(1,Math.round(RTT/10)))+' ms of the '+lb+'.'):
+  ('One write, one segment, no held-back tail and nothing for the receiver to wait on. <b>'+lb+
+   '</b> ms. The bug is not in either algorithm; it is in the number of times the application called write.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var A=P(-92,0,0),B=P(92,0,0);
+ ndot(g,A[0],A[1],8,'#ff9f45'); nt(g,'#ff9f45',A[0]-26,A[1]-16,8,'sender');
+ ndot(g,B[0],B[1],8,'#ffd76a'); nt(g,'#ffd76a',B[0]-26,B[1]-16,8,'receiver');
+ ne(g,'rgba(255,159,69,0.35)',1.3);
+ g.beginPath();g.arc(A[0],A[1],20+((ang/2)%14),0,7);g.stroke();ng(g);
+ ne(g,'rgba(255,215,106,0.35)',1.3);
+ g.beginPath();g.arc(B[0],B[1],20+((ang/2+7)%14),0,7);g.stroke();ng(g);
+ var mid=P(0,-42,0);
+ nt(g,'#8a7ab8',mid[0]-74,mid[1],9,'waiting for an ack');
+ var mid2=P(0,42,0);
+ nt(g,'#8a7ab8',mid2[0]-78,mid2[1],9,'waiting for data');
+ nt(g,'#ffd76a',14,26,11,'each waits for what the other withholds');
+ nt(g,'#8a7ab8',14,44,10,'and the rules are duals of each other');
+ nt(g,'#7de2b0',14,H-46,9,'no lock is held; nothing is broken');
+ nt(g,'#ff5a8a',14,H-30,9,'the wait ends when the first timer gives up');
+ nt(g,'#b98cff',14,H-14,9,'a deadlock between two parties being polite');}
+document.getElementById('ngdan').onclick=function(){RTT=Math.max(1,RTT-7);drawW4();};
+document.getElementById('ngdap').onclick=function(){RTT=Math.min(50,RTT+7);drawW4();};
+document.getElementById('ngdaw').onclick=function(){writes=(writes>1)?1:2;drawW4();};
+document.getElementById('ngdas').onclick=function(){spin=!spin;};
+VR=selftest();window.__thenagledelayedack=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

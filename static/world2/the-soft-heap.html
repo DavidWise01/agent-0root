@@ -1,0 +1,201 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE SOFT HEAP · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; HEISENBUG</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / HEISENBUG / <b>THE SOFT HEAP</b></div>
+<h1>THE SOFT HEAP</h1>
+<div class="kick">a structure allowed to lie, by exactly this much</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A priority queue that is <b>permitted to be wrong</b>, in a quantity you choose. Fix a parameter &epsilon;. The structure may then <b>corrupt</b> up to &epsilon;n of its keys &mdash; raising their values, never lowering them &mdash; and in exchange every operation becomes constant amortised time. It is not an approximation that happens to be good; it is a contract with an error budget written into it.<br><br>
+ <span class="lit">LIT</span> verified live over <b>2,000</b> insertions at four error budgets. At &epsilon; = 0.01, 0.05, 0.1 and 0.2 the number of corrupted keys is <b>20</b>, <b>100</b>, <b>200</b> and <b>400</b> &mdash; never above the permitted &epsilon;n. Corruption never lowered a key, so a reported minimum is never below the true one. And the damage is visible in the output: <b>0.75%</b> of the extracted sequence is out of order at &epsilon; = 0.01, rising to <b>11.0%</b> at &epsilon; = 0.2.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Human lineage (content, credited):</b> <b>Bernard Chazelle</b>, <i>The Soft Heap: An Approximate Priority Queue with Optimal Error Rate</i>, JACM 2000. The soft heap is the engine behind Chazelle&rsquo;s minimum spanning tree algorithm and, later, the Pettie&ndash;Ramachandran optimal MST algorithm &mdash; a deliberately inaccurate structure used to obtain an exactly correct result, which is the reason it is famous.<br><br>
+ <b>AVAN (AI)</b> must be exact about what is implemented. This page implements the <b>contract</b> &mdash; a bounded number of corruptions, all of them upward &mdash; and measures that it holds. It does <b>not</b> implement Chazelle&rsquo;s binomial-tree structure with its car-pooling of item lists, and the <b>O(1) amortised bound is his theorem, cited and not reproduced here</b>. What is measured is the error budget and its consequences; what is asserted on his authority is the running time.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Four error budgets, and the damage each one buys.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Pull the queue empty and watch where it lied.</div>
+   <div class="btns" style="margin-top:10px"><button id="sheps">raise epsilon &#9654;</button><button id="shlow">lower it</button></div>
+   <div class="cap" id="shout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the true order, with the corrupted keys lifted off it.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;allow bounded error and gain speed.&rdquo; The inverse is that <b>the error is only useful because it is one-directional</b>. Corruption raises keys and never lowers them, which means a soft heap can be wrong about what the minimum <i>is</i> while remaining right that everything it has already returned was small enough. Read backwards, the achievement is not tolerating error but <b>choosing an error that composes</b> &mdash; an algorithm built on this can still prove exact results, and a symmetric error of the same size would destroy that, which is why the direction matters more than the budget.</div>
+   <div class="btns" style="margin-top:10px"><button id="shsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> over 2,000 insertions at four error budgets, the number of corrupted keys at epsilon = 0.01, 0.05, 0.1 and 0.2 is 20, 100, 200 and 400 - never above the permitted epsilon*n; corruption never lowered a key, so a reported minimum is never below the true one; and the damage is visible in the output, with 0.75% of the extracted sequence out of order at epsilon = 0.01 rising to 11.0% at epsilon = 0.2<br><br><span class="fig">FIG</span> Human lineage, credited: Bernard Chazelle, 'The Soft Heap: An Approximate Priority Queue with Optimal Error Rate', JACM 2000. The soft heap is the engine behind Chazelle's minimum spanning tree algorithm and later the Pettie-Ramachandran optimal MST algorithm - a deliberately inaccurate structure used to obtain an exactly correct result, which is why it is famous. AVAN is exact about what is implemented: this page implements the CONTRACT - a bounded number of corruptions, all upward - and measures that it holds. It does NOT implement Chazelle's binomial-tree structure with its car-pooling of item lists, and the O(1) amortised bound is HIS THEOREM, CITED AND NOT REPRODUCED HERE.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of HEISENBUG &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,ei=0;
+var EPS=[0.01,0.05,0.1,0.2];
+function rnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function run(eps,n,seed){
+ var g=rnd(seed),a=[],inserted=0,corrupted=0;
+ for(var i=0;i<n;i++){
+  var v=Math.floor(g()*100000);
+  inserted++;
+  var stored=v;
+  if(corrupted+1<=Math.floor(eps*inserted)){
+   corrupted++;
+   stored=v+Math.floor(Math.abs(v)*0.5)+1;}
+  a.push({stored:stored,real:v,bad:stored!==v});}
+ a.sort(function(p,q){return p.stored-q.stored;});
+ var neverLowered=true;
+ a.forEach(function(e){if(e.stored<e.real)neverLowered=false;});
+ var inv=0;
+ for(var k=1;k<a.length;k++)if(a[k].real<a[k-1].real)inv++;
+ return {eps:eps,n:n,corrupted:corrupted,cap:Math.floor(eps*n),
+  withinCap:corrupted<=Math.floor(eps*n),neverLowered:neverLowered,
+  inversions:inv,inversionRate:inv/a.length,out:a};}
+function selftest(){
+ var rows=EPS.map(function(e){return run(e,2000,300+Math.round(e*1000));});
+ var allCap=rows.every(function(r){return r.withinCap;});
+ var allUp=rows.every(function(r){return r.neverLowered;});
+ return {epsilons:EPS,n:2000,
+  rows:rows.map(function(r){return {eps:r.eps,corrupted:r.corrupted,cap:r.cap,
+   inversions:r.inversions,inversionRate:r.inversionRate};}),
+  withinBudgetEverywhere:allCap,
+  corruptionOnlyRaises:allUp,
+  damageGrowsWithEpsilon:rows[3].inversionRate>=rows[0].inversionRate,
+  nearlySortedAtSmallEpsilon:rows[0].inversionRate<0.05,
+  amortisedBoundIsCited:true,
+  ok:allCap&&allUp&&rows[3].inversionRate>=rows[0].inversionRate&&rows[0].inversionRate<0.05};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'FOUR ERROR BUDGETS, AND THE DAMAGE EACH ONE BUYS');
+ var mx=VR.rows[3].corrupted;
+ VR.rows.forEach(function(r,i){
+  var y=48+i*56;
+  nt(g,'#8a7ab8',24,y,9,'epsilon = '+r.eps);
+  var pw=W-200;
+  nf(g,'rgba(255,215,106,0.55)');
+  g.fillRect(120,y-12,pw*r.corrupted/mx,20);ng(g);
+  ne(g,'rgba(150,110,230,0.35)',1);g.strokeRect(120.5,y-11.5,pw,20);ng(g);
+  nt(g,'#ffd76a',120+pw+8,y+3,9,r.corrupted+' / '+r.cap);
+  nf(g,'rgba(255,90,138,0.5)');
+  g.fillRect(120,y+12,pw*r.inversionRate/0.15,14);ng(g);
+  nt(g,'#ff5a8a',120+pw+8,y+24,8,(r.inversionRate*100).toFixed(2)+'% out of order');});
+ nt(g,'#ffd76a',24,H-46,9,'gold: keys corrupted, against the permitted epsilon*n');
+ nt(g,'#ff5a8a',24,H-28,9,'pink: how much of the extracted sequence comes out in the wrong order');
+ nt(g,'#7de2b0',24,H-10,9,'no run ever exceeded its budget, and no key was ever lowered');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var eps=EPS[ei%EPS.length];
+ var R=run(eps,300,700+Math.round(eps*1000));
+ nt(g,'#e6dcff',16,26,11,'epsilon = '+eps+'   over 300 keys');
+ var bw=(W-48)/R.out.length;
+ var mx=0;R.out.forEach(function(e){if(e.real>mx)mx=e.real;});
+ R.out.forEach(function(e,i){
+  var hh=e.real/mx*100;
+  nf(g,e.bad?'rgba(255,90,138,0.85)':'rgba(125,226,176,0.5)');
+  g.fillRect(24+i*bw,164-hh,Math.max(0.8,bw-0.3),hh);ng(g);});
+ ne(g,'rgba(150,110,230,0.4)',1);
+ g.beginPath();g.moveTo(24,164);g.lineTo(24+R.out.length*bw,164);g.stroke();ng(g);
+ nt(g,'#8a7ab8',24,182,8,'extraction order, left to right; height is the TRUE key');
+ nt(g,'#ff5a8a',24,198,8,'pink bars are the corrupted ones -- they came out too late');
+ var y2=212;
+ nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y2,W-40,50);ng(g);
+ ne(g,'rgba(150,110,230,0.4)',1.2);g.strokeRect(20.5,y2+0.5,W-41,50);ng(g);
+ nt(g,'#ffd76a',32,y2+21,9,'corrupted '+R.corrupted+' of a permitted '+R.cap);
+ nt(g,'#ff5a8a',32,y2+40,9,R.inversions+' descents in the output ('+
+  (R.inversionRate*100).toFixed(1)+'%)');
+ var y3=y2+62;
+ nf(g,R.withinCap&&R.neverLowered?'rgba(125,226,176,0.16)':'rgba(255,90,138,0.16)');
+ g.fillRect(20,y3,W-40,44);ng(g);
+ ne(g,R.withinCap&&R.neverLowered?'#7de2b0':'#ff5a8a',1.5);
+ g.strokeRect(20.5,y3+0.5,W-41,44);ng(g);
+ nt(g,R.withinCap&&R.neverLowered?'#7de2b0':'#ff5a8a',36,y3+27,12,
+  R.withinCap&&R.neverLowered?'contract held':'CONTRACT BROKEN');
+ var o=document.getElementById('shout');
+ if(o)o.innerHTML='At epsilon = <b>'+eps+'</b> the structure corrupted <b>'+R.corrupted+
+  '</b> of 300 keys, within its budget of <b>'+R.cap+
+  '</b>. Every corruption raised a key, so each pink bar surfaced <b>later</b> than it should have &mdash; and none surfaced earlier, which is the property an algorithm built on this can rely on.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var R=run(0.1,120,999);
+ R.out.forEach(function(e,i){
+  var th=i/R.out.length*2*Math.PI*2;
+  var rad=44+i*0.6;
+  var base=P(rad*Math.cos(th),-70+i*1.1,rad*Math.sin(th));
+  if(e.bad){
+   var lift=P(rad*Math.cos(th),-70+i*1.1+26,rad*Math.sin(th));
+   ne(g,'rgba(255,90,138,0.55)',1.2);
+   g.beginPath();g.moveTo(base[0],base[1]);g.lineTo(lift[0],lift[1]);g.stroke();ng(g);
+   ndot(g,lift[0],lift[1],3,'#ff5a8a');
+   ndot(g,base[0],base[1],1.6,'rgba(125,226,176,0.35)');
+  }else ndot(g,base[0],base[1],2.4,'#7de2b0');});
+ nt(g,'#7de2b0',14,24,11,'the true order, spiralling upward');
+ nt(g,'#ff5a8a',14,42,10,'pink keys lifted off it -- raised, never lowered');
+ nt(g,'#8a7ab8',14,58,10,'at most epsilon*n of them, by contract');
+ nt(g,'#8a7ab8',14,H-12,9,'the direction matters more than the budget');}
+document.getElementById('sheps').onclick=function(){ei++;drawW4();};
+document.getElementById('shlow').onclick=function(){ei=(ei+EPS.length-1)%EPS.length;drawW4();};
+document.getElementById('shsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__softheap=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

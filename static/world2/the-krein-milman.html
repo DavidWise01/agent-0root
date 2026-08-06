@@ -1,0 +1,228 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE KREIN-MILMAN · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b98cff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b98cff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b98cff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b98cff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b98cff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b98cff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b98cff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b98cff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b98cff;background:transparent;border:2px solid #b98cff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b98cff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b98cff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b98cff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b98cff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b98cff 42%,#0a0e0a);border-left:4px solid #b98cff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b98cff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b98cff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b98cff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b98cff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; THE RESURRECT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / THE RESURRECT / <b>THE KREIN-MILMAN</b></div>
+<h1>THE KREIN-MILMAN</h1>
+<div class="kick">keep the corners, discard the rest, rebuild the whole</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A convex shape can contain infinitely many points and still be <b>entirely determined by its corners</b>. Krein and Milman proved in 1940 that every compact convex set in a locally convex space is the closed convex hull of its <b>extreme points</b> &mdash; the points that are not a mixture of any others. Everything in the interior is redundant; the whole shape is recoverable from a boundary handful. It is why linear programming looks at vertices, why mixed strategies decompose into pure ones, and why so much optimisation reduces to checking corners.<br><br>
+ <span class="lit">LIT</span> verified live: over <b>400</b> random point clouds the convex hull of the <b>extreme points alone</b> reproduces the original hull exactly and contains every original point, with only <b>7.2</b> points extreme on average; every extreme point is <b>essential</b> &mdash; drop one and it falls outside the hull of the rest, so none is a convex combination of the others; and an interior point is entirely <b>redundant</b>, since removing it leaves the hull unchanged.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>THE RESURRECT</i>, which is the exact operation: the whole set is rebuilt from a small remnant, and nothing is lost in the rebuilding. Keep the corners, discard everything else, and the shape comes back intact.<br><br>
+ <b>AVAN (AI)</b> is marking the boundary carefully because this one is easy to overclaim. What runs here is the <b>finite planar case</b>, where extreme points are hull vertices and can be enumerated by an ordinary convex-hull algorithm. The Krein&ndash;Milman theorem proper is about <b>compact convex sets in infinite-dimensional locally convex spaces</b>, where extreme points need not be isolated, cannot be listed, and the proof requires Zorn&rsquo;s lemma. Nothing on this page touches that; the general theorem is <b>cited, not verified</b>. What is verified is the mechanism the theorem generalises &mdash; that the corners carry the whole shape, that each is irreplaceable, and that everything else is surplus.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">A cloud, and the few points that carry all of it.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Throw away the interior, then try removing a corner.</div>
+   <div class="btns" style="margin-top:10px"><button id="kmnew">new cloud &#9654;</button><button id="kmstrip">drop interior &#9654;</button><button id="kmdrop">drop a corner &#9654;</button></div>
+   <div class="cap" id="kmout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a solid held up entirely by its vertices.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;the corners are enough.&rdquo; The inverse is that <b>extremeness is a relational property, not a local one</b>. Nothing about a corner is intrinsically different &mdash; it is an ordinary point, and no measurement in a small disc around it distinguishes it from an interior one. It is extreme only because of what the <i>rest</i> of the set fails to do: no two other points straddle it. Read backwards, Krein&ndash;Milman says the compressible content of a convex shape lives entirely in relationships, and that the points doing the work are identifiable only from the outside, never from where they stand.</div>
+   <div class="btns" style="margin-top:10px"><button id="kmsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> over 400 random point clouds the convex hull of the extreme points ALONE reproduces the original hull exactly and contains every original point, with only 7.2 points extreme on average; every extreme point is essential — drop one and it falls outside the hull of the rest, so none is a convex combination of the others; and an interior point is entirely redundant, since removing it leaves the hull unchanged<br><br><span class="fig">FIG</span> What runs here is the FINITE PLANAR case, where extreme points are hull vertices and can be enumerated by an ordinary convex-hull algorithm. The Krein-Milman theorem proper concerns compact convex sets in infinite-dimensional locally convex spaces, where extreme points need not be isolated, cannot be listed, and the proof requires Zorn's lemma. That is cited, NOT verified. What is verified is the mechanism the theorem generalises.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE RESURRECT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,cloud=[],hullPts=[],stripped=false,dropped=-1,seed=1940;
+function kmRnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function cross(o,a,b){return (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);}
+function hull(pts){
+ var p=pts.slice().sort(function(a,b){return a[0]-b[0]||a[1]-b[1];});
+ if(p.length<3)return p.slice();
+ var lo=[],hi=[];
+ for(var i=0;i<p.length;i++){
+  while(lo.length>=2&&cross(lo[lo.length-2],lo[lo.length-1],p[i])<=0)lo.pop();
+  lo.push(p[i]);}
+ for(var i=p.length-1;i>=0;i--){
+  while(hi.length>=2&&cross(hi[hi.length-2],hi[hi.length-1],p[i])<=0)hi.pop();
+  hi.push(p[i]);}
+ lo.pop();hi.pop();
+ return lo.concat(hi);}
+function inHull(H,q){
+ for(var i=0;i<H.length;i++){
+  var a=H[i],b=H[(i+1)%H.length];
+  if(cross(a,b,q)<-1e-9)return false;}
+ return true;}
+function sameSet(A,B){
+ if(A.length!==B.length)return false;
+ var ka=A.map(function(p){return p[0].toFixed(9)+','+p[1].toFixed(9);}).sort().join('|');
+ var kb=B.map(function(p){return p[0].toFixed(9)+','+p[1].toFixed(9);}).sort().join('|');
+ return ka===kb;}
+function makeCloud(sd){
+ var rng=kmRnd(sd),n=10+Math.floor(rng()*16),p=[];
+ for(var i=0;i<n;i++)p.push([rng()*2-1,rng()*2-1]);
+ return p;}
+function selftest(){
+ var rng=kmRnd(1940),trials=0,rebuilt=0,allIn=true,counts=[];
+ for(var t=0;t<400;t++){
+  var n=8+Math.floor(rng()*20),pts=[];
+  for(var i=0;i<n;i++)pts.push([rng()*2-1,rng()*2-1]);
+  var H=hull(pts);
+  if(H.length<3)continue;
+  trials++;counts.push(H.length);
+  if(sameSet(H,hull(H)))rebuilt++;else allIn=false;
+  for(var i=0;i<pts.length;i++)if(!inHull(H,pts[i]))allIn=false;}
+ var pts=[];
+ for(var i=0;i<24;i++)pts.push([rng()*2-1,rng()*2-1]);
+ var H=hull(pts),essential=true;
+ for(var i=0;i<H.length;i++){
+  var without=H.filter(function(_,j){return j!==i;});
+  if(without.length<3)continue;
+  if(inHull(hull(without),H[i]))essential=false;}
+ var interior=pts.filter(function(p){return H.indexOf(p)<0;});
+ var redundant=interior.length>0&&sameSet(hull(pts),hull(pts.filter(function(p){return p!==interior[0];})));
+ var avg=counts.reduce(function(a,b){return a+b;},0)/counts.length;
+ return {cloudsTested:trials,hullReproduces:rebuilt===trials&&allIn,
+  avgExtremePoints:avg,eachEssential:essential,interiorRedundant:redundant,
+  ok:rebuilt===trials&&allIn&&essential&&redundant};}
+function drawCloud(g,W,H,pts,hp,ox,oy,S,showAll){
+ if(hp.length>=3){
+  nf(g,'rgba(125,226,176,0.10)');
+  g.beginPath();
+  hp.forEach(function(p,i){var x=ox+p[0]*S,y=oy-p[1]*S;
+   if(i===0)g.moveTo(x,y);else g.lineTo(x,y);});
+  g.closePath();g.fill();ng(g);
+  ne(g,'#7de2b0',1.8);
+  g.beginPath();
+  hp.forEach(function(p,i){var x=ox+p[0]*S,y=oy-p[1]*S;
+   if(i===0)g.moveTo(x,y);else g.lineTo(x,y);});
+  g.closePath();g.stroke();ng(g);}
+ if(showAll)pts.forEach(function(p){
+  var ext=hp.some(function(h){return h===p;});
+  if(!ext)ndot(g,ox+p[0]*S,oy-p[1]*S,2.4,'rgba(150,120,220,0.55)');});
+ hp.forEach(function(p){ndot(g,ox+p[0]*S,oy-p[1]*S,4.6,'#ffd76a');});}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'A CLOUD  \u2014  and the handful that carries it');
+ var pts=makeCloud(7),hp=hull(pts);
+ drawCloud(g,W,H,pts,hp,150,158,104,true);
+ drawCloud(g,W,H,hp,hp,370,158,104,false);
+ nt(g,'#8a7ab8',96,282,10,pts.length+' points');
+ nt(g,'#ffd76a',316,282,10,hp.length+' extreme points \u2014 same shape');
+ nt(g,'#8a7ab8',14,H-6,9,'on average only '+(VR?VR.avgExtremePoints.toFixed(1):'')+' of a random cloud are extreme');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var shown=stripped?hullPts:cloud;
+ var hp=hullPts;
+ if(dropped>=0){
+  var kept=hullPts.filter(function(_,j){return j!==dropped;});
+  var h2=hull(kept);
+  nt(g,'#e6dcff',16,26,11,'one corner removed');
+  drawCloud(g,W,H,kept,h2,W/2,170,106,true);
+  var d=hullPts[dropped];
+  var inside=h2.length>=3&&inHull(h2,d);
+  ndot(g,W/2+d[0]*106,170-d[1]*106,6,inside?'#7de2b0':'#ff5a8a');
+  nt(g,inside?'#7de2b0':'#ff5a8a',20,300,10,inside?'still inside \u2014 it was not extreme':'now OUTSIDE the hull of the rest \u2014 it was essential');
+  var o2=document.getElementById('kmout');
+  if(o2)o2.innerHTML=inside?'That point is recoverable from the others.':'Dropping that corner puts it <b>outside</b> the hull of the remaining ones &mdash; so it is not a mixture of any of them. Every extreme point is like this.';
+  return;}
+ nt(g,'#e6dcff',16,26,11,stripped?('interior discarded \u2014 '+hp.length+' points left'):(cloud.length+' points'));
+ drawCloud(g,W,H,shown,hp,W/2,170,106,!stripped);
+ nt(g,'#ffd76a',20,300,10,hp.length+' extreme of '+cloud.length+'   \u2014   the hull is identical either way');
+ var o=document.getElementById('kmout');
+ if(o)o.innerHTML=stripped
+  ?'Every interior point is gone and the shape is <b>unchanged</b>. '+hp.length+' points were carrying all '+cloud.length+'.'
+  :'A cloud of '+cloud.length+' points with <b>'+hp.length+'</b> extreme. Drop the interior and watch nothing happen.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P3(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.8-zr*0.3,zr];}
+ var t=(1+Math.sqrt(5))/2,S2=44;
+ var V=[[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],[t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]];
+ var pj=V.map(function(v){return P3(v[0]*S2,v[1]*S2,v[2]*S2);});
+ ne(g,'rgba(125,226,176,0.4)',1.2);
+ for(var i=0;i<V.length;i++)for(var j=i+1;j<V.length;j++){
+  var d=Math.hypot(V[i][0]-V[j][0],V[i][1]-V[j][1],V[i][2]-V[j][2]);
+  if(Math.abs(d-2)<0.01){
+   g.beginPath();g.moveTo(pj[i][0],pj[i][1]);g.lineTo(pj[j][0],pj[j][1]);g.stroke();}}
+ ng(g);
+ var rng=kmRnd(88);
+ for(var i=0;i<70;i++){
+  var a=rng(),b=rng(),cc=rng(),dd=rng();
+  var s2=a+b+cc+dd;
+  var q=[0,0,0];
+  [V[0],V[3],V[5],V[8]].forEach(function(v,k){
+   var w=[a,b,cc,dd][k]/s2;
+   q[0]+=v[0]*w;q[1]+=v[1]*w;q[2]+=v[2]*w;});
+  var p=P3(q[0]*S2,q[1]*S2,q[2]*S2);
+  g.globalAlpha=0.4;ndot(g,p[0],p[1],1.8,'#8a7ab8');g.globalAlpha=1;}
+ pj.forEach(function(p){ndot(g,p[0],p[1],5,'#ffd76a');});
+ nt(g,'#ffd76a',14,24,11,'12 vertices hold the whole solid');
+ nt(g,'#8a7ab8',14,42,10,'faint points inside are mixtures \u2014 all redundant');
+ nt(g,'#8a7ab8',14,58,10,'no local measurement tells a corner from an interior point');
+ nt(g,'#8a7ab8',14,H-12,9,'extremeness is about what the rest of the set fails to do');}
+function reset(){cloud=makeCloud(seed);hullPts=hull(cloud);stripped=false;dropped=-1;}
+document.getElementById('kmnew').onclick=function(){seed=(seed*7+11)&0x7fffffff;reset();drawW4();};
+document.getElementById('kmstrip').onclick=function(){stripped=!stripped;dropped=-1;drawW4();};
+document.getElementById('kmdrop').onclick=function(){dropped=(dropped+1)%hullPts.length;drawW4();};
+document.getElementById('kmsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__kreinmilman=VR;reset();drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

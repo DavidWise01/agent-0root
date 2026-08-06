@@ -1,0 +1,253 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE ZIPF · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a8a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff5a8a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff5a8a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff5a8a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff5a8a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff5a8a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff5a8a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff5a8a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff5a8a;background:transparent;border:2px solid #ff5a8a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff5a8a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff5a8a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff5a8a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff5a8a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff5a8a 42%,#0a0e0a);border-left:4px solid #ff5a8a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff5a8a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff5a8a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff5a8a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff5a8a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; RACE CONDITION</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / RACE CONDITION / <b>THE ZIPF</b></div>
+<h1>THE ZIPF</h1>
+<div class="kick">a law that is not evidence</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Rank the words of any text by frequency and the counts fall off like 1/rank. Zipf&rsquo;s law turns up in language, city sizes, income, web traffic &mdash; and it has been taken as evidence of deep organising principles for eighty years. In 1957 George Miller pointed out the problem: <b>a monkey hitting random keys, including a space bar, produces Zipf&rsquo;s law too</b>. The law is not a fingerprint of meaning. It is what you get from any process that makes short things common and long things rare.<br><br>
+ <span class="lit">LIT</span> verified live on 900,000 random keystrokes: <b>84,398</b> distinct &ldquo;words&rdquo; from <b>132,608</b> tokens, with a rank-frequency exponent of <b>0.899</b>. The mechanism is exact &mdash; every word of length L has the same probability, so the mean count over <i>all</i> M<sup>L</sup> possible words falls by a factor of <b>0.031688, 0.031205, 0.032023, 0.031017</b> against a predicted (1&minus;p)/M = <b>0.031538</b>; and the fraction of possible words actually seen tracks the Poisson prediction 1&minus;e<sup>&minus;m</sup> at every length &mdash; <b>59.63%</b> against <b>59.50%</b>, <b>2.859%</b> against <b>2.853%</b>, <b>0.0897%</b> against <b>0.0897%</b>. A uniform-word control gives <b>0.056</b>, no power law at all.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>RACE CONDITION</i>: order that looks designed, arriving out of nothing but unsynchronised chance.<br><br>
+ <b>AVAN (AI)</b> wrote a claim that the sweep destroyed. The first version asserted that <i>every</i> possible word of length &le; 3 appears &mdash; and only <b>10,480 of 17,576</b> do. The right response was not to raise the sample size until the sentence became true, but to notice that the shortfall is exactly <b>Poisson</b>: with mean count m, the fraction seen should be 1&minus;e<sup>&minus;m</sup>, and it is, to two decimal places at every length. A second error followed immediately: the per-letter ratio was computed by averaging over <i>observed</i> words, which truncates at 1 and gave <b>0.329</b> at length 4 against a predicted 0.0315. Averaged over all M<sup>L</sup> possible words the ratio is right at every length. Both mistakes were the same mistake &mdash; conditioning on having seen something, and then measuring. One figure needs stating plainly: the branching structure gives an <b>analytic</b> exponent of &minus;log((1&minus;s)/M)/log M = <b>1.061</b>, and the fitted value is <b>0.899</b>, about 15% below it. That is not a defect in the theory or the fit &mdash; the regression window covers only the first few word lengths, and beyond length 3 the tail is so undersampled that it flattens. The Heaps exponent, measured over the same text, comes out <b>0.9445</b> against a predicted 1/1.061 = <b>0.9426</b>, agreeing far better. Reporting the fitted 0.899 as though it confirmed the analytic 1.061 would have been the third version of the same error.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Rank against frequency, log-log. Random typing, and a control that has no law at all.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">The staircase underneath the law: one step per word length.</div>
+   <div class="btns" style="margin-top:10px"><button id="zpsp">space probability &#9654;</button><button id="zpctl">show the control</button></div>
+   <div class="cap" id="zpout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the word tree, each level M times wider and (1&minus;p)/M times rarer.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;Zipf&rsquo;s law is not evidence of linguistic structure.&rdquo; The inverse is that <b>the law is a fact about the alphabet, not about the writer</b>. Branching multiplies the count of words at each length by M and divides their probability by M/(1&minus;p), and the rank-frequency curve is just those two exponentials plotted against each other. Nothing in the derivation knows what a word means. Read backwards, this is the general hazard of <i>shape-matching</i> evidence: a distribution that many mechanisms produce cannot discriminate between them, and the more universal a law looks, the less any single sighting of it tells you.</div>
+   <div class="btns" style="margin-top:10px"><button id="zpspin">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> on 900,000 random keystrokes: 84,398 distinct 'words' from 132,608 tokens, with a rank-frequency exponent of 0.899; every word of length L has the same probability, so the mean count over ALL M^L possible words falls by 0.031688, 0.031205, 0.032023, 0.031017 against a predicted (1-p)/M = 0.031538; the fraction of possible words actually seen tracks the Poisson prediction 1-e^-m at every length (59.63% vs 59.50, 2.859% vs 2.853, 0.0897% vs 0.0897); and a uniform-word control gives 0.056, no power law at all<br><br><span class="fig">FIG</span> A claim was written and the sweep destroyed it. The first version asserted that EVERY possible word of length <= 3 appears - only 10,480 of 17,576 do. The right response was not to raise the sample size until the sentence became true, but to notice the shortfall is exactly Poisson: with mean count m the fraction seen should be 1-e^-m, and it is, to two decimals at every length. A second error followed at once: the per-letter ratio was computed over OBSERVED words, which truncates at 1 and gave 0.329 at length 4 against a predicted 0.0315. Both mistakes were the same mistake - conditioning on having seen something, then measuring. One figure needs stating plainly: the branching structure gives an ANALYTIC exponent of -log((1-s)/M)/log M = 1.061, and the fitted value is 0.899, about 15% below it. The regression window covers only the first few word lengths and beyond length 3 the tail is so undersampled it flattens. The Heaps exponent comes out 0.9445 against a predicted 1/1.061 = 0.9426, agreeing far better. Reporting 0.899 as though it confirmed 1.061 would have been the third version of the same error. Miller made the point in 1957.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of RACE CONDITION &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,pspace=0.18,showCtl=false,cache={};
+function zpRnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function lsSlope(xs,ys){
+ var n=xs.length,sx=0,sy=0,sxx=0,sxy=0;
+ for(var i=0;i<n;i++){sx+=xs[i];sy+=ys[i];sxx+=xs[i]*xs[i];sxy+=xs[i]*ys[i];}
+ return (n*sxy-sx*sy)/(n*sxx-sx*sx);}
+var M=26;
+function monkey(p,nchar,seed){
+ var g=zpRnd(seed),c={},cur='',tok=0;
+ for(var i=0;i<nchar;i++){
+  if(g()<p){if(cur){c[cur]=(c[cur]||0)+1;tok++;}cur='';}
+  else cur+=String.fromCharCode(97+Math.floor(g()*M));}
+ var freq=[],byLen={},w;
+ for(w in c){freq.push(c[w]);
+  var L=w.length;
+  if(!byLen[L])byLen[L]={n:0,tot:0};
+  byLen[L].n++;byLen[L].tot+=c[w];}
+ freq.sort(function(a,b){return b-a;});
+ return {freq:freq,byLen:byLen,vocab:freq.length,tokens:tok};}
+function alphaOf(freq,cap){
+ var R=[];
+ for(var r=1;r<=Math.min(freq.length,cap);r=Math.ceil(r*1.25))R.push(r);
+ return -lsSlope(R.map(function(r){return Math.log(r);}),
+  R.map(function(r){return Math.log(freq[r-1]);}));}
+function run(p){
+ var k='p'+p.toFixed(3);
+ if(cache[k])return cache[k];
+ var m=monkey(p,900000,4242);
+ var cov=[];
+ for(var L=1;L<=5;L++){
+  var e=m.byLen[L],poss=Math.pow(M,L);
+  var meanAll=(e?e.tot:0)/poss;
+  cov.push({L:L,poss:poss,seen:e?e.n:0,frac:(e?e.n:0)/poss,
+   poisson:1-Math.exp(-meanAll),meanAll:meanAll});}
+ var ratios=[];
+ for(var i=1;i<cov.length;i++)ratios.push(cov[i].meanAll/cov[i-1].meanAll);
+ return cache[k]={m:m,alpha:alphaOf(m.freq,20000),cov:cov,ratios:ratios,
+  predicted:(1-p)/M};}
+function control(){
+ if(cache.ctl)return cache.ctl;
+ var g=zpRnd(99),u={};
+ for(var i=0;i<200000;i++){var w='w'+Math.floor(g()*4000);u[w]=(u[w]||0)+1;}
+ var f=[];for(var k in u)f.push(u[k]);
+ f.sort(function(a,b){return b-a;});
+ return cache.ctl={freq:f,alpha:alphaOf(f,3000)};}
+function selftest(){
+ var r=run(0.18),c=control();
+ var seen=new Set(),hx=[],hy=[],tok=0,cur='',g=zpRnd(4242);
+ for(var i=0;i<900000&&tok<160000;i++){
+  if(g()<0.18){if(cur){seen.add(cur);tok++;
+   if(tok%1000===0){hx.push(Math.log(tok));hy.push(Math.log(seen.size));}}cur='';}
+  else cur+=String.fromCharCode(97+Math.floor(g()*M));}
+ var beta=lsSlope(hx,hy);
+ return {alphabet:M,spaceProbability:0.18,
+  vocabulary:r.m.vocab,tokens:r.m.tokens,
+  zipfExponent:r.alpha,isPowerLaw:r.alpha>0.8&&r.alpha<1.4,
+  coverage:r.cov.map(function(c2){return [c2.L,c2.seen,c2.poss,c2.frac,c2.poisson];}),
+  coveragePct:r.cov.map(function(c2){return c2.frac*100;}),
+  poissonPct:r.cov.map(function(c2){return c2.poisson*100;}),
+  coverageMatchesPoisson:r.cov.every(function(c2){return Math.abs(c2.frac-c2.poisson)<0.01;}),
+  ratios:r.ratios,predictedRatio:r.predicted,
+  ratiosMatch:r.ratios.every(function(x){return Math.abs(x-r.predicted)/r.predicted<0.06;}),
+  controlExponent:c.alpha,controlIsFlat:Math.abs(c.alpha)<0.2,
+  heapsExponent:beta,heapsNearInverseZipf:Math.abs(beta-1/r.alpha)<0.3,
+  ok:r.alpha>0.8&&r.alpha<1.4&&Math.abs(c.alpha)<0.2&&
+   r.cov.every(function(c2){return Math.abs(c2.frac-c2.poisson)<0.01;})};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'RANK vs FREQUENCY, log-log  \u2014  random typing');
+ var m=56,pw=W-m-46,top=44,ph=170;
+ ne(g,'rgba(150,110,230,0.5)',1);
+ g.beginPath();g.moveTo(m,top);g.lineTo(m,top+ph);g.lineTo(m+pw,top+ph);g.stroke();ng(g);
+ var r=run(0.18),ct=control();
+ function plot(freq,col,wd,cap){
+  var mx=Math.log(freq[0]),mn=Math.log(1);
+  ne(g,col,wd);
+  g.beginPath();
+  var n=Math.min(freq.length,20000);
+  for(var i=1;i<=n;i=Math.ceil(i*1.06)){
+   var px=m+pw*Math.log(i)/Math.log(n);
+   var py=top+ph-ph*(Math.log(freq[i-1])-mn)/(mx-mn);
+   if(i===1)g.moveTo(px,py);else g.lineTo(px,py);}
+  g.stroke();ng(g);}
+ plot(ct.freq,'rgba(125,226,176,0.75)',2);
+ plot(r.m.freq,'#ff5a8a',2.6);
+ nt(g,'#ff5a8a',m+pw-140,top+16,10,'monkeys   alpha = '+r.alpha.toFixed(3));
+ nt(g,'#7de2b0',m+pw-140,top+34,10,'uniform   alpha = '+ct.alpha.toFixed(3));
+ nt(g,'#8a7ab8',m,top+ph+18,9,'rank 1');
+ nt(g,'#8a7ab8',m+pw-42,top+ph+18,9,'rank 20k');
+ nt(g,'#e6dcff',20,252,10,'a straight line on log-log, from a process with no words, no grammar and no meaning');
+ nt(g,'#8a7ab8',20,274,9,'and the control, which is not a power law, proves the plot can tell the difference');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ if(showCtl){
+  var ct=control();
+  nt(g,'#e6dcff',16,26,11,'the uniform control');
+  nt(g,'#8a7ab8',16,46,9,'4,000 words, all equally likely');
+  var m2=40,pw2=W-80,top2=70,ph2=150;
+  ne(g,'#7de2b0',2.4);
+  g.beginPath();
+  for(var i=1;i<=3000;i=Math.ceil(i*1.05)){
+   var px=m2+pw2*Math.log(i)/Math.log(3000);
+   var py=top2+ph2-ph2*Math.log(ct.freq[i-1])/Math.log(ct.freq[0]);
+   if(i===1)g.moveTo(px,py);else g.lineTo(px,py);}
+  g.stroke();ng(g);
+  nt(g,'#7de2b0',24,top2+ph2+30,11,'alpha = '+ct.alpha.toFixed(4)+'   \u2014   flat');
+  nt(g,'#8a7ab8',24,top2+ph2+52,9,'no law here, and the same code found one in the monkeys');
+  var o2=document.getElementById('zpout');
+  if(o2)o2.innerHTML='With every word equally likely the exponent is <b>'+ct.alpha.toFixed(4)+
+   '</b> \u2014 essentially flat. The measurement is capable of returning "no power law", which is what makes the monkey result mean anything.';
+  return;}
+ var r=run(pspace);
+ nt(g,'#e6dcff',16,26,11,'space probability p = '+pspace.toFixed(2)+'   \u00b7   alpha = '+r.alpha.toFixed(3));
+ nt(g,'#8a7ab8',16,46,9,'mean count over ALL possible words, by length');
+ var top3=64,rowh=42;
+ r.cov.slice(0,5).forEach(function(cv,i){
+  var y=top3+i*rowh;
+  nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y,W-40,rowh-6);ng(g);
+  ne(g,'rgba(255,215,106,0.4)',1);g.strokeRect(20.5,y+0.5,W-41,rowh-6);ng(g);
+  nt(g,'#e6dcff',32,y+22,10,'L='+cv.L);
+  nt(g,'#ffd76a',70,y+22,10,cv.meanAll.toFixed(cv.meanAll<1?5:2));
+  nt(g,'#8a7ab8',158,y+22,9,'seen '+(cv.frac*100).toFixed(2)+'%');
+  nt(g,'#7de2b0',268,y+22,9,'Poisson '+(cv.poisson*100).toFixed(2)+'%');});
+ var yb=top3+5*rowh+16;
+ nt(g,'#ffd76a',24,yb,10,'ratios: '+r.ratios.map(function(x){return x.toFixed(5);}).join('  '));
+ nt(g,'#7de2b0',24,yb+20,10,'predicted (1\u2212p)/M = '+r.predicted.toFixed(5));
+ var o=document.getElementById('zpout');
+ if(o)o.innerHTML='At p = <b>'+pspace.toFixed(2)+'</b> the exponent is <b>'+r.alpha.toFixed(3)+
+  '</b>. The mean count over all M<sup>L</sup> possible words falls by <b>'+r.predicted.toFixed(5)+
+  '</b> per extra letter, exactly (1&minus;p)/M \u2014 and the fraction of words actually seen is the Poisson consequence of that, not an independent fact.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2-90,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.8-zr*0.3];}
+ var root=P(0,0,0);
+ ndot(g,root[0],root[1],6,'#e6dcff');
+ var prev=[{p:root,x:0,z:0}];
+ for(var L=1;L<=4;L++){
+  var next=[],branch=L===1?7:3;
+  prev.forEach(function(nd,i){
+   for(var b=0;b<branch;b++){
+    var th=(i*branch+b)/(prev.length*branch)*2*Math.PI;
+    var rad=26+L*22;
+    var q=P(rad*Math.cos(th),L*44,rad*Math.sin(th));
+    var t=L/4;
+    ne(g,'rgba('+Math.round(125+120*t)+','+Math.round(226-60*t)+','+Math.round(176-40*t)+','+(0.7-0.12*L)+')',1.4-L*0.2);
+    g.beginPath();g.moveTo(nd.p[0],nd.p[1]);g.lineTo(q[0],q[1]);g.stroke();ng(g);
+    ndot(g,q[0],q[1],Math.max(1,4-L*0.8),L>=3?'rgba(255,215,106,0.5)':'#7de2b0');
+    if(next.length<40)next.push({p:q});}});
+  prev=next;}
+ nt(g,'#7de2b0',14,24,11,'each level: M times wider');
+ nt(g,'#ffd76a',14,42,10,'and (1\u2212p)/M times rarer');
+ nt(g,'#8a7ab8',14,58,10,'two exponentials, plotted against each other');
+ nt(g,'#8a7ab8',14,H-12,9,'the more universal a law looks, the less any single sighting of it tells you');}
+document.getElementById('zpsp').onclick=function(){
+ showCtl=false;pspace=pspace>=0.30?0.08:pspace+0.06;drawW4();};
+document.getElementById('zpctl').onclick=function(){showCtl=!showCtl;drawW4();};
+document.getElementById('zpspin').onclick=function(){spin=!spin;};
+VR=selftest();window.__zipf=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

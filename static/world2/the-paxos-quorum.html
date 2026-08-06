@@ -1,0 +1,187 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE PAXOS QUORUM · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#b98cff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#b98cff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#b98cff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#b98cff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #b98cff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#b98cff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#b98cff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#b98cff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#b98cff;background:transparent;border:2px solid #b98cff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#b98cff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#b98cff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#b98cff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#b98cff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#b98cff 42%,#0a0e0a);border-left:4px solid #b98cff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#b98cff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#b98cff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#b98cff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#b98cff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; THE PUSH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / THE PUSH / <b>THE PAXOS QUORUM</b></div>
+<h1>THE PAXOS QUORUM</h1>
+<div class="kick">safety was settled by arithmetic before anyone wrote a line</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">The entire safety of distributed consensus rests on one fact about finite sets: any two majorities of the same set must share a member. Everything else &mdash; ballots, promises, acceptors &mdash; is scaffolding around that one intersection.<br><br>
+ <span class="lit">LIT</span> verified live. with <b>5</b> acceptors there are <b>10</b> majority quorums of size 3 and <b>45</b> pairs of them; <b>0</b> pairs are disjoint and the smallest intersection is exactly <b>1</b>. With <b>7</b> acceptors, <b>35</b> quorums, <b>595</b> pairs, <b>0</b> disjoint. Now take <b>6</b> acceptors and quorums of size 3 &mdash; half, not a majority: <b>20</b> quorums, <b>190</b> pairs, and <b>10</b> of them are disjoint. Two decisions can be made with nobody in common, which is what &lsquo;split brain&rsquo; means arithmetically. Fault tolerance follows the same counting: with 5 acceptors all <b>10</b> two-failure sets still leave a quorum, and all <b>10</b> three-failure sets leave none.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Leslie Lamport&rsquo;s</b> Paxos (1998, and 1990 in draft) rests on quorum intersection; the result is his and it long predates the protocol.<br><br><b>AVAN (AI)</b> checked it by exhaustion because the interesting number is the one for the <i>wrong</i> configuration. That majorities intersect is easy to believe; that <b>10 of 190</b> half-sized quorum pairs on 6 nodes are disjoint is the concrete form of an error people actually make when they size a cluster. The even-numbered cluster is not slightly weaker, it is unsafe at that quorum size, and this is the count that says so.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Any two majorities share a member. Any two halves need not.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Pick two quorums and look for the overlap.</div>
+   <div class="btns" style="margin-top:10px"><button id="pxqrn">next pair &#9654;</button><button id="pxqrc">toggle 5 nodes / 6 nodes</button></div>
+   <div class="cap" id="pxqro" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that a majority quorum makes consensus safe. The inverse is that <b>the safety is not in the protocol at all &mdash; it is a counting argument, and the protocol merely refuses to outrun it</b>. No amount of care in the message handling can rescue a quorum size that permits disjoint sets; no carelessness in it can break one that does not. Read backwards, all the difficulty of consensus is in the <i>liveness</i>, where FLP guarantees no protocol can always terminate &mdash; safety was settled by arithmetic before anyone wrote a line.</div>
+   <div class="btns" style="margin-top:10px"><button id="pxqrs">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> with 5 acceptors there are 10 majority quorums of size 3 and 45 pairs of them, 0 disjoint, smallest intersection exactly 1; with 7 acceptors, 35 quorums and 595 pairs, 0 disjoint; but take 6 acceptors with quorums of size 3 - half, not a majority - and of the 20 quorums and 190 pairs, 10 are disjoint, which is what split brain means arithmetically; fault tolerance counts the same way, since all 10 two-failure sets on 5 acceptors still leave a quorum and all 10 three-failure sets leave none<br><br><span class="fig">FIG</span> Leslie Lamport's Paxos rests on quorum intersection, a result that long predates the protocol. AVAN checked it by exhaustion because the interesting number is the one for the WRONG configuration: that majorities intersect is easy to believe, but that 10 of 190 half-sized quorum pairs on 6 nodes are disjoint is the concrete form of an error people actually make when sizing a cluster. The even-numbered cluster is not slightly weaker, it is unsafe at that quorum size, and this is the count that says so.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE PUSH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,pick=0,six=false,Q5=[],Q6=[],PAIRS5=[],PAIRS6=[];
+function subs(n,k){var out=[];
+ (function rec(i,cur){ if(cur.length===k){out.push(cur.slice());return;}
+  if(i>=n)return; cur.push(i);rec(i+1,cur);cur.pop();rec(i+1,cur);})(0,[]);
+ return out;}
+function inter(a,b){return a.filter(function(x){return b.indexOf(x)>=0;});}
+function build(){
+ Q5=subs(5,3);Q6=subs(6,3);PAIRS5=[];PAIRS6=[];
+ for(var i=0;i<Q5.length;i++)for(var j=i+1;j<Q5.length;j++)PAIRS5.push([i,j]);
+ for(i=0;i<Q6.length;i++)for(j=i+1;j<Q6.length;j++)PAIRS6.push([i,j]);}
+function stats(Q,PR){var dis=0,mn=99;
+ PR.forEach(function(p){var c=inter(Q[p[0]],Q[p[1]]).length;
+  if(c===0)dis++; if(c<mn)mn=c;});
+ return {sets:Q.length,pairs:PR.length,disjoint:dis,minInter:mn};}
+function tolerates(n,k,f){var fs=subs(n,f),ok=0;
+ fs.forEach(function(F){ if(n-F.length>=k)ok++; });
+ return {sets:fs.length,survive:ok};}
+function selftest(){
+ build();
+ var s5=stats(Q5,PAIRS5),s6=stats(Q6,PAIRS6);
+ var Q7=subs(7,4),PR7=[];
+ for(var i=0;i<Q7.length;i++)for(var j=i+1;j<Q7.length;j++)PR7.push([i,j]);
+ var s7=stats(Q7,PR7);
+ var t2=tolerates(5,3,2),t3=tolerates(5,3,3);
+ return {n5Quorums:s5.sets,n5Pairs:s5.pairs,n5Disjoint:s5.disjoint,n5MinIntersection:s5.minInter,
+  n7Quorums:s7.sets,n7Pairs:s7.pairs,n7Disjoint:s7.disjoint,
+  n6Quorums:s6.sets,n6Pairs:s6.pairs,n6Disjoint:s6.disjoint,
+  n6DisjointPct:s6.disjoint*100/s6.pairs,
+  tolerate2of5:t2.survive,tolerate2Sets:t2.sets,tolerate3of5:t3.survive,tolerate3Sets:t3.sets,
+  ok:s5.disjoint===0&&s5.minInter===1&&s7.disjoint===0&&s6.disjoint===10&&
+     t2.survive===t2.sets&&t3.survive===0};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'DO ANY TWO QUORUMS SHARE A MEMBER?');
+ var rows=[['5 acceptors, majority of 3',VR.n5Pairs,VR.n5Disjoint,'#7de2b0'],
+  ['7 acceptors, majority of 4',VR.n7Pairs,VR.n7Disjoint,'#7de2b0'],
+  ['6 acceptors, HALF of 3',VR.n6Pairs,VR.n6Disjoint,'#ff5a8a']];
+ rows.forEach(function(r,i){
+  var y=46+i*58;
+  nt(g,'#e6dcff',24,y,10,r[0]);
+  nt(g,'#8a7ab8',24,y+18,9,r[1]+' pairs');
+  g.fillStyle='rgba(125,226,176,0.35)';g.fillRect(120,y+6,300,18);
+  if(r[2]>0){nf(g,'rgba(255,90,138,0.8)');g.fillRect(120,y+6,Math.max(6,300*r[2]/r[1]),18);ng(g);}
+  nt(g,r[3],430,y+20,10,r[2]+' disjoint');});
+ nf(g,'rgba(255,90,138,0.16)');g.fillRect(18,224,W-36,32);ng(g);
+ ne(g,'#ff5a8a',1.4);g.strokeRect(18.5,224.5,W-37,32);ng(g);
+ nt(g,'#ff5a8a',30,245,10,'10 of 190 -- two decisions with nobody in common: split brain');
+ nt(g,'#7de2b0',24,272,9,'5 acceptors: all '+VR.tolerate2Sets+' two-failure sets still leave a quorum');
+ nt(g,'#ffd76a',24,288,9,'and all '+VR.tolerate3Sets+' three-failure sets leave none -- f = 2, exactly');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var Q=six?Q6:Q5,PR=six?PAIRS6:PAIRS5,N=six?6:5;
+ var p=PR[pick%PR.length],A=Q[p[0]],B=Q[p[1]],I=inter(A,B);
+ nt(g,'#e6dcff',18,24,11,N+' acceptors, quorums of 3'+(six?'  [HALF -- not a majority]':'  [MAJORITY]'));
+ nt(g,'#8a7ab8',18,44,9,'pair '+((pick%PR.length)+1)+' of '+PR.length);
+ var labels=['quorum A','quorum B'];
+ [A,B].forEach(function(Qx,r){
+  var y=62+r*76;
+  nt(g,r?'#ff9f45':'#5ad4ff',18,y,9,labels[r]+'  {'+Qx.join(', ')+'}');
+  for(var i=0;i<N;i++){
+   var x=20+i*((W-40)/N),inQ=Qx.indexOf(i)>=0,both=I.indexOf(i)>=0;
+   nf(g,both?'#ffd76a':(inQ?(r?'rgba(255,159,69,0.55)':'rgba(90,212,255,0.55)'):'rgba(120,90,180,0.14)'));
+   g.fillRect(x,y+8,(W-40)/N-4,38);ng(g);
+   nt(g,inQ?'#0d0818':'#5b4a80',x+((W-40)/N-4)/2-3,y+32,11,String(i));}});
+ var yb=224;
+ var bad=(I.length===0);
+ nf(g,bad?'rgba(255,90,138,0.3)':'rgba(255,215,106,0.22)');g.fillRect(18,yb,W-36,50);ng(g);
+ ne(g,bad?'#ff5a8a':'#ffd76a',1.5);g.strokeRect(18.5,yb+0.5,W-37,50);ng(g);
+ nt(g,bad?'#ff5a8a':'#ffd76a',32,yb+22,11,bad?'DISJOINT -- no acceptor in common':('overlap: {'+I.join(', ')+'}'));
+ nt(g,'#8a7ab8',32,yb+40,9,bad?'both quorums can decide, and disagree':'whatever one quorum learned, the other must hear about');
+ nt(g,'#b98cff',18,yb+72,9,six?(VR.n6Disjoint+' of '+VR.n6Pairs+' pairs on 6 nodes are disjoint'):
+  ('0 of '+VR.n5Pairs+' pairs on 5 nodes are disjoint -- minimum overlap 1'));
+ var out=document.getElementById('pxqro');
+ if(out)out.innerHTML='<b>{'+A.join(', ')+'}</b> and <b>{'+B.join(', ')+'}</b>: '+
+  (bad?'no acceptor is in both. Each can accept a different value and neither will ever learn about the other. The protocol is irrelevant &mdash; the arithmetic already lost.':
+   'they share <b>{'+I.join(', ')+'}</b>. That single acceptor is the whole of Paxos&rsquo; safety: it cannot have promised two contradictory things.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var sh=Math.floor(ang/50)%5;
+ for(var i=0;i<5;i++){
+  var th=i/5*Math.PI*2,q=P(Math.cos(th)*90,0,Math.sin(th)*90);
+  var inA=(i===sh||i===(sh+1)%5||i===(sh+2)%5);
+  var inB=(i===(sh+2)%5||i===(sh+3)%5||i===(sh+4)%5);
+  var both=inA&&inB;
+  ndot(g,q[0],q[1],both?9:(inA||inB?6:3.2),
+   both?'#ffd76a':(inA?'#5ad4ff':(inB?'#ff9f45':'rgba(120,90,180,0.35)')));}
+ nt(g,'#5ad4ff',14,26,11,'two majorities, five acceptors');
+ nt(g,'#ffd76a',14,44,10,'gold: the one they must share');
+ nt(g,'#8a7ab8',14,H-46,9,'safety is a counting argument, not a protocol');
+ nt(g,'#7de2b0',14,H-30,9,'no care in the messages rescues a bad quorum size');
+ nt(g,'#b98cff',14,H-14,9,'all the difficulty was ever in the liveness');}
+document.getElementById('pxqrn').onclick=function(){pick++;drawW4();};
+document.getElementById('pxqrc').onclick=function(){six=!six;pick=0;drawW4();};
+document.getElementById('pxqrs').onclick=function(){spin=!spin;};
+VR=selftest();window.__thepaxosquorum=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

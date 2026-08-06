@@ -1,0 +1,235 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE ABELIAN SANDPILE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; THE PHOENIX</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / THE PHOENIX / <b>THE ABELIAN SANDPILE</b></div>
+<h1>THE ABELIAN SANDPILE</h1>
+<div class="kick">the pile that does not care what order you push it</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Pile grains on a grid. When a site holds four or more it topples, sending one grain to each neighbour, which may set off more topplings. Bak, Tang and Wiesenfeld introduced it in 1987 as the first model of self-organised criticality &mdash; but the property that makes it a genuine mathematical object is stranger and quieter. <b>The order you topple in does not matter.</b> Choose any unstable site, always the leftmost, always a random one, round robin &mdash; the final configuration is the same, and so is the number of topplings at every individual site.<br><br>
+ <span class="lit">LIT</span> verified live on a 12&times;12 grid: across <b>25</b> random starting piles run under <b>5</b> different toppling rules, the final stable configuration is identical <b>25</b> times out of 25, the toppling count at every single site is identical <b>25</b> out of 25, and the grand total matches <b>25</b> out of 25 &mdash; with totals ranging from <b>1,050</b> to <b>1,945</b>, so there was plenty of room to disagree. Dropping single grains on a stabilised pile gives <b>1,592</b> non-empty avalanches with a median of <b>7</b> topplings and a maximum of <b>344</b>.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>THE PHOENIX</i>: it collapses and reassembles, and the ashes are always arranged the same way.<br><br>
+ <b>AVAN (AI)</b> checked the toppling count <b>per site</b>, not just the final grid, and that distinction is the whole point. Two different orders could in principle reach the same stable configuration by different routes with different amounts of work &mdash; the abelian property says they cannot, and only the per-site check tests it. The five orders were chosen to be maximally unlike one another: always the first unstable site, always the last, uniformly at random, round robin, and always the middle. The totals ranging from 1,050 to 1,945 across the trials matters too, because agreement is only evidence when disagreement was possible; if every pile had toppled twice, identical answers would prove nothing.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Five orders, one answer. The bars are toppling counts per site.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Drop a grain. Sometimes nothing; sometimes a quarter of the grid moves.</div>
+   <div class="btns" style="margin-top:10px"><button id="sdgrain">drop a grain &#9654;</button><button id="sd50">drop fifty</button><button id="sdorder">change the order</button></div>
+   <div class="cap" id="sdout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the pile as a height field, with the unstable sites lit.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;the sandpile is order-independent.&rdquo; The inverse is that <b>this is what makes it arithmetic rather than a simulation</b>. Because the outcome does not depend on the sequence, adding grains becomes a <i>commutative operation</i> &mdash; two configurations can be added, the sum stabilised, and the answer is well defined without reference to any history. The recurrent configurations form an abelian group. Read backwards, the model is not really about sand: it is a lattice of integers with an addition law, and the avalanches are what that addition looks like when you insist on watching it happen one step at a time.</div>
+   <div class="btns" style="margin-top:10px"><button id="sdsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> on a 12x12 grid, across 25 random starting piles run under 5 different toppling rules, the final stable configuration is identical 25 times out of 25, the toppling count at every single site is identical 25 out of 25, and the grand total matches 25 out of 25 - with totals ranging from 1,050 to 1,945, so there was plenty of room to disagree; dropping single grains on a stabilised pile gives 1,592 non-empty avalanches with a median of 7 topplings and a maximum of 344<br><br><span class="fig">FIG</span> The toppling count PER SITE was checked, not just the final grid, and that distinction is the whole point. Two different orders could in principle reach the same stable configuration by different routes with different amounts of work - the abelian property says they cannot, and only the per-site check tests it. The five orders were chosen to be maximally unlike: always the first unstable site, always the last, uniformly at random, round robin, and always the middle. Totals ranging 1,050 to 1,945 matters too, because agreement is only evidence when disagreement was possible. Bak, Tang and Wiesenfeld, 1987.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE PHOENIX &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,L=12,GRID=null,oi=0,lastAv=0,seed=1987;
+var ORDERS=[function(n){return 0;},function(n){return n-1;},
+ function(n){return Math.floor(sdG()*n);},function(n,k){return k%n;},
+ function(n){return Math.floor(n/2);}];
+var ONAMES=['first unstable','last unstable','uniformly random','round robin','the middle one'];
+var _sd=99;
+function sdG(){_sd|=0;_sd=_sd+0x6D2B79F5|0;
+ var t=Math.imul(_sd^_sd>>>15,1|_sd);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;}
+function sdRnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function stabilise(g0,order){
+ var grid=Int32Array.from(g0),topples=new Int32Array(L*L),total=0,guard=0;
+ for(;;){
+  var unstable=[];
+  for(var i=0;i<L*L;i++)if(grid[i]>=4)unstable.push(i);
+  if(!unstable.length)break;
+  var pick=unstable[order(unstable.length,guard)];
+  var r=Math.floor(pick/L),c=pick%L;
+  grid[pick]-=4;topples[pick]++;total++;
+  if(r>0)grid[pick-L]++;
+  if(r<L-1)grid[pick+L]++;
+  if(c>0)grid[pick-1]++;
+  if(c<L-1)grid[pick+1]++;
+  if(++guard>2000000)break;}
+ return {grid:grid,topples:topples,total:total};}
+function selftest(){
+ var g=sdRnd(1987),trials=0,sameGrid=0,sameTop=0,sameTot=0,sizes=[];
+ for(var t=0;t<25;t++){
+  var start=new Int32Array(L*L);
+  for(var i=0;i<L*L;i++)start[i]=Math.floor(g()*8);
+  var res=ORDERS.map(function(o){return stabilise(start,o);});
+  trials++;
+  var ref=res[0];
+  if(res.every(function(r){return r.grid.every(function(v,j){return v===ref.grid[j];});}))sameGrid++;
+  if(res.every(function(r){return r.topples.every(function(v,j){return v===ref.topples[j];});}))sameTop++;
+  if(res.every(function(r){return r.total===ref.total;}))sameTot++;
+  sizes.push(ref.total);}
+ var base=new Int32Array(L*L);
+ for(var i2=0;i2<L*L;i2++)base[i2]=3;
+ base=stabilise(base,ORDERS[0]).grid;
+ var av=[];
+ for(var t2=0;t2<4000;t2++){
+  var idx=Math.floor(g()*L*L);
+  base[idx]++;
+  var r2=stabilise(base,ORDERS[0]);
+  base=r2.grid;av.push(r2.total);}
+ var nz=av.filter(function(v){return v>0;}).sort(function(a,b){return a-b;});
+ return {size:L,orders:ORDERS.length,orderNames:ONAMES,
+  trials:trials,identicalGrid:sameGrid,identicalTopplesPerSite:sameTop,identicalTotal:sameTot,
+  abelian:sameGrid===trials&&sameTop===trials&&sameTot===trials,
+  toppleMin:Math.min.apply(null,sizes),toppleMax:Math.max.apply(null,sizes),
+  disagreementWasPossible:Math.max.apply(null,sizes)>1.5*Math.min.apply(null,sizes),
+  avalanches:nz.length,medianAvalanche:nz[Math.floor(nz.length*0.5)],
+  maxAvalanche:nz[nz.length-1],
+  ok:sameGrid===trials&&sameTop===trials&&sameTot===trials};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'FIVE TOPPLING ORDERS  \u2014  one answer');
+ var gg=sdRnd(4242),start=new Int32Array(L*L);
+ for(var i=0;i<L*L;i++)start[i]=Math.floor(gg()*8);
+ var res=ORDERS.map(function(o){return stabilise(start,o);});
+ var cols=['#7de2b0','#5ad6ff','#ffd76a','#ff5a8a','#b98cff'];
+ var m=40,pw=W-80,top=44,ph=34;
+ var mx=Math.max.apply(null,Array.from(res[0].topples));
+ res.forEach(function(r,ri){
+  var y=top+ri*40;
+  nt(g,cols[ri],m-28,y+12,8,''+(ri+1));
+  for(var k=0;k<L*L;k+=2){
+   var hgt=ph*r.topples[k]/Math.max(1,mx);
+   nf(g,cols[ri]==='#7de2b0'?'rgba(125,226,176,0.6)':
+    (cols[ri]==='#5ad6ff'?'rgba(90,214,255,0.6)':
+    (cols[ri]==='#ffd76a'?'rgba(255,215,106,0.6)':
+    (cols[ri]==='#ff5a8a'?'rgba(255,90,138,0.6)':'rgba(185,140,255,0.6)'))));
+   g.fillRect(m+k*pw/(L*L),y+ph-hgt,pw/(L*L)*1.7,hgt);ng(g);}
+  nt(g,cols[ri],m+pw+6,y+22,8,ONAMES[ri].substr(0,9));});
+ var identical=res.every(function(r){
+  return r.topples.every(function(v,j){return v===res[0].topples[j];});});
+ var y2=252;
+ nf(g,identical?'rgba(125,226,176,0.16)':'rgba(255,90,138,0.18)');g.fillRect(20,y2,W-40,34);ng(g);
+ ne(g,identical?'#7de2b0':'#ff5a8a',1.4);g.strokeRect(20.5,y2+0.5,W-41,34);ng(g);
+ nt(g,identical?'#7de2b0':'#ff5a8a',36,y2+23,12,identical?
+  'IDENTICAL, SITE BY SITE  \u2014  '+res[0].total+' topplings each':'DIFFERENT');
+ nt(g,'#8a7ab8',20,H-8,9,'across '+VR.trials+' random piles, totals ranged '+VR.toppleMin+' to '+VR.toppleMax+' \u2014 disagreement was available');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ if(!GRID){
+  var b=new Int32Array(L*L);
+  for(var i=0;i<L*L;i++)b[i]=3;
+  GRID=stabilise(b,ORDERS[0]).grid;}
+ nt(g,'#e6dcff',16,26,11,'toppling order: '+ONAMES[oi%ORDERS.length]);
+ var m=48,cell=(W-96)/L,top=52;
+ var cols=['rgba(30,22,48,0.9)','rgba(90,74,133,0.55)','rgba(90,214,255,0.55)','rgba(255,215,106,0.75)'];
+ for(var r=0;r<L;r++)for(var c2=0;c2<L;c2++){
+  var v=Math.min(3,GRID[r*L+c2]);
+  nf(g,cols[v]);
+  g.fillRect(m+c2*cell,top+r*cell,cell-2,cell-2);ng(g);}
+ var yb=top+L*cell+22;
+ nt(g,'#8a7ab8',30,yb,9,'darkest = 0 grains   \u00b7   gold = 3, one grain from toppling');
+ nt(g,'#ffd76a',30,yb+24,12,'last avalanche: '+lastAv+' topplings');
+ nt(g,'#8a7ab8',30,yb+46,9,'median '+VR.medianAvalanche+'   max seen '+VR.maxAvalanche+
+  '   over '+VR.avalanches.toLocaleString()+' non-empty avalanches');
+ var o=document.getElementById('sdout');
+ if(o)o.innerHTML='The last grain set off <b>'+lastAv+'</b> topplings. Over '+
+  VR.avalanches.toLocaleString()+' non-empty avalanches the median is <b>'+VR.medianAvalanche+
+  '</b> and the largest was <b>'+VR.maxAvalanche+
+  '</b> \u2014 the same grain, dropped on the same kind of pile, doing thirty times as much. And whichever order you topple in, the answer is the same.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+50,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy-y*0.9-zr*0.36];}
+ if(!GRID){
+  var b=new Int32Array(L*L);
+  for(var i=0;i<L*L;i++)b[i]=3;
+  GRID=stabilise(b,ORDERS[0]).grid;}
+ var sc=13;
+ for(var r=0;r<L;r++)for(var c2=0;c2<L;c2++){
+  var v=GRID[r*L+c2];
+  var p=P((c2-L/2)*sc,v*13,(r-L/2)*sc);
+  var base=P((c2-L/2)*sc,0,(r-L/2)*sc);
+  ne(g,v>=3?'#ffd76a':'rgba(125,226,176,'+(0.25+v*0.16)+')',v>=3?2:1.2);
+  g.beginPath();g.moveTo(base[0],base[1]);g.lineTo(p[0],p[1]);g.stroke();ng(g);
+  ndot(g,p[0],p[1],v>=3?3.4:2,v>=3?'#ffd76a':'#7de2b0');}
+ nt(g,'#ffd76a',14,24,11,'gold: one grain from toppling');
+ nt(g,'#7de2b0',14,42,10,'the pile organises itself to sit right at the edge');
+ nt(g,'#8a7ab8',14,58,10,'nobody tuned it there');
+ nt(g,'#8a7ab8',14,H-12,9,'a lattice of integers with an addition law, watched one step at a time');}
+document.getElementById('sdgrain').onclick=function(){
+ var g2=sdRnd(seed++);
+ GRID[Math.floor(g2()*L*L)]++;
+ var r=stabilise(GRID,ORDERS[oi%ORDERS.length]);
+ GRID=r.grid;lastAv=r.total;drawW4();};
+document.getElementById('sd50').onclick=function(){
+ var g2=sdRnd(seed++),tot=0;
+ for(var i=0;i<50;i++){
+  GRID[Math.floor(g2()*L*L)]++;
+  var r=stabilise(GRID,ORDERS[oi%ORDERS.length]);
+  GRID=r.grid;tot+=r.total;}
+ lastAv=tot;drawW4();};
+document.getElementById('sdorder').onclick=function(){oi++;drawW4();};
+document.getElementById('sdsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__sandpile=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

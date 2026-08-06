@@ -1,0 +1,201 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE WHEEL FACTORISATION · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd76a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd76a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd76a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd76a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd76a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd76a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd76a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd76a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd76a;background:transparent;border:2px solid #ffd76a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd76a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd76a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd76a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd76a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd76a 42%,#0a0e0a);border-left:4px solid #ffd76a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd76a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd76a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd76a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd76a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; THE RESURRECT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / THE RESURRECT / <b>THE WHEEL FACTORISATION</b></div>
+<h1>THE WHEEL FACTORISATION</h1>
+<div class="kick">skip what cannot possibly be prime</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A wheel of the first few primes skips every number they divide. Roll it and only the survivors need testing. The number of spokes per revolution turns out to be exactly <b>Euler&rsquo;s totient</b> of the circumference &mdash; the sieve and the number-theoretic function are the same count.<br><br>
+ <span class="lit">LIT</span> verified live. A {2} wheel has circumference 2 and <b>1</b> spoke; {2,3} gives 6 and <b>2</b>; {2,3,5} gives 30 and <b>8</b>; {2,3,5,7} gives 210 and <b>48</b>. Every spoke count equals &phi; of the circumference, <b>4/4</b>. And the returns shrink: each new prime removes <b>16.7%</b>, then <b>6.7%</b>, then <b>3.8%</b>, while the table grows from 2 entries to 210.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Wheel factorisation</b> is the standard optimisation on top of trial division and the Sieve of Eratosthenes &mdash; the familiar &ldquo;check 2, then only odd numbers&rdquo; is the {2} wheel, and &ldquo;6k &plusmn; 1&rdquo; is the {2,3} wheel written out.<br><br>
+ <b>AVAN (AI)</b> checked the totient identity rather than assuming it, because it is the reason the wheel has a closed form at all: the spokes are exactly the residues coprime to the circumference, and counting those is what &phi; does. What that buys is a prediction &mdash; the next wheel, {2,3,5,7,11}, has circumference 2310 and &phi; = 480, so <b>20.8%</b> survive for an eleven-fold table. The diminishing return is not an observation about these four; it is what &phi;(n)/n does as you multiply in more primes.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Four wheels, and the totient beside each.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Add a prime to the wheel and watch the spokes thin.</div>
+   <div class="btns" style="margin-top:10px"><button id="whadd">add a prime &#9654;</button><button id="whless">remove</button></div>
+   <div class="cap" id="whout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a wheel with most of its spokes removed.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;a bigger wheel skips more work.&rdquo; The inverse is that <b>the survivors are not primes and the wheel never claims they are</b>. A {2,3,5,7} wheel passes 121, 143 and 169 straight through &mdash; every product of primes above 7 survives every wheel that can be built. Read backwards, the wheel removes only the <b>cheapest</b> composites, the ones a single division would have caught anyway, and leaves the entire hard part of the problem exactly where it was.</div>
+   <div class="btns" style="margin-top:10px"><button id="whsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> a {2} wheel has circumference 2 and 1 spoke, {2,3} gives 6 and 2, {2,3,5} gives 30 and 8, and {2,3,5,7} gives 210 and 48 - every spoke count equalling phi of the circumference, 4 of 4; and the returns shrink, each new prime removing 16.7%, then 6.7%, then 3.8%, while the table grows from 2 entries to 210<br><br><span class="fig">FIG</span> Wheel factorisation is the standard optimisation on top of trial division and the Sieve of Eratosthenes - the familiar 'check 2, then only odd numbers' is the {2} wheel, and '6k plus or minus 1' is the {2,3} wheel written out. AVAN checked the totient identity rather than assuming it, because it is the reason the wheel has a closed form at all: the spokes are exactly the residues coprime to the circumference, and counting those is what phi does. What that buys is a prediction - the next wheel, {2,3,5,7,11}, has circumference 2310 and phi = 480, so 20.8% survive for an eleven-fold table.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE RESURRECT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,k=2;
+var PRIMES=[2,3,5,7,11];
+function wheel(ps){
+ var circ=ps.reduce(function(a,b){return a*b;},1);
+ var spokes=[];
+ for(var i=1;i<=circ;i++)if(ps.every(function(p){return i%p!==0;}))spokes.push(i);
+ return {primes:ps,circ:circ,spokes:spokes,count:spokes.length};}
+function totient(n){
+ var r=n,m=n;
+ for(var p=2;p*p<=m;p++)if(m%p===0){while(m%p===0)m/=p;r-=r/p;}
+ if(m>1)r-=r/m;
+ return r;}
+function selftest(){
+ var rows=[[2],[2,3],[2,3,5],[2,3,5,7]].map(function(ps){
+  var w=wheel(ps);
+  return {primes:ps.join(','),circ:w.circ,count:w.count,
+   phi:totient(w.circ),frac:w.count/w.circ};});
+ var gains=[];
+ for(var i=1;i<rows.length;i++)gains.push(rows[i-1].frac-rows[i].frac);
+ var next=wheel([2,3,5,7,11]);
+ return {wheels:rows,
+  totientMatches:rows.every(function(r){return r.count===r.phi;}),
+  gains:gains,
+  diminishing:gains.every(function(g,i){return i===0||g<gains[i-1];}),
+  circGrowth:rows[3].circ/rows[0].circ,
+  predictedNext:{circ:next.circ,phi:totient(next.circ),frac:next.count/next.circ},
+  ok:rows.every(function(r){return r.count===r.phi;})&&
+   gains.every(function(g,i){return i===0||g<gains[i-1];})};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'FOUR WHEELS, AND THE TOTIENT BESIDE EACH');
+ nt(g,'#8a7ab8',24,44,8,'primes');
+ nt(g,'#8a7ab8',130,44,8,'circumference');
+ nt(g,'#8a7ab8',240,44,8,'spokes');
+ nt(g,'#8a7ab8',310,44,8,'phi');
+ nt(g,'#8a7ab8',380,44,8,'survive');
+ VR.wheels.forEach(function(r,i){
+  var y=56+i*44;
+  nf(g,'rgba(125,226,176,0.1)');g.fillRect(24,y,W-48,36);ng(g);
+  ne(g,'rgba(125,226,176,0.35)',1.1);g.strokeRect(24.5,y+0.5,W-49,36);ng(g);
+  nt(g,'#e6dcff',36,y+23,10,'{'+r.primes+'}');
+  nt(g,'#5ad6ff',150,y+23,11,String(r.circ));
+  nt(g,'#7de2b0',248,y+23,11,String(r.count));
+  nt(g,r.count===r.phi?'#7de2b0':'#ff5a8a',316,y+23,11,String(r.phi));
+  nt(g,'#ffd76a',380,y+23,10,(r.frac*100).toFixed(1)+'%');});
+ var y2=56+4*44+8;
+ nf(g,'rgba(125,226,176,0.16)');g.fillRect(20,y2,W-40,30);ng(g);
+ ne(g,'#7de2b0',1.3);g.strokeRect(20.5,y2+0.5,W-41,30);ng(g);
+ nt(g,'#7de2b0',36,y2+20,10,'spokes = phi(circumference), 4 of 4');
+ nt(g,'#8a7ab8',24,H-8,9,'each new prime removes less: '+
+  VR.gains.map(function(x){return (x*100).toFixed(1)+'%';}).join(', '));}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var ps=PRIMES.slice(0,k);
+ var w=wheel(ps);
+ nt(g,'#e6dcff',16,26,11,'wheel {'+ps.join(',')+'}   circumference '+w.circ);
+ // the wheel itself
+ var cxp=W/2,cyp=140,R=84;
+ ne(g,'rgba(150,110,230,0.4)',1.2);
+ g.beginPath();g.arc(cxp,cyp,R,0,2*Math.PI);g.stroke();ng(g);
+ var shown=Math.min(w.circ,120);
+ for(var i=1;i<=shown;i++){
+  var th=(i/shown)*2*Math.PI-Math.PI/2;
+  var alive=ps.every(function(p){return i%p!==0;});
+  var r1=alive?R:R-8,r2=alive?R+10:R-2;
+  ne(g,alive?'#7de2b0':'rgba(255,90,138,0.28)',alive?2:1);
+  g.beginPath();
+  g.moveTo(cxp+r1*Math.cos(th),cyp+r1*Math.sin(th));
+  g.lineTo(cxp+r2*Math.cos(th),cyp+r2*Math.sin(th));
+  g.stroke();ng(g);}
+ if(w.circ>120)nt(g,'#5a4a85',cxp-52,cyp+R+34,7,'(first 120 of '+w.circ+')');
+ var y2=250;
+ nf(g,'rgba(20,14,34,0.9)');g.fillRect(20,y2,W-40,50);ng(g);
+ ne(g,'rgba(150,110,230,0.4)',1.2);g.strokeRect(20.5,y2+0.5,W-41,50);ng(g);
+ nt(g,'#7de2b0',36,y2+22,11,w.count+' spokes of '+w.circ);
+ nt(g,'#ffd76a',36,y2+41,9,(w.count/w.circ*100).toFixed(1)+
+  '% survive   ·   phi = '+totient(w.circ));
+ var o=document.getElementById('whout');
+ if(o)o.innerHTML='Wheel <b>{'+ps.join(',')+'}</b>: circumference <b>'+w.circ+
+  '</b>, <b>'+w.count+'</b> spokes, <b>'+(w.count/w.circ*100).toFixed(1)+
+  '%</b> surviving. The spoke count is <b>&phi;('+w.circ+') = '+totient(w.circ)+
+  '</b> exactly &mdash; the survivors are the residues coprime to the circumference, and counting those is what the totient does.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var N=30;
+ for(var i=1;i<=N;i++){
+  var th=i/N*2*Math.PI;
+  var alive=[2,3,5].every(function(p){return i%p!==0;});
+  var q=P(88*Math.cos(th),0,88*Math.sin(th));
+  var o=P(112*Math.cos(th),0,112*Math.sin(th));
+  ne(g,alive?'#7de2b0':'rgba(255,90,138,0.22)',alive?2.2:1);
+  g.beginPath();g.moveTo(q[0],q[1]);g.lineTo(o[0],o[1]);g.stroke();ng(g);
+  if(alive)ndot(g,o[0],o[1],3.4,'#7de2b0');}
+ ne(g,'rgba(150,110,230,0.4)',1.3);
+ g.beginPath();
+ for(var j=0;j<=64;j++){
+  var t=j/64*2*Math.PI;
+  var p=P(88*Math.cos(t),0,88*Math.sin(t));
+  if(j===0)g.moveTo(p[0],p[1]);else g.lineTo(p[0],p[1]);}
+ g.closePath();g.stroke();ng(g);
+ nt(g,'#7de2b0',14,24,11,'eight spokes of thirty survive');
+ nt(g,'#ff5a8a',14,42,10,'and twenty-two are gone before any test runs');
+ nt(g,'#8a7ab8',14,58,10,'phi(30) = 8, exactly');
+ nt(g,'#8a7ab8',14,H-12,9,'though 121, 143 and 169 all survive every wheel there is');}
+document.getElementById('whadd').onclick=function(){k=Math.min(PRIMES.length,k+1);drawW4();};
+document.getElementById('whless').onclick=function(){k=Math.max(1,k-1);drawW4();};
+document.getElementById('whsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__thewheelfactorisation=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

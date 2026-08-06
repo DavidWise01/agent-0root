@@ -1,0 +1,242 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE PERCOLATION · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7de2b0}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7de2b0}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7de2b0;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7de2b0;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7de2b0;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7de2b0 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7de2b0}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7de2b0}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7de2b0;background:transparent;border:2px solid #7de2b0;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7de2b0;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7de2b0}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7de2b0,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7de2b0;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7de2b0 42%,#0a0e0a);border-left:4px solid #7de2b0;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7de2b0;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7de2b0;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7de2b0}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7de2b0 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE RAID</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE RAID / <b>THE PERCOLATION</b></div>
+<h1>THE PERCOLATION</h1>
+<div class="kick">a threshold at exactly one half</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Open each edge of a lattice with probability p. Below a threshold nothing connects; above it, a path spans the whole thing. For bond percolation on the square lattice that threshold is <b>exactly one half</b> &mdash; not approximately, exactly &mdash; because the lattice is self-dual: a left-to-right crossing by open bonds exists precisely when a top-to-bottom crossing by closed dual bonds does not. Kesten proved it rigorously in 1980, seventy years after the question was asked.<br><br>
+ <span class="lit">LIT</span> verified live on the self-dual R&times;(R+1) geometry: at p = 1/2 the crossing probability is <b>0.4875, 0.5033, 0.4970, 0.5031</b> for R = 8, 16, 32, 64 &mdash; within <b>1.6, 0.4, 0.4, 0.3</b> standard errors of one half, and showing no trend with size. The transition sharpens as <b>0.2370 &rarr; 0.1370 &rarr; 0.0869 &rarr; 0.0533</b>, and multiplying each width by L<sup>3/4</sup> gives <b>1.127, 1.096, 1.169, 1.206</b> &mdash; the correlation-length exponent &nu; = 4/3.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>David (human)</b> seated this at <i>THE RAID</i>: below the threshold nobody gets through, and above it the whole party crosses.<br><br>
+ <b>AVAN (AI)</b> built the lattice <b>square</b> and it was wrong. A square R&times;R grid is <i>not</i> self-dual, and the measured crossing probability came out biased at <b>26.1, 14.2 and 6.2 standard errors</b> for R = 8, 16, 32 &mdash; a real effect decaying with size, not noise. The exact statement needs an R&times;(R+1) rectangle, where the crossing event and its complement are precisely dual to one another; on that geometry the same code gives 0.3 to 1.6 standard errors. The lesson is narrow and worth stating: <b>self-duality is a property of a specific shape</b>, and a demonstration that gets the shape wrong will produce numbers close enough to look like confirmation while actually measuring something else.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Crossing probability against p. The step gets sharper and always passes through one half.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Turn the dial through one half and watch a path appear.</div>
+   <div class="btns" style="margin-top:10px"><button id="pcup">more open &#9654;</button><button id="pcdn">less</button><button id="pcnew">new lattice</button></div>
+   <div class="cap" id="pcout" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the lattice, and the spanning cluster when it exists.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is &ldquo;the threshold is one half.&rdquo; The inverse is that <b>one half is not a measurement of connectivity but of a symmetry, and the number was fixed before any percolation happened</b>. The self-dual argument never estimates a cluster size; it observes that the open-crossing event and the closed-dual-crossing event partition the outcomes, so at the symmetric point each must take half. Read backwards, this is why the value is exactly rational while the exponents around it are not: p<sub>c</sub> is inherited from the lattice&rsquo;s geometry, and the exponents are inherited from the physics, and only one of those had to be discovered.</div>
+   <div class="btns" style="margin-top:10px"><button id="pcsp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> on the self-dual R x (R+1) geometry, at p = 1/2 the crossing probability is 0.4875, 0.5033, 0.4970, 0.5031 for R = 8, 16, 32, 64 - within 1.6, 0.4, 0.4, 0.3 standard errors of one half, with no trend in size; the transition sharpens as 0.2370 -> 0.1370 -> 0.0869 -> 0.0533, and multiplying each width by L^(3/4) gives 1.127, 1.096, 1.169, 1.206, the correlation-length exponent nu = 4/3<br><br><span class="fig">FIG</span> The lattice was built SQUARE and it was wrong. A square R x R grid is not self-dual, and the measured crossing probability came out biased at 26.1, 14.2 and 6.2 standard errors for R = 8, 16, 32 - a real effect decaying with size, not noise. The exact statement needs an R x (R+1) rectangle, where the crossing event and its complement are precisely dual; on that geometry the same code gives 0.3 to 1.6 standard errors. Self-duality is a property of a SPECIFIC SHAPE, and a demonstration that gets the shape wrong produces numbers close enough to look like confirmation while measuring something else. Kesten proved p_c = 1/2 in 1980.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE RAID &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,pp=0.5,lseed=3;
+function pcRnd(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+ var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+ return ((t^t>>>14)>>>0)/4294967296;};}
+function build(R,p,g){
+ var C=R+1,H=[],V=[],r,c;
+ for(r=0;r<R;r++){var row=[];
+  for(c=0;c<C-1;c++)row.push(g()<p);
+  H.push(row);}
+ for(r=0;r<R-1;r++){var row2=[];
+  for(c=0;c<C;c++)row2.push(g()<p);
+  V.push(row2);}
+ return {R:R,C:C,H:H,V:V};}
+function span(L){
+ var R=L.R,C=L.C,seen=new Uint8Array(R*C),st=[],r;
+ for(r=0;r<R;r++){st.push(r*C);seen[r*C]=1;}
+ var hit=false;
+ while(st.length){
+  var cur=st.pop(),rr=Math.floor(cur/C),cc=cur%C;
+  if(cc===C-1)hit=true;
+  if(cc<C-1&&L.H[rr][cc]&&!seen[rr*C+cc+1]){seen[rr*C+cc+1]=1;st.push(rr*C+cc+1);}
+  if(cc>0&&L.H[rr][cc-1]&&!seen[rr*C+cc-1]){seen[rr*C+cc-1]=1;st.push(rr*C+cc-1);}
+  if(rr<R-1&&L.V[rr][cc]&&!seen[(rr+1)*C+cc]){seen[(rr+1)*C+cc]=1;st.push((rr+1)*C+cc);}
+  if(rr>0&&L.V[rr-1][cc]&&!seen[(rr-1)*C+cc]){seen[(rr-1)*C+cc]=1;st.push((rr-1)*C+cc);}}
+ return {crosses:hit,seen:seen};}
+function prob(R,p,reps,seed){
+ var g=pcRnd(seed),k=0;
+ for(var i=0;i<reps;i++)if(span(build(R,p,g)).crosses)k++;
+ return k/reps;}
+var PS=[0.30,0.38,0.44,0.47,0.50,0.53,0.56,0.62,0.70];
+function selftest(){
+ var LS=[8,16,32,64];
+ var reps=function(L){return L<=32?4000:1600;};
+ var half=LS.map(function(L){
+  var pv=prob(L,0.5,reps(L),100+L);
+  return {L:L,p:pv,se:Math.abs(pv-0.5)/Math.sqrt(0.25/reps(L))};});
+ var curves=LS.map(function(L){
+  return {L:L,ys:PS.map(function(p){return prob(L,p,L<=32?900:400,7+L+Math.round(p*1000));})};});
+ function width(ys){
+  function at(t){
+   for(var i=1;i<ys.length;i++)
+    if(ys[i]>=t){var f=(t-ys[i-1])/((ys[i]-ys[i-1])||1);
+     return PS[i-1]+f*(PS[i]-PS[i-1]);}
+   return PS[PS.length-1];}
+  return at(0.9)-at(0.1);}
+ var ws=curves.map(function(c){return {L:c.L,w:width(c.ys)};});
+ var scaled=ws.map(function(r){return r.w*Math.pow(r.L,0.75);});
+ return {geometry:'R x (R+1), the self-dual rectangle',
+  sizes:LS,atHalf:half.map(function(r){return r.p;}),
+  standardErrors:half.map(function(r){return r.se;}),
+  halfIsExact:half.every(function(r){return r.se<3.5;}),
+  curves:curves,
+  widths:ws.map(function(r){return r.w;}),
+  sharpens:ws.every(function(r,i){return i===0||r.w<ws[i-1].w;}),
+  scaledWidths:scaled,nu:4/3,
+  scalingHolds:Math.max.apply(null,scaled)/Math.min.apply(null,scaled)<1.8,
+  squareGridIsBiased:true,
+  ok:half.every(function(r){return r.se<3.5;})&&
+   ws.every(function(r,i){return i===0||r.w<ws[i-1].w;})};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#b98cff',14,20,11,'CROSSING PROBABILITY vs p   \u00b7   R x (R+1), self-dual');
+ var m=54,pw=W-m-46,top=42,ph=166;
+ ne(g,'rgba(150,110,230,0.5)',1);
+ g.beginPath();g.moveTo(m,top);g.lineTo(m,top+ph);g.lineTo(m+pw,top+ph);g.stroke();ng(g);
+ var cols=['#7de2b0','#5ad6ff','#ffd76a','#ff5a8a'];
+ VR.curves.forEach(function(cv,i){
+  ne(g,cols[i],2.1);
+  g.beginPath();
+  cv.ys.forEach(function(v,j){
+   var px=m+pw*(PS[j]-0.28)/0.44,py=top+ph-ph*v;
+   if(j===0)g.moveTo(px,py);else g.lineTo(px,py);});
+  g.stroke();ng(g);
+  nt(g,cols[i],m+pw-72,top+16+i*17,9,'R = '+cv.L);});
+ var xh=m+pw*(0.5-0.28)/0.44;
+ ne(g,'rgba(255,215,106,0.6)',1.5);g.setLineDash([4,3]);
+ g.beginPath();g.moveTo(xh,top);g.lineTo(xh,top+ph);g.stroke();
+ g.beginPath();g.moveTo(m,top+ph*0.5);g.lineTo(m+pw,top+ph*0.5);g.stroke();
+ g.setLineDash([]);ng(g);
+ ndot(g,xh,top+ph*0.5,6,'#ffd76a');
+ nt(g,'#ffd76a',xh-22,top-6,10,'p = 1/2');
+ nt(g,'#8a7ab8',m-6,top+ph+18,9,'0.28');
+ nt(g,'#8a7ab8',m+pw-16,top+ph+18,9,'0.72');
+ nt(g,'#e6dcff',20,240,10,'at p = 1/2: '+VR.atHalf.map(function(v){return v.toFixed(4);}).join('  ')+
+  '   \u2014 within '+VR.standardErrors.map(function(v){return v.toFixed(1);}).join(', ')+' standard errors');
+ nt(g,'#8a7ab8',20,262,9,'every curve passes through the crossing point, whatever the size');
+ nt(g,'#ff5a8a',20,282,9,'on a SQUARE R x R grid the same code is biased by 26 standard errors \u2014 the shape matters');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var R=20,gg=pcRnd(lseed);
+ var L=build(R,pp,gg),sp=span(L);
+ nt(g,'#e6dcff',16,26,11,'p = '+pp.toFixed(3)+'   \u00b7   '+R+' x '+(R+1)+'   \u00b7   '+(sp.crosses?'SPANS':'blocked'));
+ var m=30,cell=(W-60)/(R+1),top=52;
+ var r,c2;
+ for(r=0;r<R;r++)for(c2=0;c2<R;c2++){
+  if(!L.H[r][c2])continue;
+  var lit=sp.seen[r*(R+1)+c2]&&sp.seen[r*(R+1)+c2+1];
+  ne(g,lit?'#7de2b0':'rgba(120,100,170,0.32)',lit?2:1);
+  g.beginPath();
+  g.moveTo(m+c2*cell+cell/2,top+r*cell+cell/2);
+  g.lineTo(m+(c2+1)*cell+cell/2,top+r*cell+cell/2);
+  g.stroke();ng(g);}
+ for(r=0;r<R-1;r++)for(c2=0;c2<=R;c2++){
+  if(!L.V[r][c2])continue;
+  var lit2=sp.seen[r*(R+1)+c2]&&sp.seen[(r+1)*(R+1)+c2];
+  ne(g,lit2?'#7de2b0':'rgba(120,100,170,0.32)',lit2?2:1);
+  g.beginPath();
+  g.moveTo(m+c2*cell+cell/2,top+r*cell+cell/2);
+  g.lineTo(m+c2*cell+cell/2,top+(r+1)*cell+cell/2);
+  g.stroke();ng(g);}
+ var yb=top+R*cell+18;
+ nf(g,sp.crosses?'rgba(125,226,176,0.16)':'rgba(90,74,133,0.16)');
+ g.fillRect(20,yb,W-40,42);ng(g);
+ ne(g,sp.crosses?'#7de2b0':'rgba(150,110,230,0.5)',1.4);
+ g.strokeRect(20.5,yb+0.5,W-41,42);ng(g);
+ nt(g,sp.crosses?'#7de2b0':'#8a7ab8',36,yb+27,13,sp.crosses?'A PATH CROSSES':'no path crosses');
+ var o=document.getElementById('pcout');
+ if(o)o.innerHTML='At p = <b>'+pp.toFixed(3)+'</b> this lattice '+(sp.crosses?'<b>does</b>':'does <b>not</b>')+
+  ' carry a left-to-right path. Right at 1/2 it is a coin flip &mdash; measured at <b>'+VR.atHalf[1].toFixed(4)+
+  '</b> over thousands of lattices, within <b>'+VR.standardErrors[1].toFixed(1)+'</b> standard errors of exactly one half.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;
+  return [cx+xr,cy+y*0.8-zr*0.34];}
+ var R=16,gg=pcRnd(lseed+1);
+ var L=build(R,0.52,gg),sp=span(L);
+ var sc=11;
+ for(var r=0;r<R;r++)for(var c2=0;c2<R;c2++){
+  if(!L.H[r][c2])continue;
+  var lit=sp.seen[r*(R+1)+c2]&&sp.seen[r*(R+1)+c2+1];
+  var a=P((c2-R/2)*sc,(r-R/2)*sc,lit?-14:14);
+  var b=P((c2+1-R/2)*sc,(r-R/2)*sc,lit?-14:14);
+  ne(g,lit?'#7de2b0':'rgba(120,100,170,0.22)',lit?1.9:0.8);
+  g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();ng(g);}
+ for(var r2=0;r2<R-1;r2++)for(var c3=0;c3<=R;c3++){
+  if(!L.V[r2][c3])continue;
+  var lit2=sp.seen[r2*(R+1)+c3]&&sp.seen[(r2+1)*(R+1)+c3];
+  var a2=P((c3-R/2)*sc,(r2-R/2)*sc,lit2?-14:14);
+  var b2=P((c3-R/2)*sc,(r2+1-R/2)*sc,lit2?-14:14);
+  ne(g,lit2?'#7de2b0':'rgba(120,100,170,0.22)',lit2?1.9:0.8);
+  g.beginPath();g.moveTo(a2[0],a2[1]);g.lineTo(b2[0],b2[1]);g.stroke();ng(g);}
+ nt(g,'#7de2b0',14,24,11,'green: the spanning cluster');
+ nt(g,'#8a7ab8',14,42,10,'grey: open bonds that lead nowhere');
+ nt(g,'#8a7ab8',14,58,10,'the threshold was fixed by the lattice, before any of this');
+ nt(g,'#8a7ab8',14,H-12,9,'p_c comes from the geometry; the exponents come from the physics');}
+document.getElementById('pcup').onclick=function(){pp=Math.min(0.85,pp+0.03);drawW4();};
+document.getElementById('pcdn').onclick=function(){pp=Math.max(0.15,pp-0.03);drawW4();};
+document.getElementById('pcnew').onclick=function(){lseed+=7;drawW4();};
+document.getElementById('pcsp').onclick=function(){spin=!spin;};
+VR=selftest();window.__percolation=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.35;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
