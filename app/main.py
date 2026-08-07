@@ -458,6 +458,16 @@ def beacon_shadow(request: Request):
     return beacon.shadow_map(str(request.base_url))
 
 
+@app.get("/v1/beacon/join")
+def beacon_join(request: Request):
+    """THE JOIN — corpus_uid <-> asin, validated against the served corpus.
+
+    The audit finding was that the two doors never met: an agent could list on
+    one side and crawl on the other, and no key named a thing in both."""
+    return beacon.join_table(str(request.base_url),
+                             os.path.join(STATIC, "corpus.jsonl"))
+
+
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots(request: Request):
     """THE BROADCAST — invites the agent crawlers, points them at the page + sitemap,
