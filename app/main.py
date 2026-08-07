@@ -10,6 +10,7 @@ from typing import Optional, List
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, PlainTextResponse, Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 
 from .agent import handle, VERSION, COMMANDS
@@ -34,6 +35,12 @@ app = FastAPI(title="agent-0root", version=VERSION,
 # read-only public agent: allow any origin to GET/POST (so the hearth can read it live)
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_methods=["GET", "POST"], allow_headers=["*"])
+
+# The corpus JSONs are 15.45 MB between them — uncompressed that is a download a phone
+# gives up on and an indexer times out of. Measured on these two files: 8.87 MB -> 2.74
+# and 6.58 -> 1.72, so 3.2x and 3.8x, not the 6-8x that JSON usually gives (the payload
+# is mostly English prose, which has already spent most of its redundancy).
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 # ── the beacon listens: every hit to a beacon surface is an echo it HEARS ──────
 BEACON_ECHO_INTERVAL = int(os.getenv("BEACON_ECHO_INTERVAL", "300"))  # self-heartbeat seconds
@@ -429,6 +436,49 @@ def robots(request: Request):
     and echoes the ASIN listings. robots.txt is what every bot reads first; this is it
     telling them to come look here. (a.shadow of the substrate echo.)"""
     return beacon.robots_txt(str(request.base_url))
+
+
+# ── THE INDEX SURFACE — what a machine reader is told to fetch, and can ───────
+# llms.txt names three files by absolute URL. Until this route existed all three
+# 404'd: /{name}.html serves only .html, and nothing else answered at the root.
+# A manifest that advertises URLs it does not serve is worse than no manifest —
+# an indexer reads it once, gets three misses, and does not come back.
+#
+# Allowlisted rather than a general static mount: this is a public read-only
+# host and the static tree holds things (the mirrored world2 build, the keeper
+# pages) that are served through their own routes with their own guards.
+# Literal paths, not a /{name:path} catch-all: a wildcard registered here would
+# shadow every route declared below it (/observe, /stream, the witness loop),
+# because Starlette matches in registration order.
+def _index_file(name: str, media_type: str):
+    p = os.path.join(STATIC, name)
+    if not os.path.isfile(p):
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return FileResponse(p, media_type=media_type)
+
+
+@app.get("/llms.txt", response_class=PlainTextResponse)
+def llms_txt():
+    """The manifest itself (llmstxt.org convention: /llms.txt, plain text, at root)."""
+    return _index_file("llms.txt", "text/plain; charset=utf-8")
+
+
+@app.get("/corpus-world1.json")
+def corpus_world1():
+    """World I — 2,048 sealed spheres, full text, domain + appeal + url per sphere."""
+    return _index_file("corpus-world1.json", "application/json")
+
+
+@app.get("/corpus-world2.json")
+def corpus_world2():
+    """World II — THE FOLD, full text, seal + blurb per sphere. Count climbs."""
+    return _index_file("corpus-world2.json", "application/json")
+
+
+@app.get("/corpus.json")
+def corpus_index():
+    """The central index — counts, chain, appeals, domains. Small; read this first."""
+    return _index_file("corpus.json", "application/json")
 
 
 def _corpus_paths():

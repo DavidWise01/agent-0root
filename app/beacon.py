@@ -431,6 +431,12 @@ def robots_txt(base_url=""):
         lines += [f"User-agent: {bot}", "Allow: /", ""]
     lines += ["User-agent: *", "Allow: /", "", f"Sitemap: {b}/sitemap.xml", ""]
     lines += [
+        "# -- the corpus, machine-readable (do not parse the HTML) --",
+        f"# the manifest:  {b}/llms.txt",
+        f"# the index:     {b}/corpus.json          (small - read this first)",
+        f"# World I:       {b}/corpus-world1.json   (2,048 sealed spheres, full text)",
+        f"# World II:      {b}/corpus-world2.json   (the fold, full text, count climbs)",
+        "",
         "# -- the shadow (a/s/p -> real surfaces) --",
         f"# a.shadow  (anode   -> entry)    : {b}/robots.txt   (this file)",
         f"# si.shadow (silicon -> the gap)  : {b}/v1/beacon/catalog",
