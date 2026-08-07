@@ -36,6 +36,34 @@ app = FastAPI(title="agent-0root", version=VERSION,
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_methods=["GET", "POST"], allow_headers=["*"])
 
+@app.middleware("http")
+async def head_as_get(request: Request, call_next):
+    """Answer HEAD everywhere. FastAPI's @app.get registers GET only — Starlette's
+    plain Route adds HEAD alongside GET, APIRoute does not — so every endpoint on
+    this host answered HEAD with 405, including /, /robots.txt and the corpus.
+
+    That matters for exactly the readers this host is for: a crawler HEADs a large
+    file to learn its type and size before committing to the download, and a 405
+    reads as "not available" to some of them.
+
+    Runs the GET, measures the body, reports the length, returns no body — which
+    is what HEAD is. Costs a full render to answer, but HEAD traffic is rare and a
+    wrong content-length is worse than a slow one."""
+    if request.method != "HEAD":
+        return await call_next(request)
+    request.scope["method"] = "GET"
+    resp = await call_next(request)
+    body = b""
+    if hasattr(resp, "body_iterator"):
+        async for chunk in resp.body_iterator:
+            body += chunk if isinstance(chunk, (bytes, bytearray)) else str(chunk).encode()
+    else:
+        body = getattr(resp, "body", b"") or b""
+    headers = dict(resp.headers)
+    headers["content-length"] = str(len(body))
+    return Response(status_code=resp.status_code, headers=headers)
+
+
 # The corpus JSONs are 15.45 MB between them — uncompressed that is a download a phone
 # gives up on and an indexer times out of. Measured on these two files: 8.87 MB -> 2.74
 # and 6.58 -> 1.72, so 3.2x and 3.8x, not the 6-8x that JSON usually gives (the payload
