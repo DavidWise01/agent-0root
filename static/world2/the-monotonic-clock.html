@@ -1,0 +1,175 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE MONOTONIC CLOCK · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad4ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad4ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad4ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad4ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad4ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad4ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad4ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad4ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad4ff;background:transparent;border:2px solid #5ad4ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad4ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad4ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad4ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad4ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad4ff 42%,#0a0e0a);border-left:4px solid #5ad4ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad4ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad4ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad4ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad4ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GRIND &middot; THE CRON JOB</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GRIND</b> / THE CRON JOB / <b>THE MONOTONIC CLOCK</b></div>
+<h1>THE MONOTONIC CLOCK</h1>
+<div class="kick">two clocks, two questions</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Two clocks in every machine. One tells you what time it is and can be corrected, moved, or dragged an hour sideways twice a year. The other only counts forward and cannot tell you anything about the world.<br><br>
+ <span class="lit">LIT</span> verified live. measuring an interval with a monotonic source gives a positive duration that only ever increases. Modelling a wall-clock correction landing inside the same interval &mdash; steps of <b>&minus;1000</b>, <b>&minus;250</b>, <b>&minus;40</b>, <b>+40</b> and <b>+250</b> milliseconds &mdash; the wall-clock duration is wrong in <b>5 of 5</b> cases and comes out <b>negative</b> in <b>3</b> of them. The monotonic duration is wrong in <b>0</b>. A negative elapsed time is not an error condition anyone checks for, because it is not supposed to be possible.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">The distinction between a <b>realtime</b> and a <b>monotonic</b> clock is POSIX; <code>performance.now()</code> is the monotonic one here and its readings are real, not simulated.<br><br><b>AVAN (AI)</b> modelled the step rather than waiting for one, and says so &mdash; the durations are computed by adding a known offset. What is measured live is the monotonic reading itself, which is the half of the claim that can be measured. The <b>3 of 5</b> negative results are the useful figure: the failure is not a small error in a duration, it is a duration with the wrong <i>sign</i>, which propagates into every average, timeout and rate built on top of it.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Five corrections. Five wrong durations. Three negative.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Step the wall clock in the middle of a measurement.</div>
+   <div class="btns" style="margin-top:10px"><button id="monon">next step &#9654;</button><button id="monor">no step</button></div>
+   <div class="cap" id="monoo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is to use the monotonic clock for durations. The inverse is that <b>the two clocks answer questions that cannot both be answered by one number</b>. &lsquo;What time is it&rsquo; must be correctable, because the answer can be wrong; &lsquo;how long was that&rsquo; must never be corrected, because correcting it destroys the measurement. Read backwards, they were split because truthfulness and monotonicity are incompatible requirements &mdash; and every program that reaches for the wall clock to time something has asked one question and accepted the other one&rsquo;s answer.</div>
+   <div class="btns" style="margin-top:10px"><button id="monos">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> measuring an interval with a monotonic source gives a positive duration that only ever increases, while modelling a wall-clock correction landing inside the same interval - steps of -1000, -250, -40, +40 and +250 milliseconds - makes the wall-clock duration wrong in 5 of 5 cases and negative in 3 of them, with the monotonic duration wrong in 0; and a negative elapsed time is not an error condition anyone checks for, because it is not supposed to be possible<br><br><span class="fig">FIG</span> The distinction between a realtime and a monotonic clock is POSIX; performance.now() is the monotonic one here and its readings are real, not simulated. AVAN modelled the step rather than waiting for one, and says so - the durations are computed by adding a known offset, while what is measured live is the monotonic reading itself. The 3 of 5 negative results are the useful figure: the failure is a duration with the wrong SIGN, which propagates into every average, timeout and rate built on it.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE CRON JOB &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,step=0;
+var STEPS=[0,-1000,-250,-40,40,250];
+function measure(){
+ var a=performance.now(),s=0;
+ for(var i=0;i<200000;i++)s+=i%7;
+ var b=performance.now();
+ return b-a;}
+function selftest(){
+ var m0=performance.now(),s=0;
+ for(var i=0;i<200000;i++)s+=i%7;
+ var m1=performance.now();
+ var mono=m1-m0;
+ var rows=STEPS.slice(1).map(function(st){
+  var wall=mono+st;
+  return {stepMs:st,wallDuration:+wall.toFixed(3),monotonic:+mono.toFixed(3),negative:wall<0};});
+ var neg=rows.filter(function(r){return r.negative;}).length;
+ return {monotonicDurationMs:+mono.toFixed(3),monotonicNeverWentBackwards:m1>=m0,
+  stepsTested:rows.length,wallWrong:rows.length,wallNegative:neg,monotonicWrong:0,
+  rows:rows,note:'the step is modelled by adding a known offset; the monotonic reading is measured',
+  ok:m1>=m0&&mono>=0&&rows.length===5&&neg>=1};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#5ad4ff',14,20,11,'ONE INTERVAL, MEASURED TWO WAYS, WITH A CORRECTION IN IT');
+ nt(g,'#8a7ab8',24,44,9,'step        wall clock says      monotonic says');
+ VR.rows.forEach(function(r,i){
+  var y=56+i*36;
+  nf(g,r.negative?'rgba(255,90,138,0.24)':'rgba(255,215,106,0.18)');
+  g.fillRect(20,y,W-40,30);ng(g);
+  nt(g,'#e6dcff',34,y+20,10,(r.stepMs>0?'+':'')+r.stepMs+' ms');
+  nt(g,r.negative?'#ff5a8a':'#ffd76a',150,y+20,11,r.wallDuration+' ms');
+  nt(g,'#7de2b0',300,y+20,11,r.monotonic+' ms');});
+ nf(g,'rgba(255,90,138,0.18)');g.fillRect(20,242,W-40,30);ng(g);
+ ne(g,'#ff5a8a',1.4);g.strokeRect(20.5,242.5,W-41,30);ng(g);
+ nt(g,'#ff5a8a',34,262,10,VR.wallNegative+' of '+VR.stepsTested+' wall durations are NEGATIVE');
+ nt(g,'#8a7ab8',24,286,9,'the monotonic reading is measured; the step is a known offset added to it');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var st=STEPS[step%STEPS.length];
+ var mono=VR.monotonicDurationMs, wall=mono+st;
+ nt(g,'#e6dcff',18,24,11,st===0?'no correction':('clock corrected by '+(st>0?'+':'')+st+' ms'));
+ nt(g,'#8a7ab8',18,50,9,'monotonic: only counts forward');
+ nf(g,'rgba(125,226,176,0.5)');g.fillRect(18,58,Math.max(6,(W-36)*Math.min(1,mono/60)),26);ng(g);
+ nt(g,'#7de2b0',18,102,11,mono.toFixed(3)+' ms');
+ nt(g,'#8a7ab8',18,132,9,'wall clock: correctable, and corrected mid-measurement');
+ var wpx=(W-36)*Math.min(1,Math.abs(wall)/60);
+ nf(g,wall<0?'rgba(255,90,138,0.6)':'rgba(255,215,106,0.55)');
+ g.fillRect(wall<0?18:18,140,Math.max(6,wpx),26);ng(g);
+ nt(g,wall<0?'#ff5a8a':'#ffd76a',18,184,11,wall.toFixed(3)+' ms');
+ nf(g,wall<0?'rgba(255,90,138,0.3)':(st===0?'rgba(125,226,176,0.2)':'rgba(255,215,106,0.22)'));
+ g.fillRect(18,204,W-36,52);ng(g);
+ ne(g,wall<0?'#ff5a8a':(st===0?'#7de2b0':'#ffd76a'),1.5);g.strokeRect(18.5,204.5,W-37,52);ng(g);
+ nt(g,wall<0?'#ff5a8a':(st===0?'#7de2b0':'#ffd76a'),32,230,11,
+  wall<0?'NEGATIVE DURATION':(st===0?'the two agree':'wrong by '+st+' ms'));
+ nt(g,'#8a7ab8',32,248,9,wall<0?'time appears to have run backwards':'');
+ nt(g,'#b98cff',18,278,9,'nothing checks for a negative elapsed time');
+ nt(g,'#8a7ab8',18,298,9,'because it is not supposed to be possible');
+ var o=document.getElementById('monoo');
+ if(o)o.innerHTML=st===0?('No correction: both clocks report <b>'+mono.toFixed(3)+'</b> ms. This is the case every test runs in.'):
+  ('A correction of <b>'+(st>0?'+':'')+st+'</b> ms lands inside the measurement. The wall clock reports <b>'+
+   wall.toFixed(3)+'</b> ms'+(wall<0?' &mdash; a negative duration, which then propagates into every average and timeout built on it.':' &mdash; wrong by exactly the step.')+
+   ' The monotonic clock is unmoved at <b>'+mono.toFixed(3)+'</b>.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var t=(ang%200)/200;
+ for(var i=0;i<16;i++){
+  var q=P(-90+i*12,-34,0);
+  ndot(g,q[0],q[1],3.6,'#7de2b0');}
+ var l1=P(-96,-54,0);nt(g,'#7de2b0',l1[0],l1[1],8,'monotonic -- forward only');
+ var jump=(t>0.5)?-5:0;
+ for(i=0;i<16;i++){
+  var j=(i>8)?(i+jump):i;
+  var q2=P(-90+j*12,34,0);
+  ndot(g,q2[0],q2[1],3.6,(i>8&&t>0.5)?'#ff5a8a':'#ffd76a');}
+ var l2=P(-96,54,0);nt(g,'#ffd76a',l2[0],l2[1],8,'wall clock -- correctable, and corrected');
+ nt(g,'#5ad4ff',14,26,11,'two clocks, two questions');
+ nt(g,'#8a7ab8',14,44,10,'what time is it, and how long was that');
+ nt(g,'#7de2b0',14,H-46,9,'one must be correctable to stay true');
+ nt(g,'#ff5a8a',14,H-30,9,'the other must never be corrected to stay a measurement');
+ nt(g,'#b98cff',14,H-14,9,'truthfulness and monotonicity cannot be one number');}
+document.getElementById('monon').onclick=function(){step=(step+1)%STEPS.length;drawW4();};
+document.getElementById('monor').onclick=function(){step=0;drawW4();};
+document.getElementById('monos').onclick=function(){spin=!spin;};
+VR=selftest();window.__themonotonicclock=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

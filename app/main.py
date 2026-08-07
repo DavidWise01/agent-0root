@@ -138,6 +138,9 @@ def world2_page(name: str):
         mt = ("text/css" if name.endswith(".css")
               else "application/javascript" if name.endswith(".js")
               else "application/json" if name.endswith(".json")
+              # .skills is a fixed-width ASCII matrix -- served as html the browser
+              # collapses the whitespace and the table alignment is destroyed
+              else "text/plain; charset=utf-8" if name.endswith(".skills")
               else "text/html")
         return FileResponse(p, media_type=mt)
     return JSONResponse({"error": "not found"}, status_code=404)

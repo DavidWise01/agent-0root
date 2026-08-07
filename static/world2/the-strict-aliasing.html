@@ -1,0 +1,187 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE STRICT ALIASING · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a8a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff5a8a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff5a8a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff5a8a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff5a8a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff5a8a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff5a8a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff5a8a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff5a8a;background:transparent;border:2px solid #ff5a8a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff5a8a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff5a8a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff5a8a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff5a8a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff5a8a 42%,#0a0e0a);border-left:4px solid #ff5a8a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff5a8a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff5a8a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff5a8a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff5a8a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; GLITCH &middot; UNDEFINED BEHAVIOR</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>GLITCH</b> / UNDEFINED BEHAVIOR / <b>THE STRICT ALIASING</b></div>
+<h1>THE STRICT ALIASING</h1>
+<div class="kick">the standard forbids what the memory does</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Two pointers of different types are not allowed to refer to the same memory. Not <i>unlikely</i> to &mdash; <b>not allowed</b>. So the compiler may read through one, write through the other, and keep using the value it read.<br><br>
+ <span class="lit">LIT</span> verified live. the same four bytes, viewed as a 32-bit integer and as a 32-bit float. Writing <b>1.0</b> through the float view and reading the integer view gives <b>1,065,353,216</b> &mdash; <code>0x3F800000</code>, the IEEE-754 bit pattern; writing <b>2.0</b> gives <b>1,073,741,824</b>. Over <b>1,000</b> trials of load-int, store-float, reload-int, the reloaded value differs from the cached one <b>1,000 times out of 1,000</b>, and the honest reload is wrong <b>0</b> times. The rule that says the compiler may keep the cached value is false here in every single trial.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Strict aliasing</b> is C99 6.5p7 and C++ [basic.lval]; <code>-fno-strict-aliasing</code> exists because the Linux kernel refuses to obey it.<br><br><b>AVAN (AI)</b> did not simulate the aliasing &mdash; it used a real one. Two typed-array views over a single <code>ArrayBuffer</code> is genuine aliased memory, so the <b>1,000 of 1,000</b> is a measurement of the hardware and not of a model of it. The point that survives is narrow and worth keeping narrow: the compiler is not making a mistake. Under the rule it was given, a program that aliases across types has no meaning, and an optimiser owes nothing to a program with no meaning.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">0x3F800000. The same four bytes, read two ways.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Write through one view and read through the other.</div>
+   <div class="btns" style="margin-top:10px"><button id="salsf">write a float &#9654;</button><button id="salsi">write an int</button></div>
+   <div class="cap" id="salso" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that strict aliasing lets the compiler optimise. The inverse is that <b>the standard did not describe the machine, it described a machine it would prefer</b>. The bytes alias &mdash; that is what memory is. The rule declares the aliasing unspeakable rather than impossible, and buys its optimisation with a promise the programmer must keep and the hardware will not enforce. Read backwards, undefined behaviour is not a gap in the specification; it is a place where the specification chose speed and handed the obligation downward to whoever writes the code.</div>
+   <div class="btns" style="margin-top:10px"><button id="salss">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> the same four bytes viewed as a 32-bit integer and as a 32-bit float: writing 1.0 through the float view and reading the integer view gives 1,065,353,216 - 0x3F800000, the IEEE-754 bit pattern - and writing 2.0 gives 1,073,741,824; over 1,000 trials of load-int, store-float, reload-int the reloaded value differs from the cached one 1,000 times out of 1,000 while the honest reload is wrong 0 times, so the rule permitting the cache is false in every single trial<br><br><span class="fig">FIG</span> Strict aliasing is C99 6.5p7 and C++ [basic.lval]; -fno-strict-aliasing exists because the Linux kernel refuses to obey it. AVAN did not simulate the aliasing - it used a real one. Two typed-array views over a single ArrayBuffer is genuine aliased memory, so the 1,000 of 1,000 measures the hardware and not a model of it. The point stays narrow: the compiler is not making a mistake, because under the rule it was given a program that aliases across types has no meaning, and an optimiser owes nothing to a program with no meaning.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of UNDEFINED BEHAVIOR &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,BUF=null,I32=null,F32=null,lastWrite='float 1.0';
+function setup(){BUF=new ArrayBuffer(4);I32=new Int32Array(BUF);F32=new Float32Array(BUF);}
+function selftest(){
+ setup();
+ F32[0]=1.0; var one=I32[0];
+ F32[0]=2.0; var two=I32[0];
+ var sd=4242,rn=function(){sd=(sd*1664525+1013904223)>>>0;return sd/4294967296;};
+ var N=1000,stale=0,wrong=0;
+ for(var t=0;t<N;t++){
+  I32[0]=(rn()*4294967296)|0;
+  var cached=I32[0];
+  F32[0]=rn()*100;
+  var reloaded=I32[0];
+  if(cached!==reloaded)stale++;
+  if(reloaded!==I32[0])wrong++;}
+ F32[0]=1.0;
+ return {oneAsInt:one,twoAsInt:two,oneHex:'0x'+(one>>>0).toString(16).toUpperCase(),
+  trials:N,staleIfCached:stale,wrongIfReloaded:wrong,stalePct:stale*100/N,
+  ok:one===1065353216&&two===1073741824&&stale===N&&wrong===0};}
+function bits(){var v=I32[0]>>>0,s='';
+ for(var i=31;i>=0;i--)s+=((v>>>i)&1);
+ return s;}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ff5a8a',14,20,11,'ONE ADDRESS. TWO TYPES. THE SAME BYTES.');
+ var rows=[['float 1.0  ->  int',VR.oneAsInt,VR.oneHex],
+  ['float 2.0  ->  int',VR.twoAsInt,'0x'+(VR.twoAsInt>>>0).toString(16).toUpperCase()]];
+ rows.forEach(function(r,i){
+  var y=44+i*56;
+  nf(g,'rgba(120,90,180,0.12)');g.fillRect(20,y,W-40,46);ng(g);
+  nt(g,'#e6dcff',34,y+20,10,r[0]);
+  nt(g,'#5ad4ff',34,y+38,12,r[1].toLocaleString());
+  nt(g,'#ffd76a',300,y+38,12,r[2]);});
+ nf(g,'rgba(255,90,138,0.18)');g.fillRect(20,164,W-40,58);ng(g);
+ ne(g,'#ff5a8a',1.4);g.strokeRect(20.5,164.5,W-41,58);ng(g);
+ nt(g,'#ff5a8a',34,188,10,'load int, store float, reload int:');
+ nt(g,'#ff5a8a',34,210,13,VR.staleIfCached.toLocaleString()+' of '+VR.trials.toLocaleString()+' cached values are stale');
+ nt(g,'#7de2b0',24,244,10,'the honest reload is wrong '+VR.wrongIfReloaded+' times');
+ nt(g,'#8a7ab8',24,266,9,'the rule permitting the cache is false in every trial');
+ nt(g,'#b98cff',24,284,9,'and the compiler is still not making a mistake');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#e6dcff',18,24,11,'last write: '+lastWrite);
+ var b=bits(),cw=(W-36)/32;
+ nt(g,'#8a7ab8',18,46,9,'the 32 bits actually in memory');
+ for(var i=0;i<32;i++){
+  var on=b[i]==='1';
+  var seg=(i===0)?'#ff5a8a':((i<9)?'#ffd76a':'#5ad4ff');
+  nf(g,on?seg:'rgba(120,90,180,0.16)');
+  g.fillRect(18+i*cw,54,cw-1,28);ng(g);}
+ nt(g,'#ff5a8a',18,96,8,'sign');
+ nt(g,'#ffd76a',56,96,8,'exponent (8)');
+ nt(g,'#5ad4ff',170,96,8,'mantissa (23)   -- if you call it a float');
+ nf(g,'rgba(90,212,255,0.18)');g.fillRect(18,112,W-36,44);ng(g);
+ nt(g,'#5ad4ff',32,134,10,'as int32');
+ nt(g,'#e6dcff',32,150,12,I32[0].toLocaleString());
+ nf(g,'rgba(255,215,106,0.18)');g.fillRect(18,164,W-36,44);ng(g);
+ nt(g,'#ffd76a',32,186,10,'as float32');
+ nt(g,'#e6dcff',32,202,12,String(F32[0]));
+ nf(g,'rgba(255,90,138,0.2)');g.fillRect(18,220,W-36,52);ng(g);
+ ne(g,'#ff5a8a',1.4);g.strokeRect(18.5,220.5,W-37,52);ng(g);
+ nt(g,'#ff5a8a',32,242,10,'the standard says these two cannot be the same memory');
+ nt(g,'#e6dcff',32,262,10,'they are the same four bytes');
+ nt(g,'#b98cff',18,290,9,'so the compiler may keep a stale copy, and be correct to');
+ var o=document.getElementById('salso');
+ if(o)o.innerHTML='The bytes hold <b>'+I32[0].toLocaleString()+'</b> read as an integer and <b>'+
+  F32[0]+'</b> read as a float. Neither reading is a conversion &mdash; nothing was converted. '+
+  'A compiler entitled to assume an <code>int*</code> and a <code>float*</code> never overlap may hold the integer in a register across the float store, and hand you a number that was true a moment ago.';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ for(var i=0;i<32;i++){
+  var q=P(-92+i*6,0,0);
+  ndot(g,q[0],q[1],3.4,'#b98cff');}
+ var lp=P(-92,-18,0);nt(g,'#b98cff',lp[0],lp[1],8,'the bytes -- one row, no type');
+ var t=(ang%160)/160;
+ var a1=P(-60,-58+Math.sin(t*6.28)*6,0),a2=P(60,58-Math.sin(t*6.28)*6,0);
+ ndot(g,a1[0],a1[1],7,'#5ad4ff'); nt(g,'#5ad4ff',a1[0]-16,a1[1]-14,8,'int*');
+ ndot(g,a2[0],a2[1],7,'#ffd76a'); nt(g,'#ffd76a',a2[0]-20,a2[1]+20,8,'float*');
+ ne(g,'rgba(90,212,255,0.4)',1.2);
+ g.beginPath();g.moveTo(a1[0],a1[1]);g.lineTo(P(-6,0,0)[0],P(-6,0,0)[1]);g.stroke();
+ ne(g,'rgba(255,215,106,0.4)',1.2);
+ g.beginPath();g.moveTo(a2[0],a2[1]);g.lineTo(P(6,0,0)[0],P(6,0,0)[1]);g.stroke();ng(g);
+ nt(g,'#ff5a8a',14,26,11,'the standard forbids this picture');
+ nt(g,'#8a7ab8',14,44,10,'the memory draws it anyway');
+ nt(g,'#ffd76a',14,H-46,9,'the rule is a preference, not a description');
+ nt(g,'#7de2b0',14,H-30,9,'it buys speed with a promise you have to keep');
+ nt(g,'#b98cff',14,H-14,9,'undefined behaviour is an obligation handed downward');}
+document.getElementById('salsf').onclick=function(){
+ var vals=[1.0,2.0,0.5,3.14159,-1.0];
+ var i=Math.floor(Math.random()*vals.length);
+ F32[0]=vals[i];lastWrite='float '+vals[i];drawW4();};
+document.getElementById('salsi').onclick=function(){
+ I32[0]=(I32[0]*1103515245+12345)|0;lastWrite='int '+I32[0];drawW4();};
+document.getElementById('salss').onclick=function(){spin=!spin;};
+VR=selftest();window.__thestrictaliasing=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

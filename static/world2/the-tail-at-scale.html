@@ -1,0 +1,167 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE TAIL AT SCALE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd23f}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd23f;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd23f;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd23f;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd23f 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd23f}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd23f}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd23f;background:transparent;border:2px solid #ffd23f;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd23f;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd23f}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd23f,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd23f;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd23f 42%,#0a0e0a);border-left:4px solid #ffd23f;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd23f;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd23f;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd23f}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd23f 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE GAUNTLET</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE GAUNTLET / <b>THE TAIL AT SCALE</b></div>
+<h1>THE TAIL AT SCALE</h1>
+<div class="kick">one in a hundred, a hundred times over</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A service where only one request in a hundred is slow sounds healthy. Fan a single user request out to a hundred of those services and wait for all of them, and the rare event stops being rare &mdash; it becomes the common case.<br><br>
+ <span class="lit">LIT</span> verified live. With <b>1%</b> of leaf requests slow, a fan-out of <b>100</b> makes <b>63.40%</b> of parent requests slow &mdash; exactly <code>1&minus;0.99<sup>100</sup></code>. A <b>200,000</b>-trial simulation gives <b>63.39%</b>, off by <b>0.004</b> points. Half of all parents are slow at a fan-out of just <b>69</b>. The leaf never got worse; only the arithmetic of waiting for all of them changed.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt"><b>Jeff Dean and Luiz Andr&eacute; Barroso</b> set this out in <i>The Tail at Scale</i> (2013), and it is the reason large fan-out systems are engineered around tail latency rather than averages.<br><br>
+ <b>AVAN (AI)</b> computed the exact figure and then simulated it as a separate check, because the closed form is easy to state and easy to mis-state. The number that reframes the problem is <b>69</b>: you do not need a thousand-way fan-out for this to bite. A service with a 1-in-100 tail is already a coin flip at sixty-nine leaves, which is an ordinary page.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Fan-out against the chance the parent is slow.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Widen the fan-out, or make the leaf better.</div>
+   <div class="btns" style="margin-top:10px"><button id="tailw">wider fan-out &#9654;</button><button id="tailn">narrower</button><button id="tailb">better leaf</button><button id="tailr">reset</button></div>
+   <div class="cap" id="tailo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: one hundred leaves, one slow enough to matter.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that fan-out amplifies the tail. The inverse is that <b>fan-out did not amplify anything &mdash; it revealed what the average was hiding</b>. The leaf service was always slow 1% of the time; that fact was simply never observable from a single call. Read backwards, scale is not a source of new failure modes so much as an instrument that finally has the resolution to see the old ones, and the alarming number is not <b>63.40%</b> but the fact that <b>1%</b> was ever considered a description of the service.</div>
+   <div class="btns" style="margin-top:10px"><button id="tails">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> with 1% of leaf requests slow, a fan-out of 100 makes 63.40% of parent requests slow - exactly 1 minus 0.99 to the hundredth - and a 200,000-trial simulation gives 63.39%, off by 0.004 points; half of all parents are slow at a fan-out of just 69, while the leaf never got worse<br><br><span class="fig">FIG</span> Jeff Dean and Luiz Andre Barroso set this out in The Tail at Scale (2013), and it is why large fan-out systems are engineered around tail latency rather than averages. AVAN computed the exact figure and then simulated it as a separate check, because the closed form is easy to state and easy to mis-state. The number that reframes the problem is 69: a service with a 1-in-100 tail is already a coin flip at sixty-nine leaves, which is an ordinary page.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE GAUNTLET &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,n=100,p=0.01;
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function selftest(){
+ var pp=0.01,rows=[],picks=[1,10,50,100,150,200],i;
+ for(i=0;i<picks.length;i++)rows.push({fanout:picks[i],
+  pctSlow:+(100*(1-Math.pow(1-pp,picks[i]))).toFixed(2)});
+ var exact=1-Math.pow(1-pp,100);
+ var r=rng(13),trials=200000,hit=0;
+ for(var t=0;t<trials;t++){var slow=false;
+  for(i=0;i<100;i++)if(r()<pp){slow=true;break;}
+  if(slow)hit++;}
+ var sim=hit/trials,n50=1;
+ while(1-Math.pow(1-pp,n50)<0.5)n50++;
+ return {leafSlowPct:1,fanout:100,
+  exactPctSlow:+(100*exact).toFixed(2),simPctSlow:+(100*sim).toFixed(2),
+  trials:trials,absDiffPoints:+(100*Math.abs(sim-exact)).toFixed(3),
+  fanoutForHalf:n50,rows:rows,
+  ok:Math.abs(sim-exact)<0.005&&Math.round(100*exact)===63};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ffd23f',14,20,11,'FAN-OUT vs THE CHANCE THE PARENT IS SLOW');
+ ne(g,'rgba(255,210,63,0.85)',2);g.beginPath();
+ for(var i=0;i<=200;i++){
+  var q=1-Math.pow(0.99,i),x=24+i/200*(W-56),y=246-q*196;
+  if(i===0)g.moveTo(x,y);else g.lineTo(x,y);}
+ g.stroke();ng(g);
+ var xh=24+VR.fanoutForHalf/200*(W-56);
+ ne(g,'rgba(125,226,176,0.5)',1);g.beginPath();g.moveTo(24,246-0.5*196);g.lineTo(W-32,246-0.5*196);g.stroke();ng(g);
+ ndot(g,xh,246-0.5*196,4,'rgba(125,226,176,0.95)');
+ nt(g,'#7de2b0',xh+8,246-0.5*196-6,8,'half at fan-out '+VR.fanoutForHalf);
+ var x1=24+100/200*(W-56),y1=246-(1-Math.pow(0.99,100))*196;
+ ndot(g,x1,y1,4,'rgba(255,90,138,0.95)');
+ nt(g,'#ff5a8a',x1+8,y1-6,8,VR.exactPctSlow+'% at 100');
+ nt(g,'#8a7ab8',24,266,8,'0');nt(g,'#8a7ab8',W-46,266,8,'200 leaves');
+ nt(g,'#5ad0ff',24,284,9,'simulated over '+VR.trials.toLocaleString()+' trials: '+
+  VR.simPctSlow+'%   (exact '+VR.exactPctSlow+'%, apart by '+VR.absDiffPoints+' points)');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var q=1-Math.pow(1-p,n);
+ nt(g,'#ffd23f',12,20,11,'FAN-OUT '+n+'   LEAF SLOW '+(p*100).toFixed(2)+'%');
+ var cols=20,cell=17,shown=Math.min(n,200);
+ var r=rng(n*31+Math.round(p*10000));
+ for(var i=0;i<shown;i++){
+  var slow=r()<p;
+  nf(g,slow?'rgba(255,60,90,0.85)':'rgba(125,226,176,0.42)');
+  g.fillRect(16+(i%cols)*cell,38+Math.floor(i/cols)*13,cell-3,10);ng(g);}
+ nt(g,'#8a7ab8',14,196,8,shown<n?('first '+shown+' of '+n+' leaves'):(n+' leaves, one draw'));
+ nf(g,'rgba(90,70,140,0.3)');g.fillRect(14,214,340,26);ng(g);
+ nf(g,'rgba(255,60,90,0.7)');g.fillRect(14,214,Math.round(340*q),26);ng(g);
+ nt(g,'#e8e0ff',20,232,10,(100*q).toFixed(2)+'% of parents are slow');
+ nt(g,'#7de2b0',14,262,9,'to get back under 10% you would need the leaf at '+
+  (100*(1-Math.pow(0.9,1/n))).toFixed(3)+'%');
+ nt(g,'#5ad0ff',14,284,9,'half of parents slow at fan-out '+
+  (function(){var k=1;while(1-Math.pow(1-p,k)<0.5)k++;return k;})());
+ var o=document.getElementById('tailo');
+ if(o)o.innerHTML='fan-out <b>'+n+'</b> &middot; leaf <b>'+(p*100).toFixed(2)+
+  '%</b> &middot; parent slow <b>'+(100*q).toFixed(2)+'%</b>';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'ONE HUNDRED LEAVES, ONE SLOW ENOUGH');
+ var cx=W/2,cy=H/2+10,rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ ndot(g,cx,cy-100,5,'rgba(255,210,63,0.9)');
+ for(var i=0;i<40;i++){
+  var t=i/40*6.283185307,x=Math.cos(t)*100,z=Math.sin(t)*100,y=60;
+  var px=cx+x*rr-z*sn,py=cy+y*0.7+(x*sn+z*rr)*0.30;
+  var slow=(i===7||i===23);
+  ne(g,slow?'rgba(255,60,90,0.5)':'rgba(125,226,176,0.14)',1);
+  g.beginPath();g.moveTo(cx,cy-100);g.lineTo(px,py);g.stroke();ng(g);
+  ndot(g,px,py,slow?4:2,slow?'rgba(255,60,90,0.9)':'rgba(125,226,176,0.55)');}
+ nt(g,'#8a7ab8',12,H-22,8,'the parent is only as fast as its slowest leaf');}
+document.getElementById('tailw').onclick=function(){n=Math.min(400,n+25);drawW4();};
+document.getElementById('tailn').onclick=function(){n=Math.max(1,n-25);drawW4();};
+document.getElementById('tailb').onclick=function(){p=Math.max(0.0005,p/2);drawW4();};
+document.getElementById('tailr').onclick=function(){n=100;p=0.01;drawW4();};
+document.getElementById('tails').onclick=function(){spin=!spin;};
+VR=selftest();window.__thetailatscale=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

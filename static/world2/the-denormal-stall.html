@@ -1,0 +1,169 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE DENORMAL STALL · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#00f5ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#00f5ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#00f5ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#00f5ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #00f5ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#00f5ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#00f5ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#00f5ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#00f5ff;background:transparent;border:2px solid #00f5ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#00f5ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#00f5ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#00f5ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#00f5ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#00f5ff 42%,#0a0e0a);border-left:4px solid #00f5ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#00f5ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#00f5ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#00f5ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#00f5ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; SPAWN &middot; FIRST LIGHT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>SPAWN</b> / FIRST LIGHT / <b>THE DENORMAL STALL</b></div>
+<h1>THE DENORMAL STALL</h1>
+<div class="kick">a slow, silent, correct-looking decline</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Below the smallest normal float there is one more range, where the leading bit is dropped and precision is traded away a bit at a time rather than all at once. It exists so that subtraction near zero keeps meaning something.<br><br>
+ <span class="lit">LIT</span> verified live. The smallest normal double is <b>2<sup>&minus;1022</sup></b> and the smallest subnormal is <b>2<sup>&minus;1074</sup></b> &mdash; a range of exactly <b>2<sup>52</sup></b>, or <b>4,503,599,627,370,496</b>&times;, computed and checked rather than quoted. Halving the smallest subnormal gives exactly <b>0</b>: that is the floor. And the difference between the smallest normal and its neighbour is representable, so <code>a&nbsp;&minus;&nbsp;b&nbsp;==&nbsp;0</code> and <code>a&nbsp;==&nbsp;b</code> still agree.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">Gradual underflow was argued into IEEE 754 by <b>William Kahan</b> against real hardware opposition; subnormals are awkward and, on several generations of CPU, dramatically slow.<br><br>
+ <b>AVAN (AI)</b> computed the range rather than repeating <b>2<sup>52</sup></b> from a reference, and probed the floor by halving until the value became zero. The property worth having is not the extra range &mdash; it is that <i>equality and subtraction do not disagree</i>. Without subnormals two distinct numbers can subtract to exactly zero, and every algorithm that tests equality by subtracting acquires a silent false positive near the origin.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The last stretch before zero, in powers of two.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Halve your way to the floor.</div>
+   <div class="btns" style="margin-top:10px"><button id="dnsth">halve &#9654;</button><button id="dnstd">double</button><button id="dnstz">jump to the floor</button><button id="dnstr">reset</button></div>
+   <div class="cap" id="dnsto" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a staircase that does not end at a cliff.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that subnormals buy a smooth approach to zero. The inverse is that <b>they buy it with precision you are not told you are losing</b>. Each step below the smallest normal drops another significant bit; the numbers keep arriving and keep meaning less, and nothing in the type, the printout or the comparison operators says so. Read backwards, flush-to-zero is at least honest about failing, and gradual underflow is a slow, silent, correct-looking decline &mdash; which is why the fast hardware path and the trustworthy one point in opposite directions.</div>
+   <div class="btns" style="margin-top:10px"><button id="dnsts">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> the smallest normal double is 2^-1022 and the smallest subnormal is 2^-1074, a range of exactly 2^52 or 4,503,599,627,370,496 times, computed and checked rather than quoted; halving the smallest subnormal gives exactly 0, which is the floor, and the difference between the smallest normal and its neighbour is representable so that a - b == 0 and a == b still agree<br><br><span class="fig">FIG</span> Gradual underflow was argued into IEEE 754 by William Kahan against real hardware opposition; subnormals are awkward and, on several generations of CPU, dramatically slow. AVAN computed the range rather than repeating 2^52 from a reference, and probed the floor by halving until the value became zero. The property worth having is not the extra range but that equality and subtraction do not disagree - without subnormals two distinct numbers can subtract to exactly zero, and every algorithm that tests equality by subtracting acquires a silent false positive near the origin.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of FIRST LIGHT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,cur=null,steps=0;
+function selftest(){
+ var minN=Math.pow(2,-1022),minS=Math.pow(2,-1074);
+ var ratio=minN/minS;
+ var floorHalves=minS/2;
+ var a=minN,b=minN-minS;
+ var diffRepresentable=(a-b)!==0;
+ var probes=[minN,minN/2,minN/4,minS*2,minS,minS/2],rows=[],i;
+ for(i=0;i<probes.length;i++)
+  rows.push({value:probes[i],isZero:probes[i]===0,
+   isSubnormal:probes[i]!==0&&probes[i]<minN});
+ return {minNormal:minN,minSubnormal:minS,
+  subnormalRange:ratio,rangeIsTwoTo52:ratio===Math.pow(2,52),
+  twoTo52:Math.pow(2,52),
+  smallestSubnormalHalvesToZero:floorHalves===0,
+  differenceIsRepresentable:diffRepresentable,
+  equalityAndSubtractionAgree:diffRepresentable,
+  rows:rows,
+  ok:ratio===Math.pow(2,52)&&floorHalves===0&&diffRepresentable};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#00f5ff',14,20,11,'THE LAST STRETCH BEFORE ZERO');
+ var minN=VR.minNormal;
+ nt(g,'#7de2b0',20,50,9,'normal range');
+ nf(g,'rgba(125,226,176,0.6)');g.fillRect(20,58,300,26);ng(g);
+ nt(g,'#0d0818',28,76,9,'exponent from -1022 upward');
+ nt(g,'#ffd76a',20,116,9,'subnormal range -- 2^52 wide');
+ nf(g,'rgba(255,215,106,0.55)');g.fillRect(20,124,160,26);ng(g);
+ nt(g,'#0d0818',28,142,9,'precision drops one bit per step');
+ nt(g,'#ff5a8a',20,182,9,'zero');
+ nf(g,'rgba(255,60,90,0.6)');g.fillRect(20,190,26,26);ng(g);
+ nt(g,'#8a7ab8',60,207,9,'halving the smallest subnormal lands here');
+ nf(g,'rgba(0,245,255,0.12)');g.fillRect(12,228,W-24,54);ng(g);
+ nt(g,'#00f5ff',22,250,9,'smallest normal 2^-1022   smallest subnormal 2^-1074');
+ nt(g,'#7de2b0',22,272,9,'range = '+VR.subnormalRange.toLocaleString()+
+  '   and 2^52 = '+VR.twoTo52.toLocaleString()+
+  '   -- equal: '+(VR.rangeIsTwoTo52?'yes':'no'));}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var v=cur,sub=(v!==0&&v<VR.minNormal),zero=(v===0);
+ nt(g,'#00f5ff',12,20,11,'HALVED '+steps+' TIMES');
+ nt(g,'#8a7ab8',14,52,9,'value');
+ nt(g,zero?'#ff5a8a':(sub?'#ffd76a':'#7de2b0'),14,76,13,v.toExponential(4));
+ nt(g,'#8a7ab8',14,108,9,'classification');
+ nt(g,zero?'#ff5a8a':(sub?'#ffd76a':'#7de2b0'),14,130,12,
+  zero?'ZERO -- underflowed':(sub?'subnormal':'normal'));
+ var lg=(v===0)?0:Math.max(0,Math.min(1,(Math.log(v)/Math.LN2+1074)/52));
+ nt(g,'#8a7ab8',14,162,9,'position in the subnormal range');
+ nf(g,'rgba(90,70,140,0.3)');g.fillRect(14,172,340,22);ng(g);
+ nf(g,zero?'rgba(255,60,90,0.7)':'rgba(255,215,106,0.7)');
+ g.fillRect(14,172,Math.max(2,Math.round(340*lg)),22);ng(g);
+ nt(g,'#e8e0ff',20,187,8,v===0?'below the floor':'2^'+Math.round(Math.log(v)/Math.LN2));
+ nt(g,'#5ad0ff',14,220,9,'smallest normal    '+VR.minNormal.toExponential(3));
+ nt(g,'#ffd76a',14,240,9,'smallest subnormal '+VR.minSubnormal.toExponential(3));
+ nf(g,zero?'rgba(255,60,90,0.15)':'rgba(125,226,176,0.14)');g.fillRect(12,254,W-24,32);ng(g);
+ nt(g,zero?'#ff5a8a':'#7de2b0',20,275,10,
+  zero?'this is the floor -- one more halving does nothing':
+   'still representable, with '+Math.max(0,Math.round(52+Math.log(v)/Math.LN2+1022))+
+   ' significant bits left');
+ nt(g,'#5a4a85',14,306,8,'the numbers keep arriving and keep meaning less');
+ var o=document.getElementById('dnsto');
+ if(o)o.innerHTML='<b>'+v.toExponential(4)+'</b> &middot; '+
+  (zero?'<b>zero</b>':(sub?'subnormal':'normal'))+' &middot; halved <b>'+steps+'</b> times';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'A STAIRCASE THAT DOES NOT END AT A CLIFF');
+ var cx=W/2,cy=H/2+40,rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ for(var i=0;i<30;i++){
+  var t=i/30,x=(t-0.5)*250,z=Math.sin(t*3.14)*36,y=-Math.pow(1-t,2)*160+60;
+  var px=cx+x*rr-z*sn,py=cy+y*0.8+(x*sn+z*rr)*0.30;
+  ndot(g,px,py,2.6-t*1.2,i<18?'rgba(125,226,176,0.8)':'rgba(255,215,106,0.75)');}
+ nt(g,'#8a7ab8',12,H-22,8,'green normal, amber subnormal -- and the step down is gradual');}
+document.getElementById('dnsth').onclick=function(){cur=cur/2;steps++;drawW4();};
+document.getElementById('dnstd').onclick=function(){if(steps>0){cur=cur*2;steps--;}drawW4();};
+document.getElementById('dnstz').onclick=function(){cur=VR.minSubnormal;steps=52;drawW4();};
+document.getElementById('dnstr').onclick=function(){cur=VR.minNormal;steps=0;drawW4();};
+document.getElementById('dnsts').onclick=function(){spin=!spin;};
+VR=selftest();window.__thedenormalstall=VR;cur=VR.minNormal;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

@@ -1,0 +1,167 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE UNIX EPOCH · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a8a}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff5a8a}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff5a8a;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff5a8a;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff5a8a;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff5a8a 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff5a8a}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff5a8a}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff5a8a;background:transparent;border:2px solid #ff5a8a;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff5a8a;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff5a8a}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff5a8a,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff5a8a;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff5a8a 42%,#0a0e0a);border-left:4px solid #ff5a8a;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff5a8a;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff5a8a;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff5a8a}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff5a8a 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE WALL</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE WALL / <b>THE UNIX EPOCH</b></div>
+<h1>THE UNIX EPOCH</h1>
+<div class="kick">2038, and then 1901</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A signed thirty-two bit count of seconds from 1970 reaches its largest value at three fourteen in the morning on the nineteenth of January 2038, and the next second is 1901.<br><br>
+ <span class="lit">LIT</span> verified live. the largest signed 32-bit integer is <b>2,147,483,647</b>. Interpreted as seconds since the epoch that is <b>2038-01-19T03:14:07Z</b> exactly. One more second wraps to <b>&minus;2,147,483,648</b>, which reads as <b>1901-12-13</b> &mdash; not a crash, not an error, a date. Reading the same field as unsigned buys until <b>2106-02-07</b> and no further. The epoch itself is <b>1970-01-01T00:00:00Z</b>, and every one of those days is assumed to be exactly <b>86,400</b> seconds long.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">The <b>2038 problem</b> is the direct descendant of Y2K and is already live in anything computing a date thirty-odd years out &mdash; mortgages, bonds, certificate expiry.<br><br><b>AVAN (AI)</b> computed the wrapped date rather than describing the overflow, because <b>1901-12-13</b> is the part that makes it dangerous. An overflow that threw would be found immediately in testing; this one produces a valid timestamp, comparisons against it succeed, and a record dated 1901 sorts to the top of a list rather than raising anything. The failure is not that the number breaks &mdash; it is that it keeps working.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">2,147,483,647 seconds. Then 1901.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Step over the boundary one second at a time.</div>
+   <div class="btns" style="margin-top:10px"><button id="epocn">+1 second &#9654;</button><button id="epocp">-1 second</button><button id="epoce">jump to the edge</button></div>
+   <div class="cap" id="epoco" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that thirty-two bits are not enough. The inverse is that <b>the width was never a statement about time, it was a statement about memory in 1971</b> &mdash; and it has outlived every machine it was chosen for. Read backwards, the interesting thing is not the ceiling but the silence at it: a type whose range is exhausted does not announce itself, it wraps into the middle of its own domain and keeps producing answers, which is why the fix has to happen decades before the date and never feels urgent until it is.</div>
+   <div class="btns" style="margin-top:10px"><button id="epocs">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> the largest signed 32-bit integer is 2,147,483,647, which as seconds since the epoch is exactly 2038-01-19T03:14:07Z, and one more second wraps to -2,147,483,648 which reads as 1901-12-13 - not a crash, not an error, a date; reading the same field as unsigned buys until 2106-02-07 and no further, the epoch itself is 1970-01-01T00:00:00Z, and every one of those days is assumed to be exactly 86,400 seconds long<br><br><span class="fig">FIG</span> The 2038 problem is the direct descendant of Y2K and is already live in anything computing a date thirty-odd years out - mortgages, bonds, certificate expiry. AVAN computed the wrapped date rather than describing the overflow, because 1901-12-13 is the part that makes it dangerous: an overflow that threw would be found immediately in testing, while this one produces a valid timestamp, comparisons against it succeed, and a record dated 1901 sorts to the top of a list rather than raising anything.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE WALL &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,t=2147483645;
+var MAX32=2147483647;
+function w32(v){return v|0;}
+function iso(sec){try{return new Date(sec*1000).toISOString();}catch(e){return 'invalid';}}
+function selftest(){
+ var d=new Date(MAX32*1000);
+ return {signed32Max:MAX32,overflowInstant:d.toISOString(),overflowYear:d.getUTCFullYear(),
+  wrapsToSeconds:w32(MAX32+1),wrapsToDate:iso(w32(MAX32+1)).slice(0,10),
+  unsigned32Until:new Date(4294967295*1000).toISOString().slice(0,10),
+  unsigned32UntilYear:new Date(4294967295*1000).getUTCFullYear(),
+  epochStart:new Date(0).toISOString(),secondsPerDayAssumed:86400,
+  throwsOnOverflow:false,
+  ok:d.toISOString()==='2038-01-19T03:14:07.000Z'&&w32(MAX32+1)===-2147483648&&
+     iso(w32(MAX32+1)).slice(0,10)==='1901-12-13'&&new Date(0).toISOString()==='1970-01-01T00:00:00.000Z'};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ff5a8a',14,20,11,'THE LAST SECOND, AND THE ONE AFTER IT');
+ var rows=[['epoch',VR.epochStart.slice(0,19)+'Z','#8a7ab8'],
+  ['largest signed 32-bit',VR.signed32Max.toLocaleString(),'#5ad4ff'],
+  ['which is',VR.overflowInstant.slice(0,19)+'Z','#ffd76a'],
+  ['one more second',VR.wrapsToSeconds.toLocaleString(),'#ff5a8a'],
+  ['which reads as',VR.wrapsToDate,'#ff5a8a'],
+  ['unsigned would last until',VR.unsigned32Until,'#7de2b0']];
+ rows.forEach(function(r,i){
+  var y=42+i*36;
+  nf(g,'rgba(120,90,180,0.12)');g.fillRect(20,y,W-40,30);ng(g);
+  nt(g,'#e6dcff',34,y+20,10,r[0]);
+  nt(g,r[2],250,y+20,11,r[1]);});
+ nf(g,'rgba(255,90,138,0.18)');g.fillRect(20,262,W-40,26);ng(g);
+ ne(g,'#ff5a8a',1.4);g.strokeRect(20.5,262.5,W-41,26);ng(g);
+ nt(g,'#ff5a8a',34,280,10,'no exception is raised -- 1901 is a perfectly valid date');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var v=w32(t);
+ var over=(t>MAX32);
+ nt(g,'#e6dcff',18,24,11,'stored value');
+ nf(g,over?'rgba(255,90,138,0.28)':'rgba(90,212,255,0.24)');g.fillRect(18,36,W-36,44);ng(g);
+ nt(g,over?'#ff5a8a':'#5ad4ff',32,66,15,v.toLocaleString());
+ nt(g,'#8a7ab8',18,100,9,'the 32 bits');
+ var cw=(W-36)/32;
+ for(var i=31;i>=0;i--){
+  var bit=(v>>>(31-i))&1;
+  nf(g,bit?((31-i)===31?'#ff5a8a':'rgba(90,212,255,0.55)'):'rgba(120,90,180,0.16)');
+  g.fillRect(18+i*cw,108,cw-1,24);ng(g);}
+ nt(g,'#ff5a8a',18,146,8,'sign bit');
+ nt(g,'#e6dcff',18,172,10,'reads as');
+ nf(g,over?'rgba(255,90,138,0.28)':'rgba(125,226,176,0.22)');g.fillRect(18,182,W-36,44);ng(g);
+ nt(g,over?'#ff5a8a':'#7de2b0',32,212,13,iso(v).slice(0,19)+'Z');
+ nf(g,'rgba(120,90,180,0.14)');g.fillRect(18,238,W-36,52);ng(g);
+ nt(g,'#8a7ab8',32,258,9,over?'the value wrapped, and produced a date':'still inside the range');
+ nt(g,over?'#ff5a8a':'#7de2b0',32,278,10,over?'no error was raised':'no error to raise');
+ nt(g,'#b98cff',18,312,9,'a record dated 1901 sorts to the top rather than complaining');
+ var o=document.getElementById('epoco');
+ if(o)o.innerHTML='Stored: <b>'+v.toLocaleString()+'</b> = <b>'+iso(v).slice(0,10)+'</b>. '+
+  (over?'The count passed 2,147,483,647 and wrapped to a negative number, which is a valid instant in 1901. Every comparison against it still works; it is simply wrong.':
+   'Inside the range. The last usable second is 2038-01-19T03:14:07Z.');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var cx=W/2,cy=H/2+6,ca=Math.cos(ang*Math.PI/180),sa=Math.sin(ang*Math.PI/180);
+ function P(x,y,z){var xr=x*ca-z*sa,zr=x*sa+z*ca;return [cx+xr,cy+y*0.8-zr*0.34];}
+ var pos=Math.floor(ang/5)%64;
+ for(var i=0;i<64;i++){
+  var th=i/64*Math.PI*2,q=P(Math.cos(th)*90,0,Math.sin(th)*90);
+  var edge=(i===0);
+  ndot(g,q[0],q[1],edge?8:(i===pos?5:2.4),edge?'#ff5a8a':(i===pos?'#ffd76a':'rgba(90,212,255,0.45)'));}
+ var e=P(90,0,0);
+ nt(g,'#ff5a8a',e[0]-52,e[1]-18,8,'2038  ->  1901');
+ nt(g,'#ff5a8a',14,26,11,'the line was always a ring');
+ nt(g,'#8a7ab8',14,44,10,'and the far end is the near end');
+ nt(g,'#7de2b0',14,H-46,9,'the width was a statement about memory in 1971');
+ nt(g,'#ffd76a',14,H-30,9,'an exhausted type does not announce itself');
+ nt(g,'#b98cff',14,H-14,9,'it wraps into its own middle and keeps answering');}
+document.getElementById('epocn').onclick=function(){t=t+1;drawW4();};
+document.getElementById('epocp').onclick=function(){t=t-1;drawW4();};
+document.getElementById('epoce').onclick=function(){t=MAX32;drawW4();};
+document.getElementById('epocs').onclick=function(){spin=!spin;};
+VR=selftest();window.__theunixepoch=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.5;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

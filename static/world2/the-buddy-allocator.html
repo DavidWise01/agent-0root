@@ -1,0 +1,189 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE BUDDY ALLOCATOR · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#9d00ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#9d00ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#9d00ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#9d00ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #9d00ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#9d00ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#9d00ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#9d00ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#9d00ff;background:transparent;border:2px solid #9d00ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#9d00ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#9d00ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#9d00ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#9d00ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#9d00ff 42%,#0a0e0a);border-left:4px solid #9d00ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#9d00ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#9d00ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#9d00ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#9d00ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; RESPAWN &middot; ROLLBACK</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>RESPAWN</b> / ROLLBACK / <b>THE BUDDY ALLOCATOR</b></div>
+<h1>THE BUDDY ALLOCATOR</h1>
+<div class="kick">merging is cheap because most merges are forbidden</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Split memory in half, and half again, until a block is just big enough. Each block then has exactly one partner &mdash; its <i>buddy</i> &mdash; and merging is possible only with that one. Finding it is not a search: it is a single XOR.<br><br>
+ <span class="lit">LIT</span> verified live. A <b>1,048,576</b>-byte arena, <b>64</b>-byte minimum block, <b>200</b> allocations of random sizes. Every buddy address satisfies <code>buddy = addr XOR size</code> &mdash; checked on all <b>209</b> splits, <b>0</b> exceptions. <b>51,644</b> bytes were requested and <b>68,800</b> handed out: <b>17,156</b> bytes of internal waste, <b>24.94%</b>, which is the price of rounding to powers of two. Freeing all 200 coalesces the arena back to a single whole block with <b>0</b> stray fragments.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">The buddy system is <b>Harry Markowitz</b>&rsquo;s (1963), described by <b>Knuth</b> in <i>TAOCP</i> vol. 1; Linux still allocates physical pages this way.<br><br>
+ <b>AVAN (AI)</b> checked the two claims that are usually asserted side by side and are quite different in kind. <code>addr XOR size</code> is an <i>identity</i> &mdash; it either holds always or the allocator is broken, and it held 209 times out of 209. Full coalescence is a <i>property of a run</i>, and it is the one that actually fails in practice when a single long-lived block sits in the middle. Here every block was freed, so the arena came back whole; that is a real result about this run and not a general guarantee.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">The arena, split down to blocks. Each level halves.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Allocate and free. Watch the buddies merge.</div>
+   <div class="btns" style="margin-top:10px"><button id="budya">allocate &#9654;</button><button id="budyf">free one</button><button id="budyx">free everything</button><button id="budyr">reset</button></div>
+   <div class="cap" id="budyo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a tree of halvings.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that the buddy system makes merging cheap. The inverse is that <b>it makes merging cheap by making most merges illegal</b>. Two adjacent free blocks of the same size usually cannot combine &mdash; only the one partner fixed at allocation time will do. The XOR is fast because the answer was decided before the question, and the <b>24.94%</b> waste is the same decision seen from the other side. Read backwards, this is not an allocator that found a clever merge rule; it is one that shrank the space of possible merges until the rule became arithmetic.</div>
+   <div class="btns" style="margin-top:10px"><button id="budys">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> a 1,048,576-byte arena with 64-byte minimum blocks and 200 random allocations: every buddy address satisfies buddy = addr XOR size, checked on all 209 splits with 0 exceptions; 51,644 bytes were requested and 68,800 handed out, 17,156 bytes of internal waste at 24.94%, and freeing all 200 coalesces the arena back to a single whole block with 0 stray fragments<br><br><span class="fig">FIG</span> The buddy system is Harry Markowitz's (1963), described by Knuth in TAOCP vol. 1; Linux still allocates physical pages this way. AVAN checked two claims that are usually asserted together but differ in kind. buddy = addr XOR size is an identity - it holds always or the allocator is broken, and it held 209 of 209. Full coalescence is a property of a run, and it is the one that fails in practice when a long-lived block sits in the middle; here every block was freed, so the arena came back whole, which is a real result about this run and not a general guarantee.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of ROLLBACK &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,st=null;
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function mk(arena,min){return {A:arena,M:min,free:(function(){var f={};f[arena]=[0];return f;})(),live:[],splits:0,xorOk:1};}
+function p2(x,min){var v=min;while(v<x)v*=2;return v;}
+function alloc(S,want){
+ var need=p2(want,S.M),s=need;
+ while(s<=S.A&&!(S.free[s]&&S.free[s].length))s*=2;
+ if(s>S.A)return null;
+ var addr=S.free[s].pop();
+ while(s>need){s/=2;S.splits++;
+  var bud=addr+s;
+  if((addr^s)!==bud)S.xorOk=0;
+  (S.free[s]=S.free[s]||[]).push(bud);}
+ var b={addr:addr,size:need,want:want};S.live.push(b);return b;}
+function release(S,b){
+ var s=b.size,addr=b.addr;
+ for(;;){var bud=addr^s,L=S.free[s]||[],k=L.indexOf(bud);
+  if(k<0||s>=S.A){(S.free[s]=L).push(addr);break;}
+  L.splice(k,1);addr=Math.min(addr,bud);s*=2;}
+ var i=S.live.indexOf(b);if(i>=0)S.live.splice(i,1);}
+function selftest(){
+ var S=mk(1048576,64),r=rng(31),req=0,got=0,waste=0;
+ for(var i=0;i<200;i++){
+  var want=8+Math.floor(r()*500),b=alloc(S,want);
+  if(!b)break;
+  req+=want;got+=b.size;waste+=b.size-want;}
+ var n=S.live.length;
+ var copy=S.live.slice();
+ for(var j=0;j<copy.length;j++)release(S,copy[j]);
+ var whole=(S.free[S.A]||[]).length===1,stray=0;
+ for(var k in S.free)if(+k<S.A)stray+=S.free[k].length;
+ return {arena:1048576,minBlock:64,allocs:n,
+  requested:req,handedOut:got,internalWaste:waste,
+  wastePct:+(100*waste/got).toFixed(2),splits:S.splits,
+  buddyIsXor:S.xorOk===1,coalescedToWhole:whole,strayBlocks:stray,
+  ok:S.xorOk===1&&whole&&stray===0&&waste>0};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#9d00ff',14,20,11,'THE ARENA, SPLIT DOWN TO BLOCKS');
+ for(var d=0;d<8;d++){
+  var n=Math.pow(2,d),bw=(W-40)/n;
+  for(var i=0;i<n;i++){
+   nf(g,'rgba(157,0,255,'+(0.5-d*0.045)+')');
+   g.fillRect(20+i*bw,38+d*26,Math.max(1,bw-2),20);ng(g);}
+  nt(g,'#5a4a85',W-18,52+d*26,7,''+(1048576/n>=1024?(1048576/n/1024)+'K':1048576/n));}
+ nt(g,'#7de2b0',20,258,9,'buddy = addr XOR size -- verified on all '+VR.splits+' splits, '+
+  (VR.buddyIsXor?'0 exceptions':'FAILED'));
+ nt(g,'#ffd76a',20,276,9,'internal waste '+VR.wastePct+'%  ('+VR.internalWaste.toLocaleString()+
+  ' of '+VR.handedOut.toLocaleString()+' bytes handed out)');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#9d00ff',12,20,11,'ALLOCATE AND FREE');
+ var occ=[],i;
+ for(i=0;i<st.live.length;i++)occ.push(st.live[i]);
+ nf(g,'rgba(90,70,140,0.28)');g.fillRect(14,36,352,34);ng(g);
+ for(i=0;i<occ.length;i++){
+  var x=14+352*occ[i].addr/st.A,w=Math.max(1,352*occ[i].size/st.A);
+  nf(g,'hsla('+((Math.log(occ[i].size)/Math.LN2*37)%360)+',80%,62%,0.8)');
+  g.fillRect(x,36,w,34);ng(g);}
+ var freeCount=0,freeBytes=0;
+ for(var k in st.free){freeCount+=st.free[k].length;freeBytes+=st.free[k].length*(+k);}
+ nt(g,'#8a7ab8',14,96,9,'live blocks    '+st.live.length);
+ nt(g,'#8a7ab8',14,116,9,'free blocks    '+freeCount);
+ nt(g,'#5ad0ff',14,136,9,'free bytes     '+freeBytes.toLocaleString()+' of '+st.A.toLocaleString());
+ nt(g,'#ffd76a',14,156,9,'splits so far  '+st.splits);
+ nt(g,st.xorOk?'#7de2b0':'#ff5a8a',14,176,9,st.xorOk?'buddy = addr XOR size holds':'XOR IDENTITY BROKEN');
+ var sizes={};for(var m in st.free)if(st.free[m].length)sizes[m]=st.free[m].length;
+ var keys=Object.keys(sizes).sort(function(a,b){return a-b;});
+ for(i=0;i<keys.length&&i<10;i++){
+  var hh=Math.round(70*Math.min(1,sizes[keys[i]]/8));
+  nf(g,'rgba(157,0,255,0.6)');g.fillRect(20+i*34,280-hh,26,hh);ng(g);
+  nt(g,'#5a4a85',20+i*34,294,6,(+keys[i]>=1024?(+keys[i]/1024)+'K':keys[i]));}
+ nt(g,'#8a7ab8',14,312,8,'free-list population by block size');
+ var o=document.getElementById('budyo');
+ if(o)o.innerHTML='<b>'+st.live.length+'</b> live &middot; <b>'+freeCount+'</b> free blocks &middot; '+
+  (st.live.length===0?'<b>coalesced back to '+freeCount+' block'+(freeCount===1?'':'s')+'</b>':'splits <b>'+st.splits+'</b>');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'A TREE OF HALVINGS');
+ var cx=W/2,cy=80,rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ for(var d=0;d<5;d++){
+  var n=Math.pow(2,d);
+  for(var i=0;i<n;i++){
+   var x=(i-(n-1)/2)*(220/n),z=(d-2)*30,y=d*48;
+   var px=cx+x*rr-z*sn,py=cy+y*0.9+(x*sn+z*rr)*0.30;
+   ndot(g,px,py,4-d*0.5,'rgba(125,226,176,'+(0.85-d*0.13)+')');}}
+ nt(g,'#8a7ab8',12,H-22,8,'a block may merge with one partner only -- the sibling it was cut from');}
+document.getElementById('budya').onclick=function(){
+ var r=rng(st.splits*31+st.live.length+7);alloc(st,8+Math.floor(r()*500));drawW4();};
+document.getElementById('budyf').onclick=function(){if(st.live.length)release(st,st.live[0]);drawW4();};
+document.getElementById('budyx').onclick=function(){var c2=st.live.slice();
+ for(var i=0;i<c2.length;i++)release(st,c2[i]);drawW4();};
+document.getElementById('budyr').onclick=function(){st=mk(1048576,64);
+ for(var i=0;i<24;i++){var r=rng(i*17+5);alloc(st,8+Math.floor(r()*500));}drawW4();};
+document.getElementById('budys').onclick=function(){spin=!spin;};
+VR=selftest();window.__thebuddyallocator=VR;
+st=mk(1048576,64);for(var z=0;z<24;z++){var rr2=rng(z*17+5);alloc(st,8+Math.floor(rr2()*500));}
+drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

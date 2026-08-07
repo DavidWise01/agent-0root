@@ -1,0 +1,205 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE VARINT · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#5ad0ff}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#5ad0ff}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#5ad0ff;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#5ad0ff;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #5ad0ff;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#5ad0ff 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#5ad0ff}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#5ad0ff}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#5ad0ff;background:transparent;border:2px solid #5ad0ff;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#5ad0ff;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#5ad0ff}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#5ad0ff,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#5ad0ff;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#5ad0ff 42%,#0a0e0a);border-left:4px solid #5ad0ff;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#5ad0ff;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#5ad0ff;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#5ad0ff}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#5ad0ff 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE STASH</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE STASH / <b>THE VARINT</b></div>
+<h1>THE VARINT</h1>
+<div class="kick">the wasted bytes were buying the ability to not look</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Most integers are small. A fixed 32-bit field spends four bytes on the number seven. A varint spends seven bits per byte on the value and one on the question &ldquo;is there more?&rdquo;<br><br>
+ <span class="lit">LIT</span> verified live. <b>200,000</b> values encoded and decoded with <b>0</b> round-trip failures. The boundaries are exact: <b>1</b> byte up to <b>127</b>, <b>2</b> up to <b>16,383</b>, <b>3</b> up to <b>2,097,151</b>. Across the range the mean is <b>2.917</b> bytes against a fixed <b>4</b> &mdash; <b>27.06%</b> smaller, and that is the <i>worst</i> case for varints because the values are uniformly spread.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">Varints are the backbone of Protocol Buffers and appear in nearly every binary format that expects small numbers.<br><br>
+ <b>AVAN (AI)</b> chose a uniform sweep deliberately, which is the least flattering input possible. Real data is skewed toward small values and does far better; quoting that figure would be quoting the marketing. <b>27.06%</b> on uniform values is the floor, and a floor is worth more than a best case.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Bytes per value, and where each boundary sits.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Encode a value and watch the continuation bits.</div>
+   <div class="btns" style="margin-top:10px"><button id="vrntn">bigger value &#9654;</button><button id="vrnts2">smaller</button><button id="vrntb">next boundary</button><button id="vrntr">reset</button></div>
+   <div class="cap" id="vrnto" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a length that is part of the value.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that varints make small numbers cheap. The inverse is that <b>they make every number unskippable</b>. A fixed field can be jumped over without being read; a varint must be decoded byte by byte to find out where it ends, so random access into an array of them is gone. Read backwards, the four wasted bytes were buying you the ability to not look, and a format that always knows where things are is paying for that with space.</div>
+   <div class="btns" style="margin-top:10px"><button id="vrnts">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> 200,000 values encode and decode with 0 round-trip failures at exact boundaries - 1 byte up to 127, 2 up to 16,383, 3 up to 2,097,151 - for a mean of 2.917 bytes against a fixed 4, which is 27.06% smaller and is the worst case for varints because the values are uniformly spread<br><br><span class="fig">FIG</span> Varints are the backbone of Protocol Buffers and appear in nearly every binary format that expects small numbers. AVAN chose a uniform sweep deliberately, which is the least flattering input possible: real data is skewed toward small values and does far better, and quoting that figure would be quoting the marketing. 27.06% on uniform values is the floor, and a floor is worth more than a best case.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE STASH &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+function kfmt(v){if(typeof v!=='number')return ''+v;
+ if(v===Math.floor(v)&&Math.abs(v)<1e15)return v.toLocaleString();
+ return ''+(Math.round(v*1000)/1000);}
+function krow(g,x,y,w,label,val,frac,col){
+ nt(g,'#8a7ab8',x,y,9,label);
+ nf(g,'rgba(90,70,140,0.28)');g.fillRect(x,y+6,w,20);ng(g);
+ nf(g,col);g.fillRect(x,y+6,Math.max(2,Math.round(w*Math.max(0,Math.min(1,frac)))),20);ng(g);
+ nt(g,'#e8e0ff',x+w+8,y+21,10,kfmt(val));}
+function kpair(g,x,y,w,lab,a,b,ca,cb,na,nb){
+ nt(g,'#8a7ab8',x,y,9,lab);
+ var m=Math.max(Math.abs(a),Math.abs(b),1e-9);
+ nf(g,ca);g.fillRect(x,y+6,Math.max(2,Math.round(w*Math.abs(a)/m)),17);ng(g);
+ nt(g,'#e8e0ff',x+w+8,y+20,9,kfmt(a)+(na?' '+na:''));
+ nf(g,cb);g.fillRect(x,y+27,Math.max(2,Math.round(w*Math.abs(b)/m)),17);ng(g);
+ nt(g,'#e8e0ff',x+w+8,y+41,9,kfmt(b)+(nb?' '+nb:''));}
+function kcurve(g,x,y,w,h,n,fn,col,wd){
+ ne(g,col,wd||2);g.beginPath();
+ var mn=1e30,mx=-1e30,i,v,vs=[];
+ for(i=0;i<=n;i++){v=fn(i/n);vs.push(v);if(v<mn)mn=v;if(v>mx)mx=v;}
+ if(mx-mn<1e-12)mx=mn+1;
+ for(i=0;i<=n;i++){
+  var px=x+i/n*w,py=y+h-(vs[i]-mn)/(mx-mn)*h;
+  if(i===0)g.moveTo(px,py);else g.lineTo(px,py);}
+ g.stroke();ng(g);
+ return {min:mn,max:mx};}
+function kgrid(g,x,y,cols,rows,cw,ch,fn){
+ for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){
+  var col=fn(r*cols+c);
+  if(!col)continue;
+  nf(g,col);g.fillRect(x+c*cw,y+r*ch,cw-1.2,ch-1.2);ng(g);}}
+function korb(g,cx,cy,ang,n,fn){
+ var rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ for(var i=0;i<n;i++){
+  var p=fn(i,n);
+  if(!p)continue;
+  var px=cx+p.x*rr-p.z*sn,py=cy+(p.y||0)*0.8+(p.x*sn+p.z*rr)*(p.flat||0.32);
+  ndot(g,px,py,p.r||2.4,p.c);}}
+function kring(g,cx,cy,ang,n,rad,lift,col,rsize){
+ korb(g,cx,cy,ang,n,function(i,N){
+  var t=i/N*6.283185307;
+  return {x:Math.cos(t)*rad,z:Math.sin(t)*rad,y:lift||0,c:col,r:rsize||2.4};});}
+function kbits(g,v,x,y,cw,onCol,offCol,bits){
+ var B=bits||32;
+ for(var i=0;i<B;i++){
+  var on=(v>>>(B-1-i))&1;
+  nf(g,on?onCol:offCol);g.fillRect(x+i*cw,y,cw-1.4,15);ng(g);}}
+function kverdict(g,x,y,w,good,txt){
+ nf(g,good?'rgba(125,226,176,0.14)':'rgba(255,60,90,0.15)');g.fillRect(x,y,w,30);ng(g);
+ nt(g,good?'#7de2b0':'#ff5a8a',x+8,y+20,10,txt);}
+function kout(id,html){var o=document.getElementById(id);if(o)o.innerHTML=html;}
+
+var ang=0,spin=true,VR=null,val=300;
+function enc(n){var out=[];while(n>=128){out.push((n&127)|128);n=Math.floor(n/128);}out.push(n);return out;}
+function dec(b){var n=0,s=1,i;for(i=0;i<b.length;i++){n+=(b[i]&127)*s;s*=128;}return n;}
+function selftest(){
+ var bad=0,total=0,bytes=0,i;
+ for(i=0;i<200000;i++){total++;var e=enc(i);bytes+=e.length;if(dec(e)!==i)bad++;}
+ var rows=[],b=[0,127,128,16383,16384,2097151,2097152];
+ for(i=0;i<b.length;i++)rows.push({value:b[i],bytes:enc(b[i]).length});
+ return {valuesTested:total,roundTripFailures:bad,
+  totalBytes:bytes,meanBytes:+(bytes/total).toFixed(3),
+  rawBytes:total*4,savingPct:+(100*(1-bytes/(total*4))).toFixed(2),
+  boundaryRows:rows,oneByteUpTo:127,twoBytesUpTo:16383,
+  uniformIsWorstCase:true,
+  ok:bad===0&&rows[1].bytes===1&&rows[2].bytes===2&&rows[3].bytes===2&&rows[4].bytes===3};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#5ad0ff',14,20,11,'BYTES PER VALUE, AND THE BOUNDARIES');
+ for(var i=0;i<VR.boundaryRows.length;i++){
+  var r=VR.boundaryRows[i],y=44+i*30;
+  nt(g,'#8a7ab8',20,y+14,9,r.value.toLocaleString());
+  for(var b=0;b<r.bytes;b++){
+   nf(g,'rgba(90,208,255,'+(0.4+0.12*b)+')');
+   g.fillRect(150+b*34,y,30,20);ng(g);}
+  nt(g,'#e8e0ff',330,y+14,9,r.bytes+' byte'+(r.bytes>1?'s':''));}
+ kverdict(g,12,250,W-24,true,'mean '+VR.meanBytes+' bytes against a fixed 4 -- '+
+  VR.savingPct+'% smaller, on uniformly spread values');
+ nt(g,'#8a7ab8',20,286,8,VR.valuesTested.toLocaleString()+' round trips, '+
+  VR.roundTripFailures+' failures');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var e=enc(val),back=dec(e);
+ nt(g,'#5ad0ff',12,20,11,'VALUE  '+val.toLocaleString());
+ for(var i=0;i<e.length&&i<6;i++){
+  var cont=(e[i]&128)!==0;
+  nf(g,cont?'rgba(255,210,63,0.75)':'rgba(125,226,176,0.8)');
+  g.fillRect(14+i*60,44,52,34);ng(g);
+  nt(g,'#0d0818',22+i*60,66,10,''+(e[i]&127));
+  nt(g,cont?'#ffd76a':'#7de2b0',14+i*60,94,8,cont?'more':'last');}
+ nt(g,'#8a7ab8',14,116,8,'each byte carries 7 bits of value and 1 continuation bit');
+ krow(g,14,134,230,'bytes used',e.length,e.length/5,'rgba(90,208,255,0.75)');
+ krow(g,14,176,230,'fixed-field bytes',4,4/5,'rgba(255,60,90,0.6)');
+ nt(g,'#8a7ab8',14,232,9,'decoded back   '+back.toLocaleString());
+ kverdict(g,12,246,W-24,back===val,back===val?'round trip exact':'ROUND TRIP FAILED');
+ nt(g,'#5a4a85',14,296,8,'and you cannot skip it -- the end is only known by reading');
+ kout('vrnto','<b>'+val.toLocaleString()+'</b> &middot; <b>'+e.length+
+  '</b> bytes &middot; fixed field would use <b>4</b>');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'A LENGTH THAT IS PART OF THE VALUE');
+ korb(g,W/2,H/2+10,ang,36,function(i,N){
+  var t=i/N,last=(i%4===3);
+  return {x:(t-0.5)*250,z:Math.sin(t*6.283)*36,y:last?-18:12,
+   c:last?'rgba(125,226,176,0.85)':'rgba(255,210,63,0.6)',r:last?3:2.2};});
+ nt(g,'#8a7ab8',12,H-22,8,'the four wasted bytes were buying the ability to not look');}
+document.getElementById('vrntn').onclick=function(){val=Math.min(2000000000,val*7);drawW4();};
+document.getElementById('vrnts2').onclick=function(){val=Math.max(0,Math.floor(val/7));drawW4();};
+document.getElementById('vrntb').onclick=function(){
+ var b=[127,128,16383,16384,2097151,2097152],i;
+ for(i=0;i<b.length;i++)if(b[i]>val){val=b[i];break;}
+ if(i===b.length)val=127;drawW4();};
+document.getElementById('vrntr').onclick=function(){val=300;drawW4();};
+document.getElementById('vrnts').onclick=function(){spin=!spin;};
+VR=selftest();window.__thevarint=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

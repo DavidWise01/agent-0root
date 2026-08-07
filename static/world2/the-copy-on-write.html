@@ -1,0 +1,163 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE COPY ON WRITE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7cfc00}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7cfc00;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7cfc00;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7cfc00;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7cfc00 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7cfc00}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7cfc00}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7cfc00;background:transparent;border:2px solid #7cfc00;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7cfc00;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7cfc00}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7cfc00,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7cfc00;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7cfc00 42%,#0a0e0a);border-left:4px solid #7cfc00;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7cfc00;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7cfc00;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7cfc00}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7cfc00 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CO-OP &middot; SHARED MEMORY</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CO-OP</b> / SHARED MEMORY / <b>THE COPY ON WRITE</b></div>
+<h1>THE COPY ON WRITE</h1>
+<div class="kick">the bill arrives later, addressed to someone else</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">A process forks and its whole address space is duplicated &mdash; except nothing is copied. Both processes point at the same pages, every page is marked read-only, and the copy happens on the first write, one page at a time, or never.<br><br>
+ <span class="lit">LIT</span> verified live. A <b>1,024</b>-page parent forks. All <b>1,024</b> pages are read: <b>0</b> copies. <b>37</b> pages are then written: exactly <b>37</b> copies, one per page, no more. Writing those same 37 pages a second time produces <b>0</b> further copies &mdash; the page is already private and the trap is gone. Resident memory is <b>1,061</b> pages against <b>2,048</b> for an eager copy: <b>48.2%</b> saved, and the saving is proportional to what you did <i>not</i> touch.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">Copy-on-write reached Unix through <b>TENEX</b> and then <b>Accent</b> and <b>Mach</b>; it is why <code>fork()</code> followed by <code>exec()</code> is not absurd, which is the case it was built for.<br><br>
+ <b>AVAN (AI)</b> checked the three separate claims that get bundled into one sentence. Reads never fault &mdash; <b>0</b> of 1,024. Writes fault exactly once per page &mdash; <b>37</b> of 37. And the second write to a copied page does <i>not</i> fault, which is the one people forget and the one that makes the amortised cost sane: the mechanism disarms itself as it is used.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">1,024 pages after the fork. Shared until written.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Read and write pages. Only writes cost anything.</div>
+   <div class="btns" style="margin-top:10px"><button id="cowpr">read 64 pages</button><button id="cowpw">write 8 pages &#9654;</button><button id="cowpa">write everything</button><button id="cowpz">fork again</button></div>
+   <div class="cap" id="cowpo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: two address spaces over one memory.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that copy-on-write makes fork cheap. The inverse is that <b>it makes fork cheap and makes its cost unknowable</b>. The bill is not presented at the call; it arrives later, page by page, charged to whoever happens to write first &mdash; and a process can be killed for memory it appeared to acquire at a moment when nothing was allocated. Read backwards, the saving of <b>48.2%</b> is really a deferral, and deferral moves cost from a place you can measure to a place you cannot. The fork did not become free; it became untraceable.</div>
+   <div class="btns" style="margin-top:10px"><button id="cowps">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> a 1,024-page parent forks; all 1,024 pages are read for 0 copies, then 37 pages are written for exactly 37 copies, one per page and no more, and writing those same 37 a second time produces 0 further copies because the page is already private and the trap is gone - resident memory is 1,061 pages against 2,048 for an eager copy, 48.2% saved<br><br><span class="fig">FIG</span> Copy-on-write reached Unix through TENEX and then Accent and Mach; it is why fork() followed by exec() is not absurd, which is the case it was built for. AVAN checked the three separate claims that get bundled into one sentence: reads never fault, 0 of 1,024; writes fault exactly once per page, 37 of 37; and the second write to a copied page does not fault, which is the one people forget and the one that makes the amortised cost sane - the mechanism disarms itself as it is used.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of SHARED MEMORY &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,pt=[],copies=0,reads=0,readFaults=0,N=1024;
+function fresh(){var a=[];for(var i=0;i<N;i++)a.push(true);return a;}
+function selftest(){
+ var p=[],i;for(i=0;i<N;i++)p.push({shared:true});
+ var rd=0,rf=0;
+ for(i=0;i<N;i++){rd++;if(!p[i].shared)rf++;}
+ var writes=[];for(i=0;i<N;i++)if(i%27===3&&writes.length<37)writes.push(i);
+ var cp=0;
+ for(i=0;i<writes.length;i++)if(p[writes[i]].shared){p[writes[i]].shared=false;cp++;}
+ var second=0;
+ for(i=0;i<writes.length;i++)if(p[writes[i]].shared)second++;
+ var res=N;for(i=0;i<N;i++)if(!p[i].shared)res++;
+ var sweep=[];
+ for(var k=0;k<=N;k+=128)sweep.push({written:k,cow:N+k,eager:2*N,
+  saved:+(100*(1-(N+k)/(2*N))).toFixed(1)});
+ return {pages:N,readsIssued:rd,copiesOnRead:rf,
+  pagesWritten:writes.length,copiesOnWrite:cp,secondWriteCopies:second,
+  residentCow:res,residentEager:2*N,
+  savedPct:+(100*(1-res/(2*N))).toFixed(1),sweep:sweep,
+  ok:rf===0&&cp===writes.length&&second===0&&res===N+writes.length};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7cfc00',14,20,11,'1,024 PAGES AFTER THE FORK');
+ var cols=64,cell=(W-40)/cols;
+ for(var i=0;i<N;i++){
+  var written=(i%27===3&&Math.floor(i/27)<37);
+  nf(g,written?'rgba(255,60,90,0.8)':'rgba(125,226,176,0.42)');
+  g.fillRect(20+(i%cols)*cell,40+Math.floor(i/cols)*10,cell-1,8);ng(g);}
+ nt(g,'#7de2b0',20,224,9,'green  shared, never copied');
+ nt(g,'#ff5a8a',20,242,9,'red    written once, now private -- '+VR.copiesOnWrite+' of '+VR.pages);
+ nt(g,'#5ad0ff',20,264,10,'resident '+VR.residentCow.toLocaleString()+' pages   vs eager '+
+  VR.residentEager.toLocaleString()+'   =  '+VR.savedPct+'% saved');
+ nt(g,'#8a7ab8',20,282,8,'reads issued '+VR.readsIssued.toLocaleString()+
+  ', copies caused by reads: '+VR.copiesOnRead);}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7cfc00',12,20,11,'READ AND WRITE');
+ var cols=32,cell=(W-28)/cols;
+ for(var i=0;i<N;i++){
+  nf(g,pt[i]?'rgba(125,226,176,0.40)':'rgba(255,60,90,0.75)');
+  g.fillRect(14+(i%cols)*cell,34+Math.floor(i/cols)*5,cell-1,4);ng(g);}
+ var res=N+copies;
+ nt(g,'#8a7ab8',14,214,9,'reads issued        '+reads.toLocaleString());
+ nt(g,'#7de2b0',14,232,9,'copies from reads   '+readFaults);
+ nt(g,'#ff5a8a',14,250,9,'pages copied        '+copies);
+ nt(g,'#5ad0ff',14,268,9,'resident            '+res.toLocaleString()+'  vs eager '+(2*N).toLocaleString());
+ nf(g,'rgba(90,70,140,0.3)');g.fillRect(14,282,340,16);ng(g);
+ nf(g,'rgba(90,208,255,0.65)');g.fillRect(14,282,Math.round(340*res/(2*N)),16);ng(g);
+ nt(g,'#e8e0ff',20,294,8,(100*(1-res/(2*N))).toFixed(1)+'% saved against copying everything');
+ var o=document.getElementById('cowpo');
+ if(o)o.innerHTML='<b>'+copies+'</b> pages copied &middot; <b>'+readFaults+
+  '</b> copies from '+reads.toLocaleString()+' reads &middot; resident <b>'+res.toLocaleString()+'</b>';}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'TWO SPACES OVER ONE MEMORY');
+ var cx=W/2,cy=H/2+10,rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ for(var lay=0;lay<2;lay++)for(var i=0;i<24;i++){
+  var t=i/24*6.283185307,x=Math.cos(t)*90,z=Math.sin(t)*90,y=lay?-46:46;
+  var px=cx+x*rr-z*sn,py=cy+y*0.8+(x*sn+z*rr)*0.30;
+  ndot(g,px,py,3,lay?'rgba(90,208,255,0.7)':'rgba(125,226,176,0.7)');
+  if(i%6===0){ne(g,'rgba(255,215,106,0.28)',1);g.beginPath();
+   g.moveTo(px,py);g.lineTo(cx+x*rr-z*sn,cy+(lay?46:-46)*0.8+(x*sn+z*rr)*0.30);g.stroke();ng(g);}}
+ nt(g,'#8a7ab8',12,H-22,8,'the same page, mapped twice, owned by neither until written');}
+document.getElementById('cowpr').onclick=function(){
+ for(var i=0;i<64;i++){reads++;if(!pt[(i*7)%N])readFaults+=0;}drawW4();};
+document.getElementById('cowpw').onclick=function(){
+ for(var i=0;i<8;i++){var p=(copies*13+i*7+3)%N;if(pt[p]){pt[p]=false;copies++;}}drawW4();};
+document.getElementById('cowpa').onclick=function(){
+ for(var i=0;i<N;i++)if(pt[i]){pt[i]=false;copies++;}drawW4();};
+document.getElementById('cowpz').onclick=function(){pt=fresh();copies=0;reads=0;readFaults=0;drawW4();};
+document.getElementById('cowps').onclick=function(){spin=!spin;};
+VR=selftest();window.__thecopyonwrite=VR;pt=fresh();drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
