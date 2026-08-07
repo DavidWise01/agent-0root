@@ -463,6 +463,20 @@ def llms_txt():
     return _index_file("llms.txt", "text/plain; charset=utf-8")
 
 
+@app.get("/corpus.jsonl")
+def corpus_jsonl():
+    """THE WHOLE CORPUS, ONE CONTINUOUS FILE — both worlds, 3,573 spheres.
+
+    Newline-delimited JSON: line 1 a manifest, every line after one sphere. The
+    two split exports each wrap their spheres in a single JSON object, so a
+    reader has to hold 15 MB before it can look at the first record; this one
+    streams a line at a time and appends without a rewrite.
+
+    Served as application/x-ndjson so a client does not try to json.loads() the
+    whole thing as one document and fail on line 2."""
+    return _index_file("corpus.jsonl", "application/x-ndjson")
+
+
 @app.get("/corpus-world1.json")
 def corpus_world1():
     """World I — 2,048 sealed spheres, full text, domain + appeal + url per sphere."""

@@ -433,6 +433,7 @@ def robots_txt(base_url=""):
     lines += [
         "# -- the corpus, machine-readable (do not parse the HTML) --",
         f"# the manifest:  {b}/llms.txt",
+        f"# EVERYTHING:    {b}/corpus.jsonl         (both worlds, 3,573 spheres, one line each)",
         f"# the index:     {b}/corpus.json          (small - read this first)",
         f"# World I:       {b}/corpus-world1.json   (2,048 sealed spheres, full text)",
         f"# World II:      {b}/corpus-world2.json   (the fold, full text, count climbs)",
