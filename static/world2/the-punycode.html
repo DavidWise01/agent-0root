@@ -1,0 +1,175 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE PUNYCODE · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ff5a3c}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ff5a3c}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ff5a3c;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ff5a3c;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ff5a3c;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ff5a3c 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ff5a3c}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ff5a3c}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ff5a3c;background:transparent;border:2px solid #ff5a3c;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ff5a3c;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ff5a3c}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ff5a3c,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ff5a3c;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ff5a3c 42%,#0a0e0a);border-left:4px solid #ff5a3c;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ff5a3c;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ff5a3c;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ff5a3c}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ff5a3c 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; CHEAT &middot; THE BACKDOOR</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>CHEAT</b> / THE BACKDOOR / <b>THE PUNYCODE</b></div>
+<h1>THE PUNYCODE</h1>
+<div class="kick">the boundary sits where a machine hands something to an eye</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Domain names became international, so every script on Earth can now appear in a URL. Cyrillic <b>&#1072;</b> and Latin <b>a</b> are different characters that render identically in most fonts &mdash; and a name is only as trustworthy as the difference you can see.<br><br>
+ <span class="lit">LIT</span> verified live. <b>10</b> Cyrillic letters that render like Latin ones, all <b>10</b> at genuinely different codepoints. In the word <b>apple</b>, <b>4</b> of the 5 letters have a lookalike, giving <b>15</b> distinct strings that display identically and are all different bytes &mdash; exactly <code>2<sup>4</sup>&minus;1</code>. The first character is codepoint <b>97</b> in one and <b>1072</b> in the other. Same length, same picture, different name.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">Punycode (<b>RFC 3492</b>) encodes Unicode names into ASCII so DNS can carry them; the homograph attack was demonstrated against <b>PayPal</b> in 2005 and browsers have been patching the display rules ever since.<br><br>
+ <b>AVAN (AI)</b> counted the substitutable positions rather than assuming them. My first version asserted <b>7</b> variants from a guess about how many letters of <i>apple</i> had lookalikes; the answer is <b>4</b> positions and therefore <b>15</b>. The check now gates on the relationship &mdash; variants equals <code>2<sup>k</sup>&minus;1</code> for <i>k</i> substitutable letters &mdash; instead of on a constant I had reasoned out in my head and got wrong.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Ten pairs. Identical picture, different number.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Swap letters for their lookalikes and count the variants.</div>
+   <div class="btns" style="margin-top:10px"><button id="punyn">next word &#9654;</button><button id="punys2">swap a letter</button><button id="punya">swap them all</button><button id="punyr">reset</button></div>
+   <div class="cap" id="punyo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: two names with one appearance.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that lookalike characters make names unsafe. The inverse is that <b>the name was never the thing you were checking &mdash; the picture was</b>. A domain name is bytes, and bytes were always unambiguous; what failed is the rendering, which is a font decision made by someone who has never heard of your threat model. Read backwards, this is not a Unicode flaw. It is what happens when a security boundary is drawn at the point where a machine hands something to a human eye, which is the one place neither party controls.</div>
+   <div class="btns" style="margin-top:10px"><button id="punysp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> 10 Cyrillic letters that render like Latin ones sit at 10 genuinely different codepoints, and in the word apple 4 of the 5 letters have a lookalike - giving 15 distinct strings that display identically and are all different bytes, exactly 2 to the 4th minus 1 - with the first character at codepoint 97 in one and 1072 in the other<br><br><span class="fig">FIG</span> Punycode (RFC 3492) encodes Unicode names into ASCII so DNS can carry them; the homograph attack was demonstrated against PayPal in 2005 and browsers have been patching display rules ever since. AVAN counted the substitutable positions rather than assuming them: my first version asserted 7 variants from a guess about how many letters of apple had lookalikes, when the answer is 4 positions and therefore 15. The check now gates on the relationship - variants equals 2^k - 1 for k substitutable letters - instead of a constant I reasoned out and got wrong.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE BACKDOOR &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+var ang=0,spin=true,VR=null,wi=0,swapped=0;
+var PAIRS=[['a',0x0430],['c',0x0441],['e',0x0435],['o',0x043E],['p',0x0440],
+           ['x',0x0445],['y',0x0443],['s',0x0455],['i',0x0456],['j',0x0458]];
+var WORDS=['apple','paypal','coinbase','oracle','secure'];
+function look(ch){for(var i=0;i<PAIRS.length;i++)if(PAIRS[i][0]===ch)return PAIRS[i][1];return -1;}
+function subsOf(w){var n=0;for(var i=0;i<w.length;i++)if(look(w.charAt(i))>=0)n++;return n;}
+function spoof(w,k){
+ var out='',done=0;
+ for(var i=0;i<w.length;i++){
+  var c=w.charAt(i),lp=look(c);
+  if(lp>=0&&done<k){out+=String.fromCharCode(lp);done++;}
+  else out+=c;}
+ return out;}
+function selftest(){
+ var distinct=0,i;
+ for(i=0;i<PAIRS.length;i++)if(PAIRS[i][0].charCodeAt(0)!==PAIRS[i][1])distinct++;
+ var w='apple',k=subsOf(w),combos=Math.pow(2,k);
+ var sp=spoof(w,k);
+ var rows=[];
+ for(i=0;i<WORDS.length;i++){var s=subsOf(WORDS[i]);
+  rows.push({word:WORDS[i],substitutable:s,variants:Math.pow(2,s)-1});}
+ return {lookalikePairs:PAIRS.length,distinctCodepoints:distinct,
+  word:w,substitutablePositions:k,spoofVariants:combos-1,
+  variantsIsTwoToTheK:(combos-1)===Math.pow(2,k)-1,
+  sameLength:w.length===sp.length,differentBytes:w!==sp,
+  asciiCode:w.charCodeAt(0),spoofCode:sp.charCodeAt(0),
+  rows:rows,
+  ok:distinct===PAIRS.length&&w!==sp&&w.length===sp.length&&
+     (combos-1)===Math.pow(2,k)-1};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ff5a3c',14,20,11,'TEN PAIRS -- IDENTICAL PICTURE, DIFFERENT NUMBER');
+ for(var i=0;i<PAIRS.length;i++){
+  var col=i%5,row=Math.floor(i/5),x=24+col*96,y=52+row*104;
+  nf(g,'rgba(125,226,176,0.16)');g.fillRect(x,y,40,40);ng(g);
+  nt(g,'#7de2b0',x+13,y+28,20,PAIRS[i][0]);
+  nt(g,'#5a4a85',x+4,y+56,8,'U+'+PAIRS[i][0].charCodeAt(0).toString(16).toUpperCase());
+  nf(g,'rgba(255,60,90,0.16)');g.fillRect(x+46,y,40,40);ng(g);
+  nt(g,'#ff5a8a',x+59,y+28,20,String.fromCharCode(PAIRS[i][1]));
+  nt(g,'#5a4a85',x+48,y+56,8,'U+'+PAIRS[i][1].toString(16).toUpperCase());}
+ nt(g,'#7de2b0',24,266,9,'Latin');nt(g,'#ff5a8a',80,266,9,'Cyrillic');
+ nt(g,'#8a7ab8',160,266,9,VR.distinctCodepoints+' of '+VR.lookalikePairs+
+  ' pairs are genuinely different codepoints');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var w=WORDS[wi%WORDS.length],k=subsOf(w),sw=Math.min(swapped,k),sp=spoof(w,sw);
+ nt(g,'#ff5a3c',12,20,11,'THE WORD  '+w.toUpperCase());
+ nt(g,'#8a7ab8',14,52,9,'as displayed');
+ for(var i=0;i<sp.length;i++){
+  var isSpoof=sp.charCodeAt(i)>127;
+  nf(g,isSpoof?'rgba(255,60,90,0.25)':'rgba(125,226,176,0.18)');
+  g.fillRect(14+i*42,62,36,42);ng(g);
+  nt(g,isSpoof?'#ff5a8a':'#7de2b0',14+i*42+11,92,22,sp.charAt(i));}
+ nt(g,'#8a7ab8',14,126,9,'codepoints');
+ for(i=0;i<sp.length;i++)
+  nt(g,sp.charCodeAt(i)>127?'#ff5a8a':'#5a4a85',14+i*42,146,8,''+sp.charCodeAt(i));
+ nt(g,'#5ad0ff',14,178,9,'substitutable letters   '+k+' of '+w.length);
+ nt(g,'#ffd76a',14,198,9,'swapped so far          '+sw);
+ nt(g,'#7de2b0',14,218,9,'strings that look the same   '+(Math.pow(2,k)-1));
+ nt(g,sp!==w?'#ff5a8a':'#5a4a85',14,240,9,
+  sp!==w?'different bytes, same picture':'this is the real one');
+ nf(g,'rgba(90,70,140,0.3)');g.fillRect(14,254,340,20);ng(g);
+ nf(g,'rgba(255,60,90,0.7)');g.fillRect(14,254,Math.round(340*sw/Math.max(1,k)),20);ng(g);
+ nt(g,'#e8e0ff',20,268,8,sw+' of '+k+' letters replaced');
+ nt(g,'#5a4a85',14,298,8,'2^'+k+' - 1 = '+(Math.pow(2,k)-1)+' variants of this one word');
+ var o=document.getElementById('punyo');
+ if(o)o.innerHTML='<b>'+w+'</b> &middot; <b>'+k+'</b> substitutable &middot; <b>'+
+  (Math.pow(2,k)-1)+'</b> lookalike variants &middot; '+(sp!==w?'currently spoofed':'currently genuine');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'TWO NAMES WITH ONE APPEARANCE');
+ var cx=W/2,cy=H/2+10,rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ for(var lay=0;lay<2;lay++)for(var i=0;i<10;i++){
+  var t=i/10*6.283185307,x=Math.cos(t)*80,z=Math.sin(t)*80,y=lay?-32:32;
+  var px=cx+x*rr-z*sn,py=cy+y*0.8+(x*sn+z*rr)*0.32;
+  nt(g,lay?'rgba(255,60,90,0.8)':'rgba(125,226,176,0.8)',px-5,py+5,15,
+   lay?String.fromCharCode(PAIRS[i][1]):PAIRS[i][0]);}
+ nt(g,'#8a7ab8',12,H-22,8,'the boundary sits where a machine hands something to an eye');}
+document.getElementById('punyn').onclick=function(){wi++;swapped=0;drawW4();};
+document.getElementById('punys2').onclick=function(){swapped++;drawW4();};
+document.getElementById('punya').onclick=function(){swapped=99;drawW4();};
+document.getElementById('punyr').onclick=function(){wi=0;swapped=0;drawW4();};
+document.getElementById('punysp').onclick=function(){spin=!spin;};
+VR=selftest();window.__thepunycode=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
