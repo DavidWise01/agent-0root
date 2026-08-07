@@ -529,7 +529,12 @@ def _corpus_paths():
     /<name>.html, per-domain keeper pages at /d/<name>.html, and World II fold pages at
     /world2/<name>.html. index.html files are represented by their directory root (/,
     /world2/) rather than listed twice. Scanned live so new pages appear automatically."""
-    paths = ["/", "/world2/"]
+    # The machine-readable payload, declared. Without these the sitemap listed
+    # 1,670 HTML pages and 0 of the corpus -- an agent crawling the map found
+    # every page and no manifest, and World I's 2,048 spheres are not on this
+    # host at all, so the manifest is the ONLY way this host declares them.
+    paths = ["/", "/world2/", "/llms.txt", "/corpus.jsonl", "/corpus.json",
+             "/corpus-world1.json", "/corpus-world2.json", "/world2/fold.json"]
 
     def add(subdir, prefix):
         base = os.path.join(STATIC, subdir) if subdir else STATIC
