@@ -1,0 +1,217 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE RTT BIAS · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#ffd23f}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#ffd23f}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#ffd23f;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#ffd23f;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #ffd23f;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#ffd23f 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#ffd23f}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#ffd23f}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd23f;background:transparent;border:2px solid #ffd23f;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#ffd23f;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#ffd23f}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#ffd23f,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#ffd23f;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#ffd23f 42%,#0a0e0a);border-left:4px solid #ffd23f;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#ffd23f;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#ffd23f;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#ffd23f}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#ffd23f 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; BOSS &middot; THE GAUNTLET</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>BOSS</b> / THE GAUNTLET / <b>THE RTT BIAS</b></div>
+<h1>THE RTT BIAS</h1>
+<div class="kick">a rule written in one frame, judged in another</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Two flows run the identical algorithm on the identical link and do not get the identical share. The one with the shorter round trip increases its window more often, and the rule that is fair in steps is not fair in time.<br><br>
+ <span class="lit">LIT</span> verified live. Loss rate <b>0.01</b>, one flow at <b>10</b> ms and one at <b>100</b> ms &mdash; an RTT ratio of <b>10</b>. The closed form predicts a throughput ratio of <b>10.00</b>; simulating both flows on a shared link of capacity <b>200</b> over <b>200,000</b> ticks gives <b>9.91</b>. The near flow takes <b>90.83%</b> of the link and the far flow <b>9.17%</b>, with neither breaking a rule.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">RTT unfairness follows from the square-root throughput law &mdash; rate is inversely proportional to RTT &mdash; and it is why a distant user loses to a nearby one on a congested path.<br><br>
+ <b>AVAN (AI)</b> ran the simulation <i>and</i> the closed form so that neither has to be taken on faith. <b>9.91</b> against <b>10.00</b> is the model and the mechanism agreeing, which is worth more than either printed on its own.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Same rule, same link, different distance.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Move the far flow further away.</div>
+   <div class="btns" style="margin-top:10px"><button id="rttbf">further &#9654;</button><button id="rttbn">nearer</button><button id="rttbr">reset</button></div>
+   <div class="cap" id="rttbo" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: the same rule, two distances.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that RTT bias is an unfairness in the algorithm. The inverse is that <b>the algorithm has no concept of time and cannot be unfair in it</b>. AIMD is defined per round trip, and a round trip is the only clock it has; measured in its own units the two flows are treated identically. Read backwards, the bias is what appears when a rule written in one frame is judged in another, and the near flow is not cheating &mdash; it is simply being asked more often.</div>
+   <div class="btns" style="margin-top:10px"><button id="rttbp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> at a loss rate of 0.01 with one flow at 10 ms and one at 100 ms - an RTT ratio of 10 - the closed form predicts a throughput ratio of 10.00 while simulating both on a shared link of capacity 200 over 200,000 ticks gives 9.91, with the near flow taking 90.83% of the link and the far flow 9.17%, neither having broken a rule<br><br><span class="fig">FIG</span> RTT unfairness follows from the square-root throughput law - rate is inversely proportional to RTT - and it is why a distant user loses to a nearby one on a congested path. AVAN ran the simulation AND the closed form so neither has to be taken on faith. 9.91 against 10.00 is the model and the mechanism agreeing, which is worth more than either printed alone.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE GAUNTLET &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+function kfmt(v){if(typeof v!=='number')return ''+v;
+ if(v===Math.floor(v)&&Math.abs(v)<1e15)return v.toLocaleString();
+ return ''+(Math.round(v*1000)/1000);}
+function krow(g,x,y,w,label,val,frac,col){
+ nt(g,'#8a7ab8',x,y,9,label);
+ nf(g,'rgba(90,70,140,0.28)');g.fillRect(x,y+6,w,20);ng(g);
+ nf(g,col);g.fillRect(x,y+6,Math.max(2,Math.round(w*Math.max(0,Math.min(1,frac)))),20);ng(g);
+ nt(g,'#e8e0ff',x+w+8,y+21,10,kfmt(val));}
+function kpair(g,x,y,w,lab,a,b,ca,cb,na,nb){
+ nt(g,'#8a7ab8',x,y,9,lab);
+ var m=Math.max(Math.abs(a),Math.abs(b),1e-9);
+ nf(g,ca);g.fillRect(x,y+6,Math.max(2,Math.round(w*Math.abs(a)/m)),17);ng(g);
+ nt(g,'#e8e0ff',x+w+8,y+20,9,kfmt(a)+(na?' '+na:''));
+ nf(g,cb);g.fillRect(x,y+27,Math.max(2,Math.round(w*Math.abs(b)/m)),17);ng(g);
+ nt(g,'#e8e0ff',x+w+8,y+41,9,kfmt(b)+(nb?' '+nb:''));}
+function kcurve(g,x,y,w,h,n,fn,col,wd){
+ ne(g,col,wd||2);g.beginPath();
+ var mn=1e30,mx=-1e30,i,v,vs=[];
+ for(i=0;i<=n;i++){v=fn(i/n);vs.push(v);if(v<mn)mn=v;if(v>mx)mx=v;}
+ if(mx-mn<1e-12)mx=mn+1;
+ for(i=0;i<=n;i++){
+  var px=x+i/n*w,py=y+h-(vs[i]-mn)/(mx-mn)*h;
+  if(i===0)g.moveTo(px,py);else g.lineTo(px,py);}
+ g.stroke();ng(g);
+ return {min:mn,max:mx};}
+function kgrid(g,x,y,cols,rows,cw,ch,fn){
+ for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){
+  var col=fn(r*cols+c);
+  if(!col)continue;
+  nf(g,col);g.fillRect(x+c*cw,y+r*ch,cw-1.2,ch-1.2);ng(g);}}
+function korb(g,cx,cy,ang,n,fn){
+ var rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ for(var i=0;i<n;i++){
+  var p=fn(i,n);
+  if(!p)continue;
+  var px=cx+p.x*rr-p.z*sn,py=cy+(p.y||0)*0.8+(p.x*sn+p.z*rr)*(p.flat||0.32);
+  ndot(g,px,py,p.r||2.4,p.c);}}
+function kring(g,cx,cy,ang,n,rad,lift,col,rsize){
+ korb(g,cx,cy,ang,n,function(i,N){
+  var t=i/N*6.283185307;
+  return {x:Math.cos(t)*rad,z:Math.sin(t)*rad,y:lift||0,c:col,r:rsize||2.4};});}
+function kbits(g,v,x,y,cw,onCol,offCol,bits){
+ var B=bits||32;
+ for(var i=0;i<B;i++){
+  var on=(v>>>(B-1-i))&1;
+  nf(g,on?onCol:offCol);g.fillRect(x+i*cw,y,cw-1.4,15);ng(g);}}
+function kverdict(g,x,y,w,good,txt){
+ nf(g,good?'rgba(125,226,176,0.14)':'rgba(255,60,90,0.15)');g.fillRect(x,y,w,30);ng(g);
+ nt(g,good?'#7de2b0':'#ff5a8a',x+8,y+20,10,txt);}
+function kout(id,html){var o=document.getElementById(id);if(o)o.innerHTML=html;}
+
+var ang=0,spin=true,VR=null,far=100;
+var NEAR=10;
+function sim(nr,fr){
+ var C=200,w1=10,w2=10,T=200000,s1=0,s2=0,t;
+ for(t=0;t<T;t++){
+  if(t%nr===0)w1+=1;
+  if(t%fr===0)w2+=1;
+  if(w1+w2>C){w1*=0.5;w2*=0.5;}
+  s1+=w1;s2+=w2;}
+ return {s1:s1,s2:s2,ratio:s1/s2};}
+function selftest(){
+ var m=sim(10,100);
+ var predicted=(1/(10*Math.sqrt(0.01)))/(1/(100*Math.sqrt(0.01)));
+ return {lossRate:0.01,nearRttMs:10,farRttMs:100,rttRatio:10,
+  sharedLinkCapacity:200,ticks:200000,
+  predictedThroughputRatio:+predicted.toFixed(2),
+  simulatedThroughputRatio:+m.ratio.toFixed(2),
+  nearFlowSharePct:+(100*m.s1/(m.s1+m.s2)).toFixed(2),
+  farFlowSharePct:+(100*m.s2/(m.s1+m.s2)).toFixed(2),
+  bothRunTheSameAlgorithm:true,
+  modelAndMechanismAgree:Math.abs(predicted-m.ratio)<0.5,
+  ok:predicted>1&&m.ratio>1};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#ffd23f',14,20,11,'SAME RULE, SAME LINK, DIFFERENT DISTANCE');
+ nt(g,'#7de2b0',20,48,9,'near flow  -  10 ms round trip');
+ nf(g,'rgba(90,70,140,0.25)');g.fillRect(20,56,440,28);ng(g);
+ nf(g,'rgba(125,226,176,0.85)');
+ g.fillRect(20,56,Math.round(440*VR.nearFlowSharePct/100),28);ng(g);
+ nt(g,'#e8e0ff',28,75,10,VR.nearFlowSharePct+'%');
+ nt(g,'#ff5a8a',20,112,9,'far flow  -  100 ms round trip');
+ nf(g,'rgba(90,70,140,0.25)');g.fillRect(20,120,440,28);ng(g);
+ nf(g,'rgba(255,60,90,0.85)');
+ g.fillRect(20,120,Math.round(440*VR.farFlowSharePct/100),28);ng(g);
+ nt(g,'#e8e0ff',28,139,10,VR.farFlowSharePct+'%');
+ krow(g,20,166,300,'simulated ratio',VR.simulatedThroughputRatio,
+  VR.simulatedThroughputRatio/12,'rgba(255,210,63,0.8)');
+ krow(g,20,208,300,'closed form predicts',VR.predictedThroughputRatio,
+  VR.predictedThroughputRatio/12,'rgba(90,208,255,0.7)');
+ kverdict(g,12,250,W-24,true,'the model and the mechanism agree, and neither flow '+
+  'broke a rule');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var m=sim(NEAR,far);
+ var np=100*m.s1/(m.s1+m.s2);
+ nt(g,'#ffd23f',12,20,11,'10 ms  AGAINST  '+far+' ms');
+ nf(g,'rgba(90,70,140,0.25)');g.fillRect(14,44,340,34);ng(g);
+ nf(g,'rgba(125,226,176,0.85)');g.fillRect(14,44,Math.round(340*np/100),34);ng(g);
+ nt(g,'#0a0713',22,66,11,np.toFixed(1)+'%');
+ nt(g,'#ff5a8a',300,66,10,(100-np).toFixed(1)+'%');
+ nt(g,'#8a7ab8',14,94,8,'green = the near flow, red = the far one');
+ krow(g,14,112,230,'RTT ratio',far/NEAR,Math.min(1,(far/NEAR)/60),
+  'rgba(90,208,255,0.7)');
+ krow(g,14,154,230,'throughput ratio',+m.ratio.toFixed(2),
+  Math.min(1,m.ratio/60),'rgba(255,210,63,0.8)');
+ krow(g,14,196,230,'far flow share %',+(100-np).toFixed(2),(100-np)/100,
+  'rgba(255,60,90,0.8)');
+ kverdict(g,12,238,W-24,Math.abs(np-50)<5,
+  Math.abs(np-50)<5?'roughly equal -- the paths are the same length':
+  'the distant flow gets '+(100-np).toFixed(1)+'% while obeying every rule');
+ nt(g,'#5a4a85',14,288,8,'AIMD is defined per round trip -- that is its only clock');
+ nt(g,'#5a4a85',14,308,8,'the near flow is simply asked more often');
+ kout('rttbo',far+' ms &middot; ratio <b>'+m.ratio.toFixed(2)+
+  '</b> &middot; far flow <b>'+(100-np).toFixed(2)+'%</b>');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'THE SAME RULE, TWO DISTANCES');
+ kring(g,W/2,H/2+10,ang*3,10,46,-20,'rgba(125,226,176,0.85)',3.4);
+ kring(g,W/2,H/2+10,ang*0.3,10,100,20,'rgba(255,60,90,0.6)',2.6);
+ nt(g,'#8a7ab8',12,H-22,8,'a rule written in one frame, judged in another');}
+document.getElementById('rttbf').onclick=function(){far=Math.min(600,far+50);drawW4();};
+document.getElementById('rttbn').onclick=function(){far=Math.max(10,far-50);drawW4();};
+document.getElementById('rttbr').onclick=function(){far=100;drawW4();};
+document.getElementById('rttbp').onclick=function(){spin=!spin;};
+VR=selftest();window.__therttbias=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>

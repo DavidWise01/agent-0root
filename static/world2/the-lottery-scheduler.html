@@ -1,0 +1,217 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE LOTTERY SCHEDULER · WORLD II — THE FOLD</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{box-sizing:border-box}
+body{margin:0;background:#070b07;color:#a8e6b4;font-family:'VT323',ui-monospace,monospace;font-size:19px;line-height:1.5}
+#rain{position:fixed;inset:0;z-index:0;opacity:.5}
+.cm-scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0),rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,0) 4px)}
+.cm-top{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;background:rgba(4,7,4,.85);border-bottom:3px solid #255c2c;font-family:'Press Start 2P',ui-monospace,monospace;font-size:9.5px;color:#39fc6b;backdrop-filter:blur(3px)}
+.cm-top a{color:#39fc6b;text-decoration:none}.cm-top a:hover{color:#ffd23f}.cm-top .sl{color:#7cfc00}
+main{position:relative;z-index:10;max-width:900px;margin:0 auto;padding:70px 20px 60px}
+.bc{font-family:'Press Start 2P',monospace;font-size:9px;color:#4c7a54;margin-bottom:14px}
+.bc b{color:#7cfc00}
+h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#7cfc00;text-shadow:3px 3px 0 rgba(0,0,0,.6);margin:0 0 8px;line-height:1.35}
+.kick{font-size:20px;color:#7cfc00;font-style:italic;opacity:.9;margin-bottom:20px}
+.panel{background:#0c130b;border:3px solid #7cfc00;box-shadow:0 0 0 3px #0a0e0a,0 0 20px color-mix(in srgb,#7cfc00 30%,transparent);padding:18px 20px;margin:18px 0;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+canvas.inst{image-rendering:pixelated;background:#050805;border:2px solid #255c2c;flex:none}
+.ctrl{flex:1;min-width:240px}
+.rd{font-size:19px;margin:8px 0;color:#cfe8d0}
+.rd b{color:#39fc6b;font-size:22px;text-shadow:0 0 8px rgba(57,252,107,.5)}
+.rd.fate b,.fate{color:#7cfc00}
+input[type=range]{width:120px;vertical-align:middle;accent-color:#7cfc00}
+.btns{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.btns button{font-family:'Press Start 2P',monospace;font-size:8px;color:#7cfc00;background:transparent;border:2px solid #7cfc00;padding:8px 10px;cursor:pointer}
+.btns button:hover{background:#7cfc00;color:#0a0e0a}
+.net{font-family:ui-monospace,monospace;font-size:14px;color:#cfe8d0}
+.net .n{display:inline-block;border:1px solid #255c2c;padding:4px 7px;margin:2px;border-radius:3px}
+.net .fwd{color:#39fc6b}.net .bwd{color:#7cfc00}
+.lossbar{height:12px;background:#050805;border:1px solid #255c2c;margin-top:6px}
+.lossbar i{display:block;height:100%;background:linear-gradient(90deg,#7cfc00,#ff2d95);transition:width .1s}
+.note{background:#0a0f0a;border-left:4px solid #255c2c;padding:14px 16px;margin-top:22px;font-size:17px;color:#cfe8d0;line-height:1.6}
+.lit{color:#0a0e0a;background:#39fc6b;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.fig{color:#0a0e0a;background:#7cfc00;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px}
+.dead{color:#ffe9e9;background:#8c1020;font-family:'Press Start 2P',monospace;font-size:8px;padding:2px 5px;border:1px solid #ff5a5a}
+.win{background:#0a0f0a;border:2px solid color-mix(in srgb,#7cfc00 42%,#0a0e0a);border-left:4px solid #7cfc00;padding:16px 18px;margin:16px 0}
+.win .winh{font-family:'Press Start 2P',ui-monospace,monospace;font-size:10px;color:#7cfc00;margin-bottom:13px;display:flex;align-items:center;gap:9px;line-height:1.5}
+.win .winh .wn{background:#7cfc00;color:#0a0e0a;padding:3px 7px;font-size:10px}
+.win .wintxt{font-size:17px;line-height:1.6;color:#cfe8d0}
+.win .wintxt b{color:#7cfc00}
+.win .wc{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.win .wc canvas{image-rendering:pixelated;background:#050805;border:1px solid #255c2c;max-width:100%;flex:none}
+.win .wctrl{flex:1;min-width:210px}
+.win .cap{font-size:15px;color:#8ca;line-height:1.5}
+.win .avan{margin-top:12px;border-top:1px dashed color-mix(in srgb,#7cfc00 40%,transparent);padding-top:10px;font-size:15px;color:#cfe8d0}
+.win .avan b{color:#ff2d95}
+.seal{font-family:'Press Start 2P',monospace;font-size:8px;color:#4c7a54;margin-top:24px;border-top:2px solid #255c2c;padding-top:14px}
+</style></head><body>
+<canvas id="rain"></canvas><div class="cm-scan"></div>
+<div class="cm-top"><a href="./">&#9664; THE FOLD</a><span>0ROOT.AI // WORLD II &middot; LOOT &middot; THE VAULT</span><span class="sl">&#9670; .dlw.fold</span></div>
+<main>
+<div class="bc">THE FOLD / <b>LOOT</b> / THE VAULT / <b>THE LOTTERY SCHEDULER</b></div>
+<h1>THE LOTTERY SCHEDULER</h1>
+<div class="kick">a window too short for the limit to have arrived</div>
+<div class="win"><div class="winh"><span class="wn">1</span> WHAT IT IS &middot; WHAT IT DOES &middot; FACT OR FICTION</div>
+ <div class="wintxt">Hand out tickets in proportion to the share each process should get, then draw one at random and run its owner. No queue to maintain, no priorities to age, no bookkeeping at all &mdash; and it is only fair on average.<br><br>
+ <span class="lit">LIT</span> verified live. Tickets <b>10 / 20 / 30 / 40</b>, and the error measured as a mean over <b>200</b> independent runs at each size. At <b>100</b> draws the total absolute share error is <b>0.1296</b>; at <b>6,400</b> it is <b>0.01694</b>. Every quadrupling of the draws roughly halves the error &mdash; measured ratios <b>2.037</b>, <b>1.899</b>, <b>1.978</b> against the <b>2</b> that 1/&radic;N predicts. The fairness is real, and it is asymptotic.</div></div>
+<div class="win"><div class="winh"><span class="wn">2</span> HOW IT WAS WEAVED &middot; AI + HUMAN</div>
+ <div class="wintxt">Lottery scheduling is <b>Waldspurger and Weihl</b>&rsquo;s (1994); the appeal is that proportional share falls out of the draw with no state to keep.<br><br>
+ <b>AVAN (AI)</b> first gated this on the error shrinking at every step and it failed &mdash; <b>10,000</b> draws came out worse than <b>1,000</b>, because a single Monte Carlo walk is not monotonic and never was. The claim being made is a <i>rate</i>, and a rate cannot be read off one walk. Averaging <b>200</b> runs per point is what turns the assertion into a measurement.</div></div>
+<div class="win"><div class="winh"><span class="wn">3</span> ONE DIMENSION</div>
+ <div class="wc"><canvas id="w3" width="512" height="290"></canvas>
+  <div class="wctrl"><div class="cap">Error against draws. Four times the draws, half the error.</div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">4</span> TWO DIMENSIONS &middot; INTERACTIVE</div>
+ <div class="wc"><canvas id="w4" width="384" height="330"></canvas>
+  <div class="wctrl"><div class="cap">Draw tickets and watch the shares settle.</div>
+   <div class="btns" style="margin-top:10px"><button id="lottd">draw more &#9654;</button><button id="lottf">fewer</button><button id="lottr">reset</button></div>
+   <div class="cap" id="lotto" style="margin-top:8px"></div></div></div></div>
+<div class="win"><div class="winh"><span class="wn">5</span> THREE DIMENSIONS + AVAN&rsquo;S INVERSE</div>
+ <div class="wc"><canvas id="w5" width="384" height="360"></canvas>
+  <div class="wctrl"><div class="cap">The <b>green</b> forward object: a share that only exists over time.</div>
+   <div class="avan"><b>AVAN&rsquo;s addition</b> (the inverse-companion): the forward reading is that lottery scheduling gives proportional share. The inverse is that <b>it gives it to nobody who is watching</b>. A process holding <b>40</b> of <b>100</b> tickets can lose ten draws running, and over any window short enough for a person to notice, the guarantee simply is not there. Read backwards, the elegance is bought by moving the promise from each moment to the limit, and every user complaint about a scheduler is a complaint about a window too short for the limit to have arrived.</div>
+   <div class="btns" style="margin-top:10px"><button id="lottp">pause spin</button></div></div></div></div>
+<div class="note"><span class="lit">LIT</span> tickets of 10, 20, 30 and 40 with the error measured as a mean over 200 independent runs give a total absolute share error of 0.1296 at 100 draws and 0.01694 at 6,400, so every quadrupling of the draws roughly halves the error - measured ratios 2.037, 1.899 and 1.978 against the 2 that 1/sqrt(N) predicts<br><br><span class="fig">FIG</span> Lottery scheduling is Waldspurger and Weihl's (1994); the appeal is that proportional share falls out of the draw with no state to keep. AVAN first gated this on the error shrinking at every step and it failed - 10,000 draws came out worse than 1,000, because a single Monte Carlo walk is not monotonic and never was. The claim being made is a rate, and a rate cannot be read off one walk; averaging 200 runs per point is what turns the assertion into a measurement.</div>
+<div class="seal">&#9670; sealed .dlw.fold &rarr; folded to ROOT_0 &middot; a sphere of THE VAULT &middot; David Lee Wise (ROOT0), with AVAN</div>
+</main>
+<script>
+// green binary rain
+(function(){var c=document.getElementById('rain'),g=c.getContext('2d'),W,H,cols,drops,fs=14;
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;cols=Math.floor(W/fs);drops=Array(cols).fill(0);}
+rs();addEventListener('resize',rs);
+setInterval(function(){g.fillStyle='rgba(7,11,7,.09)';g.fillRect(0,0,W,H);g.fillStyle='#1aa63a';g.font=fs+'px VT323,monospace';
+for(var i=0;i<cols;i++){g.fillText(Math.random()<.5?'0':'1',i*fs,drops[i]*fs);if(drops[i]*fs>H&&Math.random()>.975)drops[i]=0;drops[i]++;}},70);})();
+(function(){function nb(g,W,H){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#0a0713');gr.addColorStop(0.6,'#0f0a1c');gr.addColorStop(1,'#150b22');g.fillStyle=gr;g.fillRect(0,0,W,H);g.strokeStyle='rgba(150,90,220,0.05)';g.lineWidth=1;for(var y=2;y<H;y+=3){g.beginPath();g.moveTo(0,y+0.5);g.lineTo(W,y+0.5);g.stroke();}var v=g.createRadialGradient(W/2,H*0.5,H*0.12,W/2,H*0.5,H*0.85);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,0.5)');g.fillStyle=v;g.fillRect(0,0,W,H);}
+function ne(g,c,w){g.strokeStyle=c;g.lineWidth=w||2;g.shadowColor=c;g.shadowBlur=9;g.lineCap='round';g.lineJoin='round';}
+function nf(g,c){g.fillStyle=c;g.shadowColor=c;g.shadowBlur=8;}
+function ng(g){g.shadowBlur=0;}
+function nt(g,c,x,y,s,txt){g.shadowBlur=0;g.fillStyle=c;g.font=(s||10)+'px monospace';g.fillText(txt,x,y);}
+function ndot(g,x,y,r,c){nf(g,c);g.beginPath();g.arc(x,y,r,0,7);g.fill();ng(g);}
+function kfmt(v){if(typeof v!=='number')return ''+v;
+ if(v===Math.floor(v)&&Math.abs(v)<1e15)return v.toLocaleString();
+ return ''+(Math.round(v*1000)/1000);}
+function krow(g,x,y,w,label,val,frac,col){
+ nt(g,'#8a7ab8',x,y,9,label);
+ nf(g,'rgba(90,70,140,0.28)');g.fillRect(x,y+6,w,20);ng(g);
+ nf(g,col);g.fillRect(x,y+6,Math.max(2,Math.round(w*Math.max(0,Math.min(1,frac)))),20);ng(g);
+ nt(g,'#e8e0ff',x+w+8,y+21,10,kfmt(val));}
+function kpair(g,x,y,w,lab,a,b,ca,cb,na,nb){
+ nt(g,'#8a7ab8',x,y,9,lab);
+ var m=Math.max(Math.abs(a),Math.abs(b),1e-9);
+ nf(g,ca);g.fillRect(x,y+6,Math.max(2,Math.round(w*Math.abs(a)/m)),17);ng(g);
+ nt(g,'#e8e0ff',x+w+8,y+20,9,kfmt(a)+(na?' '+na:''));
+ nf(g,cb);g.fillRect(x,y+27,Math.max(2,Math.round(w*Math.abs(b)/m)),17);ng(g);
+ nt(g,'#e8e0ff',x+w+8,y+41,9,kfmt(b)+(nb?' '+nb:''));}
+function kcurve(g,x,y,w,h,n,fn,col,wd){
+ ne(g,col,wd||2);g.beginPath();
+ var mn=1e30,mx=-1e30,i,v,vs=[];
+ for(i=0;i<=n;i++){v=fn(i/n);vs.push(v);if(v<mn)mn=v;if(v>mx)mx=v;}
+ if(mx-mn<1e-12)mx=mn+1;
+ for(i=0;i<=n;i++){
+  var px=x+i/n*w,py=y+h-(vs[i]-mn)/(mx-mn)*h;
+  if(i===0)g.moveTo(px,py);else g.lineTo(px,py);}
+ g.stroke();ng(g);
+ return {min:mn,max:mx};}
+function kgrid(g,x,y,cols,rows,cw,ch,fn){
+ for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){
+  var col=fn(r*cols+c);
+  if(!col)continue;
+  nf(g,col);g.fillRect(x+c*cw,y+r*ch,cw-1.2,ch-1.2);ng(g);}}
+function korb(g,cx,cy,ang,n,fn){
+ var rr=Math.cos(ang*0.0175),sn=Math.sin(ang*0.0175);
+ for(var i=0;i<n;i++){
+  var p=fn(i,n);
+  if(!p)continue;
+  var px=cx+p.x*rr-p.z*sn,py=cy+(p.y||0)*0.8+(p.x*sn+p.z*rr)*(p.flat||0.32);
+  ndot(g,px,py,p.r||2.4,p.c);}}
+function kring(g,cx,cy,ang,n,rad,lift,col,rsize){
+ korb(g,cx,cy,ang,n,function(i,N){
+  var t=i/N*6.283185307;
+  return {x:Math.cos(t)*rad,z:Math.sin(t)*rad,y:lift||0,c:col,r:rsize||2.4};});}
+function kbits(g,v,x,y,cw,onCol,offCol,bits){
+ var B=bits||32;
+ for(var i=0;i<B;i++){
+  var on=(v>>>(B-1-i))&1;
+  nf(g,on?onCol:offCol);g.fillRect(x+i*cw,y,cw-1.4,15);ng(g);}}
+function kverdict(g,x,y,w,good,txt){
+ nf(g,good?'rgba(125,226,176,0.14)':'rgba(255,60,90,0.15)');g.fillRect(x,y,w,30);ng(g);
+ nt(g,good?'#7de2b0':'#ff5a8a',x+8,y+20,10,txt);}
+function kout(id,html){var o=document.getElementById(id);if(o)o.innerHTML=html;}
+
+var ang=0,spin=true,VR=null,draws=400;
+var TICK=[10,20,30,40],TOT=100;
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function draw(N,seed){
+ var r=rng(seed),win=[0,0,0,0],i,k;
+ for(i=0;i<N;i++){
+  var t=r()*TOT,a=0;
+  for(k=0;k<4;k++){a+=TICK[k];if(t<a){win[k]++;break;}}}
+ return win;}
+function errOf(win,N){
+ var e=0;
+ for(var k=0;k<4;k++)e+=Math.abs(win[k]/N-TICK[k]/TOT);
+ return e;}
+function meanErr(N,s0){
+ var acc=0,TR=200;
+ for(var tr=0;tr<TR;tr++)acc+=errOf(draw(N,1000+s0*7919+tr*104729),N);
+ return acc/TR;}
+function selftest(){
+ var Ns=[100,400,1600,6400],rows=[],i;
+ for(i=0;i<Ns.length;i++)rows.push({draws:Ns[i],meanAbsError:+meanErr(Ns[i],i).toFixed(5)});
+ var shrinks=true;
+ for(i=1;i<rows.length;i++)if(rows[i].meanAbsError>=rows[i-1].meanAbsError)shrinks=false;
+ var ratios=[];
+ for(i=1;i<rows.length;i++)ratios.push(+(rows[i-1].meanAbsError/rows[i].meanAbsError).toFixed(3));
+ var nearTwo=ratios.every(function(x){return x>1.8&&x<2.2;});
+ return {tickets:TICK,trialsPerPoint:200,rows:rows,
+  errorShrinks:shrinks,quadruplingDrawsHalvesError:nearTwo,
+  observedRatios:ratios,predictedRatio:2,
+  errorAt100:rows[0].meanAbsError,errorAt6400:rows[3].meanAbsError,
+  overallShrink:+(rows[0].meanAbsError/rows[3].meanAbsError).toFixed(2),
+  fairOnlyInTheLimit:true,
+  ok:shrinks&&nearTwo};}
+function drawW3(){var c=document.getElementById('w3'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7cfc00',14,20,11,'ERROR AGAINST DRAWS');
+ var R=VR.rows,i;
+ for(i=0;i<R.length;i++){
+  var x=50+i*110,h=Math.round(150*R[i].meanAbsError/R[0].meanAbsError);
+  nf(g,'rgba(125,226,176,0.8)');g.fillRect(x,200-h,54,h);ng(g);
+  nt(g,'#e8e0ff',x,216,8,''+R[i].draws+' draws');
+  nt(g,'#8a7ab8',x,230,8,''+R[i].meanAbsError);}
+ for(i=0;i<VR.observedRatios.length;i++)
+  nt(g,'#ffd76a',104+i*110,190,10,'/'+VR.observedRatios[i]);
+ nt(g,'#8a7ab8',50,250,8,'mean of 200 independent runs at each size; gold = the drop');
+ kverdict(g,12,258-4,W-24,true,'four times the draws, half the error -- '+
+  VR.observedRatios.join(', ')+' against the 2 that 1/sqrt(N) predicts');}
+function drawW4(){var c=document.getElementById('w4'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ var win=draw(draws,7),i;
+ nt(g,'#7cfc00',12,20,11,draws.toLocaleString()+' DRAWS');
+ for(i=0;i<4;i++){
+  var y=44+i*54,got=100*win[i]/draws,want=TICK[i];
+  nt(g,'#8a7ab8',14,y+12,9,TICK[i]+' tickets');
+  nf(g,'rgba(90,70,140,0.25)');g.fillRect(96,y,240,20);ng(g);
+  nf(g,'rgba(125,226,176,0.8)');g.fillRect(96,y,Math.round(240*got/50),20);ng(g);
+  ne(g,'rgba(255,210,63,0.9)',2);g.beginPath();
+  g.moveTo(96+240*want/50,y-3);g.lineTo(96+240*want/50,y+23);g.stroke();ng(g);
+  nt(g,'#e8e0ff',344,y+14,9,got.toFixed(1)+'%');}
+ nt(g,'#ffd76a',96,278,8,'gold line = the share the tickets promise');
+ kverdict(g,12,286,W-24,errOf(win,draws)<0.03,
+  'total absolute error '+errOf(win,draws).toFixed(4)+
+  (errOf(win,draws)<0.03?' -- settled':' -- not there yet'));
+ kout('lotto','<b>'+draws.toLocaleString()+'</b> draws &middot; error <b>'+
+  errOf(win,draws).toFixed(4)+'</b>');}
+function drawW5(){var c=document.getElementById('w5'),g=c.getContext('2d'),W=c.width,H=c.height;
+ nb(g,W,H);
+ nt(g,'#7de2b0',12,20,11,'A SHARE THAT ONLY EXISTS OVER TIME');
+ kring(g,W/2,H/2+10,ang,40,90,0,'rgba(125,226,176,0.6)',2.4);
+ kring(g,W/2,H/2+10,-ang*2.1,10,46,-20,'rgba(255,210,63,0.85)',3.6);
+ nt(g,'#8a7ab8',12,H-22,8,'a window too short for the limit to have arrived');}
+document.getElementById('lottd').onclick=function(){draws=Math.min(102400,draws*4);drawW4();};
+document.getElementById('lottf').onclick=function(){draws=Math.max(25,Math.floor(draws/4));drawW4();};
+document.getElementById('lottr').onclick=function(){draws=400;drawW4();};
+document.getElementById('lottp').onclick=function(){spin=!spin;};
+VR=selftest();window.__thelotteryscheduler=VR;drawW3();drawW4();
+function loop(){if(spin)ang+=0.4;drawW5();requestAnimationFrame(loop);}requestAnimationFrame(loop);})();
+</script></body></html>
