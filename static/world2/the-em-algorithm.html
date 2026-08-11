@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE EXPECTATION MAXIMIZATION</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --ground:#07140f;
+  --ground2:#0b1d15;
+  --ink:#e8f5ee;
+  --dim:#8fb3a4;
+  --line:#1c3a2c;
+  --blue:#5cc9ff;
+  --red:#ff6b6b;
+  --amber:#ffbf47;
+  --lit:#7fe0c0;
+  --wall:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 20% -10%, #0e2c20 0%, transparent 60%),
+    radial-gradient(1000px 700px at 110% 10%, #0a241a 0%, transparent 55%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.wrap{max-width:1240px;margin:0 auto}
+header{margin:0 0 22px;border-bottom:1px solid var(--line);padding-bottom:18px}
+h1{
+  font-size:30px;letter-spacing:.06em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 22px rgba(127,224,192,.25)
+}
+.sub{color:var(--ink);max-width:900px;margin:0 0 10px;font-size:14px}
+.src{font-size:12px;color:var(--dim)}
+.tag{display:inline-block;font-size:10.5px;letter-spacing:.12em;padding:2px 7px;border-radius:4px;border:1px solid var(--line);vertical-align:middle}
+.t-amber{color:var(--amber);border-color:#5a4410;background:rgba(255,191,71,.07)}
+.t-lit{color:var(--lit);border-color:#1f5a45;background:rgba(127,224,192,.08)}
+.t-in{color:var(--blue);border-color:#1d4666;background:rgba(92,201,255,.07)}
+.t-out{color:var(--am);border-color:#1f5a45;background:rgba(127,224,192,.08)}
+.t-wall{color:var(--wall);border-color:#5a1818;background:rgba(255,107,107,.07)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);padding:2px 2px 6px;border-bottom:1px dashed var(--line)}
+.col.blue .teamhdr{color:var(--blue)}
+.col.red .teamhdr{color:var(--red)}
+.col.center .teamhdr{color:var(--am)}
+
+.win{
+  position:relative;background:linear-gradient(180deg,var(--ground2),#081812);
+  border:1px solid var(--line);border-radius:10px;padding:13px 13px 14px;
+}
+.win.panel{border-color:#245c47;box-shadow:0 0 0 1px rgba(127,224,192,.08),0 10px 40px rgba(0,0,0,.35)}
+.wnum{position:absolute;top:-9px;left:12px;width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+  background:var(--ground);border:1px solid var(--line);color:var(--dim)}
+.col.blue .wnum{color:var(--blue);border-color:#1d4666}
+.col.red .wnum{color:var(--red);border-color:#5a1818}
+.win.panel .wnum{color:var(--am);border-color:#245c47}
+.wtitle{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin:2px 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+.win b{color:var(--ink)}
+.mono{font-size:11.5px;color:var(--ink)}
+.strike{text-decoration:line-through;color:#7d5a5a}
+.fix{color:var(--am)}
+.wall-note{border-left:2px solid var(--wall);padding-left:10px;color:#e9b7b7;font-size:12.5px}
+
+.flow{height:22px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;letter-spacing:.2em}
+.flow::before{content:"";width:1px;height:22px;background:linear-gradient(var(--line),transparent)}
+.flow span{position:absolute;background:var(--ground2);padding:0 8px}
+
+canvas{width:100%;height:auto;display:block;background:#061009;border:1px solid var(--line);border-radius:8px}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 6px}
+button{font:inherit;font-size:12px;background:#0c2419;color:var(--am);border:1px solid #245c47;border-radius:7px;padding:6px 11px;cursor:pointer}
+button:hover{background:#123526}
+button.danger{color:var(--red);border-color:#5a1818;background:#1a0d0d}
+button.danger:hover{background:#2a1212}
+.reads{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:8px;font-size:11.5px}
+.reads div{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding:2px 0}
+.reads span{color:var(--dim)}
+.reads b{color:var(--am)}
+.badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:5px;border:1px solid var(--line)}
+.badge.ok{color:var(--lit);border-color:#1f5a45;background:rgba(127,224,192,.08)}
+.badge.bad{color:var(--red);border-color:#5a1818;background:rgba(255,107,107,.1)}
+#failb{display:none;margin:10px 0;padding:8px 11px;border:1px solid #5a1818;background:rgba(255,107,107,.09);color:var(--red);border-radius:7px;font-size:12px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:11.5px}
+.k{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE EXPECTATION MAXIMIZATION</h1>
+  <p class="sub">Maximum likelihood when part of the data is hidden. Two Gaussians are mixed and their labels erased; EM guesses the labels (E-step), then re-fits the Gaussians as if the guesses were true (M-step), and climbs the likelihood without ever seeing which point came from which bell. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Dempster, Laird &amp; Rubin, <i>Maximum Likelihood from Incomplete Data via the EM Algorithm</i> (1977), <a href="https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/j.2517-6161.1977.tb01600.x">J. Roy. Stat. Soc. B, vol. 39, no. 1, pp. 1&ndash;38</a>. Pre-arXiv classic &mdash; cited by journal &amp; year.</p>
+</header>
+
+<div class="ocho">
+
+  <!-- ===================== BLUE TEAM ===================== -->
+  <div class="col blue">
+    <div class="teamhdr">Blue team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wnum">3</div>
+      <div class="wtitle">The Model</div>
+      <p>The data are <b>n</b> real numbers drawn from a mixture of two Gaussians:
+      <span class="mono">p(x) = &pi;&#8321;&middot;N(x;&mu;&#8321;,&sigma;&#8321;&sup2;) + &pi;&#8322;&middot;N(x;&mu;&#8322;,&sigma;&#8322;&sup2;)</span>,
+      with &pi;&#8321;+&pi;&#8322;=1. The <b>latent label</b> z&#7522;&isin;{1,2} says which bell produced x&#7522; &mdash; and it is never observed.</p>
+      <p><b>E-step.</b> Given current &theta;, the responsibility <span class="mono">&gamma;&#7522;&#8342; = &pi;&#8342;N&#8342;(x&#7522;) / &Sigma;&#8343;&pi;&#8343;N&#8343;(x&#7522;)</span> is the posterior P(z&#7522;=k | x&#7522;,&theta;) &mdash; a soft label in [0,1].</p>
+      <p><b>M-step.</b> Treat the &gamma; as fractional counts and re-fit by weighted maximum likelihood:
+      <span class="mono">&mu;&#8342; = &Sigma;&gamma;&#7522;&#8342;x&#7522; / &Sigma;&gamma;&#7522;&#8342;</span>,
+      &sigma;&#8342;&sup2; the weighted variance, &pi;&#8342; = (&Sigma;&#7522;&gamma;&#7522;&#8342;)/n.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">5</div>
+      <div class="wtitle">The Lineage</div>
+      <p>Parent: <b><a href="https://davidwise01.github.io/the-maximum-likelihood/">the-maximum-likelihood</a></b> &mdash; EM <i>is</i> maximum likelihood, run when a latent variable makes the log-likelihood intractable. It does not maximize log&Sigma;&#8342;&pi;&#8342;N&#8342; directly; it uses <b>Jensen's inequality</b> to build a tractable lower bound (the ELBO), maximizes the bound (M-step), tightens it (E-step), and repeats. <span class="k">Bound-and-maximize.</span></p>
+      <p>Descendants: the same E/M loop is the engine behind <b>k-means</b> (hard-label limit), <b>hidden Markov models</b> (Baum&ndash;Welch), and <b>topic models</b> &mdash; any model with data you can see and structure you cannot.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">7</div>
+      <div class="wtitle">The Witness <span class="tag t-lit">live</span></div>
+      <p>Re-runs <span class="mono">selfcheck()</span> against the engine on every load and after any tamper. It re-verifies the monotonicity theorem across the whole run, the responsibility simplex, convergence to truth, and the fixed-point&nbsp;=&nbsp;stationary-point identity.</p>
+      <div id="auditout" class="badge">witness&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ===================== CENTER ===================== -->
+  <div class="col center">
+    <div class="teamhdr">The machine</div>
+
+    <div class="win">
+      <div class="wnum">4</div>
+      <div class="wtitle">Data In <span class="tag t-in">in &darr;</span></div>
+      <p><b>200</b> points sampled (fixed seed) from the true mixture
+      <span class="mono">&mu;=(&minus;4,+4), &sigma;=(1,1), &pi;=(.5,.5)</span>. The labels are thrown away. EM starts deliberately wrong at
+      <span class="mono">&mu;=(&minus;1,+1), &sigma;&sup2;=(2,2), &pi;=(.5,.5)</span>.</p>
+    </div>
+
+    <div class="flow"><span>E &middot; M &middot; E &middot; M</span></div>
+
+    <div class="win panel">
+      <div class="wnum">0</div>
+      <div class="wtitle">The Panel <span class="tag t-lit">LIT</span></div>
+      <canvas id="cv" width="560" height="240"></canvas>
+      <div class="ctl">
+        <button id="step">E&middot;M step</button>
+        <button id="run">run to convergence</button>
+        <button id="reset">reset</button>
+      </div>
+      <div class="reads">
+        <div><span>iteration</span><b id="r-it">0</b></div>
+        <div><span>log-likelihood</span><b id="r-ll">&mdash;</b></div>
+        <div><span>&mu; (sorted)</span><b id="r-mu">&mdash;</b></div>
+        <div><span>&Delta;LL (&ge;0 = climb)</span><b id="r-dll">&mdash;</b></div>
+        <div><span>&sigma;&sup2;</span><b id="r-var">&mdash;</b></div>
+        <div><span>&pi;</span><b id="r-w">&mdash;</b></div>
+      </div>
+      <div id="failb"></div>
+    </div>
+
+    <div class="flow"><span>fitted &theta;&#770;</span></div>
+
+    <div class="win">
+      <div class="wnum">8</div>
+      <div class="wtitle">Data Out <span class="tag t-out">out &darr;</span></div>
+      <p>The MLE recovered from unlabelled data. Proven at boot on the seeded run:</p>
+      <div id="litbadge" class="badge">&mdash;</div>
+    </div>
+  </div>
+
+  <!-- ===================== RED TEAM ===================== -->
+  <div class="col red">
+    <div class="teamhdr">Red team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wnum">1</div>
+      <div class="wtitle">The Adversary <span class="tag t-wall">WALL</span></div>
+      <p class="wall-note">EM finds <b>a</b> local maximum, not <b>the</b> global one. On poorly separated or badly initialised data it converges to a saddle or a shallow ridge and reports it with full confidence. Monotonicity guarantees you climb &mdash; never that you reach the top.</p>
+      <p class="wall-note">It can also collapse: let one component chase a single point and &sigma;&#8342;&sup2;&rarr;0 sends the likelihood to +&infin;. Unbounded, degenerate, "correct." The wall is that likelihood alone does not fence these off.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">2</div>
+      <div class="wtitle">The Graveyard</div>
+      <p><span class="strike">"EM maximises the log-likelihood at each step."</span><br>
+      <span class="fix">&rarr; It maximises a <b>lower bound</b>; the true log-likelihood can only be shown to <b>not decrease</b>.</span></p>
+      <p><span class="strike">"Monotone increase means it converges to the MLE."</span><br>
+      <span class="fix">&rarr; It converges to a <b>stationary point</b> of the likelihood &mdash; local max, or saddle.</span></p>
+      <p><span class="strike">"Responsibilities are the true probabilities of the labels."</span><br>
+      <span class="fix">&rarr; They are posteriors under the <b>current, wrong</b> &theta;; they are correct only at a fixed point.</span></p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">6</div>
+      <div class="wtitle">The Tamper</div>
+      <p>Corrupt the M-step: instead of moving each mean <i>to</i> the weighted estimate, <b>step past it</b> (&mu; &larr; 2&mu;&#770; &minus; &mu;<sub>old</sub>), overshooting the target. The likelihood must now dip on some iteration &mdash; the monotonicity theorem breaks and the Witness (7) turns red.</p>
+      <div class="ctl">
+        <button id="tamper" class="danger">plant the overshoot</button>
+        <button id="restore">restore</button>
+      </div>
+      <p id="tampermsg" class="mono" style="color:var(--dim)">M-step intact.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b class="k">THE EXPECTATION MAXIMIZATION</b> &middot; WORLD II &middot; THE FOLD &middot; the-em-algorithm. The engine is genuinely LIT: means, variances, weights and log-likelihood are computed live from the seeded sample; nothing is hard-coded. The overshoot in window 6 is the disclosed planted void &mdash; a known-bad edit the Witness catches. Rendered, not quoted &mdash; source cited by journal and year. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ================= ENGINE (pure logic — node-verifiable) =================
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function gauss(rng){var u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+var TRUE={mu:[-4,4],sd:[1,1],w:[0.5,0.5]};
+function genData(n){var rng=mulberry32(12345),xs=[];for(var i=0;i<n;i++){var c=rng()<TRUE.w[0]?0:1;xs.push(TRUE.mu[c]+TRUE.sd[c]*gauss(rng));}return xs;}
+function npdf(x,mu,varc){return Math.exp(-0.5*(x-mu)*(x-mu)/varc)/Math.sqrt(2*Math.PI*varc);}
+var TAMPER=false;
+// one full E-step + M-step from parameters p -> new parameters (+ responsibilities)
+function emStep(xs,p){
+  var n=xs.length,i;
+  var g1=new Array(n),g2=new Array(n);
+  for(i=0;i<n;i++){                                   // E-step: responsibilities
+    var a=p.w[0]*npdf(xs[i],p.mu[0],p.varc[0]);
+    var b=p.w[1]*npdf(xs[i],p.mu[1],p.varc[1]);
+    var s=a+b; g1[i]=a/s; g2[i]=b/s;
+  }
+  var N1=0,N2=0; for(i=0;i<n;i++){N1+=g1[i];N2+=g2[i];}
+  var m1=0,m2=0; for(i=0;i<n;i++){m1+=g1[i]*xs[i];m2+=g2[i]*xs[i];} m1/=N1; m2/=N2;   // M-step: means
+  var v1=0,v2=0; for(i=0;i<n;i++){v1+=g1[i]*(xs[i]-m1)*(xs[i]-m1);v2+=g2[i]*(xs[i]-m2)*(xs[i]-m2);} v1/=N1; v2/=N2; // variances
+  var w1=N1/n,w2=N2/n;                                // mixing weights
+  if(TAMPER){ m1=2*m1-p.mu[0]; m2=2*m2-p.mu[1]; }     // PLANTED VOID: overshoot past the weighted estimate
+  return {mu:[m1,m2],varc:[v1,v2],w:[w1,w2],resp:[g1,g2]};
+}
+function logLik(xs,p){var ll=0;for(var i=0;i<xs.length;i++){ll+=Math.log(p.w[0]*npdf(xs[i],p.mu[0],p.varc[0])+p.w[1]*npdf(xs[i],p.mu[1],p.varc[1]));}return ll;}
+function runEM(xs,init,iters){
+  var p={mu:init.mu.slice(),varc:init.varc.slice(),w:init.w.slice()};
+  var hist=[{p:p,ll:logLik(xs,p),resp:null}];
+  for(var t=0;t<iters;t++){var np=emStep(xs,p);p={mu:np.mu,varc:np.varc,w:np.w};hist.push({p:p,ll:logLik(xs,p),resp:np.resp});}
+  return hist;
+}
+// fail-loud selfcheck — THROWS on any violation, RETURNS true on success. Saves/restores TAMPER.
+function selfcheck(){
+  var xs=genData(200);
+  var init={mu:[-1,1],varc:[2,2],w:[0.5,0.5]};
+  var hist=runEM(xs,init,50),t,i;
+  // 1. EM monotonicity theorem: observed-data log-likelihood non-decreasing at EVERY iteration
+  for(t=1;t<hist.length;t++){ if(hist[t].ll < hist[t-1].ll - 1e-9) throw "EM monotonicity violated at iter "+t; }
+  // 2. E-step responsibilities are a valid posterior: each >=0 and sum to 1 per point
+  for(t=1;t<hist.length;t++){ var r=hist[t].resp; for(i=0;i<xs.length;i++){
+      if(r[0][i]<0||r[1][i]<0) throw "negative responsibility";
+      if(Math.abs(r[0][i]+r[1][i]-1) > 1e-12) throw "responsibilities do not sum to 1"; } }
+  // 3. on seeded, separable data EM recovers the generating means
+  var fin=hist[hist.length-1].p;
+  var mu=fin.mu.slice().sort(function(a,b){return a-b;});
+  if(Math.abs(mu[0]-TRUE.mu[0])>0.5) throw "did not converge near true mean 1";
+  if(Math.abs(mu[1]-TRUE.mu[1])>0.5) throw "did not converge near true mean 2";
+  // 4. a fixed point of EM is a stationary point of the likelihood: one more step barely moves
+  var extra=emStep(xs,fin);
+  var d=Math.abs(extra.mu[0]-fin.mu[0])+Math.abs(extra.mu[1]-fin.mu[1]);
+  if(d>1e-3) throw "converged point is not a fixed point";
+  // 5. TAMPER: overshoot must make the log-likelihood decrease somewhere -> monotonicity fails
+  var save=TAMPER; TAMPER=true;
+  var ht=runEM(xs,init,50),broke=false;
+  for(t=1;t<ht.length;t++){ if(ht[t].ll < ht[t-1].ll - 1e-9){broke=true;break;} }
+  TAMPER=save;
+  if(!broke) throw "tamper failed to break monotonicity";
+  return true;
+}
+/* ===== UI ===== */
+var XS=genData(200);
+var INIT={mu:[-1,1],varc:[2,2],w:[0.5,0.5]};
+var cur={mu:INIT.mu.slice(),varc:INIT.varc.slice(),w:INIT.w.slice()};
+var iter=0, prevLL=null, curResp=null;
+
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+function fmt(a){return a.map(function(x){return (x>=0?" ":"")+x.toFixed(3);}).join(", ");}
+function draw(){
+  var W=cv.width,H=cv.height; ctx.clearRect(0,0,W,H);
+  var xmin=-9,xmax=9, pad=8, gh=H-24;
+  function X(x){return pad+(x-xmin)/(xmax-xmin)*(W-2*pad);}
+  // histogram of data
+  var bins=48,cnt=new Array(bins).fill(0);
+  for(var i=0;i<XS.length;i++){var b=Math.floor((XS[i]-xmin)/(xmax-xmin)*bins);if(b>=0&&b<bins)cnt[b]++;}
+  var mx=Math.max.apply(null,cnt)||1;
+  ctx.fillStyle="#16342600";
+  for(i=0;i<bins;i++){
+    var h=cnt[i]/mx*gh*0.9;
+    var x0=pad+i/bins*(W-2*pad), bw=(W-2*pad)/bins;
+    ctx.fillStyle="rgba(143,179,164,.28)";
+    ctx.fillRect(x0,H-12-h,bw-1,h);
+  }
+  // fitted component curves
+  var peak=0,vals=[[],[]];
+  for(i=0;i<=200;i++){
+    var x=xmin+(xmax-xmin)*i/200;
+    var y1=cur.w[0]*npdf(x,cur.mu[0],cur.varc[0]);
+    var y2=cur.w[1]*npdf(x,cur.mu[1],cur.varc[1]);
+    vals[0].push([x,y1]);vals[1].push([x,y2]);
+    peak=Math.max(peak,y1,y2);
+  }
+  peak=peak||1;
+  var cols=["#5cc9ff","#7fe0c0"];
+  for(var k=0;k<2;k++){
+    ctx.beginPath();
+    for(i=0;i<vals[k].length;i++){
+      var px=X(vals[k][i][0]), py=H-12-vals[k][i][1]/peak*gh*0.95;
+      if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    }
+    ctx.strokeStyle=cols[k];ctx.lineWidth=2;ctx.stroke();
+    // mean marker
+    var mxp=X(cur.mu[k]);
+    ctx.strokeStyle=cols[k];ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(mxp,12);ctx.lineTo(mxp,H-12);ctx.stroke();ctx.setLineDash([]);
+  }
+  // baseline
+  ctx.strokeStyle="#1c3a2c";ctx.beginPath();ctx.moveTo(0,H-12);ctx.lineTo(W,H-12);ctx.stroke();
+}
+function refresh(){
+  var ll=logLik(XS,cur);
+  document.getElementById('r-it').textContent=iter;
+  document.getElementById('r-ll').textContent=ll.toFixed(4);
+  var ms=cur.mu.slice().sort(function(a,b){return a-b;});
+  document.getElementById('r-mu').textContent=fmt(ms);
+  document.getElementById('r-var').textContent=fmt(cur.varc);
+  document.getElementById('r-w').textContent=fmt(cur.w);
+  var dll=document.getElementById('r-dll');
+  if(prevLL===null){dll.textContent="—";dll.style.color="var(--am)";}
+  else{var d=ll-prevLL;dll.textContent=(d>=0?"+":"")+d.toFixed(6);dll.style.color=(d< -1e-9)?"var(--red)":"var(--am)";}
+  draw();
+}
+function stepOnce(){
+  prevLL=logLik(XS,cur);
+  var np=emStep(XS,cur);
+  cur={mu:np.mu,varc:np.varc,w:np.w}; curResp=np.resp; iter++;
+  refresh();
+}
+document.getElementById('step').onclick=stepOnce;
+document.getElementById('run').onclick=function(){var g=0;var prev=logLik(XS,cur);while(g<80){stepOnce();var now=logLik(XS,cur);if(Math.abs(now-prev)<1e-8){break;}prev=now;g++;}};
+document.getElementById('reset').onclick=function(){cur={mu:INIT.mu.slice(),varc:INIT.varc.slice(),w:INIT.w.slice()};iter=0;prevLL=null;refresh();};
+document.getElementById('tamper').onclick=function(){
+  TAMPER=true;
+  document.getElementById('tampermsg').innerHTML='<span style="color:var(--red)">M-step OVERSHOOT active — climb broken.</span>';
+  runWitness();
+};
+document.getElementById('restore').onclick=function(){
+  TAMPER=false;
+  document.getElementById('tampermsg').textContent='M-step intact.';
+  runWitness();
+};
+
+function runWitness(){
+  var el=document.getElementById('auditout');
+  try{
+    var ok=selfcheck();
+    if(TAMPER){
+      // with tamper live, the honest engine's guarantee is broken — reflect that truthfully
+      el.className="badge bad";
+      el.textContent="TAMPER LIVE — monotonicity would break (selfcheck proves it)";
+    }else{
+      el.className="badge ok";
+      el.textContent="WITNESS OK — monotonic climb, valid simplex, fixed point verified ("+(ok===true?"selfcheck=true":"?")+")";
+    }
+  }catch(e){
+    el.className="badge bad";
+    el.textContent="WITNESS FAIL — "+e;
+  }
+}
+
+// ---- boot: fail-loud selfcheck, then light the panel ----
+(function boot(){
+  try{
+    var ok=selfcheck();
+    if(ok!==true) throw "selfcheck did not return true";
+    // prove the recovered MLE for DATA OUT (window 8)
+    var h=runEM(XS,INIT,50), fin=h[h.length-1].p;
+    var ms=fin.mu.slice().sort(function(a,b){return a-b;});
+    document.getElementById('litbadge').className="badge ok";
+    document.getElementById('litbadge').innerHTML=
+      "LIT &middot; MLE from unlabelled data: &mu;&#770; = ("+ms[0].toFixed(3)+", "+ms[1].toFixed(3)+") &nbsp;vs true (&minus;4, +4) &middot; LL "+h[0].ll.toFixed(1)+" &rarr; "+h[h.length-1].ll.toFixed(1);
+    runWitness();
+    refresh();
+  }catch(e){
+    var fb=document.getElementById('failb');
+    fb.style.display="block";
+    fb.textContent="SELFCHECK FAILED AT BOOT: "+e;
+    document.getElementById('litbadge').className="badge bad";
+    document.getElementById('litbadge').textContent="NOT LIT — selfcheck failed";
+    var el=document.getElementById('auditout');el.className="badge bad";el.textContent="WITNESS FAIL — "+e;
+    throw e; // rethrow — fail loud
+  }
+})();
+</script>
+</body>
+</html>

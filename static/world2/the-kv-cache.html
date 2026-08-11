@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE KV CACHE · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fe0c0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,224,192,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,224,192,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,224,192,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+.tok{display:inline-block;background:#0a130c;border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin:2px;color:var(--cy);font-size:12px;}
+.cacheviz{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0;}
+.cell{border:1px solid var(--line);border-radius:5px;padding:4px 7px;font-size:10.5px;line-height:1.3;background:#0a130c;text-align:center;min-width:40px;}
+.cell.kv{border-color:var(--am);color:var(--am);}
+.cell.drop{border-color:var(--wall);color:var(--wall);text-decoration:line-through;opacity:.6;}
+.cg{color:var(--gr);} .cr{color:var(--wall);} .ca{color:var(--am);} .cc{color:var(--cy);}
+.opbig{font-size:15px;font-weight:700;}
+tr.miss td{color:var(--wall);}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE KV CACHE</h1>
+ <p class="sub">A transformer generates one token at a time. Naively, each new token re-runs attention over the <i>whole</i> sequence from scratch — O(n²) work every step, O(n³) to finish. But the <b>causal mask</b> guarantees a past token never attends forward, so its key and value never change. Store them once. Now each step attends over a <b class="k">cache</b> in O(n), and the whole run costs O(n²). This page runs both paths <b>side by side</b> and proves, bit-for-bit, that they emit the identical sequence — while the op-counter shows the cost collapse.</p>
+ <p class="src"><span class="tag t-amber">source</span> Vaswani, Shazeer, Parmar, et al., <i>Attention Is All You Need</i> (2017) — <a href="https://arxiv.org/abs/1706.03762">arxiv.org/abs/1706.03762</a>. The causal self-attention is theirs; the KV-cache is the inference optimization it makes exact. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — attend, then memoize</h2>
+   <p>Single-head causal attention. Each token <b>x<sub>i</sub></b> projects to a query, key and value: <b class="k">q<sub>i</sub>=x<sub>i</sub>W<sub>Q</sub></b>, <b class="k">k<sub>i</sub>=x<sub>i</sub>W<sub>K</sub></b>, <b class="k">v<sub>i</sub>=x<sub>i</sub>W<sub>V</sub></b>.</p>
+   <p>The output at position t is <b>softmax</b>(q<sub>t</sub>·k<sub>i</sub>/√d) weighting v<sub>i</sub> over <b>i ≤ t</b> only (causal). Because i ≤ t never looks forward, <b>k<sub>i</sub>, v<sub>i</sub> depend on x<sub>i</sub> alone</b> — appending a later token cannot change them.</p>
+   <p class="small">So they are memoizable. Cached: 1 new projection + <b class="cg">t+1</b> dot-products per step → <b class="cg">O(n)</b>/step, <b class="cg">O(n²)</b> total. Recompute-from-scratch: re-project all t+1 and rebuild the whole matrix → <b class="ca">O(n²)</b>/step, <b class="ca">O(n³)</b> total. Exact closed forms, checked on load.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — why it is legal <span class="tag t-amber">AMBER</span></h2>
+   <p>The cache is not a trick you may or may not get away with — it is licensed by one upstream fact. <a href="https://davidwise01.github.io/the-causal-mask/" style="color:var(--cy)">the-causal-mask</a> makes every past token blind to the future, so its K,V are <b>frozen</b> the instant that token exists. Memoizing frozen values is always exact.</p>
+   <p>That is how <a href="https://davidwise01.github.io/the-attention/" style="color:var(--cy)">the-attention</a> is made fast for generation. Each sphere is the next one's premise: mask ⟶ frozen past ⟶ cache.</p>
+   <p class="small"><span class="tag t-amber">AMBER</span> The cache is engineering folklore built <i>on</i> the 2017 paper, not a named result <i>in</i> it; the weights here are a fixed-seed toy, not trained. The invariant proven — frozen K,V ⇒ identical output — is exact and model-independent.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: for the current length, run <b>both paths</b> and confirm the cached output equals the recompute ground truth to ≤1e-12, that cached K,V are invariant, and that the op counts hit their closed forms. If red drops a cache entry, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the prompt <span class="tag t-in">in ↓</span></h2>
+   <p>A tiny model: dimension <b class="cc">d=4</b>, vocabulary <b class="cc">V=6</b>, fixed-seed projections <b>W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub></b>. Generation starts from a one-token prompt and picks each next token as the nearest embedding to the attention output — fully deterministic, no training, no randomness at decode.</p>
+   <p>prompt fed in: <span class="tok">t0 = 2</span></p>
+   <p class="small">The prompt goes <b style="color:var(--cy)">in</b>; the engine below extends it token by token down both paths. What flows out the bottom is the generated sequence plus the proven op counts.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the prompt into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>generate to n</label>
+      <select id="N"><option>3</option><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option><option>9</option></select></div>
+     <p class="small">the growing cache — one (K,V) per token, frozen once written:</p>
+     <div class="cacheviz" id="cacheviz"></div>
+     <p class="small" id="matchline"></p>
+     <div class="row"><span class="opbig">cached total <span id="totCached"></span></span></div>
+     <div class="row"><span class="opbig">recompute total <span id="totRecomp"></span></span></div>
+     <p class="small">QK dot-products · recompute does <b class="ca" id="ratio">—</b>× the work</p>
+    </div>
+    <div class="readout">
+     <p class="small">per-step QK ops — cached grows linearly, recompute quadratically:</p>
+     <table><thead><tr><th>n</th><th>cached O(n)</th><th>recompute O(n²)</th><th>out ≡</th></tr></thead><tbody id="stepBody"></tbody></table>
+     <p class="small" style="margin-top:8px">generated sequence (identical from both paths):</p>
+     <div id="genseq"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change n — both paths re-run live from the four rules of attention, never looked up. The cache is exact: same tokens, a third of the arithmetic.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits sequence + counts &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: the cached path and the recompute-from-scratch path emit the <b>bit-for-bit identical</b> token sequence, while the cache cuts total attention cost from <b class="ca">O(n³)</b> to <b class="k">O(n²)</b> — and per-step from <b class="ca">O(n²)</b> to <b class="k">O(n)</b>. Same answer, cheaper.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms the identity and counts live; the red team (right) drops a cache entry to break it.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The cache does not make attention cheap — it removes <b>redundant recomputation</b>. Decoding a length-n sequence still costs O(n²) attention in total; the cache only stops you paying O(n³). And it pays in <b>memory</b>: 2·n·d per layer, growing with context, which becomes the real serving bottleneck.</div>
+   <p class="small" style="margin-top:8px">This is why the field grew MQA/GQA (share K,V across heads), sliding-window and paged attention (PagedAttention) — every one of them is a fight against the cache's memory, not its compute. The cache is a correctness-preserving optimization with a cost that scales, not a free lunch.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"The KV cache makes attention O(n)."</s> <b>Cut.</b> Per decode step attention is O(n) over the cache; the <i>total</i> to decode n tokens is O(n²). The cache turns the naive O(n³) into O(n²) — it does not make attention sub-linear.</p>
+   <p class="grave"><s>"The cache is free."</s> <b>Cut.</b> It costs 2·n·d·layers of memory that grows with the sequence and often dominates — the reason paging and window-attention exist.</p>
+   <p class="grave"><s>"Cache the queries too."</s> <b>Cut.</b> Only K and V are reused across steps. Each step's query is new and used once; caching Q buys nothing.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: drop one entry from the cache, so the new token attends over a <b>hole</b> in its past. The cached output no longer matches the recompute ground truth. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ drop cache entry K0/V0</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Drop a cached (K,V) and the attention over the past is wrong — the cached sequence diverges from the from-scratch path, the identity check fails, and the witness turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE KV CACHE — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (prompt <b style="color:var(--cy)">in</b> → engine → sequence + counts <b style="color:var(--gr)">out</b>). A runnable rendering of the causal self-attention of Vaswani et al. (2017) from arxiv — the engine is LIT (both paths run live, cached ≡ recompute bit-for-bit, op counts O(n²) vs O(n³) self-checked, tamper-provable), the blue team witnesses, the red team drops an entry, and the graveyard + adversary carry the memory cost a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: cached ≡ recompute; ops O(n^2) vs O(n^3)) ===== */
+const D=4, V=6, PROMPT=[2], TAMPER_IDX=0;
+let TAMPER=false;   // drops a cached (K,V) when true — the witness must catch it
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function buildMats(){ const rng=mulberry32(0x51CAC4E>>>0);
+ const mk=(r,c)=>{const m=[];for(let i=0;i<r;i++){const row=[];for(let j=0;j<c;j++)row.push(rng()*2-1);m.push(row);}return m;};
+ return {E:mk(V,D), WQ:mk(D,D), WK:mk(D,D), WV:mk(D,D)}; }
+const M=buildMats(), E=M.E, WQ=M.WQ, WK=M.WK, WV=M.WV;
+
+function matvec(x,W){ const d=W[0].length, out=new Array(d).fill(0);
+ for(let i=0;i<x.length;i++){ const xi=x[i], Wi=W[i]; for(let j=0;j<d;j++) out[j]+=xi*Wi[j]; } return out; }
+function dot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
+function emb(tok){ return E[tok].slice(); }
+function projQ(x){ return matvec(x,WQ); }
+function projK(x){ return matvec(x,WK); }
+function projV(x){ return matvec(x,WV); }
+const SC=1/Math.sqrt(D);
+function attend(q,Ks,Vs){ const n=Ks.length, sc=new Array(n);
+ for(let i=0;i<n;i++) sc[i]=dot(q,Ks[i])*SC;
+ let mx=-Infinity; for(let i=0;i<n;i++) if(sc[i]>mx) mx=sc[i];
+ let den=0; const w=new Array(n);
+ for(let i=0;i<n;i++){ w[i]=Math.exp(sc[i]-mx); den+=w[i]; }
+ const out=new Array(D).fill(0);
+ for(let i=0;i<n;i++){ const wi=w[i]/den, Vi=Vs[i]; for(let j=0;j<D;j++) out[j]+=wi*Vi[j]; }
+ return {out, dots:n}; }
+function readout(out){ let best=0, bv=-Infinity; for(let t=0;t<V;t++){ const s=dot(out,E[t]); if(s>bv){bv=s;best=t;} } return best; }
+
+/* --- cached path: memoize K,V; attend over the cache in O(n)/step --- */
+function genCached(N){
+ const seq=PROMPT.slice(), cK=[], cV=[];
+ for(let p=0;p<seq.length;p++){ const x=emb(seq[p]); cK.push(projK(x)); cV.push(projV(x)); }
+ const outs=[], steps=[]; let dots=0;
+ while(seq.length<N){
+  const L=seq.length, x=emb(seq[L-1]), q=projQ(x);
+  let Ks=cK, Vs=cV;
+  if(TAMPER && cK.length>1){ Ks=cK.slice(); Vs=cV.slice(); Ks.splice(TAMPER_IDX,1); Vs.splice(TAMPER_IDX,1); }
+  const r=attend(q,Ks,Vs);
+  dots+=L; steps.push({L,dots:L}); outs.push(r.out);
+  const nt=readout(r.out); seq.push(nt);
+  const nx=emb(nt); cK.push(projK(nx)); cV.push(projV(nx));
+ }
+ return {seq,outs,dots,steps,cK,cV};
+}
+/* --- recompute path: rebuild all K,V + the full matrix every step, O(n^2)/step --- */
+function genRecompute(N){
+ const seq=PROMPT.slice(), outs=[], steps=[]; let dots=0;
+ while(seq.length<N){
+  const L=seq.length, K=[], Vv=[];
+  for(let p=0;p<L;p++){ const x=emb(seq[p]); K.push(projK(x)); Vv.push(projV(x)); }
+  let stepDots=0, lastOut=null;
+  for(let j=0;j<L;j++){
+   const q=projQ(emb(seq[j]));
+   const r=attend(q,K.slice(0,j+1),Vv.slice(0,j+1));
+   stepDots+=r.dots; if(j===L-1) lastOut=r.out;
+  }
+  dots+=stepDots; steps.push({L,dots:stepDots}); outs.push(lastOut);
+  seq.push(readout(lastOut));
+ }
+ return {seq,outs,dots,steps};
+}
+/* --- closed-form expected op counts (prompt length 1) --- */
+function expCached(N){ let s=0; for(let L=1;L<=N-1;L++) s+=L; return s; }            // (N-1)N/2  = O(n^2)
+function expRecompute(N){ let s=0; for(let L=1;L<=N-1;L++) s+=L*(L+1)/2; return s; }  // O(n^3)
+
+/* ===== fail-loud self-check (runs untampered, restores the flag) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const N=6;
+ t(PROMPT.length===1,"prompt must be length 1 for the closed-form op counts");
+ const c=genCached(N), r=genRecompute(N);
+ // 1. cached output IDENTICAL (<=1e-12) to recompute for every generated token
+ t(c.outs.length===N-1 && r.outs.length===N-1,"there must be N-1 generation steps");
+ for(let s=0;s<c.outs.length;s++) for(let j=0;j<D;j++)
+  t(Math.abs(c.outs[s][j]-r.outs[s][j])<=1e-12,"cached output must equal recompute at step "+s+" dim "+j);
+ t(c.seq.join(",")===r.seq.join(","),"the two paths must generate the same tokens");
+ // 2. appending a token does NOT change the cached K,V of earlier tokens
+ t(c.cK.length===c.seq.length && c.cV.length===c.seq.length,"cache holds one K,V per token");
+ for(let i=0;i<c.seq.length;i++){ const x=emb(c.seq[i]), k=projK(x), v=projV(x);
+  for(let j=0;j<D;j++){
+   t(Math.abs(c.cK[i][j]-k[j])<=1e-12,"cached K["+i+"] must be invariant under later appends");
+   t(Math.abs(c.cV[i][j]-v[j])<=1e-12,"cached V["+i+"] must be invariant under later appends");
+  } }
+ // 3. op counts: cached O(n)/step & O(n^2) total ; recompute O(n^2)/step & O(n^3) total
+ t(c.dots===expCached(N),"cached total QK ops must be (N-1)N/2 = "+expCached(N)+", got "+c.dots);
+ t(r.dots===expRecompute(N),"recompute total QK ops must be "+expRecompute(N)+", got "+r.dots);
+ t(c.steps[c.steps.length-1].dots===(N-1),"cached last-step ops must be linear = N-1");
+ t(r.steps[r.steps.length-1].dots===(N-1)*N/2,"recompute last-step ops must be quadratic = (N-1)N/2");
+ t(c.dots<r.dots,"the cache must do strictly fewer ops");
+ // 4. TAMPER: dropping a cached (K,V) makes the cached output DIFFER from the ground truth
+ TAMPER=true;
+ const ct=genCached(N);
+ let diverged=false;
+ for(let s=0;s<ct.outs.length && !diverged;s++) for(let j=0;j<D;j++)
+  if(Math.abs(ct.outs[s][j]-r.outs[s][j])>1e-9){ diverged=true; break; }
+ t(diverged,"TAMPER must make the cached output differ from the recompute ground truth");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+function fmtSeq(seq){ return seq.map((tk,i)=>`<span class="tok">t${i} = ${tk}</span>`).join(" "); }
+
+function run(){
+ const N=+$("N").value;
+ const r=genRecompute(N);
+ const c=genCached(N);
+ let viz="";
+ for(let i=0;i<c.cK.length;i++){
+  const dropped = TAMPER && i===TAMPER_IDX && c.cK.length>1;
+  viz+=`<div class="cell kv${dropped?' drop':''}">K${i}<br>V${i}</div>`;
+ }
+ $("cacheviz").innerHTML=viz;
+ let rows="", allMatch=true;
+ for(let s=0;s<c.steps.length;s++){
+  const L=c.steps[s].L, cd=c.steps[s].dots, rd=r.steps[s].dots;
+  let match=true;
+  for(let j=0;j<D;j++) if(Math.abs(c.outs[s][j]-r.outs[s][j])>1e-9){ match=false; break; }
+  if(!match) allMatch=false;
+  rows+=`<tr class="${match?'':'miss'}"><td>${L}</td><td class="cg">${cd}</td><td class="ca">${rd}</td><td>${match?'<span class="cg">✓</span>':'<span class="cr">✗</span>'}</td></tr>`;
+ }
+ $("stepBody").innerHTML=rows;
+ $("totCached").innerHTML=`<b class="cg">${c.dots}</b>`;
+ $("totRecomp").innerHTML=`<b class="ca">${r.dots}</b>`;
+ $("ratio").textContent=(r.dots/c.dots).toFixed(2);
+ $("genseq").innerHTML=fmtSeq(c.seq);
+ $("matchline").innerHTML = allMatch
+  ? `<span class="cg">outputs identical — cached ≡ recompute for all ${c.steps.length} tokens</span>`
+  : `<span class="cr">outputs DIVERGED — cache corrupted (tamper active)</span>`;
+}
+
+function audit(){
+ const N=+$("N").value;
+ const r=genRecompute(N), c=genCached(N);
+ let idOK=true, maxd=0;
+ for(let s=0;s<c.outs.length;s++) for(let j=0;j<D;j++){ const dd=Math.abs(c.outs[s][j]-r.outs[s][j]); if(dd>maxd)maxd=dd; if(dd>1e-9)idOK=false; }
+ const opsOK = c.dots===expCached(N) && r.dots===expRecompute(N)
+   && c.steps[c.steps.length-1].dots===(N-1) && r.steps[r.steps.length-1].dots===(N-1)*N/2;
+ let inv=true;
+ for(let p=0;p<c.seq.length;p++){ const k=projK(emb(c.seq[p])); for(let j=0;j<D;j++) if(Math.abs(k[j]-c.cK[p][j])>1e-12) inv=false; }
+ const ok = idOK && opsOK && inv;
+ $("auditout").innerHTML =
+  `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — cache ≡ recompute':'✗ WITNESS — cache broken'}</span>`
+  + `<div class="small" style="margin-top:6px">identity max|Δ| <b style="color:${idOK?'var(--gr)':'var(--wall)'}">${maxd.toExponential(1)}</b> (≤1e-12 untampered) · K,V invariant <b style="color:${inv?'var(--gr)':'var(--wall)'}">${inv?'yes':'no'}</b> · ops cached <b class="cg">${c.dots}</b> vs recompute <b class="ca">${r.dots}</b> = O(n²) vs O(n³)${TAMPER?' · <span style="color:var(--wall)">red dropped K'+TAMPER_IDX+'/V'+TAMPER_IDX+'</span>':''}</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load — cached ≡ recompute bit-for-bit, ops O(n²) vs O(n³)</span>';
+ run(); audit();
+ $("N").addEventListener("change",()=>{ run(); audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true;
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>Cache entry dropped.</b> The new token attends over a hole in its past, so the cached output no longer matches the from-scratch path — the witness (window 7) recomputed and went red. The attack is real; it is caught.";
+  run(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false;
+  $("tampernote").textContent="Drop a cached (K,V) and the attention over the past is wrong — the cached sequence diverges from the from-scratch path, the identity check fails, and the witness turns red. Nothing is faked; the attack is real and it is caught.";
+  run(); audit(); });
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the KV-cache engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

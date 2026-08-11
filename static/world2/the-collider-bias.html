@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE COLLIDER BIAS</title>
+<style>
+:root{
+  --am:#9ee0d0;
+  --bg:#08160f; --bg2:#0c2016; --ink:#dff3ea; --dim:#8fb7a7;
+  --line:#1c3a2b; --panel:#0b1d14; --card:#0e2519;
+  --blue:#6fb8ff; --blueln:#173049; --bluebg:#0a1a26;
+  --red:#ff8b7a; --redln:#3a2018; --redbg:#22110c;
+  --amber:#ffcf6b; --wall:#ff6a5a; --lit:#9ee0d0;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 12% -8%, #123322 0%, transparent 60%),
+    radial-gradient(1000px 600px at 108% 10%, #0f2b1e 0%, transparent 55%),
+    linear-gradient(180deg,#08160f 0%,#061109 100%);
+  color:var(--ink);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  min-height:100vh;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1220px;margin:0 auto}
+header{margin:0 auto 22px;max-width:960px;text-align:center}
+h1{
+  font-size:clamp(26px,4.4vw,44px);letter-spacing:.16em;margin:0 0 10px;
+  color:var(--am);font-weight:800;
+  text-shadow:0 0 26px rgba(158,224,208,.28);
+}
+.sub{color:var(--ink);font-size:16px;margin:0 auto 12px;max-width:720px}
+.sub b{color:var(--am)}
+.src{font:12.5px/1.5 var(--mono);color:var(--dim);margin-top:8px}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{display:inline-block;font:11px/1 var(--mono);letter-spacing:.08em;
+  padding:3px 7px;border-radius:5px;border:1px solid var(--line);vertical-align:middle}
+.t-amber{color:#1a1206;background:var(--amber);border-color:var(--amber)}
+.t-lit{color:#052018;background:var(--lit);border-color:var(--lit)}
+.t-in{color:#03202c;background:var(--blue);border-color:var(--blue)}
+.t-out{color:#052018;background:var(--am);border-color:var(--am)}
+.t-wall{color:#2a0d06;background:var(--wall);border-color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font:12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  padding:8px 10px;border-radius:8px;border:1px solid var(--line);color:var(--dim);
+  display:flex;align-items:center;gap:8px}
+.col.blue .teamhdr{color:var(--blue);border-color:var(--blueln);background:var(--bluebg)}
+.col.red .teamhdr{color:var(--red);border-color:var(--redln);background:var(--redbg)}
+.col.center .teamhdr{color:var(--am);border-color:var(--line);background:var(--panel)}
+
+.win{position:relative;border:1px solid var(--line);border-radius:11px;
+  background:linear-gradient(180deg,var(--card),var(--panel));padding:13px 14px 14px}
+.col.blue .win{border-color:var(--blueln)}
+.col.red .win{border-color:var(--redln)}
+.win .num{position:absolute;top:-9px;right:10px;width:22px;height:22px;border-radius:50%;
+  font:11px/22px var(--mono);text-align:center;background:var(--bg2);
+  border:1px solid var(--line);color:var(--dim)}
+.col.blue .win .num{color:var(--blue);border-color:var(--blueln)}
+.col.red .win .num{color:var(--red);border-color:var(--redln)}
+.win.panel{border-color:var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.12),0 0 34px rgba(158,224,208,.10)}
+.win.panel .num{color:#052018;background:var(--am);border-color:var(--am)}
+.wt{font:12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
+  margin:0 0 9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.win h3{margin:2px 0 7px;font-size:15px;color:var(--ink)}
+.win p{margin:6px 0;font-size:13.5px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.mono{font-family:var(--mono)}
+kbd{font:11.5px/1 var(--mono);background:#08201640;border:1px solid var(--line);
+  border-radius:4px;padding:2px 5px;color:var(--am)}
+
+.flow{height:20px;display:flex;align-items:center;justify-content:center;color:var(--am);
+  font:11px/1 var(--mono);letter-spacing:.3em;opacity:.7}
+.flow::before{content:"\25BC"}
+
+.eq{font-family:var(--mono);font-size:12.5px;color:var(--am);
+  background:#06170f;border:1px solid var(--line);border-radius:7px;padding:9px 11px;margin:8px 0;
+  overflow-x:auto;white-space:nowrap}
+.rows{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-family:var(--mono);
+  font-size:13px;margin:8px 0}
+.rows .k{color:var(--dim)} .rows .v{color:var(--ink);text-align:right}
+.rows .v.good{color:var(--lit)} .rows .v.bad{color:var(--wall)}
+
+.ctrl{display:flex;flex-direction:column;gap:9px;margin:10px 0}
+.ctrl label{display:flex;align-items:center;gap:9px;font:12px/1 var(--mono);color:var(--dim)}
+.ctrl input[type=range]{flex:1;accent-color:var(--am)}
+.ctrl .rv{width:44px;text-align:right;color:var(--am)}
+canvas{width:100%;height:190px;display:block;border:1px solid var(--line);border-radius:8px;
+  background:#050f0a;margin-top:8px}
+.leg{display:flex;gap:14px;font:11px/1.4 var(--mono);color:var(--dim);margin-top:6px;flex-wrap:wrap}
+.dotc{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:middle;margin-right:4px}
+
+.badge{display:block;font:12.5px/1.45 var(--mono);border-radius:8px;padding:10px 11px;margin-top:6px}
+.badge.ok{color:var(--lit);background:#07231790;border:1px solid #1f5a41}
+.badge.bad{color:#3a0c06;background:var(--wall);border:1px solid var(--wall)}
+#litbadge{font:12.5px/1.45 var(--mono);color:var(--lit);margin-top:8px;
+  background:#07231790;border:1px solid #1f5a41;border-radius:8px;padding:9px 11px}
+#failb{display:none;color:#3a0c06;background:var(--wall);border:1px solid var(--wall);
+  border-radius:8px;padding:9px 11px;margin-top:8px;font:12.5px/1.4 var(--mono)}
+
+.wall-note{border-left:3px solid var(--wall);background:#1c0d0880;padding:8px 11px;border-radius:0 7px 7px 0}
+.grave{list-style:none;padding:0;margin:8px 0}
+.grave li{margin:9px 0;padding-left:16px;position:relative;font-size:13px}
+.grave li::before{content:"\271D";position:absolute;left:0;color:var(--red)}
+.grave s{color:#c97a6a}
+.grave .fix{display:block;color:var(--lit);font-size:12.5px;margin-top:3px}
+
+button{font:12px/1 var(--mono);letter-spacing:.06em;border-radius:7px;padding:9px 12px;
+  border:1px solid var(--redln);background:#2a130c;color:var(--red);cursor:pointer}
+button:hover{filter:brightness(1.18)}
+button.rst{border-color:var(--blueln);background:#0a1a26;color:var(--blue)}
+.btnrow{display:flex;gap:9px;margin-top:9px;flex-wrap:wrap}
+.tstate{font:12px/1.4 var(--mono);margin-top:9px;color:var(--dim)}
+.tstate b{color:var(--wall)}
+
+footer{max-width:960px;margin:26px auto 0;text-align:center;color:var(--dim);
+  font:12px/1.6 var(--mono);border-top:1px solid var(--line);padding-top:14px}
+footer b{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>THE COLLIDER BIAS</h1>
+  <p class="sub">Talent and luck are <b>independent</b> in the world. Look only at people who got <b>hired</b> &mdash; a common effect of both &mdash; and a phantom correlation appears out of nothing. Conditioning on a <b>collider</b> manufactures association. This is the opposite of a confounder.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Berkson, J. &mdash; <i>Limitations of the Application of Fourfold Table Analysis to Hospital Data</i>,
+    <a href="https://www.jstor.org/stable/3002000" target="_blank" rel="noopener">Biometrics Bulletin <b>2</b>(3):47&ndash;53, 1946</a>.
+    Rendered, not quoted.
+  </p>
+</header>
+
+<div class="ocho">
+
+  <!-- ============ BLUE TEAM ============ -->
+  <div class="col blue">
+    <div class="teamhdr">&#9633; Blue Team &middot; builds &amp; defends</div>
+
+    <section class="win"><span class="num">3</span>
+      <div class="wt">The Model</div>
+      <h3>A linear-Gaussian collider</h3>
+      <p>Two independent causes flow into one common effect &mdash; the graph <b>X &rarr; C &larr; Y</b>. No edge joins X and Y.</p>
+      <div class="eq">X ~ N(0,1)   Y ~ N(0,1)   [independent]<br>C = a&middot;X + b&middot;Y + &epsilon;,  &epsilon; ~ N(0,&sigma;&sup2;)</div>
+      <p>With <b>a=b=&sigma;=1</b> the covariance of (X,Y,C) is exact, so every correlation below is a <i>closed form</i>, not a fitted guess.</p>
+      <div class="rows">
+        <span class="k">marginal &rho;(X,Y)</span><span class="v">0</span>
+        <span class="k">Var(C)</span><span class="v">3</span>
+        <span class="k">Cov(X,Y | C)</span><span class="v">&minus;1/3</span>
+        <span class="k">partial &rho;(X,Y | C)</span><span class="v">&minus;1/2</span>
+      </div>
+    </section>
+
+    <section class="win"><span class="num">5</span>
+      <div class="wt">The Lineage</div>
+      <h3>The confounder&rsquo;s mirror image</h3>
+      <p>A <b>confounder</b> is a common <i>cause</i> (C &rarr; X, C &rarr; Y): you <i>must</i> condition on it to remove a real spurious link. A <b>collider</b> is a common <i>effect</i>: conditioning <i>creates</i> a spurious link where none existed.</p>
+      <p>Same word &mdash; &ldquo;control for C&rdquo; &mdash; opposite consequence. This is why <b>&ldquo;adjust for everything&rdquo;</b> is a trap, and why Berkson&rsquo;s hospital paradox is <i>selection bias in disguise</i>: the hospital <i>is</i> the collider you conditioned on.</p>
+    </section>
+
+    <section class="win"><span class="num">7</span>
+      <div class="wt">The Witness &middot; live re-check</div>
+      <h3>Does the collider invariant still hold?</h3>
+      <p>Re-derives the covariance of the <i>currently displayed</i> graph and asserts the collider signature: marginal independence <b>and</b> negative induced partial correlation.</p>
+      <div id="auditout" class="badge ok">&hellip;</div>
+    </section>
+  </div>
+
+  <!-- ============ CENTER ============ -->
+  <div class="col center">
+    <div class="teamhdr">&#9673; The Machine</div>
+
+    <section class="win"><span class="num">4</span>
+      <div class="wt">Data In <span class="tag t-in">in &#9660;</span></div>
+      <h3>Two honest, unrelated causes</h3>
+      <p>Structural coefficients enter the machine. X and Y are drawn independently; C is assembled from them. Nothing here links X to Y.</p>
+      <div class="ctrl">
+        <label>a &middot; X&rarr;C <input id="sa" type="range" min="0" max="2" step="0.1" value="1"><span class="rv" id="va">1.0</span></label>
+        <label>b &middot; Y&rarr;C <input id="sb" type="range" min="0" max="2" step="0.1" value="1"><span class="rv" id="vb">1.0</span></label>
+        <label>C band &nbsp; <input id="sc" type="range" min="0.1" max="1.5" step="0.1" value="0.4"><span class="rv" id="vc">0.4</span></label>
+      </div>
+    </section>
+
+    <div class="flow"></div>
+
+    <section class="win panel"><span class="num">0</span>
+      <div class="wt">The Panel <span class="tag t-lit">LIT</span></div>
+      <h3>Selecting on C invents a correlation</h3>
+      <p>Blue dots: the full, unconditioned cloud (X vs Y) &mdash; a shapeless blob, <b>&rho;&asymp;0</b>. Amber dots: the sub-sample where <b>C&asymp;0</b>. Within that slice a real downward tilt appears.</p>
+      <canvas id="cv" width="620" height="380"></canvas>
+      <div class="leg">
+        <span><span class="dotc" style="background:#3a6ea8"></span>all points (unconditioned)</span>
+        <span><span class="dotc" style="background:#ffcf6b"></span>selected: C in band</span>
+      </div>
+      <div class="rows">
+        <span class="k">marginal &rho;(X,Y) &mdash; closed form</span><span id="p_marg" class="v good">0.000</span>
+        <span class="k">partial &rho;(X,Y | C) &mdash; closed form</span><span id="p_part" class="v good">&minus;0.500</span>
+        <span class="k">sample &rho; inside band (seeded N)</span><span id="p_samp" class="v">&minus;0.5</span>
+        <span class="k">E[Y | do(X=x)] slope &mdash; causal</span><span id="p_do" class="v good">0.000</span>
+      </div>
+      <div id="litbadge">booting&hellip;</div>
+      <div id="failb"></div>
+    </section>
+
+    <div class="flow"></div>
+
+    <section class="win"><span class="num">8</span>
+      <div class="wt">Data Out <span class="tag t-out">out &#9660;</span></div>
+      <h3>The verdict</h3>
+      <p><b>Association &ne; causation, and selection can forge association.</b> The <i>causal</i> effect of X on Y is exactly zero (<span class="mono">do(X)</span> leaves Y untouched), yet conditioning on the collider C yields <b>&rho;(X,Y|C) = &minus;&frac12;</b>. The correlation is real in the sample and false about the world.</p>
+    </section>
+  </div>
+
+  <!-- ============ RED TEAM ============ -->
+  <div class="col red">
+    <div class="teamhdr">&#9633; Red Team &middot; attacks &amp; breaks</div>
+
+    <section class="win"><span class="num">1</span>
+      <div class="wt">The Adversary <span class="tag t-wall">WALL</span></div>
+      <h3>&ldquo;You found a correlation, so control for it.&rdquo;</h3>
+      <div class="wall-note">
+        <p>The reflex of the naive analyst: see two variables move together in the data, add the shared variable as a covariate, call it rigor. But if that shared variable is a common <i>effect</i>, the adjustment is what <b>created</b> the movement. The wall is the belief that <b>more conditioning is always safer</b>.</p>
+      </div>
+    </section>
+
+    <section class="win"><span class="num">2</span>
+      <div class="wt">The Graveyard</div>
+      <h3>Claims that died here</h3>
+      <ul class="grave">
+        <li><s>&ldquo;Diabetes protects against gallbladder disease.&rdquo;</s>
+          <span class="fix">Berkson, 1946: an artifact of studying only hospitalized patients &mdash; conditioning on admission (the collider).</span></li>
+        <li><s>&ldquo;X and Y correlate in my clean sample, so they are related.&rdquo;</s>
+          <span class="fix">Only if the sample was not selected on a descendant of both. Berkson&rsquo;s slice is selected on C.</span></li>
+        <li><s>&ldquo;Adjusting for more variables removes more bias.&rdquo;</s>
+          <span class="fix">Adjusting for a collider (or its descendant) <i>adds</i> bias. Direction, not count, decides.</span></li>
+        <li><s>&ldquo;Attractive people are ruder &mdash; I&rsquo;ve met so many.&rdquo;</s>
+          <span class="fix">You met them because you dated on looks-or-personality: conditioning on a collider again.</span></li>
+      </ul>
+    </section>
+
+    <section class="win"><span class="num">6</span>
+      <div class="wt">The Tamper</div>
+      <h3>Swap the arrows: collider &rarr; confounder</h3>
+      <p>Reverse the graph to <b>C &rarr; X, C &rarr; Y</b> and keep insisting &ldquo;conditioning on C is harmful.&rdquo; Now X and Y are <i>genuinely</i> correlated and conditioning <b>removes</b> it. The collider witness must catch that its signature is gone.</p>
+      <div class="btnrow">
+        <button id="tamper">&#9888; Swap to confounder</button>
+        <button id="restore" class="rst">Restore collider</button>
+      </div>
+      <div class="tstate" id="tstate">graph: <b>X&rarr;C&larr;Y</b> (collider)</div>
+    </section>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE COLLIDER BIAS</b> &middot; World II &middot; THE FOLD &middot; ud0 corpus.
+  The engine computes every correlation live from a known structural causal model; the planted void in window&nbsp;6 is the disclosed tamper the witness catches.
+  Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+</div>
+
+<script>
+// ============================================================
+// ENGINE — pure logic. Node-verifiable. No DOM above the UI marker.
+// SCM  X -> C <- Y  (collider)  vs  C -> X , C -> Y  (confounder, tamper)
+// ============================================================
+
+// deterministic PRNG: 32-bit LCG (Numerical Recipes constants)
+function makePRNG(seed){
+  var s = seed >>> 0;
+  return function(){
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return s / 4294967296;   // [0,1)
+  };
+}
+// standard normal via Box-Muller, driven by a PRNG
+function makeGauss(rng){
+  var have=false, cached=0;
+  return function(){
+    if(have){ have=false; return cached; }
+    var u1=rng(), u2=rng();
+    if(u1 < 1e-12) u1 = 1e-12;
+    var r=Math.sqrt(-2*Math.log(u1)), t=2*Math.PI*u2;
+    cached=r*Math.sin(t); have=true;
+    return r*Math.cos(t);
+  };
+}
+
+// shared tamper state (UI toggles it; selfcheck saves/sets/restores it)
+var MODEL = { tampered:false };
+
+// covariance of (X,Y,C) as a closed form for the active graph
+// collider:  X,Y ~ N(0,1) indep ;  C = a X + b Y + e , Var(e)=sc^2
+// confounder(tamper): C ~ N(0,vc) ; X = a C + eX(vx) ; Y = b C + eY(vy)
+function covMatrix(p){
+  var a=p.a, b=p.b;
+  if(!p.tampered){
+    var sc=p.sc;
+    return { Sxx:1, Syy:1, Scc:a*a+b*b+sc*sc, Sxy:0, Sxc:a, Syc:b };
+  } else {
+    var vc=1, vx=1, vy=1;
+    return { Sxx:a*a*vc+vx, Syy:b*b*vc+vy, Scc:vc, Sxy:a*b*vc, Sxc:a*vc, Syc:b*vc };
+  }
+}
+
+// marginal correlation of X and Y
+function marginalCorr(S){ return S.Sxy / Math.sqrt(S.Sxx * S.Syy); }
+
+// partial correlation of X,Y given C (Gaussian => equals conditional correlation)
+function partialCorr(S){
+  var num = S.Sxy - S.Sxc*S.Syc/S.Scc;
+  var vx  = S.Sxx - S.Sxc*S.Sxc/S.Scc;
+  var vy  = S.Syy - S.Syc*S.Syc/S.Scc;
+  return num / Math.sqrt(vx*vy);
+}
+// conditional covariance of X,Y given C
+function condCov(S){ return S.Sxy - S.Sxc*S.Syc/S.Scc; }
+
+// causal effect of X on Y under do(X=x): replace X's equation by the constant x,
+// push noise through the (unchanged) rest of the SCM, read dE[Y]/dx.
+// Collider: Y is exogenous => Y ignores x => slope 0.
+// Confounder: Y = b*C + eY and C no longer depends on X after the surgery => slope 0.
+// Either way the true X->Y causal slope is 0 (there is no X->Y edge).
+function doSlopeX_on_Y(p){
+  var g0 = interveneMeanY(p, 0.0);
+  var g1 = interveneMeanY(p, 1.0);
+  return g1 - g0;
+}
+// E[Y | do(X=x)] in closed form. do(X=x) severs incoming arrows to X.
+function interveneMeanY(p, x){
+  // Under the surgery X is a constant; Y's structural equation is untouched.
+  // collider: Y ~ N(0,1) independent of x  => E[Y]=0
+  // confounder: Y = b*C + eY, and C is upstream of X (C not a function of X) => E[Y]=0
+  return 0.0;
+}
+
+// sample the induced (collider) association by SELECTING on C in a band around 0.
+// fixed seed + large N + robust tolerance (never a fragile float equality).
+function sampleBandCorr(p, N, band, seed){
+  var rng=makePRNG(seed), g=makeGauss(rng);
+  var n=0, sx=0, sy=0, sxx=0, syy=0, sxy=0;
+  for(var i=0;i<N;i++){
+    var X,Y,C;
+    if(!p.tampered){
+      X=g(); Y=g(); C=p.a*X + p.b*Y + p.sc*g();
+    } else {
+      C=g(); X=p.a*C + g(); Y=p.b*C + g();
+    }
+    if(Math.abs(C) <= band){
+      n++; sx+=X; sy+=Y; sxx+=X*X; syy+=Y*Y; sxy+=X*Y;
+    }
+  }
+  if(n<50) return 0;
+  var mx=sx/n, my=sy/n;
+  var cxy=sxy/n - mx*my, cxx=sxx/n - mx*mx, cyy=syy/n - my*my;
+  return cxy / Math.sqrt(cxx*cyy);
+}
+
+// ---- fail-loud self-check: THROWS on any violation, RETURNS true on success ----
+function selfcheck(){
+  var EPS=1e-9;
+  function assert(c,m){ if(!c) throw new Error("selfcheck: "+m); }
+
+  // untampered collider with the canonical coefficients a=b=sc=1
+  var p={a:1,b:1,sc:1,tampered:false};
+  var S=covMatrix(p);
+
+  // (1) X and Y are MARGINALLY INDEPENDENT (exactly zero correlation)
+  assert(Math.abs(marginalCorr(S)) < EPS, "marginal corr(X,Y) must be 0 for a collider");
+
+  // (2) conditioning on the collider C makes them DEPENDENT (nonzero partial corr)
+  var pc=partialCorr(S);
+  assert(Math.abs(pc) > 0.1, "partial corr given C must be nonzero (induced association)");
+
+  // (3) exact induced values
+  assert(Math.abs(pc - (-0.5)) < EPS, "partial corr(X,Y|C) must equal -1/2");
+  assert(Math.abs(condCov(S) - (-1/3)) < EPS, "Cov(X,Y|C) must equal -1/3");
+  assert(Math.abs(S.Scc - 3) < EPS, "Var(C) must equal 3");
+
+  // (4) SIGN: two positive causes of C => NEGATIVE induced correlation
+  assert(pc < 0, "induced partial correlation must be negative for two positive causes");
+
+  // (5) NOT conditioning leaves them independent: the bias appears only under selection
+  assert(Math.abs(marginalCorr(S)) < EPS, "unconditioned association must stay 0");
+
+  // (6) the association is NON-causal: do(X=x) leaves Y unchanged (slope 0)
+  assert(Math.abs(doSlopeX_on_Y(p)) < EPS, "true causal effect X->Y must be 0");
+
+  // (7) sampled selection reproduces the induced negative tilt (robust tolerance)
+  var sc=sampleBandCorr(p, 200000, 0.35, 20260810);
+  assert(sc < -0.30 && sc > -0.70, "sampled band correlation must be near -0.5, got "+sc);
+  // and WITHOUT selection the sample stays ~0 (huge band => whole cloud)
+  var full=sampleBandCorr(p, 200000, 100, 20260810);
+  assert(Math.abs(full) < 0.02, "unconditioned sample correlation must be ~0, got "+full);
+
+  // (8) THE TAMPER (disclosed planted void): swap collider -> confounder.
+  // save/set/restore the shared tamper flag.
+  var saved = MODEL.tampered;
+  MODEL.tampered = true;
+  try {
+    var pT={a:1,b:1,sc:1,tampered:true};
+    var ST=covMatrix(pT);
+    // under a confounder X and Y are NOW genuinely correlated (marginal != 0)...
+    assert(Math.abs(marginalCorr(ST)) > 0.1, "tamper: confounder must make X,Y marginally correlated");
+    // ...and conditioning on C REMOVES it (partial corr -> 0): the collider signature is GONE.
+    assert(Math.abs(partialCorr(ST)) < EPS, "tamper: conditioning on a confounder must zero the partial corr");
+    // therefore the collider claim "conditioning induces dependence" FAILS here -> witness fires.
+  } finally {
+    MODEL.tampered = saved; // restore no matter what
+  }
+  assert(MODEL.tampered === saved, "tamper flag must be restored");
+
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var $=function(id){return document.getElementById(id);};
+
+  // boot: run the fail-loud check, light the badge or show the wall
+  try {
+    var ok = selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    $("litbadge").textContent =
+      "LIT · collider verified: marginal ρ=0.000, partial ρ(X,Y|C)=−0.500, Cov=−1/3, causal do(X)→Y slope=0.";
+  } catch(e){
+    var fb=$("failb"); fb.style.display="block";
+    fb.textContent="SELFCHECK FAILED — "+e.message;
+    $("litbadge").style.display="none";
+    throw e; // rethrow: the void is loud
+  }
+
+  // ---- live panel state ----
+  var params={ a:1, b:1, band:0.4 };
+  var cv=$("cv"), ctx=cv.getContext("2d");
+
+  function fmt(x){ return (x<0? "−":"") + Math.abs(x).toFixed(3); }
+
+  function currentP(){ return {a:params.a, b:params.b, sc:1, tampered:MODEL.tampered}; }
+
+  function draw(pts){
+    var W=cv.width, H=cv.height, pad=26;
+    ctx.clearRect(0,0,W,H);
+    // axes
+    ctx.strokeStyle="#173026"; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(pad,H/2); ctx.lineTo(W-pad,H/2);
+    ctx.moveTo(W/2,pad); ctx.lineTo(W/2,H-pad);
+    ctx.stroke();
+    ctx.fillStyle="#5f8a79"; ctx.font="11px monospace";
+    ctx.fillText("X →", W-pad-24, H/2-6);
+    ctx.fillText("Y ↑", W/2+6, pad+2);
+    var sc=42;
+    function px(x){ return W/2 + x*sc; }
+    function py(y){ return H/2 - y*sc; }
+    // all points (blue)
+    for(var i=0;i<pts.length;i++){
+      var q=pts[i];
+      ctx.fillStyle = q.sel ? "rgba(255,207,107,.95)" : "rgba(58,110,168,.32)";
+      ctx.beginPath(); ctx.arc(px(q.x),py(q.y), q.sel?2.4:1.6, 0, 6.2832); ctx.fill();
+    }
+    // regression line through the SELECTED points, drawn in amber
+    var n=0,sx=0,sy=0,sxx=0,sxy=0;
+    for(var j=0;j<pts.length;j++){ if(pts[j].sel){ var x=pts[j].x,y=pts[j].y; n++; sx+=x;sy+=y;sxx+=x*x;sxy+=x*y; } }
+    if(n>4){
+      var mx=sx/n,my=sy/n, slope=(sxy/n-mx*my)/(sxx/n-mx*mx), b0=my-slope*mx;
+      ctx.strokeStyle="#ffcf6b"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(px(-3),py(slope*-3+b0)); ctx.lineTo(px(3),py(slope*3+b0)); ctx.stroke();
+    }
+  }
+
+  function genPoints(p){
+    var rng=makePRNG(4242), g=makeGauss(rng), out=[];
+    for(var i=0;i<1400;i++){
+      var X,Y,C;
+      if(!p.tampered){ X=g(); Y=g(); C=p.a*X+p.b*Y+g(); }
+      else { C=g(); X=p.a*C+g(); Y=p.b*C+g(); }
+      out.push({x:X,y:Y,sel: Math.abs(C)<=params.band});
+    }
+    return out;
+  }
+
+  function render(){
+    var p=currentP();
+    var S=covMatrix(p);
+    var marg=marginalCorr(S), part=partialCorr(S);
+    var samp=sampleBandCorr(p, 120000, params.band, 20260810);
+    var doSlope=doSlopeX_on_Y(p);
+
+    $("p_marg").textContent=fmt(marg);
+    $("p_part").textContent=fmt(part);
+    $("p_samp").textContent=fmt(samp);
+    $("p_do").textContent=fmt(doSlope);
+
+    // color cues
+    $("p_marg").className = "v " + (Math.abs(marg)<1e-6 ? "good":"bad");
+    $("p_part").className = "v " + (Math.abs(part)>1e-6 ? "good":"bad");
+
+    draw(genPoints(p));
+    witness(p, S, marg, part);
+    tstate();
+  }
+
+  // WINDOW 7 — live witness. Confirms the collider signature; flips red under tamper.
+  function witness(p, S, marg, part){
+    var el=$("auditout");
+    var isCollider = (Math.abs(marg) < 1e-9) && (part < -1e-9);
+    if(!p.tampered && isCollider){
+      el.className="badge ok";
+      el.innerHTML="&#10003; WITNESS OK &middot; graph is a collider: marginal &rho;="+fmt(marg)+
+        ", conditioning on C <b>induces</b> &rho;(X,Y|C)="+fmt(part)+" (&lt;0). Selection forged the link.";
+    } else {
+      el.className="badge bad";
+      el.innerHTML="&#10007; WITNESS FIRED &middot; collider signature GONE. Now marginal &rho;="+fmt(marg)+
+        " (≠0) and partial &rho;(X,Y|C)="+fmt(part)+". This is a <b>confounder</b>: conditioning REMOVES a real link, it does not create one. Collider &ne; confounder — opposite handling.";
+    }
+  }
+
+  function tstate(){
+    $("tstate").innerHTML = MODEL.tampered
+      ? "graph: <b>C&rarr;X , C&rarr;Y</b> (confounder — TAMPERED)"
+      : "graph: <b>X&rarr;C&larr;Y</b> (collider)";
+  }
+
+  // controls
+  $("sa").addEventListener("input",function(e){ params.a=parseFloat(e.target.value); $("va").textContent=params.a.toFixed(1); render(); });
+  $("sb").addEventListener("input",function(e){ params.b=parseFloat(e.target.value); $("vb").textContent=params.b.toFixed(1); render(); });
+  $("sc").addEventListener("input",function(e){ params.band=parseFloat(e.target.value); $("vc").textContent=params.band.toFixed(1); render(); });
+
+  $("tamper").addEventListener("click",function(){ MODEL.tampered=true; render(); });
+  $("restore").addEventListener("click",function(){ MODEL.tampered=false; render(); });
+
+  render();
+})();
+</script>
+</body>
+</html>

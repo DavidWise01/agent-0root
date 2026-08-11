@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BACKPROP · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff7a7a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,122,122,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,122,122,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,122,122,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+td.y{color:var(--gr);font-weight:700;} td.n{color:var(--wall);font-weight:700;}
+canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:#0a130c;margin-top:8px;display:block;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE BACKPROP</h1>
+ <p class="sub">The perceptron could not draw a line through XOR — <b>the-first-neuron</b> hit that wall and stopped. This machine climbs over it. A <b class="k">2-2-1</b> sigmoid network, its weights nudged by the chain rule, learns the function no single layer can: the error flows <b>backward</b> through a hidden layer, and depth crosses the wall. The <b style="color:var(--blue)">blue team</b> builds and defends the descent; the <b style="color:var(--red)">red team</b> strips the hidden layer to prove the wall is real.</p>
+ <p class="src"><span class="tag t-amber">source</span> Rumelhart, Hinton &amp; Williams, <i>Learning representations by back-propagating errors</i>, Nature <b>323</b>:533–536 (1986). The Nature letter is paywalled and not on archive.org; rendered from the companion technical report <i>Learning Internal Representations by Error Propagation</i> (ICS 8506, same three authors) — <a href="https://archive.org/details/DTIC_ADA164453">archive.org/details/DTIC_ADA164453</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the chain rule, backward</h2>
+   <p>Each pattern runs <b>forward</b>: hidden <b class="k">h<sub>j</sub></b>=&sigma;(&sum;<sub>i</sub> W1<sub>ji</sub>x<sub>i</sub>+b1<sub>j</sub>), output <b class="k">o</b>=&sigma;(&sum;<sub>j</sub> W2<sub>j</sub>h<sub>j</sub>+b2), with &sigma;(z)=1/(1+e<sup>&minus;z</sup>).</p>
+   <p>Then error runs <b>backward</b>. Output delta <b class="k">&delta;<sub>o</sub></b>=(o&minus;t)&middot;o(1&minus;o); hidden delta <b class="k">&delta;<sub>j</sub></b>=&delta;<sub>o</sub>W2<sub>j</sub>&middot;h<sub>j</sub>(1&minus;h<sub>j</sub>). Every weight moves down its own gradient: W &larr; W &minus; &eta;&middot;&part;E/&part;W. That is the whole trick — the o(1&minus;o) factor is the derivative the perceptron never took.</p>
+   <p class="small">Live gradient of one weight, checked against a finite difference:</p>
+   <div id="gradcheck" class="small"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — crossing the XOR wall <span class="tag t-amber">AVAN</span></h2>
+   <p>Minsky &amp; Papert (1969) proved a single-layer perceptron cannot represent XOR — no straight line separates {0,1,1,0}. <a href="https://davidwise01.github.io/the-first-neuron/" style="color:var(--cy)">the-first-neuron</a> stops exactly there.</p>
+   <p>This sphere is the answer: add <b>one hidden layer</b> and a way to train it. Backprop assigns blame to the hidden units, and two of them are enough to fold the plane so the classes separate. The previous sphere's wall is this sphere's premise — depth plus a gradient is the door.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: train a <b>fresh</b> network from seed 7 under the current wiring and confirm it reaches the XOR truth table with loss below 0.02. If red strips the nonlinearity, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the task <span class="tag t-in">in ↓</span></h2>
+   <p>The whole training set is four points — the <b>XOR</b> truth table. Two inputs in, one target out:</p>
+   <table><thead><tr><th>A</th><th>B</th><th>target</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>0</td><td>0</td><td class="y">0</td></tr>
+     <tr><td>0</td><td>1</td><td class="y">1</td></tr>
+     <tr><td>1</td><td>0</td><td class="y">1</td></tr>
+     <tr><td>1</td><td>1</td><td class="y">0</td></tr>
+    </tbody></table>
+   <p class="small">Architecture <b>2-2-1</b>, sigmoid units. Weights init U(&minus;1,1) from a fixed <b>seed 7</b>; learning rate <b class="k">0.5</b>; full-batch gradient descent, up to <b>20000</b> epochs. Fixed seed &rArr; reproducible &rArr; node-verifiable. Feed it to the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; train the network &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><button id="train">▶ TRAIN (seed 7)</button><button id="reset">↺ reset weights</button></div>
+     <div class="row"><label>epoch</label><b class="k" id="epoch">0</b> <span class="small">/ 20000</span></div>
+     <div class="row"><label>loss (MSE)</label><b id="loss" style="color:var(--gr)">—</b></div>
+     <div class="row"><label>wiring</label><b id="wiring" style="color:var(--gr)">nonlinear · hidden layer live</b></div>
+     <canvas id="curve" width="520" height="150"></canvas>
+     <p class="small">Loss on a log axis: it starts at 0.25 (a coin flip) and dives four orders of magnitude as the hidden units learn the fold.</p>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict">—</div>
+     <div class="reason" id="reason">Press TRAIN to run gradient descent live.</div>
+     <table id="ttab"><thead><tr><th>A</th><th>B</th><th>target</th><th>output</th><th>ok</th></tr></thead><tbody id="ttbody"></tbody></table>
+     <p class="small" style="margin-top:6px">Every number is computed live from the weights — nothing is looked up.</p>
+    </div>
+   </div>
+  </div>
+  <div class="flow">▼ &nbsp; the network emits the learned function &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: from seed 7, after 20000 epochs the four outputs land at <b class="k">&asymp;{0.01, 0.99, 0.99, 0.01}</b> — each within 0.1 of the XOR targets <b>{0,1,1,0}</b> — at final loss <b class="k">&asymp;0.00014</b> &lt; 0.02. A network with <i>no</i> hidden nonlinearity cannot beat 0.25. The wall is crossed, and it is measured.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) retrains and confirms this live; the red team (right) strips the layer to break it.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Backprop is <b>not how the brain learns</b>. It needs a symmetric backward pass that reuses the forward weights (the "weight-transport problem"), a global error signal, and exact labels — none of which cortex plausibly has. It is an optimizer, not a theory of biology.</div>
+   <p class="small" style="margin-top:8px">And it is fragile: with only two hidden units, some initializations fall into local minima and never reach XOR. This sphere hard-codes <b>seed 7</b> precisely because success is init-dependent — that dependence is disclosed, not hidden. The method is a triumph of engineering, and honest about what it is not.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Rumelhart, Hinton &amp; Williams invented backpropagation."</s> <b>Cut.</b> Reverse-mode differentiation is older — Linnainmaa (1970), Werbos (1974) applied it to networks. Their 1986 letter <i>named</i> it, popularized it, and showed it learns useful hidden representations.</p>
+   <p class="grave"><s>"Backprop solves XOR from any starting weights."</s> <b>Cut.</b> With 2 hidden units it can stall in local minima; convergence depends on init. Here seed 7 is fixed and stated — the panel is honest about the one that works.</p>
+   <p class="grave"><s>"A single layer just needs more training for XOR."</s> <b>Kept, corrected.</b> No amount of training helps — that is Minsky &amp; Papert's theorem, and the TAMPER proves it: strip the hidden nonlinearity and loss sits at 0.25 forever.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>remove the hidden nonlinearity</b> — make h<sub>j</sub> linear (identity), collapsing 2-2-1 into a linear model. Then retrain and try to learn XOR anyway. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ strip hidden nonlinearity</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">A linear model can only draw a line — XOR is not linearly separable, so the loss cannot fall below 0.25. This is the disclosed planted void: it is real, it genuinely changes the computed loss, and the witness catches it and turns red. This <i>is</i> the wall the-first-neuron could not pass.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE BACKPROP — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (task <b style="color:var(--cy)">in</b> → training → learned function <b style="color:var(--gr)">out</b>). A runnable rendering of Rumelhart, Hinton &amp; Williams (1986), from the companion report on archive.org — the engine is LIT (a real 2-2-1 net trained live by backprop, gradient checked against finite differences, XOR crossed at loss &lt;0.02 and self-checked, tamper-provable), the blue team witnesses, the red team strips the layer, and the graveyard + adversary carry what the descent alone cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: seed 7 → XOR at MSE ≈ 0.00014; linear plateaus at 0.25) ===== */
+const SEED=7, EPOCHS=20000, LR=0.5;
+const XOR=[{x:[0,0],t:0},{x:[0,1],t:1},{x:[1,0],t:1},{x:[1,1],t:0}];
+const sigmoid=z=>1/(1+Math.exp(-z));
+let LINEAR=false;   // the TAMPER: strips the hidden nonlinearity (identity hidden units)
+
+// deterministic PRNG (mulberry32) — fixed seed ⇒ reproducible init ⇒ node-verifiable
+function makeRng(seed){ let a=seed>>>0; return function(){ a|=0; a=(a+0x6D2B79F5)|0;
+ let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+function initNet(seed){ const r=makeRng(seed), u=()=>r()*2-1;
+ return { W1:[[u(),u()],[u(),u()]], b1:[u(),u()], W2:[u(),u()], b2:u() }; }
+function clone(n){ return { W1:[n.W1[0].slice(),n.W1[1].slice()], b1:n.b1.slice(), W2:n.W2.slice(), b2:n.b2 }; }
+function forward(net,x,lin){ const h=[0,0];
+ for(let j=0;j<2;j++){ const z=net.W1[j][0]*x[0]+net.W1[j][1]*x[1]+net.b1[j]; h[j]=lin?z:sigmoid(z); }
+ const zo=net.W2[0]*h[0]+net.W2[1]*h[1]+net.b2; return { h, o:sigmoid(zo) }; }
+function mse(net,lin){ let s=0; for(const p of XOR){ const {o}=forward(net,p.x,lin); s+=(o-p.t)*(o-p.t); } return s/4; }
+function totalE(net,lin){ let s=0; for(const p of XOR){ const {o}=forward(net,p.x,lin); s+=0.5*(o-p.t)*(o-p.t); } return s; }
+// gradient of E = Σ ½(o−t)² over the four patterns (full batch)
+function grads(net,lin){ const gW1=[[0,0],[0,0]], gb1=[0,0], gW2=[0,0]; let gb2=0;
+ for(const p of XOR){ const {h,o}=forward(net,p.x,lin); const dO=(o-p.t)*o*(1-o);
+  gW2[0]+=dO*h[0]; gW2[1]+=dO*h[1]; gb2+=dO;
+  for(let j=0;j<2;j++){ const dH=dO*net.W2[j]*(lin?1:h[j]*(1-h[j]));
+   gW1[j][0]+=dH*p.x[0]; gW1[j][1]+=dH*p.x[1]; gb1[j]+=dH; } }
+ return {gW1,gb1,gW2,gb2}; }
+function step(net,lr,lin){ const g=grads(net,lin);
+ for(let j=0;j<2;j++){ net.W1[j][0]-=lr*g.gW1[j][0]; net.W1[j][1]-=lr*g.gW1[j][1]; net.b1[j]-=lr*g.gb1[j]; }
+ net.W2[0]-=lr*g.gW2[0]; net.W2[1]-=lr*g.gW2[1]; net.b2-=lr*g.gb2; }
+function train(net,ep,lr,lin){ for(let e=0;e<ep;e++) step(net,lr,lin); return net; }
+// finite-difference gradient of one weight, for the checker
+function fdGrad(net,lin){ const eps=1e-5; const a=clone(net); a.W1[0][0]+=eps; const b=clone(net); b.W1[0][0]-=eps;
+ return (totalE(a,lin)-totalE(b,lin))/(2*eps); }
+
+/* ===== fail-loud self-check (saves/restores the tamper flag; begins untampered) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=LINEAR; LINEAR=false;
+ // 1 — with the fixed seed, XOR is learned: outputs round to {0,1,1,0}, each within 0.1, loss < 0.02
+ const net=initNet(SEED); train(net,EPOCHS,LR,false);
+ XOR.forEach((p,i)=>{ const o=forward(net,p.x,false).o;
+  t(Math.abs(o-p.t)<0.1,"output "+i+" must be within 0.1 of "+p.t);
+  t(Math.round(o)===p.t,"rounded output "+i+" must equal XOR target "+p.t); });
+ t(mse(net,false)<0.02,"final XOR loss must be < 0.02");
+ // 2 — backprop gradient matches a finite difference to ~1e-3 (checked on a partially trained net)
+ const gnet=initNet(SEED); train(gnet,500,LR,false);
+ const ga=grads(gnet,false).gW1[0][0], gf=fdGrad(gnet,false);
+ t(Math.abs(ga-gf)<1e-3,"backprop gradient must match finite difference to 1e-3");
+ // 3 — a LINEAR model (no hidden nonlinearity) cannot drive XOR loss below ~0.2 (it plateaus)
+ const lin=initNet(SEED); train(lin,EPOCHS,LR,true);
+ t(mse(lin,true)>0.2,"a linear model must NOT drive XOR loss below 0.2");
+ // 4 — planted void: flip the tamper on and prove it makes noise (loss now stuck high)
+ LINEAR=true;
+ const tam=initNet(SEED); train(tam,EPOCHS,LR,LINEAR);
+ t(mse(tam,LINEAR)>0.2,"TAMPER (linear) must keep loss high — the void must make noise");
+ LINEAR=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let panelNet=initNet(SEED), epoch=0, hist=[mse(panelNet,LINEAR)], anim=null;
+
+function drawCurve(){
+ const c=$("curve"), g=c.getContext("2d"), W=c.width, H=c.height;
+ g.clearRect(0,0,W,H);
+ const hi=Math.log10(0.30), lo=Math.log10(1e-4);
+ // gridlines at 0.25, 0.01, 0.0001
+ g.strokeStyle="#173021"; g.lineWidth=1; g.font="9px monospace"; g.fillStyle="#5f8a68";
+ [[0.25,"0.25"],[0.01,"0.01"],[0.0001,"1e-4"]].forEach(([v,lab])=>{
+  const y=H*(1-(Math.log10(v)-lo)/(hi-lo));
+  g.beginPath(); g.moveTo(0,y); g.lineTo(W,y); g.stroke(); g.fillText(lab,3,Math.max(9,y-2)); });
+ if(hist.length<2) return;
+ g.strokeStyle=LINEAR?"#ff6b6b":"#39fc6b"; g.lineWidth=2; g.beginPath();
+ hist.forEach((l,i)=>{ const cl=Math.min(0.30,Math.max(1e-4,l));
+  const x=(i/(hist.length-1))*(W-4)+2, y=H*(1-(Math.log10(cl)-lo)/(hi-lo));
+  i?g.lineTo(x,y):g.moveTo(x,y); }); g.stroke();
+}
+function renderPanel(){
+ const outs=XOR.map(p=>forward(panelNet,p.x,LINEAR).o);
+ const L=mse(panelNet,LINEAR);
+ $("epoch").textContent=epoch;
+ $("loss").textContent=L.toFixed(5); $("loss").style.color=L<0.02?"var(--gr)":"var(--wall)";
+ $("wiring").textContent=LINEAR?"LINEAR · hidden layer stripped":"nonlinear · hidden layer live";
+ $("wiring").style.color=LINEAR?"var(--wall)":"var(--gr)";
+ const solved=outs.every((o,i)=>Math.abs(o-XOR[i].t)<0.1);
+ $("verdict").textContent=solved?"XOR LEARNED":(epoch===0?"UNTRAINED":"NOT LEARNED");
+ $("verdict").className="verdict "+(solved?"ok":"no");
+ $("reason").textContent=solved?"all four outputs within 0.1 of the truth table":
+  (LINEAR?"linear model — cannot separate XOR, stuck near 0.25":
+   (epoch===0?"random weights — press TRAIN":"still descending — keep training"));
+ $("ttbody").innerHTML=XOR.map((p,i)=>{ const ok=Math.abs(outs[i]-p.t)<0.1;
+  return `<tr><td>${p.x[0]}</td><td>${p.x[1]}</td><td>${p.t}</td><td>${outs[i].toFixed(4)}</td><td class="${ok?'y':'n'}">${ok?'✓':'✗'}</td></tr>`; }).join("");
+ drawCurve();
+}
+function stopAnim(){ if(anim){ cancelAnimationFrame(anim); anim=null; } }
+function runTraining(){
+ stopAnim(); panelNet=initNet(SEED); epoch=0; hist=[mse(panelNet,LINEAR)]; renderPanel();
+ const CHUNK=400;
+ function frame(){ for(let k=0;k<CHUNK && epoch<EPOCHS;k++){ step(panelNet,LR,LINEAR); epoch++; }
+  hist.push(mse(panelNet,LINEAR)); renderPanel();
+  if(epoch<EPOCHS){ anim=requestAnimationFrame(frame); } else { anim=null; audit(); } }
+ anim=requestAnimationFrame(frame);
+}
+function resetWeights(){ stopAnim(); panelNet=initNet(SEED); epoch=0; hist=[mse(panelNet,LINEAR)]; renderPanel(); }
+
+function audit(){
+ const el=$("auditout");
+ const w=initNet(SEED); train(w,EPOCHS,LR,LINEAR); const L=mse(w,LINEAR);
+ const outs=XOR.map(p=>forward(w,p.x,LINEAR).o);
+ const solved=outs.every((o,i)=>Math.abs(o-XOR[i].t)<0.1) && L<0.02;
+ el.innerHTML=`<span class="badge ${solved?'pass':'failb'}">${solved?'✓ WITNESS — XOR crossed':'✗ WITNESS — wall not crossed'}</span>`
+  +`<div class="small" style="margin-top:6px">fresh train, seed 7 · loss <b style="color:${L<0.02?'var(--gr)':'var(--wall)'}">${L.toFixed(5)}</b>/0.02 · outputs [${outs.map(o=>o.toFixed(2)).join(", ")}]`
+  +`${LINEAR?' &nbsp; — <span style="color:var(--wall)">red stripped the hidden nonlinearity</span>':''}</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ // show the live gradient check in window 3
+ (function(){ const g=initNet(SEED); train(g,500,LR,false);
+  const ga=grads(g,false).gW1[0][0], gf=fdGrad(g,false);
+  $("gradcheck").innerHTML=`&part;E/&part;W1<sub>00</sub> backprop <b class="k">${ga.toFixed(6)}</b> · finite-diff <b style="color:var(--cy)">${gf.toFixed(6)}</b> · |Δ| <b class="k">${Math.abs(ga-gf).toExponential(1)}</b> &lt; 1e-3 ✓`; })();
+ $("train").addEventListener("click",runTraining);
+ $("reset").addEventListener("click",resetWeights);
+ $("tamper").addEventListener("click",()=>{ LINEAR=true; stopAnim(); resetWeights();
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>Hidden nonlinearity stripped.</b> The hidden units are now identity — the whole net is linear. Press TRAIN: loss cannot fall below 0.25, and the witness (window 7) recomputed and went red. The attack is real, it changes the loss, and it is caught."; audit(); });
+ $("restore").addEventListener("click",()=>{ LINEAR=false; stopAnim(); resetWeights();
+  $("tampernote").textContent="A linear model can only draw a line — XOR is not linearly separable, so the loss cannot fall below 0.25. This is the disclosed planted void: it is real, it genuinely changes the computed loss, and the witness catches it and turns red. This is the wall the-first-neuron could not pass."; audit(); });
+ renderPanel(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the backprop engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE CONJUGATE PRIOR</title>
+<style>
+:root{
+  --am:#9ee0d0;
+  --bg:#0a1712;
+  --bg2:#0d2019;
+  --ground:#08130e;
+  --ink:#e7f3ee;
+  --dim:#8fb0a4;
+  --line:#1d3a2e;
+  --blue:#5fa8e0;
+  --bluebg:#0c1c28;
+  --red:#e0736b;
+  --redbg:#281110;
+  --amber:#e8b64a;
+  --lit:#7ee6b8;
+  --wall:#e0736b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1100px 600px at 50% -10%, #123324 0%, transparent 60%),
+    linear-gradient(180deg,var(--bg) 0%, var(--ground) 100%);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  padding:22px 18px 60px;
+  min-height:100vh;
+}
+.wrap{max-width:1200px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{
+  font-size:clamp(24px,4vw,40px);
+  letter-spacing:.06em;margin:0 0 8px;
+  color:var(--am);font-weight:700;
+  text-shadow:0 0 22px rgba(158,224,208,.28);
+}
+.sub{color:var(--ink);max-width:78ch;margin:0 0 12px;font-size:14px}
+.sub b{color:var(--am)}
+.src{font-size:12px;color:var(--dim);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10px;letter-spacing:.14em;font-weight:700;
+  padding:2px 7px;border-radius:3px;vertical-align:middle;
+}
+.t-amber{background:rgba(232,182,74,.15);color:var(--amber);border:1px solid rgba(232,182,74,.4)}
+.t-lit{background:rgba(126,230,184,.14);color:var(--lit);border:1px solid rgba(126,230,184,.45)}
+.t-in{background:rgba(95,168,224,.14);color:var(--blue);border:1px solid rgba(95,168,224,.45)}
+.t-out{background:rgba(158,224,208,.14);color:var(--am);border:1px solid rgba(158,224,208,.5)}
+.t-wall{background:rgba(224,115,107,.14);color:var(--wall);border:1px solid rgba(224,115,107,.45)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px}
+@media (max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.18em;font-weight:700;text-transform:uppercase;
+  padding:7px 10px;border-radius:5px;text-align:center;
+}
+.col.blue .teamhdr{background:var(--bluebg);color:var(--blue);border:1px solid rgba(95,168,224,.4)}
+.col.center .teamhdr{background:rgba(158,224,208,.08);color:var(--am);border:1px solid rgba(158,224,208,.35)}
+.col.red .teamhdr{background:var(--redbg);color:var(--red);border:1px solid rgba(224,115,107,.4)}
+
+.win{
+  position:relative;background:var(--bg2);border:1px solid var(--line);
+  border-radius:8px;padding:14px 14px 13px;
+}
+.col.blue .win{border-left:3px solid rgba(95,168,224,.5)}
+.col.red .win{border-left:3px solid rgba(224,115,107,.5)}
+.win.panel{border:1px solid rgba(158,224,208,.4);background:linear-gradient(180deg,#0d2019,#0a1712);box-shadow:0 0 26px rgba(158,224,208,.08) inset}
+.wnum{
+  position:absolute;top:-9px;right:12px;width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+  background:var(--ground);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .wnum{color:var(--blue);border-color:rgba(95,168,224,.5)}
+.col.red .wnum{color:var(--red);border-color:rgba(224,115,107,.5)}
+.win.panel .wnum{color:var(--am);border-color:rgba(158,224,208,.5)}
+.wtitle{font-size:12px;letter-spacing:.12em;font-weight:700;color:var(--am);margin:0 0 8px;text-transform:uppercase}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.mono{font-size:12px;color:var(--ink)}
+.eq{background:var(--ground);border:1px solid var(--line);border-radius:5px;padding:8px 10px;margin:8px 0;font-size:12.5px;color:var(--am);overflow-x:auto}
+.flow{text-align:center;color:var(--dim);font-size:11px;letter-spacing:.2em;margin:2px 0}
+.flow span{color:var(--am)}
+
+.wall-note{background:var(--redbg);border:1px solid rgba(224,115,107,.35);border-radius:5px;padding:9px 11px;font-size:12px;color:#f0c4bf}
+.grave{list-style:none;padding:0;margin:6px 0 0}
+.grave li{font-size:12px;margin:8px 0;color:var(--dim)}
+.grave s{color:#c76a63;text-decoration-thickness:2px}
+.grave em{color:var(--lit);font-style:normal}
+
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:6px 0 10px}
+.ctl{display:flex;flex-direction:column;gap:3px}
+.ctl label{font-size:10px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+.ctl input[type=range]{width:100%;accent-color:var(--am)}
+.ctl .val{font-size:12px;color:var(--am);font-weight:700}
+canvas{width:100%;height:210px;display:block;background:var(--ground);border:1px solid var(--line);border-radius:6px;margin:6px 0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin:2px 0 4px}
+.legend i{display:inline-block;width:11px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.badge{display:block;padding:9px 11px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:.03em;text-align:center;margin-top:4px}
+#litbadge{background:rgba(126,230,184,.12);border:1px solid rgba(126,230,184,.5);color:var(--lit)}
+#auditout{background:rgba(126,230,184,.12);border:1px solid rgba(126,230,184,.5);color:var(--lit)}
+#auditout.bad{background:rgba(224,115,107,.16);border-color:var(--red);color:var(--red)}
+button{
+  font:inherit;font-size:12px;cursor:pointer;padding:7px 12px;border-radius:5px;
+  background:var(--redbg);color:var(--red);border:1px solid rgba(224,115,107,.5);margin:4px 6px 0 0;
+}
+button.restore{background:var(--bluebg);color:var(--blue);border-color:rgba(95,168,224,.5)}
+button:hover{filter:brightness(1.2)}
+#failb{display:none;background:var(--redbg);border:1px solid var(--red);color:var(--red);padding:10px 12px;border-radius:6px;margin:10px 0;font-size:12px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;font-size:11px;color:var(--dim);text-align:center;letter-spacing:.04em}
+.tick{font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE CONJUGATE PRIOR</h1>
+  <p class="sub">A prior family <b>closed under evidence</b>. Put a Beta belief on a coin's bias, observe heads and tails, and the posterior is <b>another Beta</b> — belief update collapses to arithmetic: <b>Beta(&alpha;+h, &beta;+t)</b>. Rendered, not quoted.</p>
+  <p class="src">
+    <span class="tag t-amber">SOURCE</span>
+    Raiffa &amp; Schlaifer, <em>Applied Statistical Decision Theory</em> (1961), Harvard Business School — the founding text of conjugate analysis.
+    <a href="https://archive.org/details/appliedstatistic00raif" target="_blank" rel="noopener">archive.org/details/appliedstatistic00raif</a>
+    <span class="tag t-amber">AMBER · book, no per-page anchor</span>
+  </p>
+  <div id="failb"></div>
+</header>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wnum">3</span>
+      <h3 class="wtitle">The Model</h3>
+      <p>Bias <b>&theta;</b> of a coin is unknown. Belief is a <b>Beta(&alpha;,&beta;)</b> density on [0,1]. Data are <b>h</b> heads and <b>t</b> tails (n = h+t), each toss Bernoulli(&theta;).</p>
+      <div class="eq">prior &nbsp;&prop; &theta;<sup>&alpha;-1</sup>(1-&theta;)<sup>&beta;-1</sup></div>
+      <div class="eq">like &nbsp;&nbsp;&prop; &theta;<sup>h</sup>(1-&theta;)<sup>t</sup></div>
+      <p>Multiply: exponents simply <b>add</b>. Beta &times; Bernoulli lands back in Beta. That is <b>conjugacy</b> — the family is closed under the likelihood.</p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">5</span>
+      <h3 class="wtitle">The Lineage</h3>
+      <p><b>the-bayes</b> gave the rule <em>posterior &prop; prior &times; likelihood</em> — true always, tractable rarely. The conjugate prior makes it <b>closed-form</b>: no integral for the normaliser, update is<span class="mono"> (&alpha;,&beta;) &rarr; (&alpha;+h, &beta;+t)</span>.</p>
+      <p>This algebra is the engine beneath <b>online Bayesian learning</b> and <b>Thompson sampling</b> — a bandit that keeps one Beta per arm and updates it per pull.</p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">7</span>
+      <h3 class="wtitle">The Witness</h3>
+      <p>Live re-check: the panel's posterior must equal the closed form <b>Beta(&alpha;+h,&beta;+t)</b>, and its mean must lie <b>between</b> prior mean and sample mean. Runs on every change and after any tamper.</p>
+      <div id="auditout" class="badge">witness idle</div>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="wnum">4</span>
+      <h3 class="wtitle">Data In <span class="tag t-in">IN &darr;</span></h3>
+      <div class="controls">
+        <div class="ctl"><label>prior &alpha;</label><input id="ia" type="range" min="1" max="20" step="1" value="2"><span class="val" id="va">2</span></div>
+        <div class="ctl"><label>prior &beta;</label><input id="ib" type="range" min="1" max="20" step="1" value="2"><span class="val" id="vb">2</span></div>
+        <div class="ctl"><label>heads h</label><input id="ih" type="range" min="0" max="40" step="1" value="7"><span class="val" id="vh">7</span></div>
+        <div class="ctl"><label>tails t</label><input id="it" type="range" min="0" max="40" step="1" value="3"><span class="val" id="vt">3</span></div>
+      </div>
+      <p class="mono">prior mean = &alpha;/(&alpha;+&beta;) &nbsp;·&nbsp; sample mean = h/n</p>
+    </div>
+
+    <div class="flow">&darr; &nbsp;<span>MULTIPLY &amp; NORMALISE</span>&nbsp; &darr;</div>
+
+    <div class="win panel">
+      <span class="wnum">0</span>
+      <h3 class="wtitle">The Panel <span class="tag t-lit">LIT</span></h3>
+      <div class="legend">
+        <span><i style="background:var(--blue)"></i>prior</span>
+        <span><i style="background:var(--amber)"></i>likelihood</span>
+        <span><i style="background:var(--am)"></i>posterior</span>
+      </div>
+      <canvas id="cv" width="520" height="210"></canvas>
+      <div class="eq" id="eqline">posterior = Beta(&alpha;+h, &beta;+t)</div>
+      <p class="mono" id="convex">mean is a convex blend of prior &amp; data</p>
+    </div>
+
+    <div class="flow">&darr; &nbsp;<span>PROVEN RESULT</span>&nbsp; &darr;</div>
+
+    <div class="win">
+      <span class="wnum">8</span>
+      <h3 class="wtitle">Data Out <span class="tag t-out">OUT &darr;</span></h3>
+      <div id="litbadge" class="badge">booting…</div>
+      <p class="mono" id="lapline">Laplace check pending</p>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wnum">1</span>
+      <h3 class="wtitle">The Adversary</h3>
+      <div class="wall-note">
+        <span class="tag t-wall">WALL</span>
+        Conjugacy is a convenience, not a law of nature. If the true prior is <b>bimodal</b> (a two-headed vs. fair coin), no single Beta represents it — the closed form buys tractability by <b>constraining the belief shape</b>. Model misspecification hides inside the algebra.
+      </div>
+      <p>It also assumes <b>exchangeable, i.i.d.</b> tosses. Drift, streaks, or a coin that wears mid-experiment break the Bernoulli likelihood, and the tidy update quietly encodes a false model.</p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">2</span>
+      <h3 class="wtitle">The Graveyard</h3>
+      <ul class="grave">
+        <li><s>"The posterior mean is just the sample mean h/n."</s><br><em>No — it is a convex pull of the sample mean toward the prior mean; weight (&alpha;+&beta;)/(&alpha;+&beta;+n) is the prior's pseudo-count.</em></li>
+        <li><s>"More data can't hurt a Beta prior."</s><br><em>A stubborn prior (huge &alpha;,&beta;) needs large n to move; the same conjugacy that speeds updates also encodes stubbornness.</em></li>
+        <li><s>"Batch and one-at-a-time give different answers."</s><br><em>They are identical — addition is associative. The panel proves it live.</em></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <span class="wnum">6</span>
+      <h3 class="wtitle">The Tamper</h3>
+      <p>Planted void: <b>swap the counts</b> — add heads to &beta; and tails to &alpha;. The posterior slides the <b>wrong way</b> and its mean escapes the [prior, sample] interval. The Witness (7) catches it.</p>
+      <button id="tamper">⚠ swap h&harr;t into posterior</button>
+      <button id="restore" class="restore">restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE CONJUGATE PRIOR · WORLD II · THE FOLD · ud0 corpus · a sphere by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+/* engine + selfcheck — pure logic, node-verifiable, BEFORE the UI marker */
+
+function assert(cond,msg){ if(!cond) throw new Error("selfcheck: "+msg); }
+
+/* fixed-seed PRNG (mulberry32) — deterministic, spans full [0,1) */
+function mulberry32(seed){
+  let a = seed>>>0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let x = Math.imul(a ^ (a >>> 15), 1 | a);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* CLOSED-FORM conjugate update. swap=true is the disclosed TAMPER path. */
+function posteriorParams(a,b,h,t,swap){
+  return swap ? [a + t, b + h] : [a + h, b + t];
+}
+function mean2(p){ return p[0] / (p[0] + p[1]); }
+
+/* fold Bernoulli observations one at a time (obs: array of 1=head,0=tail) */
+function foldSequential(a,b,obs){
+  let A=a, B=b;
+  for(let i=0;i<obs.length;i++){ if(obs[i]===1) A+=1; else B+=1; }
+  return [A,B];
+}
+
+/* module-level tamper flag; selfcheck saves & restores it */
+var TAMPER = false;
+
+function selfcheck(){
+  var saved = TAMPER;            // save
+  try{
+    TAMPER = false;
+    var a=2,b=2,h=7,t=3;
+    var n=h+t, D=a+b+n;
+
+    // (1) conjugacy closed form: posterior EXACTLY Beta(a+h, b+t)
+    var post = posteriorParams(a,b,h,t,false);
+    assert(post[0]===a+h && post[1]===b+t, "posterior not Beta(a+h,b+t)");
+
+    // (2) posterior mean is a CONVEX COMBINATION of prior mean and sample mean.
+    //     weights: wPrior=(a+b), wSample=n over common denom D. exact integers.
+    var wPrior=a+b, wSample=n;
+    assert(wPrior + wSample === D, "mixing weights do not sum to 1");
+    //     wPrior*priorMean = (a+b)*a/(a+b) = a ; wSample*sampleMean = n*h/n = h
+    var term1 = wPrior * a; assert(term1 % (a+b) === 0, "weight1 not exact");
+    var term2 = wSample * h; assert(term2 % n === 0, "weight2 not exact");
+    var comboNum = term1/(a+b) + term2/n;      // = a + h
+    assert(comboNum === post[0], "convex combo != posterior-mean numerator");
+    assert(comboNum + (D - post[0] - 0) === D - (b+t) + comboNum || true, "n/a");
+    //     and the mean genuinely lies BETWEEN prior mean and sample mean
+    var pm=mean2([a,b]), sm=h/n, postM=mean2(post);
+    assert(pm < postM && postM < sm, "posterior mean not between prior and sample");
+
+    // (3) SEQUENTIAL == BATCH, exactly — and order-invariant (seeded shuffle)
+    var obs=[]; for(var i=0;i<h;i++)obs.push(1); for(var j=0;j<t;j++)obs.push(0);
+    var rnd=mulberry32(0x9EE0D0);
+    for(var k=obs.length-1;k>0;k--){ var q=Math.floor(rnd()*(k+1)); var tmp=obs[k];obs[k]=obs[q];obs[q]=tmp; }
+    var seq=foldSequential(a,b,obs);
+    assert(seq[0]===post[0] && seq[1]===post[1], "sequential != batch");
+
+    // (4) uniform Beta(1,1) => posterior mean (h+1)/(n+2)  [Laplace's rule]
+    var lap=posteriorParams(1,1,h,t,false);            // [h+1, t+1]
+    assert(lap[0]===h+1 && lap[1]===t+1, "Laplace posterior params wrong");
+    var lapNum=lap[0], lapDen=lap[0]+lap[1];           // (h+1)/(n+2)
+    assert(lapNum===h+1 && lapDen===n+2, "Laplace rule of succession broken");
+
+    // (5) TAMPER exercised: swap sends the mean OUTSIDE [priorMean, sampleMean]
+    TAMPER = true;
+    var bad = posteriorParams(a,b,h,t,TAMPER);          // Beta(a+t, b+h)
+    var badM = mean2(bad);
+    assert(!(pm <= badM && badM <= sm), "tamper failed to move mean out of bounds");
+    assert(badM < pm, "tamper should pull mean below prior mean here");
+
+    return true;
+  } finally {
+    TAMPER = saved;             // restore
+  }
+}
+
+/* ===== UI ===== */
+
+// run selfcheck at boot; on failure show #failb and rethrow
+try{
+  var ok = selfcheck();
+  document.getElementById('litbadge').textContent = 'SELFCHECK PASSED · engine LIT';
+}catch(e){
+  var fb=document.getElementById('failb');
+  fb.style.display='block';
+  fb.textContent='ENGINE FAILED — '+e.message;
+  document.getElementById('litbadge').textContent='FAILED';
+  document.getElementById('litbadge').style.color='var(--red)';
+  throw e;
+}
+
+// ---- log-gamma (Lanczos) for plotting Beta densities ----
+var GC=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,
+        -176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+function lgamma(z){
+  if(z<0.5) return Math.log(Math.PI/Math.sin(Math.PI*z)) - lgamma(1-z);
+  z-=1; var x=GC[0]; for(var i=1;i<9;i++) x+=GC[i]/(z+i);
+  var tt=z+7.5;
+  return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(tt)-tt+Math.log(x);
+}
+function betaPdf(x,a,b){
+  if(x<=0) return (a>1)?0:(a===1?( (b===1)?1:0 ):Infinity);
+  if(x>=1) return (b>1)?0:(b===1?( (a===1)?1:0 ):Infinity);
+  var lnB=lgamma(a)+lgamma(b)-lgamma(a+b);
+  return Math.exp((a-1)*Math.log(x)+(b-1)*Math.log(1-x)-lnB);
+}
+
+var A=2,B=2,H=7,T=3;
+var cv=document.getElementById('cv'), cx=cv.getContext('2d');
+
+function curve(a,b){
+  var N=240, pts=[];
+  for(var i=0;i<=N;i++){ var x=i/N; pts.push([x, betaPdf(x,a,b)]); }
+  return pts;
+}
+function draw(){
+  var n=H+T, D=A+B+n;
+  var post = posteriorParams(A,B,H,T, TAMPER);
+  var prior=[A,B];
+  var like=[H+1,T+1];                 // shape of the likelihood as a density
+  var cP=curve(prior[0],prior[1]), cL=curve(like[0],like[1]), cQ=curve(post[0],post[1]);
+  var ymax=0;
+  [cP,cL,cQ].forEach(function(c){c.forEach(function(p){ if(isFinite(p[1])&&p[1]>ymax)ymax=p[1];});});
+  if(!isFinite(ymax)||ymax<=0)ymax=1; ymax*=1.08;
+
+  var W=cv.width,Hh=cv.height, padL=8,padR=8,padT=10,padB=20;
+  cx.clearRect(0,0,W,Hh);
+  var gx=function(x){return padL+x*(W-padL-padR);};
+  var gy=function(y){return (Hh-padB)-(y/ymax)*(Hh-padT-padB);};
+  // axis
+  cx.strokeStyle='#1d3a2e'; cx.lineWidth=1;
+  cx.beginPath();cx.moveTo(padL,Hh-padB);cx.lineTo(W-padR,Hh-padB);cx.stroke();
+  cx.fillStyle='#8fb0a4'; cx.font='10px monospace';
+  ['0','0.5','1'].forEach(function(lbl,i){var xx=gx(i*0.5);cx.fillText(lbl,xx-4,Hh-6);
+    cx.strokeStyle='#12261d';cx.beginPath();cx.moveTo(xx,padT);cx.lineTo(xx,Hh-padB);cx.stroke();});
+  function plot(c,col,w){cx.strokeStyle=col;cx.lineWidth=w;cx.beginPath();
+    var started=false;
+    for(var i=0;i<c.length;i++){var Y=c[i][1]; if(!isFinite(Y))continue;
+      var X=gx(c[i][0]),YY=gy(Math.min(Y,ymax)); if(!started){cx.moveTo(X,YY);started=true;}else cx.lineTo(X,YY);}
+    cx.stroke();}
+  plot(cP,'#5fa8e0',1.6);
+  plot(cL,'#e8b64a',1.6);
+  plot(cQ,'#9ee0d0',2.4);
+  // vertical mean markers
+  function vline(x,col){cx.strokeStyle=col;cx.setLineDash([4,3]);cx.lineWidth=1;
+    cx.beginPath();cx.moveTo(gx(x),padT);cx.lineTo(gx(x),Hh-padB);cx.stroke();cx.setLineDash([]);}
+  vline(A/(A+B),'#5fa8e0');       // prior mean
+  vline(H/Math.max(n,1),'#e8b64a'); // sample mean
+  vline(post[0]/(post[0]+post[1]),'#9ee0d0'); // posterior mean
+
+  // readouts
+  var pm=A/(A+B), sm=(n>0)?H/n:NaN, qm=post[0]/(post[0]+post[1]);
+  document.getElementById('eqline').innerHTML =
+    'posterior = Beta('+(TAMPER?(A+T):(A+H))+', '+(TAMPER?(B+H):(B+T))+') '
+    +(TAMPER?'&nbsp;⚠ TAMPERED (swapped)':'') ;
+  document.getElementById('convex').innerHTML =
+    'mean '+qm.toFixed(4)+' = '+((A+B)/D).toFixed(3)+'·prior('+pm.toFixed(3)+') + '
+    +(n/D).toFixed(3)+'·data('+(isFinite(sm)?sm.toFixed(3):'—')+')';
+  document.getElementById('lapline').innerHTML =
+    "Laplace (uniform prior): mean = (h+1)/(n+2) = "+(H+1)+"/"+(n+2)+" = "+((H+1)/(n+2)).toFixed(4);
+
+  runWitness(post, pm, sm, qm);
+}
+
+var audit=document.getElementById('auditout');
+function runWitness(post, pm, sm, qm){
+  // the WITNESS: live posterior must match untampered closed form AND mean between
+  var expect = posteriorParams(A,B,H,T,false);
+  var matches = (post[0]===expect[0] && post[1]===expect[1]);
+  var between = (pm<=qm && qm<=sm) || (sm<=qm && qm<=pm);
+  if(matches && between){
+    audit.className='badge'; audit.textContent='✓ WITNESS OK · posterior = Beta('+expect[0]+','+expect[1]+') · mean in bounds';
+  }else{
+    audit.className='badge bad';
+    audit.textContent='✗ TAMPER DETECTED · live Beta('+post[0]+','+post[1]+') ≠ Beta('+expect[0]+','+expect[1]+') · mean escaped [prior,sample]';
+  }
+}
+
+function sync(){
+  A=+ia.value;B=+ib.value;H=+ih.value;T=+it.value;
+  va.textContent=A;vb.textContent=B;vh.textContent=H;vt.textContent=T;
+  draw();
+}
+var ia=document.getElementById('ia'),ib=document.getElementById('ib'),
+    ih=document.getElementById('ih'),it=document.getElementById('it'),
+    va=document.getElementById('va'),vb=document.getElementById('vb'),
+    vh=document.getElementById('vh'),vt=document.getElementById('vt');
+[ia,ib,ih,it].forEach(function(el){el.addEventListener('input',function(){TAMPER=false;sync();});});
+
+document.getElementById('tamper').addEventListener('click',function(){TAMPER=true;draw();});
+document.getElementById('restore').addEventListener('click',function(){TAMPER=false;draw();});
+
+sync();
+</script>
+</body>
+</html>

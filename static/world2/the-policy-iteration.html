@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE POLICY ITERATION</title>
+<style>
+:root{
+  --am:#9ee0d0;
+  --ground:#06140f;
+  --ground2:#0a2018;
+  --ink:#e8f5ef;
+  --dim:#8fb6a8;
+  --line:rgba(158,224,208,.18);
+  --blue:#7fb4ff;
+  --red:#ff8f8f;
+  --amber:#ffcf6b;
+  --lit:#79f0c4;
+  --panel:rgba(10,32,24,.72);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:0;
+  background:
+    radial-gradient(1200px 700px at 15% -10%, #0d2a1f 0%, transparent 60%),
+    radial-gradient(1000px 600px at 100% 120%, #0a241a 0%, transparent 55%),
+    linear-gradient(160deg, var(--ground) 0%, var(--ground2) 100%);
+  color:var(--ink);
+  font:15px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;
+  min-height:100vh;
+}
+.wrap{max-width:1220px;margin:0 auto;padding:30px 20px 60px}
+header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:24px}
+h1{
+  margin:0 0 8px;font-size:34px;letter-spacing:.02em;font-weight:800;
+  color:var(--am);
+  text-shadow:0 0 26px rgba(158,224,208,.28);
+}
+.sub{margin:0 0 12px;max-width:75ch;color:var(--ink);font-size:15.5px}
+.src{font-size:13px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.12em;
+  padding:2px 8px;border-radius:999px;text-transform:uppercase;vertical-align:middle;
+  border:1px solid transparent;white-space:nowrap;
+}
+.t-amber{background:rgba(255,207,107,.12);color:var(--amber);border-color:rgba(255,207,107,.4)}
+.t-lit{background:rgba(121,240,196,.14);color:var(--lit);border-color:rgba(121,240,196,.5)}
+.t-in{background:rgba(127,180,255,.12);color:var(--blue);border-color:rgba(127,180,255,.4)}
+.t-out{background:rgba(158,224,208,.12);color:var(--am);border-color:rgba(158,224,208,.45)}
+.t-wall{background:rgba(255,143,143,.12);color:var(--red);border-color:rgba(255,143,143,.45)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:18px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:16px}
+.teamhdr{
+  font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  padding:7px 12px;border-radius:8px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);background:rgba(127,180,255,.07);border-color:rgba(127,180,255,.28)}
+.col.red .teamhdr{color:var(--red);background:rgba(255,143,143,.07);border-color:rgba(255,143,143,.28)}
+.col.center .teamhdr{color:var(--am);background:rgba(158,224,208,.07);border-color:rgba(158,224,208,.3);text-align:center}
+
+.win{
+  position:relative;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;padding:16px 16px 15px;
+  box-shadow:0 8px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.03);
+}
+.win .badge{
+  position:absolute;top:-11px;left:14px;width:24px;height:24px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:var(--ground2);border:1px solid var(--line);color:var(--am);
+}
+.col.blue .win .badge{color:var(--blue);border-color:rgba(127,180,255,.4)}
+.col.red .win .badge{color:var(--red);border-color:rgba(255,143,143,.4)}
+.win h3{margin:4px 0 8px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.win p{margin:6px 0;font-size:13.5px;color:var(--ink)}
+.win .muted{color:var(--dim);font-size:12.5px}
+.win.panel{border-color:rgba(121,240,196,.32);box-shadow:0 10px 40px rgba(0,0,0,.35),0 0 0 1px rgba(121,240,196,.08) inset}
+
+.flow{
+  text-align:center;color:var(--am);font-size:18px;line-height:1;
+  margin:2px 0;opacity:.7;letter-spacing:.3em;
+}
+.k{color:var(--am);font-weight:700}
+.mono{font-family:"Cascadia Code",ui-monospace,"Consolas",monospace}
+
+table.pit{width:100%;border-collapse:collapse;font-family:ui-monospace,"Consolas",monospace;font-size:12.5px;margin-top:4px}
+table.pit th,table.pit td{border:1px solid var(--line);padding:5px 7px;text-align:center}
+table.pit th{color:var(--am);font-weight:700;background:rgba(158,224,208,.06);letter-spacing:.04em}
+table.pit td.pi{color:var(--blue)}
+table.pit tr.opt td{background:rgba(121,240,196,.09)}
+td.drop{color:var(--red);font-weight:800}
+.status{margin-top:9px;font-size:12.5px;font-family:ui-monospace,monospace}
+.status.good{color:var(--lit)}
+.status.bad{color:var(--red)}
+
+.auditbadge{
+  display:block;margin-top:6px;padding:10px 12px;border-radius:9px;font-weight:700;
+  font-size:13px;letter-spacing:.03em;border:1px solid;
+}
+.auditbadge.ok{background:rgba(121,240,196,.10);color:var(--lit);border-color:rgba(121,240,196,.45)}
+.auditbadge.bad{background:rgba(255,143,143,.12);color:var(--red);border-color:rgba(255,143,143,.5)}
+
+.wall-note{
+  border-left:3px solid var(--red);padding:8px 12px;background:rgba(255,143,143,.06);
+  border-radius:0 8px 8px 0;font-size:13.5px;
+}
+.grave li{margin:7px 0;font-size:13px;list-style:none}
+.grave{padding-left:0;margin:6px 0}
+.grave s{color:var(--red);opacity:.85}
+.grave .fix{color:var(--lit)}
+.grave .fix.amb{color:var(--amber)}
+
+button{
+  font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+  padding:8px 14px;border-radius:8px;border:1px solid var(--line);
+  background:rgba(255,143,143,.10);color:var(--red);margin:4px 6px 2px 0;
+}
+button#restore{background:rgba(121,240,196,.10);color:var(--lit);border-color:rgba(121,240,196,.4)}
+button:hover{filter:brightness(1.15)}
+
+#failb{display:none;margin-top:8px;padding:9px 12px;border-radius:8px;
+  background:rgba(255,143,143,.14);color:var(--red);border:1px solid rgba(255,143,143,.5);
+  font-family:ui-monospace,monospace;font-size:12px;font-weight:700}
+#litbadge{font-family:ui-monospace,monospace;color:var(--lit);font-weight:700;font-size:13px}
+
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
+  color:var(--dim);font-size:12.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE POLICY ITERATION</h1>
+  <p class="sub">Evaluate a policy exactly, then greedily improve it &mdash; and repeat. On a finite Markov decision process this reaches the optimal policy in a <strong>finite</strong> number of steps, because every improvement is <strong>monotone</strong> (values never fall) and there are only so many policies to try. Rendered, not quoted.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    <span>Ronald A. Howard, <em>Dynamic Programming and Markov Processes</em>, Technology Press / Wiley, 1960 &mdash;</span>
+    <a href="https://archive.org/details/dynamicprogrammi0000howa" target="_blank" rel="noopener">archive.org/details/dynamicprogrammi0000howa</a>
+  </p>
+</header>
+
+<div class="ocho">
+
+  <!-- ========== BLUE TEAM (LEFT) ========== -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="badge">3</span>
+      <h3>The Model</h3>
+      <p>A tiny MDP: <span class="k">3 states</span>, <span class="k">2 actions</span> each, discount <span class="mono">&gamma;=0.9</span>, deterministic transitions. Only state&nbsp;2 under action&nbsp;0 pays a reward (<span class="mono">+5</span>) and loops on itself.</p>
+      <p class="muted">Policy evaluation solves the <em>linear</em> Bellman equation exactly:
+      <span class="mono">V<sup>&pi;</sup> = (I &minus; &gamma;P<sub>&pi;</sub>)<sup>&minus;1</sup> R<sub>&pi;</sub></span>
+      by Gaussian elimination &mdash; a closed-form value, not an iterated approximation.</p>
+    </div>
+
+    <div class="win">
+      <span class="badge">5</span>
+      <h3>The Lineage</h3>
+      <p><span class="k">the-value-iteration</span>'s cousin. Both descend from <span class="k">the-bellman-equation</span>.</p>
+      <p class="muted">Value iteration nudges the value function toward the fixed point one Bellman backup at a time. Policy iteration moves whole <em>policies</em>: evaluate exactly, then swap the entire policy for its greedy improvement. Fewer, larger steps &mdash; both land on the same <span class="mono">V*</span>.</p>
+    </div>
+
+    <div class="win">
+      <span class="badge">7</span>
+      <h3>The Witness &middot; live</h3>
+      <p class="muted">Re-runs the policy-improvement theorem and the optimality equation against the live table below.</p>
+      <div id="auditout" class="auditbadge ok">checking&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ========== THE MACHINE (CENTER) ========== -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="badge">4</span>
+      <h3>Data In &nbsp;<span class="tag t-in">in &darr;</span></h3>
+      <p class="mono muted" style="font-size:12px;line-height:1.7">
+        S = {0,1,2}, A = {0,1}, &gamma; = 0.9<br>
+        R(2,0)=+5 &nbsp; (all other R = 0)<br>
+        0: a0&rarr;0, a1&rarr;1<br>
+        1: a0&rarr;0, a1&rarr;2<br>
+        2: a0&rarr;2, a1&rarr;1
+      </p>
+      <p>Start policy <span class="mono k">&pi;<sub>0</sub> = [0, 0, 0]</span> &mdash; the do-nothing default.</p>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <span class="badge">0</span>
+      <h3>The Panel &nbsp;<span class="tag t-lit">lit</span></h3>
+      <p class="muted">Each row: a policy and the exact values it earns. Improvement is greedy w.r.t. those values; the loop halts when the policy stops changing.</p>
+      <div id="panelbox"></div>
+      <div id="status" class="status good"></div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win">
+      <span class="badge">8</span>
+      <h3>Data Out &nbsp;<span class="tag t-out">out &darr;</span></h3>
+      <p>Proven optimum:</p>
+      <p id="litbadge">&pi;* pending&hellip;</p>
+      <div id="failb"></div>
+    </div>
+  </div>
+
+  <!-- ========== RED TEAM (RIGHT) ========== -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="badge">1</span>
+      <h3>The Adversary &nbsp;<span class="tag t-wall">wall</span></h3>
+      <div class="wall-note">
+        &ldquo;Policy iteration must converge, so <em>any</em> improvement rule works.&rdquo;
+        <p class="muted" style="margin-top:8px">False. Convergence rides entirely on the policy-improvement theorem: greedy w.r.t. <span class="mono">V<sup>&pi;</sup></span> gives <span class="mono">Q &ge; V<sup>&pi;</sup></span>, hence <span class="mono">V<sup>&pi;'</sup> &ge; V<sup>&pi;</sup></span>. Break that inequality and the guarantee is void &mdash; values fall and the loop can cycle forever.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <span class="badge">2</span>
+      <h3>The Graveyard</h3>
+      <ul class="grave">
+        <li><s>&ldquo;Policy iteration is just value iteration.&rdquo;</s><br><span class="fix">&rarr; No: it solves V<sup>&pi;</sup> <em>exactly</em> between improvements, not one backup at a time.</span></li>
+        <li><s>&ldquo;It can loop forever.&rdquo;</s><br><span class="fix">&rarr; No: argmax improvement is monotone, and there are only finitely many deterministic policies (2<sup>3</sup>=8), so it halts in &le;8 steps.</span></li>
+        <li><s>&ldquo;You need &gamma;&lt;1 for it to converge.&rdquo;</s><br><span class="fix amb">&rarr; AMBER: &gamma;&lt;1 guarantees a unique V<sup>&pi;</sup>. Proper/absorbing rewards can converge undiscounted too, but that needs extra conditions &mdash; assumed away here.</span></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <span class="badge">6</span>
+      <h3>The Tamper</h3>
+      <p class="muted">Replace <span class="mono">argmax</span> with <span class="mono">argmin</span> in improvement &mdash; greedily pick the <em>worst</em> action. The inequality reverses (<span class="mono">Q &le; V<sup>&pi;</sup></span>), values <strong>drop</strong> each step, and &pi;* is never reached. The Witness (7) catches the first non-monotone step.</p>
+      <button id="tamper">Tamper &rarr; argmin</button>
+      <button id="restore">Restore &rarr; argmax</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  WORLD II &middot; THE FOLD &nbsp;&bull;&nbsp; the-policy-iteration &nbsp;&bull;&nbsp; rendered from Howard (1960) by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+/* ================= ENGINE (pure, node-verifiable) ================= */
+
+// --- the MDP (deterministic transitions encoded as one-hot rows) ---
+var MDP = {
+  nS: 3, nA: 2,
+  R: [ [0,0], [0,0], [5,0] ],
+  P: [
+    [ [1,0,0], [0,1,0] ],   // state 0: a0->0, a1->1
+    [ [1,0,0], [0,0,1] ],   // state 1: a0->0, a1->2
+    [ [0,0,1], [0,1,0] ]    // state 2: a0->2, a1->1
+  ]
+};
+var GAMMA = 0.9;
+
+// tamper flag: when true, improvement chooses argmin (the WORST action)
+var TAMPER = false;
+
+// exact linear solve A x = b (Gaussian elimination, partial pivoting)
+function gauss(A, b){
+  var n = b.length, i, j, k;
+  var M = A.map(function(r,ri){ return r.slice().concat([b[ri]]); });
+  for(k=0;k<n;k++){
+    var p = k;
+    for(i=k+1;i<n;i++) if(Math.abs(M[i][k]) > Math.abs(M[p][k])) p = i;
+    if(Math.abs(M[p][k]) < 1e-15) throw new Error('singular system');
+    var tmp = M[k]; M[k] = M[p]; M[p] = tmp;
+    for(i=k+1;i<n;i++){
+      var f = M[i][k]/M[k][k];
+      for(j=k;j<=n;j++) M[i][j] -= f*M[k][j];
+    }
+  }
+  var x = new Array(n).fill(0);
+  for(i=n-1;i>=0;i--){
+    var s = M[i][n];
+    for(j=i+1;j<n;j++) s -= M[i][j]*x[j];
+    x[i] = s/M[i][i];
+  }
+  return x;
+}
+
+// POLICY EVALUATION: exact V^pi from (I - gamma P_pi) V = R_pi
+function policyEval(pi){
+  var n = MDP.nS, A = [], b = [], s, sp;
+  for(s=0;s<n;s++){
+    var a = pi[s], row = new Array(n).fill(0);
+    for(sp=0;sp<n;sp++) row[sp] = (s===sp?1:0) - GAMMA*MDP.P[s][a][sp];
+    A.push(row); b.push(MDP.R[s][a]);
+  }
+  return gauss(A, b);
+}
+
+// action-values Q(s,.) under a value function V
+function qval(s, V){
+  var out = [], a, sp;
+  for(a=0;a<MDP.nA;a++){
+    var e = 0;
+    for(sp=0;sp<MDP.nS;sp++) e += MDP.P[s][a][sp]*V[sp];
+    out.push(MDP.R[s][a] + GAMMA*e);
+  }
+  return out;
+}
+
+// argmax / argmin with lowest-index tie-breaking (deterministic)
+function argmax(q){ var b=0,i; for(i=1;i<q.length;i++) if(q[i] > q[b]+1e-12) b=i; return b; }
+function argmin(q){ var b=0,i; for(i=1;i<q.length;i++) if(q[i] < q[b]-1e-12) b=i; return b; }
+
+// POLICY IMPROVEMENT: greedy policy w.r.t. V (argmin when TAMPERed)
+function improve(V){
+  var pi = [], s;
+  for(s=0;s<MDP.nS;s++){
+    var q = qval(s, V);
+    pi.push(TAMPER ? argmin(q) : argmax(q));
+  }
+  return pi;
+}
+
+function eqPol(a,b){ for(var i=0;i<a.length;i++) if(a[i]!==b[i]) return false; return true; }
+
+// full policy iteration; capped so a tampered (cycling) run still terminates
+function policyIteration(pi0){
+  var maxPol = Math.pow(MDP.nA, MDP.nS); // 8 deterministic policies
+  var pi = pi0.slice(), hist = [], it;
+  for(it=0; it<=maxPol+1; it++){
+    var V = policyEval(pi);
+    hist.push({ pi: pi.slice(), V: V.slice() });
+    var pin = improve(V);
+    if(eqPol(pin, pi)) return { hist: hist, iters: it, converged: true };
+    pi = pin;
+  }
+  return { hist: hist, iters: -1, converged: false };
+}
+
+// FAIL-LOUD self-check: throws on any violation, returns true on success.
+// Saves/restores the tamper flag so it is self-contained.
+function selfcheck(){
+  var save = TAMPER;
+  try {
+    TAMPER = false;
+    var R = policyIteration([0,0,0]);
+
+    // (a) converged in a FINITE number of steps
+    if(!R.converged) throw new Error('did not converge');
+    var maxPol = Math.pow(MDP.nA, MDP.nS);
+    if(R.iters < 0 || R.iters > maxPol) throw new Error('iteration count exceeds policy count');
+
+    // (b) MONOTONE improvement: V never decreases componentwise (policy-improvement theorem)
+    for(var i=1;i<R.hist.length;i++){
+      for(var s=0;s<MDP.nS;s++){
+        if(R.hist[i].V[s] < R.hist[i-1].V[s] - 1e-9)
+          throw new Error('non-monotone improvement at step '+i);
+      }
+    }
+
+    // (c) final policy + values satisfy the Bellman OPTIMALITY equation to 1e-9
+    var fin = R.hist[R.hist.length-1];
+    for(var s2=0;s2<MDP.nS;s2++){
+      var q = qval(s2, fin.V);
+      var best = Math.max.apply(null, q);
+      if(Math.abs(best - fin.V[s2]) > 1e-9) throw new Error('final not Bellman-optimal at s'+s2);
+      if(Math.abs(q[fin.pi[s2]] - best) > 1e-9) throw new Error('final policy not greedy at s'+s2);
+    }
+
+    // (d) the computed optimum matches the hand-derived closed form
+    var exp = [40.5, 45, 50];
+    for(var s3=0;s3<MDP.nS;s3++)
+      if(Math.abs(fin.V[s3] - exp[s3]) > 1e-9) throw new Error('optimal value mismatch at s'+s3);
+    if(!eqPol(fin.pi, [1,1,0])) throw new Error('optimal policy mismatch');
+
+    // (e) DISCLOSED PLANTED VOID: argmin improvement must DECREASE value.
+    //     From the optimum, the worst-action greedy step drops V somewhere.
+    TAMPER = true;
+    var Vopt = policyEval([1,1,0]);
+    var piBad = improve(Vopt);          // argmin greedy
+    var Vbad  = policyEval(piBad);
+    var dropped = false;
+    for(var s4=0;s4<MDP.nS;s4++) if(Vbad[s4] < Vopt[s4] - 1e-9){ dropped = true; break; }
+    if(!dropped) throw new Error('tamper failed to decrease value - witness would be blind');
+
+    // and the untampered step leaves the optimum fixed (it is the fixed point)
+    TAMPER = false;
+    if(!eqPol(improve(Vopt), [1,1,0])) throw new Error('optimum is not a fixed point of argmax');
+
+    return true;
+  } finally {
+    TAMPER = save;
+  }
+}
+
+/* ===== UI ===== */
+
+var uiTamper = false, LIVE = null;
+
+function fmt(x){
+  var r = Math.round(x*100)/100;
+  return (Math.abs(r) < 1e-9 ? 0 : r).toString();
+}
+
+function render(){
+  TAMPER = uiTamper;
+  LIVE = policyIteration([0,0,0]);
+  TAMPER = false;
+
+  var rows = '<table class="pit"><tr><th>step</th><th>&pi; = [a0,a1,a2]</th>'
+           + '<th>V(0)</th><th>V(1)</th><th>V(2)</th></tr>';
+  for(var i=0;i<LIVE.hist.length;i++){
+    var h = LIVE.hist[i];
+    var isOpt = (i === LIVE.hist.length-1) && LIVE.converged;
+    rows += '<tr class="'+(isOpt?'opt':'')+'">';
+    rows += '<td>'+i+'</td>';
+    rows += '<td class="pi">['+h.pi.join(', ')+']</td>';
+    for(var s=0;s<MDP.nS;s++){
+      var drop = (i>0 && h.V[s] < LIVE.hist[i-1].V[s]-1e-9);
+      rows += '<td class="'+(drop?'drop':'')+'">'+fmt(h.V[s])+'</td>';
+    }
+    rows += '</tr>';
+  }
+  rows += '</table>';
+  document.getElementById('panelbox').innerHTML = rows;
+
+  // did any value fall between steps? (true iff the improvement rule is broken)
+  var fell = false;
+  for(var ci=1;ci<LIVE.hist.length && !fell;ci++)
+    for(var cs=0;cs<MDP.nS;cs++)
+      if(LIVE.hist[ci].V[cs] < LIVE.hist[ci-1].V[cs]-1e-9){ fell = true; break; }
+
+  var st = document.getElementById('status');
+  var fin = LIVE.hist[LIVE.hist.length-1];
+  if(LIVE.converged && !fell){
+    st.className = 'status good';
+    st.innerHTML = 'converged in '+LIVE.iters+' improvement steps &rarr; &pi;* = ['+fin.pi.join(',')+']';
+  } else if(fell){
+    st.className = 'status bad';
+    st.innerHTML = 'argmin drops values &mdash; settles on the WORSE policy ['+fin.pi.join(',')+'], V=['+fin.V.map(fmt).join(',')+']. Never reaches &pi;*.';
+  } else {
+    st.className = 'status bad';
+    st.innerHTML = 'NOT CONVERGED &mdash; the loop is cycling.';
+  }
+}
+
+// WITNESS: independently re-check the live sequence for the two invariants.
+function witness(){
+  var el = document.getElementById('auditout');
+  var ok = true, reason = '';
+
+  // monotone improvement across the live steps
+  for(var i=1;i<LIVE.hist.length && ok;i++){
+    for(var s=0;s<MDP.nS;s++){
+      if(LIVE.hist[i].V[s] < LIVE.hist[i-1].V[s] - 1e-9){
+        ok = false; reason = 'value decreased at step '+i+' (policy-improvement theorem violated)'; break;
+      }
+    }
+  }
+  // finiteness + optimality of the endpoint
+  if(ok && !LIVE.converged){ ok = false; reason = 'never converged &mdash; the loop is cycling'; }
+  if(ok){
+    var fin = LIVE.hist[LIVE.hist.length-1];
+    for(var s2=0;s2<MDP.nS;s2++){
+      var q = qval(s2, fin.V);
+      if(Math.abs(Math.max.apply(null,q) - fin.V[s2]) > 1e-9){
+        ok = false; reason = 'endpoint fails Bellman optimality at s'+s2; break;
+      }
+    }
+  }
+
+  if(ok){
+    el.className = 'auditbadge ok';
+    el.innerHTML = 'PASS &mdash; every step monotone; endpoint satisfies Bellman optimality to 1e-9.';
+  } else {
+    el.className = 'auditbadge bad';
+    el.innerHTML = 'TAMPER DETECTED &mdash; ' + reason + '.';
+  }
+}
+
+document.getElementById('tamper').onclick  = function(){ uiTamper = true;  render(); witness(); };
+document.getElementById('restore').onclick = function(){ uiTamper = false; render(); witness(); };
+
+// boot: run the fail-loud selfcheck, then light the OUT badge.
+try {
+  var ok = selfcheck();
+  if(ok !== true) throw new Error('selfcheck did not return true');
+  document.getElementById('litbadge').innerHTML =
+    '&pi;* = [1, 1, 0] &nbsp; V* = [40.5, 45.0, 50.0]';
+} catch(e){
+  var fb = document.getElementById('failb');
+  fb.style.display = 'block';
+  fb.textContent = 'SELFCHECK FAILED: ' + e.message;
+  throw e;
+}
+
+render();
+witness();
+</script>
+</body>
+</html>

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE INDUCTION HEAD</title>
+<style>
+:root{
+  --am:#9ee06a;
+  --bg:#0c1a10;
+  --bg2:#10241634;
+  --ink:#e4f3e0;
+  --dim:#9fc39a;
+  --line:#274b31;
+  --panel:#0f2114;
+  --blue:#6ab0ff;
+  --red:#ff7a6b;
+  --amber:#ffcf5c;
+  --lit:#9ee06a;
+  --wall:#ff7a6b;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 20% -10%, #14311d 0%, transparent 60%),
+    radial-gradient(1000px 700px at 100% 0%, #0e2416 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 var(--mono);
+  padding:22px 18px 60px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{
+  font-size:30px;letter-spacing:.16em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 22px #9ee06a2e;font-weight:800;
+}
+.sub{color:var(--ink);max-width:78ch;margin:0 0 10px;font-size:14px;line-height:1.6}
+.sub b{color:var(--am)}
+.src{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.src .q{color:var(--dim);font-style:italic}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.14em;
+  padding:2px 7px;border-radius:3px;border:1px solid;font-weight:700;
+  vertical-align:middle;
+}
+.t-amber{color:var(--amber);border-color:#7a5f1e;background:#2a210a}
+.t-lit{color:var(--lit);border-color:#3c6b2c;background:#12280f}
+.t-in{color:var(--blue);border-color:#2b4d75;background:#0c1a2a}
+.t-out{color:var(--am);border-color:#3c6b2c;background:#12280f}
+.t-wall{color:var(--wall);border-color:#7a2f27;background:#2a0f0c}
+
+.ocho{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.teamhdr{
+  font-size:11.5px;letter-spacing:.2em;font-weight:800;padding:7px 10px;
+  border-radius:6px;border:1px solid var(--line);text-align:center;
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#274a6b;background:#0c1a2a66}
+.col.center .teamhdr{color:var(--am);border-color:#3c6b2c;background:#12280f66}
+.col.red .teamhdr{color:var(--red);border-color:#6b2b27;background:#2a0f0c66}
+
+.win{
+  border:1px solid var(--line);border-radius:8px;background:var(--bg2);
+  padding:12px 13px;position:relative;min-width:0;
+}
+.win.panel{background:linear-gradient(180deg,#12280f,#0d1f12);border-color:#3c6b2c}
+.wn{
+  position:absolute;top:-9px;left:12px;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;font-size:11px;font-weight:800;
+  background:var(--bg);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .wn{color:var(--blue);border-color:#274a6b}
+.col.center .wn{color:var(--am);border-color:#3c6b2c}
+.col.red .wn{color:var(--red);border-color:#6b2b27}
+.win h3{
+  margin:4px 0 8px;font-size:12px;letter-spacing:.14em;color:var(--ink);
+  font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim);line-height:1.55}
+.win p b{color:var(--ink)}
+.win code{color:var(--am);font-size:12px}
+.k{color:var(--ink)}
+
+.flow{
+  text-align:center;color:var(--dim);font-size:11px;letter-spacing:.2em;
+  padding:2px 0;user-select:none;
+}
+.flow span{color:var(--am)}
+
+/* panel engine bits */
+.seqrow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.cell{
+  min-width:34px;text-align:center;border:1px solid var(--line);border-radius:5px;
+  padding:6px 4px;background:#0b1d11;position:relative;
+}
+.cell .t{font-size:16px;font-weight:800;color:var(--ink)}
+.cell .i{font-size:9px;color:#5f7d5d;display:block}
+.cell.pred{border-color:#3c6b2c;box-shadow:0 0 0 1px #3c6b2c inset}
+.cell.pred .p{font-size:10px;color:var(--am);display:block;margin-top:3px;font-weight:700}
+.cell.attn{border-color:var(--am);background:#153016}
+.cell.miss .p{color:#5f7d5d}
+.mono-out{background:#0a1a0f;border:1px solid var(--line);border-radius:6px;padding:9px 10px;font-size:12px;color:var(--dim);white-space:pre-wrap;line-height:1.5;overflow-x:auto}
+.mono-out b{color:var(--am)}
+.badge{
+  display:inline-block;font-size:11px;font-weight:800;letter-spacing:.12em;
+  padding:4px 9px;border-radius:5px;border:1px solid;margin-top:4px;
+}
+.b-pass{color:var(--lit);border-color:#3c6b2c;background:#12280f}
+.b-fail{color:var(--wall);border-color:#7a2f27;background:#2a0f0c}
+button{
+  font:12px var(--mono);cursor:pointer;border-radius:5px;padding:6px 11px;
+  border:1px solid var(--line);background:#122;color:var(--ink);letter-spacing:.08em;
+}
+button.tam{border-color:#6b2b27;color:var(--red);background:#2a0f0c}
+button.res{border-color:#274a6b;color:var(--blue);background:#0c1a2a}
+button:hover{filter:brightness(1.25)}
+.btnrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.wall-note{
+  border-left:3px solid var(--wall);padding:6px 10px;background:#1c0d0a55;
+  border-radius:0 5px 5px 0;font-size:12.5px;color:var(--ink)
+}
+.dead{color:#7e5d5a;text-decoration:line-through}
+.fix{color:var(--am)}
+.gy li{margin:8px 0;font-size:12.5px;color:var(--dim)}
+.matrix{font-size:10.5px;color:var(--dim);white-space:pre;overflow-x:auto;background:#0a1a0f;border:1px solid var(--line);border-radius:6px;padding:8px}
+#failb{display:none;margin-top:10px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;font-size:11.5px;color:var(--dim);letter-spacing:.06em}
+footer b{color:var(--am)}
+small.note{display:block;color:#6f8d6c;font-size:11px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE INDUCTION HEAD</h1>
+  <p class="sub">Two attention heads wired into one trick: a <b>previous-token head</b> in layer 1 tags every position with the token before it, and an <b>induction head</b> in layer 2 uses your current token to find where it last appeared and copies what came next. Feed it <code>[A][B]…[A]</code> and it answers <code>[B]</code>. This is the mechanism Olsson et al. tied to the sudden onset of in-context learning — the copy engine, built here by hand so every readout has a closed form.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Olsson et al., <i>In-context Learning and Induction Heads</i> (2022), Anthropic / transformer-circuits.pub —
+    <a href="https://arxiv.org/abs/2209.11895" target="_blank" rel="noopener">arxiv.org/abs/2209.11895</a>
+    <span class="q">rendered, not quoted: <span class="k">[A][B] … [A] → [B]</span></span>
+  </p>
+</header>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">BLUE TEAM · BUILDS &amp; DEFENDS</div>
+
+    <div class="win">
+      <div class="wn">3</div>
+      <h3>THE MODEL</h3>
+      <p>Attention-only, two layers, no MLP, hardmax attention (the zero-temperature limit of softmax — exact, deterministic).</p>
+      <p><b>Layer 1 — previous-token head.</b> Attention matrix is the <b>sub-diagonal</b>: position <code>i</code> attends to <code>i−1</code>. It copies that token's identity into a separate "prev" channel. So position <code>k</code> now carries <code>token[k−1]</code>.</p>
+      <p><b>Layer 2 — induction head.</b> Query = current <code>token[i]</code>. Key at <code>k</code> = the prev-channel <code>token[k−1]</code>. They match exactly when <code>token[k−1]=token[i]</code>, i.e. <code>k−1=j</code> is a prior occurrence of the current token — so it attends to <code>k=j+1</code>, the position <i>after</i> the match, and outputs <code>token[j+1]</code>.</p>
+      <div class="matrix" id="modelmat"></div>
+      <small class="note">Weights are constructed, not trained — the readouts below are exact, not approximate.</small>
+    </div>
+
+    <div class="win">
+      <div class="wn">5</div>
+      <h3>THE LINEAGE</h3>
+      <p>Two <a class="k" style="color:var(--am);text-decoration:none" >the-attention-heads</a> given a concrete job. Neither head alone copies anything; <b>composed</b> — layer 2 reading the channel layer 1 wrote — they become a pattern-completer. This sphere is <b>the-attention-heads</b> with the composition made load-bearing: the circuit Olsson et al. named as the engine of in-context learning.</p>
+      <p><span class="tag t-lit">neighbour</span> <code>the-attention-heads → the-induction-head</code></p>
+    </div>
+
+    <div class="win">
+      <div class="wn">7</div>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check of the running panel against the closed-form expectation. Green while the circuit copies correctly; flips red the instant the wiring is tampered.</p>
+      <div id="auditout" class="badge b-pass">WITNESS: —</div>
+      <small class="note">Press TAMPER (window 6) and watch this catch it.</small>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">THE MACHINE</div>
+
+    <div class="win">
+      <div class="wn">4</div>
+      <h3>DATA IN <span class="tag t-in">in ↓</span></h3>
+      <p>A repeated sequence. The block <b>A B C</b> appears, then repeats — the induction head should complete the repeat from the second occurrence onward.</p>
+      <div class="seqrow" id="inrow"></div>
+    </div>
+
+    <div class="flow">▼ <span>previous-token head → induction head</span> ▼</div>
+
+    <div class="win panel">
+      <div class="wn">0</div>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <p>Per-position prediction from the live circuit. A green outline = a confident copy; the <b>attended</b> source cell (the position after the prior match) is highlighted.</p>
+      <div class="seqrow" id="panelrow"></div>
+      <div class="mono-out" id="panelout"></div>
+      <div id="failb" class="badge b-fail">SELFCHECK FAILED — engine not LIT</div>
+    </div>
+
+    <div class="flow">▼ <span>argmax over the token channel</span> ▼</div>
+
+    <div class="win">
+      <div class="wn">8</div>
+      <h3>DATA OUT <span class="tag t-out">out ↓</span></h3>
+      <p>Proven result: after <code id="ctxtxt"></code> the circuit predicts the repeat.</p>
+      <div id="litbadge" class="badge b-pass">—</div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">RED TEAM · ATTACKS &amp; BREAKS</div>
+
+    <div class="win">
+      <div class="wn">1</div>
+      <h3>THE ADVERSARY</h3>
+      <div class="wall-note">
+        <span class="tag t-wall">WALL</span> Induction is <b>positional copying, not understanding</b>. It fires on <i>any</i> repeat — including adversarial or nonsense strings — and will confidently reproduce a poisoned continuation. It also copies the <i>most recent</i> prior match; a later, misleading occurrence can hijack the prediction over the intended one.
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wn">2</div>
+      <h3>THE GRAVEYARD</h3>
+      <ul class="gy">
+        <li><span class="dead">"The induction head understands grammar / meaning."</span> <span class="fix">→ It matches surface token identity. No semantics; a repeated random-token string is copied just as well.</span></li>
+        <li><span class="dead">"One head does it."</span> <span class="fix">→ It takes <b>two</b>, composed. Ablate the previous-token head and the induction head keys on the wrong channel and fails (see window 6).</span></li>
+        <li><span class="dead">"It's trained/emergent so behaviour is fuzzy."</span> <span class="fix">→ The <i>mechanism</i> is exact. Constructed here, every prediction has a closed form and is asserted, not sampled.</span></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <div class="wn">6</div>
+      <h3>THE TAMPER</h3>
+      <p>Shift the previous-token head to the <b>wrong offset</b> (attend to <code>i−2</code>). Now the induction head keys on the wrong position and the copy <code>[A][B]…[A]→[B]</code> breaks. The WITNESS (7) catches it live.</p>
+      <div class="btnrow">
+        <button id="tamper" class="tam">TAMPER · offset→2</button>
+        <button id="restore" class="res">RESTORE · offset→1</button>
+      </div>
+      <div id="tampstate" class="mono-out" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE INDUCTION HEAD</b> · WORLD II · THE FOLD · refined OCHO. Engine LIT: a hand-constructed two-layer attention circuit, closed-form, deterministic, fail-loud. Source rendered not quoted — <a style="color:var(--am);text-decoration:none" href="https://arxiv.org/abs/2209.11895" target="_blank" rel="noopener">arXiv:2209.11895</a>. Built by <b>David Lee Wise (ROOT0) with AVAN.</b>
+</footer>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// THE INDUCTION HEAD — pure engine (constructed two-layer attention circuit)
+// All logic below the marker is display only. Everything here is extractable
+// for node verification: fixed structure, hardmax attention, closed-form.
+// ---------------------------------------------------------------------------
+
+// fixed-seed PRNG (mulberry32) — used only for the robustness probe in selfcheck
+function mulberry32(a){
+  return function(){
+    a|=0; a=(a+0x6D2B79F5)|0;
+    var t=Math.imul(a^(a>>>15),1|a);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+
+var TOK=['A','B','C','D','E','F','G','H'];
+
+// Layer-1 previous-token head: attention matrix is sub-diagonal for a given
+// offset. Row i is one-hot on column (i-offset) when that exists.
+function prevAttn(n, offset){
+  var A=[];
+  for(var i=0;i<n;i++){
+    var row=new Array(n).fill(0);
+    var j=i-offset;
+    if(j>=0) row[j]=1;
+    A.push(row);
+  }
+  return A;
+}
+
+// Layer-1 output: the "prev" channel at position i holds token[i-offset]
+// (or -1 where no such position exists). This is exactly attn @ tokens.
+function prevChannel(seq, offset){
+  var A=prevAttn(seq.length, offset);
+  var f=new Array(seq.length).fill(-1);
+  for(var i=0;i<seq.length;i++){
+    for(var k=0;k<seq.length;k++){
+      if(A[i][k]===1) f[i]=seq[k];
+    }
+  }
+  return f;
+}
+
+// Layer-2 induction head at position i: match query token[i] against the prev
+// channel at every causal key k in [1..i]; matches are where token[k-1]=token[i]
+// i.e. k-1 is a prior occurrence of the current token. Attend to k=j+offset,
+// the position after the match, and output token[k]. Tie-break: most recent
+// (largest k). No match => no confident copy.
+function inductionStep(seq, i, offset){
+  var pf=prevChannel(seq, offset);
+  var best=-1;
+  for(var k=1;k<=i;k++){
+    if(pf[k]===seq[i]) best=k; // largest k wins => most recent match
+  }
+  if(best<0) return {k:-1, pred:-1, confident:false};
+  return {k:best, pred:seq[best], confident:true};
+}
+
+function predictAll(seq, offset){
+  var out=[];
+  for(var i=0;i<seq.length;i++) out.push(inductionStep(seq,i,offset));
+  return out;
+}
+
+// canonical demo: base block repeated
+var BASE=[0,1,2];              // A B C
+var SEQ=BASE.concat(BASE);     // A B C A B C
+
+// LIVE offset drives the rendered panel + witness. Boot value 1 = correct.
+var LIVE_OFFSET=1;
+var CORRECT_OFFSET=1;
+
+// expected next token of the periodic pattern (closed form)
+function patternNext(base, i){ return base[(i+1)%base.length]; }
+
+// witness: does the live circuit still copy the repeat correctly?
+function witnessCheck(){
+  var L=BASE.length;
+  var live=predictAll(SEQ, LIVE_OFFSET);
+  for(var i=L;i<SEQ.length-1;i++){
+    if(!live[i].confident || live[i].pred!==patternNext(BASE,i)){
+      return {ok:false, at:i};
+    }
+  }
+  if(LIVE_OFFSET!==CORRECT_OFFSET) return {ok:false, at:-1};
+  return {ok:true, at:-1};
+}
+
+// ---- fail-loud selfcheck: THROWS on any violation, RETURNS true on success ---
+function selfcheck(){
+  function assert(c,m){ if(!c) throw new Error("selfcheck: "+m); }
+
+  // 1) previous-token head attention is exactly sub-diagonal (offset 1)
+  var A=prevAttn(SEQ.length,1);
+  for(var i=0;i<SEQ.length;i++){
+    for(var k=0;k<SEQ.length;k++){
+      var want=(k===i-1)?1:0;
+      assert(A[i][k]===want,"prev-token attn not sub-diagonal at "+i+","+k);
+    }
+  }
+
+  // 2) on the repeated sequence the circuit predicts the repeat EXACTLY,
+  //    for every position past the first occurrence (closed form).
+  var L=BASE.length;
+  var p=predictAll(SEQ,1);
+  for(var i=L;i<SEQ.length;i++){
+    assert(p[i].confident,"no confident copy at repeated pos "+i);
+    if(i<SEQ.length-1){
+      assert(p[i].pred===patternNext(BASE,i),
+        "wrong copy at "+i+": got "+p[i].pred+" want "+patternNext(BASE,i));
+    }
+  }
+  // explicit [A][B]..[A]->[B]: first A of 2nd block is position 3 -> predicts B(=1)
+  assert(p[3].pred===1,"[A][B]..[A] did not predict [B]");
+
+  // 3) induction head attends to the position AFTER the prior match.
+  //    at i=3 (A), prior A at j=0 -> attends k=1; at i=4 (B), j=1 -> k=2.
+  assert(p[3].k===1,"induction did not attend to post-match position (i=3)");
+  assert(p[4].k===2,"induction did not attend to post-match position (i=4)");
+
+  // 4) on a NON-repeating (all-unique) sequence, no confident copy anywhere.
+  var uniq=[0,1,2,3,4];
+  var pu=predictAll(uniq,1);
+  for(var i2=0;i2<uniq.length;i2++){
+    assert(pu[i2].confident===false,"false copy on non-repeating seq at "+i2);
+  }
+
+  // 5) robustness: random distinct base, repeated, must complete the repeat.
+  var rng=mulberry32(0x1DEA5EED);
+  var pool=[0,1,2,3,4,5,6,7];
+  var base=[];
+  for(var b=0;b<4;b++){
+    var idx=Math.floor(rng()*pool.length);
+    base.push(pool.splice(idx,1)[0]);   // distinct tokens, fixed seed
+  }
+  var Lr=base.length, R=3, rs=[];
+  for(var r=0;r<R;r++) rs=rs.concat(base);
+  var pr=predictAll(rs,1);
+  for(var i3=Lr;i3<rs.length-1;i3++){
+    assert(pr[i3].confident && pr[i3].pred===base[(i3+1)%Lr],
+      "robustness probe failed at "+i3);
+  }
+
+  // 6) TAMPER is the disclosed planted void: shift the prev-token head to the
+  //    wrong offset and the copy MUST break. Save flag, assert difference,
+  //    restore, assert restoration.
+  var saved=LIVE_OFFSET;      // save the tamper flag
+  LIVE_OFFSET=2;              // plant the void (attend to i-2)
+  var bad=predictAll(SEQ,LIVE_OFFSET);
+  assert(bad[3].pred!==1,"tamper did not break the [A][B]..[A]->[B] copy");
+  assert(witnessCheck().ok===false,"witness failed to catch the tamper");
+  LIVE_OFFSET=saved;         // restore the flag
+  assert(predictAll(SEQ,LIVE_OFFSET)[3].pred===1,"restore did not recover copy");
+  assert(witnessCheck().ok===true,"witness not green after restore");
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+function fmtSeq(seq){ return seq.map(function(t){return TOK[t];}).join(' '); }
+
+function renderIn(){
+  var row=document.getElementById('inrow');
+  row.innerHTML='';
+  SEQ.forEach(function(t,i){
+    var c=document.createElement('div');
+    c.className='cell';
+    c.innerHTML='<span class="t">'+TOK[t]+'</span><span class="i">'+i+'</span>';
+    row.appendChild(c);
+  });
+}
+
+function renderPanel(){
+  var row=document.getElementById('panelrow');
+  var out=document.getElementById('panelout');
+  row.innerHTML='';
+  var pred=predictAll(SEQ, LIVE_OFFSET);
+  var lines=[];
+  SEQ.forEach(function(t,i){
+    var c=document.createElement('div');
+    c.className='cell';
+    var pr=pred[i];
+    var html='<span class="t">'+TOK[t]+'</span><span class="i">'+i+'</span>';
+    if(pr.confident){
+      c.className+=' pred';
+      html+='<span class="p">→'+TOK[pr.pred]+'</span>';
+      lines.push('pos '+i+' ('+TOK[t]+'): attend pos '+pr.k+' → predict '+TOK[pr.pred]);
+    }else{
+      c.className+=' miss';
+      html+='<span class="p">·</span>';
+    }
+    c.innerHTML=html;
+    row.appendChild(c);
+  });
+  // mark the attended source for the final confident position
+  var last=SEQ.length-1;
+  if(pred[last].confident){
+    var cells=row.children;
+    if(cells[pred[last].k]) cells[pred[last].k].className+=' attn';
+  }
+  var lastPred=pred[last];
+  out.innerHTML='LIVE previous-token offset = <b>'+LIVE_OFFSET+'</b>'
+    +(LIVE_OFFSET===CORRECT_OFFSET?' (correct)':' (TAMPERED)')+'\n'
+    +lines.join('\n')
+    +'\n\nfinal position '+last+' → predicted next token: <b>'
+    +(lastPred.confident?TOK[lastPred.pred]:'—')+'</b>';
+}
+
+function renderWitness(){
+  var el=document.getElementById('auditout');
+  var w=witnessCheck();
+  if(w.ok){
+    el.className='badge b-pass';
+    el.textContent='WITNESS: PASS · circuit copies the repeat';
+  }else{
+    el.className='badge b-fail';
+    el.textContent='WITNESS: FAIL · TAMPER DETECTED'+(w.at>=0?' (pos '+w.at+')':' (offset≠1)');
+  }
+}
+
+function renderTampState(){
+  document.getElementById('tampstate').innerHTML=
+    'previous-token head offset: <b>'+LIVE_OFFSET+'</b> — '
+    +(LIVE_OFFSET===CORRECT_OFFSET
+        ? 'wiring intact, copy holds.'
+        : 'wrong offset: induction keys on the wrong position, copy broken.');
+}
+
+function renderModelMat(){
+  var A=prevAttn(SEQ.length,1);
+  var s='prev-token attention (sub-diagonal, offset 1)\n     ';
+  for(var k=0;k<SEQ.length;k++) s+=k+' ';
+  s+='\n';
+  for(var i=0;i<SEQ.length;i++){
+    s+='pos'+i+' ';
+    for(var k2=0;k2<SEQ.length;k2++) s+=A[i][k2]+' ';
+    s+='\n';
+  }
+  document.getElementById('modelmat').textContent=s;
+}
+
+function renderAll(){
+  renderIn();
+  renderPanel();
+  renderWitness();
+  renderTampState();
+  renderModelMat();
+  document.getElementById('ctxtxt').textContent='['+fmtSeq(SEQ)+']';
+}
+
+document.getElementById('tamper').addEventListener('click',function(){
+  LIVE_OFFSET=2; renderAll();
+});
+document.getElementById('restore').addEventListener('click',function(){
+  LIVE_OFFSET=1; renderAll();
+});
+
+// boot: fail-loud selfcheck, then light the panel
+(function boot(){
+  try{
+    var ok=selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    renderAll();
+    var lit=document.getElementById('litbadge');
+    lit.className='badge b-pass';
+    lit.textContent='LIT · after [A][B]…[A] → [B] (exact, constructed)';
+  }catch(e){
+    document.getElementById('failb').style.display='inline-block';
+    document.getElementById('failb').textContent='SELFCHECK FAILED — '+e.message;
+    var lit2=document.getElementById('litbadge');
+    if(lit2){ lit2.className='badge b-fail'; lit2.textContent='NOT LIT'; }
+    var w=document.getElementById('auditout');
+    if(w){ w.className='badge b-fail'; w.textContent='WITNESS: engine failed selfcheck'; }
+    throw e;
+  }
+})();
+</script>
+</body>
+</html>

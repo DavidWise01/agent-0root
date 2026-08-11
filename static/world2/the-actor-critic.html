@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE ACTOR-CRITIC · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee06a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{accent-color:var(--am);flex:1;min-width:90px;height:4px;vertical-align:middle;}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#12200a;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.row .v{color:var(--gr);min-width:34px;text-align:right;}
+.sent{font-size:13px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.bar{height:9px;border-radius:4px;background:#0a130c;border:1px solid var(--line);overflow:hidden;margin:2px 0 6px;}
+.bar>span{display:block;height:100%;}
+.bar.b0>span{background:var(--wall);} .bar.bv>span{background:var(--gr);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE ACTOR-CRITIC</h1>
+ <p class="sub">A policy that <b>acts</b>, guided by a value that <b>judges</b>. The <b style="color:var(--am)">actor</b> is a softmax policy π; the <b class="k">critic</b> is a state value V(s). Their difference is the <b>advantage</b> A(s,a)=Q(s,a)−V(s) — how much better than average an action turned out. Down the center the terms go <b style="color:var(--cy)">in</b>, the engine computes the policy gradient with and without the critic as a baseline, and the proven result comes <b style="color:var(--gr)">out</b>: the baseline is <b>free of bias</b> yet <b>cuts the variance</b>. The <b style="color:var(--blue)">blue team</b> builds it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> A. G. Barto, R. S. Sutton &amp; C. W. Anderson, <i>Neuronlike adaptive elements that can solve difficult learning control problems</i>, IEEE Trans. Systems, Man &amp; Cybernetics, SMC-13 (1983) 834–846 — <a href="https://scholarworks.umass.edu/cs_faculty_pubs/362/">scholarworks.umass.edu/cs_faculty_pubs/362</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — actor, critic, advantage</h2>
+   <p>The actor is a <b>softmax</b> over a small action set: π(a|s)=softmax(z)_a. Its <b>score</b> is exact — <b class="k">∂log π(a)/∂z<sub>i</sub> = [i=a] − π<sub>i</sub></b>. The critic is the state value <b class="k">V(s)=Σ<sub>a</sub> π(a)Q(s,a)</b>. The policy gradient is g = E<sub>a~π</sub>[ score(a)·(Q(a)−b) ].</p>
+   <p>Two facts do all the work: <b>E<sub>a~π</sub>[score(a)] = 0</b>, so any action-independent b leaves g untouched; and the exact gradient collapses to <b class="k">g<sub>i</sub> = π<sub>i</sub>·A(s,a<sub>i</sub>)</b>. Live, for the current state:</p>
+   <table id="modelTbl"><thead><tr><th>a</th><th>π(a)</th><th>A(a)=Q−V</th><th>g<sub>i</sub>=π<sub>i</sub>A<sub>i</sub></th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the learned baseline <span class="tag t-amber">AVAN</span></h2>
+   <p>Neighbour sphere: <a href="https://davidwise01.github.io/the-policy-gradient/" style="color:var(--cy)">the-policy-gradient</a>. Plain REINFORCE pushes on score(a)·Q(a) — unbiased but <b>noisy</b>, because Q swings with the raw return.</p>
+   <p>The actor-critic hands that same estimator a <b>learned baseline</b>: subtract V(s) so the actor is steered by <i>advantage</i>, not by absolute return. The critic tells the actor <b>how much better than average</b> an action was — the noise the plain gradient suffers is exactly what the baseline removes. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive the exact gradient with and without the baseline, and re-measure both variances. It confirms <b>unbiased + variance-reduced</b>. If red makes the baseline depend on the action, this badge catches it and turns red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the state <span class="tag t-in">in &#8595;</span></h2>
+   <p>A single state s with a small action set (K=3). Two things are fed in: the <b style="color:var(--am)">actor's logits</b> z (which set the policy π=softmax(z)) and the <b class="k">action values</b> Q(s,·) the critic estimates. Everything else is computed.</p>
+   <table><thead><tr><th>symbol</th><th>meaning</th><th>role</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>z</td><td>policy logits</td><td class="y">ACTOR</td></tr>
+     <tr><td>π=softmax(z)</td><td>the policy</td><td class="y">ACTOR</td></tr>
+     <tr><td>Q(s,·)</td><td>action values</td><td class="y">CRITIC</td></tr>
+     <tr><td>V(s)=Σπ·Q</td><td>state value</td><td class="y">CRITIC</td></tr>
+     <tr><td>A=Q−V</td><td>advantage</td><td class="n">the baseline term</td></tr>
+    </tbody></table>
+   <p class="small">The critic supplies V(s) as the <b>baseline</b>; a legal baseline may depend on the state s but <b>never on the action a</b>. That single rule is the whole game — and it is what you feed the panel below.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the state into the engine &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>logit z1</label><input type="range" id="z1" min="-2" max="2" step="0.1" value="1"><span class="v" id="z1v"></span></div>
+     <div class="row"><label>logit z2</label><input type="range" id="z2" min="-2" max="2" step="0.1" value="0.5"><span class="v" id="z2v"></span></div>
+     <div class="row"><label>Q(s,a0)</label><input type="range" id="q0" min="-3" max="3" step="0.1" value="2"><span class="v" id="q0v"></span></div>
+     <div class="row"><label>Q(s,a1)</label><input type="range" id="q1" min="-3" max="3" step="0.1" value="0"><span class="v" id="q1v"></span></div>
+     <div class="row"><label>Q(s,a2)</label><input type="range" id="q2" min="-3" max="3" step="0.1" value="1"><span class="v" id="q2v"></span></div>
+     <div class="row"><label>baseline</label>
+      <span class="toggle"><button id="tZero">b = 0</button><button id="tV" class="on">b = V(s)</button></span></div>
+     <p class="small" id="readmode">Actor-critic: subtract the critic's V(s). Same gradient, less noise.</p>
+     <div class="row"><button id="rand">↺ random</button><button id="reset">→ default</button></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+     <div id="varbox" style="margin-top:8px"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Move any slider — π, V, the advantage, the gradient and both variances are computed on the spot from the score function, never looked up.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits the proven result &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out &#8595;</span></h2>
+   <p>What the machine proves, exactly and live: (1) the advantage has <b>zero mean</b> under π — E<sub>π</sub>[A]=0 to 1e-12; (2) subtracting the state-value baseline leaves the gradient <b class="k">unbiased</b> — identical to REINFORCE to 1e-9; (3) it <b class="k">strictly reduces</b> the estimator variance. At the default state: Var drops <b class="k">0.803 → 0.252</b> (a <b class="k">68.7%</b> cut), matched by a fixed-seed Monte-Carlo.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-derives these live; the red team (right) tries to make the baseline cheat.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> A baseline <b>reduces</b> variance; it never removes it, and V(s) is <b>not</b> the variance-minimising baseline — that optimum is the score-magnitude-weighted mean of Q, not the plain mean. V is chosen because it is <i>learnable and near-optimal</i>, not because it is best.</div>
+   <p class="small" style="margin-top:8px">Worse in practice: the critic is itself <b>learned and biased</b> — a lagging or wrong V(s) can <i>raise</i> variance and, when the advantage is bootstrapped (TD), inject bias the unbiasedness proof here does not cover. This sphere proves the <b>constant-baseline</b> case exactly; the deep on-policy actor-critic inherits all the critic's estimation error on top.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Subtracting a baseline changes the gradient direction."</s> <b>Cut.</b> The expectation is identical (E[score]=0); only the variance moves. Proven live in the panel — the gradient vector does not budge.</p>
+   <p class="grave"><s>"The baseline must be the value function."</s> <b>Cut.</b> <i>Any</i> action-independent baseline is unbiased. V(s) is merely convenient and near-optimal — a constant, or an average return, works too.</p>
+   <p class="grave"><s>"An action needs positive Q to be reinforced."</s> <b>Kept, corrected.</b> It needs positive <i>advantage</i>: a below-average action with Q&gt;0 is pushed <b>down</b>, an above-average action with Q&lt;0 is pushed <b>up</b>.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: make the baseline <b>depend on the action</b> — set b(a)=Q(a) itself. Now the subtracted term correlates with the score, E[score·b]≠0, and the gradient is <b>biased</b> (it collapses to zero). The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ set b(a) = Q(a)</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">An action-dependent baseline is illegal: it no longer estimates ∇J. The witness re-derives the gradient, finds it disagrees with REINFORCE, and turns red. Nothing is faked — the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE ACTOR-CRITIC — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (state <b style="color:var(--cy)">in</b> → engine → proven result <b style="color:var(--gr)">out</b>). A runnable rendering of Barto, Sutton &amp; Anderson (1983) — the engine is LIT (advantage zero-mean, baseline unbiased to 1e-9, variance cut 0.803→0.252 exactly, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single constant-baseline proof cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: advantage zero-mean, baseline unbiased, variance cut) ===== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function softmax(z){const m=Math.max.apply(null,z);const e=z.map(function(v){return Math.exp(v-m);});const s=e.reduce(function(a,b){return a+b;},0);return e.map(function(v){return v/s;});}
+function valueV(pi,Q){let v=0;for(let i=0;i<pi.length;i++)v+=pi[i]*Q[i];return v;}
+function advantage(pi,Q){const v=valueV(pi,Q);return Q.map(function(q){return q-v;});}
+function score(a,pi){return pi.map(function(p,i){return(i===a?1:0)-p;});} /* d log pi(a)/dz_i */
+/* exact policy gradient given a baseline function b(a) */
+function pgGrad(pi,Q,bfn){const K=pi.length;const g=new Array(K).fill(0);for(let a=0;a<K;a++){const sc=score(a,pi);const adv=Q[a]-bfn(a);for(let i=0;i<K;i++)g[i]+=pi[a]*sc[i]*adv;}return g;}
+/* exact total variance (trace of covariance) of the single-sample estimator */
+function pgVar(pi,Q,bfn){const K=pi.length;const g=pgGrad(pi,Q,bfn);let e2=0;for(let a=0;a<K;a++){const sc=score(a,pi);let sn=0;for(let i=0;i<K;i++)sn+=sc[i]*sc[i];const d=Q[a]-bfn(a);e2+=pi[a]*sn*d*d;}let gn=0;for(let i=0;i<K;i++)gn+=g[i]*g[i];return e2-gn;}
+let TAMPER=false; /* red: makes the baseline depend on the action b(a)=Q(a) — the witness must catch it */
+function baselineV(pi,Q){const v=valueV(pi,Q);return TAMPER?function(a){return Q[a];}:function(){return v;};}
+/* fixed-seed Monte-Carlo cross-check of the two variances */
+function mcVar(pi,Q,bfn,N,seed){const K=pi.length;const rnd=mulberry32(seed);const draws=[];let gs=new Array(K).fill(0);
+ for(let n=0;n<N;n++){let r=rnd(),c=0,a=K-1;for(let i=0;i<K;i++){c+=pi[i];if(r<=c){a=i;break;}}
+  const sc=score(a,pi),d=Q[a]-bfn(a),G=sc.map(function(s){return s*d;});draws.push(G);for(let i=0;i<K;i++)gs[i]+=G[i];}
+ for(let i=0;i<K;i++)gs[i]/=N;let tv=0;for(let j=0;j<draws.length;j++){let s=0;for(let i=0;i<K;i++){const e=draws[j][i]-gs[i];s+=e*e;}tv+=s;}return tv/N;}
+
+/* ===== fail-loud self-check (runs untampered, then plants + restores the tamper) ===== */
+function selfcheck(){
+ const t=function(c,m){if(!c)throw new Error(m);};
+ const save=TAMPER; TAMPER=false;
+ const z=[0,1,0.5], Q=[2,0,1];
+ const pi=softmax(z), A=advantage(pi,Q);
+ /* 1. advantage is zero-mean under the policy */
+ let ea=0; for(let i=0;i<pi.length;i++)ea+=pi[i]*A[i];
+ t(Math.abs(ea)<1e-12,"advantage must have zero mean under pi: "+ea);
+ /* 2. the state-value baseline leaves the gradient unbiased */
+ const g0=pgGrad(pi,Q,function(){return 0;});
+ const gV=pgGrad(pi,Q,baselineV(pi,Q));
+ let d=0; for(let i=0;i<g0.length;i++)d=Math.max(d,Math.abs(g0[i]-gV[i]));
+ t(d<1e-9,"state-value baseline must leave the gradient unbiased: "+d);
+ /* 3. the baseline strictly reduces the estimator variance */
+ const var0=pgVar(pi,Q,function(){return 0;}), varV=pgVar(pi,Q,baselineV(pi,Q));
+ t(varV<var0,"baseline must strictly reduce variance: "+varV+" !< "+var0);
+ t(varV>0,"estimator variance must be positive");
+ /* the exact gradient obeys g_i = pi_i * A_i, and softmax scores sum to zero */
+ for(let i=0;i<pi.length;i++) t(Math.abs(g0[i]-pi[i]*A[i])<1e-12,"gradient identity g_i=pi_i*A_i must hold at i="+i);
+ let gsum=0; for(let i=0;i<g0.length;i++)gsum+=g0[i];
+ t(Math.abs(gsum)<1e-12,"softmax score gradient must sum to zero: "+gsum);
+ /* fixed-seed Monte-Carlo must agree that the baseline lowers variance */
+ const mc0=mcVar(pi,Q,function(){return 0;},20000,12345), mcV=mcVar(pi,Q,baselineV(pi,Q),20000,12345);
+ t(mcV<mc0,"fixed-seed Monte-Carlo must confirm the variance cut: "+mcV+" !< "+mc0);
+ /* 4. THE TAMPER (disclosed): an action-dependent baseline b(a)=Q(a) biases the gradient */
+ TAMPER=true;
+ const gT=pgGrad(pi,Q,baselineV(pi,Q));
+ let dT=0; for(let i=0;i<g0.length;i++)dT=Math.max(dT,Math.abs(g0[i]-gT[i]));
+ t(dT>1e-6,"tamper must bias the gradient (action-dependent baseline): "+dT);
+ let gTn=0; for(let i=0;i<gT.length;i++)gTn+=gT[i]*gT[i];
+ t(gTn<1e-12,"b(a)=Q(a) must collapse the gradient to zero (biased): "+gTn);
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=function(id){return document.getElementById(id);};
+let mode="V";
+function panelState(){
+ const z=[0,+$("z1").value,+$("z2").value];
+ const Q=[+$("q0").value,+$("q1").value,+$("q2").value];
+ return {z:z,Q:Q,pi:softmax(z)};
+}
+function syncLabels(){
+ $("z1v").textContent=(+$("z1").value).toFixed(1);
+ $("z2v").textContent=(+$("z2").value).toFixed(1);
+ $("q0v").textContent=(+$("q0").value).toFixed(1);
+ $("q1v").textContent=(+$("q1").value).toFixed(1);
+ $("q2v").textContent=(+$("q2").value).toFixed(1);
+}
+function fixv(a,n){return a.map(function(x){return x.toFixed(n);}).join(", ");}
+function render(){
+ const st=panelState(), pi=st.pi, Q=st.Q;
+ const v=valueV(pi,Q), A=advantage(pi,Q);
+ let ea=0; for(let i=0;i<3;i++)ea+=pi[i]*A[i];
+ const bV=baselineV(pi,Q);
+ const bfn=mode==="zero"?function(){return 0;}:bV;
+ const g=pgGrad(pi,Q,bfn);
+ const g0=pgGrad(pi,Q,function(){return 0;});
+ const gV=pgGrad(pi,Q,bV);
+ const var0=pgVar(pi,Q,function(){return 0;}), varV=pgVar(pi,Q,bV);
+ let dd=0; for(let i=0;i<3;i++)dd=Math.max(dd,Math.abs(g0[i]-gV[i]));
+ const unbiased=dd<1e-9;
+ $("sent").innerHTML="&pi;(a|s) = ["+fixv(pi,3)+"]<br>"+
+  "Q(s,&middot;) = ["+fixv(Q,2)+"] &nbsp; V(s)=&Sigma;&pi;&middot;Q = <b class='k'>"+v.toFixed(3)+"</b><br>"+
+  "A(s,&middot;)=Q&minus;V = ["+fixv(A,3)+"] &nbsp; E<sub>&pi;</sub>[A] = <b class='k'>"+ea.toExponential(1)+"</b>";
+ $("verdict").textContent=unbiased?"UNBIASED":"BIASED";
+ $("verdict").className="verdict "+(unbiased?"ok":"no");
+ $("moodname").innerHTML=mode==="zero"
+  ?"REINFORCE &nbsp;&middot;&nbsp; b = 0"
+  :(TAMPER?"ACTOR-CRITIC &nbsp;&middot;&nbsp; <span style='color:var(--wall)'>b = Q(a) &mdash; illegal</span>":"ACTOR-CRITIC &nbsp;&middot;&nbsp; b = V(s)");
+ const red=var0>0?100*(1-varV/var0):0;
+ $("reason").innerHTML=unbiased
+  ?"gradient g = ["+fixv(g,3)+"] &mdash; identical to REINFORCE; the baseline is free."
+  :"the baseline depends on the action &rarr; E[score&middot;b]&ne;0, the gradient no longer estimates &nabla;J.";
+ const p0=Math.max(2,Math.min(100,100*var0/Math.max(var0,varV,1e-9)));
+ const pv=Math.max(2,Math.min(100,100*varV/Math.max(var0,varV,1e-9)));
+ $("varbox").innerHTML=
+  "<div class='small'>Var(b=0) &nbsp; <b style='color:var(--wall)'>"+var0.toFixed(4)+"</b></div>"+
+  "<div class='bar b0'><span style='width:"+p0+"%'></span></div>"+
+  "<div class='small'>Var(b=V) &nbsp; <b class='k'>"+varV.toFixed(4)+"</b> &nbsp; cut <b class='k'>"+red.toFixed(1)+"%</b></div>"+
+  "<div class='bar bv'><span style='width:"+pv+"%'></span></div>";
+ const mb=[];
+ for(let i=0;i<3;i++)mb.push("<tr><td>a"+i+"</td><td>"+pi[i].toFixed(3)+"</td><td class='"+(A[i]>=0?"y":"n")+"'>"+A[i].toFixed(3)+"</td><td>"+g0[i].toFixed(3)+"</td></tr>");
+ $("modelBody").innerHTML=mb.join("");
+}
+function setMode(m){
+ mode=m; $("tZero").classList.toggle("on",m==="zero"); $("tV").classList.toggle("on",m==="V");
+ $("readmode").innerHTML=m==="zero"
+  ?"REINFORCE: no baseline. Unbiased, but the variance is the full return&rsquo;s."
+  :"Actor-critic: subtract the critic&rsquo;s V(s). Same gradient, less noise.";
+ render(); audit();
+}
+function audit(){
+ const el=$("auditout");
+ const z=[0,1,0.5], Q=[2,0,1], pi=softmax(z);
+ const g0=pgGrad(pi,Q,function(){return 0;});
+ const gB=pgGrad(pi,Q,baselineV(pi,Q));
+ let d=0; for(let i=0;i<3;i++)d=Math.max(d,Math.abs(g0[i]-gB[i]));
+ const var0=pgVar(pi,Q,function(){return 0;}), varB=pgVar(pi,Q,baselineV(pi,Q));
+ let ea=0; const A=advantage(pi,Q); for(let i=0;i<3;i++)ea+=pi[i]*A[i];
+ const unbiased=d<1e-9, reduced=varB<var0, zero=Math.abs(ea)<1e-12;
+ const ok=unbiased&&reduced&&zero;
+ el.innerHTML="<span class='badge "+(ok?"pass":"failb")+"'>"+(ok?"&#10003; WITNESS &mdash; holds":"&#10007; WITNESS &mdash; broken")+"</span>"+
+  "<div class='small' style='margin-top:6px'>unbiased (&Delta;g="+d.toExponential(1)+") <b style='color:"+(unbiased?"var(--gr)":"var(--wall)")+"'>"+(unbiased?"yes":"NO")+"</b>"+
+  " &nbsp;&middot;&nbsp; E<sub>&pi;</sub>[A]=0 <b style='color:"+(zero?"var(--gr)":"var(--wall)")+"'>"+(zero?"yes":"NO")+"</b>"+
+  " &nbsp;&middot;&nbsp; Var "+var0.toFixed(3)+"&rarr;<b style='color:"+(reduced?"var(--gr)":"var(--wall)")+"'>"+varB.toFixed(3)+"</b>"+
+  (TAMPER?" &nbsp;&mdash; <span style='color:var(--wall)'>red set b(a)=Q(a)</span>":"")+"</div>";
+}
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">&#10003; LIT &middot; self-check passed on load</span>';
+ syncLabels();
+ ["z1","z2","q0","q1","q2"].forEach(function(id){$(id).addEventListener("input",function(){syncLabels();render();audit();});});
+ $("tZero").addEventListener("click",function(){setMode("zero");});
+ $("tV").addEventListener("click",function(){setMode("V");});
+ $("rand").addEventListener("click",function(){
+  $("z1").value=(Math.random()*4-2).toFixed(1); $("z2").value=(Math.random()*4-2).toFixed(1);
+  $("q0").value=(Math.random()*6-3).toFixed(1); $("q1").value=(Math.random()*6-3).toFixed(1); $("q2").value=(Math.random()*6-3).toFixed(1);
+  syncLabels(); render(); audit();
+ });
+ $("reset").addEventListener("click",function(){
+  $("z1").value="1"; $("z2").value="0.5"; $("q0").value="2"; $("q1").value="0"; $("q2").value="1";
+  syncLabels(); render(); audit();
+ });
+ $("tamper").addEventListener("click",function(){
+  TAMPER=true;
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>Baseline set to b(a)=Q(a).</b> The subtracted term now correlates with the score, E[score&middot;b]&ne;0, and the gradient is biased (it collapses to zero). The witness (window 7) re-derived it and went red. The attack is real; it is caught.";
+  render(); audit();
+ });
+ $("restore").addEventListener("click",function(){
+  TAMPER=false;
+  $("tampernote").textContent="An action-dependent baseline is illegal: it no longer estimates the gradient. The witness re-derives the gradient, finds it disagrees with REINFORCE, and turns red. Nothing is faked; the attack is real and it is caught.";
+  render(); audit();
+ });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the actor-critic engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

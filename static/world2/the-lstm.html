@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LSTM · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fe0c0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,224,192,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,224,192,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,224,192,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+input[type=number]{width:74px;}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#08120e;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:96px;}
+.verdict{font-size:18px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+.nums{font-size:12px;margin:6px 0;} .nums div{margin:2px 0;} .nums b{color:#eafff0;}
+.traj{display:flex;align-items:flex-end;height:52px;padding:4px 4px 0;background:#0a130c;border:1px solid var(--line);border-radius:6px;margin-top:8px;overflow:hidden;}
+.bar{display:inline-block;width:3px;margin-right:1px;background:var(--am);vertical-align:bottom;flex:0 0 auto;}
+.traj.decay .bar{background:var(--red);} .traj.hold .bar{background:var(--gr);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE LSTM</h1>
+ <p class="sub">A recurrent net forgets: run the gradient back through time and it shrinks by a factor every step, until the far past leaves no trace. Hochreiter &amp; Schmidhuber cut a channel through the middle of the cell where the self-loop weight is fixed at <b>1</b> — the <b class="k">constant error carousel</b> — so a stored value is carried <i>exactly</i> across a thousand steps. Down the center, a value goes <b style="color:var(--cy)">in</b>, sits through a long gap, and comes back <b style="color:var(--gr)">out</b> undamaged. The <b style="color:var(--blue)">blue team</b> builds the gates; the <b style="color:var(--red)">red team</b> springs a leak.</p>
+ <p class="src"><span class="tag t-amber">source</span> Hochreiter &amp; Schmidhuber, <i>Long Short-Term Memory</i>, Neural Computation 9(8):1735–1780 (1997) — <a href="https://direct.mit.edu/neco/article/9/8/1735">direct.mit.edu/neco/article/9/8/1735</a>. Pre-arXiv; no clean archive.org id confirmed on search, so the journal of record is cited <span class="tag t-amber">AMBER</span>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — one gated cell</h2>
+   <p>A memory cell holds a state <b class="k">c</b>. Three <b>gates</b>, each a sigmoid squashed to (0,1), decide what happens to it each step:</p>
+   <table><thead><tr><th>gate</th><th>value</th><th>controls</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>input <b>i</b></td><td>σ(·)</td><td>how much new candidate <b>g</b> is written</td></tr>
+     <tr><td>forget <b>f</b></td><td>σ(·)</td><td>how much of old <b>c</b> survives</td></tr>
+     <tr><td>output <b>o</b></td><td>σ(·)</td><td>how much of c leaks out as h</td></tr>
+    </tbody></table>
+   <p class="small" style="margin-top:8px">The update is <b>c′ = f·c + i·g</b>, and <b>h = o·tanh(c′)</b>. Set <b>f = 1, i = 0</b> and the cell becomes a straight wire: <b>c′ = c</b>. That fixed unit self-weight is the <b class="k">carousel</b> — the original 1997 cell had no forget gate, just this permanent 1.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the gate arc <span class="tag t-amber">AVAN</span></h2>
+   <p>Left of here, <a href="https://davidwise01.github.io/the-first-neuron/" style="color:var(--cy)">the-first-neuron</a> is a <i>static</i> unit: one input vector, one output, no yesterday. Stack it in time and the vanishing gradient erases the past.</p>
+   <p>The LSTM's answer is the <b>gate</b>: a learned valve that decides when the wire stays open. Right of here, attention (Vaswani, 2017) discards recurrence entirely and lets every step read every other step directly — a <i>different</i> fix for the same disease. This sphere is the hinge between them: memory by a protected loop, then memory by direct access.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run the carousel for 200 steps with the <i>current</i> forget gate and confirm the stored value is unchanged and the through-time gradient is exactly 1. If red springs a leak, this badge catches it.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — write, then wait <span class="tag t-in">in ↓</span></h2>
+   <p>Write a value into the cell at step 0 — the <b style="color:var(--cy)">stored value c₀</b>. Then close the input gate (<b>i = 0</b>) and let a long <b>gap</b> of N steps pass with no new information. The only question: is the value still there at the end?</p>
+   <p class="small">For contrast the panel also runs a <b>vanilla RNN</b> memory, <b>c′ = tanh(w·c)</b> with <b>|w| &lt; 1</b> <span class="tag t-amber">AMBER</span> — the standard pre-LSTM recurrence and the standard illustrative baseline (w, tanh chosen for the demo). Feed the same c₀ into both and watch one hold while the other bleeds to zero.</p>
+  </div>
+  <div class="flow">▼ &nbsp; write c₀, then step through the gap &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the cell <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>cell</label>
+      <span class="toggle"><button id="tL" class="on">LSTM</button><button id="tV">VANILLA RNN</button></span></div>
+     <div class="row"><label>stored value c₀</label><input type="number" id="c0" value="1" step="0.1"></div>
+     <div class="row" id="rF"><label>forget gate f</label>
+      <select id="f"><option value="1">1.00 · carousel</option><option value="0.99">0.99</option><option value="0.9">0.90</option><option value="0.5">0.50</option></select></div>
+     <div class="row" id="rI"><label>input gate i</label>
+      <select id="ig"><option value="0">0 · closed</option><option value="0.5">0.5</option><option value="1">1 · open</option></select></div>
+     <div class="row" id="rG"><label>candidate g</label><input type="number" id="g" value="1" step="0.1"></div>
+     <div class="row" id="rW" style="display:none"><label>weight w</label>
+      <select id="w"><option value="0.9">0.90</option><option value="0.7">0.70</option><option value="0.5">0.50</option><option value="1">1.00</option></select></div>
+     <div class="row"><label>gap N steps</label><input type="number" id="N" value="200" step="10" min="1" max="2000"></div>
+     <div class="row"><button id="rand">↺ random</button><button id="cec">→ carousel</button></div>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+     <div class="nums" id="nums"></div>
+     <div class="traj" id="traj"></div>
+     <div class="small" style="margin-top:4px">cell state over the gap — one bar per sampled step</div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every number is computed on the spot by stepping the cell; nothing is looked up. The through-time gradient shown is <b>dc<sub>N</sub>/dc₀</b> — the product of forget gates for the LSTM, the product of tanh′·w for the vanilla RNN.</p>
+  </div>
+  <div class="flow">▼ &nbsp; read the value back out &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the proof <span class="tag t-out">out ↓</span></h2>
+   <p>Proven live: with <b>f = 1, i = 0</b> the cell returns c₀ to within <b class="k">1e-12</b> after 200 steps, and its through-time gradient is <b class="k">exactly 1</b> — no vanishing. The vanilla RNN with w = 0.9 falls below <b>0.01</b> within a few hundred steps and its gradient shrinks geometrically to a speck. One wire holds; the other forgets.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-checks this every render; the red team (right) tries to make the "held" value leak.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The carousel is an <b>idealization</b>. A real sigmoid gate never outputs exactly 1 or 0 — it only approaches them — so a trained LSTM's memory still decays, just far slower. The exact, lossless carousel is the <i>limit</i>, achieved literally only by the 1997 cell's hard-wired self-weight of 1.</div>
+   <p class="small" style="margin-top:8px">And even at its best the LSTM is <b>sequential</b>: N steps mean N un-parallelizable hops. Attention (2017) threw out recurrence, read all positions at once, and won NLP outright. Gates also <b>saturate</b> and <b>explode</b>; the vanilla LSTM needed the forget-gate bias initialized high (Gers, 2000) to work at all. The carousel is a real fix — not the final one.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"The LSTM was born with a forget gate."</s> <b>Cut.</b> The 1997 cell had only input and output gates and a fixed self-weight of 1. The forget gate is Gers, Schmidhuber &amp; Cummins (1999–2000) — this panel's f = 1 <i>is</i> the original carousel.</p>
+   <p class="grave"><s>"LSTM solved vanishing gradients, full stop."</s> <b>Cut.</b> It solves it in the carousel's ideal limit; with learned gates in (0,1) the gradient still attenuates — the achievement is that it attenuates slowly enough to learn 1000-step lags.</p>
+   <p class="grave"><s>"LSTM is obsolete."</s> <b>Kept, corrected.</b> Transformers dominate, but gated recurrence lives on in streaming and low-latency work and in the state-space lineage (S4, Mamba). The mechanism outlived the hype cycle.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — spring a leak</h2>
+   <p>The red team's move: nudge the carousel's forget gate from <b>1</b> to <b>0.9</b>. The wire is now a slow drain — the "preserved" value bleeds toward zero. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ set carousel forget = 0.9</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Set forget to 0.9 and the carousel's value decays like 0.9<sup>N</sup> instead of holding — the witness recomputes, finds c ≠ c₀ and the gradient ≠ 1, and turns red. Nothing is faked; the leak is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE LSTM — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (a value written <b style="color:var(--cy)">in</b> → carried through a long gap → read back <b style="color:var(--gr)">out</b>). A runnable rendering of Hochreiter &amp; Schmidhuber's constant error carousel — the cell is LIT (carousel preservation to 1e-12, vanilla decay, and the through-time gradient all computed live and self-checked; tamper-provable), the blue team witnesses, the red team springs a leak, and the graveyard + adversary carry what one gated wire cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (LSTM cell · constant error carousel) ===== */
+function sigmoid(x){ return 1/(1+Math.exp(-x)); }
+
+// the three gates are each a sigmoid of a pre-activation
+function gates(preI, preF, preO){
+ return { i: sigmoid(preI), f: sigmoid(preF), o: sigmoid(preO) };
+}
+
+// one LSTM cell step:  c' = f*c + i*g ;  h = o*tanh(c')
+function lstmStep(c, f, i, g, o){
+ const cn = f*c + i*g;
+ return { c: cn, h: o*Math.tanh(cn) };
+}
+
+let TAMPER=false;                     // red sets the carousel forget gate to 0.9 — the witness must catch it
+function cecForget(){ return TAMPER ? 0.9 : 1.0; }   // 1.0 = the original 1997 fixed self-weight (the carousel)
+
+// carry a stored value across n steps with constant gates — returns the final cell state
+function carry(c0, f, i, g, n){
+ let c=c0;
+ for(let t=0;t<n;t++) c = f*c + i*g;
+ return c;
+}
+// same, but keep the whole trajectory
+function carryTraj(c0, f, i, g, n){
+ const tr=[c0]; let c=c0;
+ for(let t=0;t<n;t++){ c=f*c+i*g; tr.push(c); }
+ return tr;
+}
+// vanilla RNN memory:  c' = tanh(w*c), |w|<1 — the decaying baseline
+function vanillaTraj(c0, w, n){
+ const tr=[c0]; let c=c0;
+ for(let t=0;t<n;t++){ c=Math.tanh(w*c); tr.push(c); }
+ return tr;
+}
+
+// through-time gradient  dc_N/dc_0
+function lstmGrad(forgets){ let g=1; for(const f of forgets) g*=f; return g; }         // product of forget gates
+function vanillaGrad(c0, w, n){                                                          // product of tanh'(w*c)*w
+ let c=c0, grad=1;
+ for(let t=0;t<n;t++){ const cn=Math.tanh(w*c); grad*=(1-cn*cn)*w; c=cn; }
+ return grad;
+}
+
+// fixed-seed PRNG (mulberry32) — used only by the UI "random" button; selfcheck never touches it
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ===== fail-loud self-check (runs untampered, restores the tamper flag) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+
+ // (a) the three gates are exactly sigmoid of their inputs
+ t(Math.abs(sigmoid(0)-0.5)<1e-12,"sigmoid(0) must equal 0.5");
+ const G=gates(2,-3,0.5);
+ t(Math.abs(G.i-sigmoid(2))<1e-12 && Math.abs(G.f-sigmoid(-3))<1e-12 && Math.abs(G.o-sigmoid(0.5))<1e-12,
+   "the three gates must each equal sigmoid of their pre-activation");
+ t(G.i>0 && G.i<1 && G.f>0 && G.f<1 && G.o>0 && G.o<1,"a real sigmoid gate is strictly inside (0,1)");
+
+ // (b) constant error carousel: forget=1, input=0 -> cell state preserved to 1e-12 over 200 steps
+ const c0=0.731420;
+ const cN=carry(c0, cecForget(), 0, 0.9, 200);
+ t(Math.abs(cN-c0)<1e-12,"CEC: with forget=1, input=0 the cell state must be preserved (to 1e-12) over 200 steps");
+
+ // one lstmStep with f=1,i=0 is the identity on c
+ const st=lstmStep(0.4, 1, 0, 0.9, 0.5);
+ t(Math.abs(st.c-0.4)<1e-12,"a single carousel step (f=1,i=0) must leave c unchanged");
+
+ // (c) vanilla RNN with w=0.9 decays below 0.01 within a few hundred steps
+ const vT=vanillaTraj(1.0, 0.9, 300);
+ t(Math.abs(vT[300])<0.01,"vanilla RNN (w=0.9) must decay below 0.01 within 300 steps");
+ t(Math.abs(vT[300])<Math.abs(vT[0]),"vanilla RNN state must shrink toward 0, not hold");
+
+ // (d) gradient dc_T/dc_0 = 1 when all forget gates are 1 (no vanishing); geometric shrink for vanilla
+ t(Math.abs(lstmGrad(new Array(200).fill(1))-1)<1e-12,"LSTM through-time gradient must be exactly 1 when all forget gates=1");
+ const gv=vanillaGrad(1.0, 0.9, 200);
+ t(gv>0 && gv<1e-6,"vanilla RNN gradient must shrink geometrically: >0 but <1e-6 over 200 steps");
+ // shrinking is monotone-ish: 200-step product is far smaller than the 50-step product
+ t(vanillaGrad(1.0,0.9,200) < vanillaGrad(1.0,0.9,50),"vanilla gradient must keep shrinking with depth");
+
+ // (e) the disclosed planted void: with forget=0.9 the carousel preservation MUST fail
+ TAMPER=true;
+ const cTamp=carry(c0, cecForget(), 0, 0.9, 200);
+ t(Math.abs(cTamp-c0) > 1e-6,"TAMPER must break the carousel: forget=0.9 leaks the stored value away");
+ t(Math.abs(lstmGrad(new Array(200).fill(cecForget()))-1) > 1e-6,"TAMPER must also break the unit gradient");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let mode="lstm";
+let RNG=mulberry32(0x10577);   // fixed seed
+const nv=id=>parseFloat($(id).value);
+
+function fmt(x){
+ const a=Math.abs(x);
+ if(a!==0 && (a<1e-3 || a>=1e5)) return x.toExponential(3);
+ return x.toFixed(6);
+}
+
+function render(){
+ let N=Math.round(nv("N")); if(!(N>=1)) N=1; if(N>2000) N=2000; $("N").value=N;
+ const c0=nv("c0");
+ let tr, grad, held, label;
+ if(mode==="lstm"){
+  const f=nv("f"), ig=nv("ig"), g=nv("g");
+  tr=carryTraj(c0, f, ig, g, N);
+  grad=lstmGrad(new Array(N).fill(f));
+  held = (f===1 && ig===0);
+  label = held ? "MEMORY PRESERVED" : "MEMORY LEAKS";
+ } else {
+  const w=nv("w");
+  tr=vanillaTraj(c0, w, N);
+  grad=vanillaGrad(c0, w, N);
+  held = (w===1);
+  label = "MEMORY DECAYS";
+ }
+ const cN=tr[N];
+ const preserved = Math.abs(cN-c0)<1e-9;
+ const ret = c0!==0 ? (cN/c0)*100 : (cN===0?100:0);
+
+ $("verdict").textContent = preserved ? "MEMORY PRESERVED" : (mode==="lstm"&&label==="MEMORY LEAKS"?"MEMORY LEAKS":"MEMORY DECAYS");
+ $("verdict").className = "verdict "+(preserved?"ok":"no");
+
+ let reason;
+ if(mode==="lstm"){
+  reason = preserved
+   ? "f = 1, i = 0 → c′ = c. The carousel carries c₀ across the whole gap, exact in floating point."
+   : "f < 1 or i ≠ 0 → the wire no longer copies c forward; the stored value bleeds each step.";
+ } else {
+  reason = "c′ = tanh(w·c) contracts toward a fixed point at 0 (w=1 sits marginal); the past is overwritten every step.";
+ }
+ $("reason").textContent = reason;
+
+ $("nums").innerHTML =
+   `<div>final cell state c<sub>${N}</sub>: <b style="color:${preserved?'var(--gr)':'var(--wall)'}">${fmt(cN)}</b> &nbsp;(started ${fmt(c0)})</div>`
+  +`<div>retention c<sub>${N}</sub>/c₀: <b>${isFinite(ret)?ret.toFixed(4)+' %':'—'}</b></div>`
+  +`<div>through-time gradient dc<sub>${N}</sub>/dc₀: <b style="color:${Math.abs(grad-1)<1e-9?'var(--gr)':'var(--wall)'}">${fmt(grad)}</b> ${Math.abs(grad-1)<1e-9?'· no vanishing':'· vanished'}</div>`;
+
+ // trajectory bars
+ const K=Math.min(N,72), bars=[];
+ for(let s=0;s<=K;s++){ const idx=Math.round(s/K*N); bars.push(tr[idx]); }
+ let mx=Math.abs(c0); for(const v of bars) mx=Math.max(mx,Math.abs(v)); if(mx<1e-12) mx=1e-12;
+ $("traj").className = "traj "+(preserved?"hold":"decay");
+ $("traj").innerHTML = bars.map(v=>{
+   const h=Math.max(1, Math.abs(v)/mx*46);
+   return `<span class="bar" style="height:${h.toFixed(1)}px" title="c=${v.toFixed(4)}"></span>`;
+ }).join("");
+}
+
+function setMode(m){
+ mode=m;
+ $("tL").classList.toggle("on", m==="lstm");
+ $("tV").classList.toggle("on", m==="vanilla");
+ const lstmOnly = m==="lstm";
+ ["rF","rI","rG"].forEach(id=>$(id).style.display=lstmOnly?"flex":"none");
+ $("rW").style.display=lstmOnly?"none":"flex";
+ render(); audit();
+}
+
+function audit(){
+ const el=$("auditout");
+ const c0=1.0;
+ const cN=carry(c0, cecForget(), 0, 0, 200);
+ const preserved = Math.abs(cN-c0)<1e-12;
+ const gL = lstmGrad(new Array(200).fill(cecForget()));
+ const gradOne = Math.abs(gL-1)<1e-12;
+ const vdecay = Math.abs(vanillaTraj(1.0,0.9,300)[300])<0.01;
+ const ok = preserved && gradOne && vdecay;
+ el.innerHTML =
+   `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — carousel holds':'✗ WITNESS — carousel broken'}</span>`
+  +`<div class="small" style="margin-top:6px">forget gate now <b style="color:${TAMPER?'var(--wall)':'var(--gr)'}">${cecForget().toFixed(2)}</b> · `
+  +`c after 200 steps <b style="color:${preserved?'var(--gr)':'var(--wall)'}">${preserved?'1.000000':cN.toExponential(3)}</b> (start 1.000000) · `
+  +`dc₂₀₀/dc₀ <b style="color:${gradOne?'var(--gr)':'var(--wall)'}">${gradOne?'1.000000':gL.toExponential(3)}</b> · `
+  +`vanilla decays ${vdecay}${TAMPER?' &nbsp;— <span style="color:var(--wall)">red set forget = 0.9</span>':''}</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+
+ ["c0","f","ig","g","w","N"].forEach(id=>$(id).addEventListener("change",()=>{render();audit();}));
+ $("N").addEventListener("input",()=>{render();});
+ $("tL").addEventListener("click",()=>setMode("lstm"));
+ $("tV").addEventListener("click",()=>setMode("vanilla"));
+
+ $("rand").addEventListener("click",()=>{
+  const fchoices=["1","0.99","0.9","0.5"], ichoices=["0","0.5","1"];
+  $("f").value=fchoices[(RNG()*fchoices.length)|0];
+  $("ig").value=ichoices[(RNG()*ichoices.length)|0];
+  $("c0").value=(RNG()*2-1).toFixed(2);
+  $("g").value=(RNG()*2-1).toFixed(2);
+  $("N").value=50+((RNG()*400)|0);
+  render(); audit();
+ });
+ $("cec").addEventListener("click",()=>{
+  setMode("lstm");
+  $("f").value="1"; $("ig").value="0"; $("c0").value="1"; $("g").value="1"; $("N").value="200";
+  render(); audit();
+ });
+
+ $("tamper").addEventListener("click",()=>{
+  TAMPER=true;
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>forget = 0.9.</b> The carousel is now a slow drain: c decays like 0.9<sup>N</sup> and the through-time gradient collapses. The witness (window 7) recomputed and went red. The leak is real; it is caught.";
+  render(); audit();
+ });
+ $("restore").addEventListener("click",()=>{
+  TAMPER=false;
+  $("tampernote").innerHTML="Set forget to 0.9 and the carousel's value decays like 0.9<sup>N</sup> instead of holding — the witness recomputes, finds c ≠ c₀ and the gradient ≠ 1, and turns red. Nothing is faked; the leak is real and it is caught.";
+  render(); audit();
+ });
+
+ setMode("lstm");
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the LSTM engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE TEMPORAL-DIFFERENCE LEARNING</title>
+<style>
+  :root{
+    --am:#ffd23f;
+    --bg:#0a1712; --bg2:#0e2018; --panel:#10281b; --panel2:#0c1f16;
+    --ink:#eaf6ee; --dim:#8fb6a1; --faint:#5f8571;
+    --blue:#5aa0ff; --red:#ff6f6f; --green:#57e08a;
+    --line:rgba(255,255,255,.12);
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 15% -8%, #14301f 0%, transparent 60%),
+      radial-gradient(1000px 600px at 105% 10%, #172a1e 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink); font-family:var(--sans); line-height:1.5;
+    padding:26px 20px 60px; min-height:100vh;
+  }
+  a{color:var(--am);text-decoration:none;border-bottom:1px dotted rgba(255,210,63,.5)}
+  a:hover{border-bottom-style:solid}
+  .wrap{max-width:1220px;margin:0 auto}
+
+  header{margin:0 auto 22px;max-width:1000px}
+  h1{
+    font-size:clamp(24px,4.4vw,40px);line-height:1.08;margin:0 0 10px;
+    letter-spacing:.3px;font-weight:800;
+    background:linear-gradient(92deg,var(--am),#fff4cf 60%,var(--am));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{font-size:clamp(14px,1.7vw,17px);color:var(--dim);margin:0 0 12px;max-width:78ch}
+  .sub b{color:var(--ink);font-weight:600}
+  .src{font-family:var(--mono);font-size:12.5px;color:var(--faint);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;
+    letter-spacing:.6px;padding:2px 7px;border-radius:5px;border:1px solid var(--line);
+    text-transform:uppercase;white-space:nowrap}
+  .t-amber{background:rgba(255,210,63,.13);color:var(--am);border-color:rgba(255,210,63,.4)}
+  .t-lit{background:rgba(87,224,138,.14);color:var(--green);border-color:rgba(87,224,138,.4)}
+  .t-in{background:rgba(90,160,255,.14);color:var(--blue);border-color:rgba(90,160,255,.4)}
+  .t-out{background:rgba(255,210,63,.14);color:var(--am);border-color:rgba(255,210,63,.4)}
+  .t-wall{background:rgba(255,111,111,.14);color:var(--red);border-color:rgba(255,111,111,.42)}
+
+  .ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+  @media(max-width:880px){.ocho{grid-template-columns:1fr}}
+
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:1px;
+    text-transform:uppercase;padding:7px 10px;border-radius:8px;border:1px solid var(--line);
+    display:flex;align-items:center;gap:8px}
+  .col.blue .teamhdr{color:var(--blue);background:rgba(90,160,255,.08);border-color:rgba(90,160,255,.28)}
+  .col.red  .teamhdr{color:var(--red); background:rgba(255,111,111,.08);border-color:rgba(255,111,111,.28)}
+  .col.center .teamhdr{color:var(--am);background:rgba(255,210,63,.08);border-color:rgba(255,210,63,.3);justify-content:center}
+
+  .win{position:relative;background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:12px;padding:14px 14px 13px;}
+  .win.blue{border-color:rgba(90,160,255,.24)}
+  .win.red{border-color:rgba(255,111,111,.24)}
+  .win.panel{border-color:rgba(255,210,63,.3);background:linear-gradient(180deg,#12291c,#0d2016)}
+  .badge{position:absolute;top:-10px;left:-10px;width:26px;height:26px;border-radius:50%;
+    display:grid;place-items:center;font-family:var(--mono);font-weight:800;font-size:13px;
+    background:var(--bg2);border:1px solid var(--line);color:var(--dim)}
+  .win.blue .badge{color:var(--blue);border-color:rgba(90,160,255,.5)}
+  .win.red  .badge{color:var(--red);border-color:rgba(255,111,111,.5)}
+  .win.panel .badge{color:var(--am);border-color:rgba(255,210,63,.55)}
+  .wtitle{display:flex;align-items:center;gap:8px;margin:0 0 9px}
+  .wtitle h3{margin:0;font-size:13.5px;letter-spacing:.4px;font-weight:700}
+  .win p{margin:6px 0;font-size:13px;color:var(--dim)}
+  .win p b{color:var(--ink);font-weight:600}
+  .win small{color:var(--faint);font-size:11.5px}
+
+  .flow{height:20px;display:grid;place-items:center;color:var(--faint);font-family:var(--mono);font-size:14px}
+  .flow::before{content:"▼"}
+
+  code,.mono{font-family:var(--mono)}
+  .eq{font-family:var(--mono);font-size:12.5px;background:rgba(0,0,0,.28);border:1px solid var(--line);
+    border-radius:7px;padding:8px 10px;color:#dff2e6;overflow-x:auto;margin:8px 0}
+  .eq .hl{color:var(--am)}
+
+  table.mrp{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:12px;margin:6px 0}
+  table.mrp th,table.mrp td{border:1px solid var(--line);padding:4px 6px;text-align:center}
+  table.mrp th{color:var(--dim);font-weight:700;background:rgba(255,255,255,.03)}
+  table.mrp td.good{color:var(--green)}
+  table.mrp td.neg{color:var(--red)}
+
+  .wall-note{background:rgba(255,111,111,.07);border-left:3px solid var(--red);
+    padding:8px 11px;border-radius:0 8px 8px 0;font-size:12.5px;color:#ffd7d7;margin:8px 0}
+  .grave s{color:var(--faint)}
+  .grave .fix{color:var(--green)}
+  .grave li{font-size:12.5px;margin:7px 0;color:var(--dim)}
+  .grave ul{padding-left:18px;margin:6px 0}
+
+  button{font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;
+    padding:7px 12px;border-radius:8px;border:1px solid var(--line);
+    background:#16281d;color:var(--ink);transition:.15s}
+  button:hover{border-color:var(--am)}
+  #tamper{border-color:rgba(255,111,111,.5);color:var(--red)}
+  #tamper:hover{background:rgba(255,111,111,.12)}
+  #restore{border-color:rgba(87,224,138,.5);color:var(--green)}
+  #restore:hover{background:rgba(87,224,138,.12)}
+  .btnrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+
+  .wit{font-family:var(--mono);font-size:12px;border-radius:8px;padding:9px 11px;margin-top:6px;
+    border:1px solid var(--line);white-space:pre-wrap;line-height:1.45}
+  .wit.ok{background:rgba(87,224,138,.1);border-color:rgba(87,224,138,.45);color:#bff4d3}
+  .wit.bad{background:rgba(255,111,111,.12);border-color:rgba(255,111,111,.55);color:#ffd0d0}
+
+  #litbadge{font-family:var(--mono);font-size:12px;color:var(--green);font-weight:700}
+  #failb{display:none;background:rgba(255,111,111,.14);border:1px solid var(--red);
+    color:#ffd0d0;font-family:var(--mono);font-size:12.5px;padding:10px 12px;border-radius:8px;margin:10px 0}
+
+  footer{max-width:1000px;margin:30px auto 0;color:var(--faint);font-size:12px;
+    font-family:var(--mono);border-top:1px solid var(--line);padding-top:14px;line-height:1.7}
+  .lit-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);
+    box-shadow:0 0 8px var(--green);margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>THE TEMPORAL-DIFFERENCE LEARNING</h1>
+    <p class="sub">Update a guess toward a <b>later guess</b> — before the final outcome ever arrives, and with <b>no model</b> of the world. TD(0) nudges each state value along the error <b>δ = r + γV(s′) − V(s)</b>. The true value function is exactly the point where that error vanishes <b>in expectation</b>. This panel computes it live on a bounded random walk and proves the fixed point.</p>
+    <p class="src">
+      <span class="tag t-amber">source</span>
+      Sutton, R. S. — <i>Learning to Predict by the Methods of Temporal Differences</i>, <a href="https://link.springer.com/article/10.1007/BF00115009" target="_blank" rel="noopener">Machine Learning <b>3</b> (1988), 9–44</a> · DOI 10.1007/BF00115009 · <span style="color:var(--am)">AMBER</span> (classic behind publisher; no open arXiv id). Rendered, not quoted.
+    </p>
+  </header>
+
+  <div id="failb"></div>
+
+  <div class="ocho">
+
+    <!-- ===================== BLUE TEAM (LEFT) ===================== -->
+    <section class="col blue">
+      <div class="teamhdr">■ Blue Team · builds &amp; defends</div>
+
+      <div class="win blue">
+        <span class="badge">3</span>
+        <div class="wtitle"><h3>THE MODEL</h3></div>
+        <p>A <b>Markov Reward Process</b>: the bounded random walk. Five non-terminal states <b>1…5</b>. From state <i>i</i> the walk steps to <i>i−1</i> or <i>i+1</i>, each with probability ½. Hitting <b>0</b> ends the episode with reward 0; hitting <b>6</b> ends it with reward <b>1</b>. All other rewards are 0, γ = 1.</p>
+        <p>By symmetry the true value <b>V<sup>π</sup>(i) = i/6</b> — the probability of exiting on the right. No policy, no actions: pure prediction of the future return.</p>
+        <div class="eq">V(s) ← V(s) + α·<span class="hl">δ</span>,&nbsp;&nbsp; δ = r + γ·V(s′) − V(s)</div>
+      </div>
+
+      <div class="win blue">
+        <span class="badge">5</span>
+        <div class="wtitle"><h3>THE LINEAGE</h3></div>
+        <p>Descends from <b>the-bellman-equation</b> — but learned from <i>samples</i>. Bellman writes V(s) = E[r + γV(s′)]; a dynamic-programming sweep needs the full transition model. TD keeps the same fixed point and throws the model away.</p>
+        <p>The new idea is <b>bootstrapping</b>: you may correct a prediction using your <i>own later prediction</i> V(s′), before the episode's true outcome is known. Credit flows between successive guesses, not from the final result.</p>
+      </div>
+
+      <div class="win blue">
+        <span class="badge">7</span>
+        <div class="wtitle"><h3>THE WITNESS</h3></div>
+        <p>Live re-check: at V = V<sup>π</sup>, the maximum expected TD error over all states must be <b>≈ 0</b>. If Red's tamper (window 6) drops the bootstrap term, this witness recomputes and catches it.</p>
+        <div class="wit ok" id="auditout">witness idle…</div>
+      </div>
+    </section>
+
+    <!-- ===================== THE MACHINE (CENTER) ===================== -->
+    <section class="col center">
+      <div class="teamhdr">◆ The Machine</div>
+
+      <div class="win">
+        <span class="badge">4</span>
+        <div class="wtitle"><span class="tag t-in">in ▼</span><h3>DATA IN</h3></div>
+        <p>The MRP above, plus an <b>optimistic init</b> V(1…5) = 0.5, step size α = 0.1, and a fixed-seed stream of sampled episodes (seed 12345, mulberry32). No true values are given to the learner.</p>
+        <table class="mrp" id="tbl-in"><tbody><tr><td>booting…</td></tr></tbody></table>
+      </div>
+
+      <div class="flow"></div>
+
+      <div class="win panel">
+        <span class="badge">0</span>
+        <div class="wtitle"><span class="tag t-lit">● lit</span><h3>THE PANEL — TD(0) live</h3></div>
+        <p><small>Sampled transitions and their live TD errors δ. Each row nudges V(s) toward r + γV(s′):</small></p>
+        <table class="mrp" id="tbl-trace"><tbody><tr><td>booting…</td></tr></tbody></table>
+        <p style="margin-top:10px"><small>Estimates after 200 episodes vs. the true V<sup>π</sup>(i)=i/6:</small></p>
+        <table class="mrp" id="tbl-est"><tbody><tr><td>booting…</td></tr></tbody></table>
+      </div>
+
+      <div class="flow"></div>
+
+      <div class="win">
+        <span class="badge">8</span>
+        <div class="wtitle"><span class="tag t-out">out ▼</span><h3>DATA OUT</h3></div>
+        <p id="litline"><span class="lit-dot"></span><span id="litbadge">verifying…</span></p>
+        <p id="outline"><small>result pending selfcheck…</small></p>
+      </div>
+    </section>
+
+    <!-- ===================== RED TEAM (RIGHT) ===================== -->
+    <section class="col red">
+      <div class="teamhdr">▲ Red Team · attacks &amp; breaks</div>
+
+      <div class="win red">
+        <span class="badge">1</span>
+        <div class="wtitle"><span class="tag t-wall">wall</span><h3>THE ADVERSARY</h3></div>
+        <div class="wall-note">TD(0) is <b>biased</b> for finite α and finite data: it chases a moving bootstrap target, so early estimates inherit the error of their own neighbours. It converges to V<sup>π</sup> only in expectation, under decaying step sizes (Robbins–Monro), not from any single run.</div>
+        <p><small>With <b>function approximation</b> and <b>off-policy</b> sampling, the same bootstrap can diverge — Baird's counterexample. Here (tabular, on-policy) it is safe, but the wall is real: the fixed point exists only where E[δ]=0.</small></p>
+      </div>
+
+      <div class="win red grave">
+        <span class="badge">2</span>
+        <div class="wtitle"><h3>THE GRAVEYARD</h3></div>
+        <ul>
+          <li><s>"TD waits for the outcome, like Monte Carlo."</s> <span class="fix">→ It updates every step from the <b>next</b> prediction; the outcome need not arrive.</span></li>
+          <li><s>"You need the transition probabilities."</s> <span class="fix">→ TD is <b>model-free</b> — it samples s′ instead of averaging over it.</span></li>
+          <li><s>"Any V that fits the data is the answer."</s> <span class="fix">→ Only V<sup>π</sup> makes the <b>expected</b> error zero at <i>every</i> state simultaneously.</span></li>
+        </ul>
+      </div>
+
+      <div class="win red">
+        <span class="badge">6</span>
+        <div class="wtitle"><h3>THE TAMPER</h3></div>
+        <p><small>The disclosed planted void: drop the bootstrap term so δ = r − V(s), ignoring γV(s′). The true V is no longer a fixed point — E[δ]≠0 — and the witness in window 7 must catch it.</small></p>
+        <div class="btnrow">
+          <button id="tamper">⚠ drop bootstrap</button>
+          <button id="restore">✓ restore</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <div><b>OCHO</b> · WORLD II · THE FOLD — the-td-learning · engine LIT, one planted void (window 6) caught live by the witness (window 7).</div>
+    <div>Bootstrapping renders the Bellman fixed point from samples. Built by David Lee Wise (ROOT0) with AVAN.</div>
+  </footer>
+
+</div>
+
+<script>
+/* ======================================================================
+   ENGINE — pure, deterministic, node-verifiable. No DOM above the marker.
+   ====================================================================== */
+
+// Disclosed planted void. selfcheck() saves/restores this flag.
+var TAMPER = false;
+
+// Fixed-seed PRNG (mulberry32) — full [0,1) span, deterministic.
+function makePRNG(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// True value function of the bounded random walk: V(i) = i/6, states 1..5.
+function trueV(){ return [0, 1/6, 2/6, 3/6, 4/6, 5/6, 0]; } // index 0..6; 0 and 6 terminal=0
+
+// Expected TD error at non-terminal state i under value array V (index 0..6),
+// discount g. If bootstrap=false, drop the g*V(s') term (the tamper).
+function expectedDelta(V, i, g, bootstrap){
+  var e = 0, moves = [i-1, i+1], k;
+  for(k=0;k<2;k++){
+    var ns = moves[k], p = 0.5;
+    var r = (ns === 6) ? 1 : 0;
+    var vns = (ns === 0 || ns === 6) ? 0 : V[ns];
+    var target = bootstrap ? (r + g*vns) : r;
+    e += p * (target - V[i]);
+  }
+  return e;
+}
+
+// Max |E[delta]| over all states at true V, honoring the current TAMPER flag.
+// This is the witness computation used live by window 7.
+function witnessMaxError(){
+  var g = 1, V = trueV(), maxE = 0, i;
+  for(i=1;i<=5;i++){
+    var e = Math.abs(expectedDelta(V, i, g, !TAMPER));
+    if(e > maxE) maxE = e;
+  }
+  return maxE;
+}
+
+// Independent Bellman solve: (I - g P) V = b via Gaussian elimination.
+// Returns V for states 1..5. Must match the closed form i/6.
+function gaussSolve(A, b){
+  var n = b.length, i, j, k;
+  var M = [];
+  for(i=0;i<n;i++){ M.push(A[i].slice()); M[i].push(b[i]); }
+  for(i=0;i<n;i++){
+    var piv = i;
+    for(k=i+1;k<n;k++){ if(Math.abs(M[k][i]) > Math.abs(M[piv][i])) piv = k; }
+    var tmp = M[i]; M[i] = M[piv]; M[piv] = tmp;
+    var d = M[i][i];
+    for(j=i;j<=n;j++){ M[i][j] /= d; }
+    for(k=0;k<n;k++){
+      if(k===i) continue;
+      var f = M[k][i];
+      for(j=i;j<=n;j++){ M[k][j] -= f*M[i][j]; }
+    }
+  }
+  var x = [];
+  for(i=0;i<n;i++) x.push(M[i][n]);
+  return x;
+}
+function solveBellman(g){
+  var n = 5, A = [], b = [], s, i, r;
+  for(i=0;i<n;i++){ A.push([0,0,0,0,0]); b.push(0); }
+  for(s=1;s<=5;s++){
+    i = s-1; A[i][i] += 1;
+    var moves = [s-1, s+1], m;
+    for(m=0;m<2;m++){
+      var ns = moves[m], p = 0.5;
+      var rew = (ns === 6) ? 1 : 0;
+      b[i] += p*rew;
+      if(ns >= 1 && ns <= 5) A[i][ns-1] -= g*p;
+    }
+  }
+  return gaussSolve(A, b); // length 5 -> states 1..5
+}
+
+// Deterministic 3-state chain: TD(0) with alpha=1 reaches exact discounted returns.
+function detChain(){
+  var g = 0.5, rew = [2, 3, 5]; // r0:0->1, r1:1->2, r2:2->terminal
+  var G = [0,0,0], acc = 0, i;
+  for(i=2;i>=0;i--){ acc = rew[i] + g*acc; G[i] = acc; }        // closed-form returns
+  var V = [0,0,0,0];                                            // V[3]=terminal
+  for(i=2;i>=0;i--){ V[i] = rew[i] + g*V[i+1]; }                // alpha=1 backward sweep
+  return { G: G, V: V };
+}
+
+// Live TD(0) simulation on the walk, honoring TAMPER. Fixed seed -> reproducible.
+function simulate(episodes, alpha, g, seed){
+  var rng = makePRNG(seed);
+  var V = [0, 0.5, 0.5, 0.5, 0.5, 0.5, 0];
+  var trace = [], ep, s;
+  for(ep=0; ep<episodes; ep++){
+    s = 3;
+    while(s >= 1 && s <= 5){
+      var ns = (rng() < 0.5) ? s-1 : s+1;
+      var r = (ns === 6) ? 1 : 0;
+      var vns = (ns === 0 || ns === 6) ? 0 : V[ns];
+      var boot = TAMPER ? 0 : g*vns;
+      var delta = r + boot - V[s];
+      V[s] += alpha * delta;
+      if(trace.length < 9) trace.push({ep:ep, s:s, ns:ns, r:r, delta:delta, Vs:V[s]});
+      s = ns;
+    }
+  }
+  return { V: V, trace: trace };
+}
+function rmsError(V){
+  var tv = trueV(), sum = 0, i;
+  for(i=1;i<=5;i++){ var d = V[i]-tv[i]; sum += d*d; }
+  return Math.sqrt(sum/5);
+}
+
+// Fail-loud selfcheck: THROWS on any violation, RETURNS true on success.
+function selfcheck(){
+  var g = 1, V = trueV(), i;
+
+  // (1) True V is the fixed point: expected TD error vanishes at every state.
+  for(i=1;i<=5;i++){
+    if(Math.abs(expectedDelta(V, i, g, true)) > 1e-9)
+      throw new Error("E[delta] != 0 at V_pi, state " + i);
+  }
+
+  // (2) Cross-check: independent linear Bellman solve equals the closed form i/6.
+  var bv = solveBellman(g);
+  for(i=1;i<=5;i++){
+    if(Math.abs(bv[i-1] - V[i]) > 1e-9)
+      throw new Error("Bellman solve != i/6 at state " + i);
+  }
+
+  // (3) Deterministic chain: TD(0) with alpha=1 reaches exact discounted returns.
+  var dc = detChain();
+  for(i=0;i<3;i++){
+    if(Math.abs(dc.V[i] - dc.G[i]) > 1e-12)
+      throw new Error("det-chain alpha=1 not exact at " + i);
+  }
+
+  // (4) Robust: on a fixed seed, sampled TD(0) strictly reduces RMS error.
+  var savedT = TAMPER; TAMPER = false;
+  var sim = simulate(200, 0.1, g, 12345);
+  var initRMS = rmsError([0,0.5,0.5,0.5,0.5,0.5,0]);
+  var finRMS  = rmsError(sim.V);
+  TAMPER = savedT;
+  if(!(finRMS < initRMS) || !(finRMS < 0.2))
+    throw new Error("TD(0) did not reduce error (init " + initRMS + " -> " + finRMS + ")");
+
+  // (5) TAMPER witness: drop the bootstrap term; the fixed point must break.
+  var saved = TAMPER;
+  TAMPER = true;
+  var maxE = witnessMaxError();            // uses bootstrap = !TAMPER = false
+  TAMPER = saved;                          // restore before returning
+  if(maxE < 1e-9)
+    throw new Error("tamper undetected: E[delta] still ~0 without bootstrap");
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+function fmt(x, n){ return (typeof n === "undefined") ? String(x) : Number(x).toFixed(n); }
+
+function boot(){
+  try{
+    var ok = selfcheck();
+    if(ok !== true) throw new Error("selfcheck did not return true");
+  }catch(err){
+    var fb = document.getElementById("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED — engine not LIT: " + err.message;
+    document.getElementById("litbadge").textContent = "DEAD";
+    document.getElementById("litbadge").style.color = "var(--red)";
+    throw err; // rethrow: fail loud
+  }
+
+  // ---- DATA IN: the MRP as a table ----
+  var tv = trueV();
+  var inRows = "<tr><th>state</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>";
+  inRows += "<tr><th>init V</th><td>0.500</td><td>0.500</td><td>0.500</td><td>0.500</td><td>0.500</td></tr>";
+  inRows += "<tr><th>true V(i)=i/6</th>";
+  for(var i=1;i<=5;i++) inRows += "<td class='good'>" + fmt(tv[i],3) + "</td>";
+  inRows += "</tr>";
+  document.getElementById("tbl-in").innerHTML = inRows;
+
+  // ---- THE PANEL: run the live sim, show trace + estimates ----
+  var sim = simulate(200, 0.1, 1, 12345);
+  var tr = "<tr><th>ep</th><th>s</th><th>s′</th><th>r</th><th>δ</th><th>V(s)</th></tr>";
+  for(var k=0;k<sim.trace.length;k++){
+    var t = sim.trace[k];
+    var cls = t.delta < 0 ? "neg" : "good";
+    tr += "<tr><td>" + t.ep + "</td><td>" + t.s + "</td><td>" + t.ns + "</td><td>" +
+          t.r + "</td><td class='" + cls + "'>" + fmt(t.delta,4) + "</td><td>" + fmt(t.Vs,4) + "</td></tr>";
+  }
+  document.getElementById("tbl-trace").innerHTML = tr;
+
+  var est = "<tr><th>state</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>";
+  est += "<tr><th>TD estimate</th>";
+  for(i=1;i<=5;i++) est += "<td>" + fmt(sim.V[i],3) + "</td>";
+  est += "</tr><tr><th>true i/6</th>";
+  for(i=1;i<=5;i++) est += "<td class='good'>" + fmt(tv[i],3) + "</td>";
+  est += "</tr>";
+  document.getElementById("tbl-est").innerHTML = est;
+
+  // ---- DATA OUT ----
+  var initRMS = rmsError([0,0.5,0.5,0.5,0.5,0.5,0]);
+  var finRMS  = rmsError(sim.V);
+  document.getElementById("litbadge").textContent =
+    "LIT · V^π = i/6 · E[δ]=0 to 1e-9 · det-chain exact";
+  document.getElementById("outline").innerHTML =
+    "<small><b>Proven fixed point.</b> E[δ|s]=0 at V<sup>π</sup> for every state; independent Bellman solve matches i/6 to 1e-9; deterministic α=1 chain hits exact returns. " +
+    "Sampled run: RMS error <b>" + fmt(initRMS,3) + " → " + fmt(finRMS,3) + "</b> in 200 episodes.</small>";
+
+  // ---- WITNESS (window 7) ----
+  renderWitness();
+
+  document.getElementById("tamper").addEventListener("click", function(){
+    TAMPER = true; renderWitness();
+  });
+  document.getElementById("restore").addEventListener("click", function(){
+    TAMPER = false; renderWitness();
+  });
+}
+
+function renderWitness(){
+  var el = document.getElementById("auditout");
+  var maxE = witnessMaxError();
+  if(maxE < 1e-9){
+    el.className = "wit ok";
+    el.textContent =
+      "● WITNESS OK — bootstrap intact\n" +
+      "max |E[δ]| at V^π = " + maxE.toExponential(2) + " < 1e-9\n" +
+      "V^π = i/6 is the fixed point.";
+  }else{
+    el.className = "wit bad";
+    el.textContent =
+      "✗ TAMPER CAUGHT — bootstrap dropped (δ = r − V(s))\n" +
+      "max |E[δ]| at V^π = " + maxE.toFixed(4) + " ≠ 0\n" +
+      "V^π is no longer a fixed point.";
+  }
+}
+
+boot();
+</script>
+</body>
+</html>

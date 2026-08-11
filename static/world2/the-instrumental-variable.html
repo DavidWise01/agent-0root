@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE INSTRUMENTAL VARIABLE</title>
+<style>
+:root{
+  --am:#9ee06a;               /* accent */
+  --bg:#0c1a10;               /* dark-green code-monkeys ground */
+  --bg2:#0f2416;
+  --ink:#dff6e4;
+  --dim:#8fb79a;
+  --line:#1e4028;
+  --blue:#6ab7ff;
+  --red:#ff7a7a;
+  --amber:#ffcf5c;
+  --lit:#9ee06a;
+  --wall:#ff9a6a;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 12% -8%, #17351f 0%, rgba(23,53,31,0) 60%),
+    radial-gradient(1000px 600px at 105% 0%, #123a24 0%, rgba(18,58,36,0) 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:16px}
+h1{
+  font-size:clamp(24px,4.4vw,42px);letter-spacing:.06em;margin:0 0 6px;
+  color:var(--am);text-shadow:0 0 22px rgba(158,224,106,.28);font-weight:800;
+}
+.sub{margin:0 0 10px;color:var(--ink);max-width:70ch}
+.src{font-size:12.5px;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{display:inline-block;font-size:10.5px;letter-spacing:.14em;font-weight:700;
+  padding:2px 7px;border-radius:4px;text-transform:uppercase;vertical-align:middle}
+.t-amber{background:rgba(255,207,92,.13);color:var(--amber);border:1px solid rgba(255,207,92,.4)}
+.t-lit{background:rgba(158,224,106,.14);color:var(--lit);border:1px solid rgba(158,224,106,.5)}
+.t-in{background:rgba(106,183,255,.13);color:var(--blue);border:1px solid rgba(106,183,255,.42)}
+.t-out{background:rgba(158,224,106,.13);color:var(--lit);border:1px solid rgba(158,224,106,.42)}
+.t-wall{background:rgba(255,122,122,.12);color:var(--red);border:1px solid rgba(255,122,122,.45)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:16px}
+.teamhdr{font-size:11px;letter-spacing:.2em;font-weight:800;text-transform:uppercase;
+  padding:6px 10px;border-radius:6px;border:1px solid var(--line)}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(106,183,255,.35);background:rgba(106,183,255,.06)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,122,122,.35);background:rgba(255,122,122,.06)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(158,224,106,.35);background:rgba(158,224,106,.06);text-align:center}
+
+.win{position:relative;border:1px solid var(--line);border-radius:10px;
+  background:linear-gradient(180deg,rgba(255,255,255,.018),rgba(0,0,0,.12));padding:13px 14px 14px}
+.win h3{margin:0 0 8px;font-size:12.5px;letter-spacing:.08em;color:var(--ink);text-transform:uppercase}
+.win p{margin:7px 0;color:var(--dim);font-size:13px}
+.win .num{position:absolute;top:-10px;right:-10px;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--bg2);
+  border:1px solid var(--line);color:var(--dim)}
+.col.blue .win .num{color:var(--blue);border-color:rgba(106,183,255,.4)}
+.col.red .win .num{color:var(--red);border-color:rgba(255,122,122,.4)}
+.col.center .win .num{color:var(--am);border-color:rgba(158,224,106,.45)}
+.win.panel{border-color:rgba(158,224,106,.4);box-shadow:0 0 0 1px rgba(158,224,106,.12),0 0 34px rgba(158,224,106,.08)}
+
+.flow{height:22px;display:grid;place-items:center;color:var(--am);opacity:.7;font-size:15px}
+.flow::before{content:"\25BC"}
+
+code,kbd{font-family:inherit}
+.eq{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:7px;
+  padding:9px 10px;margin:8px 0;font-size:12.5px;color:var(--ink);overflow-x:auto;white-space:pre}
+.mono{font-size:12.5px;color:var(--ink)}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.06)}
+.kv b{color:var(--am);font-weight:700}
+.kv .blueval{color:var(--blue)}
+.kv .redval{color:var(--red)}
+.num-lg{font-size:22px;font-weight:800}
+
+.wall-note{background:rgba(255,122,122,.06);border:1px solid rgba(255,122,122,.28);
+  border-radius:7px;padding:9px 10px;color:#ffd6d6;font-size:12.5px}
+.grave{list-style:none;padding:0;margin:6px 0 0}
+.grave li{margin:8px 0;font-size:12.5px}
+.grave s{color:#c98d8d}
+.grave .fix{color:var(--am);display:block;margin-top:2px}
+
+button{font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;
+  border-radius:6px;padding:7px 11px;border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
+button:hover{border-color:var(--am)}
+#tamper{border-color:rgba(255,122,122,.5);color:var(--red)}
+#tamper:hover{background:rgba(255,122,122,.12)}
+#restore{border-color:rgba(158,224,106,.5);color:var(--am)}
+
+.badge{display:inline-block;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:800;
+  letter-spacing:.05em;border:1px solid var(--line)}
+.badge.ok{background:rgba(158,224,106,.12);color:var(--am);border-color:rgba(158,224,106,.5)}
+.badge.bad{background:rgba(255,122,122,.14);color:var(--red);border-color:rgba(255,122,122,.55)}
+#failb{display:none;margin:10px 0;background:rgba(255,122,122,.14);border:1px solid var(--red);
+  color:#ffd6d6;border-radius:8px;padding:10px 12px;font-size:12.5px}
+
+input[type=range]{width:100%;accent-color:var(--am)}
+.slabel{display:flex;justify-content:space-between;font-size:11.5px;color:var(--dim);margin-top:8px}
+.small{font-size:11.5px;color:var(--dim)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12px}
+.diagram{font-size:12px;line-height:1.35;color:var(--ink)}
+.diagram .u{color:var(--amber)}
+.diagram .z{color:var(--blue)}
+.diagram .b{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE INSTRUMENTAL VARIABLE</h1>
+  <p class="sub">You cannot see the confounder, so you cannot adjust it away. Find instead a lever that jiggles
+  <b>only the cause</b> &mdash; a valve upstream of X that never touches Y except through X. Its wobble carries a
+  clean signal of the causal slope through the noise. OLS is fooled; the instrument is not. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span>
+  Angrist &amp; Imbens,
+  <a href="https://www.econometricsociety.org/publications/econometrica/1994/03/01/notes-and-comments-identification-and-estimation-local-average" target="_blank" rel="noopener">&ldquo;Identification and Estimation of Local Average Treatment Effects,&rdquo; <i>Econometrica</i> 62(2):467&ndash;475 (1994)</a>
+  &middot; method after P. G. Wright, appendix B to <i>The Tariff on Animal and Vegetable Oils</i> (1928).</p>
+</header>
+
+<div class="ocho">
+
+  <!-- ============ BLUE (left) ============ -->
+  <div class="col blue">
+    <div class="teamhdr">Blue team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <h3>The model</h3>
+      <p>A linear-Gaussian structural causal model. <span class="diagram"><span class="u">U</span></span> is an
+      <b>unobserved</b> confounder feeding both X and Y. <span class="diagram"><span class="z">Z</span></span> is the
+      instrument: it moves X and reaches Y <i>only</i> through X.</p>
+      <div class="eq diagram"> <span class="z">Z</span> ---a--> X ---<span class="b">&beta;</span>--> Y
+     <span class="u">U</span> --c--^   ^--d-- <span class="u">U</span>   (<span class="u">U</span> hidden)
+
+X = a&middot;<span class="z">Z</span> + c&middot;<span class="u">U</span> + e&#8339;
+Y = <span class="b">&beta;</span>&middot;X + d&middot;<span class="u">U</span> + e&#7527;</div>
+      <p>True causal effect <b>&beta; = 2</b>. Coefficients a=0.8, c=1.5, d=1.2; all noises unit-variance,
+      independent. Everything below is computed from these &mdash; no baked numbers.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <h3>The lineage</h3>
+      <p><b>Identification without adjustment.</b> The neighbouring sphere <i>the-backdoor-criterion</i> closes
+      confounding by conditioning on observed variables. But you cannot condition on
+      <i>the-confounder</i> when it is unmeasured &mdash; the back door has no handle.</p>
+      <p>The instrument is the escape hatch: instead of blocking the path, find a Z that opens a
+      <i>front</i> door you fully control. This is the tool econometrics leans on where the backdoor
+      criterion cannot reach.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <h3>The witness</h3>
+      <p class="small">Live re-check of the identification claim. Re-derives IV from the current model and
+      tests exclusion. Flips red the instant the instrument is tampered.</p>
+      <div id="auditout" class="badge">checking&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ============ CENTER (machine) ============ -->
+  <div class="col center">
+    <div class="teamhdr">The machine</div>
+
+    <div class="win">
+      <span class="num">4</span>
+      <h3>Data in <span class="tag t-in">in &darr;</span></h3>
+      <p class="small">The analyst observes the joint <b>(Z, X, Y)</b> only. The confounder
+      <span class="diagram"><span class="u">U</span></span> and every structural noise term are
+      <b>never seen</b>. All the engine may use are covariances of the three observed columns.</p>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <h3>The panel <span class="tag t-lit">lit</span></h3>
+      <p class="small">Three estimates of the same slope. OLS regresses Y on X directly; IV divides
+      Cov(Z,Y) by Cov(Z,X). Drag the instrument strength.</p>
+
+      <div class="kv"><span>Truth &nbsp; <span class="small">do(X): dE[Y]/dx</span></span><b id="vTrue" class="num-lg">&mdash;</b></div>
+      <div class="kv"><span>OLS(Y~X) <span class="small">biased by U</span></span><span id="vOls" class="redval num-lg">&mdash;</span></div>
+      <div class="kv"><span>IV = Cov(Z,Y)/Cov(Z,X)</span><span id="vIv" class="blueval num-lg">&mdash;</span></div>
+
+      <div class="slabel"><span>instrument strength a (Z&rarr;X)</span><span id="aLbl">0.80</span></div>
+      <input type="range" id="aSlide" min="0.03" max="1.4" step="0.01" value="0.8">
+      <div class="kv"><span>Cov(Z,X) <span class="small">relevance</span></span><span id="vRel">&mdash;</span></div>
+      <div class="kv"><span>IV asymptotic Var &prop; 1/Cov(Z,X)&sup2;</span><span id="vVar">&mdash;</span></div>
+      <p class="small" id="weakNote"></p>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win">
+      <span class="num">8</span>
+      <h3>Data out <span class="tag t-out">out &darr;</span></h3>
+      <p class="mono">Proven: under a hidden confounder, <b>OLS is biased to &asymp;2.463</b> while a valid
+      instrument recovers <b>&beta; = 2 exactly</b> (population / large&nbsp;N).</p>
+      <div id="litbadge" class="badge">&mdash;</div>
+      <div id="failb"></div>
+    </div>
+  </div>
+
+  <!-- ============ RED (right) ============ -->
+  <div class="col red">
+    <div class="teamhdr">Red team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <h3>The adversary</h3>
+      <div class="wall-note"><span class="tag t-wall">wall</span> IV buys identification with two
+      <b>untestable</b> promises. Break either and the estimator lies with a straight face:
+      <br>&bull; <b>Exclusion</b> &mdash; any direct Z&rarr;Y path (even tiny) biases IV by g/a.
+      <br>&bull; <b>Relevance</b> &mdash; a weak first stage (small Cov(Z,X)) makes the ratio explode.
+      <br>&bull; <b>Monotonicity</b> &mdash; &ldquo;defiers&rdquo; break the LATE interpretation of a heterogeneous effect.</div>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <h3>The graveyard</h3>
+      <ul class="grave">
+        <li><s>&ldquo;IV needs no assumptions &mdash; it's model-free.&rdquo;</s>
+          <span class="fix">&rarr; It trades observed-confounding assumptions for relevance + exclusion, which no data can verify.</span></li>
+        <li><s>&ldquo;Add more controls and OLS will reach the causal effect.&rdquo;</s>
+          <span class="fix">&rarr; Controls cannot touch an <i>unobserved</i> U; the bias term d&middot;c&middot;Var(U)/Var(X) survives.</span></li>
+        <li><s>&ldquo;A significant first stage means a strong instrument.&rdquo;</s>
+          <span class="fix">&rarr; Significance &ne; strength; weak instruments (low F) inflate variance and bias toward OLS.</span></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <h3>The tamper</h3>
+      <p class="small">Planted void (disclosed): add a direct edge <b>Z&rarr;Y</b> (g=0.5), violating
+      exclusion. IV drifts from &beta; to &beta;+g/a. The witness (7) catches it live.</p>
+      <button id="tamper">Break exclusion &nbsp;Z&rarr;Y</button>
+      <button id="restore">Restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE INSTRUMENTAL VARIABLE &middot; WORLD II &middot; THE FOLD &mdash; a ud0 sphere. The engine is genuinely
+  LIT: every estimate is computed from a linear-Gaussian SCM with known coefficients, checked to 1e-9 against a
+  simulated do-intervention. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ================= ENGINE (pure logic; node-verifiable) =================
+// Linear-Gaussian structural causal model:
+//   U (unobserved), Z (instrument), eX, eY  mutually independent, mean 0.
+//   X = a*Z + c*U + eX
+//   Y = beta*X + d*U + g*Z + eY        (g = disclosed tamper: direct Z->Y edge; 0 => valid instrument)
+// True causal effect of X on Y is beta. do(X=x) removes X's equation and sets X:=x.
+
+var P = { beta:2.0, a:0.8, c:1.5, d:1.2, sz2:1.0, su2:1.0, sx2:1.0, sy2:1.0, g:0.0 };
+
+// ---- population moments (closed form; Z independent of U,eX,eY) ----
+function covZX(p){ return p.a*p.sz2; }
+function varX(p){ return p.a*p.a*p.sz2 + p.c*p.c*p.su2 + p.sx2; }
+function covXU(p){ return p.c*p.su2; }
+function covZY(p){ return p.beta*covZX(p) + p.g*p.sz2; }          // Cov(Z,Y): only via X, plus tamper g*Var(Z)
+function covXY(p){ return p.beta*varX(p) + p.d*covXU(p) + p.g*covZX(p); }
+function ivPop(p){ return covZY(p)/covZX(p); }                    // = beta + g/a
+function olsPop(p){ return covXY(p)/varX(p); }                    // = beta + confounding bias
+function biasOLS(p){ return olsPop(p) - p.beta; }
+function exclResidCov(p){ return covZY(p) - p.beta*covZX(p); }    // Cov(Z, Y - beta*X); 0 iff exclusion holds
+function asyVarIV(p){ return (p.d*p.d*p.su2 + p.sy2)/(p.a*p.a*p.sz2); } // N*Var(beta_hat) ~ 1/Cov(Z,X)^2
+
+// ---- fixed-seed PRNG + Gaussian stream (deterministic) ----
+function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0;
+  var t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t;
+  return ((t^(t>>>14))>>>0)/4294967296; }; }
+function gaussStream(seed){ var u=mulberry32(seed>>>0), have=false, cache=0;
+  return function(){ if(have){ have=false; return cache; }
+    var x,y,s; do{ x=2*u()-1; y=2*u()-1; s=x*x+y*y; }while(s===0||s>=1);
+    var m=Math.sqrt(-2*Math.log(s)/s); cache=y*m; have=true; return x*m; }; }
+
+// ---- sample estimators from simulated observational data ----
+function sampleMoments(p, N, seed){
+  var g=gaussStream(seed), Zs=0,Xs=0,Ys=0,ZX=0,ZY=0,XX=0,XY=0;
+  for(var i=0;i<N;i++){
+    var z=g()*Math.sqrt(p.sz2), u=g()*Math.sqrt(p.su2), ex=g()*Math.sqrt(p.sx2), ey=g()*Math.sqrt(p.sy2);
+    var x=p.a*z+p.c*u+ex;
+    var y=p.beta*x+p.d*u+p.g*z+ey;
+    Zs+=z; Xs+=x; Ys+=y; ZX+=z*x; ZY+=z*y; XX+=x*x; XY+=x*y;
+  }
+  var mZ=Zs/N,mX=Xs/N,mY=Ys/N;
+  var cZX=ZX/N-mZ*mX, cZY=ZY/N-mZ*mY, vX=XX/N-mX*mX, cXY=XY/N-mX*mY;
+  return { covZX:cZX, covZY:cZY, varX:vX, covXY:cXY, iv:cZY/cZX, ols:cXY/vX };
+}
+
+// ---- simulated do-intervention: replace X's equation by a constant, push noise through ----
+// Paired at x0,x1 with the SAME noise draws => Y1-Y0 = beta*(x1-x0) exactly for every draw.
+function doSlopeSim(p, N, seed){
+  var g=gaussStream(seed), s0=0, s1=0, x0=0, x1=1;
+  for(var i=0;i<N;i++){
+    var z=g()*Math.sqrt(p.sz2), u=g()*Math.sqrt(p.su2), ey=g()*Math.sqrt(p.sy2); // eX unused: X clamped
+    s0 += p.beta*x0 + p.d*u + p.g*z + ey;
+    s1 += p.beta*x1 + p.d*u + p.g*z + ey;
+  }
+  return (s1/N - s0/N)/(x1-x0);
+}
+
+function assert(c,m){ if(!c) throw new Error("selfcheck: "+m); }
+function close(a,b,t){ return Math.abs(a-b)<=t; }
+
+// ---- fail-loud self-check: THROWS on any violation; returns true on success ----
+function selfcheck(){
+  var savedG = P.g;                                   // save tamper flag
+  try{
+    // (1) RELEVANCE: instrument actually moves X
+    assert(Math.abs(covZX(P)) > 1e-9, "instrument irrelevant: Cov(Z,X)=0");
+    assert(close(covZX(P), P.a*P.sz2, 1e-12), "Cov(Z,X) closed form mismatch");
+
+    // (2) EXCLUSION holds in the valid model: Cov(Z, Y-beta*X)=0
+    assert(close(exclResidCov(P), 0, 1e-9), "exclusion residual nonzero while valid");
+
+    // (3) IV recovers the TRUE causal beta exactly (population)
+    assert(close(ivPop(P), P.beta, 1e-9), "IV failed to recover beta");
+
+    // (4) OLS is BIASED by the hidden confounder, by a KNOWN closed-form amount
+    var predBias = (P.d*P.c*P.su2)/varX(P);
+    assert(close(biasOLS(P), predBias, 1e-9), "OLS bias closed form mismatch");
+    assert(Math.abs(biasOLS(P)) > 1e-6, "OLS should be biased but is not");
+    assert(!close(olsPop(P), P.beta, 1e-6), "OLS must differ from beta under confounding");
+
+    // (5) do-intervention ground truth == IV, and != OLS
+    var d0 = doSlopeSim(P, 4000, 20240811);
+    assert(close(d0, P.beta, 1e-9), "simulated do-slope != beta");
+    assert(close(d0, ivPop(P), 1e-9), "IV != interventional truth");
+    assert(!close(d0, olsPop(P), 1e-6), "OLS wrongly equals interventional truth");
+
+    // (6) WEAK instrument explodes variance ~ 1/Cov(Z,X)^2
+    var strong = asyVarIV(P);
+    var pWeak = { beta:P.beta,a:0.05,c:P.c,d:P.d,sz2:P.sz2,su2:P.su2,sx2:P.sx2,sy2:P.sy2,g:P.g };
+    var weak = asyVarIV(pWeak);
+    assert(weak > strong, "weak instrument variance not larger");
+    assert(close(weak/strong, (P.a/0.05)*(P.a/0.05), 1e-9), "variance ratio != (a_strong/a_weak)^2");
+
+    // (7) SAMPLE check: estimator works on simulated data (fixed seed, large N, robust tol)
+    var s = sampleMoments(P, 120000, 1234567);
+    assert(close(s.iv, P.beta, 0.05), "sample IV off from beta");
+    assert(Math.abs(s.ols - P.beta) > 0.25, "sample OLS should be visibly biased");
+    assert(close(s.ols, olsPop(P), 0.05), "sample OLS not near population OLS");
+
+    // (8) TAMPER (disclosed planted void): break EXCLUSION via a direct Z->Y edge
+    P.g = 0.5;                                          // set the tamper flag
+    assert(!close(exclResidCov(P), 0, 1e-6), "tamper undetected: exclusion still holds");
+    assert(!close(ivPop(P), P.beta, 1e-6), "tamper undetected: IV still equals beta");
+    assert(close(ivPop(P), P.beta + P.g/P.a, 1e-9), "tampered IV closed form mismatch");
+  } finally {
+    P.g = savedG;                                       // restore the tamper flag
+  }
+  // (9) restored: IV valid again
+  assert(close(ivPop(P), P.beta, 1e-9), "restore failed: IV not back to beta");
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  function fmt(x,n){ return (Math.round(x*Math.pow(10,n))/Math.pow(10,n)).toFixed(n); }
+  var $=function(id){ return document.getElementById(id); };
+
+  // boot: fail-loud gate
+  try{
+    var ok = selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    $("litbadge").textContent = "LIT · IV recovers β = 2 exactly; OLS biased to 2.463";
+    $("litbadge").className = "badge ok";
+  }catch(e){
+    var f=$("failb"); f.style.display="block";
+    f.textContent = "FAIL-LOUD: "+e.message;
+    $("litbadge").textContent = "DEAD · selfcheck threw";
+    $("litbadge").className = "badge bad";
+    throw e;
+  }
+
+  function refresh(){
+    var a = parseFloat($("aSlide").value);
+    var p = { beta:P.beta,a:a,c:P.c,d:P.d,sz2:P.sz2,su2:P.su2,sx2:P.sx2,sy2:P.sy2,g:P.g };
+    $("aLbl").textContent = fmt(a,2);
+    $("vTrue").textContent = fmt(P.beta,3);
+    $("vOls").textContent = fmt(olsPop(p),3);
+    $("vIv").textContent = fmt(ivPop(p),3);
+    var rel = covZX(p);
+    $("vRel").textContent = fmt(rel,3);
+    var av = asyVarIV(p);
+    $("vVar").textContent = fmt(av,2);
+    var weak = Math.abs(rel) < 0.2;
+    $("weakNote").innerHTML = weak
+      ? "<span style='color:var(--red)'>WEAK instrument: Cov(Z,X) near zero — IV stays unbiased in the population but its sampling variance blows up (≈"+fmt(av,1)+").</span>"
+      : "Strong first stage: the ratio is stable; IV pins β while OLS keeps its confounding bias.";
+    runWitness();
+  }
+
+  function runWitness(){
+    var out=$("auditout");
+    var driftIV = ivPop(P);
+    var exclOK = close(exclResidCov(P), 0, 1e-9);
+    var ivOK   = close(driftIV, P.beta, 1e-6);
+    if(exclOK && ivOK){
+      out.className="badge ok";
+      out.innerHTML="PASS · exclusion holds · IV = β = "+fmt(driftIV,3);
+    }else{
+      out.className="badge bad";
+      out.innerHTML="TAMPERED · Z→Y edge open · IV drifted to "+fmt(driftIV,3)
+        +" (≠ β, off by "+fmt(driftIV-P.beta,3)+")";
+    }
+  }
+
+  $("aSlide").addEventListener("input", refresh);
+  $("tamper").addEventListener("click", function(){ P.g = 0.5; refresh(); });
+  $("restore").addEventListener("click", function(){ P.g = 0.0; refresh(); });
+
+  refresh();
+})();
+</script>
+</body>
+</html>

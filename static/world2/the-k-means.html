@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE K-MEANS · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+canvas{background:#081109;border:1px solid var(--line);border-radius:6px;display:block;width:100%;max-width:340px;height:auto;margin:6px 0;}
+.stat{font-size:12.5px;margin:4px 0;} .stat b{color:var(--am);}
+.verdict{font-size:18px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.hist{font-size:11px;color:var(--dim);background:#0a130c;border:1px solid var(--line);border-radius:6px;padding:7px 9px;margin-top:6px;max-height:120px;overflow:auto;}
+.hist b{color:var(--gr);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE K-MEANS</h1>
+ <p class="sub">Give a cloud of points and a number <b>k</b>, and the machine finds the k centers that carve it into tight groups — with no labels, no teacher. It only ever does two things, over and over: <b>assign</b> each point to its nearest center, then <b>move</b> each center to the mean of the points that chose it. Down the center, data flows: points and k go <b style="color:var(--cy)">in</b>, the loop descends, and the clusters + the shrinking error come <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> S. P. Lloyd, <i>Least Squares Quantization in PCM</i> (Bell Labs 1957; IEEE Trans. Inf. Theory 28, 1982); J. MacQueen, <i>Some Methods for Classification and Analysis of Multivariate Observations</i> (5th Berkeley Symp., 1967) — <a href="https://projecteuclid.org/ebooks/berkeley-symposium-on-mathematical-statistics-and-probability/Proceedings-of-the-Fifth-Berkeley-Symposium-on-Mathematical-Statistics-and/chapter/Some-methods-for-classification-and-analysis-of-multivariate-observations/bsmsp/1200512992">projecteuclid · bsmsp/1200512992</a>. <b style="color:var(--amber)">AMBER:</b> no archive.org/details scan of either paper was found on search (2026-08); accessible full text linked instead. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — alternating minimization</h2>
+   <p>k-means minimizes one number: the <b>within-cluster sum of squares</b> (WCSS) — total squared distance from each point to its cluster's center. The loop is two half-steps, each of which can only <b>lower</b> WCSS:</p>
+   <p><b class="k">assign</b> — hold the centers fixed; send every point to its <i>nearest</i> center. No point can do better than nearest, so error drops or holds.</p>
+   <p><b class="k">update</b> — hold the assignment fixed; move each center to the <i>mean</i> of its points. The mean is exactly the point that minimizes squared distance to a set, so error drops or holds.</p>
+   <p class="small">Two steps that never increase WCSS ⇒ the sequence descends and must stop. Live descent this run:</p>
+   <div class="hist" id="modelhist"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — Lloyd, 1957 <span class="tag t-amber">arc</span></h2>
+   <p>Lloyd wrote this to place quantizer levels in a telephone signal; the identical alternating descent is what the rest of THE FOLD keeps meeting under other names. <b>Assign-then-average</b> is the hard-membership special case of EM; it is coordinate descent on a squared-error objective; it is unsupervised learning as <b>alternating minimization</b>.</p>
+   <p>Each neighbouring sphere is the same idea softened or supervised — swap "nearest center" for "responsibility" and you have a mixture model; keep the descent, change the loss, and you have the batch. One current, many names.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run the whole algorithm on the seeded data and confirm four things — WCSS never rose, it reached a fixed point, every center equals the exact mean of its members, and the obvious clusters were recovered. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — points &amp; k <span class="tag t-in">in ↓</span></h2>
+   <p>A fixed, seeded cloud of <b>60</b> points in the plane — three well-separated blobs of 20, drawn from a fixed-seed PRNG so every run is identical and checkable. You also feed in one integer: <b class="k">k</b>, how many centers to fit (the count is your choice, not the data's — see the adversary).</p>
+   <p class="small">The objective the engine is handed: place k centers to minimize total squared distance from each point to its nearest center (WCSS). Nothing about the true grouping is given — only the raw coordinates go into the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the points and k into the loop &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <canvas id="cv" width="340" height="300"></canvas>
+     <div class="row"><label>k centers</label>
+      <select id="kk"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></div>
+     <div class="row">
+      <button id="step">▶ step (assign+move)</button>
+      <button id="run">⏩ run to fixed point</button></div>
+     <div class="row"><button id="reset">↺ reset centers</button></div>
+     <p class="small">✕ = a moving center · dots = points colored by current assignment (grey = not yet assigned). One step = one assign + one move. Every number below is computed on the spot.</p>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict"></div>
+     <div class="stat">iteration <b id="iter">0</b> &nbsp;·&nbsp; k = <b id="kout">3</b></div>
+     <div class="stat">WCSS now: <b id="wcss">—</b></div>
+     <div class="stat" id="movestat">centers moved this step: <b id="moved">—</b></div>
+     <div class="hist" id="hist"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Step and watch WCSS fall each iteration until the assignment stops changing — that fixed point is the answer. Nothing is looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the loop settles to a fixed point &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the clustering <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven, for the seeded 3-blob data at k=3: convergence in <b class="k" id="oIters">·</b> iterations to a fixed point with final WCSS <b class="k" id="oWcss">·</b> (down from <b id="oStart">·</b> at the start), and every one of the 60 points sorted into its correct blob — the obvious clusters, recovered from coordinates alone.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these numbers live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> k-means minimizes a <b>non-convex</b> objective. It is only guaranteed to reach a <i>local</i> minimum — a bad initialization can converge to a genuinely worse clustering and never escape. It also assumes you already know <b>k</b>, and that clusters are roughly round and equal-sized; on elongated, nested, or unequal blobs its squared-error loss cuts them wrong.</div>
+   <p class="small" style="margin-top:8px">A single outlier drags its center; the "fixed point" it finds is optimal only for the seed it started from, not globally. Robust practice re-seeds many times (k-means++), or picks k by an external criterion. "Converged" here means <i>stopped</i>, not <i>best</i> — an honest distinction the panel keeps.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"k-means finds the optimal clustering."</s> <b>Cut.</b> It finds a <i>local</i> optimum of WCSS; the global problem is NP-hard. It finds the best clustering only for its starting centers.</p>
+   <p class="grave"><s>"More iterations keep lowering the error."</s> <b>Cut.</b> WCSS is non-increasing but hits a fixed point and then holds <i>exactly</i> — the flat tail in the log is convergence, not a stall.</p>
+   <p class="grave"><s>"Moving a center to any member point is fine."</s> <b>Kept, corrected.</b> Only the <i>mean</i> minimizes squared distance to a set — the tamper below moves to the first member instead, and WCSS climbs.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: change the update step to place each center on its <b>first assigned point</b> instead of the mean. The mean is what makes WCSS fall; break it and the descent guarantee is gone.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ move to first point</button><button id="restore">↺ restore mean</button></div>
+   <p class="small" id="tampernote">Swap the mean for the first member and WCSS can <i>rise</i> between iterations — the witness (window 7) recomputes, sees error go up and the clusters miss, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE K-MEANS — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (points + k <b style="color:var(--cy)">in</b> → assign/move loop → clusters + WCSS <b style="color:var(--gr)">out</b>). A runnable rendering of Lloyd's algorithm — the engine is LIT (WCSS descent computed live, monotone / fixed-point / exact-mean / clusters-recovered self-checked, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== fixed-seed PRNG ===== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+const SEED=20250811, INIT_SEED=7;
+const CENTERS=[[2,2],[18,3],[10,17]], NPC=20, SPREAD=2.5;
+let TAMPER=false;   // update to FIRST assigned point instead of the mean — the witness must catch it
+
+function makeData(){
+ const rnd=mulberry32(SEED); const pts=[], truth=[];
+ for(let c=0;c<CENTERS.length;c++) for(let i=0;i<NPC;i++){
+  pts.push([CENTERS[c][0]+(rnd()*2-1)*SPREAD, CENTERS[c][1]+(rnd()*2-1)*SPREAD]); truth.push(c);
+ }
+ return {pts,truth};
+}
+function d2(a,b){const dx=a[0]-b[0],dy=a[1]-b[1];return dx*dx+dy*dy;}
+function nearest(p,C){let bi=0,bd=Infinity;for(let j=0;j<C.length;j++){const d=d2(p,C[j]);if(d<bd){bd=d;bi=j;}}return bi;}
+function assign(pts,C){return pts.map(p=>nearest(p,C));}
+function meanOf(pts,labels,j){let sx=0,sy=0,n=0;for(let i=0;i<pts.length;i++)if(labels[i]===j){sx+=pts[i][0];sy+=pts[i][1];n++;}return n?[sx/n,sy/n]:null;}
+function wcssOf(pts,labels,C){let s=0;for(let i=0;i<pts.length;i++)s+=d2(pts[i],C[labels[i]]);return s;}
+function initCentroids(pts,k){const rnd=mulberry32(INIT_SEED);const idx=[];while(idx.length<k){const i=(rnd()*pts.length)|0;if(!idx.includes(i))idx.push(i);}return idx.map(i=>pts[i].slice());}
+// one Lloyd update: mean of members, or (tampered) their first point; empty clusters keep their center
+function update(pts,labels,C){
+ return C.map((c,j)=>{
+  const members=[]; for(let i=0;i<pts.length;i++) if(labels[i]===j) members.push(i);
+  if(members.length===0) return c.slice();
+  if(TAMPER) return pts[members[0]].slice();
+  return meanOf(pts,labels,j);
+ });
+}
+// full run: history of WCSS (one per iteration), final labels/centers, iters, converged
+function lloyd(pts,k,maxIter){
+ let C=initCentroids(pts,k), prev=null, hist=[], iters=0, converged=false, labels=null;
+ for(let t=0;t<maxIter;t++){
+  labels=assign(pts,C);
+  const nC=update(pts,labels,C);
+  hist.push(wcssOf(pts,labels,nC));
+  C=nC; iters=t+1;
+  if(prev && labels.every((v,i)=>v===prev[i])){converged=true;break;}
+  prev=labels;
+ }
+ return {centroids:C,labels,hist,iters,converged};
+}
+// unordered-partition equality (up to label permutation): majority truth-label per cluster must be a bijection with 0 errors
+function partitionMatches(labels,truth,k){
+ const map={};
+ for(let j=0;j<k;j++){
+  const cnt={}; for(let i=0;i<labels.length;i++) if(labels[i]===j){cnt[truth[i]]=(cnt[truth[i]]||0)+1;}
+  let best=-1,bl=-1; for(const tl in cnt) if(cnt[tl]>best){best=cnt[tl];bl=+tl;}
+  map[j]=bl;
+ }
+ if(new Set(Object.values(map)).size!==k) return false;
+ for(let i=0;i<labels.length;i++) if(map[labels[i]]!==truth[i]) return false;
+ return true;
+}
+function isMonotoneNonIncreasing(h){for(let i=1;i<h.length;i++)if(h[i]>h[i-1]+1e-9)return false;return true;}
+
+/* ===== fail-loud self-check (runs untampered; restores the flag) ===== */
+function selfcheck(){
+ const t=(c,m)=>{if(!c)throw new Error(m);};
+ const save=TAMPER; TAMPER=false;
+ const {pts,truth}=makeData(); const k=3;
+ const run=lloyd(pts,k,100);
+ t(isMonotoneNonIncreasing(run.hist),"WCSS must be monotone non-increasing across iterations");
+ t(run.converged,"Lloyd must reach a fixed point (assignments stop changing)");
+ for(let j=0;j<k;j++){const m=meanOf(pts,run.labels,j); t(m!==null,"cluster "+j+" must be non-empty");
+  t(Math.abs(run.centroids[j][0]-m[0])<1e-9 && Math.abs(run.centroids[j][1]-m[1])<1e-9,
+   "centroid "+j+" must equal the exact mean of its assigned points");}
+ t(partitionMatches(run.labels,truth,k),"on separated data Lloyd must recover the true clusters");
+ // planted-void proof: the tampered update must raise final WCSS above the true minimum, and break monotone-descent-or-clusters
+ TAMPER=true;
+ const bad=lloyd(pts,k,100);
+ t(bad.hist[bad.hist.length-1] > run.hist[run.hist.length-1] + 1e-6,
+  "TAMPER (first-point update) must raise final WCSS above the true minimum");
+ t(!(isMonotoneNonIncreasing(bad.hist) && partitionMatches(bad.labels,truth,k)),
+  "TAMPER must break monotone descent or the recovered clusters");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const PAL=["#57e0d0","#ffcf4d","#6cc6ff","#ff7a7a"];
+const XMIN=-1,XMAX=21,YMIN=-1,YMAX=20;
+let DATA=makeData(), state=null;
+
+function sx(x){return 14+(x-XMIN)/(XMAX-XMIN)*(340-28);}
+function sy(y){return 300-14-(y-YMIN)/(YMAX-YMIN)*(300-28);}
+
+function reset(){
+ const k=+$("kk").value;
+ state={k, C:initCentroids(DATA.pts,k), labels:null, prev:null, hist:[], iters:0, converged:false, done:false, moved:null};
+ $("kout").textContent=k; draw(); readout();
+}
+function step(){
+ if(!state||state.done) return;
+ const labels=assign(DATA.pts,state.C);
+ const nC=update(DATA.pts,labels,state.C);
+ let moved=0; for(let j=0;j<nC.length;j++) if(d2(nC[j],state.C[j])>1e-12) moved++;
+ state.hist.push(wcssOf(DATA.pts,labels,nC));
+ state.iters++; state.C=nC; state.labels=labels; state.moved=moved;
+ if(state.prev && labels.every((v,i)=>v===state.prev[i])){state.converged=true;state.done=true;}
+ state.prev=labels; draw(); readout();
+}
+function run(){ let g=0; while(state && !state.done && g<200){step();g++;} }
+
+function draw(){
+ const cv=$("cv"), g=cv.getContext("2d"); g.clearRect(0,0,340,300);
+ g.strokeStyle="#12251a"; g.lineWidth=1;
+ for(let x=0;x<=20;x+=5){g.beginPath();g.moveTo(sx(x),sy(YMIN));g.lineTo(sx(x),sy(YMAX));g.stroke();}
+ for(let y=0;y<=20;y+=5){g.beginPath();g.moveTo(sx(XMIN),sy(y));g.lineTo(sx(XMAX),sy(y));g.stroke();}
+ for(let i=0;i<DATA.pts.length;i++){
+  const p=DATA.pts[i], lab=state.labels?state.labels[i]:-1;
+  g.beginPath(); g.arc(sx(p[0]),sy(p[1]),3.1,0,7); g.fillStyle=lab<0?"#3d5a44":PAL[lab%PAL.length]; g.fill();
+ }
+ for(let j=0;j<state.C.length;j++){
+  const c=state.C[j], X=sx(c[0]),Y=sy(c[1]), col=PAL[j%PAL.length];
+  g.strokeStyle="#000"; g.lineWidth=3.5;
+  g.beginPath(); g.moveTo(X-7,Y-7); g.lineTo(X+7,Y+7); g.moveTo(X+7,Y-7); g.lineTo(X-7,Y+7); g.stroke();
+  g.strokeStyle=col; g.lineWidth=2;
+  g.beginPath(); g.moveTo(X-7,Y-7); g.lineTo(X+7,Y+7); g.moveTo(X+7,Y-7); g.lineTo(X-7,Y+7); g.stroke();
+  g.beginPath(); g.arc(X,Y,10,0,7); g.strokeStyle=col; g.lineWidth=1.5; g.stroke();
+ }
+}
+function readout(){
+ const h=state.hist;
+ $("iter").textContent=state.iters;
+ $("wcss").textContent = h.length?h[h.length-1].toFixed(2):"—";
+ $("moved").textContent = state.moved===null?"—":state.moved;
+ const v=$("verdict");
+ if(state.done){v.textContent="FIXED POINT REACHED"; v.className="verdict ok";}
+ else if(state.iters===0){v.textContent="READY — press step"; v.className="verdict";}
+ else {v.textContent="DESCENDING…"; v.className="verdict";}
+ const rows=h.map((w,i)=>`iter ${String(i+1).padStart(2)} &nbsp; WCSS <b>${w.toFixed(3)}</b>${i>0?(w<=h[i-1]+1e-9?' &nbsp;↓':' &nbsp;<span style="color:var(--wall)">↑ ROSE</span>'):''}`);
+ $("hist").innerHTML = rows.length?rows.join("<br>"):'<span class="mut">no iterations yet — press step</span>';
+ $("modelhist").innerHTML = rows.length?rows.slice(0,8).join("<br>"):'<span class="mut">press step in the panel to watch WCSS fall</span>';
+ audit();
+}
+function audit(){
+ const el=$("auditout");
+ const {pts,truth}=DATA, k=3;
+ const run=lloyd(pts,k,100);
+ const mono=isMonotoneNonIncreasing(run.hist);
+ const means=(function(){for(let j=0;j<k;j++){const m=meanOf(pts,run.labels,j);if(!m)return false;if(Math.abs(run.centroids[j][0]-m[0])>1e-9||Math.abs(run.centroids[j][1]-m[1])>1e-9)return false;}return true;})();
+ const part=partitionMatches(run.labels,truth,k);
+ const ok = mono && run.converged && means && part;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  +`<div class="small" style="margin-top:6px">non-increasing: <b style="color:${mono?'var(--gr)':'var(--wall)'}">${mono}</b> · fixed point: <b style="color:${run.converged?'var(--gr)':'var(--wall)'}">${run.converged}</b> · centers=means: <b style="color:${means?'var(--gr)':'var(--wall)'}">${means}</b> · clusters recovered: <b style="color:${part?'var(--gr)':'var(--wall)'}">${part}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red moved centers off the mean</span>':''}</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ // fill DATA OUT from a live canonical k=3 run — no baked numbers
+ const {pts,truth}=DATA; const canon=lloyd(pts,3,100);
+ $("oIters").textContent=canon.iters;
+ $("oWcss").textContent=canon.hist[canon.hist.length-1].toFixed(2);
+ $("oStart").textContent=canon.hist[0].toFixed(1);
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ reset();
+ $("kk").addEventListener("change",reset);
+ $("step").addEventListener("click",step);
+ $("run").addEventListener("click",run);
+ $("reset").addEventListener("click",reset);
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("kk").value="3"; reset();
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>Update broken.</b> Centers now jump to their first assigned point, not the mean — WCSS can rise between iterations and the clusters miss. The witness (window 7) recomputed and went red. The attack is real; it is caught."; });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("kk").value="3"; reset();
+  $("tampernote").innerHTML="Swap the mean for the first member and WCSS can <i>rise</i> between iterations — the witness (window 7) recomputes, sees error go up and the clusters miss, and turns red. Nothing is faked; the attack is real and it is caught."; });
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the k-means engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

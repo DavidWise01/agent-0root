@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE RANDOMIZED SMOOTHING</title>
+<style>
+  :root{
+    --am:#ff7a7a;
+    --ground:#0c1a12;
+    --ground2:#0f2117;
+    --panel:#12271b;
+    --panel2:#15301f;
+    --ink:#e8f3ea;
+    --dim:#9db8a6;
+    --line:#254a34;
+    --blue:#7ab8ff;
+    --red:#ff7a7a;
+    --lit:#8effa8;
+    --amber:#ffcf6a;
+    --wall:#ff9d9d;
+    --in:#9ad0ff;
+    --out:#8effa8;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:
+      radial-gradient(1200px 600px at 15% -10%,#12301f 0%,transparent 60%),
+      radial-gradient(900px 500px at 110% 10%,#132a2f 0%,transparent 55%),
+      var(--ground);
+    color:var(--ink);
+    font:15px/1.55 var(--mono);
+    padding:26px 18px 60px;
+  }
+  .wrap{max-width:1220px;margin:0 auto}
+  header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+  h1{
+    font-size:clamp(26px,4vw,44px);letter-spacing:.06em;margin:0 0 8px;
+    color:var(--am);text-shadow:0 0 22px rgba(255,122,122,.28)
+  }
+  .sub{color:var(--ink);max-width:80ch;margin:0 0 12px;font-size:15px}
+  .sub b{color:var(--am)}
+  .src{font-size:12.5px;color:var(--dim)}
+  .src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+  .tag{
+    display:inline-block;font-size:10.5px;letter-spacing:.14em;font-weight:700;
+    padding:2px 7px;border-radius:4px;vertical-align:middle;margin-right:6px
+  }
+  .t-amber{background:rgba(255,207,106,.15);color:var(--amber);border:1px solid rgba(255,207,106,.4)}
+  .t-lit{background:rgba(142,255,168,.14);color:var(--lit);border:1px solid rgba(142,255,168,.45)}
+  .t-in{background:rgba(154,208,255,.14);color:var(--in);border:1px solid rgba(154,208,255,.4)}
+  .t-out{background:rgba(142,255,168,.14);color:var(--out);border:1px solid rgba(142,255,168,.4)}
+  .t-wall{background:rgba(255,122,122,.14);color:var(--wall);border:1px solid rgba(255,122,122,.5)}
+
+  .ocho{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px}
+  @media(max-width:880px){.ocho{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{
+    font-size:12px;letter-spacing:.16em;font-weight:700;padding:8px 12px;border-radius:8px;
+    border:1px solid var(--line);text-align:center
+  }
+  .col.blue .teamhdr{color:var(--blue);border-color:rgba(122,184,255,.4);background:rgba(122,184,255,.06)}
+  .col.red .teamhdr{color:var(--red);border-color:rgba(255,122,122,.4);background:rgba(255,122,122,.06)}
+  .col.center .teamhdr{color:var(--lit);border-color:rgba(142,255,168,.35);background:rgba(142,255,168,.05)}
+
+  .win{
+    position:relative;background:linear-gradient(180deg,var(--panel),var(--ground2));
+    border:1px solid var(--line);border-radius:10px;padding:14px 14px 13px
+  }
+  .win.panel{border-color:rgba(142,255,168,.35);box-shadow:0 0 0 1px rgba(142,255,168,.08),0 8px 30px rgba(0,0,0,.35)}
+  .wnum{
+    position:absolute;top:-9px;left:12px;width:22px;height:22px;border-radius:50%;
+    font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;
+    background:var(--ground);border:1px solid var(--line)
+  }
+  .col.blue .wnum{color:var(--blue);border-color:rgba(122,184,255,.6)}
+  .col.red .wnum{color:var(--red);border-color:rgba(255,122,122,.6)}
+  .col.center .wnum{color:var(--lit);border-color:rgba(142,255,168,.6)}
+  .wt{font-size:12px;letter-spacing:.12em;color:var(--dim);margin:4px 0 9px;font-weight:700}
+  .win p{margin:7px 0;font-size:13px;color:var(--ink)}
+  .win small{color:var(--dim);font-size:12px}
+  code,.k{color:var(--am);font-family:var(--mono)}
+  .dead{color:#7f978a;text-decoration:line-through;text-decoration-color:#ff7a7a99}
+  .fix{color:var(--lit)}
+  .wall-note{
+    border-left:3px solid var(--wall);padding:8px 10px;background:rgba(255,122,122,.06);
+    border-radius:0 6px 6px 0;font-size:13px
+  }
+  .flow{
+    text-align:center;color:var(--dim);font-size:18px;line-height:1;margin:2px 0;
+    user-select:none
+  }
+  .flow span{color:var(--lit)}
+
+  .eng{background:#0a1710;border:1px solid var(--line);border-radius:8px;padding:12px;margin:8px 0}
+  .row{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap}
+  .row label{font-size:12px;color:var(--dim);min-width:64px}
+  input[type=range]{flex:1;accent-color:var(--am);min-width:120px}
+  .val{color:var(--am);font-weight:700;min-width:70px;text-align:right}
+  .big{font-size:30px;color:var(--lit);font-weight:700;letter-spacing:.02em}
+  .readout{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;border-top:1px dashed var(--line);padding-top:8px}
+  .readout small{color:var(--dim)}
+  button{
+    font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;
+    border-radius:6px;padding:7px 12px;cursor:pointer;border:1px solid var(--line);
+    background:#16301f;color:var(--ink)
+  }
+  button.warn{border-color:rgba(255,122,122,.6);color:var(--wall);background:rgba(255,122,122,.08)}
+  button.ok{border-color:rgba(142,255,168,.5);color:var(--lit);background:rgba(142,255,168,.07)}
+  button:hover{filter:brightness(1.15)}
+  .badge{
+    display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;
+    padding:5px 10px;border-radius:6px;margin-top:6px
+  }
+  .badge.good{background:rgba(142,255,168,.13);color:var(--lit);border:1px solid rgba(142,255,168,.5)}
+  .badge.bad{background:rgba(255,122,122,.15);color:var(--wall);border:1px solid rgba(255,122,122,.6)}
+  #failb{display:none;margin-top:10px;background:rgba(255,122,122,.15);color:var(--wall);
+    border:1px solid rgba(255,122,122,.6);border-radius:8px;padding:10px;font-size:13px}
+  .litbadge{font-size:13px;color:var(--lit);font-weight:700}
+  footer{margin-top:28px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12px;text-align:center}
+  .kv{font-size:12px;color:var(--dim);margin:3px 0}
+  .kv b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>THE RANDOMIZED SMOOTHING</h1>
+    <p class="sub">Certified robustness that <b>scales</b> — not by bounding a network's Lipschitz constant, but by drowning it in Gaussian noise and counting votes. If the majority class survives noise of std <b>&sigma;</b> with probability <b>p<sub>A</sub></b>, the smoothed classifier carries a hard, closed-form L2 certificate: no perturbation smaller than <b>R = &sigma;&middot;&Phi;<sup>-1</sup>(p<sub>A</sub>)</b> can change its answer. Noise, turned into a proof.</p>
+    <p class="src"><span class="tag t-amber">SOURCE</span> Cohen, Rosenfeld &amp; Kolter, <em>Certified Adversarial Robustness via Randomized Smoothing</em> (2019) &mdash; <a href="https://arxiv.org/abs/1902.02918" target="_blank" rel="noopener">arxiv.org/abs/1902.02918</a>. Rendered, not quoted.</p>
+  </header>
+
+  <div class="ocho">
+
+    <!-- ===================== BLUE TEAM ===================== -->
+    <div class="col blue">
+      <div class="teamhdr">BLUE TEAM &middot; BUILDS &amp; DEFENDS</div>
+
+      <div class="win">
+        <div class="wnum">3</div>
+        <div class="wt">THE MODEL</div>
+        <p>A base classifier <code>f</code> is smoothed into <code>g</code>: to classify <code>x</code>, sample <code>x + &epsilon;</code>, <code>&epsilon; ~ N(0, &sigma;&sup2;I)</code>, and return the majority vote. Let <code>p<sub>A</sub></code> be the probability the top class wins under that noise.</p>
+        <p class="kv"><b>Theorem.</b> <code>g</code> is constant inside the L2 ball of radius <code>R = &sigma;&middot;&Phi;<sup>-1</sup>(p<sub>A</sub>)</code> around <code>x</code>. No attack of L2 norm &lt; R flips it.</p>
+        <p><small>Here <code>&Phi;<sup>-1</sup></code> is the inverse standard-normal CDF (a probit). The bound is <b>tight</b>: an adversary that only knows <code>p<sub>A</sub></code> can force a flip at exactly R.</small></p>
+        <p class="kv">Ground truth is a <b>constructed linear base</b> <code>f(x)=sign(w&middot;x)</code>, <code>w=[3,4]</code>, evaluated at <code>x=[2,1]</code>. Every quantity below is closed-form.</p>
+      </div>
+
+      <div class="win">
+        <div class="wnum">5</div>
+        <div class="wt">THE LINEAGE</div>
+        <p>Neighbour: <code>the-certified-robustness</code> — the Lipschitz-bound school (IBP, CROWN, Reluplex) that proves a no-attack zone by bounding how fast the network can change.</p>
+        <p>Smoothing pays a different price. It needs <b>no</b> Lipschitz constant and <b>no</b> access to weights — it works on models far too big to bound, at the cost of noise-time inference and a sampling estimate of <code>p<sub>A</sub></code>. A probabilistic no-attack zone where a deterministic one was impossible.</p>
+      </div>
+
+      <div class="win">
+        <div class="wnum">7</div>
+        <div class="wt">THE WITNESS</div>
+        <p>Live re-check of the load-bearing identity <code>R = &sigma;&middot;&Phi;<sup>-1</sup>(p<sub>A</sub>)</code> against the linear model's exact margin, probed at a noise level <code>&sigma;=2 &ne; 1</code> so a dropped factor cannot hide.</p>
+        <div id="auditout" class="badge good">WITNESS: verifying&hellip;</div>
+        <p><small>Green only while the certificate scales with &sigma;. Trip THE TAMPER (window 6) and this flips red on the spot.</small></p>
+      </div>
+    </div>
+
+    <!-- ===================== CENTER ===================== -->
+    <div class="col center">
+      <div class="teamhdr">THE MACHINE</div>
+
+      <div class="win">
+        <div class="wnum">4</div>
+        <div class="wt"><span class="tag t-in">IN &darr;</span>DATA IN</div>
+        <p>The noise level and the measured top-class probability:</p>
+        <div class="eng">
+          <div class="row">
+            <label>&sigma; (noise)</label>
+            <input id="sig" type="range" min="0.05" max="3" step="0.05" value="1">
+            <span class="val" id="sigv">1.00</span>
+          </div>
+          <div class="row">
+            <label>p<sub>A</sub></label>
+            <input id="pa" type="range" min="0.5" max="0.9999" step="0.0001" value="0.9772">
+            <span class="val" id="pav">0.9772</span>
+          </div>
+          <p class="kv">Preset from the linear base at <code>&sigma;=1</code>: <code>p<sub>A</sub>=&Phi;(w&middot;x / (&sigma;&#8201;&#8741;w&#8741;)) = &Phi;(2) &asymp; 0.9772</code>.</p>
+        </div>
+      </div>
+
+      <div class="flow">&darr;<span> smooth &amp; certify </span>&darr;</div>
+
+      <div class="win panel">
+        <div class="wnum">0</div>
+        <div class="wt"><span class="tag t-lit">LIT</span>THE PANEL &middot; THE ENGINE</div>
+        <div class="eng">
+          <div style="text-align:center">
+            <div class="big"><span id="Rout">2.0000</span></div>
+            <small>certified L2 radius&nbsp; R = &sigma;&middot;&Phi;<sup>-1</sup>(p<sub>A</sub>)</small>
+          </div>
+          <div class="readout"><small>&Phi;<sup>-1</sup>(p<sub>A</sub>) &nbsp;=</small><span class="k" id="probit">2.0000</span></div>
+          <div class="readout"><small>exact L2 margin of the linear base &nbsp;=</small><span class="k" id="margin">2.0000</span></div>
+          <div class="readout"><small>identity R &minus; margin &nbsp;=</small><span class="k" id="delta">0.0e+0</span></div>
+        </div>
+        <p><small>For the linear base the certificate is <b>exact</b>: smoothing recovers the true distance to the decision boundary. <code>p<sub>A</sub>&rarr;1</code> &rArr; R&rarr;&infin;; <code>p<sub>A</sub>=0.5</code> &rArr; R=0 (a coin flip certifies nothing).</small></p>
+        <div id="litbadge" class="litbadge">&middot;&middot;&middot;</div>
+        <div id="failb"></div>
+      </div>
+
+      <div class="flow">&darr;<span> proven </span>&darr;</div>
+
+      <div class="win">
+        <div class="wnum">8</div>
+        <div class="wt"><span class="tag t-out">OUT &darr;</span>DATA OUT</div>
+        <p>At <code>&sigma;=1, p<sub>A</sub>=&Phi;(2)</code> the smoothed classifier is <b>certifiably unflippable</b> inside <code>R=2.0000</code> in L2 — and this equals the linear base's exact margin, so the bound is met with no slack. Raise &sigma; and R grows for the same <code>p<sub>A</sub></code>: noise <em>buys</em> certified radius, trading clean accuracy for it.</p>
+      </div>
+    </div>
+
+    <!-- ===================== RED TEAM ===================== -->
+    <div class="col red">
+      <div class="teamhdr">RED TEAM &middot; ATTACKS &amp; BREAKS</div>
+
+      <div class="win">
+        <div class="wnum">1</div>
+        <div class="wt"><span class="tag t-wall">WALL</span>THE ADVERSARY</div>
+        <div class="wall-note">
+          The certificate is a <b>wall only in L2</b>. Against the linear base, the closed-form optimal L2 attack is <code>&delta; = &minus;margin&middot;w/&#8741;w&#8741; = [&minus;1.2,&minus;1.6]</code>, norm exactly <b>2.0</b> — it reaches the boundary at precisely R, never sooner. But switch norms: the optimal L&infin; attack <code>&epsilon;&middot;sign(w)</code> flips the base at <code>&epsilon; = margin / &#8741;w&#8741;<sub>1</sub> = 10/7 &asymp; 1.43</code>, whose L2 norm is only <code>1.43&radic;2 &asymp; 2.02</code> — barely outside, and an L&infin; certificate here does <b>not</b> follow from the L2 one.
+        </div>
+        <p><small>Gaussian smoothing certifies L2 and L2 alone. Other threat models need other noise (uniform / Laplacian) — and weaker guarantees.</small></p>
+      </div>
+
+      <div class="win">
+        <div class="wnum">2</div>
+        <div class="wt">THE GRAVEYARD</div>
+        <p class="dead">&ldquo;A high certified accuracy means the model is actually that robust.&rdquo;</p>
+        <p class="fix">&rarr; It means robust with confidence <code>1&minus;&alpha;</code> from a Monte-Carlo estimate of <code>p<sub>A</sub></code>. The certificate is <b>probabilistic</b>; a lower-confidence-bound on <code>p<sub>A</sub></code> must be used or the radius over-claims. <span class="tag t-amber">AMBER</span></p>
+        <p class="dead">&ldquo;Bigger &sigma; is strictly better — free robustness.&rdquo;</p>
+        <p class="fix">&rarr; Bigger &sigma; enlarges R for a <em>fixed</em> <code>p<sub>A</sub></code>, but it also drives <code>p<sub>A</sub></code> down (the base sees noisier inputs), collapsing clean accuracy. The trade is real.</p>
+        <p class="dead">&ldquo;&Phi;<sup>-1</sup>(1) is a big number.&rdquo;</p>
+        <p class="fix">&rarr; It is <code>+&infin;</code>. A never-wrong class is certified everywhere — which is exactly why the estimate never returns <code>p<sub>A</sub>=1</code> from finite samples.</p>
+      </div>
+
+      <div class="win">
+        <div class="wnum">6</div>
+        <div class="wt">THE TAMPER</div>
+        <p><small>Disclosed planted void: drop the <code>&sigma;</code> factor and report <code>R = &Phi;<sup>-1</sup>(p<sub>A</sub>)</code>. It looks fine at <code>&sigma;=1</code> and <b>over-claims for small &sigma;</b>. THE WITNESS (7) probes at <code>&sigma;=2</code> and catches it.</small></p>
+        <div class="row">
+          <button id="tamper" class="warn">DROP &sigma; FACTOR</button>
+          <button id="restore" class="ok">RESTORE</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    THE RANDOMIZED SMOOTHING &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus &mdash; the engine is LIT: it computes R = &sigma;&middot;&Phi;<sup>-1</sup>(p<sub>A</sub>) live and asserts it against the linear base's exact margin at boot. Built by David Lee Wise (ROOT0) with AVAN.
+  </footer>
+</div>
+
+<script>
+// deterministic fixed-seed PRNG (kept for reproducibility of any sampling)
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// standard-normal pdf, cdf, and its numerically-inverted quantile
+function pdf(x){return Math.exp(-0.5*x*x)/Math.sqrt(2*Math.PI);}
+function erfc(x){
+  var z=Math.abs(x);
+  var t=1/(1+z/2);
+  var r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+
+    t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+
+    t*(-0.82215223+t*0.17087277)))))))));
+  return x>=0?r:2-r;
+}
+function Phi(x){return 1-0.5*erfc(x/Math.SQRT2);}
+function phiInv(p){
+  if(p<=0)return -Infinity;
+  if(p>=1)return Infinity;
+  var a=[-3.969683028665376e+1,2.209460984245205e+2,-2.759285104469687e+2,1.383577518672690e+2,-3.066479806614716e+1,2.506628277459239e+0];
+  var b=[-5.447609879822406e+1,1.615858368580409e+2,-1.556989798598866e+2,6.680131188771972e+1,-1.328068155288572e+1];
+  var c=[-7.784894002430293e-3,-3.223964580411365e-1,-2.400758277161838e+0,-2.549732539343734e+0,4.374664141464968e+0,2.938163982698783e+0];
+  var d=[7.784695709041462e-3,3.224671290700398e-1,2.445134137142996e+0,3.754408661907416e+0];
+  var plow=0.02425,phigh=1-plow,x,q,r;
+  if(p<plow){q=Math.sqrt(-2*Math.log(p));x=(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  else if(p<=phigh){q=p-0.5;r=q*q;x=(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  else{q=Math.sqrt(-2*Math.log(1-p));x=-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  for(var i=0;i<6;i++){var e=Phi(x)-p;var g=pdf(x);if(g<1e-300)break;x=x-e/g;}
+  return x;
+}
+
+// the constructed linear base classifier: known weights, closed-form everything
+var W=[3,4], B=0, X0=[2,1];
+function dot(u,v){return u[0]*v[0]+u[1]*v[1];}
+function l2(u){return Math.sqrt(u[0]*u[0]+u[1]*u[1]);}
+function l1(u){return Math.abs(u[0])+Math.abs(u[1]);}
+function rawMargin(){return dot(W,X0)+B;}            // 10
+function marginL2(){return rawMargin()/l2(W);}        // 2  = exact minimal L2 attack distance
+function marginLinf(){return rawMargin()/l1(W);}      // 10/7 = optimal Linf epsilon
+function pA_of(sigma){return Phi(rawMargin()/(sigma*l2(W)));}
+
+// the engine: the certified L2 radius. TAMPER drops the sigma factor.
+var TAMPER=false;
+function certifiedRadius(pA,sigma){
+  if(pA>=1)return Infinity;
+  if(pA<=0)return -Infinity;
+  var z=phiInv(pA);
+  return (TAMPER?1:sigma)*z;
+}
+
+// fail-loud selfcheck: throws on any violation, returns true on success
+function selfcheck(){
+  var i,EPS=1e-6,EPS9=1e-9;
+  // inverse is a true inverse: Phi(PhiInv(p)) = p
+  var ps=[0.6,0.75,0.9,0.9772,0.999];
+  for(i=0;i<ps.length;i++){ if(Math.abs(Phi(phiInv(ps[i]))-ps[i])>EPS9) throw 'PhiInv is not a true inverse at p='+ps[i]; }
+  // a coin flip certifies nothing
+  if(Math.abs(certifiedRadius(0.5,1))>EPS) throw 'p_A=0.5 must certify radius 0';
+  // certainty certifies everywhere
+  if(certifiedRadius(1,1)!==Infinity) throw 'p_A=1 must certify infinite radius';
+  // closed form: R = sigma * PhiInv(p_A), asserted to 1e-6
+  var sig=1.37,pa=0.9;
+  if(Math.abs(certifiedRadius(pa,sig)-sig*phiInv(pa))>EPS) throw 'R must equal sigma*PhiInv(p_A)';
+  // more noise buys more certified radius for the same p_A
+  if(!(certifiedRadius(0.9,2)>certifiedRadius(0.9,1))) throw 'larger sigma must certify larger radius';
+  // linear-model identity: smoothing recovers the exact L2 margin, for any sigma
+  var s1=1,s2=2.5;
+  if(Math.abs(certifiedRadius(pA_of(s1),s1)-marginL2())>EPS) throw 'certified radius must equal exact L2 margin at sigma=1';
+  if(Math.abs(certifiedRadius(pA_of(s2),s2)-marginL2())>EPS) throw 'certified radius must equal exact L2 margin at sigma=2.5';
+  // disclosed planted void: dropping the sigma factor must change the radius at sigma!=1
+  var save=TAMPER;
+  TAMPER=true;
+  var st=2;
+  if(Math.abs(certifiedRadius(pA_of(st),st)-marginL2())<EPS) throw 'tamper should have broken the margin identity but did not';
+  TAMPER=save;
+  return true;
+}
+
+/* ===== UI ===== */
+function fmt(x){ if(!isFinite(x))return '&infin;'; return x.toFixed(4); }
+function fmtd(x){ var s=(x>=0?'+':'-'); var a=Math.abs(x); return s+a.toExponential(1); }
+
+var sigEl=document.getElementById('sig'),
+    paEl=document.getElementById('pa'),
+    sigv=document.getElementById('sigv'),
+    pav=document.getElementById('pav'),
+    Rout=document.getElementById('Rout'),
+    probitEl=document.getElementById('probit'),
+    marginEl=document.getElementById('margin'),
+    deltaEl=document.getElementById('delta'),
+    auditout=document.getElementById('auditout');
+
+function render(){
+  var sigma=parseFloat(sigEl.value), pA=parseFloat(paEl.value);
+  sigv.textContent=sigma.toFixed(2);
+  pav.textContent=pA.toFixed(4);
+  var z=phiInv(pA), R=certifiedRadius(pA,sigma);
+  Rout.innerHTML=fmt(R);
+  probitEl.textContent=isFinite(z)?z.toFixed(4):'∞';
+  marginEl.textContent=marginL2().toFixed(4);
+  deltaEl.textContent=isFinite(R)?fmtd(R-marginL2()):'n/a';
+  witness();
+}
+
+function witness(){
+  // re-check the identity at sigma=2 (a level != 1 where a dropped factor shows)
+  var s=2, got=certifiedRadius(pA_of(s),s), want=marginL2();
+  if(Math.abs(got-want)<1e-6){
+    auditout.className='badge good';
+    auditout.innerHTML='WITNESS: INTACT &middot; R(&sigma;=2)='+got.toFixed(4)+' = margin';
+  }else{
+    auditout.className='badge bad';
+    auditout.innerHTML='WITNESS: TAMPERED &middot; R(&sigma;=2)='+got.toFixed(4)+' &ne; margin '+want.toFixed(4);
+  }
+}
+
+document.getElementById('tamper').onclick=function(){ TAMPER=true; render(); };
+document.getElementById('restore').onclick=function(){ TAMPER=false; render(); };
+sigEl.oninput=render;
+paEl.oninput=render;
+
+// boot: run the fail-loud selfcheck, then light the panel
+try{
+  var ok=selfcheck();
+  if(ok!==true) throw 'selfcheck did not return true';
+  render();
+  document.getElementById('litbadge').innerHTML='&#10003; LIT &middot; selfcheck passed &middot; R=&sigma;&middot;&Phi;<sup>-1</sup>(p<sub>A</sub>) verified against the exact linear margin';
+}catch(err){
+  var fb=document.getElementById('failb');
+  fb.style.display='block';
+  fb.textContent='SELFCHECK FAILED: '+err;
+  document.getElementById('litbadge').innerHTML='&#10007; DARK &middot; engine refused to light';
+  throw err;
+}
+</script>
+</body>
+</html>

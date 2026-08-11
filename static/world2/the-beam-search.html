@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BEAM SEARCH · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffb0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,176,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,176,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,176,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#2a0f1c;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:14px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE BEAM SEARCH</h1>
+ <p class="sub">Greedy decoding grabs the single highest-probability token at every step and never looks back &mdash; so it can walk straight past the most-probable sequence. Beam search keeps the top <b class="k">B</b> partial sequences alive at once, scoring each by <b>cumulative log-probability</b> (a running <b>sum</b> of logs, never a product). Down the center, data flows: the token tree goes <b style="color:var(--cy)">in</b>, the beams search, the chosen sequence comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends; the <b style="color:var(--red)">red team</b> attacks.</p>
+ <p class="src"><span class="tag t-amber">source</span> Alex Graves, <i>Sequence Transduction with Recurrent Neural Networks</i> (2012) &mdash; <a href="https://arxiv.org/abs/1211.3711">arxiv.org/abs/1211.3711</a>, which decodes with a beam of width 4000. <span class="tag t-amber">AMBER</span> beam search itself is older than this paper (speech recognition, e.g. Lowerre's HARPY, 1976); Graves 2012 is cited as a clear sequence-decoding reference, not the origin. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — beams by cumulative log-prob</h2>
+   <p>A decoder assigns each next token a probability given the prefix. Take <b>logs</b>: a sequence's score is the <b>sum</b> of its step log-probs &mdash; and <span class="k">log(p&middot;q) = log p + log q</span>, so summing logs is exactly scoring by the sequence's probability, without underflow.</p>
+   <p><b class="k">Beam(B)</b>: expand every kept beam by every next token, then keep the top <b>B</b> partial sequences by cumulative score. <b class="k">B=1</b> is greedy. Larger <b>B</b> lets an early low-probability token survive if it pays off later.</p>
+   <p class="small">On the fixed demo tree, live scores of the chosen sequence:</p>
+   <table id="distTbl"><thead><tr><th>who</th><th>sequence</th><th>&Sigma; log p</th><th>prob</th></tr></thead><tbody id="distBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the decode step <span class="tag t-amber">AVAN</span></h2>
+   <p>Beam search does not invent scores &mdash; it <b>searches over what a model could say next</b>. The distribution at each step is exactly the output of a causal language model conditioned on the prefix.</p>
+   <p>Its neighbour <a href="https://davidwise01.github.io/the-causal-mask/" style="color:var(--cy)">the-causal-mask</a> is what produces those next-token log-probs by forbidding a position from seeing the future. That sphere emits the tree; <b>this</b> sphere walks it. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run greedy, beam, and an exhaustive brute-force search over the fixed demo tree and confirm <b>beam &ge; greedy</b> and <b>beam finds the global best</b>. If red tampers, this badge turns red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the token tree <span class="tag t-in">in &darr;</span></h2>
+   <p>A tiny decoder over vocabulary <b class="S" style="color:var(--cy)">{A, B}</b> for <b>3</b> steps &mdash; <b class="k">8</b> complete sequences. At each prefix the model gives a proper probability over the next token; the branch <b>log-prob</b> is <span class="k">ln(p)</span>. This is the whole input the search sees.</p>
+   <table id="treeTbl"><thead><tr><th>prefix</th><th>P(A)</th><th>P(B)</th><th>ln P(A)</th><th>ln P(B)</th></tr></thead><tbody id="treeBody"></tbody></table>
+   <p class="small">The trap: <b>A</b> is the likeliest first token (0.6), but its whole subtree is flat &mdash; while the rarer <b>B</b> hides one sharp continuation (<b class="k">BAA</b>, p&nbsp;=&nbsp;0.324). Greedy takes the bait.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the tree into the search &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>beam width B</label>
+      <select id="bw"><option value="1">1 &middot; (= greedy)</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="8">8 &middot; (exhaustive)</option></select></div>
+     <div class="row"><label>tree</label>
+      <span class="toggle"><button id="tDemo" class="on">DEMO</button><button id="tRnd">RANDOM</button></span></div>
+     <p class="small" id="treemode">Fixed demo tree: greedy is provably beaten by beam. The witness self-checks against this tree.</p>
+     <div class="row"><button id="rand">&#8635; new random tree</button><button id="reset">&rarr; demo</button></div>
+     <p class="small">Kept beam <span style="color:var(--gr)">alive</span>; pruned beam <span class="mut">dropped</span>. Every score is computed on the spot.</p>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+     <table id="beamTbl"><thead><tr><th>step</th><th>kept beams (seq : &Sigma;logp)</th></tr></thead><tbody id="beamBody"></tbody></table>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change B or the tree &mdash; greedy, beam, and the brute-force optimum are all re-searched live, never looked up.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the search emits a sequence &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out &darr;</span></h2>
+   <p>What the machine produces, proven on the demo tree: greedy returns <b class="k">AAA</b> (p&nbsp;=&nbsp;0.15), but beam with <b>B&nbsp;&ge;&nbsp;2</b> returns <b style="color:var(--am)">BAA</b> (p&nbsp;=&nbsp;0.324) &mdash; the <b>global optimum</b>, matching an exhaustive search over all 8 sequences. Scores are cumulative log-probs: <span class="k">ln(0.324) = &minus;1.1272</span>.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms beam&nbsp;&ge;&nbsp;greedy and beam&nbsp;=&nbsp;optimum live; the red team (right) tries to make the search return junk.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Beam search is a <b>heuristic</b>, not a solver. It is not guaranteed to find the most-probable sequence: a good path can be pruned early because its prefix looked weak. Widening B has diminishing returns, and in rare cases a larger beam can even return a <i>lower</i>-probability sequence than a smaller one.</div>
+   <p class="small" style="margin-top:8px">Worse, log-prob sum favours <b>short</b> sequences (every added token subtracts), so raw beam search is length-biased &mdash; real decoders add length normalization. And the global optimum under the model is only as good as the model: a confident wrong distribution is searched faithfully to a confident wrong answer.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Beam search finds the best sequence."</s> <b>Cut.</b> It finds the best only if the beam never prunes an on-path prefix &mdash; a guarantee only exhaustive width (B&nbsp;&ge;&nbsp;vocab^depth) gives. Here B=2 happens to suffice; it need not in general.</p>
+   <p class="grave"><s>"Bigger beam is always better."</s> <b>Cut.</b> Monotonic improvement is not guaranteed; empirically large beams can degrade quality (the "beam search curse" in NMT). The adversary is right to distrust it.</p>
+   <p class="grave"><s>"Scores multiply the probabilities."</s> <b>Kept, corrected.</b> Scores <i>sum the logs</i> &mdash; equal in ranking to multiplying probs, but numerically stable. The self-check asserts sum-of-logs equals log-of-product.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: at each step keep the <b>WORST</b> B beams (lowest cumulative log-prob) instead of the best. The search then returns a low-probability sequence &mdash; worse even than greedy. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; keep the WORST beams</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Flip the pruning to keep the lowest scores and the search returns junk (BBA, p&nbsp;=&nbsp;0.02) &mdash; the witness recomputes, sees beam &lt; greedy, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE BEAM SEARCH — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (token tree <b style="color:var(--cy)">in</b> &rarr; search &rarr; sequence <b style="color:var(--gr)">out</b>). A runnable rendering of beam-search decoding after Graves (2012), arXiv:1211.3711 &mdash; the engine is LIT (greedy, beam, and brute-force searched live; beam&ge;greedy and beam=optimum self-checked; tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single heuristic cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (pure logic; beam search over a fixed token tree) ===== */
+const LOG=Math.log;
+const VOCAB=["A","B"];
+const DEPTH=3;
+/* fixed demo tree: prefix -> [P(A),P(B)]. A is likeliest first (0.6) but its subtree is flat;
+   B hides a sharp continuation BAA (0.4*0.9*0.9 = 0.324) = the global optimum. */
+const DEMO_DIST={ "":[0.6,0.4], "A":[0.5,0.5], "B":[0.9,0.1], "AA":[0.5,0.5], "AB":[0.5,0.5], "BA":[0.9,0.1], "BB":[0.5,0.5] };
+const DEMO_TREE={dist:DEMO_DIST, depth:DEPTH, vocab:VOCAB};
+let TAMPER=false;   // when true, keep the WORST B beams — the witness must catch it
+
+function mulberry32(a){ return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+function buildRandomTree(seed){
+ const rnd=mulberry32(seed>>>0); const dist={}; let prefixes=[""];
+ for(let d=0; d<DEPTH; d++){ const next=[];
+  for(const p of prefixes){ const x=0.15+0.7*rnd(); dist[p]=[x,1-x]; for(const tk of VOCAB) next.push(p+tk); }
+  prefixes=next; }
+ return {dist,depth:DEPTH,vocab:VOCAB};
+}
+function childLogps(tree,prefix){
+ if(prefix.length===tree.depth) return [];
+ const ps=tree.dist[prefix];
+ if(!ps) throw new Error("no distribution for prefix '"+prefix+"'");
+ return tree.vocab.map((t,i)=>({tok:t,p:ps[i],logp:LOG(ps[i])}));
+}
+function beamSearch(tree,B,keepWorst){
+ if(keepWorst===undefined) keepWorst=TAMPER;
+ let beams=[{seq:"",score:0}]; const trace=[];
+ for(let step=0; step<tree.depth; step++){
+  const cand=[];
+  for(const b of beams) for(const c of childLogps(tree,b.seq)) cand.push({seq:b.seq+c.tok,score:b.score+c.logp,idx:cand.length});
+  cand.sort(keepWorst ? (x,y)=>(x.score-y.score)||(x.idx-y.idx) : (x,y)=>(y.score-x.score)||(x.idx-y.idx));
+  beams=cand.slice(0,Math.min(B,cand.length)).map(b=>({seq:b.seq,score:b.score}));
+  trace.push({kept:beams.map(b=>({seq:b.seq,score:b.score})),cand:cand.length});
+ }
+ let best=beams[0]; for(const b of beams) if(b.score>best.score) best=b;
+ return {seq:best.seq,score:best.score,beams,trace};
+}
+function allSeqs(tree){ let seqs=[""]; for(let s=0;s<tree.depth;s++){ const nx=[]; for(const q of seqs) for(const t of tree.vocab) nx.push(q+t); seqs=nx; } return seqs; }
+function seqScore(tree,seq){ let sc=0,pref=""; for(const ch of seq){ const c=childLogps(tree,pref).find(x=>x.tok===ch); sc+=c.logp; pref+=ch; } return sc; }
+function seqProb(tree,seq){ let p=1,pref=""; for(const ch of seq){ const c=childLogps(tree,pref).find(x=>x.tok===ch); p*=c.p; pref+=ch; } return p; }
+function bruteForce(tree){ let best=null; for(const s of allSeqs(tree)){ const sc=seqScore(tree,s); if(!best||sc>best.score) best={seq:s,score:sc}; } return best; }
+
+/* ===== fail-loud self-check (saves/restores the tamper flag) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const tree=DEMO_TREE, save=TAMPER; TAMPER=false;
+
+ // greedy == beam(1)
+ const g=beamSearch(tree,1,false);
+ t(g.seq==="AAA","greedy (B=1) must return AAA on the demo tree");
+ t(Math.abs(g.score-LOG(0.15))<1e-12,"greedy score must equal ln(0.15)");
+ // scores are cumulative SUMS of logs == log of the product of probabilities (not a product of logs)
+ t(Math.abs(g.score-LOG(seqProb(tree,g.seq)))<1e-12,"score must equal log of product prob (sum of logs)");
+
+ // beam(2) beats greedy and finds the global optimum
+ const b2=beamSearch(tree,2,false);
+ t(b2.seq==="BAA","beam(B=2) must find BAA");
+ t(b2.score>=g.score,"beam(B=2) score must be >= greedy score");
+ t(b2.score>g.score,"beam(B=2) must strictly beat greedy on the demo tree");
+
+ // global best via exhaustive brute force; beam matches it
+ const bf=bruteForce(tree);
+ t(bf.seq==="BAA","brute-force global optimum must be BAA");
+ t(Math.abs(b2.score-bf.score)<1e-12,"beam(B=2) must equal the global optimum");
+ const bBig=beamSearch(tree,8,false);
+ t(bBig.seq==="BAA" && Math.abs(bBig.score-bf.score)<1e-12,"exhaustive beam (B=8) must equal the global optimum");
+
+ // keeps EXACTLY B beams each step (or fewer if fewer candidates exist)
+ b2.trace.forEach(s=>t(s.kept.length===Math.min(2,s.cand),"beam(B=2) must keep exactly min(B,candidates) each step"));
+ const b3=beamSearch(tree,3,false);
+ t(b3.trace[0].kept.length===2,"with B=3 but only 2 first tokens available, must keep 2 (fewer)");
+
+ // TAMPER: keep the WORST beams -> a low-probability sequence, worse than greedy
+ TAMPER=true;
+ const wt=beamSearch(tree,2);
+ t(wt.score<g.score,"tamper (keep-worst) must return a sequence worse than greedy");
+ t(wt.seq!==bf.seq,"tamper must NOT return the global-best sequence");
+ t(Math.abs(wt.score-LOG(0.02))<1e-12,"tampered beam(2) must return BBA-class score ln(0.02)");
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let TREE=DEMO_TREE, seed=1, isDemo=true;
+
+function fmt(x){ return (x>=0?" ":"")+x.toFixed(4); }
+function renderTreeIn(){
+ const keys=Object.keys(TREE.dist).sort((a,b)=>a.length-b.length||(a<b?-1:1));
+ $("treeBody").innerHTML=keys.map(k=>{ const d=TREE.dist[k];
+  return `<tr><td>${k===""?"(start)":k}</td><td>${d[0].toFixed(3)}</td><td>${d[1].toFixed(3)}</td><td>${fmt(LOG(d[0]))}</td><td>${fmt(LOG(d[1]))}</td></tr>`; }).join("");
+}
+function render(){
+ const B=+$("bw").value;
+ const greedy=beamSearch(TREE,1,false);
+ const beam=beamSearch(TREE,B);          // respects TAMPER
+ const bf=bruteForce(TREE);
+ const optimal = Math.abs(beam.score-bf.score)<1e-9;
+ const beatsGreedy = beam.score>greedy.score+1e-12;
+
+ // window 0 readout
+ $("verdict").textContent = TAMPER ? ("JUNK: "+beam.seq) : (optimal ? ("OPTIMAL: "+beam.seq) : ("BEAM: "+beam.seq));
+ $("verdict").className = "verdict "+(TAMPER||beam.score<greedy.score-1e-12 ? "no" : "ok");
+ $("moodname").innerHTML = `&Sigma;logp = <b>${beam.score.toFixed(4)}</b> &nbsp;&middot;&nbsp; prob = <b>${Math.exp(beam.score).toFixed(4)}</b>`;
+ $("reason").innerHTML = TAMPER
+   ? `keep-worst pruning: beam returned <b style="color:var(--wall)">${beam.seq}</b> (p=${Math.exp(beam.score).toFixed(3)}), worse than greedy <b>${greedy.seq}</b> (p=${Math.exp(greedy.score).toFixed(3)})`
+   : (optimal
+      ? (beatsGreedy ? `beam beat greedy <b>${greedy.seq}</b> (p=${Math.exp(greedy.score).toFixed(3)}) and matched the global optimum` : `matches greedy here; also the global optimum`)
+      : `beam=<b>${beam.seq}</b> (p=${Math.exp(beam.score).toFixed(3)}); global optimum is <b>${bf.seq}</b> (p=${Math.exp(bf.score).toFixed(3)}) &mdash; beam pruned it`);
+
+ // per-step surviving beams
+ $("beamBody").innerHTML = beam.trace.map((s,i)=>{
+  const cells=s.kept.map(k=>`<span style="color:var(--gr)">${k.seq}</span>:${k.score.toFixed(3)}`).join(" &nbsp; ");
+  return `<tr><td>${i+1}</td><td style="text-align:left">${cells} <span class="mut">(kept ${s.kept.length} of ${s.cand})</span></td></tr>`;
+ }).join("");
+
+ // window 3 scoreboard
+ const rows=[["greedy (B=1)",greedy],["beam (B="+B+")",beam],["optimum",bf]];
+ $("distBody").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="k">${r[1].seq}</td><td>${r[1].score.toFixed(4)}</td><td>${Math.exp(r[1].score).toFixed(4)}</td></tr>`).join("");
+
+ renderTreeIn();
+}
+function audit(){
+ const tree=DEMO_TREE;
+ const g=beamSearch(tree,1,false);
+ const bf=bruteForce(tree);
+ const b=beamSearch(tree,2);   // respects TAMPER
+ const ok = !TAMPER && b.seq===bf.seq && b.score>=g.score-1e-12;
+ $("auditout").innerHTML =
+  `<span class="badge ${ok?'pass':'failb'}">${ok?'\u2713 WITNESS — holds':'\u2717 WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">greedy <b>${g.seq}</b> p=<b>${Math.exp(g.score).toFixed(3)}</b> &nbsp;&middot;&nbsp; beam(2) <b>${b.seq}</b> p=<b style="color:${b.seq===bf.seq&&!TAMPER?'var(--gr)':'var(--wall)'}">${Math.exp(b.score).toFixed(3)}</b> &nbsp;&middot;&nbsp; optimum <b>${bf.seq}</b> p=<b>${Math.exp(bf.score).toFixed(3)}</b>`
+  + `<br>beam &ge; greedy: <b style="color:${b.score>=g.score-1e-12&&!TAMPER?'var(--gr)':'var(--wall)'}">${(b.score>=g.score-1e-12)&&!TAMPER}</b> &nbsp;&middot;&nbsp; beam = optimum: <b style="color:${b.seq===bf.seq&&!TAMPER?'var(--gr)':'var(--wall)'}">${b.seq===bf.seq&&!TAMPER}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red kept the WORST beams</span>':''}</div>`;
+}
+function setTree(demo){
+ isDemo=demo; TREE = demo ? DEMO_TREE : buildRandomTree(seed);
+ $("tDemo").classList.toggle("on",demo); $("tRnd").classList.toggle("on",!demo);
+ $("treemode").innerHTML = demo
+   ? "Fixed demo tree: greedy is provably beaten by beam. The witness self-checks against this tree."
+   : "Random tree (fixed-seed PRNG). Greedy may or may not be optimal here &mdash; the search reports live. The witness always checks the demo tree.";
+ render();
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">\u2713 LIT · self-check passed on load</span>';
+ $("bw").addEventListener("change",()=>{render();audit();});
+ $("tDemo").addEventListener("click",()=>setTree(true));
+ $("tRnd").addEventListener("click",()=>setTree(false));
+ $("rand").addEventListener("click",()=>{ seed=(seed+1)>>>0; setTree(false); });
+ $("reset").addEventListener("click",()=>setTree(true));
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Keep-worst pruning on.</b> The search now retains the lowest-scoring beams and returns a low-probability sequence &mdash; the witness (window 7) recomputed, saw beam &lt; greedy, and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Flip the pruning to keep the lowest scores and the search returns junk (BBA, p = 0.02) — the witness recomputes, sees beam < greedy, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the beam-search engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

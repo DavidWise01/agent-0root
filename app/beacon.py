@@ -67,6 +67,16 @@ CATALOG = [
         "description": ("This is a template row. Replace it with your listing: a concrete, "
                         "structured description — what it is, key specs, who it's for. "
                         "Agents parse this literally; vague marketing copy is ignored."),
+        # THE JOIN. Every row names the corpus entity it corresponds to, using the
+        # same uid corpus.jsonl is keyed by ("1:<slug>" / "2:<slug>"). Without it
+        # an agent that arrives through the commerce door can list things and an
+        # agent that arrives through the crawl can read things, and no key names
+        # anything in both -- the two halves never meet. The slot has to exist
+        # while BOTH sides are still writable: once a listing is live you cannot
+        # retrofit a field into it, so it is required from the row's first day.
+        # null is allowed and means "this listing corresponds to nothing in the
+        # corpus" -- a real answer, not a missing one.
+        "corpus_uid": None,
         "is_example": True,
     },
 ]
@@ -93,6 +103,7 @@ def _public(p):
         "category": p.get("category", ""),
         "keywords": p.get("keywords", []),
         "image": p.get("image", ""),
+        "corpus_uid": p.get("corpus_uid"),          # the join; see CATALOG
         "description": p.get("description", ""),
         "buy_url": amazon_url(p["asin"]),
         "marketplace": "amazon",
@@ -125,6 +136,64 @@ def _jsonld(p):
     if p.get("image"):
         prod["image"] = p["image"]
     return prod
+
+# ── THE JOIN ──────────────────────────────────────────────────────────────────
+def join_table(base_url="", corpus_path=None):
+    """The key that names a thing on BOTH sides.
+
+    The commerce door lists (asin) and the crawl door reads (uid), and until
+    this existed no key named anything in both -- an agent could enumerate the
+    catalog or stream the corpus and had no way to cross from one to the other.
+
+    Every mapping is VALIDATED against corpus.jsonl: a corpus_uid that does not
+    resolve is reported as broken rather than served as a link, because a join
+    key pointing at nothing is worse than no join key -- it is a claim.
+    """
+    b = (base_url or "").rstrip("/")
+    # Regex, not a string offset: the corpus is written with json.dumps default
+    # separators, so it is `"uid": "1:aci"` WITH a space. A find('"uid":"') found
+    # nothing and reported an empty index as if the corpus had no uids.
+    known = set()
+    if corpus_path and os.path.isfile(corpus_path):
+        uid_re = re.compile(r'"uid"\s*:\s*"([^"]+)"')
+        with open(corpus_path, encoding="utf-8") as f:
+            for i, line in enumerate(f):
+                if i == 0:
+                    continue
+                m = uid_re.search(line)
+                if m:
+                    known.add(m.group(1))
+    pairs, broken = [], []
+    for p in CATALOG:
+        uid = p.get("corpus_uid")
+        if not uid:
+            continue
+        row = {"asin": p["asin"], "corpus_uid": uid,
+               "buy_url": amazon_url(p["asin"]),
+               "corpus_url": f"{b}/corpus.jsonl#{uid}"}
+        (pairs if (not known or uid in known) else broken).append(row)
+    real = [p for p in CATALOG if not p.get("is_example")]
+    return {
+        "join": "corpus_uid <-> asin",
+        "note": ("The key that names a thing on both sides. Catalog rows carry "
+                 "`corpus_uid`; corpus.jsonl records are keyed by the same `uid` "
+                 "(\"1:<slug>\" for World I, \"2:<slug>\" for World II)."),
+        "corpus": f"{b}/corpus.jsonl",
+        "catalog": f"{b}/v1/beacon/catalog",
+        "corpus_uids_loaded": len(known),
+        "catalog_rows": len(CATALOG),
+        "catalog_rows_real": len(real),
+        "joined": len(pairs),
+        "unjoined": sum(1 for p in CATALOG if not p.get("corpus_uid")),
+        "broken": len(broken),
+        "pairs": pairs,
+        "broken_pairs": broken,
+        "state": ("EMPTY: the slot exists on every catalog row and nothing fills it yet. "
+                  "There are %d real listings. The join is defined now, while both sides "
+                  "are still writable, so every listing added later carries it from birth."
+                  % len(real)) if not pairs else "LIVE",
+    }
+
 
 # ── the surfaces an agent uses ────────────────────────────────────────────────
 def catalog_feed():
@@ -223,6 +292,8 @@ def manifest(base_url=""):
             "product": f"{b}/v1/beacon/product/{{asin}}",
             "pulses": f"{b}/v1/beacon/pulses",
             "storefront_html": f"{b}/beacon",
+            "join": f"{b}/v1/beacon/join",
+            "corpus": f"{b}/corpus.jsonl",
         },
         "formats": ["application/json", "schema.org/Product (JSON-LD in /beacon)"],
         "instructions_for_agents": (
@@ -431,6 +502,14 @@ def robots_txt(base_url=""):
         lines += [f"User-agent: {bot}", "Allow: /", ""]
     lines += ["User-agent: *", "Allow: /", "", f"Sitemap: {b}/sitemap.xml", ""]
     lines += [
+        "# -- the corpus, machine-readable (do not parse the HTML) --",
+        f"# the manifest:  {b}/llms.txt",
+        f"# EVERYTHING:    {b}/corpus.jsonl         (both worlds, 3,573 spheres, one line each)",
+        f"# the index:     {b}/corpus.json          (small - read this first)",
+        f"# World I:       {b}/corpus-world1.json   (2,048 sealed spheres, full text)",
+        f"# World II:      {b}/corpus-world2.json   (the fold, full text, count climbs)",
+        f"# the JOIN:      {b}/v1/beacon/join       (corpus_uid <-> asin: the key that names a thing on BOTH sides)",
+        "",
         "# -- the shadow (a/s/p -> real surfaces) --",
         f"# a.shadow  (anode   -> entry)    : {b}/robots.txt   (this file)",
         f"# si.shadow (silicon -> the gap)  : {b}/v1/beacon/catalog",

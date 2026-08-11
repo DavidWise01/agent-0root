@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LAYER NORM · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,208,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{width:130px;accent-color:var(--am);background:transparent;}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#08201a;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:12.5px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:16px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.mono td{font-variant-numeric:tabular-nums;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE LAYER NORM</h1>
+ <p class="sub">Batch-norm steadies a feature by looking sideways at the whole batch — it needs a crowd. Layer-norm turns the axis <b>ninety degrees</b>: it steadies each <b>token</b> by looking across its own features, so a batch of <b class="k">one</b> normalizes exactly as well as a batch of a thousand. Down the center, activations go <b style="color:var(--cy)">in</b>, each row is re-centered and re-scaled, the standardized rows come <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Ba, Kiros &amp; Hinton, <i>Layer Normalization</i> (2016) — <a href="https://arxiv.org/abs/1607.06450">arxiv.org/abs/1607.06450</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — normalize each row</h2>
+   <p>For one token's feature vector <b>x</b> (length H), compute its <b>own</b> mean and variance — no other token involved:</p>
+   <p class="small">μ = mean(x), &nbsp; σ² = mean((x−μ)²), &nbsp; then<br>
+   <b>y = γ · (x − μ) / √(σ² + ε) + β</b></p>
+   <p class="small">The raw per-token stats the panel is standardizing right now (these are what must become 0 and 1):</p>
+   <table id="modelTbl" class="mono"><thead><tr><th>token</th><th>raw μ</th><th>raw σ²</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — batch-norm, turned <span class="tag t-amber">AVAN</span></h2>
+   <p>Layer-norm is <a href="https://davidwise01.github.io/the-batch-norm/" style="color:var(--cy)">batch-norm</a> with the normalization axis transposed. Batch-norm standardizes each <i>feature</i> across the batch; layer-norm standardizes each <i>token</i> across its features.</p>
+   <p>That single transpose buys everything: <b>no running statistics</b>, identical math at train and test, and it holds at <b>batch size 1</b> — which is why the transformer, decoding one token at a time, uses this and not batch-norm. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-standardize the full matrix with γ=1, β=0 and confirm <b>every row</b> lands at μ≈0, σ²≈1 — and that a single-token batch does too. If red flips the axis, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the activations <span class="tag t-in">in ↓</span></h2>
+   <p>A block of activations: each <b>row is a token</b>, each <b>column a feature</b> (H = 6). These are raw pre-norm values on wildly different scales — the thing normalization exists to tame.</p>
+   <table id="inmat" class="mono"></table>
+   <p class="small">Layer-norm reads <i>along each row</i>. Batch-norm would read <i>down each column</i>. Same numbers — the whole difference is which way you look.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the rows into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>γ (scale)</label><input type="range" id="g" min="-3" max="3" step="0.1" value="1"><b id="gval" class="k">1.00</b></div>
+     <div class="row"><label>β (shift)</label><input type="range" id="b" min="-2" max="2" step="0.1" value="0"><b id="bval" class="k">0.00</b></div>
+     <div class="row"><label>batch</label>
+      <span class="toggle"><button id="tFull" class="on">4 TOKENS</button><button id="tOne">1 TOKEN</button></span></div>
+     <p class="small" id="readmode">Full batch. Each row is normalized on its own — the count of tokens never enters the math.</p>
+     <div class="row"><button id="reset">↺ γ=1 β=0</button><button id="std">→ standardize</button></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+     <table id="outTbl" class="mono"><thead><tr><th>token</th><th>out μ</th><th>out σ</th></tr></thead><tbody id="outBody"></tbody></table>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change γ, β, or the batch — every value is recomputed from x, μ and σ on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits standardized rows &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>The standardized block: with γ=1, β=0 every row has μ=0 and σ²=1; in general each row lands at μ=<b class="k">β</b> and σ=<b class="k">|γ|</b>, whatever the batch size. The current output:</p>
+   <table id="outmat" class="mono"></table>
+   <div id="litbadge"></div>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Forcing every token to unit variance <b>throws away magnitude</b> — the scale of an activation vector often carried signal, and layer-norm deletes it, handing the model γ and β to claw some back. RMSNorm (Zhang &amp; Sennrich, 2019) later showed the mean-subtraction is usually dead weight; the variance/scale is the load-bearing part.</div>
+   <p class="small" style="margin-top:8px">And <i>placement</i> matters more than the formula: the paper's post-LN is hard to train deep without warmup; pre-LN trains but shifts the residual stream. "Add layer-norm" is never the whole decision — where it sits changes the gradients.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Layer-norm normalizes over the whole layer, batch included."</s> <b>Cut.</b> It touches only one example's features; the batch axis is never read — that is the entire point.</p>
+   <p class="grave"><s>"Layer-norm and batch-norm are the same, just a different axis."</s> <b>Cut.</b> Same formula, but BN keeps running statistics and couples examples; LN is per-example and stateless. The consequences diverge at batch 1.</p>
+   <p class="grave"><s>"You must subtract the mean."</s> <b>Kept, corrected.</b> RMSNorm drops μ and works fine — the essential operation is the <i>rescaling</i>, not the centering.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: flip the axis — normalize <b>down the columns</b> (across the batch) like batch-norm. The formula is untouched; only the direction changes. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ normalize across the batch</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Normalize across the batch and a single token collapses (variance 0 — batch-norm needs a crowd) and per-row means stop being 0. The witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE LAYER NORM — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (activations <b style="color:var(--cy)">in</b> → per-row normalize → standardized rows <b style="color:var(--gr)">out</b>). A runnable rendering of Ba, Kiros &amp; Hinton's <i>Layer Normalization</i> (arXiv 1607.06450) — the engine is LIT (each row standardized live, μ→β / σ→|γ| self-checked, batch-of-one proven, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one axis cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: per-row standardization, exact) ===== */
+const EPS=1e-9, SEED=1607, R=4, C=6;
+let TAMPER=false;   // flips the axis to batch-norm when true — the witness must catch it
+
+function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,t|61); return ((t^t>>>14)>>>0)/4294967296; }; }
+function makeMatrix(rows,cols,seed){ const rnd=mulberry32(seed),m=[]; for(let i=0;i<rows;i++){ const row=[]; for(let j=0;j<cols;j++) row.push(+((rnd()*6-3).toFixed(4))); m.push(row); } return m; }
+function mean(a){ let s=0; for(const x of a) s+=x; return s/a.length; }
+function pvar(a){ const m=mean(a); let s=0; for(const x of a) s+=(x-m)*(x-m); return s/a.length; }
+
+// layer-norm: normalize a token's own feature vector (a ROW)
+function layernormRow(row,g,b,eps){ const m=mean(row),inv=1/Math.sqrt(pvar(row)+eps); return row.map(x=>g*(x-m)*inv+b); }
+// batch-norm (the planted tamper): normalize each feature down the batch (a COLUMN)
+function batchnormCols(mat,g,b,eps){ const rows=mat.length,cols=mat[0].length,out=mat.map(r=>r.slice());
+ for(let c=0;c<cols;c++){ const col=mat.map(r=>r[c]),m=mean(col),inv=1/Math.sqrt(pvar(col)+eps);
+  for(let r=0;r<rows;r++) out[r][c]=g*(mat[r][c]-m)*inv+b; } return out; }
+// the engine dispatches on the (disclosed) tamper flag
+function normalize(mat,g,b,eps){ return TAMPER ? batchnormCols(mat,g,b,eps) : mat.map(row=>layernormRow(row,g,b,eps)); }
+
+const M0=makeMatrix(R,C,SEED);
+
+/* ===== fail-loud self-check (runs untampered, then proves the tamper is caught) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ // 1. γ=1, β=0 → every row has mean ≈ 0 and variance ≈ 1
+ const std=normalize(M0,1,0,EPS);
+ for(let i=0;i<std.length;i++){
+  t(Math.abs(mean(std[i]))<1e-6,"row "+i+" mean must be ~0 after norm");
+  t(Math.abs(pvar(std[i])-1)<1e-6,"row "+i+" variance must be ~1 after norm");
+ }
+ // 2. batch of ONE token still normalizes (layer-norm needs no batch)
+ const one=normalize([M0[0]],1,0,EPS);
+ t(Math.abs(mean(one[0]))<1e-6,"single-token mean must be ~0");
+ t(Math.abs(pvar(one[0])-1)<1e-6,"single-token variance must be ~1 (no batch required)");
+ // 3. β shifts the row mean to β; γ scales the row std to |γ|
+ const G=2.5,B=1.3, y=normalize(M0,G,B,EPS);
+ for(let i=0;i<y.length;i++){
+  t(Math.abs(mean(y[i])-B)<1e-6,"β must shift row mean to β");
+  t(Math.abs(Math.sqrt(pvar(y[i]))-Math.abs(G))<1e-6,"γ must scale row std to |γ|");
+ }
+ const yn=normalize(M0,-1.7,0,EPS);            // negative γ → std is |γ|
+ t(Math.abs(Math.sqrt(pvar(yn[0]))-1.7)<1e-6,"negative γ std must be |γ|");
+ // ===== the disclosed planted void: flip the axis to batch-norm =====
+ TAMPER=true;
+ const bad=normalize(M0,1,0,EPS);              // now normalizes across the batch
+ t(Math.abs(mean(bad[0]))>1e-6,"TAMPER: batch-norm makes the per-row mean != 0");
+ const badOne=normalize([M0[0]],1,0,EPS);      // one token, across the batch, collapses
+ t(Math.abs(pvar(badOne[0]))<1e-6,"TAMPER: batch-norm of one token collapses to variance 0");
+ t(Math.abs(pvar(badOne[0])-1)>0.5,"TAMPER: single-token variance now differs from 1");
+ TAMPER=save; return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let GAMMA=1, BETA=0, BATCH=4;
+function activeMatrix(){ return BATCH===1 ? [M0[0]] : M0; }
+function fmt(x){ return (x>=0?" ":"-")+Math.abs(x).toFixed(3); }
+function matHTML(mat){
+ let h="<thead><tr><th></th>"; for(let j=0;j<mat[0].length;j++) h+="<th>f"+j+"</th>"; h+="</tr></thead><tbody>";
+ mat.forEach((r,i)=>{ h+="<tr><td class='mut'>t"+i+"</td>"+r.map(x=>"<td>"+fmt(x)+"</td>").join("")+"</tr>"; });
+ return h+"</tbody>";
+}
+function render(){
+ const mat=activeMatrix(), out=normalize(mat,GAMMA,BETA,EPS);
+ $("gval").textContent=GAMMA.toFixed(2);
+ $("bval").textContent=BETA.toFixed(2);
+ $("modelBody").innerHTML=mat.map((r,i)=>`<tr><td>t${i}</td><td>${fmt(mean(r))}</td><td>${fmt(pvar(r))}</td></tr>`).join("");
+ $("outBody").innerHTML=out.map((r,i)=>`<tr><td>t${i}</td><td>${fmt(mean(r))}</td><td>${fmt(Math.sqrt(pvar(r)))}</td></tr>`).join("");
+ $("outmat").innerHTML=matHTML(out);
+ // verdict: does every row hit its target μ=β, σ=|γ| ?
+ const hitMu=out.every(r=>Math.abs(mean(r)-BETA)<1e-6);
+ const hitSd=out.every(r=>Math.abs(Math.sqrt(pvar(r))-Math.abs(GAMMA))<1e-6);
+ const ok=hitMu&&hitSd;
+ $("verdict").textContent = ok?"EVERY ROW STANDARDIZED":"ROWS NOT STANDARDIZED";
+ $("verdict").className="verdict "+(ok?"ok":"no");
+ if(TAMPER){
+  const collapsed = BATCH===1;
+  $("sent").innerHTML = "Axis flipped to <b style='color:var(--wall)'>batch-norm</b> — reading down the columns."+
+   (collapsed?" With one token there is no batch: every feature collapses to β.":" Per-row means are no longer 0 — each row was never looked at as a whole.");
+  $("reason").textContent = collapsed?"batch-norm of a single token is degenerate (σ²=0)":"target μ=β, σ=|γ| is a row property; batch-norm does not hold it";
+ }else{
+  $("sent").innerHTML = `Reading <b>along each row</b>: μ→<b class='k'>${BETA.toFixed(2)}</b>, σ→<b class='k'>${Math.abs(GAMMA).toFixed(2)}</b> for `+
+   (BATCH===1?"the single token, exactly as for a full batch.":"all 4 tokens, independently.");
+  $("reason").textContent = ok?`holds: each row now has mean β=${BETA.toFixed(2)} and std |γ|=${Math.abs(GAMMA).toFixed(2)}`:"—";
+ }
+}
+function audit(){
+ const std=normalize(M0,1,0,EPS);
+ const meanOk=std.every(r=>Math.abs(mean(r))<1e-6);
+ const varOk=std.every(r=>Math.abs(pvar(r)-1)<1e-6);
+ const one=normalize([M0[0]],1,0,EPS);
+ const oneOk=Math.abs(pvar(one[0])-1)<1e-6;
+ const ok=meanOk&&varOk&&oneOk;
+ const worstMean=Math.max(...std.map(r=>Math.abs(mean(r))));
+ const worstVar=Math.max(...std.map(r=>Math.abs(pvar(r)-1)));
+ $("auditout").innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">worst row |μ|: <b style="color:${meanOk?'var(--gr)':'var(--wall)'}">${worstMean.toExponential(1)}</b> &nbsp;·&nbsp; worst |σ²−1|: <b style="color:${varOk?'var(--gr)':'var(--wall)'}">${worstVar.toExponential(1)}</b> &nbsp;·&nbsp; batch-of-1 σ²≈1: <b style="color:${oneOk?'var(--gr)':'var(--wall)'}">${oneOk}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red flipped the axis to batch-norm</span>':''}</div>`;
+}
+function setBatch(n){ BATCH=n; $("tFull").classList.toggle("on",n===4); $("tOne").classList.toggle("on",n===1);
+ $("readmode").innerHTML = n===4?"Full batch. Each row is normalized on its own — the count of tokens never enters the math.":"One token. Layer-norm still delivers μ=β, σ=|γ| — a batch-norm would collapse here (try the tamper).";
+ render(); }
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("inmat").innerHTML=matHTML(M0);
+ $("g").addEventListener("input",e=>{ GAMMA=+e.target.value; render(); audit(); });
+ $("b").addEventListener("input",e=>{ BETA=+e.target.value; render(); audit(); });
+ $("tFull").addEventListener("click",()=>setBatch(4));
+ $("tOne").addEventListener("click",()=>setBatch(1));
+ $("reset").addEventListener("click",()=>{ GAMMA=1;BETA=0; $("g").value=1; $("b").value=0; render(); audit(); });
+ $("std").addEventListener("click",()=>{ GAMMA=1;BETA=0; $("g").value=1; $("b").value=0; render(); audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Axis flipped.</b> Normalization now runs down the columns — a single token collapses and per-row means are no longer 0. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Normalize across the batch and a single token collapses (variance 0 — batch-norm needs a crowd) and per-row means stop being 0. The witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the layer-norm engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

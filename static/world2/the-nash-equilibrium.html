@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE NASH EQUILIBRIUM</title>
+<style>
+:root{
+  --am:#7fd4ff;
+  --ground:#0a1712;
+  --panel:#0e211a;
+  --panel2:#0b1c16;
+  --ink:#dbeee6;
+  --dim:#8fae9f;
+  --line:#1d3a2c;
+  --blue:#5fb2ff;
+  --red:#ff6b6b;
+  --lit:#57e08a;
+  --amber:#ffbf47;
+  --wall:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 620px at 82% -8%, rgba(127,212,255,.10), transparent 60%),
+    radial-gradient(900px 520px at 8% 108%, rgba(87,224,138,.07), transparent 60%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted rgba(127,212,255,.5)}
+a:hover{border-bottom-style:solid}
+.wrap{max-width:1220px;margin:0 auto}
+header{border:1px solid var(--line);border-radius:14px;padding:20px 22px;background:linear-gradient(180deg,var(--panel),var(--panel2));margin-bottom:18px}
+h1{margin:0 0 6px;font-size:27px;letter-spacing:.06em;color:#fff}
+h1 .glow{color:var(--am);text-shadow:0 0 22px rgba(127,212,255,.55)}
+.sub{margin:0 0 12px;color:var(--dim);max-width:78ch}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.tag{display:inline-block;font-size:10.5px;letter-spacing:.14em;padding:2px 8px;border-radius:999px;border:1px solid;vertical-align:middle}
+.t-amber{color:var(--amber);border-color:rgba(255,191,71,.5);background:rgba(255,191,71,.08)}
+.t-in{color:var(--am);border-color:rgba(127,212,255,.5);background:rgba(127,212,255,.08)}
+.t-out{color:var(--lit);border-color:rgba(87,224,138,.5);background:rgba(87,224,138,.08)}
+.t-lit{color:var(--lit);border-color:rgba(87,224,138,.5);background:rgba(87,224,138,.08)}
+.t-wall{color:var(--wall);border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.08)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font-size:11.5px;letter-spacing:.18em;padding:7px 11px;border-radius:9px;border:1px solid var(--line);text-align:center;text-transform:uppercase}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(95,178,255,.4);background:rgba(95,178,255,.06)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.06)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(127,212,255,.4);background:rgba(127,212,255,.06)}
+
+.win{position:relative;border:1px solid var(--line);border-radius:12px;padding:14px 14px 13px;background:linear-gradient(180deg,var(--panel),var(--panel2))}
+.win h3{margin:0 0 8px;font-size:13.5px;letter-spacing:.05em;color:#eafff5;padding-right:30px}
+.win p{margin:6px 0;font-size:12.8px;color:var(--dim)}
+.wn{position:absolute;top:10px;right:11px;width:22px;height:22px;border-radius:6px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)}
+.col.blue .wn{color:var(--blue)}
+.col.red .wn{color:var(--red)}
+.col.center .wn{color:var(--am)}
+.win.panel{border-color:rgba(127,212,255,.35);box-shadow:0 0 0 1px rgba(127,212,255,.08),0 14px 40px -22px rgba(127,212,255,.4)}
+.flow{height:20px;display:flex;align-items:center;justify-content:center;color:var(--am);opacity:.6;font-size:14px}
+
+code,kbd{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
+.mono{font-size:12.4px;color:var(--ink)}
+.dead{color:#6f8a7c;text-decoration:line-through}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);border-radius:0 8px 8px 0;font-size:12.6px;color:#e9c9c9}
+.fix{color:var(--lit)}
+.k{color:var(--am)}
+
+/* engine */
+.preset{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.preset button{font:inherit;font-size:11px;letter-spacing:.04em;color:var(--ink);background:rgba(127,212,255,.06);border:1px solid var(--line);border-radius:7px;padding:5px 9px;cursor:pointer}
+.preset button:hover{border-color:var(--am);color:#fff}
+.mtx{border-collapse:collapse;margin:6px auto;font-size:12.5px}
+.mtx th{color:var(--dim);font-weight:400;padding:4px 7px;font-size:11px}
+.mtx td{border:1px solid var(--line);padding:8px 11px;text-align:center;min-width:74px;background:rgba(0,0,0,.16)}
+.mtx td.ne{outline:2px solid var(--lit);outline-offset:-2px;background:rgba(87,224,138,.10)}
+.pa{color:var(--blue)} .pb{color:var(--red)}
+.br{text-decoration:underline;font-weight:700}
+.inrow{display:flex;gap:6px;align-items:center;justify-content:center;margin:3px 0;flex-wrap:wrap}
+.inrow input{width:48px;font:inherit;font-size:12px;text-align:center;background:#08130e;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px}
+.inrow label{font-size:11px;color:var(--dim);min-width:96px;text-align:right}
+.res{font-size:12.6px;line-height:1.7;margin-top:8px}
+.res b{color:#fff}
+.badge{display:inline-block;font-size:11px;letter-spacing:.05em;padding:3px 9px;border-radius:999px;border:1px solid}
+.b-lit{color:var(--lit);border-color:rgba(87,224,138,.5);background:rgba(87,224,138,.08)}
+.b-red{color:var(--red);border-color:rgba(255,107,107,.55);background:rgba(255,107,107,.10)}
+#auditout{font-size:12.4px;margin-top:8px;line-height:1.6}
+button.act{font:inherit;font-size:11.5px;color:var(--ink);background:rgba(255,107,107,.07);border:1px solid var(--line);border-radius:7px;padding:6px 11px;cursor:pointer;margin:3px 6px 3px 0}
+button.act:hover{border-color:var(--red)}
+button.act.good:hover{border-color:var(--lit)}
+#failb{display:none;margin:10px 0;padding:9px 12px;border:1px solid var(--red);border-radius:8px;background:rgba(255,107,107,.1);color:#ffd7d7;font-size:12.5px}
+footer{margin-top:24px;text-align:center;color:var(--dim);font-size:11.5px;letter-spacing:.04em}
+.hair{height:1px;background:var(--line);margin:9px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1><span class="glow">THE NASH</span> EQUILIBRIUM</h1>
+  <p class="sub">A profile of strategies where no player can gain by changing their own move alone. The machine below reads a 2&times;2 game as two payoff matrices, computes best responses, and finds every pure and mixed equilibrium &mdash; each one a fixed point of mutual best-response. Rendered, not quoted.</p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>John F. Nash, <em>Non-Cooperative Games</em>, Annals of Mathematics <b>54</b> (1951), 286&ndash;295 &mdash; <a href="https://www.jstor.org/stable/1969529" target="_blank" rel="noopener">JSTOR&nbsp;1969529</a>; existence first announced in <em>Equilibrium Points in N-Person Games</em>, PNAS 36 (1950), 48&ndash;49.</span>
+  </div>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ================= BLUE ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wn">3</div>
+      <h3>THE MODEL</h3>
+      <p>A finite game: players <span class="k">1,2</span>, each with a set of pure actions, and a payoff to each player for every action <em>profile</em>. A player may randomize &mdash; a <b>mixed strategy</b> is a probability distribution over their actions.</p>
+      <p>Write <code>u<sub>i</sub>(&sigma;)</code> for player <em>i</em>'s expected payoff at profile &sigma;. Profile &sigma;* is a <b>Nash equilibrium</b> iff for every player <em>i</em> and every alternative strategy <code>s<sub>i</sub></code>:</p>
+      <p class="mono" style="text-align:center;color:var(--ink)">u<sub>i</sub>(&sigma;*<sub>i</sub>, &sigma;*<sub>&minus;i</sub>) &ge; u<sub>i</sub>(s<sub>i</sub>, &sigma;*<sub>&minus;i</sub>)</p>
+      <p>Nash proved every finite game has at least one such point (via Brouwer/Kakutani). Finding it is what the engine does &mdash; for 2&times;2 games, in closed form.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">5</div>
+      <h3>THE LINEAGE</h3>
+      <p>In <a href="https://davidwise01.github.io/the-bellman-equation/" target="_blank" rel="noopener">the-bellman-equation</a> a value is the <b>best response to the world</b> &mdash; a fixed point of one agent optimizing against a fixed environment.</p>
+      <p>Nash turns the environment into <b>another mind</b>. The equilibrium is the fixed point of <em>mutual</em> best-response: each player is optimal <b>given</b> the other, who is optimal given them. Bellman's <code>V=max&nbsp;TV</code> becomes a joint fixed point <code>&sigma;=BR(&sigma;)</code>. One-player optimality &rarr; strategic coherence.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">7</div>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check. Recomputes the Matching-Pennies value, the Prisoner's-Dilemma equilibrium, and confirms the <em>currently claimed</em> profile is a genuine best-response fixed point. Flips red the instant the Red Team's tamper injects a false claim.</p>
+      <div id="auditout">&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="wn">4</div>
+      <h3>DATA IN &nbsp;<span class="tag t-in">in &darr;</span></h3>
+      <p style="margin-top:2px">A 2&times;2 bimatrix. <span class="pa">Blue = player&nbsp;1 (row)</span>, <span class="pb">red = player&nbsp;2 (column)</span>. Load a classic or edit any cell.</p>
+      <div class="preset" id="presets"></div>
+      <table class="mtx" style="font-size:11.5px">
+        <tr><th></th><th id="hc0">Left</th><th id="hc1">Right</th></tr>
+        <tr><th id="hr0">Top</th>
+          <td><span class="inrow"><input id="a00" value="1"><input id="b00" value="-1"></span></td>
+          <td><span class="inrow"><input id="a01" value="-1"><input id="b01" value="1"></span></td></tr>
+        <tr><th id="hr1">Bottom</th>
+          <td><span class="inrow"><input id="a10" value="-1"><input id="b10" value="1"></span></td>
+          <td><span class="inrow"><input id="a11" value="1"><input id="b11" value="-1"></span></td></tr>
+      </table>
+      <p style="text-align:center;margin-top:2px">each cell = (<span class="pa">u<sub>1</sub></span>, <span class="pb">u<sub>2</sub></span>)</p>
+    </div>
+
+    <div class="flow">&darr; best response &darr;</div>
+
+    <div class="win panel">
+      <div class="wn">0</div>
+      <h3>THE PANEL &nbsp;<span class="tag t-lit">LIT</span></h3>
+      <p style="margin-top:2px">Underline = a player's best response to the column/row it faces. A cell best for <em>both</em> is a <b>pure Nash equilibrium</b> (boxed green). The mixed equilibrium, if any, makes each player <em>indifferent</em>.</p>
+      <div id="board"></div>
+      <div class="res" id="analysis"></div>
+    </div>
+
+    <div class="flow">&darr; proven &darr;</div>
+
+    <div class="win">
+      <div class="wn">8</div>
+      <h3>DATA OUT &nbsp;<span class="tag t-out">out &darr;</span></h3>
+      <div class="res" id="dataout"></div>
+      <div class="hair"></div>
+      <div id="litbadge"><span class="badge b-red">booting&hellip;</span></div>
+    </div>
+  </div>
+
+  <!-- ================= RED ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wn">1</div>
+      <h3>THE ADVERSARY</h3>
+      <div class="wall-note">
+        <span class="tag t-wall">WALL</span>
+        <p style="margin:6px 0 0;color:#e9c9c9">&ldquo;Existence is not selection.&rdquo; Nash proves an equilibrium <em>exists</em>; it does not say which one gets played, nor that it is unique. Battle of the Sexes has three. A game can have exponentially many. The theorem hands you a fixed point, not a prediction &mdash; the equilibrium-selection problem is left wide open.</p>
+      </div>
+      <p style="margin-top:8px">Worse: computing one equilibrium in general games is <b>PPAD-complete</b> (Daskalakis&ndash;Goldberg&ndash;Papadimitriou, 2009). Closed form here works only because 2&times;2 is small.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">2</div>
+      <h3>THE GRAVEYARD</h3>
+      <p class="dead">&ldquo;Rational players always reach the good outcome.&rdquo;</p>
+      <p class="fix">&rarr; The Prisoner's Dilemma's only equilibrium is <b>(Defect, Defect)</b> &mdash; jointly worse than (Cooperate, Cooperate), which is <em>not</em> stable. Individual rationality can converge on a bad point.</p>
+      <div class="hair"></div>
+      <p class="dead">&ldquo;A Nash equilibrium is a payoff maximum.&rdquo;</p>
+      <p class="fix">&rarr; It maximizes <em>no</em> joint quantity. It is only a mutual no-regret condition: no player gains by moving <b>alone</b>. Coalitions or side-payments can break it.</p>
+      <div class="hair"></div>
+      <p class="dead">&ldquo;Mixed strategies are unstable coin-flips.&rdquo;</p>
+      <p class="fix">&rarr; At the mixed point each pure action in the support pays <em>exactly the same</em> &mdash; that indifference is what makes it an equilibrium, not fragility.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">6</div>
+      <h3>THE TAMPER</h3>
+      <p>The disclosed planted void. Force the engine to <em>claim</em> that (Cooperate, Cooperate) is the Prisoner's-Dilemma equilibrium &mdash; a profile from which either player gains <b>+2</b> by defecting. The Witness (7) recomputes the best-response condition and must catch it.</p>
+      <p style="margin-top:8px">
+        <button class="act" id="tamper">Inject false claim: C,C is Nash</button>
+        <button class="act good" id="restore">Restore truth</button>
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<footer>WORLD II &middot; THE FOLD &nbsp;&mdash;&nbsp; the-nash-equilibrium &nbsp;&mdash;&nbsp; rendered, not quoted &nbsp;&mdash;&nbsp; David Lee Wise (ROOT0) with AVAN.</footer>
+</div>
+
+<script>
+"use strict";
+/* Engine: pure functions for 2x2 normal-form Nash analysis. Node-extractable. */
+
+var EPS = 1e-9;
+
+/* fixed-seed PRNG (mulberry32) — deterministic robustness sampling */
+function makePRNG(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* A = row(player1) payoffs 2x2, B = column(player2) payoffs 2x2.
+   i = row action (0/1), j = column action (0/1). */
+function rowDeviationGain(A,i,j){ var best=-Infinity; for(var k=0;k<2;k++) if(A[k][j]>best) best=A[k][j]; return best - A[i][j]; }
+function colDeviationGain(B,i,j){ var best=-Infinity; for(var l=0;l<2;l++) if(B[i][l]>best) best=B[i][l]; return best - B[i][j]; }
+function isPureNash(A,B,i,j){ return rowDeviationGain(A,i,j) <= EPS && colDeviationGain(B,i,j) <= EPS; }
+function pureNashList(A,B){ var out=[]; for(var i=0;i<2;i++) for(var j=0;j<2;j++) if(isPureNash(A,B,i,j)) out.push([i,j]); return out; }
+
+/* best-response index sets */
+function rowBR(A,j){ var s=[],m=Math.max(A[0][j],A[1][j]); for(var k=0;k<2;k++) if(Math.abs(A[k][j]-m)<=EPS) s.push(k); return s; }
+function colBR(B,i){ var s=[],m=Math.max(B[i][0],B[i][1]); for(var l=0;l<2;l++) if(Math.abs(B[i][l]-m)<=EPS) s.push(l); return s; }
+
+/* fully-mixed equilibrium: each player mixes so the OTHER is indifferent.
+   p = P(row plays action 0), q = P(col plays action 0). */
+function mixedNash(A,B){
+  var denP = (B[0][0]-B[0][1]-B[1][0]+B[1][1]);
+  var denQ = (A[0][0]-A[1][0]-A[0][1]+A[1][1]);
+  if(Math.abs(denP)<EPS || Math.abs(denQ)<EPS) return null;
+  var p = (B[1][1]-B[1][0]) / denP;   /* makes column indifferent */
+  var q = (A[1][1]-A[0][1]) / denQ;   /* makes row indifferent */
+  if(p<=EPS || p>=1-EPS || q<=EPS || q>=1-EPS) return null;
+  return {p:p, q:q};
+}
+
+/* expected payoffs */
+function rowActionPayoff(A,i,q){ return q*A[i][0] + (1-q)*A[i][1]; }            /* row plays pure i vs col mix q */
+function colActionPayoff(B,j,p){ return p*B[0][j] + (1-p)*B[1][j]; }            /* col plays pure j vs row mix p */
+function expPayoff(M,p,q){ return p*q*M[0][0] + p*(1-q)*M[0][1] + (1-p)*q*M[1][0] + (1-p)*(1-q)*M[1][1]; }
+
+/* canonical games */
+var MP = { A:[[1,-1],[-1,1]], B:[[-1,1],[1,-1]], rows:["Heads","Tails"], cols:["Heads","Tails"], name:"Matching Pennies" };
+var PD = { A:[[3,0],[5,1]], B:[[3,5],[0,1]], rows:["Cooperate","Defect"], cols:["Cooperate","Defect"], name:"Prisoner's Dilemma" };
+
+/* live state the Witness verifies; the Tamper corrupts PD_CLAIM. */
+var TAMPER = false;
+var PD_CLAIM = [1,1];   /* claimed pure Nash of PD = (Defect,Defect) */
+
+/* Witness: recompute invariants + confirm the live claim is a real fixed point. */
+function runWitness(){
+  var m = mixedNash(MP.A, MP.B);
+  if(!m || Math.abs(m.p-0.5)>EPS || Math.abs(m.q-0.5)>EPS) return {ok:false, msg:"Matching Pennies equilibrium corrupted"};
+  if(Math.abs(expPayoff(MP.A, m.p, m.q))>EPS) return {ok:false, msg:"Matching Pennies value ≠ 0"};
+  var i=PD_CLAIM[0], j=PD_CLAIM[1];
+  var rg=rowDeviationGain(PD.A,i,j), cg=colDeviationGain(PD.B,i,j);
+  if(rg>EPS || cg>EPS){
+    var who = rg>=cg ? "row" : "column";
+    var g = Math.max(rg,cg);
+    return {ok:false, msg:"claimed profile ("+PD.rows[i]+","+PD.cols[j]+") is NOT an equilibrium — "+who+" gains +"+g.toFixed(0)+" by deviating to Defect"};
+  }
+  return {ok:true, msg:"verified: Matching Pennies = (½,½), value 0; PD equilibrium ("+PD.rows[i]+","+PD.cols[j]+") — no player gains by deviating"};
+}
+
+/* fail-loud selfcheck: THROWS on any violation, returns true on success.
+   Saves and restores the tamper flag. */
+function selfcheck(){
+  var savedT = TAMPER, savedC = PD_CLAIM.slice();
+
+  /* 1. exact best-response: PD (Defect,Defect) is Nash, no deviation pays */
+  if(!isPureNash(PD.A, PD.B, 1, 1)) throw new Error("PD (D,D) must be Nash");
+  if(rowDeviationGain(PD.A,1,1) > EPS || colDeviationGain(PD.B,1,1) > EPS) throw new Error("deviation gain at (D,D)");
+
+  /* 2. PD has a UNIQUE pure Nash = (D,D), and no fully-mixed equilibrium */
+  var pdN = pureNashList(PD.A, PD.B);
+  if(pdN.length !== 1 || pdN[0][0] !== 1 || pdN[0][1] !== 1) throw new Error("PD pure Nash not unique (D,D)");
+  if(mixedNash(PD.A, PD.B) !== null) throw new Error("PD has spurious mixed equilibrium");
+
+  /* 3. Matching Pennies: NO pure Nash; unique mixed = (1/2,1/2) both; value 0 */
+  if(pureNashList(MP.A, MP.B).length !== 0) throw new Error("MP must have no pure Nash");
+  var m = mixedNash(MP.A, MP.B);
+  if(!m) throw new Error("MP mixed equilibrium missing");
+  if(Math.abs(m.p-0.5) > EPS || Math.abs(m.q-0.5) > EPS) throw new Error("MP mixed ≠ (1/2,1/2)");
+  if(Math.abs(expPayoff(MP.A, m.p, m.q)) > EPS) throw new Error("MP game value ≠ 0");
+
+  /* 3a. indifference to 1e-9: every action in support pays equally */
+  if(Math.abs(rowActionPayoff(MP.A,0,m.q) - rowActionPayoff(MP.A,1,m.q)) > EPS) throw new Error("row not indifferent at MP mix");
+  if(Math.abs(colActionPayoff(MP.B,0,m.p) - colActionPayoff(MP.B,1,m.p)) > EPS) throw new Error("col not indifferent at MP mix");
+
+  /* 4. robust (fixed seed): NO random unilateral deviation beats the equilibrium.
+        MP mixed: any row deviation still pays the value (0). PD (D,D): col plays D,
+        so every mixed row strategy pays <= the D payoff. */
+  var rng = makePRNG(1950);
+  var eqMP = expPayoff(MP.A, m.p, m.q);
+  var ddPay = PD.A[1][1];               /* row payoff at (D,D) with col=D */
+  for(var t=0;t<4000;t++){
+    var pp = rng();                       /* random alt row mix */
+    var devMP = pp*rowActionPayoff(MP.A,0,m.q) + (1-pp)*rowActionPayoff(MP.A,1,m.q);
+    if(devMP - eqMP > EPS) throw new Error("MP: found a profitable row deviation (impossible)");
+    var devPD = pp*PD.A[0][1] + (1-pp)*PD.A[1][1];   /* row mix vs col=Defect */
+    if(devPD - ddPay > EPS) throw new Error("PD: found a row deviation beating (D,D)");
+  }
+
+  /* 5. TAMPER — disclosed planted void: claim (Cooperate,Cooperate) IS Nash.
+        The exact best-response check MUST catch the profitable move to Defect. */
+  TAMPER = true; PD_CLAIM = [0,0];
+  if(isPureNash(PD.A, PD.B, PD_CLAIM[0], PD_CLAIM[1])) throw new Error("tamper undetected: (C,C) wrongly accepted as Nash");
+  if(!(rowDeviationGain(PD.A,0,0) > EPS)) throw new Error("tamper: no profitable deviation to Defect found");
+  if(runWitness().ok) throw new Error("tamper: witness failed to flip");
+
+  /* restore */
+  TAMPER = savedT; PD_CLAIM = savedC;
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var curRows = ["Top","Bottom"], curCols = ["Left","Right"];
+  var presetDefs = [
+    {n:"Matching Pennies", A:[[1,-1],[-1,1]], B:[[-1,1],[1,-1]], r:["Heads","Tails"], c:["Heads","Tails"]},
+    {n:"Prisoner's Dilemma", A:[[3,0],[5,1]], B:[[3,5],[0,1]], r:["Cooperate","Defect"], c:["Cooperate","Defect"]},
+    {n:"Battle of Sexes", A:[[2,0],[0,1]], B:[[1,0],[0,2]], r:["Opera","Football"], c:["Opera","Football"]},
+    {n:"Stag Hunt", A:[[4,1],[3,3]], B:[[4,3],[1,3]], r:["Stag","Hare"], c:["Stag","Hare"]},
+    {n:"Chicken", A:[[0,-1],[1,-10]], B:[[0,1],[-1,-10]], r:["Swerve","Straight"], c:["Swerve","Straight"]}
+  ];
+  function $(id){ return document.getElementById(id); }
+  function setVal(id,v){ $(id).value = v; }
+
+  function loadPreset(p){
+    setVal("a00",p.A[0][0]); setVal("a01",p.A[0][1]); setVal("a10",p.A[1][0]); setVal("a11",p.A[1][1]);
+    setVal("b00",p.B[0][0]); setVal("b01",p.B[0][1]); setVal("b10",p.B[1][0]); setVal("b11",p.B[1][1]);
+    curRows = p.r.slice(); curCols = p.c.slice();
+    $("hr0").textContent=p.r[0]; $("hr1").textContent=p.r[1]; $("hc0").textContent=p.c[0]; $("hc1").textContent=p.c[1];
+    compute();
+  }
+
+  (function buildPresets(){
+    var host = $("presets");
+    presetDefs.forEach(function(p){
+      var b=document.createElement("button"); b.textContent=p.n;
+      b.onclick=function(){ loadPreset(p); }; host.appendChild(b);
+    });
+  })();
+
+  function readMatrix(){
+    function g(id){ return parseFloat($(id).value); }
+    var A=[[g("a00"),g("a01")],[g("a10"),g("a11")]];
+    var B=[[g("b00"),g("b01")],[g("b10"),g("b11")]];
+    return {A:A,B:B};
+  }
+
+  function fmt(x){ if(!isFinite(x)) return "–"; var r=Math.round(x*1000)/1000; return (Math.abs(r-Math.round(r))<1e-9)? String(Math.round(r)) : String(r); }
+  function frac(x){ if(Math.abs(x-0.5)<1e-9) return "½"; if(Math.abs(x-1/3)<1e-9) return "⅓"; if(Math.abs(x-2/3)<1e-9) return "⅔"; return fmt(x); }
+
+  function compute(){
+    var g = readMatrix();
+    var A=g.A, B=g.B;
+    var bad = [A[0][0],A[0][1],A[1][0],A[1][1],B[0][0],B[0][1],B[1][0],B[1][1]].some(isNaN);
+    if(bad){ $("board").innerHTML="<p style='color:var(--red)'>enter numbers in all eight cells.</p>"; return; }
+
+    /* best-response marks */
+    var brR0=rowBR(A,0), brR1=rowBR(A,1);   /* row best resp vs col=0 / col=1 */
+    var brC0=colBR(B,0), brC1=colBR(B,1);   /* col best resp vs row=0 / row=1 */
+    function rowMark(i,j){ return (j===0? brR0:brR1).indexOf(i)>=0; }
+    function colMark(i,j){ return (i===0? brC0:brC1).indexOf(j)>=0; }
+    var pure = pureNashList(A,B);
+    function isNE(i,j){ return pure.some(function(e){return e[0]===i&&e[1]===j;}); }
+
+    /* board */
+    var h = '<table class="mtx"><tr><th></th><th>'+curCols[0]+'</th><th>'+curCols[1]+'</th></tr>';
+    for(var i=0;i<2;i++){
+      h += '<tr><th>'+curRows[i]+'</th>';
+      for(var j=0;j<2;j++){
+        var a='<span class="pa'+(rowMark(i,j)?' br':'')+'">'+fmt(A[i][j])+'</span>';
+        var b='<span class="pb'+(colMark(i,j)?' br':'')+'">'+fmt(B[i][j])+'</span>';
+        h += '<td class="'+(isNE(i,j)?'ne':'')+'">'+a+', '+b+'</td>';
+      }
+      h += '</tr>';
+    }
+    h += '</table>';
+    $("board").innerHTML = h;
+
+    /* analysis */
+    var m = mixedNash(A,B);
+    var an = '<b>Best responses.</b> vs <b>'+curCols[0]+'</b>: row plays <b>'+brR0.map(function(k){return curRows[k];}).join("/")+'</b>; '
+           + 'vs <b>'+curCols[1]+'</b>: <b>'+brR1.map(function(k){return curRows[k];}).join("/")+'</b>. '
+           + 'vs <b>'+curRows[0]+'</b>: col plays <b>'+brC0.map(function(l){return curCols[l];}).join("/")+'</b>; '
+           + 'vs <b>'+curRows[1]+'</b>: <b>'+brC1.map(function(l){return curCols[l];}).join("/")+'</b>.';
+    $("analysis").innerHTML = an;
+
+    /* data out */
+    var out = "";
+    if(pure.length){
+      out += '<b>Pure Nash:</b> ' + pure.map(function(e){
+        return '('+curRows[e[0]]+', '+curCols[e[1]]+') → ('+fmt(A[e[0]][e[1]])+', '+fmt(B[e[0]][e[1]])+')';
+      }).join('; ') + '.<br>';
+    } else {
+      out += '<b>Pure Nash:</b> none.<br>';
+    }
+    if(m){
+      var v1=expPayoff(A,m.p,m.q), v2=expPayoff(B,m.p,m.q);
+      out += '<b>Mixed Nash:</b> player&nbsp;1 plays '+curRows[0]+' w.p. <b>'+frac(m.p)+'</b>, player&nbsp;2 plays '+curCols[0]+' w.p. <b>'+frac(m.q)+'</b>.<br>'
+           + '<span style="color:var(--dim)">at this mix each player is indifferent across their support; expected payoffs = ('+fmt(v1)+', '+fmt(v2)+').</span>';
+    } else {
+      out += '<span style="color:var(--dim)">No fully-mixed equilibrium (a player is never indifferent).</span>';
+    }
+    $("dataout").innerHTML = out;
+
+    refreshWitness();
+  }
+
+  function refreshWitness(){
+    var w = runWitness();
+    var el = $("auditout");
+    if(w.ok){
+      el.innerHTML = '<span class="badge b-lit">WITNESS ✓ LIVE</span><br><span style="color:var(--dim)">'+w.msg+'</span>';
+    } else {
+      el.innerHTML = '<span class="badge b-red">WITNESS ✗ TAMPER CAUGHT</span><br><span style="color:#ffb3b3">'+w.msg+'</span>';
+    }
+  }
+
+  /* tamper controls */
+  $("tamper").onclick = function(){ TAMPER=true; PD_CLAIM=[0,0]; refreshWitness(); };
+  $("restore").onclick = function(){ TAMPER=false; PD_CLAIM=[1,1]; refreshWitness(); };
+
+  /* live editing */
+  ["a00","a01","a10","a11","b00","b01","b10","b11"].forEach(function(id){
+    $(id).addEventListener("input", compute);
+  });
+
+  /* boot: fail-loud selfcheck, then light the badge */
+  try {
+    var ok = selfcheck();
+    if(ok !== true) throw new Error("selfcheck did not return true");
+    $("litbadge").innerHTML = '<span class="badge b-lit">LIT ✓</span> best-response fixed points computed exactly; selfcheck passed — including the planted (C,C) void, caught.';
+  } catch(e){
+    var fb = $("failb");
+    fb.style.display="block";
+    fb.textContent = "SELFCHECK FAILED — engine not LIT: " + e.message;
+    $("litbadge").innerHTML = '<span class="badge b-red">DEAD</span> selfcheck failed.';
+    throw e;
+  }
+
+  compute();
+})();
+</script>
+</body>
+</html>

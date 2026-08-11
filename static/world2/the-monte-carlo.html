@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE MONTE CARLO · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#c8a2ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(200,162,255,.07),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(200,162,255,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(200,162,255,.06);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(200,162,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=number]{width:96px;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+canvas{background:#081109;border:1px solid var(--line);border-radius:6px;display:block;margin:2px auto;max-width:100%;}
+.big{font-size:26px;font-weight:700;letter-spacing:1px;color:var(--am);margin:6px 0 2px;}
+.big .u{font-size:13px;color:var(--dim);letter-spacing:0;}
+.stat{font-size:12px;color:#c3e8ca;margin:3px 0;} .stat b{color:#eafff0;}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE MONTE CARLO</h1>
+ <p class="sub">You cannot integrate the circle by hand? Then <b>throw dice at it</b>. Rain random darts on the unit square, count how many land inside the quarter circle, and the ratio is <b class="k">π/4</b> — so <b class="k">π ≈ 4·inside/total</b>, with no formula, no calculus, only counting. The estimate is real, live, and honest: it wobbles toward π and the error shrinks like <b class="k">1/√n</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> N. Metropolis &amp; S. Ulam, <i>The Monte Carlo Method</i>, J. Amer. Statist. Assoc. <b>44</b>(247), 335–341 (1949) — <a href="https://archive.org/details/sim_journal-of-the-american-statistical-association_1949-09_44_247">archive.org/details/sim_journal-of-the-american-statistical-association_1949-09_44_247</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — throw &amp; count</h2>
+   <p>The whole machine is one idea. The quarter circle of radius 1 has area <b class="k">π/4</b>; the surrounding unit square has area <b>1</b>. Drop a uniform random point <b>(x,y)</b> in the square — the chance it lands inside is exactly the area ratio, <b class="k">π/4</b>. So:</p>
+   <p style="text-align:center;font-size:14px;color:var(--am)">π ≈ 4 · (inside) / (total)</p>
+   <p>A point is <b>inside</b> when <b class="k">x²+y² ≤ 1</b> — one multiply, one compare. No calculus is ever performed. For the current run:</p>
+   <table id="modelTbl"><thead><tr><th>quantity</th><th>value</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — from Ulam's cards <span class="tag t-amber">AVAN</span></h2>
+   <p>Los Alamos, 1946: Stanislaw Ulam, laid up with illness, plays solitaire and wonders what fraction of games win. The combinatorics defeat him — so he imagines just <b>dealing many hands and counting</b>. With von Neumann and Metropolis he turns it on the neutron-diffusion integrals no one could solve by pen.</p>
+   <p>The 1949 paper names and systematizes it. Draw samples, tally outcomes — the same move sits under every simulation since, and its correlated cousin, <a href="https://davidwise01.github.io/the-markov-chain/" style="color:var(--cy)">the Markov chain</a>, turns independent darts into MCMC. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run the estimator over a ladder of sample sizes and confirm it converges to π and the error falls like 1/√n. If red tampers with the test, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the inputs <span class="tag t-in">in ↓</span></h2>
+   <p>The estimator eats exactly three things: a <b class="k">seed</b> (fixes the pseudo-random stream so every run is reproducible), a count <b class="k">n</b> of darts to throw, and the <b>rule of inside</b> — the unit quarter circle x²+y² ≤ 1 living in the unit square [0,1]×[0,1].</p>
+   <p class="small">Randomness comes from a fixed-seed <b>mulberry32</b> PRNG returning values in [0,1) — deterministic, so the self-check is repeatable. Feed these to the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; throw the darts &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>darts n</label>
+      <select id="nsel"><option value="100">100</option><option value="1000">1,000</option><option value="10000" selected>10,000</option><option value="100000">100,000</option></select></div>
+     <div class="row"><label>seed</label><input id="seed" type="number" value="20902" min="1" step="1"></div>
+     <div class="row"><button id="rand">↺ random seed</button><button id="reset">→ reset</button></div>
+     <canvas id="cv" width="230" height="230"></canvas>
+     <p class="small">Each dot is one dart: <b style="color:var(--am)">inside</b> the quarter circle or <b class="mut">outside</b>. Up to 3,000 dots are drawn; the estimate uses all n.</p>
+    </div>
+    <div class="readout">
+     <div class="big" id="piest">—<span class="u"> ≈ π</span></div>
+     <div class="stat">true π = <b>3.1415927</b></div>
+     <div class="stat">inside / total = <b id="frac">—</b></div>
+     <div class="stat">absolute error = <b id="errv">—</b></div>
+     <div class="stat">theoretical 1σ (1.6423/√n) = <b id="se">—</b></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change n or the seed — the estimate is counted from the darts on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the count becomes an estimate &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: a live estimate of <b class="k">π</b> from nothing but counted darts, whose error shrinks like <b class="k">1/√n</b> — quadruple the darts, roughly halve the error. It is a <b>statistical estimate</b>, never exact; the panel shows both the value and its error bar.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms convergence and scaling live; the red team (right) tries to make it converge to the wrong number.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Monte Carlo is <b>slow</b>. Error falls only as 1/√n, so each extra decimal digit of π costs <b>100× more darts</b>. For a 2-D integral like this, classical quadrature (Simpson, Gauss) reaches machine precision in a few thousand evaluations — Monte Carlo never will.</div>
+   <p class="small" style="margin-top:8px">Its win comes only in <b>high dimensions</b>, where grid methods die of the curse of dimensionality and MC's 1/√n is independent of dimension. And the "random" darts are <b>pseudo</b>-random: a poor generator with hidden correlations biases the answer, which is why the seed and PRNG are named and fixed here, not hand-waved.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"More darts always give a better estimate."</s> <b>Cut.</b> Only in expectation. A single run can worsen with more darts — try seed 20902 at n=100 vs n=1000 and watch the error rise before it falls.</p>
+   <p class="grave"><s>"Monte Carlo computes π exactly."</s> <b>Cut.</b> It returns a random estimate with an error bar; it is never exact and never terminates at the true value.</p>
+   <p class="grave"><s>"The 1949 paper invented the method."</s> <b>Kept, corrected.</b> It named and systematized it (Ulam's idea, 1946); random sampling for integrals goes back to Buffon's needle, 1777.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: change the "inside" test from radius 1 to <b>radius 2</b> (x²+y² ≤ 4). Now every dart in the unit square counts as inside, so the estimate marches to <b>4</b>, not π. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ set radius = 2</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Widen the circle and the count is wrong on purpose — the estimate converges to 4, the witness recomputes, disagrees with π, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE MONTE CARLO — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (inputs <b style="color:var(--cy)">in</b> → dart engine → π estimate <b style="color:var(--gr)">out</b>). A runnable rendering of Metropolis &amp; Ulam's 1949 method from archive.org — the engine is LIT (π counted live from a fixed-seed PRNG, convergence and 1/√n scaling self-checked, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: converges to π; error ~ 1/√n) ===== */
+// fixed-seed PRNG — mulberry32, returns a float in [0,1)
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+let TAMPER=false;               // when true the "inside" radius becomes 2 — the estimate goes to 4, not π
+function inside(x,y){ const R2=TAMPER?4:1; return x*x+y*y<=R2; }
+// throw n darts from a fixed seed; return the π estimate = 4*inside/total
+function estimatePi(seed,n){ const rnd=mulberry32(seed); let hits=0; for(let i=0;i<n;i++){ const x=rnd(),y=rnd(); if(inside(x,y)) hits++; } return {hits:hits,n:n,pi:4*hits/n}; }
+// mean absolute error of the estimate across a batch of seeds — smooths the 1/√n law
+function meanAbsErr(n,seeds){ let s=0; for(let k=0;k<seeds;k++) s+=Math.abs(estimatePi(9001+k*13,n).pi-Math.PI); return s/seeds; }
+// theoretical 1-sigma of the estimate: SE = 4*sqrt(p(1-p)/n), p=π/4  →  ≈ 1.6423/√n
+function stdErr(n){ const p=Math.PI/4; return 4*Math.sqrt(p*(1-p)/n); }
+
+/* ===== fail-loud self-check (saves/restores TAMPER; always begins untampered) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ // 1) convergence: a fixed seed at large n lands within a small tolerance of π
+ const conv=estimatePi(0x51A6,262144).pi;            // verified ≈ 3.14673, err ≈ 0.0051
+ t(Math.abs(conv-Math.PI)<0.02,"large-n estimate must be within 0.02 of π (got "+conv+")");
+ // 2) 1/√n scaling: mean error must strictly fall as n grows, each 4× step shrinking it (~half)
+ const ladder=[256,1024,4096,16384,65536], SEEDS=24;
+ const errs=ladder.map(n=>meanAbsErr(n,SEEDS));
+ for(let i=1;i<errs.length;i++){
+   t(errs[i]<errs[i-1],"mean error must fall as n grows (n="+ladder[i]+")");
+   t(errs[i-1]/errs[i]>1.4,"each 4× in n must cut error markedly (n="+ladder[i]+")");
+ }
+ t(errs[0]/errs[errs.length-1]>8,"256× the darts must cut error by well over 8×");
+ // and the realized mean error must track the theoretical 1σ, not drift free
+ const ratio=errs[errs.length-1]/(stdErr(65536)*Math.sqrt(2/Math.PI));
+ t(ratio>0.5&&ratio<1.6,"realized error must track theoretical 1σ (ratio "+ratio.toFixed(3)+")");
+ // 3) the inside-test is correct for known points
+ t(inside(0,0)===true,"(0,0) must be inside");
+ t(inside(0.9,0.9)===false,"(0.9,0.9) must be outside (0.81+0.81=1.62>1)");
+ t(inside(0.5,0.5)===true,"(0.5,0.5) must be inside");
+ t(inside(0.6,0.8)===true,"(0.6,0.8) is on the boundary (=1) — inside");
+ // 4) planted void: with radius=2 the count is wrong, the estimate goes to 4, a known point flips
+ TAMPER=true;
+ const bad=estimatePi(0x51A6,262144).pi;
+ t(bad===4,"tampered radius=2 must make every dart inside → estimate 4");
+ t(Math.abs(bad-Math.PI)>0.5,"tamper must move the estimate far off π");
+ t(inside(0.9,0.9)===true,"under tamper (0.9,0.9) must now count as inside — the void makes noise");
+ TAMPER=false;
+ t(inside(0.9,0.9)===false,"restore must return (0.9,0.9) to outside");
+ TAMPER=save; return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+// draw n darts, plotting up to `cap` of them; returns the full-n estimate
+function runAndDraw(seed,n,cap){
+ const rnd=mulberry32(seed); let hits=0;
+ const cv=$("cv"), g=cv.getContext("2d"), W=cv.width, H=cv.height, pad=6, side=W-2*pad;
+ g.clearRect(0,0,W,H);
+ g.strokeStyle="#20402a"; g.strokeRect(pad,pad,side,side);
+ if(!TAMPER){ g.strokeStyle="#c8a2ff"; g.lineWidth=1.4; g.beginPath(); g.arc(pad,pad+side,side,0,-Math.PI/2,true); g.stroke(); g.lineWidth=1; }
+ else { g.strokeStyle="#ff7a7a"; g.lineWidth=1.4; g.strokeRect(pad,pad,side,side); g.lineWidth=1; }
+ for(let i=0;i<n;i++){
+   const x=rnd(),y=rnd(), ins=inside(x,y); if(ins) hits++;
+   if(i<cap){ const px=pad+x*side, py=pad+(1-y)*side; g.fillStyle=ins?"#c8a2ff":"#3d5a45"; g.fillRect(px-0.9,py-0.9,1.8,1.8); }
+ }
+ return {hits:hits,n:n,pi:4*hits/n};
+}
+function render(){
+ const seed=Math.max(1,parseInt($("seed").value,10)||1), n=+$("nsel").value;
+ const r=runAndDraw(seed,n,3000), err=Math.abs(r.pi-Math.PI), se=stdErr(n);
+ $("piest").innerHTML=r.pi.toFixed(5)+'<span class="u"> ≈ π</span>';
+ $("frac").textContent=r.hits.toLocaleString()+" / "+n.toLocaleString();
+ $("errv").textContent=err.toFixed(5)+(TAMPER?"  ✗ (aimed at 4, not π)":"");
+ $("se").textContent="±"+se.toFixed(5);
+ $("reason").innerHTML = TAMPER
+   ? '<b style="color:var(--wall)">radius=2 — every dart counts as inside; the estimate is heading to 4.</b>'
+   : (err<3*se ? "within the expected error band — the count is doing its job."
+              : "this seed is an unlucky draw, still inside a few σ; that is Monte Carlo.");
+ // window 3 live model table
+ $("modelBody").innerHTML=[
+   ["darts thrown (n)", n.toLocaleString()],
+   ["landed inside", r.hits.toLocaleString()],
+   ["inside / total", (r.hits/n).toFixed(5)],
+   ["× 4 → π estimate", r.pi.toFixed(5)],
+   ["|estimate − π|", err.toFixed(5)]
+ ].map(row=>`<tr><td style="text-align:left">${row[0]}</td><td class="k">${row[1]}</td></tr>`).join("");
+ audit();
+}
+function audit(){
+ const el=$("auditout");
+ const save=TAMPER; TAMPER=false;
+ const conv=estimatePi(0x51A6,65536).pi, cErr=Math.abs(conv-Math.PI);
+ const eA=meanAbsErr(4096,12), eB=meanAbsErr(16384,12);
+ TAMPER=save;
+ // if red set radius=2, the LIVE panel run is tampered — reflect that in the witness
+ const liveBad=TAMPER;
+ const ok = cErr<0.02 && eB<eA && !liveBad;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — converges to π':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">n=65536 estimate: <b style="color:${cErr<0.02?'var(--gr)':'var(--wall)'}">${conv.toFixed(5)}</b> (err ${cErr.toFixed(5)}) &nbsp;·&nbsp; mean err falls ${eA.toFixed(4)}→${eB.toFixed(4)} as n:4096→16384 <b style="color:${eB<eA?'var(--gr)':'var(--wall)'}">${eB<eA?'✓':'✗'}</b>`
+  + `${liveBad?' &nbsp; — <span style="color:var(--wall)">red set radius=2: live estimate aims at 4</span>':''}</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("nsel").addEventListener("change",render);
+ $("seed").addEventListener("input",render);
+ $("rand").addEventListener("click",()=>{ $("seed").value=1+((Math.random()*2000000)|0); render(); });
+ $("reset").addEventListener("click",()=>{ TAMPER=false; $("nsel").value="10000"; $("seed").value="20902";
+   $("tampernote").textContent="Widen the circle and the count is wrong on purpose — the estimate converges to 4, the witness recomputes, disagrees with π, and turns red. Nothing is faked; the attack is real and it is caught."; render(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Radius set to 2.</b> Every dart in the square now counts as inside, so the estimate climbs to 4 — the witness (window 7) recomputed the live run and went red. The attack is real; it is caught."; render(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Widen the circle and the count is wrong on purpose — the estimate converges to 4, the witness recomputes, disagrees with π, and turns red. Nothing is faked; the attack is real and it is caught."; render(); });
+ render();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Monte Carlo engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

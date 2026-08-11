@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE POSITIONAL ENCODING · WORLD II · THE FOLD</title>
+<style>
+:root{
+  --am:#7fd4ff;
+  --ground:#0a1410;
+  --ground2:#0c1a13;
+  --ink:#dff3ea;
+  --dim:#8fb4a6;
+  --line:#1d3a2c;
+  --blue:#5aa9ff;
+  --blue-bg:#0b1826;
+  --red:#ff6b6b;
+  --red-bg:#26100f;
+  --amber:#ffbf47;
+  --lit:#6ee7a8;
+  --wall:#ff8f8f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 15% -5%, #10241a 0%, transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, #0d1f18 0%, transparent 55%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:22px clamp(12px,3vw,40px) 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted currentColor}
+a:hover{color:#fff}
+header{max-width:1200px;margin:0 auto 20px}
+h1{
+  font-size:clamp(24px,4vw,40px);letter-spacing:.06em;margin:0 0 8px;
+  color:#fff;text-shadow:0 0 26px rgba(127,212,255,.35)
+}
+.sub{color:var(--dim);max-width:70ch;margin:0 0 12px;font-size:14px}
+.src{font-size:12.5px;color:var(--dim)}
+.tag{
+  display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;
+  font-weight:700;letter-spacing:.08em;vertical-align:middle;margin-right:6px;
+  border:1px solid currentColor
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{
+  max-width:1200px;margin:0 auto;display:grid;
+  grid-template-columns:1fr 1.15fr 1fr;gap:14px;align-items:start
+}
+@media (max-width:880px){ .ocho{grid-template-columns:1fr} }
+
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:12px;letter-spacing:.14em;font-weight:700;text-transform:uppercase;
+  padding:7px 10px;border-radius:8px;border:1px solid var(--line)
+}
+.col.blue .teamhdr{color:var(--blue);background:var(--blue-bg);border-color:#1c3a5c}
+.col.red  .teamhdr{color:var(--red);background:var(--red-bg);border-color:#5c2320}
+.col.center .teamhdr{color:var(--am);background:#08201c;border-color:#124e46;text-align:center}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:10px;
+  background:linear-gradient(180deg,var(--ground2),#08130e);
+  padding:12px 12px 12px 40px
+}
+.win h3{margin:0 0 6px;font-size:13.5px;letter-spacing:.04em;color:#eafff6}
+.win p,.win li{font-size:12.6px;color:var(--dim);margin:5px 0}
+.win .num{
+  position:absolute;left:8px;top:10px;width:24px;height:24px;border-radius:6px;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:#07130e;border:1px solid var(--line);color:var(--dim)
+}
+.col.blue   .win .num{color:var(--blue);border-color:#1c3a5c}
+.col.red    .win .num{color:var(--red); border-color:#5c2320}
+.col.center .win.panel{border-color:#12564c;box-shadow:0 0 0 1px #0c3630,0 0 34px rgba(127,212,255,.10)}
+.col.center .win .num{color:var(--am);border-color:#124e46}
+
+.flow{
+  text-align:center;color:var(--am);font-size:16px;letter-spacing:.3em;
+  opacity:.7;margin:2px 0
+}
+.wall-note{
+  border-left:3px solid var(--wall);padding:6px 10px;background:#1c0d0c;
+  border-radius:0 8px 8px 0;color:#f4cfcf;font-size:12.4px
+}
+.grave li{list-style:none}
+.grave s{color:#8a6a6a}
+.grave .fix{color:var(--lit)}
+.grave ul{padding-left:0;margin:6px 0}
+
+canvas{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#04100b}
+.mono{font-variant-numeric:tabular-nums}
+.kv{margin:8px 0;font-size:12.4px}
+.kv b{color:var(--ink);font-weight:700}
+.badge{
+  display:inline-block;padding:3px 10px;border-radius:6px;font-weight:800;
+  font-size:12px;letter-spacing:.06em;border:1px solid currentColor
+}
+.badge.ok{color:var(--lit);background:#08201200}
+.badge.bad{color:var(--red);background:#1a0908}
+button{
+  font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+  background:#12211a;border:1px solid var(--line);border-radius:7px;
+  padding:6px 11px;margin:4px 6px 0 0
+}
+button:hover{border-color:var(--am);color:#fff}
+#failb{display:none;margin:10px 0;padding:10px;border:1px solid var(--red);
+  border-radius:8px;background:#1a0908;color:var(--wall);font-size:12.5px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:6px}
+.swatch{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:middle;margin-right:3px}
+footer{max-width:1200px;margin:26px auto 0;color:var(--dim);font-size:12px;text-align:center;
+  border-top:1px solid var(--line);padding-top:14px}
+.small{font-size:11.5px;color:#6f9184}
+code{color:var(--am);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>THE POSITIONAL ENCODING</h1>
+  <p class="sub">A transformer sees a bag of tokens — order-blind by construction. This instrument builds the sinusoidal
+  <em>positional encoding</em> live and proves the one property that makes it work: every position gets a unique, bounded
+  fingerprint, and a shift by <code>k</code> is a fixed rotation the model can learn once and reuse everywhere. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span>
+  Vaswani et&nbsp;al., <em>Attention Is All You Need</em> (2017) —
+  <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">arxiv.org/abs/1706.03762</a>
+  &nbsp;·&nbsp; §3.5 sinusoidal encoding. arXiv id confirmed by search.</p>
+</header>
+
+<main class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <section class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <div class="num">3</div>
+      <h3>THE MODEL</h3>
+      <p>For model width <b>d</b> (even) and integer position <b>pos</b>, split the vector into <b>d/2</b> pairs. Pair <b>i</b> gets angular
+      frequency <code>&omega;<sub>i</sub> = 1 / 10000<sup>2i/d</sup></code>:</p>
+      <p class="mono">PE(pos, 2i)&nbsp;&nbsp;= sin(pos&nbsp;&middot;&nbsp;&omega;<sub>i</sub>)<br>
+      PE(pos, 2i+1) = cos(pos&nbsp;&middot;&nbsp;&omega;<sub>i</sub>)</p>
+      <p>Geometric frequencies span from &omega;=1 (dim&nbsp;0, fastest) down to a slow crawl — a ruler with many nested tick spacings.
+      Here <b>d=16</b>, checked over <b>64</b> positions.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">5</div>
+      <h3>THE LINEAGE</h3>
+      <p>Feeds → <a href="../the-attention/" target="_blank" rel="noopener">the-attention</a>. Self-attention is a set operation:
+      permute the inputs and the outputs just permute — it cannot tell position 1 from position 5. This sphere injects order as
+      <em>geometry</em> added to the embeddings, so the order-blind mechanism downstream can finally see sequence.</p>
+      <p class="small">Order is not stored in attention; it is handed to attention, already shaped.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">7</div>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check of the running engine. Confirms bounds and the rotation relation on the <em>current</em> state, and turns red
+      the instant window&nbsp;6 tampers.</p>
+      <p>Verdict: <span id="auditout" class="badge ok">checking…</span></p>
+      <p class="small">Re-runs <code>invariantsHold()</code> over all 64 positions on every click and every tamper toggle.</p>
+    </div>
+  </section>
+
+  <!-- ================= CENTER ================= -->
+  <section class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="num">4</div>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>Positions <b>0…63</b> and dimension width <b>d=16</b>. No text, no training — pure index geometry.
+      Two probe positions: <b id="pA">5</b> and <b id="pB">40</b>.</p>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <div class="num">0</div>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <canvas id="hm" width="512" height="384" aria-label="positional encoding heatmap"></canvas>
+      <div class="legend">
+        <span><span class="swatch" style="background:#ff6b6b"></span>&minus;1</span>
+        <span><span class="swatch" style="background:#0a1410"></span>0</span>
+        <span><span class="swatch" style="background:#7fd4ff"></span>+1</span>
+        <span>rows = positions 0…31 · cols = dims 0…15</span>
+      </div>
+      <div class="kv" id="simout"></div>
+      <div class="kv small" id="rotout"></div>
+      <div id="failb"></div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win">
+      <div class="num">8</div>
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p>Proven: <span id="litbadge" class="badge bad">booting…</span></p>
+      <p class="small">64 positions → 64 unique encodings, all in [&minus;1,1]; PE(pos+k)=R<sub>k</sub>&middot;PE(pos) for every pos, to &lt;1e&minus;9.</p>
+    </div>
+  </section>
+
+  <!-- ================= RED TEAM ================= -->
+  <section class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="num">1</div>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <div class="wall-note">
+        "Why sinusoids? Just append the integer index, or a one-hot position." — The wall: an unbounded index blows up
+        the residual stream and never generalises past the longest position seen in training; a one-hot needs a fixed max length
+        and gives no notion of <em>relative</em> distance. Sinusoids are bounded and admit a position-independent shift operator.
+      </div>
+    </div>
+
+    <div class="win grave">
+      <div class="num">2</div>
+      <h3>THE GRAVEYARD</h3>
+      <ul>
+        <li><s>"Absolute position is all you get."</s><br><span class="fix">→ shift-by-k is a fixed rotation R<sub>k</sub>, so relative offsets are linearly recoverable.</span></li>
+        <li><s>"10000 is magic / required."</s><br><span class="fix">→ it is an <span class="tag t-amber">AMBER</span> design constant setting the longest wavelength; other bases work, this one was chosen, not derived.</span></li>
+        <li><s>"Two far-apart positions look the same."</s><br><span class="fix">→ every one of the 64 rows is distinct (checked); collisions would fail selfcheck.</span></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <div class="num">6</div>
+      <h3>THE TAMPER</h3>
+      <p>Disclosed planted void: swap the sin/cos engine for a raw linear index <code>PE = pos</code>. Encodings go unbounded and
+      the rotation relation collapses — window&nbsp;7 catches it live.</p>
+      <button id="tamper">Plant the void (PE = pos)</button>
+      <button id="restore">Restore sin/cos</button>
+      <p class="small" id="tampstate">state: clean</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  WORLD II · THE FOLD — the-positional-encoding · refined OCHO ·
+  engine is LIT (live from real logic, fixed-seed, node-verifiable) ·
+  built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+/* Engine + selfcheck: pure logic, extractable for node verification. */
+const D = 16;          // model width (even)
+const NPOS = 64;       // positions checked
+let TAMPER = false;    // disclosed planted-void flag (window 6)
+
+function freq(i){ return 1 / Math.pow(10000, (2*i)/D); }   // pair i angular frequency
+
+function pe(pos){
+  const v = new Array(D);
+  if(TAMPER){                       // planted void: raw linear index, unbounded, no rotation structure
+    for(let j=0;j<D;j++) v[j] = pos;
+    return v;
+  }
+  for(let i=0;i<D/2;i++){
+    const w = freq(i);
+    v[2*i]   = Math.sin(pos*w);
+    v[2*i+1] = Math.cos(pos*w);
+  }
+  return v;
+}
+
+function rotK(k){                    // block-diagonal rotation that should map pe(pos) -> pe(pos+k)
+  const B = [];
+  for(let i=0;i<D/2;i++){
+    const a = k*freq(i);
+    B.push([[Math.cos(a), Math.sin(a)], [-Math.sin(a), Math.cos(a)]]);
+  }
+  return B;
+}
+
+function applyRot(B, v){
+  const out = new Array(D);
+  for(let i=0;i<D/2;i++){
+    const s = v[2*i], c = v[2*i+1], b = B[i];
+    out[2*i]   = b[0][0]*s + b[0][1]*c;
+    out[2*i+1] = b[1][0]*s + b[1][1]*c;
+  }
+  return out;
+}
+
+function cosSim(a,b){
+  let dot=0,na=0,nb=0;
+  for(let j=0;j<a.length;j++){ dot+=a[j]*b[j]; na+=a[j]*a[j]; nb+=b[j]*b[j]; }
+  return dot/Math.sqrt(na*nb);
+}
+
+// Checks the CURRENT engine (respects the live TAMPER flag). true iff all invariants hold.
+function invariantsHold(){
+  // (a) every value bounded in [-1,1]
+  for(let p=0;p<NPOS;p++){
+    const v = pe(p);
+    for(let j=0;j<D;j++){ if(v[j] < -1-1e-9 || v[j] > 1+1e-9) return false; }
+  }
+  // (b) shift-by-k is a fixed rotation of pe(pos), for every pos
+  const ks=[1,3,7];
+  for(let t=0;t<ks.length;t++){
+    const k=ks[t], R=rotK(k);
+    for(let p=0;p+k<NPOS;p++){
+      const pred=applyRot(R, pe(p)), act=pe(p+k);
+      for(let j=0;j<D;j++){ if(Math.abs(pred[j]-act[j]) > 1e-9) return false; }
+    }
+  }
+  return true;
+}
+
+// Fail-loud. Throws on any violation; returns true on success. Saves/restores the tamper flag.
+function selfcheck(){
+  const saved = TAMPER;
+  try{
+    TAMPER = false;
+
+    // 1. uniqueness: no two of 64 positions share an encoding
+    const seen = new Set();
+    for(let p=0;p<NPOS;p++){
+      const key = pe(p).map(x=>x.toFixed(9)).join(',');
+      if(seen.has(key)) throw new Error('E_DUP: two positions share an encoding');
+      seen.add(key);
+    }
+
+    // 2 + 3. bounds in [-1,1] AND rotation relation PE(pos+k)=R_k.PE(pos)
+    if(!invariantsHold()) throw new Error('E_INV: bounds or rotation relation violated');
+
+    // 4. lowest dim oscillates fastest (freq strictly decreasing in i)
+    if(!(freq(0) > freq(D/2-1))) throw new Error('E_FREQ: lowest dim is not the fastest');
+
+    // 5. disclosed planted void MUST be detectable: linear index breaks the invariants
+    TAMPER = true;
+    if(invariantsHold()) throw new Error('E_TAMPER: planted void (PE=pos) not detected');
+    TAMPER = false;
+
+    return true;
+  } finally {
+    TAMPER = saved;   // restore whatever the UI/live state was
+  }
+}
+/* ===== UI ===== */
+function boot(){
+  // fail-loud boot
+  try{
+    const ok = selfcheck();
+    if(ok !== true) throw new Error('selfcheck did not return true');
+    const lb = document.getElementById('litbadge');
+    lb.textContent = 'LIT · selfcheck ✓';
+    lb.className = 'badge ok';
+  }catch(e){
+    const fb = document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent = 'SELFCHECK FAILED — engine not LIT: ' + e.message;
+    const lb = document.getElementById('litbadge');
+    if(lb){ lb.textContent='FAILED'; lb.className='badge bad'; }
+    throw e;
+  }
+  draw();
+  witness();
+}
+
+function draw(){
+  const cv = document.getElementById('hm');
+  const ctx = cv.getContext('2d');
+  const rows = 32, cols = D;
+  const cw = cv.width/cols, ch = cv.height/rows;
+  for(let p=0;p<rows;p++){
+    const v = pe(p);
+    for(let j=0;j<cols;j++){
+      const val = Math.max(-1, Math.min(1, v[j]));
+      ctx.fillStyle = colorFor(val);
+      ctx.fillRect(j*cw, p*ch, Math.ceil(cw), Math.ceil(ch));
+    }
+  }
+  // probe positions similarity
+  const pA=5, pB=40;
+  const a=pe(pA), b=pe(pB), adj=pe(pA+1);
+  document.getElementById('simout').innerHTML =
+    '<b>cos&#8736;( PE('+pA+'), PE('+pB+') )</b> = <span class="mono">'+cosSim(a,b).toFixed(4)+'</span>'+
+    ' &nbsp;·&nbsp; <b>cos&#8736;( PE('+pA+'), PE('+(pA+1)+') )</b> = <span class="mono">'+cosSim(a,adj).toFixed(4)+'</span>'+
+    ' &nbsp;<span class="small">(neighbours more alike than distant positions)</span>';
+  // rotation demonstration on the live probe
+  const R=rotK(pB-pA);
+  const pred=applyRot(R, a);
+  let maxerr=0; for(let j=0;j<D;j++) maxerr=Math.max(maxerr, Math.abs(pred[j]-b[j]));
+  document.getElementById('rotout').innerHTML =
+    'R<sub>'+(pB-pA)+'</sub>&middot;PE('+pA+') vs PE('+pB+') — max abs error = <span class="mono">'+maxerr.toExponential(2)+'</span>'+
+    (TAMPER? ' &nbsp;<b style="color:var(--red)">← relation broken (tampered)</b>':'');
+}
+
+// diverging map: -1 red, 0 ground, +1 accent
+function colorFor(t){
+  const lo=[255,107,107], mid=[10,20,16], hi=[127,212,255];
+  let c;
+  if(t<0){ const k=Math.min(1,-t); c=[mid[0]+(lo[0]-mid[0])*k, mid[1]+(lo[1]-mid[1])*k, mid[2]+(lo[2]-mid[2])*k]; }
+  else   { const k=Math.min(1, t); c=[mid[0]+(hi[0]-mid[0])*k, mid[1]+(hi[1]-mid[1])*k, mid[2]+(hi[2]-mid[2])*k]; }
+  return 'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';
+}
+
+function witness(){
+  const out = document.getElementById('auditout');
+  const clean = invariantsHold();
+  if(clean){ out.textContent='CONFIRMED · invariants hold'; out.className='badge ok'; }
+  else     { out.textContent='TAMPER DETECTED · invariants broken'; out.className='badge bad'; }
+}
+
+document.getElementById('tamper').addEventListener('click', ()=>{
+  TAMPER=true; document.getElementById('tampstate').textContent='state: TAMPERED (PE = pos)';
+  draw(); witness();
+});
+document.getElementById('restore').addEventListener('click', ()=>{
+  TAMPER=false; document.getElementById('tampstate').textContent='state: clean';
+  draw(); witness();
+});
+document.getElementById('auditout').addEventListener('click', witness);
+
+boot();
+</script>
+</body>
+</html>

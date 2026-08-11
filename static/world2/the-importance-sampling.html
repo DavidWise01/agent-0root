@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE IMPORTANCE SAMPLING · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee06a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#0f1a06;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE IMPORTANCE SAMPLING</h1>
+ <p class="sub">You must average a quantity over a distribution <b class="k">p</b> you cannot easily draw from. So draw from an <i>easy</i> distribution <b style="color:var(--cy)">q</b> instead — and pay for the lie with a <b>weight</b> <b class="k">w(x)=p(x)/q(x)</b>. The corrected average is still <b>exactly</b> E<sub>p</sub>[f]: the reweighting is unbiased by an algebraic identity, not by luck. Pick <b>q</b> well and the variance collapses to zero; pick it with a thin tail where <b>p·f</b> is heavy and it explodes. The <b style="color:var(--blue)">blue team</b> builds and proves the estimator; the <b style="color:var(--red)">red team</b> drops the weight and watches it drift.</p>
+ <p class="src"><span class="tag t-amber">source</span> H. Kahn &amp; T. E. Harris, <i>Estimation of Particle Transmission by Random Sampling</i>, Nat. Bur. Standards Appl. Math. Ser. <b>12</b> (1951), pp. 27–30 — no stable open link, cited by author/title/year <span class="tag t-amber">AMBER</span>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the weight w=p/q</h2>
+   <p>The whole trick is one line of algebra. Sample <b>x ~ q</b>, but score each sample by <b class="k">w(x)=p(x)/q(x)</b>:</p>
+   <p><b class="k">E<sub>q</sub>[ f(x)·p(x)/q(x) ]</b> = Σ<sub>x</sub> q(x)·f(x)·p(x)/q(x) = Σ<sub>x</sub> p(x)·f(x) = <b>E<sub>p</sub>[f]</b>. The q cancels — <b>exactly</b>, for <i>any</i> valid q. That makes the estimator <b>unbiased</b>.</p>
+   <p class="small">Live for the chosen proposal: state, target p, proposal q, weight w=p/q, payoff f.</p>
+   <table id="wTbl"><thead><tr><th>x</th><th>p(x)</th><th>q(x)</th><th>w=p/q</th><th>f(x)</th></tr></thead><tbody id="wBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — off-policy <span class="tag t-amber">AVAN</span></h2>
+   <p>Sample from the <i>wrong</i> distribution, then correct with a ratio. That single move is the engine under <a href="https://davidwise01.github.io/the-policy-gradient/" style="color:var(--cy)">the policy gradient</a>'s <b>off-policy</b> correction — data gathered by a behaviour policy <b>q</b>, reweighted by <b class="k">π(a)/q(a)</b> to estimate the return under the target policy <b>p</b>.</p>
+   <p>Same identity, different names: reward-weighted regression, self-normalized off-policy value, every clipped ratio in PPO. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute the population estimator Σ q·f·(p/q) and confirm it equals the known truth <b class="k">E<sub>p</sub>[f] = 3.2</b>. If red drops the weight, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — p, q, f <span class="tag t-in">in ↓</span></h2>
+   <p>Three discrete ingredients over states <b>x ∈ {0,1,2,3,4}</b>:</p>
+   <table><thead><tr><th> </th><th>meaning</th><th>values</th></tr></thead>
+    <tbody class="dist">
+     <tr><td class="y">p</td><td>the <b>target</b> — hard to draw from</td><td>.1 .2 .3 .2 .2</td></tr>
+     <tr><td class="y">q</td><td>the <b>proposal</b> — easy to draw from</td><td>chosen below</td></tr>
+     <tr><td class="y">f</td><td>the <b>payoff</b> f(x)</td><td>1 2 3 4 5</td></tr>
+    </tbody></table>
+   <p class="small">The goal is <b class="k">E<sub>p</sub>[f] = Σ p(x)f(x) = 3.2</b> — computed here as ground truth, then <i>re-estimated</i> below using samples from q with the weight correction.</p>
+  </div>
+  <div class="flow">▼ &nbsp; draw from q, correct by w=p/q &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>proposal q</label>
+      <select id="prop"><option value="q0">uniform · workable</option><option value="qopt">optimal ∝ f·p</option><option value="qbad">thin-tail · poor</option></select></div>
+     <div class="row"><label>samples N</label>
+      <select id="nn"><option value="100">100</option><option value="1000" selected>1000</option><option value="20000">20000</option></select></div>
+     <div class="row"><label>estimator</label>
+      <span class="toggle"><button id="tRaw" class="on">RAW IS</button><button id="tSN">SELF-NORM</button></span></div>
+     <p class="small" id="estmode">Raw IS: (1/N) Σ f(xᵢ)·p(xᵢ)/q(xᵢ). Unbiased for E<sub>p</sub>[f].</p>
+     <div class="row"><button id="reseed">↺ reseed</button><button id="best">→ optimal q</button></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every number is computed live from p, q, f on the spot — the population estimate exactly, the sample estimate from a fixed-seed PRNG. Nothing is looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits an estimate &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the estimate <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves: the reweighted average is <b>unbiased</b> for <b class="k">E<sub>p</sub>[f] = 3.2</b> under <i>any</i> valid q; the <b>optimal</b> proposal q ∝ f·p drives the variance to <b class="k">0</b> (every corrected sample equals 3.2 exactly); the <b>self-normalized</b> form recovers the same answer knowing p only <i>up to a constant</i>; and a <b>thin-tailed</b> q blows the variance up (2.86 → 22.12).</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) confirms the identity live; the red team (right) drops the weight and makes it drift.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Unbiased does not mean <i>usable</i>. If q has a thin tail where <b>p·f</b> is heavy, a single rare sample carries a giant weight, the estimator's variance is enormous — sometimes <b>infinite</b> — and any finite run silently reports a confident wrong number with no warning.</div>
+   <p class="small" style="margin-top:8px">The effective sample size Nₑ = (Σwᵢ)²/Σwᵢ² collapses toward 1 as the weights become lopsided: you paid for N draws and got the information of one. In high dimension a hand-picked q almost always mismatches p somewhere — which is why adaptive / annealed proposals exist.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"More samples always fix it."</s> <b>Cut.</b> With a mismatched q the variance can be infinite; more draws shrink nothing. Fix the <i>proposal</i>, not the count.</p>
+   <p class="grave"><s>"You need p normalized to use IS."</s> <b>Cut.</b> The <b>self-normalized</b> estimator divides by Σw, so any constant in p cancels — this engine proves p̃=7·p gives the identical answer.</p>
+   <p class="grave"><s>"The optimal proposal is q ∝ p."</s> <b>Corrected.</b> It is q ∝ |f|·p. For f ≥ 0 that gives <i>zero</i> variance — every corrected sample equals E<sub>p</sub>[f] exactly.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>drop the weight</b> — just average f under the samples from q with no p/q correction. Now the estimator targets <b>E<sub>q</sub>[f]</b>, not E<sub>p</sub>[f]. The blue witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ drop the weight</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Drop p/q and the unbiasedness identity fails: the population estimate slides from 3.2 to E<sub>q</sub>[f] = 3.0, the witness recomputes, disagrees with the known truth, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE IMPORTANCE SAMPLING — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (p, q, f <b style="color:var(--cy)">in</b> → reweighted estimate <b style="color:var(--gr)">out</b>). A runnable rendering of Kahn &amp; Harris (1951) — the engine is LIT (unbiasedness proven as an exact identity, optimal q zero-variance, self-normalized invariant to p's constant, tamper-provable), the blue team witnesses, the red team drops the weight, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the importance-sampling engine (discrete, exact) ===== */
+const LABELS=[0,1,2,3,4];
+const F  =[1,2,3,4,5];              // payoff f(x) > 0
+const P  =[0.1,0.2,0.3,0.2,0.2];    // target p — hard to sample, sums to 1
+const Q0 =[0.2,0.2,0.2,0.2,0.2];    // proposal: uniform (workable)
+const ZOPT=F.reduce((s,fx,x)=>s+fx*P[x],0);           // = E_p[f]
+const QOPT=F.map((fx,x)=>fx*P[x]/ZOPT);               // optimal q ∝ f·p (zero variance, f ≥ 0)
+const QBAD=[0.4,0.3,0.15,0.1,0.05]; // thin tail exactly where f·p is largest
+const PROP={ q0:{q:Q0,name:"uniform (workable)"}, qopt:{q:QOPT,name:"optimal ∝ f·p"}, qbad:{q:QBAD,name:"thin-tail (poor)"} };
+
+let TAMPER=false;   // when true: drop the p/q weight → the estimator targets E_q[f], not E_p[f]
+
+const Ep=(f,p)=>f.reduce((s,fx,x)=>s+p[x]*fx,0);       // true target expectation E_p[f]
+const Eq=(f,q)=>f.reduce((s,fx,x)=>s+q[x]*fx,0);       // what the unweighted (tampered) mean targets
+const weights=(p,q)=>p.map((px,x)=>px/q[x]);           // importance weights w = p/q
+
+// population raw-IS estimator: Σ_x q(x)·f(x)·w(x), w = (TAMPER ? 1 : p/q)
+function isPop(f,p,q){ let s=0; for(let x=0;x<f.length;x++){ const w=TAMPER?1:p[x]/q[x]; s+=q[x]*f[x]*w; } return s; }
+// population self-normalized estimator: (Σ q·w·f)/(Σ q·w), w = ptilde/q — invariant to a constant in p
+function snPop(f,pt,q){ let num=0,den=0; for(let x=0;x<f.length;x++){ const w=pt[x]/q[x]; num+=q[x]*w*f[x]; den+=q[x]*w; } return num/den; }
+// exact per-sample variance of the raw-IS estimator: Σ (f·p)²/q − (E_p f)²
+function varPop(f,p,q){ let s=0; for(let x=0;x<f.length;x++){ s+=(f[x]*p[x])*(f[x]*p[x])/q[x]; } return s-Ep(f,p)**2; }
+
+// fixed-seed PRNG (mulberry32) — full [0,1), deterministic selfcheck
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function sampleIdx(q,rng){ const u=rng(); let c=0; for(let i=0;i<q.length;i++){ c+=q[i]; if(u<c) return i; } return q.length-1; }
+function sampleIS(f,p,q,seed,N){ const rng=mulberry32(seed>>>0); let s=0; for(let k=0;k<N;k++){ const x=sampleIdx(q,rng); const w=TAMPER?1:p[x]/q[x]; s+=f[x]*w; } return s/N; }
+function sampleSN(f,pt,q,seed,N){ const rng=mulberry32(seed>>>0); let num=0,den=0; for(let k=0;k<N;k++){ const x=sampleIdx(q,rng); const w=pt[x]/q[x]; num+=w*f[x]; den+=w; } return num/den; }
+
+/* ===== fail-loud self-check (deterministic) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const truth=Ep(F,P);                                        // 3.2
+ t(Math.abs(truth-3.2)<1e-12,"E_p[f] must be 3.2");
+ // (1) unbiasedness identity — Σ q·f·(p/q) = Σ p·f, EXACTLY, for ANY proposal
+ t(Math.abs(isPop(F,P,Q0)  -truth)<1e-12,"IS identity must hold for q0");
+ t(Math.abs(isPop(F,P,QBAD)-truth)<1e-12,"IS identity must hold for a poor q");
+ t(Math.abs(isPop(F,P,QOPT)-truth)<1e-12,"IS identity must hold for q*");
+ // (2) every importance weight ≥ 0
+ for(const key in PROP) weights(P,PROP[key].q).forEach(w=>t(w>=0,"weights must be ≥ 0"));
+ // (3) self-normalized recovers E_p[f] and is invariant to the normalizing constant of p
+ t(Math.abs(snPop(F,P,Q0)-truth)<1e-12,"self-normalized must equal E_p[f]");
+ const PT=P.map(x=>7*x);                                     // unnormalized p̃ = 7·p
+ t(Math.abs(snPop(F,PT,Q0)-snPop(F,P,Q0))<1e-12,"self-normalized must ignore the constant");
+ t(Math.abs(snPop(F,PT,QBAD)-truth)<1e-12,"self-normalized must equal E_p[f] for any q");
+ // (4) variance: optimal q is zero-variance; a thin tail strictly increases variance
+ t(varPop(F,P,QOPT)<1e-12,"optimal proposal must have zero variance");
+ t(varPop(F,P,QOPT)<varPop(F,P,Q0),"q* variance must be below q0 variance");
+ t(varPop(F,P,Q0)<varPop(F,P,QBAD),"a thin-tailed q must have larger variance");
+ // (5) sampling (fixed seed): optimal q is exact for ANY draw; workable q converges within tolerance
+ t(Math.abs(sampleIS(F,P,QOPT,12345,64)-truth)<1e-9,"q* sample estimate is exact for any seed");
+ t(Math.abs(sampleIS(F,P,Q0,12345,20000)-truth)<0.1,"q0 sample estimate must converge near E_p[f]");
+ // (6) the planted void: dropping the weight makes the estimator target E_q[f] ≠ E_p[f]
+ TAMPER=true;
+ t(Math.abs(isPop(F,P,Q0)-Eq(F,Q0))<1e-12,"tampered estimator must equal E_q[f]");
+ t(Math.abs(isPop(F,P,Q0)-truth)>1e-6,"tamper must break the unbiasedness identity");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const fmt=(v,d=4)=>Number(v).toFixed(d);
+let seed=12345, useSN=false;
+const curKey=()=>$("prop").value;
+const curN =()=>+$("nn").value;
+
+function render(){
+ const key=curKey(), q=PROP[key].q, N=curN(), truth=Ep(F,P);
+ // weight table (window 3)
+ const w=weights(P,q);
+ $("wBody").innerHTML=LABELS.map(x=>`<tr><td>${x}</td><td>${fmt(P[x],3)}</td><td>${fmt(q[x],4)}</td><td class="${w[x]>2?'y':''}">${fmt(w[x],3)}</td><td>${F[x]}</td></tr>`).join("");
+
+ const isP=isPop(F,P,q);                                     // population estimate (exact)
+ const est= useSN ? sampleSN(F,P,q,seed,N) : sampleIS(F,P,q,seed,N);  // sample estimate
+ const vp=varPop(F,P,q);
+ const se=Math.sqrt(vp/N);                                   // raw-IS standard error
+ const err=Math.abs(est-truth);
+ const unbiased = Math.abs(isP-truth)<1e-9;                  // population identity holds?
+
+ $("sent").innerHTML =
+   `target &nbsp; <b>E<sub>p</sub>[f]</b> = <b class="M">${fmt(truth,3)}</b><br>`+
+   `population &nbsp; Σ q·f·w = <b class="${unbiased?'P':'S'}" style="color:${unbiased?'var(--gr)':'var(--wall)'}">${fmt(isP,4)}</b> ${unbiased?'✓ exact':'✗ drifted'}<br>`+
+   `sample (${useSN?'self-norm':'raw'}, N=${N}) = <b class="S">${fmt(est,4)}</b> &nbsp;|err| ${fmt(err,4)}`;
+ $("verdict").textContent = unbiased ? "UNBIASED" : "BIASED";
+ $("verdict").className = "verdict "+(unbiased?"ok":"no");
+ $("moodname").innerHTML = `proposal: <b>${PROP[key].name}</b>`;
+ $("reason").innerHTML = unbiased
+   ? `per-sample variance <b class="k">${fmt(vp,3)}</b> · std-error ≈ ${fmt(se,4)}`
+     + (vp<1e-12? ` — <b style="color:var(--gr)">zero: every corrected sample = E<sub>p</sub>[f]</b>` : (key==="qbad"? ` — <span style="color:var(--wall)">thin tail: variance blows up</span>`:``))
+   : `weight dropped — the mean now targets E<sub>q</sub>[f] = ${fmt(Eq(F,q),3)}, not E<sub>p</sub>[f]`;
+ audit();
+}
+
+function setMode(sn){ useSN=sn; $("tRaw").classList.toggle("on",!sn); $("tSN").classList.toggle("on",sn);
+ $("estmode").innerHTML = sn
+   ? "Self-normalized: (Σ wᵢ f(xᵢ))/(Σ wᵢ). Works when p is known only up to a constant."
+   : "Raw IS: (1/N) Σ f(xᵢ)·p(xᵢ)/q(xᵢ). Unbiased for E<sub>p</sub>[f].";
+ render();
+}
+
+function audit(){
+ const el=$("auditout"), truth=Ep(F,P);
+ const m=isPop(F,P,Q0);                                      // recompute the identity live
+ const ok = Math.abs(m-truth)<1e-9;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — identity holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">Σ q·f·(p/q) = <b style="color:${ok?'var(--gr)':'var(--wall)'}">${fmt(m,4)}</b> vs known E<sub>p</sub>[f] = <b>${fmt(truth,3)}</b>`
+  + `${TAMPER?' &nbsp; — <span style="color:var(--wall)">red dropped the weight → targeting E<sub>q</sub>[f]='+fmt(Eq(F,Q0),3)+'</span>':' &nbsp; · match'}</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("prop").addEventListener("change",render);
+ $("nn").addEventListener("change",render);
+ $("tRaw").addEventListener("click",()=>setMode(false));
+ $("tSN").addEventListener("click",()=>setMode(true));
+ $("reseed").addEventListener("click",()=>{ seed=(seed*1664525+1013904223)>>>0; render(); });
+ $("best").addEventListener("click",()=>{ $("prop").value="qopt"; render(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Weight dropped.</b> The estimator is now a plain average of f under q — it targets E<sub>q</sub>[f] = 3.0, and the witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Drop p/q and the unbiasedness identity fails: the population estimate slides from 3.2 to E_q[f] = 3.0, the witness recomputes, disagrees with the known truth, and turns red. Nothing is faked; the attack is real and it is caught."; render(); });
+ render();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the importance-sampling engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

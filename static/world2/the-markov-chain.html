@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE MARKOV CHAIN · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:220px;} .readout{flex:1;min-width:240px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.mtx input{width:52px;text-align:center;padding:4px 3px;} .mtx td{padding:2px;} .mtx th{color:var(--am);font-weight:700;}
+.mtx .rl{color:var(--cy);font-weight:700;}
+.ptbl td.p{color:var(--ink);} .ptbl .diag{background:rgba(158,224,208,.06);}
+.pi{font-size:12px;margin:8px 0;}
+.bar{height:12px;background:linear-gradient(90deg,var(--am),var(--cy));border-radius:3px;min-width:2px;}
+.bwrap{display:flex;align-items:center;gap:8px;margin:3px 0;} .bwrap .lab{min-width:74px;color:var(--dim);}
+.bwrap .val{min-width:78px;text-align:right;color:#eafff0;}
+.conv td.k{color:var(--dim);} .conv tr:last-child td{color:var(--gr);font-weight:700;}
+.verdict{font-size:15px;font-weight:700;letter-spacing:.5px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE MARKOV CHAIN</h1>
+ <p class="sub">The future depends only on the present — never on the whole past. Write the transitions as a matrix <b>P</b>, one row per state, each row a probability distribution. Push any starting distribution through it again and again and it <b>forgets where it began</b>, settling onto a single fixed vector <b class="k">π</b> with <b class="k">πP = π</b>. Down the center: a matrix goes <b style="color:var(--cy)">in</b>, power iteration runs, the stationary distribution comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> A. A. Markov, <i>Extension of the law of large numbers to quantities depending on each other</i> (Izv. Fiz.-Mat. Obshch. Kazan, 2nd ser., 15, 1906). <b style="color:var(--amber)">AMBER</b>: an archive.org search returned no verified standalone scan of the 1906 Kazan bulletin; an English translation is reprinted in the appendix of Meyn &amp; Tweedie / Seneta's <a href="https://arxiv.org/abs/1309.6488">tricentenary history</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — power iteration</h2>
+   <p>A distribution π is a row vector; one step of the chain is a matrix multiply on the right: <b class="k">π′ = πP</b>, so <b>π′ⱼ = Σᵢ πᵢ Pᵢⱼ</b>. Because every row of P sums to 1, total mass is conserved — π stays a distribution forever.</p>
+   <p>Iterate. For an <b>irreducible, aperiodic</b> (ergodic) chain the sequence π, πP, πP², … converges to the unique <b>stationary</b> vector where <b class="k">πP = π</b> — the leading left eigenvector, eigenvalue 1. The rate is set by the second-largest eigenvalue |λ₂|; error shrinks like |λ₂|ᵏ.</p>
+   <p class="small">Live for the current matrix — the fixed-point residual ‖πP − π‖₁:</p>
+   <table id="modelTbl"><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — probability made sequential <span class="tag t-amber">AVAN</span></h2>
+   <p>Independence was probability's silent assumption. Markov's 1906 move — keep the <i>law of large numbers</i> but let each trial <b>lean on the one before</b> — is the premise every later sphere consumes:</p>
+   <p><b class="k">PageRank</b> is π for the web's link matrix — the stationary distribution of a random surfer. <b class="k">MCMC</b> runs the arrow backwards: design P so its π <i>is</i> the distribution you want to sample, then walk. The <b class="k">n-gram language model</b> is a Markov chain over tokens — P(next | current). <a href="https://davidwise01.github.io/ud0/world2/" style="color:var(--cy)">Each sphere is the next one's premise.</a></p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute π for the <b>current</b> matrix and confirm the two invariants — every built row sums to 1, and the fixed point holds (‖πP − π‖₁ &lt; 1e-6). If red skips normalization, this is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the transition weights <span class="tag t-in">in ↓</span></h2>
+   <p>A chain over <b class="k" id="nlabel">3</b> states is a square grid of <b>non-negative weights</b>. Entry <b>row i, col j</b> is the tendency to go from state <b>i</b> to state <b>j</b>. Each row is <b>normalized</b> to sum to 1 — that is what turns raw counts into a probability distribution and makes P a stochastic matrix.</p>
+   <p class="small">Edit any cell (raw weights, e.g. observed counts); pick the number of states. Zeros are fine; a zero <b>row</b> is treated as uniform. This grid is exactly what feeds the panel below.</p>
+   <div class="row"><label>states</label>
+    <select id="nstates"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select>
+    <span class="small">rows = <b>from</b> · columns = <b>to</b></span></div>
+   <table class="mtx" id="mtx"><tbody id="mtxBody"></tbody></table>
+  </div>
+  <div class="flow">▼ &nbsp; normalize each row, then iterate &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <p class="small">Normalized <b>P</b> (each row a distribution):</p>
+     <table class="ptbl" id="ptbl"><tbody id="ptblBody"></tbody></table>
+     <div class="row" style="margin-top:8px"><button id="rand">↺ random rows</button><button id="reset">→ reset preset</button></div>
+     <p class="small" id="connote" style="margin-top:6px">Power iteration from the uniform start — watch the row vector settle onto π.</p>
+     <table class="conv" id="convTbl"><thead><tr id="convHead"></tr></thead><tbody id="convBody"></tbody></table>
+    </div>
+    <div class="readout">
+     <p class="small">Stationary distribution <b class="k">π</b> (computed, not stored):</p>
+     <div class="pi" id="piBars"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change any weight — π is recomputed by iterating πP on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits the stationary vector &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the stationary π <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: the long-run fraction of time the chain spends in each state, independent of where it started. It satisfies <b class="k">πP = π</b> and <b class="k">Σπ = 1</b> — both checked live below. For a 2-state chain P = [[1−a, a],[b, 1−b]] the closed form is <b>π = [b/(a+b), a/(a+b)]</b>, which the engine reproduces to 1e-6.</p>
+   <div id="outNums"></div>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these invariants live; the red team (right) tries to make them false.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The chain is <b>memoryless by fiat</b>. Order-1 dependence is an assumption, not a fact: real language, markets and weather carry long-range structure a single P cannot hold. Worse, π need not exist or be unique — a <b>reducible</b> chain has many stationary vectors, and a <b>periodic</b> one (e.g. [[0,1],[1,0]]) never converges under power iteration at all.</div>
+   <p class="small" style="margin-top:8px">Build a periodic chain in the panel and the witness honestly refuses to certify convergence — it goes red, because there is no fixed point to reach. "Stationary distribution" is a promise that holds only for ergodic chains; the engine does not pretend otherwise.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Every Markov chain has a unique stationary distribution."</s> <b>Cut.</b> Only <b>irreducible + aperiodic</b> chains do. Reducible → many; periodic → power iteration oscillates and never lands.</p>
+   <p class="grave"><s>"Markov invented chains to model language (Eugene Onegin)."</s> <b>Cut.</b> The <b>1906</b> paper is about the law of large numbers for dependent variables; the vowel/consonant count of Pushkin's <i>Onegin</i> came <b>1913</b> — an application, not the origin.</p>
+   <p class="grave"><s>"π is just the starting distribution run forward."</s> <b>Kept, corrected.</b> π is the <i>fixed point</i>: the one input that comes back unchanged. Every other start converges toward it.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>skip the row-normalization</b>. Rows keep their raw weights, no longer sum to 1, P stops being stochastic — mass is no longer conserved, so πP grows without bound and π stops summing to 1. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ skip row-normalization</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Skip normalization and the iterates blow up — Σπ leaves 1, the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE MARKOV CHAIN — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (matrix <b style="color:var(--cy)">in</b> → power iteration → stationary π <b style="color:var(--gr)">out</b>). A runnable rendering of Markov's 1906 extension of the law of large numbers to dependent quantities — the engine is LIT (π computed live by iterating πP, πP=π and Σπ=1 self-checked against the 2-state closed form, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single memoryless frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (pure logic — node-verifiable) ===== */
+let TAMPER=false;   // when true, skip row-normalization — the witness must catch it
+
+// Build the stochastic matrix P from raw non-negative weights.
+// Untampered: normalize each row to sum 1 (a zero row becomes uniform).
+// Tampered: return the raw weights unchanged (rows no longer sum to 1).
+function buildP(raw){
+ if(TAMPER) return raw.map(r=>r.slice());
+ return raw.map(r=>{ const s=r.reduce((a,b)=>a+b,0); const n=r.length;
+  return s>0 ? r.map(x=>x/s) : r.map(()=>1/n); });
+}
+// one step: piNew_j = sum_i pi_i * P_ij
+function step(pi,P){ const n=P.length,out=new Array(n).fill(0);
+ for(let j=0;j<n;j++){ let s=0; for(let i=0;i<n;i++) s+=pi[i]*P[i][j]; out[j]=s; } return out; }
+function vsum(v){ let s=0; for(let i=0;i<v.length;i++) s+=v[i]; return s; }
+function l1(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=Math.abs(a[i]-b[i]); return s; }
+function residual(pi,P){ return l1(step(pi,P),pi); }   // ||piP - pi||_1
+// power iteration from the uniform start; records history of the row vector
+function powerIter(raw,iters){
+ const P=buildP(raw), n=P.length;
+ let pi=new Array(n).fill(1/n);
+ const hist=[pi.slice()];
+ for(let k=0;k<iters;k++){ pi=step(pi,P); hist.push(pi.slice()); }
+ return {pi,hist,P};
+}
+// closed form for the 2-state chain P=[[1-a,a],[b,1-b]]
+function stationary2(a,b){ return [b/(a+b), a/(a+b)]; }
+
+/* ===== fail-loud self-check (saves/restores TAMPER; begins untampered) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+
+ // (1) power iteration matches the 2-state closed form, sums to 1, is a fixed point
+ const cases=[[0.3,0.6],[0.1,0.25],[0.5,0.5],[0.8,0.4]];
+ for(const c of cases){ const a=c[0], b=c[1];
+  const raw=[[1-a,a],[b,1-b]];
+  const r=powerIter(raw,500);
+  const cf=stationary2(a,b);
+  t(Math.abs(r.pi[0]-cf[0])<1e-6 && Math.abs(r.pi[1]-cf[1])<1e-6,
+    "power iteration must match closed form pi=[b/(a+b),a/(a+b)] for a="+a+",b="+b);
+  t(Math.abs(vsum(r.pi)-1)<1e-9, "pi must sum to 1 for a="+a+",b="+b);
+  t(residual(r.pi,r.P)<1e-6, "||piP-pi|| must be < 1e-6 at convergence for a="+a+",b="+b);
+  for(const row of r.P) t(Math.abs(vsum(row)-1)<1e-12,"each built row must sum to 1");
+ }
+ // (2) a 3-state ergodic chain also converges to a normalized fixed point
+ const raw3=[[6,3,1],[3,4,3],[2,3,5]];
+ const r3=powerIter(raw3,600);
+ t(Math.abs(vsum(r3.pi)-1)<1e-9,"3-state pi must sum to 1");
+ t(residual(r3.pi,r3.P)<1e-6,"3-state chain must reach a fixed point");
+ for(const row of r3.P) t(Math.abs(vsum(row)-1)<1e-12,"3-state built rows must sum to 1");
+
+ // (3) THE PLANTED VOID: skip normalization and the same raw counts must break.
+ //     rawBad rows sum to 10, so mass multiplies by 10 each step -> pi leaves 1.
+ TAMPER=true;
+ const rawBad=[[7,3],[4,6]];
+ const bad=powerIter(rawBad,40);
+ t(Math.abs(vsum(bad.pi)-1)>1e-3,"tamper (no normalization) MUST break pi-sums-to-1");
+ t(bad.P.some(row=>Math.abs(vsum(row)-1)>1e-9),"tampered rows must NOT sum to 1");
+ // and restoring normalization on the very same weights fixes it
+ TAMPER=false;
+ const good=powerIter(rawBad,500);
+ t(Math.abs(vsum(good.pi)-1)<1e-9,"after restore, normalization must fix pi-sum");
+ t(residual(good.pi,good.P)<1e-6,"after restore, pi must again be a fixed point");
+
+ TAMPER=save; return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const NAMES=["A","B","C","D"];
+const PRESETS={2:[[7,3],[4,6]], 3:[[6,3,1],[3,4,3],[2,3,5]], 4:[[5,2,2,1],[1,5,2,2],[2,1,5,2],[2,2,1,5]]};
+let N=3;
+const fmt=x=>{ if(!isFinite(x)) return "∞"; if(x!==0 && (Math.abs(x)>=1000||Math.abs(x)<1e-4)) return x.toExponential(2); return x.toFixed(4); };
+const pct=x=>{ if(!isFinite(x)) return "∞"; return (x*100).toFixed(2)+"%"; };
+
+function buildGrid(){
+ const pre=PRESETS[N];
+ // header row
+ let head='<tr><th></th>'+NAMES.slice(0,N).map(nm=>'<th>→'+nm+'</th>').join('')+'</tr>';
+ let body=head;
+ for(let i=0;i<N;i++){
+  body+='<tr><td class="rl">'+NAMES[i]+'→</td>';
+  for(let j=0;j<N;j++) body+='<td><input type="number" min="0" step="0.1" id="m_'+i+'_'+j+'" value="'+pre[i][j]+'"></td>';
+  body+='</tr>';
+ }
+ $("mtxBody").innerHTML=body;
+ for(let i=0;i<N;i++)for(let j=0;j<N;j++) $("m_"+i+"_"+j).addEventListener("input",()=>{render();audit();});
+}
+function readRaw(){
+ const raw=[];
+ for(let i=0;i<N;i++){ const r=[]; for(let j=0;j<N;j++){ let v=parseFloat($("m_"+i+"_"+j).value); if(!isFinite(v)||v<0) v=0; r.push(v);} raw.push(r);} return raw;
+}
+function computeState(){ const raw=readRaw(); const r=powerIter(raw,200); return Object.assign({raw},r); }
+
+function render(){
+ const S=computeState(), P=S.P, pi=S.pi, hist=S.hist;
+ $("nlabel").textContent=N;
+ // normalized P table
+ let pb='<tr><th></th>'+NAMES.slice(0,N).map(nm=>'<th>'+nm+'</th>').join('')+'</tr>';
+ for(let i=0;i<N;i++){ pb+='<tr><th>'+NAMES[i]+'</th>';
+  for(let j=0;j<N;j++) pb+='<td class="p'+(i===j?' diag':'')+'">'+fmt(P[i][j])+'</td>'; pb+='</tr>'; }
+ $("ptblBody").innerHTML=pb;
+ // convergence table (selected iterations)
+ const idx=[0,1,2,3,5,10,20,50,199].filter(k=>k<hist.length);
+ let ch='<th class="k">k</th>'+NAMES.slice(0,N).map(nm=>'<th>'+nm+'</th>').join('')+'<th>Σ</th>';
+ $("convHead").innerHTML=ch;
+ $("convBody").innerHTML=idx.map(k=>{ const v=hist[k];
+  return '<tr><td class="k">'+k+'</td>'+v.map(x=>'<td>'+fmt(x)+'</td>').join('')+'<td>'+fmt(vsum(v))+'</td></tr>'; }).join("");
+ // pi bars
+ const mx=Math.max.apply(null,pi.map(x=>isFinite(x)?Math.abs(x):0),1e-9);
+ $("piBars").innerHTML=pi.map((x,i)=>{ const w=isFinite(x)?Math.max(0,Math.min(100,100*x/mx)):100;
+  return '<div class="bwrap"><span class="lab">'+NAMES[i]+'</span><div class="bar" style="width:'+w+'%"></div><span class="val">'+pct(x)+'</span></div>'; }).join("");
+ const sum=vsum(pi), res=residual(pi,P);
+ const ok = Math.abs(sum-1)<1e-6 && res<1e-6;
+ $("verdict").textContent = ok? "CONVERGED · πP = π" : (TAMPER?"BROKEN · Σπ ≠ 1":"NOT CONVERGED");
+ $("verdict").className="verdict "+(ok?"ok":"no");
+ $("reason").innerHTML = ok
+   ? "Σπ = "+fmt(sum)+" · residual ‖πP−π‖₁ = "+res.toExponential(2)
+   : (TAMPER? "rows not normalized — mass grew to Σπ = "+fmt(sum)
+            : "no fixed point reached (chain reducible or periodic) — residual "+res.toExponential(2));
+ // data out numbers
+ $("outNums").innerHTML='<table><thead><tr><th>state</th>'+pi.map((_,i)=>'<th>'+NAMES[i]+'</th>').join('')+'<th>Σπ</th></tr></thead>'
+   +'<tbody><tr><td>π</td>'+pi.map(x=>'<td>'+fmt(x)+'</td>').join('')+'<td class="'+(Math.abs(sum-1)<1e-6?'':'')+'" style="color:'+(Math.abs(sum-1)<1e-6?'var(--gr)':'var(--wall)')+'">'+fmt(sum)+'</td></tr></tbody></table>';
+}
+
+function audit(){
+ const el=$("auditout");
+ const S=computeState(), P=S.P, pi=S.pi;
+ const rowsok = P.every(r=>Math.abs(vsum(r)-1)<1e-9);
+ const sumok = Math.abs(vsum(pi)-1)<1e-6;
+ const fixok = residual(pi,P)<1e-6;
+ // independent standing check: the 2-state closed form, always recomputed
+ const ref=powerIter([[0.7,0.3],[0.4,0.6]],400), cf=stationary2(0.3,0.4);
+ const refok = Math.abs(ref.pi[0]-cf[0])<1e-6 && Math.abs(ref.pi[1]-cf[1])<1e-6;
+ const ok = rowsok && sumok && fixok && refok;
+ el.innerHTML = '<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — invariants hold':'✗ WITNESS — broken')+'</span>'
+  +'<div class="small" style="margin-top:6px">'
+  +'rows sum to 1: <b style="color:'+(rowsok?'var(--gr)':'var(--wall)')+'">'+rowsok+'</b> &nbsp;·&nbsp; '
+  +'Σπ = <b style="color:'+(sumok?'var(--gr)':'var(--wall)')+'">'+fmt(vsum(pi))+'</b> &nbsp;·&nbsp; '
+  +'‖πP−π‖₁ = <b style="color:'+(fixok?'var(--gr)':'var(--wall)')+'">'+residual(pi,P).toExponential(2)+'</b><br>'
+  +'2-state closed-form ref [b/(a+b),a/(a+b)]: <b style="color:'+(refok?'var(--gr)':'var(--wall)')+'">'+refok+'</b>'
+  +(TAMPER?' &nbsp; — <span style="color:var(--wall)">red skipped row-normalization</span>':'')+'</div>';
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ buildGrid();
+ $("nstates").addEventListener("change",()=>{ N=+$("nstates").value; buildGrid(); render(); audit(); });
+ $("rand").addEventListener("click",()=>{ for(let i=0;i<N;i++)for(let j=0;j<N;j++) $("m_"+i+"_"+j).value=(Math.random()*9+0.2).toFixed(1); render(); audit(); });
+ $("reset").addEventListener("click",()=>{ buildGrid(); render(); audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Normalization skipped.</b> Rows keep raw weights (Σ≠1), P is no longer stochastic — the iterates blow up, Σπ leaves 1, and the witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Skip normalization and the iterates blow up — Σπ leaves 1, the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Markov engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE FISHER INFORMATION · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffb0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,176,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,176,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,176,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{width:100%;accent-color:var(--am);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#2a0c18;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:230px;} .readout{flex:1;min-width:250px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:96px;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.big{font-size:18px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;color:var(--am);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+.mono{color:var(--gr);} .val{color:#eafff0;font-weight:700;}
+svg{display:block;width:100%;height:auto;margin-top:6px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE FISHER INFORMATION</h1>
+ <p class="sub">How much a single sample tells you about a parameter — and the hard floor it sets on any estimator's variance. Fisher's insight: the <b>curvature</b> of the log-likelihood at its peak <i>is</i> information. A sharp peak pins <b class="k">θ</b> down; a flat one leaves it loose. Define it two ways — the mean-square of the <b>score</b>, or the negative expected <b>second derivative</b> — and they are <b>equal</b>. From that equality falls the <b style="color:var(--am)">Cramér–Rao bound</b>: no unbiased estimator can beat <b class="k">1/(n·I(θ))</b>. Terms go <b style="color:var(--cy)">in</b>, the engine computes I two ways and the bound, the proof comes <b style="color:var(--gr)">out</b>.</p>
+ <p class="src"><span class="tag t-amber">source</span> R. A. Fisher, "Theory of Statistical Estimation," <i>Proc. Camb. Phil. Soc.</i> <b>22</b> (1925) 700–725 — <a href="https://www.cambridge.org/core/journals/mathematical-proceedings-of-the-cambridge-philosophical-society/article/abs/theory-of-statistical-estimation/7A05FB68C83B36C0E91D42C76AB177D4">cambridge.org/core · 1925</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — score &amp; curvature</h2>
+   <p>Write the log-likelihood <b>ℓ(θ)=log p(x;θ)</b>. Two objects live on it:</p>
+   <p><b class="k">score</b> = ∂ℓ/∂θ — the slope. Its expectation is <b>zero</b> at the truth (∫∂p = ∂∫p = ∂1 = 0). Its mean-square is the information: <b class="k">I(θ)=E[(∂ℓ/∂θ)²]</b>.</p>
+   <p><b class="k">curvature</b> = ∂²ℓ/∂θ² — bends downward at the peak. Differentiate the zero-score identity once more and you get the second face: <b class="k">I(θ)=−E[∂²ℓ/∂θ²]</b>. The two faces are the same number.</p>
+   <p class="small">For the current model, both faces computed live:</p>
+   <table id="modelTbl"><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the peak's curvature <span class="tag t-amber">AVAN</span></h2>
+   <p>I(θ) is the curvature of <a href="https://davidwise01.github.io/the-maximum-likelihood/" style="color:var(--cy)">the maximum-likelihood</a> peak. The MLE sits where the score is zero; how <b>sharply</b> ℓ falls away there — the second derivative — is exactly the observed information, and its expectation is I(θ).</p>
+   <p>Sharper peak → more information → smaller variance floor. Multiply the samples by <b>n</b> and the curvature scales by n (independence adds information), so the bound shrinks as <b class="k">1/(n·I)</b>. It is also the <b>metric</b> the natural gradient descends — distance in θ measured in units of information. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run both definitions across a grid of parameters and confirm they <b>agree</b>, that the score is mean-zero, and that the sample mean <b>achieves</b> the Cramér–Rao bound. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — a family &amp; a parameter <span class="tag t-in">in ↓</span></h2>
+   <p>Pick a parametric family and a value of its parameter. Two textbook families carry it, both <b>exponential-family</b> models where the sample mean is the natural sufficient statistic:</p>
+   <table><thead><tr><th>family</th><th>ℓ(θ)</th><th>score ∂ℓ/∂θ</th><th>I(θ)</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>Bernoulli(θ)</td><td>x·log θ + (1−x)·log(1−θ)</td><td>x/θ − (1−x)/(1−θ)</td><td class="y">1/(θ(1−θ))</td></tr>
+     <tr><td>Gaussian mean μ, σ known</td><td>−(x−μ)²/2σ² + c</td><td>(x−μ)/σ²</td><td class="y">1/σ²</td></tr>
+    </tbody></table>
+   <p class="small">Bernoulli's support is discrete — its expectations are exact finite sums over {0,1}. The Gaussian's are exact <b>Gauss–Hermite</b> quadratures (the integrands are low-degree polynomials, so the rule is exact). That is what you feed the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the family into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>family</label>
+      <span class="toggle"><button id="tBern" class="on">BERNOULLI(θ)</button><button id="tGauss">GAUSSIAN μ</button></span></div>
+     <div class="row"><label id="pLabel">θ = <b class="val" id="pVal">0.30</b></label></div>
+     <div class="row"><input type="range" id="pSlide" min="1" max="99" value="30"></div>
+     <div class="row"><label>samples n = <b class="val" id="nVal">10</b></label></div>
+     <div class="row"><input type="range" id="nSlide" min="1" max="60" value="10"></div>
+     <p class="small" id="pnote"></p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="big" id="ival"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">The log-likelihood for a fixed-seed sample of size n — its <b>curvature</b> at the peak is n·I(θ̂):</p>
+   <svg id="plot" viewBox="0 0 520 150" preserveAspectRatio="none"></svg>
+   <p class="small">Move any control — I(θ) is recomputed from the two definitions on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits the bound &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the Cramér–Rao floor <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves: the two definitions of I(θ) <b>agree</b> exactly, the score is mean-zero, and every unbiased estimator obeys <b class="k">Var ≥ 1/(n·I(θ))</b> — a floor the <b>sample mean achieves with equality</b> for both families. Current numbers:</p>
+   <div id="outbox"></div>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The Cramér–Rao bound is <b>local</b> and needs <b>regularity</b>: the support must not depend on θ, and differentiation must pass under the integral. Break either and it lies. For Uniform(0,θ) the support <i>is</i> θ — the MLE's variance falls like 1/n², faster than any 1/(n·I) "floor". Information is not a universal speed limit; it is one under conditions.</div>
+   <p class="small" style="margin-top:8px">It also assumes the model is <b>true</b>. Under misspecification the inverse information is replaced by Huber's sandwich. And it only binds <b>unbiased</b> estimators — James–Stein and ridge deliberately take bias to beat it in mean-squared error. I(θ) is a property of the model+parameter, not of the data.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"The MLE always achieves the Cramér–Rao bound."</s> <b>Cut.</b> Only <i>asymptotically</i> in general. A finite-sample efficient estimator exists only for exponential families — which is exactly why the sample mean hits equality here and rarely elsewhere.</p>
+   <p class="grave"><s>"Fisher information measures the information in the data."</s> <b>Corrected.</b> It measures how sharply the <i>likelihood</i> constrains θ near a value. Reparametrize φ=g(θ) and it rescales by (dθ/dφ)² — it lives in the parameter's metric, not the sample.</p>
+   <p class="grave"><s>"More data divides the bound by n by definition."</s> <b>Kept, corrected.</b> I_n(θ)=n·I₁(θ) is a <i>theorem</i> — additivity of information under independence — not a definition. Correlated samples do not simply add.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: define I as <b>+</b>E[∂²ℓ/∂θ²] — drop the minus sign on the curvature. Curvature is negative at a peak, so I turns <b>negative</b>, the two definitions split, and the bound 1/(n·I) goes meaningless. The witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ drop the minus sign</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Drop the minus and I(θ)&lt;0: the mean-square-score form (always ≥0) and the curvature form no longer match, and a negative "floor" is no bound at all. The witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE FISHER INFORMATION — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (a family <b style="color:var(--cy)">in</b> → I(θ) two ways → the Cramér–Rao floor <b style="color:var(--gr)">out</b>). A runnable rendering of Fisher's 1925 <i>Theory of Statistical Estimation</i> — the engine is LIT (I(θ) computed two independent ways and shown equal, the score proven mean-zero, the bound achieved with equality, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (Fisher information, two definitions, Cramér–Rao) ===== */
+
+// fixed-seed PRNG — used only for the illustrative sample plot; the checks are exact
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+// 5-node Gauss–Hermite (physicists', weight e^{-t^2}); exact for polynomials up to degree 9
+const GHt=[-2.0201828704560856,-0.9585724646138185,0,0.9585724646138185,2.0201828704560856];
+const GHw=[0.019953242059045913,0.3936193231522412,0.9453087204829419,0.3936193231522412,0.019953242059045913];
+const SQRTPI=Math.sqrt(Math.PI);
+// E_{N(mu,sig^2)}[g(x)] via the substitution x = mu + sqrt(2)*sig*t
+function gaussExpect(mu,sig,g){ let s=0; for(let i=0;i<GHt.length;i++){ const x=mu+Math.SQRT2*sig*GHt[i]; s+=GHw[i]*g(x); } return s/SQRTPI; }
+
+let TAMPER=false; // when true, drop the minus sign on the curvature form — I goes negative
+
+// Compute I(theta) BOTH ways plus the score mean and the closed form.
+// formA  = E[(dl/dtheta)^2]            (mean-square score)
+// formB  = -E[d^2 l/dtheta^2]          (negative expected curvature)  [tamper drops the minus]
+function fisherTwoWays(model,param){
+ if(model==="bernoulli"){
+  const th=param;
+  let A=0,B=0,mean=0;
+  for(const x of [0,1]){
+   const p   = x===1 ? th : (1-th);
+   const score = x/th - (1-x)/(1-th);
+   const curv  = -x/(th*th) - (1-x)/((1-th)*(1-th));   // d^2 l / dtheta^2
+   A   += p*score*score;
+   B   += p*(TAMPER ? curv : -curv);
+   mean+= p*score;
+  }
+  return {formA:A, formB:B, meanScore:mean, closed:1/(th*(1-th))};
+ } else {
+  const mu=param.mu, sig=param.sig, s2=sig*sig;
+  const A   = gaussExpect(mu,sig, x=>{ const sc=(x-mu)/s2; return sc*sc; });
+  const curvConst = -1/s2;                              // d^2 l / dmu^2 is constant
+  const B   = gaussExpect(mu,sig, _=> (TAMPER ? curvConst : -curvConst));
+  const mean= gaussExpect(mu,sig, x=> (x-mu)/s2);
+  return {formA:A, formB:B, meanScore:mean, closed:1/s2};
+ }
+}
+// Cramér–Rao floor for n iid samples
+function crBound(I,n){ return 1/(n*I); }
+// exact variance of the sample-mean estimator (of theta / of mu)
+function estimatorVar(model,param,n){
+ if(model==="bernoulli"){ const th=param; return th*(1-th)/n; }
+ const sig=param.sig; return sig*sig/n;
+}
+
+/* ===== fail-loud self-check (runs untampered, then plants + catches the tamper) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+
+ // Bernoulli: two forms agree, equal the closed form, score mean-zero, CR achieved
+ for(const th of [0.1,0.25,0.5,0.7,0.9]){
+  const r=fisherTwoWays("bernoulli",th);
+  t(Math.abs(r.formA-r.formB)<1e-9, "Bernoulli: the two definitions must agree at theta="+th);
+  t(Math.abs(r.formA-r.closed)<1e-9,"Bernoulli: I must equal 1/(theta*(1-theta)) at theta="+th);
+  t(Math.abs(r.meanScore)<1e-12,    "Bernoulli: score must be mean-zero at theta="+th);
+  for(const n of [1,5,37]){
+   const v=estimatorVar("bernoulli",th,n), b=crBound(r.closed,n);
+   t(v>=b-1e-12,            "Cramér–Rao bound must hold (Bernoulli)");
+   t(Math.abs(v-b)<1e-12,   "sample mean must ACHIEVE the bound (Bernoulli)");
+  }
+ }
+ // Gaussian: same four guarantees, information independent of mu
+ for(const sig of [1,2,0.5]) for(const mu of [-1,0,3]){
+  const r=fisherTwoWays("gaussian",{mu,sig});
+  t(Math.abs(r.formA-r.formB)<1e-9,       "Gaussian: the two definitions must agree");
+  t(Math.abs(r.formA-1/(sig*sig))<1e-9,   "Gaussian: I must equal 1/sigma^2");
+  t(Math.abs(r.meanScore)<1e-12,          "Gaussian: score must be mean-zero");
+  for(const n of [1,5,37]){
+   const v=estimatorVar("gaussian",{mu,sig},n), b=crBound(1/(sig*sig),n);
+   t(v>=b-1e-12,          "Cramér–Rao bound must hold (Gaussian)");
+   t(Math.abs(v-b)<1e-12, "sample mean must ACHIEVE the bound (Gaussian)");
+  }
+ }
+
+ // TAMPER: drop the minus -> I negative, forms split, bound meaningless. Witness must catch it.
+ TAMPER=true;
+ const rt=fisherTwoWays("bernoulli",0.5);
+ t(rt.formB<0,                          "tamper must make I(theta) negative");
+ t(Math.abs(rt.formA-rt.formB)>1e-6,    "tamper must make the two definitions DISAGREE");
+ t(crBound(rt.formB,10)<0,              "tamper must make the Cramér–Rao bound meaningless (negative)");
+ const rg=fisherTwoWays("gaussian",{mu:0,sig:1});
+ t(rg.formB<0 && Math.abs(rg.formA-rg.formB)>1e-6, "tamper must also break the Gaussian");
+
+ TAMPER=save; // restore the flag exactly
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let model="bernoulli";
+function readParam(){
+ if(model==="bernoulli"){ return (+$("pSlide").value)/100; }
+ return {mu:0, sig:(+$("pSlide").value)/20}; // sigma in (0.05 .. 4.95)
+}
+function n(){ return +$("nSlide").value; }
+const f=(x,d)=>{ if(!isFinite(x)) return "∞"; return x.toFixed(d===undefined?4:d); };
+
+function setModel(m){
+ model=m;
+ $("tBern").classList.toggle("on",m==="bernoulli");
+ $("tGauss").classList.toggle("on",m==="gaussian");
+ if(m==="bernoulli"){ $("pSlide").min=1; $("pSlide").max=99; $("pSlide").value=30; }
+ else { $("pSlide").min=1; $("pSlide").max=99; $("pSlide").value=20; }
+ render(); audit();
+}
+
+function plotBernoulli(th,N){
+ // fixed-seed sample -> k successes; log-likelihood ell(t)=k ln t+(N-k)ln(1-t)
+ const rng=mulberry32(0x5eed^ (Math.round(th*1000)) ^ (N<<8));
+ let k=0; for(let i=0;i<N;i++) if(rng()<th) k++;
+ const tHat=k/N;
+ const pts=[]; let maxL=-1e18;
+ for(let i=1;i<=199;i++){ const tt=i/200; const L=(k>0?k*Math.log(tt):0)+((N-k)>0?(N-k)*Math.log(1-tt):0); if(L>maxL)maxL=L; pts.push([tt,L]); }
+ const curv=N/(tHat*(1-tHat)===0?1e-9:tHat*(1-tHat));
+ return {pts,maxL,peak:tHat,curv,label:"k="+k+" of n="+N+", θ̂="+f(tHat,3),xlo:0,xhi:1};
+}
+function plotGaussian(sig,N){
+ // fixed-seed sample of N(0,sig^2); log-lik ell(m)=-(1/2s2) sum (x_i-m)^2 ; peak at xbar
+ const rng=mulberry32(0xa11ce ^ (Math.round(sig*1000)) ^ (N<<8));
+ let sx=0; const xs=[];
+ for(let i=0;i<N;i++){ const u1=Math.max(rng(),1e-12),u2=rng(); const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2)*sig; xs.push(z); sx+=z; }
+ const xbar=sx/N, s2=sig*sig, lo=-3*sig, hi=3*sig;
+ const pts=[]; let maxL=-1e18;
+ for(let i=0;i<=200;i++){ const m=lo+(hi-lo)*i/200; let ss=0; for(const x of xs) ss+=(x-m)*(x-m); const L=-ss/(2*s2); if(L>maxL)maxL=L; pts.push([m,L]); }
+ const curv=N/s2;
+ return {pts,maxL,peak:xbar,curv,label:"n="+N+", x̄="+f(xbar,3),xlo:lo,xhi:hi};
+}
+function drawPlot(P){
+ const W=520,H=150,pad=6, span=Math.max(1e-9, P.maxL-(-Math.max(6,Math.abs(P.maxL)+6)));
+ const lo=P.maxL-Math.max(6, 0.12*P.curv/ (P.xhi-P.xlo) *0+6); // fixed 6-nat window below the peak
+ const yMax=P.maxL, yMin=P.maxL-6;
+ const X=t=> pad + (t-P.xlo)/(P.xhi-P.xlo)*(W-2*pad);
+ const Y=L=> pad + (yMax-Math.max(L,yMin))/(yMax-yMin)*(H-2*pad);
+ let d=""; P.pts.forEach((pt,i)=>{ d+=(i?" L":"M")+X(pt[0]).toFixed(1)+" "+Y(pt[1]).toFixed(1); });
+ const px=X(P.peak);
+ return `<polyline fill="none" stroke="#ffb0d0" stroke-width="2" points="${P.pts.map(pt=>X(pt[0]).toFixed(1)+","+Y(pt[1]).toFixed(1)).join(" ")}"/>`
+  + `<line x1="${px.toFixed(1)}" y1="${pad}" x2="${px.toFixed(1)}" y2="${H-pad}" stroke="#39fc6b" stroke-width="1" stroke-dasharray="3 3"/>`
+  + `<text x="${(px+6).toFixed(1)}" y="16" fill="#39fc6b" font-size="10">peak · ${P.label}</text>`
+  + `<text x="${pad+4}" y="${H-6}" fill="#5f8a68" font-size="10">observed curvature at peak = n·I(θ̂) = ${f(P.curv,2)}</text>`;
+}
+
+function render(){
+ const param=readParam(), N=n();
+ const r=fisherTwoWays(model,param);
+ if(model==="bernoulli"){
+  const th=param;
+  $("pLabel").innerHTML='θ = <b class="val" id="pVal">'+f(th,2)+'</b>';
+  $("pnote").innerHTML="Bernoulli(θ): information blows up as θ→0 or 1 — a near-certain coin is very informative when it surprises you.";
+  $("sent").innerHTML='<b>Bernoulli(θ='+f(th,2)+')</b><br>score = x/θ − (1−x)/(1−θ) &nbsp;·&nbsp; ℓ″ = −x/θ² − (1−x)/(1−θ)²';
+ } else {
+  const sig=param.sig;
+  $("pLabel").innerHTML='σ = <b class="val" id="pVal">'+f(sig,2)+'</b>';
+  $("pnote").innerHTML="Gaussian mean (σ known): I = 1/σ² is constant in μ — a flatter bell (large σ) carries less information about its center.";
+  $("sent").innerHTML='<b>Gaussian mean μ, σ='+f(sig,2)+'</b><br>score = (x−μ)/σ² &nbsp;·&nbsp; ℓ″ = −1/σ² (constant)';
+ }
+ const agree=Math.abs(r.formA-r.formB)<1e-9;
+ $("ival").innerHTML = TAMPER
+  ? 'I(θ) = <span style="color:var(--wall)">'+f(r.formB)+'</span> &nbsp;<span class="mut">(tampered)</span>'
+  : 'I(θ) = <span class="mono">'+f(r.formA)+'</span>';
+ $("reason").innerHTML = 'E[score²] = <span class="val">'+f(r.formA)+'</span> &nbsp; −E[ℓ″] = <span class="val" style="color:'+(agree?'#eafff0':'var(--wall)')+'">'+f(r.formB)+'</span> &nbsp; '
+  + (agree?'<span style="color:var(--gr)">✓ equal</span>':'<span style="color:var(--wall)">✗ split — I is negative, no valid floor</span>')
+  + ' &nbsp;·&nbsp; E[score] = '+f(r.meanScore,6);
+
+ // model table (window 3)
+ $("modelBody").innerHTML =
+   '<tr><td>E[(∂ℓ/∂θ)²]</td><td class="val">'+f(r.formA)+'</td></tr>'
+  +'<tr><td>−E[∂²ℓ/∂θ²]</td><td class="val" style="color:'+(agree?'#eafff0':'var(--wall)')+'">'+f(r.formB)+'</td></tr>'
+  +'<tr><td>closed form</td><td class="k">'+f(r.closed)+'</td></tr>'
+  +'<tr><td>E[score]</td><td>'+f(r.meanScore,6)+'</td></tr>';
+
+ // data out (window 8)
+ const I = TAMPER ? r.formB : r.formA;
+ const bound=crBound(I,N), varMean=estimatorVar(model,param,N);
+ const achieves=isFinite(bound)&&bound>0&&Math.abs(varMean-bound)<1e-12;
+ $("outbox").innerHTML =
+   '<table><tbody>'
+  +'<tr><td>I(θ)</td><td class="val" style="color:'+(TAMPER?'var(--wall)':'#eafff0')+'">'+f(I)+'</td></tr>'
+  +'<tr><td>Cramér–Rao floor 1/(n·I)</td><td class="val" style="color:'+(bound>0?'#eafff0':'var(--wall)')+'">'+f(bound)+'</td></tr>'
+  +'<tr><td>Var(sample mean)</td><td class="val">'+f(varMean)+'</td></tr>'
+  +'<tr><td>bound met?</td><td>'+(achieves?'<span style="color:var(--gr)">✓ equality</span>':(TAMPER?'<span style="color:var(--wall)">✗ negative floor</span>':'<span style="color:var(--wall)">✗</span>'))+'</td></tr>'
+  +'</tbody></table>';
+
+ // curvature plot
+ const P = model==="bernoulli" ? plotBernoulli(param,N) : plotGaussian(param.sig,N);
+ $("plot").innerHTML = drawPlot(P);
+}
+
+function audit(){
+ const el=$("auditout");
+ let ok=true, detail="";
+ try{
+  // recompute the core guarantees live and reflect any tamper
+  const grid = model==="bernoulli" ? [0.2,0.5,0.8].map(v=>[v,null]) : [[null,0.5],[null,1],[null,2]];
+  let agreeAll=true, meanAll=true, crAll=true;
+  for(const g of grid){
+   const p = model==="bernoulli" ? g[0] : {mu:0,sig:g[1]};
+   const r=fisherTwoWays(model,p);
+   if(Math.abs(r.formA-r.formB)>1e-9) agreeAll=false;
+   if(Math.abs(r.meanScore)>1e-12)    meanAll=false;
+   const I=TAMPER?r.formB:r.formA, b=crBound(I,10), v=estimatorVar(model,p,10);
+   if(!(b>0 && Math.abs(v-b)<1e-12)) crAll=false;
+  }
+  ok = agreeAll && meanAll && crAll && !TAMPER;
+  detail = 'two forms agree: <b style="color:'+(agreeAll?'var(--gr)':'var(--wall)')+'">'+agreeAll+'</b> &nbsp;·&nbsp; '
+    +'score mean-zero: <b style="color:'+(meanAll?'var(--gr)':'var(--wall)')+'">'+meanAll+'</b> &nbsp;·&nbsp; '
+    +'sample mean achieves CR: <b style="color:'+(crAll?'var(--gr)':'var(--wall)')+'">'+crAll+'</b>'
+    +(TAMPER?' &nbsp; — <span style="color:var(--wall)">red dropped the minus sign</span>':'');
+ }catch(e){ ok=false; detail=e.message; }
+ el.innerHTML = '<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — holds':'✗ WITNESS — broken')+'</span>'
+  + '<div class="small" style="margin-top:6px">'+detail+'</div>';
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ ["pSlide","nSlide"].forEach(id=>$(id).addEventListener("input",()=>{ $("nVal").textContent=n(); render(); audit(); }));
+ $("tBern").addEventListener("click",()=>setModel("bernoulli"));
+ $("tGauss").addEventListener("click",()=>setModel("gaussian"));
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Minus dropped.</b> −E[ℓ″] became +E[ℓ″]; the curvature is negative at a peak, so I(θ)<0. The mean-square-score form stays positive — the two definitions split — and 1/(n·I) is a negative 'floor', no bound at all. The witness (window 7) recomputed and went red."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").innerHTML="Drop the minus and I(θ)&lt;0: the mean-square-score form (always ≥0) and the curvature form no longer match, and a negative &quot;floor&quot; is no bound at all. The witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ $("nVal").textContent=n();
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Fisher-information engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

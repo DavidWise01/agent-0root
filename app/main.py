@@ -10,6 +10,7 @@ from typing import Optional, List
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse, PlainTextResponse, Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 
 from .agent import handle, VERSION, COMMANDS
@@ -34,6 +35,40 @@ app = FastAPI(title="agent-0root", version=VERSION,
 # read-only public agent: allow any origin to GET/POST (so the hearth can read it live)
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_methods=["GET", "POST"], allow_headers=["*"])
+
+@app.middleware("http")
+async def head_as_get(request: Request, call_next):
+    """Answer HEAD everywhere. FastAPI's @app.get registers GET only — Starlette's
+    plain Route adds HEAD alongside GET, APIRoute does not — so every endpoint on
+    this host answered HEAD with 405, including /, /robots.txt and the corpus.
+
+    That matters for exactly the readers this host is for: a crawler HEADs a large
+    file to learn its type and size before committing to the download, and a 405
+    reads as "not available" to some of them.
+
+    Runs the GET, measures the body, reports the length, returns no body — which
+    is what HEAD is. Costs a full render to answer, but HEAD traffic is rare and a
+    wrong content-length is worse than a slow one."""
+    if request.method != "HEAD":
+        return await call_next(request)
+    request.scope["method"] = "GET"
+    resp = await call_next(request)
+    body = b""
+    if hasattr(resp, "body_iterator"):
+        async for chunk in resp.body_iterator:
+            body += chunk if isinstance(chunk, (bytes, bytearray)) else str(chunk).encode()
+    else:
+        body = getattr(resp, "body", b"") or b""
+    headers = dict(resp.headers)
+    headers["content-length"] = str(len(body))
+    return Response(status_code=resp.status_code, headers=headers)
+
+
+# The corpus JSONs are 15.45 MB between them — uncompressed that is a download a phone
+# gives up on and an indexer times out of. Measured on these two files: 8.87 MB -> 2.74
+# and 6.58 -> 1.72, so 3.2x and 3.8x, not the 6-8x that JSON usually gives (the payload
+# is mostly English prose, which has already spent most of its redundancy).
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 # ── the beacon listens: every hit to a beacon surface is an echo it HEARS ──────
 BEACON_ECHO_INTERVAL = int(os.getenv("BEACON_ECHO_INTERVAL", "300"))  # self-heartbeat seconds
@@ -423,6 +458,16 @@ def beacon_shadow(request: Request):
     return beacon.shadow_map(str(request.base_url))
 
 
+@app.get("/v1/beacon/join")
+def beacon_join(request: Request):
+    """THE JOIN — corpus_uid <-> asin, validated against the served corpus.
+
+    The audit finding was that the two doors never met: an agent could list on
+    one side and crawl on the other, and no key named a thing in both."""
+    return beacon.join_table(str(request.base_url),
+                             os.path.join(STATIC, "corpus.jsonl"))
+
+
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots(request: Request):
     """THE BROADCAST — invites the agent crawlers, points them at the page + sitemap,
@@ -431,13 +476,75 @@ def robots(request: Request):
     return beacon.robots_txt(str(request.base_url))
 
 
+# ── THE INDEX SURFACE — what a machine reader is told to fetch, and can ───────
+# llms.txt names three files by absolute URL. Until this route existed all three
+# 404'd: /{name}.html serves only .html, and nothing else answered at the root.
+# A manifest that advertises URLs it does not serve is worse than no manifest —
+# an indexer reads it once, gets three misses, and does not come back.
+#
+# Allowlisted rather than a general static mount: this is a public read-only
+# host and the static tree holds things (the mirrored world2 build, the keeper
+# pages) that are served through their own routes with their own guards.
+# Literal paths, not a /{name:path} catch-all: a wildcard registered here would
+# shadow every route declared below it (/observe, /stream, the witness loop),
+# because Starlette matches in registration order.
+def _index_file(name: str, media_type: str):
+    p = os.path.join(STATIC, name)
+    if not os.path.isfile(p):
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return FileResponse(p, media_type=media_type)
+
+
+@app.get("/llms.txt", response_class=PlainTextResponse)
+def llms_txt():
+    """The manifest itself (llmstxt.org convention: /llms.txt, plain text, at root)."""
+    return _index_file("llms.txt", "text/plain; charset=utf-8")
+
+
+@app.get("/corpus.jsonl")
+def corpus_jsonl():
+    """THE WHOLE CORPUS, ONE CONTINUOUS FILE — both worlds, 3,573 spheres.
+
+    Newline-delimited JSON: line 1 a manifest, every line after one sphere. The
+    two split exports each wrap their spheres in a single JSON object, so a
+    reader has to hold 15 MB before it can look at the first record; this one
+    streams a line at a time and appends without a rewrite.
+
+    Served as application/x-ndjson so a client does not try to json.loads() the
+    whole thing as one document and fail on line 2."""
+    return _index_file("corpus.jsonl", "application/x-ndjson")
+
+
+@app.get("/corpus-world1.json")
+def corpus_world1():
+    """World I — 2,048 sealed spheres, full text, domain + appeal + url per sphere."""
+    return _index_file("corpus-world1.json", "application/json")
+
+
+@app.get("/corpus-world2.json")
+def corpus_world2():
+    """World II — THE FOLD, full text, seal + blurb per sphere. Count climbs."""
+    return _index_file("corpus-world2.json", "application/json")
+
+
+@app.get("/corpus.json")
+def corpus_index():
+    """The central index — counts, chain, appeals, domains. Small; read this first."""
+    return _index_file("corpus.json", "application/json")
+
+
 def _corpus_paths():
     """Enumerate the served static HTML corpus as url-paths, so the sitemap declares
     the whole town, not just the beacon. Mirrors the serving routes: top-level pages at
     /<name>.html, per-domain keeper pages at /d/<name>.html, and World II fold pages at
     /world2/<name>.html. index.html files are represented by their directory root (/,
     /world2/) rather than listed twice. Scanned live so new pages appear automatically."""
-    paths = ["/", "/world2/"]
+    # The machine-readable payload, declared. Without these the sitemap listed
+    # 1,670 HTML pages and 0 of the corpus -- an agent crawling the map found
+    # every page and no manifest, and World I's 2,048 spheres are not on this
+    # host at all, so the manifest is the ONLY way this host declares them.
+    paths = ["/", "/world2/", "/llms.txt", "/corpus.jsonl", "/corpus.json",
+             "/corpus-world1.json", "/corpus-world2.json", "/world2/fold.json"]
 
     def add(subdir, prefix):
         base = os.path.join(STATIC, subdir) if subdir else STATIC

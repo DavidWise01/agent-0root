@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LEAST SQUARES</title>
+<style>
+:root{
+  --am:#8bd0ff;
+  --bg:#0a1410;
+  --bg2:#0e1a14;
+  --ink:#d7f0e2;
+  --dim:#7fa791;
+  --line:#1d3428;
+  --blue:#6fb2ff;
+  --red:#ff7a6b;
+  --lit:#7dffa8;
+  --amber:#ffcf5c;
+  --wall:#ff8a5c;
+  --panel:#0c1712;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 15% -10%, #10241a 0%, transparent 60%),
+    radial-gradient(1000px 500px at 110% 10%, #0d2018 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:14px/1.5 "DejaVu Sans Mono",ui-monospace,Menlo,Consolas,monospace;
+  padding:22px 16px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+h1{
+  font-size:30px;letter-spacing:.14em;margin:0 0 8px;
+  color:#fff;text-shadow:0 0 18px rgba(139,208,255,.35);
+}
+.wrap{max-width:1180px;margin:0 auto}
+.sub{color:var(--ink);max-width:820px;margin:0 0 10px}
+.src{color:var(--dim);font-size:12.5px;margin:0 0 4px}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.12em;
+  padding:1px 7px;border-radius:3px;border:1px solid currentColor;
+  vertical-align:middle;text-transform:uppercase
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--am)}
+.t-out{color:var(--lit)}
+.t-wall{color:var(--wall)}
+.rn{color:var(--dim);font-size:12px;font-style:italic}
+
+.ocho{
+  display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;margin-top:18px;
+}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:12px}
+.teamhdr{
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  padding:6px 10px;border-radius:5px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--dim)
+}
+.col.blue .teamhdr{border-color:#22406a;color:var(--blue)}
+.col.red .teamhdr{border-color:#5a2a24;color:var(--red)}
+.col.center .teamhdr{border-color:#2b5540;color:var(--lit)}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:8px;
+  background:linear-gradient(180deg,var(--bg2),var(--panel));
+  padding:12px 12px 12px 14px;
+}
+.win h3{margin:0 0 6px;font-size:12.5px;letter-spacing:.08em;color:#eafff3}
+.win p{margin:6px 0;color:var(--dim);font-size:12.5px}
+.wnum{
+  position:absolute;top:-9px;right:10px;width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;
+  background:var(--bg);border:1px solid var(--line);color:var(--dim)
+}
+.col.blue .wnum{border-color:#22406a;color:var(--blue)}
+.col.red .wnum{border-color:#5a2a24;color:var(--red)}
+.win.panel{border-color:#2b5540;background:linear-gradient(180deg,#0d1c15,#0a1610)}
+.win.panel .wnum{border-color:#2b5540;color:var(--lit)}
+
+.flow{
+  text-align:center;color:var(--dim);font-size:16px;line-height:1;margin:2px 0;
+  opacity:.7
+}
+.wall-note{border-left:3px solid var(--wall);padding-left:10px}
+.grave del{color:#8a6b6b}
+.grave ins{color:var(--lit);text-decoration:none}
+
+/* engine */
+canvas{
+  width:100%;height:auto;display:block;border:1px solid var(--line);
+  border-radius:6px;background:#081b12;touch-action:none;cursor:crosshair
+}
+.ctrls{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+button{
+  font:inherit;font-size:11.5px;letter-spacing:.06em;cursor:pointer;
+  background:#10221a;color:var(--ink);border:1px solid var(--line);
+  border-radius:5px;padding:5px 9px
+}
+button:hover{border-color:var(--am);color:#fff}
+button.warn{border-color:#5a2a24;color:var(--red)}
+button.warn:hover{border-color:var(--red);color:#fff}
+.readout{
+  margin-top:8px;font-size:12.5px;display:grid;grid-template-columns:auto 1fr;
+  gap:2px 12px
+}
+.readout b{color:#fff}
+.kv{color:var(--am)}
+.badge{
+  display:inline-block;margin-top:8px;font-size:11.5px;padding:3px 8px;border-radius:4px;
+  border:1px solid var(--lit);color:var(--lit);background:rgba(125,255,168,.06)
+}
+.badge.bad{border-color:var(--red);color:var(--red);background:rgba(255,122,107,.08)}
+#failb{
+  display:none;margin:10px 0;padding:10px 12px;border:1px solid var(--red);
+  border-radius:6px;background:rgba(255,122,107,.1);color:var(--red);font-size:12.5px
+}
+.mono{font-family:inherit}
+.foot{margin-top:26px;color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+code{background:#10221a;border:1px solid var(--line);border-radius:3px;padding:0 4px;color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>THE LEAST SQUARES</h1>
+  <p class="sub">Give it a cloud of points and it draws the one straight line that no other line can beat &mdash; the line whose squared misses sum to the smallest number possible. Drag the points, watch the line chase them, read the residuals it is trying to shrink. This is the closed form Gauss and Legendre wrote down: not a search, a solved equation.</p>
+  <p class="src"><span class="tag t-amber">source</span> Gauss, <em>Theoria motus corporum coelestium</em> (1809) &middot; Legendre, <em>Nouvelles m&eacute;thodes</em> (1805) &mdash; <a href="https://archive.org/details/bub_gb_ORUOAAAAQAAJ" target="_blank" rel="noopener">archive.org/details/bub_gb_ORUOAAAAQAAJ</a></p>
+  <p class="rn">Rendered, not quoted.</p>
+
+  <div id="failb"></div>
+
+  <div class="ocho">
+
+    <!-- ================= BLUE TEAM ================= -->
+    <div class="col blue">
+      <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+      <div class="win">
+        <span class="wnum">3</span>
+        <h3>THE MODEL</h3>
+        <p>Fit <b>y = m&middot;x + b</b> to n points. Define the residual of a point as its vertical miss, <code>e = y &minus; (m x + b)</code>. Choose (m, b) to minimise <b>SSE = &Sigma; e&sup2;</b>.</p>
+        <p>Setting the two partial derivatives to zero gives the <b>normal equations</b>, solved in closed form:</p>
+        <p class="mono" style="color:var(--am)">m = (n&middot;Sxy &minus; Sx&middot;Sy) / (n&middot;Sxx &minus; Sx&middot;Sx)<br>b = (Sy &minus; m&middot;Sx) / n</p>
+        <p>where Sx=&Sigma;x, Sy=&Sigma;y, Sxx=&Sigma;x&sup2;, Sxy=&Sigma;xy. No iteration, no guessing &mdash; one evaluation lands on the exact minimum.</p>
+      </div>
+
+      <div class="win">
+        <span class="wnum">5</span>
+        <h3>THE LINEAGE</h3>
+        <p>This is the ancestor of every regression. The SSE surface here is a perfect paraboloid with one bottom; the closed form jumps straight to it.</p>
+        <p>When the model is <em>not</em> linear you cannot solve it in one line &mdash; so you roll downhill on the same SSE loss instead. That downhill roll is <b>gradient descent</b>, and the quantity it minimises is exactly this squared-error loss. Least squares is the seed; the whole training arc grows from it.</p>
+      </div>
+
+      <div class="win">
+        <span class="wnum">7</span>
+        <h3>THE WITNESS</h3>
+        <p>A live re-check. It refits the fixed dataset <code>(1,1)(2,2)(3,3)</code> from the engine right now and confirms it recovers <b>m=1, b=0</b>. If the engine is tampered, this recomputes a wrong slope and flips red.</p>
+        <div id="auditout" class="badge">witness idle</div>
+      </div>
+    </div>
+
+    <!-- ================= CENTER ================= -->
+    <div class="col center">
+      <div class="teamhdr">The Machine</div>
+
+      <div class="win panel">
+        <span class="wnum">4</span>
+        <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+        <p>A set of 2D points. Click empty canvas to add one; drag a point to move it; the presets load known clouds. Everything below is computed from these coordinates &mdash; nothing is baked.</p>
+      </div>
+
+      <div class="flow">&darr;</div>
+
+      <div class="win panel">
+        <span class="wnum">0</span>
+        <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+        <canvas id="cv" width="520" height="360"></canvas>
+        <div class="ctrls">
+          <button id="preset1">preset: noisy line</button>
+          <button id="preset2">preset: exact line</button>
+          <button id="clear">clear</button>
+          <button id="undo">remove last</button>
+        </div>
+        <div class="readout">
+          <span>slope m</span><span class="kv" id="rm">&mdash;</span>
+          <span>intercept b</span><span class="kv" id="rb">&mdash;</span>
+          <span>points n</span><span class="kv" id="rn">&mdash;</span>
+          <span>SSE (&Sigma;e&sup2;)</span><span class="kv" id="rsse">&mdash;</span>
+        </div>
+      </div>
+
+      <div class="flow">&darr;</div>
+
+      <div class="win panel">
+        <span class="wnum">8</span>
+        <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+        <p>The fitted line (cyan) with each residual drawn as a dropped segment from point to line. The reported SSE is the minimum reachable &mdash; no other (m, b) makes it smaller. That claim is enforced live by the self-check.</p>
+        <div id="litbadge" class="badge">booting&hellip;</div>
+      </div>
+    </div>
+
+    <!-- ================= RED TEAM ================= -->
+    <div class="col red">
+      <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+      <div class="win">
+        <span class="wnum">1</span>
+        <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+        <p class="wall-note">Least squares minimises <em>vertical</em> error and assumes x is exact. It is not symmetric: swap x and y and you get a different line. It also has no unique answer when all x are equal &mdash; the denominator <code>n&middot;Sxx &minus; Sx&middot;Sx</code> goes to zero and the slope is undefined (a vertical cloud has no y=mx+b fit).</p>
+        <p class="wall-note">And it is famously <b>not robust</b>: because misses are squared, a single far-off outlier can drag the whole line toward it. The line is honest about the loss it minimises, not about which loss you should have wanted.</p>
+      </div>
+
+      <div class="win grave">
+        <span class="wnum">2</span>
+        <h3>THE GRAVEYARD</h3>
+        <p><del>&ldquo;Least squares gives the true line the data came from.&rdquo;</del></p>
+        <p><ins>Correction:</ins> it gives the line that minimises squared vertical residuals <em>for this sample</em>. That estimate is unbiased under specific noise assumptions (Gauss&ndash;Markov), but it is not the &ldquo;true&rdquo; line &mdash; different samples give different fits.</p>
+        <p><del>&ldquo;A lower SSE always means a better model.&rdquo;</del></p>
+        <p><ins>Correction:</ins> SSE always drops as you add parameters; driven to zero it just memorises. Fit quality is a separate question from the minimisation this engine performs.</p>
+      </div>
+
+      <div class="win">
+        <span class="wnum">6</span>
+        <h3>THE TAMPER</h3>
+        <p>The disclosed planted void. This drops the <code>&minus; Sx&middot;Sx</code> term from the denominator, so the slope formula becomes <code>(n Sxy &minus; Sx Sy)/(n Sxx)</code> &mdash; wrong, and no longer the SSE minimum. On <code>(1,1)(2,2)(3,3)</code> it returns m&asymp;0.143 instead of 1.</p>
+        <div class="ctrls">
+          <button id="tamper" class="warn">plant the void</button>
+          <button id="restore">restore</button>
+        </div>
+        <p>Watch <b>THE WITNESS</b> (window 7) catch it and go red the instant you press it.</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <p class="foot">THE LEAST SQUARES &middot; WORLD II &middot; THE FOLD &middot; refined OCHO. The engine computes the closed-form fit live from the points on the canvas; the self-check throws if the minimum property, the collinear recovery, or the known dataset ever fail, and the planted void is proven to make noise before it is restored. Built by David Lee Wise (ROOT0) with AVAN.</p>
+
+</div>
+
+<script>
+/* ---- pure engine + selfcheck (node-verifiable) : keep ABOVE the UI marker ---- */
+
+// fixed-seed PRNG (mulberry32) so any generated data is deterministic
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+var TAMPER=false;
+
+function fit(pts){
+  var n=pts.length, Sx=0,Sy=0,Sxx=0,Sxy=0, i,x,y;
+  for(i=0;i<n;i++){x=pts[i][0];y=pts[i][1];Sx+=x;Sy+=y;Sxx+=x*x;Sxy+=x*y;}
+  var denom = TAMPER ? (n*Sxx) : (n*Sxx - Sx*Sx);
+  var m=(n*Sxy - Sx*Sy)/denom;
+  var b=(Sy - m*Sx)/n;
+  return {m:m,b:b,n:n,Sx:Sx,Sy:Sy,Sxx:Sxx,Sxy:Sxy,denom:denom};
+}
+
+function sse(pts,m,b){
+  var s=0,i,e;
+  for(i=0;i<pts.length;i++){e=pts[i][1]-(m*pts[i][0]+b);s+=e*e;}
+  return s;
+}
+
+// deterministic noisy sample around a target line, seeded
+function sampleLine(m,b,n,seed){
+  var r=mulberry32(seed>>>0), out=[], i, x;
+  for(i=0;i<n;i++){ x=1+i*(9/(n-1)); out.push([Math.round(x*100)/100, Math.round((m*x+b+(r()-0.5)*2.2)*100)/100]); }
+  return out;
+}
+
+function selfcheck(){
+  var saved=TAMPER; TAMPER=false;
+  try{
+    var approx=function(a,b,t){return Math.abs(a-b)<=(t||1e-9);};
+
+    // 1) points exactly on a line recover that line, SSE ~ 0
+    var L=[[0,1],[1,3],[2,5],[3,7]];           // y = 2x + 1
+    var f=fit(L);
+    if(!approx(f.m,2)) throw new Error("collinear slope not recovered");
+    if(!approx(f.b,1)) throw new Error("collinear intercept not recovered");
+    if(!approx(sse(L,f.m,f.b),0)) throw new Error("collinear SSE not ~0");
+
+    // 2) known dataset (1,1)(2,2)(3,3) gives m=1,b=0
+    var K=[[1,1],[2,2],[3,3]];
+    f=fit(K);
+    if(!approx(f.m,1)) throw new Error("known dataset m != 1");
+    if(!approx(f.b,0)) throw new Error("known dataset b != 0");
+
+    // 3) closed form is the MINIMUM: it beats every perturbed (m+dm,b+db)
+    var D=[[1,1],[2,2],[3,2],[4,4]];           // closed form: m=0.9, b=0, SSE=0.70
+    f=fit(D);
+    if(!approx(f.m,0.9)) throw new Error("D slope");
+    if(!approx(f.b,0))   throw new Error("D intercept");
+    var base=sse(D,f.m,f.b);
+    if(!approx(base,0.70,1e-9)) throw new Error("D SSE != 0.70");
+    var deltas=[-0.3,-0.1,-0.05,0.05,0.1,0.3], a,c;
+    for(a=0;a<deltas.length;a++) for(c=0;c<deltas.length;c++){
+      if(sse(D,f.m+deltas[a],f.b+deltas[c]) <= base)
+        throw new Error("not the minimum at dm="+deltas[a]+" db="+deltas[c]);
+    }
+
+    // 4) planted void must make noise: with the tamper the known slope changes
+    TAMPER=true;
+    var ft=fit(K);
+    if(approx(ft.m,1)) throw new Error("tamper is silent: slope unchanged");
+    TAMPER=false;
+
+    return true;
+  } finally { TAMPER=saved; }   // always leave the flag as we found it
+}
+
+/* ===== UI ===== */
+
+var cv=document.getElementById("cv");
+var ctx=cv.getContext("2d");
+var W=cv.width, H=cv.height;
+var PAD=34, XMIN=0, XMAX=10, YMIN=0, YMAX=10;
+
+var points=[];
+
+function toPx(x,y){
+  return [ PAD + (x-XMIN)/(XMAX-XMIN)*(W-2*PAD),
+           H-PAD - (y-YMIN)/(YMAX-YMIN)*(H-2*PAD) ];
+}
+function toData(px,py){
+  return [ XMIN + (px-PAD)/(W-2*PAD)*(XMAX-XMIN),
+           YMIN + (H-PAD-py)/(H-2*PAD)*(YMAX-YMIN) ];
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle="#12261c"; ctx.lineWidth=1;
+  var g;
+  for(g=0;g<=10;g++){
+    var a=toPx(g,0), b=toPx(g,10); ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+    var c=toPx(0,g), d=toPx(10,g); ctx.beginPath();ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle="#2b4c39"; ctx.lineWidth=1.4;
+  var o=toPx(0,0), xx=toPx(10,0), yy=toPx(0,10);
+  ctx.beginPath();ctx.moveTo(o[0],o[1]);ctx.lineTo(xx[0],xx[1]);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(o[0],o[1]);ctx.lineTo(yy[0],yy[1]);ctx.stroke();
+
+  var out={m:NaN,b:NaN,n:points.length,sse:NaN};
+  if(points.length>=2){
+    var f=fit(points);
+    if(isFinite(f.m)&&isFinite(f.b)){
+      out.m=f.m; out.b=f.b; out.sse=sse(points,f.m,f.b);
+      // residual segments
+      ctx.strokeStyle="rgba(255,207,92,.55)"; ctx.lineWidth=1.4;
+      var i;
+      for(i=0;i<points.length;i++){
+        var px=points[i][0], py=points[i][1], yhat=f.m*px+f.b;
+        var p1=toPx(px,py), p2=toPx(px,yhat);
+        ctx.beginPath();ctx.moveTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke();
+      }
+      // fitted line clipped to view
+      ctx.strokeStyle=TAMPER?"#ff7a6b":"#8bd0ff"; ctx.lineWidth=2.4;
+      var la=toPx(0,f.b), lb=toPx(10,f.m*10+f.b);
+      ctx.beginPath();ctx.moveTo(la[0],la[1]);ctx.lineTo(lb[0],lb[1]);ctx.stroke();
+    }
+  }
+  // points
+  var j;
+  for(j=0;j<points.length;j++){
+    var pp=toPx(points[j][0],points[j][1]);
+    ctx.fillStyle="#eafff3"; ctx.strokeStyle="#0a1410"; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(pp[0],pp[1],4.5,0,Math.PI*2);ctx.fill();ctx.stroke();
+  }
+
+  document.getElementById("rm").textContent  = isFinite(out.m)? out.m.toFixed(4): "undefined";
+  document.getElementById("rb").textContent  = isFinite(out.b)? out.b.toFixed(4): "undefined";
+  document.getElementById("rn").textContent  = out.n;
+  document.getElementById("rsse").textContent= isFinite(out.sse)? out.sse.toFixed(4): "—";
+
+  audit();
+}
+
+// window 7 : live witness on the fixed known dataset
+function audit(){
+  var el=document.getElementById("auditout");
+  var K=[[1,1],[2,2],[3,3]];
+  var f=fit(K);
+  var ok = Math.abs(f.m-1)<1e-9 && Math.abs(f.b-0)<1e-9;
+  if(ok){
+    el.className="badge";
+    el.textContent="witness OK — refit (1,1)(2,2)(3,3) → m="+f.m.toFixed(3)+", b="+f.b.toFixed(3);
+  }else{
+    el.className="badge bad";
+    el.textContent="TAMPER DETECTED — refit gives m="+f.m.toFixed(3)+", b="+f.b.toFixed(3)+" (expected 1, 0)";
+  }
+}
+
+// interaction: click to add, drag to move nearest
+var dragIdx=-1;
+function evtPos(ev){
+  var rect=cv.getBoundingClientRect();
+  var sx=W/rect.width, sy=H/rect.height;
+  var t=ev.touches? ev.touches[0]:ev;
+  return [ (t.clientX-rect.left)*sx, (t.clientY-rect.top)*sy ];
+}
+function nearest(px,py){
+  var best=-1,bd=14;
+  var i;
+  for(i=0;i<points.length;i++){
+    var pp=toPx(points[i][0],points[i][1]);
+    var d=Math.hypot(pp[0]-px,pp[1]-py);
+    if(d<bd){bd=d;best=i;}
+  }
+  return best;
+}
+function clampD(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+
+function down(ev){
+  ev.preventDefault();
+  var p=evtPos(ev);
+  var idx=nearest(p[0],p[1]);
+  if(idx>=0){ dragIdx=idx; }
+  else{
+    var d=toData(p[0],p[1]);
+    points.push([Math.round(clampD(d[0],0,10)*100)/100, Math.round(clampD(d[1],0,10)*100)/100]);
+    draw();
+  }
+}
+function move(ev){
+  if(dragIdx<0) return;
+  ev.preventDefault();
+  var p=evtPos(ev);
+  var d=toData(p[0],p[1]);
+  points[dragIdx]=[Math.round(clampD(d[0],0,10)*100)/100, Math.round(clampD(d[1],0,10)*100)/100];
+  draw();
+}
+function up(){ dragIdx=-1; }
+
+cv.addEventListener("mousedown",down);
+window.addEventListener("mousemove",move);
+window.addEventListener("mouseup",up);
+cv.addEventListener("touchstart",down,{passive:false});
+cv.addEventListener("touchmove",move,{passive:false});
+cv.addEventListener("touchend",up);
+
+document.getElementById("preset1").onclick=function(){ points=sampleLine(0.8,1.5,9,20260810); draw(); };
+document.getElementById("preset2").onclick=function(){ points=[[1,1],[2,3],[3,5],[4,7],[5,9]]; draw(); };
+document.getElementById("clear").onclick =function(){ points=[]; draw(); };
+document.getElementById("undo").onclick  =function(){ points.pop(); draw(); };
+
+document.getElementById("tamper").onclick =function(){ TAMPER=true;  draw(); };
+document.getElementById("restore").onclick=function(){ TAMPER=false; draw(); };
+
+// boot : fail-loud selfcheck, then light the LIT badge
+(function boot(){
+  var lb=document.getElementById("litbadge");
+  try{
+    var ok=selfcheck();
+    if(!ok) throw new Error("selfcheck returned false");
+    lb.className="badge";
+    lb.textContent="LIT — self-check passed: minimum, collinear recovery, known dataset, and planted-void detection all hold.";
+  }catch(err){
+    var fb=document.getElementById("failb");
+    fb.style.display="block";
+    fb.textContent="SELF-CHECK FAILED — "+err.message+" — this instrument is not LIT and must not be trusted.";
+    lb.className="badge bad";
+    lb.textContent="NOT LIT — self-check failed.";
+    throw err;
+  }
+  points=sampleLine(0.8,1.5,9,20260810);
+  draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE COUNTERFACTUAL</title>
+<style>
+:root{
+  --am:#ff7a7a;            /* accent — red team salmon */
+  --blue:#6ea8ff;
+  --bg0:#2a184c; --bg1:#3a2068; --bg2:#4a1f4e;
+  --ink:#f3ecff; --dim:#c6b6e6; --faint:#9c86c8;
+  --panel:rgba(255,255,255,.045);
+  --panel2:rgba(255,255,255,.075);
+  --line:rgba(255,255,255,.14);
+  --lit:#6ee7a0; --amber:#ffcf6e; --in:#7fe0ff; --out:#ffd36e; --wall:#ff6b6b;
+  --ground:#0f2a1a;       /* dark-green code-monkeys ground */
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 700px at 15% -10%, #52267a 0%, transparent 55%),
+    radial-gradient(900px 600px at 100% 0%, #7a2f5e 0%, transparent 50%),
+    linear-gradient(160deg,var(--bg0),var(--bg1) 55%,var(--bg2));
+  background-attachment:fixed;
+  min-height:100vh;
+  padding:26px 20px 0;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin:0 auto 20px;max-width:1180px}
+h1{
+  font-size:clamp(28px,5vw,46px);letter-spacing:.14em;margin:.1em 0 .12em;
+  font-weight:800;
+  background:linear-gradient(92deg,#fff,var(--am));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 42px rgba(255,122,122,.20);
+}
+.sub{color:var(--dim);max-width:70ch;font-size:16px;margin:.2em 0 .7em}
+.src{font-size:12.5px;color:var(--faint);font-family:var(--mono)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;
+  letter-spacing:.09em;padding:2px 7px;border-radius:5px;vertical-align:middle}
+.t-amber{background:rgba(255,207,110,.14);color:var(--amber);border:1px solid rgba(255,207,110,.4)}
+.t-lit{background:rgba(110,231,160,.14);color:var(--lit);border:1px solid rgba(110,231,160,.42)}
+.t-in{background:rgba(127,224,255,.14);color:var(--in);border:1px solid rgba(127,224,255,.42)}
+.t-out{background:rgba(255,211,110,.14);color:var(--out);border:1px solid rgba(255,211,110,.42)}
+.t-wall{background:rgba(255,107,107,.14);color:var(--wall);border:1px solid rgba(255,107,107,.42)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;align-items:start}
+@media (max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-family:var(--mono);font-size:12px;letter-spacing:.16em;font-weight:700;
+  padding:8px 12px;border-radius:9px;text-transform:uppercase;
+}
+.col.blue .teamhdr{color:var(--blue);background:rgba(110,168,255,.09);border:1px solid rgba(110,168,255,.30)}
+.col.red  .teamhdr{color:var(--am);background:rgba(255,122,122,.09);border:1px solid rgba(255,122,122,.30)}
+.col.center .teamhdr{color:var(--ink);background:rgba(255,255,255,.07);border:1px solid var(--line);text-align:center}
+
+.win{
+  position:relative;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;padding:14px 14px 13px;
+}
+.col.blue .win{border-left:3px solid rgba(110,168,255,.55)}
+.col.red  .win{border-left:3px solid rgba(255,122,122,.55)}
+.win.panel{background:var(--panel2);border-color:rgba(255,122,122,.30);
+  box-shadow:0 0 0 1px rgba(255,122,122,.10),0 18px 50px rgba(20,6,40,.5)}
+.num{
+  position:absolute;top:-10px;right:-9px;width:24px;height:24px;border-radius:50%;
+  font-family:var(--mono);font-size:12px;font-weight:800;display:grid;place-items:center;
+  background:#1c0f36;color:var(--ink);border:1px solid var(--line)}
+.col.blue .num{border-color:rgba(110,168,255,.6);color:var(--blue)}
+.col.red  .num{border-color:rgba(255,122,122,.6);color:var(--am)}
+.col.center .num{border-color:rgba(255,255,255,.4)}
+.win h3{margin:.1em 0 .5em;font-size:13.5px;letter-spacing:.05em}
+.win p{margin:.4em 0;color:var(--dim);font-size:13px}
+.win .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+
+.mono{font-family:var(--mono)}
+.eq{font-family:var(--mono);font-size:12.5px;background:rgba(0,0,0,.24);border:1px solid var(--line);
+  border-radius:8px;padding:9px 11px;color:#e8dcff;line-height:1.7;white-space:pre-wrap;overflow-x:auto}
+.eq b{color:var(--am);font-weight:700}
+.readout{font-family:var(--mono);font-size:12.5px;line-height:1.75;margin:.4em 0}
+.readout .k{color:var(--faint)}
+.readout .v{color:#fff;font-weight:700}
+.big{font-family:var(--mono);font-size:19px;font-weight:800;color:var(--lit)}
+
+.flow{display:flex;align-items:center;justify-content:center;gap:8px;
+  color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  padding:2px 0}
+.flow::before,.flow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+
+.ctl{display:flex;align-items:center;gap:10px;margin:.6em 0}
+.ctl input[type=range]{flex:1;accent-color:var(--am)}
+.ctl .val{font-family:var(--mono);font-weight:700;color:#fff;min-width:52px;text-align:right}
+button{
+  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;
+  padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--ink);
+  background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.45)}
+button:hover{background:rgba(255,122,122,.22)}
+button#restore{background:rgba(110,231,160,.12);border-color:rgba(110,231,160,.45)}
+button#restore:hover{background:rgba(110,231,160,.22)}
+
+.badge{font-family:var(--mono);font-size:12px;font-weight:700;padding:9px 11px;border-radius:8px;
+  border:1px solid var(--line);line-height:1.5;word-break:break-word}
+.badge.ok{background:rgba(110,231,160,.10);border-color:rgba(110,231,160,.5);color:var(--lit)}
+.badge.bad{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.55);color:var(--wall)}
+.wall-note{background:repeating-linear-gradient(45deg,rgba(255,107,107,.07) 0 10px,rgba(255,107,107,.13) 10px 20px);
+  border:1px dashed rgba(255,107,107,.5);border-radius:8px;padding:9px 11px;font-size:12.5px;color:#ffd9d9}
+.dead{text-decoration:line-through;color:#c58ea8;opacity:.8}
+.fix{color:var(--lit)}
+.small{font-size:11.5px;color:var(--faint)}
+
+#failb{display:none;margin:14px auto;max-width:1180px;background:rgba(255,107,107,.14);
+  border:1px solid var(--wall);color:#ffd9d9;border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:12.5px}
+
+footer{
+  margin:26px -20px 0;padding:20px;background:var(--ground);border-top:2px solid rgba(110,231,160,.25);
+  color:#a9d8b9;font-family:var(--mono);font-size:12px;text-align:center;letter-spacing:.05em}
+footer .rung{color:#8fe0ab}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE COUNTERFACTUAL</h1>
+  <p class="sub">What <em>would</em> have happened — not on average, but for the very unit we already saw. The engine runs abduction&nbsp;→&nbsp;action&nbsp;→&nbsp;prediction: read this unit's hidden noise off its evidence, splice in do(X=x&#39;), then push the <em>same</em> noise through the surgery. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Pearl, <em>Causality: Models, Reasoning, and Inference</em> (Cambridge, 2000), ch.7 &mdash; structural counterfactuals &middot; <a href="https://archive.org/details/causalitymodelsr0000pear" target="_blank" rel="noopener">archive.org/details/causalitymodelsr0000pear</a></p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <span class="lbl">The Model</span>
+      <h3>A structural causal model with known coefficients</h3>
+      <div class="eq">Z := u_z
+X := a&middot;Z + u_x
+Y := b&middot;X + c&middot;Z + <b>d&middot;X&middot;Z</b> + u_y
+
+a=0.5  b=2.0  c=1.5  d=0.8</div>
+      <p>Every arrow is a deterministic function of its parents plus a private exogenous noise. The <b class="mono" style="color:var(--am)">d&middot;X&middot;Z</b> interaction is deliberate: it makes X's effect depend on Z, so the counterfactual is <em>unit-specific</em>, not one number for everyone.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <span class="lbl">The Lineage</span>
+      <h3>Rung 3 of Pearl's Ladder</h3>
+      <p><span class="mono" style="color:var(--faint)">seeing</span> &nbsp;&rarr;&nbsp; <span class="mono" style="color:var(--blue)">doing</span> &nbsp;&rarr;&nbsp; <span class="mono" style="color:var(--am)">imagining</span></p>
+      <p>Above <em>the-do-calculus</em> (rung 2: intervening, P(Y|do(x))) sits this — the &ldquo;what if it had been otherwise, <em>for this one</em>.&rdquo; It is the rung that assigns <b class="mono" style="color:var(--am)">blame, credit, and regret</b>: quantities the interventional average cannot see because they are counterfactual to a fact that already occurred.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <span class="lbl">The Witness</span>
+      <h3>Live re-check</h3>
+      <p class="small">Re-runs the full selfcheck against the pure engine on every tamper. Green = all identities hold. Flips red the instant abduction is skipped.</p>
+      <div id="auditout" class="badge">&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="num">4</span>
+      <span class="lbl"><span class="tag t-in">in &darr;</span></span>
+      <h3>Data In &middot; the factual evidence</h3>
+      <div class="readout">
+        <div><span class="k">unit A observed &nbsp;</span></div>
+        <div><span class="k">Z =</span> <span class="v">1.0</span> &nbsp; <span class="k">X =</span> <span class="v">1.0</span> &nbsp; <span class="k">Y =</span> <span class="v">4.6</span></div>
+      </div>
+      <p class="small">A complete observation of one unit. We do not yet know its noise — that is what abduction is for.</p>
+    </div>
+
+    <div class="flow">&darr; ABDUCT &darr;</div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <span class="lbl"><span class="tag t-lit">LIT</span> &nbsp;the engine</span>
+      <h3>Abduction &rarr; Action &rarr; Prediction</h3>
+
+      <div class="eq" id="abductbox">u_z = Z            = &hellip;
+u_x = X &minus; aZ        = &hellip;
+u_y = Y &minus; bX &minus; cZ &minus; dXZ = &hellip;</div>
+
+      <div class="ctl">
+        <span class="lbl" style="min-width:74px">do(X = x&#39;)</span>
+        <input id="xp" type="range" min="-1" max="6" step="0.1" value="3">
+        <span class="val" id="xpval">3.0</span>
+      </div>
+
+      <div class="readout">
+        <div><span class="k">had X been</span> <span class="v" id="xpEcho">3.0</span><span class="k">, with THIS unit's fixed noise&hellip;</span></div>
+      </div>
+      <div class="big" id="cfline">Y<sub>x&#39;</sub>(u) = &hellip;</div>
+      <div class="readout small">
+        <span class="k">closed form &nbsp;</span> Y<sub>x&#39;</sub>(u) = y + (x&#39;&minus;x)(b + d&middot;z)
+        &nbsp;&middot;&nbsp; <span class="k">consistency (x&#39;=x)&rarr;y:</span> <span id="consist" class="v">&hellip;</span>
+      </div>
+    </div>
+
+    <div class="flow">&darr; PREDICT &darr;</div>
+
+    <div class="win">
+      <span class="num">8</span>
+      <span class="lbl"><span class="tag t-out">out &darr;</span></span>
+      <h3>Data Out &middot; the proven verdict</h3>
+      <div id="litbadge" class="badge">&hellip;</div>
+      <p class="small">The individual counterfactual carries this unit's own noise — it is <em>not</em> the population answer E[Y|do(x&#39;)], shown live in window&nbsp;1.</p>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <span class="lbl">The Adversary</span>
+      <h3>&ldquo;Just use the interventional average.&rdquo;</h3>
+      <div class="wall-note">
+        <span class="tag t-wall">WALL</span> The population answer is a different question. By Monte-Carlo (fixed seed, N=200k) the interventional mean is
+        <span class="mono" id="popbox" style="color:#ffd9d9">E[Y|do(X=3)] &asymp; &hellip;</span>.
+        The individual counterfactual for unit A is <span class="mono" style="color:#fff" id="cfEcho">&hellip;</span> — a real gap the average <b>cannot</b> recover, because it has averaged this unit's noise away.
+      </div>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <span class="lbl">The Graveyard</span>
+      <h3>Claims that died here</h3>
+      <p><span class="dead">&ldquo;Counterfactuals aren't testable, so they aren't science.&rdquo;</span><br>
+        <span class="fix">&rarr; In an SCM they are point-identified functions of the model + evidence; every value below is exact to 1e&minus;9.</span></p>
+      <p><span class="dead">&ldquo;Two units with the same X and Y must have the same what-if.&rdquo;</span><br>
+        <span class="fix">&rarr; False under effect modification: A and B share (X=1,Y=4.6) yet differ in Z, so their abducted noise — and their counterfactuals — differ.</span></p>
+      <p><span class="dead">&ldquo;do(X=x&#39;) with x&#39;=x might change Y.&rdquo;</span><br>
+        <span class="fix">&rarr; No — consistency is a theorem: setting x&#39; to the observed x reproduces the observed y exactly.</span></p>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <span class="lbl">The Tamper</span>
+      <h3>The disclosed planted void</h3>
+      <p class="small">Skip the abduction step — draw <em>fresh</em> noise instead of inferring this unit's u_y. The counterfactual detaches from the unit; consistency (x&#39;=x&rarr;y) breaks. The Witness in&nbsp;7 catches it live.</p>
+      <div class="ctl">
+        <button id="tamper">SKIP ABDUCTION</button>
+        <button id="restore">RESTORE</button>
+      </div>
+      <div id="tampstate" class="small mono">state: abduction ON</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer>
+  <span class="rung">rung 3 &middot; the what-if</span> &nbsp;|&nbsp; THE COUNTERFACTUAL &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus &nbsp;|&nbsp; the engine is LIT, the tamper is disclosed &nbsp;|&nbsp; David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+/* ===== ENGINE (pure logic — node-extractable, sits above the UI marker) ===== */
+
+// fixed-seed PRNG (mulberry32) — determinism for the sampled population check
+function mulberry32(seed){
+  return function(){
+    seed|=0; seed = (seed + 0x6D2B79F5)|0;
+    var t = Math.imul(seed ^ (seed>>>15), 1 | seed);
+    t = (t + Math.imul(t ^ (t>>>7), 61 | t)) ^ t;
+    return ((t ^ (t>>>14)) >>> 0) / 4294967296;
+  };
+}
+// standard normal via Box–Muller, driven by a supplied rng
+function gauss(rng){
+  var u=0,v=0;
+  while(u===0) u=rng();
+  while(v===0) v=rng();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+// the SCM's known coefficients
+var SCM = { a:0.5, b:2.0, c:1.5, d:0.8 };
+
+// the disclosed planted void: when true, counterfactual() SKIPS abduction of u_y
+var TAMPER = false;
+
+// forward evaluation of the SCM; pass doX (a number) to REPLACE X's equation with a constant
+function forward(scm, uz, ux, uy, doX){
+  var z = uz;
+  var x = (doX===null || doX===undefined) ? (scm.a*z + ux) : doX;
+  var y = scm.b*x + scm.c*z + scm.d*x*z + uy;
+  return { z:z, x:x, y:y };
+}
+
+// ABDUCTION: infer the exogenous noise of the unit that produced a full observation {z,x,y}
+function abduct(scm, obs){
+  var uz = obs.z;
+  var ux = obs.x - scm.a*obs.z;
+  var uy = obs.y - scm.b*obs.x - scm.c*obs.z - scm.d*obs.x*obs.z;
+  return { uz:uz, ux:ux, uy:uy };
+}
+
+// COUNTERFACTUAL: Y had X been xp, for the specific unit behind obs.
+// abduct u -> act do(X=xp) -> predict with the SAME u.
+function counterfactual(scm, obs, xp){
+  var u = abduct(scm, obs);
+  if(TAMPER){
+    // PLANTED VOID: do not use the abducted u_y — draw fresh (fixed-seed) noise.
+    var rng = mulberry32(424242);
+    u = { uz: obs.z, ux: obs.x - scm.a*obs.z, uy: gauss(rng) };
+  }
+  return forward(scm, u.uz, u.ux, u.uy, xp).y; // do(X=xp)
+}
+
+// closed-form ground truth for the counterfactual outcome
+function cfClosedForm(scm, obs, xp){
+  return obs.y + (xp - obs.x) * (scm.b + scm.d*obs.z);
+}
+
+// population interventional E[Y | do(X=xp)] by Monte-Carlo with a fixed seed
+function popInterventional(scm, xp, N, seed){
+  var rng = mulberry32(seed), s=0;
+  for(var i=0;i<N;i++){
+    var uz=gauss(rng), ux=gauss(rng), uy=gauss(rng);
+    s += forward(scm, uz, ux, uy, xp).y;
+  }
+  return s/N;
+}
+
+function assertClose(a,b,tol,msg){
+  tol = (tol===undefined)?1e-9:tol;
+  if(!(Math.abs(a-b)<=tol)) throw new Error((msg||'assert')+': '+a+' vs '+b+' (tol '+tol+')');
+  return true;
+}
+
+// fail-loud selfcheck — THROWS on any violation, RETURNS true on success. Saves/restores TAMPER.
+function selfcheck(){
+  var scm = SCM;
+
+  // build unit A from KNOWN noise: u_z=1, u_x=0.5, u_y=0.3  ->  z=1, x=1, y=4.6
+  var A = forward(scm, 1.0, 0.5, 0.3, null);
+  assertClose(A.z, 1.0, 1e-12, 'A.z');
+  assertClose(A.x, 1.0, 1e-12, 'A.x');
+  assertClose(A.y, 4.6, 1e-9,  'A.y');
+
+  // (1) EXACT: counterfactual matches abduction–action–prediction closed form, to 1e-9
+  var cfA = counterfactual(scm, A, 3.0);
+  assertClose(cfA, 10.2, 1e-9, 'cf exact');
+  assertClose(cfA, cfClosedForm(scm, A, 3.0), 1e-9, 'cf==closedform');
+  // and matches a full re-simulation with do(X=3) and the true noise
+  assertClose(cfA, forward(scm, 1.0, 0.5, 0.3, 3.0).y, 1e-9, 'cf==resim');
+
+  // (2) CONSISTENCY: setting x' = observed x reproduces the observed y (the factual special case)
+  assertClose(counterfactual(scm, A, A.x), A.y, 1e-9, 'consistency');
+
+  // (3) individual counterfactual GENERALLY DIFFERS from population E[Y|do(x')]
+  var pop = popInterventional(scm, 3.0, 200000, 20260810);
+  assertClose(pop, 6.0, 0.15, 'pop E[Y|do(3)]');           // closed truth: b*3 = 6 (E[Z]=E[u_y]=0)
+  if(Math.abs(cfA - pop) < 1.0) throw new Error('individual cf must differ from population interventional');
+
+  // (4) two units with the SAME (X,Y) but DIFFERENT abducted noise -> different counterfactuals
+  var Bz = 2.0;
+  var uxB = 1.0 - scm.a*Bz;                                 // keep X = 1
+  var uyB = 4.6 - scm.b*1.0 - scm.c*Bz - scm.d*1.0*Bz;      // keep Y = 4.6
+  var B = forward(scm, Bz, uxB, uyB, null);
+  assertClose(B.x, A.x, 1e-9, 'B.x==A.x');
+  assertClose(B.y, A.y, 1e-9, 'B.y==A.y');
+  if(Math.abs(abduct(scm,A).uy - abduct(scm,B).uy) < 0.5) throw new Error('units must have different abducted noise');
+  var cfB = counterfactual(scm, B, 3.0);
+  assertClose(cfB, 11.8, 1e-9, 'cfB exact');
+  if(Math.abs(cfA - cfB) < 0.5) throw new Error('same (X,Y), different noise must give different counterfactuals');
+
+  // (5) THE TAMPER (disclosed planted void): skipping abduction breaks consistency; the witness must catch it.
+  var saved = TAMPER;             // save
+  TAMPER = true;                  // plant
+  var broken = counterfactual(scm, A, A.x);   // x'=x should give y, but fresh noise detaches it
+  if(Math.abs(broken - A.y) < 1e-6) throw new Error('tamper not detected: consistency should fail when abduction is skipped');
+  TAMPER = saved;                 // restore
+  // after restore, consistency holds again
+  assertClose(counterfactual(scm, A, A.x), A.y, 1e-9, 'restore');
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+var UNIT_A = forward(SCM, 1.0, 0.5, 0.3, null);   // z=1,x=1,y=4.6
+var POP3   = null;
+
+function fmt(n){ return (Math.round(n*1e6)/1e6).toString(); }
+
+function renderPanel(){
+  var xp = parseFloat(document.getElementById('xp').value);
+  document.getElementById('xpval').textContent = xp.toFixed(1);
+  document.getElementById('xpEcho').textContent = xp.toFixed(1);
+
+  var u = abduct(SCM, UNIT_A);
+  document.getElementById('abductbox').innerHTML =
+    'u_z = Z            = <b>'+fmt(u.uz)+'</b>\n' +
+    'u_x = X \u2212 aZ        = <b>'+fmt(u.ux)+'</b>\n' +
+    'u_y = Y \u2212 bX \u2212 cZ \u2212 dXZ = <b>'+fmt(u.uy)+'</b>';
+
+  var cf = counterfactual(SCM, UNIT_A, xp);
+  document.getElementById('cfline').innerHTML =
+    'we saw X=1, Y=4.6 &nbsp;\u2192&nbsp; had X been '+xp.toFixed(1)+', Y = <span style="color:'+ (TAMPER?'#ff6b6b':'#6ee7a0') +'">'+fmt(cf)+'</span>';
+
+  var cons = counterfactual(SCM, UNIT_A, UNIT_A.x);
+  var ok = Math.abs(cons - UNIT_A.y) < 1e-9;
+  document.getElementById('consist').innerHTML =
+    (ok ? '<span style="color:#6ee7a0">'+fmt(cons)+' = y \u2713</span>'
+        : '<span style="color:#ff6b6b">'+fmt(cons)+' \u2260 4.6 \u2717</span>');
+
+  document.getElementById('cfEcho').textContent = fmt(counterfactual(SCM, UNIT_A, 3.0));
+}
+
+function renderOut(){
+  var b = document.getElementById('litbadge');
+  var cf3 = counterfactual(SCM, UNIT_A, 3.0);
+  var consOk = Math.abs(counterfactual(SCM,UNIT_A,UNIT_A.x)-UNIT_A.y) < 1e-9;
+  if(!TAMPER && consOk){
+    b.className='badge ok';
+    b.innerHTML='PROVEN &middot; unit A: we saw X=1, Y=4.6. Had X been 3, Y would be <b>10.2</b> — exact to 1e\u22129, and \u2260 the population 6.0.';
+  } else {
+    b.className='badge bad';
+    b.innerHTML='VOID OPEN &middot; abduction skipped: counterfactual = '+fmt(cf3)+', consistency broken. Restore to re-seal.';
+  }
+}
+
+function runWitness(){
+  var el = document.getElementById('auditout');
+  try{
+    var ok = selfcheck();
+    el.className='badge ok';
+    el.innerHTML='\u2713 WITNESS PASS &middot; abduction\u2192action\u2192prediction holds; exact to 1e\u22129; consistency, unit-specificity &amp; the tamper trap all verified.';
+  }catch(e){
+    el.className='badge bad';
+    el.innerHTML='\u2717 WITNESS CAUGHT IT &middot; '+e.message;
+  }
+}
+
+function refresh(){ renderPanel(); renderOut(); runWitness(); }
+
+// wire controls
+document.getElementById('xp').addEventListener('input', function(){ renderPanel(); renderOut(); });
+document.getElementById('tamper').addEventListener('click', function(){
+  TAMPER = true;
+  document.getElementById('tampstate').innerHTML = 'state: <span style="color:#ff6b6b">abduction SKIPPED (void open)</span>';
+  refresh();
+});
+document.getElementById('restore').addEventListener('click', function(){
+  TAMPER = false;
+  document.getElementById('tampstate').textContent = 'state: abduction ON';
+  refresh();
+});
+
+// BOOT: fail-loud selfcheck in try/catch — show #failb + rethrow on failure; set litbadge on success
+(function boot(){
+  try{
+    selfcheck();
+    POP3 = popInterventional(SCM, 3.0, 200000, 20260810);
+    document.getElementById('popbox').textContent = 'E[Y|do(X=3)] \u2248 '+ (Math.round(POP3*1000)/1000);
+    renderPanel();
+    renderOut();
+    runWitness();
+  }catch(e){
+    var fb=document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent='SELFCHECK FAILED \u2014 engine is not LIT: '+e.message;
+    var lb=document.getElementById('litbadge'); if(lb){lb.className='badge bad'; lb.textContent='NOT LIT \u2014 '+e.message;}
+    throw e;
+  }
+})();
+</script>
+</body>
+</html>

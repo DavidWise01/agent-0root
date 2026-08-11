@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE MEMBERSHIP INFERENCE · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee06a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,106,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* refined OCHO layout */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#0a1204;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:240px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+input[type=range]{padding:0;height:22px;accent-color:var(--am);flex:1;min-width:120px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;} .verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+svg{display:block;max-width:100%;height:auto;background:#0a130c;border:1px solid var(--line);border-radius:6px;margin-top:6px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+.leg{font-size:11px;color:var(--dim);margin-top:4px;} .leg b.m{color:var(--gr);} .leg b.n{color:var(--red);}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE MEMBERSHIP INFERENCE</h1>
+ <p class="sub">From the outside of the box, decide one bit: was this sample <b>in the training set</b>? A model fits its own data too well — members sit at <b class="k">lower loss</b> than strangers. Threshold the loss and you have an attack. Down the center, data flows: the losses go <b style="color:var(--cy)">in</b>, the attacker sweeps a threshold, the leak comes <b style="color:var(--gr)">out</b> as an AUC. The <b style="color:var(--blue)">blue team</b> builds the attack and proves it; the <b style="color:var(--red)">red team</b> flips the rule to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Shokri, Stronati, Song &amp; Shmatikov, <i>Membership Inference Attacks Against Machine Learning Models</i> (IEEE S&amp;P 2017) — <a href="https://arxiv.org/abs/1610.05820">arxiv.org/abs/1610.05820</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — threshold the loss</h2>
+   <p>The attacker sees only per-example <b>loss</b> (or confidence). Rule: predict <b>member</b> when loss &lt; τ. The member-score is <b class="k">−loss</b>, so low loss ⇒ high score. Sweep τ over every value and the whole ROC falls out.</p>
+   <p>The attack's power is one number, the area under that ROC — and it has a closed form. AUC equals the <b>Mann–Whitney</b> probability that a random member scores above a random stranger:</p>
+   <p class="small">AUC = P( loss<sub>member</sub> &lt; loss<sub>stranger</sub> ) + ½·P( tie ) — rank-based, so it never changes under a monotone rescale of the score.</p>
+   <p class="small">Exact ground truth on a constructed model — members {0,1,2,3}, strangers shifted by an integer <b>gap g</b>:</p>
+   <table id="gapTbl"><thead><tr><th>gap g</th><th>AUC (closed form)</th><th>leak</th></tr></thead><tbody id="gapBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the leak DP seals <span class="tag t-amber">AVAN</span></h2>
+   <p>The model <b>remembers who it studied</b>. This sphere makes that memory measurable from outside the box; the next one builds the wall against it.</p>
+   <p><a href="https://davidwise01.github.io/the-differential-privacy/" style="color:var(--cy)">the-differential-privacy</a> <span class="tag t-amber">neighbour</span> adds calibrated noise so that a single record's presence changes the output by a bounded ε — collapsing exactly the member/stranger gap this attack feeds on. Overfitting is the door; DP is the lock. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute the closed-form AUCs over the constructed model and confirm them against the known truth — separated ⇒ AUC&gt;½, overlap ⇒ AUC→½, rank-invariant. If red flips the rule, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — two loss piles <span class="tag t-in">in ↓</span></h2>
+   <p>Two constructed piles of per-example loss, drawn with a <b>fixed-seed</b> PRNG: <b class="k">members</b> (the model trained on them) and <b style="color:var(--red)">strangers</b> (it did not). The only knob is the <b>train–test gap</b> — how much better the model fits its own data. That gap is the entire signal; the attacker never sees the membership labels.</p>
+   <p class="small">A well-generalized model has a small gap: the piles overlap and there is almost nothing to read. An overfit model pulls the member pile down and left — and hands the attacker a lever.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the losses into the attacker &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>train–test gap</label><input type="range" id="gap" min="0" max="1.7" step="0.01" value="0.85"><span id="gapv" class="k" style="min-width:34px">—</span></div>
+     <div class="row"><button id="gen">↺ generalized (small gap)</button></div>
+     <div class="row"><button id="over">⤢ overfit (large gap)</button></div>
+     <div class="row"><label>score scale</label>
+      <span class="toggle"><button id="sRaw" class="on">RAW loss</button><button id="sLog">log rescale</button></span></div>
+     <p class="small" id="scalenote">A monotone rescale moves the histogram but not a single rank — the AUC is provably unchanged.</p>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict">—</div>
+     <div class="reason" id="reason"></div>
+     <svg id="hist" viewBox="0 0 300 120"></svg>
+     <div class="leg"><b class="m">■ members</b> &nbsp; <b class="n">■ strangers</b> &nbsp;·&nbsp; lower loss = left</div>
+     <svg id="roc" viewBox="0 0 130 130"></svg>
+     <div class="leg">ROC · attacker vs. the diagonal (½ = pure guessing)</div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every quantity is computed on the spot from the two loss piles — the AUC is the Mann–Whitney rank statistic, never a stored number.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the attacker emits a leak score &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the leak, proven <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven on the constructed model: a separated gap gives a loss-threshold AUC of <b class="k">0.875</b> at g=2 and <b class="k">0.969</b> at g=3; as the gap closes the AUC falls monotonically to exactly <b>0.5</b> — a perfectly generalized model leaks nothing. The number is invariant to any monotone rescale of the score.</p>
+   <div id="litbadge"></div>
+   <p class="small">The witness (left) reconfirms these closed forms live; the red team (right) flips the rule to try to make the leak lie.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The bare loss threshold is the <b>weak</b> attack. Shokri's real method trains <b>shadow models</b> and a learned attack classifier; Carlini et al. (LiRA, 2022) calibrate per-example against a null of models trained without the point and dominate global thresholding, especially at low false-positive rates — the regime that actually matters.</div>
+   <p class="small" style="margin-top:8px">And the honest limit cuts the other way: with a near-zero generalization gap there is <b>no signal</b> — AUC≈½ is not the attack failing, it is the model genuinely not leaking. A single global threshold also ignores that "easy" examples are low-loss whether member or not; per-example calibration is what fixes it.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"High test accuracy means the model is private."</s> <b>Cut.</b> Accuracy and privacy are different axes; it is the <i>gap</i> between train and test loss that leaks — a model can be accurate and still memorize.</p>
+   <p class="grave"><s>"The attacker needs the training data."</s> <b>Cut.</b> It needs only query access to the loss/confidence for the target point. Membership is inferred, not looked up.</p>
+   <p class="grave"><s>"AUC 0.5 means the attack is broken."</s> <b>Kept, corrected.</b> 0.5 is the honest floor — no leak — not an error. Below 0.5 means the <i>rule is inverted</i>, which is exactly the tamper.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>flip the decision rule</b> — predict "member" when the loss is <b>high</b>. On separated data the attacker now scores <i>below</i> chance, and the "AUC&gt;½ on a real gap" guarantee fails.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ flip the rule</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Flip it and the ROC bows under the diagonal: AUC drops below 0.5. The witness (window 7) recomputes, disagrees with the known 0.875, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE MEMBERSHIP INFERENCE — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (losses <b style="color:var(--cy)">in</b> → threshold sweep → leak <b style="color:var(--gr)">out</b>). A runnable rendering of Shokri et al. (2017) — the engine is LIT (AUC is the live Mann–Whitney rank statistic, closed forms self-checked to 1e-9, tamper-provable), the blue team witnesses, the red team flips the rule, and the graveyard + adversary carry what a single global threshold cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// the engine — membership inference by loss threshold; AUC = Mann-Whitney rank statistic
+// FLIP is the disclosed planted void: red flips the decision rule; the witness catches it.
+let FLIP=false;
+
+// fixed-seed PRNG (mulberry32) so every draw is deterministic
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function gauss(r){ let u=0,v=0; while(u===0)u=r(); while(v===0)v=r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function genLosses(mean,sigma,n,seed){ const r=mulberry32(seed>>>0); const a=[]; for(let i=0;i<n;i++) a.push(Math.max(0.002, mean+sigma*gauss(r))); return a; }
+
+// the attacker's member-score. honest rule: low loss => high score (-loss). tamper: high loss => member (+loss).
+function memberScore(loss){ return FLIP ? loss : -loss; }
+
+// AUC as the Mann-Whitney U probability that a member out-scores a stranger (0.5 credit for ties)
+function auc(memberLosses, strangerLosses){
+ let gt=0, tie=0; const tot=memberLosses.length*strangerLosses.length;
+ for(const lm of memberLosses){ const sm=memberScore(lm);
+  for(const ls of strangerLosses){ const ss=memberScore(ls);
+   if(sm>ss) gt++; else if(sm===ss) tie++; } }
+ return (gt+0.5*tie)/tot;
+}
+
+// constructed exact model: members {0..K-1}, strangers {g .. g+K-1}
+function memberSet(K){ const a=[]; for(let i=0;i<K;i++) a.push(i); return a; }
+function strangerSet(K,g){ const a=[]; for(let i=0;i<K;i++) a.push(g+i); return a; }
+function aucGap(K,g){ return auc(memberSet(K), strangerSet(K,g)); }
+
+// AUC with a monotone rescale f applied to every loss — ranks unchanged, so AUC unchanged
+function aucRescaled(memberLosses, strangerLosses, f){ return auc(memberLosses.map(f), strangerLosses.map(f)); }
+
+// AUC recovered by trapezoid over the ROC (threshold sweep) — cross-checks the rank statistic
+function rocAUC(memberLosses, strangerLosses){
+ const pts=[];
+ for(const l of memberLosses) pts.push({s:memberScore(l),y:1});
+ for(const l of strangerLosses) pts.push({s:memberScore(l),y:0});
+ pts.sort((a,b)=> b.s-a.s);
+ const P=memberLosses.length, N=strangerLosses.length;
+ let tp=0, fp=0, pF=0, pT=0, area=0, i=0;
+ while(i<pts.length){ let j=i;
+  while(j<pts.length && pts[j].s===pts[i].s){ if(pts[j].y===1) tp++; else fp++; j++; }
+  const tpr=tp/P, fpr=fp/N; area+=(fpr-pF)*(tpr+pT)/2; pF=fpr; pT=tpr; i=j; }
+ return area;
+}
+
+// fail-loud self-check — throws on any violation, restores the tamper flag, returns true
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=FLIP; FLIP=false;
+ const A0=aucGap(4,0), A1=aucGap(4,1), A2=aucGap(4,2), A3=aucGap(4,3), A4=aucGap(4,4);
+ // closed forms on the constructed model, exact to 1e-9
+ t(Math.abs(A0-0.5)<1e-9,"g=0 (full overlap) AUC must be exactly 0.5");
+ t(Math.abs(A1-0.71875)<1e-9,"g=1 AUC must be 11.5/16");
+ t(Math.abs(A2-0.875)<1e-9,"g=2 AUC must be 14/16");
+ t(Math.abs(A3-0.96875)<1e-9,"g=3 AUC must be 15.5/16");
+ t(Math.abs(A4-1)<1e-9,"g=4 (fully separated) AUC must be 1");
+ // separated distributions => the attack works (AUC > 0.5)
+ t(A2>0.5,"on separated losses the loss-threshold attack must beat chance");
+ // shrinking the gap => AUC approaches 0.5 (a well-generalized model leaks little)
+ t(A2>A1 && A1>A0,"AUC must fall toward 0.5 as the distributions overlap");
+ t(Math.abs(A0-0.5)<1e-9,"at zero gap the leak must vanish to 0.5");
+ // overfitting (a larger gap) RAISES the attack AUC
+ t(A3>A1,"a larger train-test gap must raise the attack AUC");
+ // AUC is rank-based: invariant to any strictly-monotone rescale of the score
+ const mL=memberSet(4), sL=strangerSet(4,2);
+ const fExp=x=>Math.exp(0.9*x)+3.14, fLin=x=>7*x+11, fLog=x=>Math.log(1+x)*1.7;
+ t(Math.abs(aucRescaled(mL,sL,fExp)-A2)<1e-9,"AUC must be invariant to an exp rescale");
+ t(Math.abs(aucRescaled(mL,sL,fLin)-A2)<1e-9,"AUC must be invariant to a linear rescale");
+ t(Math.abs(aucRescaled(mL,sL,fLog)-A2)<1e-9,"AUC must be invariant to a log rescale");
+ // the ROC-area route must recover the same number
+ t(Math.abs(rocAUC(mL,sL)-A2)<1e-9,"trapezoid over the ROC must equal the rank AUC");
+ // a seeded live draw with a real gap must also leak (AUC > 0.5)
+ const dm=genLosses(0.30,0.34,60,1111), ds=genLosses(0.30+2*0.32,0.34,60,2222);
+ t(auc(dm,ds)>0.5,"a seeded separated draw must beat chance");
+ // the disclosed planted void: FLIP the rule, the separated-data guarantee must now FAIL
+ FLIP=true;
+ const T2=aucGap(4,2);
+ t(Math.abs(T2-0.125)<1e-9,"flipped rule must invert the AUC to 0.125");
+ t(!(T2>0.5),"flipping the rule must break the 'AUC>0.5 on separated data' guarantee");
+ FLIP=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const N=60, SIG=0.34, MU_M=0.30;
+let scaleLog=false;
+const RS=x=>Math.log(1+x)*1.7; // the live monotone rescale demo
+
+function curLosses(){
+ const gap=+$("gap").value;
+ let mem=genLosses(MU_M,SIG,N,1111);
+ let str=genLosses(MU_M+gap,SIG,N,2222);
+ if(scaleLog){ mem=mem.map(RS); str=str.map(RS); }
+ return {gap,mem,str};
+}
+function fmt(x){ return x.toFixed(3); }
+
+function drawHist(mem,str){
+ const W=300,H=120,pad=6, bins=16;
+ const all=mem.concat(str); const mx=Math.max(...all,0.001); const bw=(W-2*pad)/bins;
+ const cm=new Array(bins).fill(0), cs=new Array(bins).fill(0);
+ const bi=v=>Math.min(bins-1,Math.max(0,Math.floor(v/mx*bins)));
+ mem.forEach(v=>cm[bi(v)]++); str.forEach(v=>cs[bi(v)]++);
+ const top=Math.max(...cm,...cs,1); const sc=(H-2*pad)/top;
+ let s='';
+ for(let i=0;i<bins;i++){
+  const x=pad+i*bw;
+  const hm=cm[i]*sc, hs=cs[i]*sc;
+  s+=`<rect x="${(x+1).toFixed(1)}" y="${(H-pad-hs).toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${hs.toFixed(1)}" fill="#ff7a7a" opacity="0.55"/>`;
+  s+=`<rect x="${(x+1).toFixed(1)}" y="${(H-pad-hm).toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${hm.toFixed(1)}" fill="#39fc6b" opacity="0.6"/>`;
+ }
+ s+=`<line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#20402a"/>`;
+ $("hist").innerHTML=s;
+}
+function drawROC(mem,str){
+ const S=130,pad=12, P=mem.length, Nn=str.length;
+ const pts=[]; mem.forEach(l=>pts.push({s:memberScore(l),y:1})); str.forEach(l=>pts.push({s:memberScore(l),y:0}));
+ pts.sort((a,b)=> b.s-a.s);
+ let tp=0,fp=0; const xy=[[0,0]];
+ let i=0; while(i<pts.length){ let j=i; while(j<pts.length&&pts[j].s===pts[i].s){ if(pts[j].y===1)tp++; else fp++; j++; } xy.push([fp/Nn,tp/P]); i=j; }
+ const X=v=>pad+v*(S-2*pad), Y=v=>(S-pad)-v*(S-2*pad);
+ const path=xy.map((p,k)=>`${k?'L':'M'}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' ');
+ const col=FLIP?'#ff6b6b':'#39fc6b';
+ let s=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(1)}" stroke="#3a5a44" stroke-dasharray="3 3"/>`;
+ s+=`<rect x="${pad}" y="${pad}" width="${S-2*pad}" height="${S-2*pad}" fill="none" stroke="#20402a"/>`;
+ s+=`<path d="${path}" fill="none" stroke="${col}" stroke-width="2"/>`;
+ $("roc").innerHTML=s;
+}
+function render(){
+ const {gap,mem,str}=curLosses();
+ $("gapv").textContent=gap.toFixed(2);
+ const a=auc(mem,str);
+ $("verdict").textContent="attack AUC = "+fmt(a);
+ $("verdict").className="verdict "+(a>0.5?"ok":"no");
+ let msg;
+ if(FLIP) msg="rule flipped — the attacker scores below chance; this is the tamper, and the witness has it.";
+ else if(a<0.55) msg="gap ≈ 0 — members and strangers overlap; almost nothing leaks (AUC → ½).";
+ else if(a<0.8) msg="a moderate gap — the attacker reads membership well above chance.";
+ else msg="a wide gap — the model memorized; membership is exposed.";
+ $("reason").textContent=msg;
+ drawHist(mem,str); drawROC(mem,str);
+}
+function fillGapTbl(){
+ const rows=[[0,aucGap(4,0),"none"],[1,aucGap(4,1),"some"],[2,aucGap(4,2),"clear"],[3,aucGap(4,3),"strong"],[4,aucGap(4,4),"total"]];
+ $("gapBody").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="${r[1]>0.5?'y':'n'}">${r[1].toFixed(5)}</td><td>${r[2]}</td></tr>`).join("");
+}
+function audit(){
+ const el=$("auditout");
+ const A0=aucGap(4,0), A2=aucGap(4,2), A3=aucGap(4,3), A1=aucGap(4,1);
+ const mL=memberSet(4), sL=strangerSet(4,2);
+ const inv=Math.abs(aucRescaled(mL,sL,x=>Math.exp(0.9*x)+3.14)-A2)<1e-9;
+ const ok = Math.abs(A0-0.5)<1e-9 && A2>0.5 && A2>A1 && A3>A1 && inv;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">separated g=2 AUC: <b style="color:${A2>0.5?'var(--gr)':'var(--wall)'}">${A2.toFixed(3)}</b> (must &gt;½) &nbsp;·&nbsp; overlap g=0: <b style="color:${Math.abs(A0-0.5)<1e-9?'var(--gr)':'var(--wall)'}">${A0.toFixed(3)}</b> (=½) &nbsp;·&nbsp; rescale-invariant: <b style="color:${inv?'var(--gr)':'var(--wall)'}">${inv}</b>${FLIP?' &nbsp; — <span style="color:var(--wall)">red flipped the rule</span>':''}</div>`;
+}
+function setScale(l){ scaleLog=l; $("sRaw").classList.toggle("on",!l); $("sLog").classList.toggle("on",l);
+ $("scalenote").innerHTML = l?"log rescale applied — the histogram compressed, but every rank held: <b>AUC unchanged</b>.":"A monotone rescale moves the histogram but not a single rank — the AUC is provably unchanged.";
+ render(); }
+
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load (closed forms to 1e-9)</span>';
+ fillGapTbl();
+ $("gap").addEventListener("input",()=>{render();});
+ $("gen").addEventListener("click",()=>{ $("gap").value="0.05"; render(); });
+ $("over").addEventListener("click",()=>{ $("gap").value="1.6"; render(); });
+ $("sRaw").addEventListener("click",()=>setScale(false));
+ $("sLog").addEventListener("click",()=>setScale(true));
+ $("tamper").addEventListener("click",()=>{ FLIP=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Rule flipped.</b> Members are now called strangers and back again — on separated losses the AUC fell below 0.5, the ROC bowed under the diagonal, and the witness (window 7) went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ FLIP=false; $("tampernote").textContent="Flip it and the ROC bows under the diagonal: AUC drops below 0.5. The witness (window 7) recomputes, disagrees with the known 0.875, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the membership-inference engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

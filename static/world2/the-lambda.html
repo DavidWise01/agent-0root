@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LAMBDA · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#c8a2ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(200,162,255,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(200,162,255,.06);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(200,162,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.term{font-size:13px;line-height:1.85;margin:6px 0;padding:9px 10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;color:#d7ffe0;word-break:break-word;}
+.term .lam{color:var(--am);} .term .f{color:var(--cy);} .term .x{color:var(--gr);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+td.l{text-align:left;} .mono{color:#d7ffe0;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE LAMBDA</h1>
+ <p class="sub">A variable, a way to make a function, a way to apply one — nothing else. From those three marks Alonzo Church built a universal computer in 1936, months before Turing built his. A number <b>is</b> a function: <b class="k">n</b> = λf.λx. f applied to x, <b>n</b> times. Arithmetic becomes term-rewriting. Down the center, terms go <b style="color:var(--cy)">in</b>, one β-reduction rule fires until nothing more can, and the decoded integer comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and proves it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source · AMBER</span> Church, <i>An Unsolvable Problem of Elementary Number Theory</i>, Amer. J. Math. <b>58</b> (1936) 345–363 — where λ-definability and the Church numerals first appear. No public scan on archive.org (JSTOR 10.2307/2371045); honest link is the <a href="https://archive.org/search?query=Church+unsolvable+problem+elementary+number+theory">archive.org search</a>. The related monograph is Barendregt, <i>The Lambda Calculus</i> (1984). Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — one rewrite rule</h2>
+   <p>The whole calculus is three term shapes and one rule.</p>
+   <p><b class="k">Terms:</b> a <b>variable</b>; an <b>abstraction</b> <span class="mono">λx.M</span> (a function of x); an <b>application</b> <span class="mono">M N</span> (feed N to M).</p>
+   <p><b class="k">β-reduction:</b> <span class="mono">(λx.M) N → M[x:=N]</span> — substitute the argument for the bound variable. That single move is the entire engine.</p>
+   <p class="small">To avoid a free variable in N being <i>captured</i> by a λ inside M, this engine uses <b>de Bruijn indices</b>: a variable is a number counting binders outward, so substitution needs no fresh-name games — it just shifts indices. Reduction is <b>normal-order</b> (leftmost-outermost), which by the standardisation theorem reaches a term's normal form whenever one exists.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the 1936 twin <span class="tag t-amber">AVAN</span></h2>
+   <p>The same year, in a different notation, Turing defined the <b>machine</b>: a head on an infinite tape. Church defined the <b>function</b>: a term that rewrites. In 1937 they were proved to compute <b>exactly</b> the same class — the <b style="color:var(--am)">Church–Turing thesis</b>.</p>
+   <p>λ-calculus is the functional root of every language with first-class functions; the tape is the imperative root of every CPU. Two spheres, one power. The twin waits in <a href="https://davidwise01.github.io/ud0/world2/" style="color:var(--cy)">THE FOLD</a>: this sphere's output — "computation has a smallest shape" — is that one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: independently re-reduce SUCC, PLUS, and MULT on real terms and confirm the decoded integers. If red tampers with the engine, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the terms <span class="tag t-in">in ↓</span></h2>
+   <p>Everything is encoded as a λ-term. A number is <b>how many times you apply a function</b>:</p>
+   <table><thead><tr><th>name</th><th>λ-term</th><th>means</th></tr></thead>
+    <tbody>
+     <tr><td>0</td><td class="l mono">λf.λx. x</td><td>apply f zero times</td></tr>
+     <tr><td>1</td><td class="l mono">λf.λx. f x</td><td>apply f once</td></tr>
+     <tr><td>n</td><td class="l mono">λf.λx. f (f … (f x))</td><td>apply f n times</td></tr>
+     <tr><td>SUCC</td><td class="l mono">λn.λf.λx. f (n f x)</td><td>add one</td></tr>
+     <tr><td>PLUS</td><td class="l mono">λm.λn.λf.λx. m f (n f x)</td><td>m + n</td></tr>
+     <tr><td>MULT</td><td class="l mono">λm.λn.λf. m (n f)</td><td>m × n</td></tr>
+    </tbody></table>
+   <p class="small">These six terms are the entire input. The panel below builds each input number <b>by iterating SUCC on 0</b> — Peano-style — then reduces the operator applied to them.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the terms into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the evaluator <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>operation</label>
+      <select id="op"><option value="SUCC">SUCC · add one</option><option value="PLUS" selected>PLUS · m + n</option><option value="MULT">MULT · m × n</option></select></div>
+     <div class="row"><label>m</label><select id="a"></select></div>
+     <div class="row" id="rowb"><label>n</label><select id="b"></select></div>
+     <div class="row"><button id="reset">↺ build term</button><button id="stepb">▶ β-step</button><button id="runb">⏭ normal form</button></div>
+     <div class="row"><button id="ex1">PLUS 2 3</button><button id="ex2">MULT 2 3</button></div>
+     <p class="small">Each <b>β-step</b> contracts the leftmost-outermost redex. "Normal form" runs to the end; the result is decoded by counting the f's — never looked up.</p>
+    </div>
+    <div class="readout">
+     <div class="small">current term &nbsp;·&nbsp; <b class="k" id="stepc">0</b> β-steps</div>
+     <div class="term" id="curterm"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change any control and the term is rebuilt from the six λ-terms above — then reduced live by the one β-rule.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the evaluator emits a normal form &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, live and from scratch: arithmetic is <b>reduction</b>. No numbers are stored — every value is a normal-form term, decoded by counting applications.</p>
+   <div id="outbox" class="small"></div>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-derives these; the red team (right) tries to make them lie.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Untyped λ-calculus is <b>too</b> powerful in one direction and useless in another. <span class="mono">Ω = (λx.x x)(λx.x x)</span> reduces to itself forever — there is <b>no</b> normal form, and no algorithm can decide in general whether a term has one. That undecidability was Church's actual 1936 result; the pretty arithmetic is a corollary.</div>
+   <p class="small" style="margin-top:8px">And a Church numeral is a spectacularly slow integer: MULT 6 6 here takes over a hundred rewrites to reach 36. As a <i>model</i> it is universal; as a <i>calculator</i> it is a proof of concept, not a competitor to binary. This panel only survives because it feeds the engine terms known to terminate.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Church proved lambda calculus can add — that was the point."</s> <b>Cut.</b> The point was <i>un</i>solvability: no decision procedure for λ-convertibility. Addition just shows the system is rich enough to encode arithmetic first.</p>
+   <p class="grave"><s>"Church numerals are the only encoding."</s> <b>Cut.</b> Scott and Mogensen–Scott encodings exist and are often better; the numeral here is Church's, chosen because SUCC/PLUS/MULT are legible — not because it is canonical.</p>
+   <p class="grave"><s>"Any reduction order gives the same answer."</s> <b>Kept, corrected.</b> The <i>value</i> is confluent (Church–Rosser), but only <b>normal-order</b> is guaranteed to <i>find</i> it. Applicative order can diverge where normal order halts — so this engine commits to leftmost-outermost.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: corrupt SUCC to <span class="mono">λn.λf.λx. f x</span> — it drops the <b>n</b> and always returns 1, so it no longer adds one. Every number built from it collapses.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ break SUCC</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Break SUCC and the inputs stop counting: PLUS 2 3 no longer decodes to 5, the panel's answer changes, and the witness (window 7) recomputes, disagrees, and turns red. Nothing is faked — the value genuinely changes and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE LAMBDA — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (terms <b style="color:var(--cy)">in</b> → β-reduction → integer <b style="color:var(--gr)">out</b>). A runnable rendering of Alonzo Church's 1936 λ-calculus — de Bruijn substitution, normal-order reduction, and Church numerals, all computed live: the engine is LIT (SUCC/PLUS/MULT reduced and decoded on load, self-checked, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry the undecidability a single arithmetic demo cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== THE LAMBDA — untyped lambda calculus engine (de Bruijn indices) =====
+   Pure logic only; verified: PLUS 2 3 = 5, MULT 2 3 = 6, round-trips 0..6. */
+const V=i=>({t:"var",i});
+const L=b=>({t:"lam",body:b});
+const A=(f,a)=>({t:"app",f,a});
+const ZERO=L(L(V(0)));                                   // λf.λx.x
+const SUCC_GOOD=L(L(L(A(V(1),A(A(V(2),V(1)),V(0))))));   // λn.λf.λx. f (n f x)
+const SUCC_BAD =L(L(L(A(V(1),V(0)))));                   // λn.λf.λx. f x   (tamper: drops n → always 1)
+const PLUS=L(L(L(L(A(A(V(3),V(1)),A(A(V(2),V(1)),V(0))))))); // λm.λn.λf.λx. m f (n f x)
+const MULT=L(L(L(A(V(2),A(V(1),V(0))))));                // λm.λn.λf. m (n f)
+let TAMPER=false;                                        // red-team flag; witness must catch it
+const succTerm=()=>TAMPER?SUCC_BAD:SUCC_GOOD;
+const CAP=100000;
+
+function shift(t,d,c){
+ if(t.t==="var") return V(t.i>=c?t.i+d:t.i);
+ if(t.t==="lam") return L(shift(t.body,d,c+1));
+ return A(shift(t.f,d,c),shift(t.a,d,c));
+}
+function subst(t,j,s){
+ if(t.t==="var") return t.i===j?s:t;
+ if(t.t==="lam") return L(subst(t.body,j+1,shift(s,1,0)));
+ return A(subst(t.f,j,s),subst(t.a,j,s));
+}
+function betaContract(lam,arg){ return shift(subst(lam.body,0,shift(arg,1,0)),-1,0); }
+function step(t){                                        // one normal-order (leftmost-outermost) step; null if normal form
+ if(t.t==="app"){
+  if(t.f.t==="lam") return betaContract(t.f,t.a);
+  const f2=step(t.f); if(f2!==null) return A(f2,t.a);
+  const a2=step(t.a); if(a2!==null) return A(t.f,a2);
+  return null;
+ }
+ if(t.t==="lam"){ const b=step(t.body); return b!==null?L(b):null; }
+ return null;
+}
+function norm(t){ let s=0; while(true){ const n=step(t); if(n===null) break; t=n; if(++s>CAP) throw new Error("no normal form within "+CAP+" steps"); } return {term:t,steps:s}; }
+function isNF(t){ return step(t)===null; }
+function church(n){ let b=V(0); for(let k=0;k<n;k++) b=A(V(1),b); return L(L(b)); } // canonical λf.λx.f^n x
+function decode(t){                                      // Church numeral -> int, else null
+ if(t.t!=="lam"||t.body.t!=="lam") return null;
+ let b=t.body.body,n=0;
+ while(b.t==="app"){ if(!(b.f.t==="var"&&b.f.i===1)) return null; n++; b=b.a; }
+ return (b.t==="var"&&b.i===0)?n:null;
+}
+function numeralRaw(k){ let t=ZERO; for(let i=0;i<k;i++) t=A(succTerm(),t); return t; } // SUCC^k ZERO (un-normalized)
+function rawTerm(op,a,b){
+ if(op==="SUCC") return A(succTerm(),numeralRaw(a));
+ if(op==="PLUS") return A(A(PLUS,numeralRaw(a)),numeralRaw(b));
+ return A(A(MULT,numeralRaw(a)),numeralRaw(b));       // MULT
+}
+function enc(n){ return norm(numeralRaw(n)).term; }
+function plus(a,b){ return decode(norm(rawTerm("PLUS",a,b)).term); }
+function mult(a,b){ return decode(norm(rawTerm("MULT",a,b)).term); }
+
+/* ===== fail-loud self-check (saves/restores TAMPER so it always runs untampered) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ for(let n=0;n<=6;n++) t(decode(church(n))===n,"church("+n+") must decode to "+n);
+ for(let n=0;n<=6;n++) t(decode(enc(n))===n,"enc("+n+") built by SUCC must round-trip to "+n);
+ for(let n=0;n<=5;n++) t(decode(norm(A(succTerm(),church(n))).term)===n+1,"SUCC("+n+") must be "+(n+1));
+ for(let a=0;a<=3;a++)for(let b=0;b<=3;b++){
+  t(plus(a,b)===a+b,"PLUS "+a+" "+b+" must be "+(a+b));
+  t(mult(a,b)===a*b,"MULT "+a+" "+b+" must be "+(a*b));
+ }
+ t(plus(2,3)===5,"PLUS 2 3 must be 5");
+ t(mult(2,3)===6,"MULT 2 3 must be 6");
+ TAMPER=save; return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const NAMES=["f","x","y","z","g","h","p","q","r","s","u","v","w"];
+const vname=k=>NAMES[k]||("v"+k);
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function pretty(t,stack){                                // de Bruijn -> readable string, with binder names
+ stack=stack||[];
+ if(t.t==="var"){ return stack[stack.length-1-t.i]||("#"+t.i); }
+ if(t.t==="lam"){ const nm=vname(stack.length); return "λ"+nm+"."+pretty(t.body,stack.concat(nm)); }
+ const f=t.f.t==="lam"?"("+pretty(t.f,stack)+")":pretty(t.f,stack);
+ const a=(t.a.t==="var")?pretty(t.a,stack):"("+pretty(t.a,stack)+")";
+ return f+" "+a;
+}
+function colorTerm(s){                                    // light syntax colour for the readout
+ return esc(s).replace(/λ/g,'<span class="lam">λ</span>');
+}
+
+let PT=null, PS=0;                                        // panel term + step count
+function opAB(){ return {op:$("op").value, a:+$("a").value, b:+$("b").value}; }
+function expected(){ const {op,a,b}=opAB(); return op==="SUCC"?a+1:op==="PLUS"?a+b:a*b; }
+function buildPanel(){ const {op,a,b}=opAB(); PT=rawTerm(op,a,b); PS=0; renderPanel(); }
+function stepPanel(){ const n=step(PT); if(n===null){ renderPanel(); return; } PT=n; PS++; renderPanel(); }
+function runPanel(){ const r=norm(PT); PT=r.term; PS+=r.steps; renderPanel(); }
+function renderPanel(){
+ $("stepc").textContent=PS;
+ $("curterm").innerHTML=colorTerm(pretty(PT));
+ if(isNF(PT)){
+  const v=decode(PT), exp=expected(), ok=(v===exp);
+  const {op,a,b}=opAB();
+  const lhs=op==="SUCC"?("SUCC "+a):(op+" "+a+" "+b);
+  $("verdict").textContent = (v===null?"— not a numeral":("= "+v));
+  $("verdict").className="verdict "+(ok?"ok":"no");
+  $("reason").innerHTML = ok
+   ? "normal form reached · "+esc(lhs)+" decodes to <b class='k'>"+v+"</b> (expected "+exp+")"
+   : "<b style='color:var(--wall)'>"+esc(lhs)+" decoded to "+v+", expected "+exp+"</b> — the engine is broken";
+ } else {
+  $("verdict").textContent="reducing…"; $("verdict").className="verdict";
+  $("reason").textContent="press ▶ β-step or ⏭ normal form";
+ }
+}
+
+function audit(){
+ const el=$("auditout");
+ const s=decode(norm(A(succTerm(),church(3))).term);     // SUCC 3 -> should be 4
+ const e2=decode(enc(2)), e5=decode(enc(5));             // SUCC-built round-trips
+ const p=plus(2,3), m=mult(2,3);
+ const ok = s===4 && e2===2 && e5===5 && p===5 && m===6;
+ const g=v=>v?"var(--gr)":"var(--wall)";
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">`
+  + `SUCC 3 → <b style="color:${g(s===4)}">${s}</b>/4 &nbsp;·&nbsp; enc(2) → <b style="color:${g(e2===2)}">${e2}</b>/2 &nbsp;·&nbsp; enc(5) → <b style="color:${g(e5===5)}">${e5}</b>/5<br>`
+  + `PLUS 2 3 → <b style="color:${g(p===5)}">${p}</b>/5 &nbsp;·&nbsp; MULT 2 3 → <b style="color:${g(m===6)}">${m}</b>/6`
+  + `${TAMPER?' &nbsp; — <span style="color:var(--wall)">red broke SUCC</span>':''}</div>`;
+}
+
+function fillOut(){
+ const p=norm(rawTerm("PLUS",2,3)), m=norm(rawTerm("MULT",2,3));
+ $("outbox").innerHTML =
+   `PLUS 2 3 &nbsp;→&nbsp; <span class="mono">${colorTerm(pretty(p.term))}</span> &nbsp;=&nbsp; <b class="k">${decode(p.term)}</b> &nbsp;<span class="mut">(${p.steps} β-steps)</span><br>`
+  +`MULT 2 3 &nbsp;→&nbsp; <span class="mono">${colorTerm(pretty(m.term))}</span> &nbsp;=&nbsp; <b class="k">${decode(m.term)}</b> &nbsp;<span class="mut">(${m.steps} β-steps)</span>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ for(const id of ["a","b"]) $(id).innerHTML=[0,1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join("");
+ $("op").value="PLUS"; $("a").value="2"; $("b").value="3";
+ const syncB=()=>{ $("rowb").style.display = $("op").value==="SUCC" ? "none" : "flex"; };
+ const rebuild=()=>{ syncB(); buildPanel(); };
+ ["op","a","b"].forEach(id=>$(id).addEventListener("change",rebuild));
+ $("reset").addEventListener("click",buildPanel);
+ $("stepb").addEventListener("click",stepPanel);
+ $("runb").addEventListener("click",runPanel);
+ $("ex1").addEventListener("click",()=>{ $("op").value="PLUS"; $("a").value="2"; $("b").value="3"; rebuild(); });
+ $("ex2").addEventListener("click",()=>{ $("op").value="MULT"; $("a").value="2"; $("b").value="3"; rebuild(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true;
+   $("tampernote").innerHTML="<b style='color:var(--wall)'>SUCC broken.</b> It drops n and returns 1, so numbers built from it stop counting — PLUS 2 3 no longer reaches 5. The witness (window 7) recomputed and went red. Rebuild the term to watch the panel change too.";
+   audit(); fillOut(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false;
+   $("tampernote").textContent="Break SUCC and the inputs stop counting: PLUS 2 3 no longer decodes to 5, the panel's answer changes, and the witness (window 7) recomputes, disagrees, and turns red. Nothing is faked — the value genuinely changes and it is caught.";
+   audit(); fillOut(); });
+ syncB(); buildPanel(); runPanel(); audit(); fillOut();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the lambda engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

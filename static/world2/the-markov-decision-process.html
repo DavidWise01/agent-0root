@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE MARKOV DECISION PROCESS · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fd4ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,212,255,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,212,255,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,212,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{width:150px;accent-color:var(--am);vertical-align:middle;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .A{color:var(--am);} .sent .B{color:var(--cy);} .sent .C{color:var(--gr);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE MARKOV DECISION PROCESS</h1>
+ <p class="sub">States, actions, a reward, a discount — the frame every learning agent lives in. Fix a policy and the value of each state is not simulated but <b>solved</b>: the Bellman expectation equation <b class="k">V = R<sub>π</sub> + γ·P<sub>π</sub>V</b> is one linear system, exact in closed form. Down the center the pipeline runs: the tuple goes <b style="color:var(--cy)">in</b>, the engine solves, the value <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and re-checks it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> R. A. Howard, <i>Dynamic Programming and Markov Processes</i> (MIT Press &amp; Wiley, 1960); R. Bellman, <i>Dynamic Programming</i> (Princeton, 1957) — <a href="https://archive.org/details/dynamicprogrammi0000howa">archive.org/details/dynamicprogrammi0000howa</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — one linear system</h2>
+   <p>For a <b>fixed policy π</b> the value function is defined self-referentially — the worth of a state is its immediate reward plus the discounted worth of where π sends you:</p>
+   <p style="text-align:center;color:var(--am)"><b>V(s) = R<sub>π</sub>(s) + γ·Σ<sub>s'</sub> P<sub>π</sub>(s'|s)·V(s')</b></p>
+   <p class="small">That is <b class="k">n</b> equations in <b class="k">n</b> unknowns. Stack them: <b>(I − γP<sub>π</sub>)V = R<sub>π</sub></b>, solvable exactly whenever γ&lt;1 (the matrix is then invertible). No sampling, no training. Live P<sub>π</sub> and R<sub>π</sub> for the current policy:</p>
+   <table id="modelTbl"><thead><tr><th>s</th><th>→ A</th><th>→ B</th><th>→ C</th><th>R<sub>π</sub></th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — from the chain <span class="tag t-amber">AVAN</span></h2>
+   <p>Strip the actions and the reward away and an MDP collapses to <a href="https://davidwise01.github.io/the-markov-chain/" style="color:var(--cy)">the Markov chain</a> — a memoryless random walk that just <i>drifts</i>. P<sub>π</sub> here <b>is</b> such a chain: pick a policy and the choices freeze into one transition matrix.</p>
+   <p>The MDP adds the two things the chain lacks: a <b>steering wheel</b> (choose the action) and a <b>scoreboard</b> (collect the reward). The chain asks "where do I end up?"; the MDP asks "given that I can steer, what is each place <i>worth</i>?" Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-solve for the current policy, confirm the Bellman residual is ~0, every value obeys the R<sub>max</sub>/(1−γ) bound, and it matches an independent discounted-trajectory sum. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the tuple (S,A,P,R,γ) <span class="tag t-in">in ↓</span></h2>
+   <p>A concrete little world: a robot patrolling three locations in a loop.</p>
+   <p><b class="A" style="color:var(--am)">S</b> = {A, B, C} — a 3-state cycle. &nbsp; <b>A</b> = {<i>advance</i> → next location, <i>hold</i> → stay}. &nbsp; <b>P</b> is deterministic given the action. &nbsp; <b>R(s,a)</b>: advancing pays A=+1, B=+2, C=+3; holding pays 0 — except <b class="C" style="color:var(--gr)">holding at C keeps paying +3</b> (C is the jackpot). &nbsp; <b>γ</b> ∈ [0,1) discounts the future.</p>
+   <p class="small">A <b>policy π</b> names one action per state. That is the whole input — feed it to the panel and it returns the value of every state.</p>
+  </div>
+  <div class="flow">▼ &nbsp; fix a policy and a discount, feed the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>discount γ</label><input type="range" id="gamma" min="0" max="0.99" step="0.01" value="0.9"><b id="gval" style="color:var(--am)">0.90</b></div>
+     <div class="row"><label>π at A</label><select id="pA"><option value="0">advance → B</option><option value="1">hold at A</option></select></div>
+     <div class="row"><label>π at B</label><select id="pB"><option value="0">advance → C</option><option value="1">hold at B</option></select></div>
+     <div class="row"><label>π at C</label><select id="pC"><option value="0">advance → A</option><option value="1" selected>hold at C</option></select></div>
+     <div class="row"><button id="patrol">→ patrol (all advance)</button><button id="campc">→ camp at C</button></div>
+     <p class="small" id="readmode">The engine forms (I − γP<sub>π</sub>) and solves by Gaussian elimination — the exact value, not an average of rollouts.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <table id="valTbl"><thead><tr><th>state</th><th>action</th><th>R<sub>π</sub></th><th>V(s)</th></tr></thead><tbody id="valBody"></tbody></table>
+     <div class="reason" id="reason" style="margin-top:6px"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Move γ or change any action — V is re-solved from the linear system on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits the value function &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the value function <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: <b>V(s)</b> for every state, the unique fixed point of the Bellman expectation operator. It satisfies <b class="k">V = R<sub>π</sub> + γP<sub>π</sub>V</b> to machine precision, sits inside the geometric bound <b class="k">|V| ≤ R<sub>max</sub>/(1−γ)</b>, and — because the policy is deterministic — equals the discounted sum of rewards along the trajectory it actually walks.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-solves and confirms these live; the red team (right) tries to make them diverge.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> This panel <b>evaluates</b> a policy you hand it — it does not <b>find</b> the best one. That is a different equation (the Bellman <i>optimality</i> equation, with a max over actions) solved by policy/value iteration. Evaluation is one half of the loop, not the whole of it.</div>
+   <p class="small" style="margin-top:8px">And the frame has hard edges: P and R must be <b>known</b> (unknown ⇒ model-free RL, Q-learning); the table is |S|²|A| — the <b>curse of dimensionality</b> kills exact solves for large or continuous spaces; the state must be <b>Markov</b> (sufficient) — real agents see partial observations (POMDPs); and γ&lt;1 is a modelling choice that quietly discounts the far future to nothing.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Solving the MDP gives the optimal policy."</s> <b>Cut.</b> The <i>expectation</i> equation only scores a <b>fixed</b> π. Optimality needs the max-over-actions operator; this engine is the evaluation step inside that larger loop.</p>
+   <p class="grave"><s>"You must simulate/train to estimate the values."</s> <b>Cut.</b> For a known model and fixed policy the value is the <b>exact</b> solution of a linear system — closed form. Sampling is only for the model-free case.</p>
+   <p class="grave"><s>"γ is just a number; set it to 1."</s> <b>Kept, corrected.</b> At γ=1 on a recurring chain, (I − P<sub>π</sub>) is <b>singular</b> and the value diverges — undiscounted problems need proper/absorbing policies or average-reward theory. The red team's tamper does exactly this.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: shove <b>γ = 1</b> onto the cyclic MDP. Now (I − γP<sub>π</sub>) loses rank, the R<sub>max</sub>/(1−γ) bound blows up, and the value diverges to ∞. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ force γ = 1</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Set γ=1 and the geometric series 1/(1−γ) is undefined; the linear solve hits a zero pivot on the cycle. The witness re-solves, sees non-finite values, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE MARKOV DECISION PROCESS — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (tuple <b style="color:var(--cy)">in</b> → linear solve → value <b style="color:var(--gr)">out</b>). A runnable rendering of Howard's <i>Dynamic Programming and Markov Processes</i> from archive.org — the engine is LIT (the Bellman expectation system solved exactly, residual / bound / trajectory self-checked, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine — a tiny deterministic MDP, values solved in closed form ===== */
+const S=3, ACT=2;
+const LOC=["A","B","C"];
+const ANAME=["advance","hold"];
+/* R[s][a] : advancing pays 1/2/3; holding pays 0, except holding at C pays 3 (the jackpot) */
+const R=[[1,0],[2,0],[3,3]];
+const PATROL=[0,0,0];   /* advance everywhere -> pure 3-cycle A->B->C->A */
+const CAMPC =[0,0,1];   /* advance A,B ; hold at C -> absorbing at C */
+let TAMPER=false;       /* red forces gamma=1 when true — the witness must catch it */
+let GAMMA=0.9;
+
+function nextState(s,a){ return a===0 ? (s+1)%S : s; }
+function effGamma(base){ return TAMPER ? 1 : base; }
+function maxAbsR(){ let m=0; for(let s=0;s<S;s++) for(let a=0;a<ACT;a++) m=Math.max(m,Math.abs(R[s][a])); return m; }
+function Ppi(pol){ const P=[]; for(let s=0;s<S;s++){ P[s]=new Array(S).fill(0); P[s][nextState(s,pol[s])]=1; } return P; }
+function Rpi(pol){ const r=[]; for(let s=0;s<S;s++) r[s]=R[s][pol[s]]; return r; }
+
+/* solve (I - g*P) V = Rv by Gaussian elimination with partial pivoting;
+   a near-zero pivot (singular matrix, e.g. g=1 on a recurring chain) returns Infinity. */
+function solveV(P,Rv,g){
+ const n=P.length, M=[];
+ for(let i=0;i<n;i++){ M[i]=[]; for(let j=0;j<n;j++) M[i][j]=(i===j?1:0)-g*P[i][j]; M[i][n]=Rv[i]; }
+ for(let c=0;c<n;c++){
+  let piv=c; for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[piv][c])) piv=r;
+  if(Math.abs(M[piv][c])<1e-12) return new Array(n).fill(Infinity);
+  const tmp=M[c]; M[c]=M[piv]; M[piv]=tmp;
+  for(let r=0;r<n;r++){ if(r===c) continue; const f=M[r][c]/M[c][c]; for(let k=c;k<=n;k++) M[r][k]-=f*M[c][k]; }
+ }
+ const x=[]; for(let i=0;i<n;i++) x[i]=M[i][n]/M[i][i]; return x;
+}
+function bellmanResidual(P,Rv,g,V){ let m=0; for(let s=0;s<S;s++){ let b=Rv[s]; for(let j=0;j<S;j++) b+=g*P[s][j]*V[j]; m=Math.max(m,Math.abs(V[s]-b)); } return m; }
+
+/* independent value: follow the deterministic trajectory until a state repeats,
+   then sum the finite prefix plus a geometric tail over the discovered cycle.
+   This never touches the linear solve — a genuine cross-check. */
+function trajValue(s,pol,g){
+ const seen={}, rew=[]; let cur=s, idx=0;
+ while(!(cur in seen)){ seen[cur]=idx; rew.push(R[cur][pol[cur]]); cur=nextState(cur,pol[cur]); idx++; }
+ const cs=seen[cur], L=rew.length, cyl=L-cs;
+ let V=0; for(let k=0;k<cs;k++) V+=Math.pow(g,k)*rew[k];
+ let cyc=0; for(let k=0;k<cyl;k++) cyc+=Math.pow(g,k)*rew[cs+k];
+ return V + Math.pow(g,cs)*cyc/(1-Math.pow(g,cyl));
+}
+
+/* ===== fail-loud self-check (saves/restores the tamper flag) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const g=0.9;
+ t(g>=0 && g<1,"gamma must be in [0,1)");
+ for(const pol of [PATROL,CAMPC]){
+  const P=Ppi(pol), Rv=Rpi(pol);
+  for(let s=0;s<S;s++){ let sum=0; for(let j=0;j<S;j++) sum+=P[s][j]; t(Math.abs(sum-1)<1e-12,"P_pi rows must sum to 1"); }
+  const V=solveV(P,Rv,g);
+  t(V.every(isFinite),"value must be finite for gamma<1");
+  t(bellmanResidual(P,Rv,g,V)<1e-10,"Bellman residual V - (R + gP V) must vanish");
+  const bound=maxAbsR()/(1-g);
+  for(let s=0;s<S;s++) t(Math.abs(V[s])<=bound+1e-9,"every value bounded by Rmax/(1-gamma)");
+  for(let s=0;s<S;s++) t(Math.abs(V[s]-trajValue(s,pol,g))<1e-9,"V must equal the discounted trajectory sum");
+ }
+ /* explicit closed-form geometric check for the pure 3-cycle patrol policy */
+ const Vp=solveV(Ppi(PATROL),Rpi(PATROL),g), rp=Rpi(PATROL);
+ const cyc=(rp[0]+g*rp[1]+g*g*rp[2])/(1-g*g*g);
+ t(Math.abs(Vp[0]-cyc)<1e-9,"patrol V(A) must equal the 3-cycle geometric series");
+ /* ===== the planted void: gamma=1 on the cyclic MDP must break the bounded/solvable checks ===== */
+ TAMPER=true;
+ const gt=effGamma(0.9);
+ t(gt===1,"tamper must force gamma=1");
+ t(!isFinite(maxAbsR()/(1-gt)),"at gamma=1 the Rmax/(1-gamma) bound must diverge");
+ t(!isFinite(trajValue(0,PATROL,gt)),"at gamma=1 on a cycle the trajectory value must diverge");
+ t(solveV(Ppi(PATROL),Rpi(PATROL),gt).some(x=>!isFinite(x)),"at gamma=1 (I - gamma P_pi) must be singular");
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+function policy(){ return [ +$("pA").value, +$("pB").value, +$("pC").value ]; }
+function fnum(x){ return isFinite(x) ? x.toFixed(3) : "∞"; }
+
+function render(){
+ GAMMA=parseFloat($("gamma").value);
+ const g=effGamma(GAMMA);
+ const pol=policy(), P=Ppi(pol), Rv=Rpi(pol), V=solveV(P,Rv,g);
+ $("gval").textContent = g.toFixed(2) + (TAMPER?" ⚠":"");
+ $("sent").innerHTML =
+  `policy: A <b class="A">${ANAME[pol[0]]}</b> · B <b class="A">${ANAME[pol[1]]}</b> · C <b class="C">${ANAME[pol[2]]}</b>` +
+  `<br>discount γ = <b style="color:var(--am)">${g.toFixed(2)}</b> &nbsp;·&nbsp; R<sub>max</sub>/(1−γ) bound = <b class="k">${fnum(maxAbsR()/(1-g))}</b>`;
+ const ok=V.every(isFinite);
+ $("verdict").textContent = ok ? "SOLVED — V is finite & bounded" : "DIVERGES — matrix singular at γ=1";
+ $("verdict").className = "verdict "+(ok?"ok":"no");
+ $("valBody").innerHTML = [0,1,2].map(s=>
+   `<tr><td>${LOC[s]}</td><td>${ANAME[pol[s]]}</td><td>${Rv[s]}</td><td class="${isFinite(V[s])?'y':'n'}">${fnum(V[s])}</td></tr>`).join("");
+ $("reason").innerHTML = ok
+   ? `Bellman residual = <b class="k">${bellmanResidual(P,Rv,g,V).toExponential(1)}</b> — the exact fixed point.`
+   : `<b style="color:var(--wall)">1/(1−γ) is undefined; the solve hit a zero pivot.</b>`;
+ /* window 3 model table */
+ $("modelBody").innerHTML = [0,1,2].map(s=>{
+   const row=P[s].map(v=>`<td class="${v?'y':'n'}">${v}</td>`).join("");
+   return `<tr><td>${LOC[s]}</td>${row}<td>${Rv[s]}</td></tr>`; }).join("");
+}
+function audit(){
+ const g=effGamma(GAMMA);
+ const pol=policy(), P=Ppi(pol), Rv=Rpi(pol), V=solveV(P,Rv,g);
+ const res=bellmanResidual(P,Rv,g,V), bound=maxAbsR()/(1-g);
+ const finite=V.every(isFinite)&&isFinite(res)&&isFinite(bound);
+ const boundOK=finite && V.every(v=>Math.abs(v)<=bound+1e-9);
+ const trajOK=finite && V.every((v,s)=>Math.abs(v-trajValue(s,pol,g))<1e-9);
+ const ok=finite && res<1e-8 && boundOK && trajOK;
+ $("auditout").innerHTML =
+  `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">residual <b style="color:${finite&&res<1e-8?'var(--gr)':'var(--wall)'}">${finite?res.toExponential(1):'∞'}</b>`
+  + ` · bound |V|≤${fnum(bound)} <b style="color:${boundOK?'var(--gr)':'var(--wall)'}">${boundOK?'✓':'✗'}</b>`
+  + ` · trajectory match <b style="color:${trajOK?'var(--gr)':'var(--wall)'}">${trajOK?'✓':'✗'}</b>`
+  + `${TAMPER?' &nbsp; — <span style="color:var(--wall)">red forced γ=1: (I−P) singular</span>':''}</div>`;
+}
+function sync(){ render(); audit(); }
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ ["gamma","pA","pB","pC"].forEach(id=>$(id).addEventListener("input",sync));
+ ["pA","pB","pC"].forEach(id=>$(id).addEventListener("change",sync));
+ $("patrol").addEventListener("click",()=>{ $("pA").value="0";$("pB").value="0";$("pC").value="0"; sync(); });
+ $("campc").addEventListener("click",()=>{ $("pA").value="0";$("pB").value="0";$("pC").value="1"; sync(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true;
+   $("tampernote").innerHTML="<b style='color:var(--wall)'>γ forced to 1.</b> On the recurring chain (I − P<sub>π</sub>) is singular, 1/(1−γ)=∞, and the value diverges — the witness (window 7) re-solved, got non-finite values, and went red. The attack is real; it is caught."; sync(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false;
+   $("tampernote").textContent="Set γ=1 and the geometric series 1/(1−γ) is undefined; the linear solve hits a zero pivot on the cycle. The witness re-solves, sees non-finite values, and turns red. Nothing is faked; the attack is real and it is caught."; sync(); });
+ sync();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the MDP engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

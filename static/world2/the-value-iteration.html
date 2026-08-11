@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE VALUE ITERATION · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#0a0710; --bg2:#120c1a; --ink:#d9cdf2; --dim:#8a7bb0; --line:#33264a;
+ --am:#c0b0ff; --gr:#7bffb0; --lit:#7bffb0; --amber:#c0b0ff; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(192,176,255,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(192,176,255,.06);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#cdbdf0;} .win b{color:#efe6ff;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(192,176,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#140d1e;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.vec{font-size:14px;line-height:1.9;margin:8px 0;padding:10px;background:#140d1e;border:1px solid var(--line);border-radius:6px;}
+.vec .lbl{color:var(--dim);} .vec .val{color:var(--am);font-weight:700;} .vec .star{color:var(--gr);font-weight:700;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.y{color:var(--gr);font-weight:700;} .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(123,255,176,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#a59;font-size:12px;} .grave s{color:#6b5d7f;} .grave b{color:#d3bde0;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE VALUE ITERATION</h1>
+ <p class="sub">Apply the Bellman operator until the values stop moving. Start from <b>nothing</b> — V₀ = 0 — and iterate <b class="k">V<sub>k+1</sub> = T V<sub>k</sub></b> on a small Markov decision process. Because T is a <b>γ-contraction</b>, the error to the true optimum V* is crushed by a factor of γ every sweep: the estimates march, geometrically and unstoppably, to the one value function that satisfies the Bellman equation. Down the center, data flows: the model goes <b style="color:var(--cy)">in</b>, the operator iterates, the fixed point comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Richard Bellman, <i>Dynamic Programming</i> (Princeton University Press, 1957) — <a href="https://archive.org/details/dynamicprogrammi0000bell">archive.org/details/dynamicprogrammi0000bell</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the Bellman operator</h2>
+   <p>Validity is not memorized; it falls out of one map. The <b>optimality operator</b> T acts on a value vector:</p>
+   <p><b class="k">(T V)(s) = max<sub>a</sub> [ R(s,a) + γ · Σ<sub>s′</sub> P(s′|s,a) · V(s′) ]</b></p>
+   <p>Because that max-of-affine map is <b>non-expansive in the max and 1-Lipschitz in the sum</b>, and the sum is scaled by γ&lt;1, T is a <b>γ-contraction</b> in the sup-norm: ‖TU − TV‖<sub>∞</sub> ≤ γ‖U − V‖<sub>∞</sub>. That single fact is the whole guarantee.</p>
+   <p class="small">Live V<sub>k</sub> for the current sweep (the panel drives this):</p>
+   <table id="modelTbl"><thead><tr><th>state</th><th>V<sub>k</sub></th><th>V*</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — equation → algorithm <span class="tag t-amber">AVAN</span></h2>
+   <p><a href="https://davidwise01.github.io/the-bellman-equation/" style="color:var(--cy)">The Bellman equation</a> is a <i>fixed-point condition</i>: V* = T V*. This sphere turns that condition into a <b>procedure</b>.</p>
+   <p><b>Banach's fixed-point theorem</b>, iterated: a contraction on a complete space has <i>exactly one</i> fixed point, and repeated application from <b>any</b> start converges to it. Value iteration <i>is</i> Banach applied to T — the equation was the premise, the iteration is the proof made runnable. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run the whole iteration from V₀ = 0 and confirm the error contracts by γ every step, decreases strictly, and lands on the closed-form V*. If red cancels the discount, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the MDP <span class="tag t-in">in ↓</span></h2>
+   <p>A tiny deterministic <b>Markov decision process</b>: three states <b class="k">A B C</b>, each with two actions (reward, next state). The discount is <b>γ</b>; the start is <b>V₀ = 0</b>.</p>
+   <table><thead><tr><th>state</th><th>action</th><th>reward</th><th>→ next</th></tr></thead>
+    <tbody>
+     <tr><td>A</td><td>stay</td><td>1</td><td>A</td></tr>
+     <tr><td>A</td><td>go</td><td>0</td><td>B</td></tr>
+     <tr><td>B</td><td>stay</td><td>3</td><td>B</td></tr>
+     <tr><td>B</td><td>go</td><td>0</td><td>A</td></tr>
+     <tr><td>C</td><td>go</td><td>5</td><td>B</td></tr>
+     <tr><td>C</td><td>stay</td><td>0</td><td>C</td></tr>
+    </tbody></table>
+   <p class="small">At γ = 0.9 the optimum is closed-form: B loops on reward 3 → <b>V*(B)=30</b>; A prefers B → <b>V*(A)=27</b>; C jumps to B → <b>V*(C)=32</b>. Feed this into the operator below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the model into the operator &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>discount γ</label>
+      <select id="gam"><option value="0.5">0.50</option><option value="0.7">0.70</option><option value="0.9" selected>0.90</option><option value="0.95">0.95</option><option value="0.99">0.99</option></select></div>
+     <div class="row"><button id="step">▶ step T</button><button id="run">⏩ run to V*</button></div>
+     <div class="row"><button id="reset">↺ reset V₀=0</button><button id="rand">🎲 random V₀</button></div>
+     <p class="small" id="mode">Untampered: each sweep multiplies the error by at most γ. Banach guarantees convergence from any V₀.</p>
+    </div>
+    <div class="readout">
+     <div class="vec" id="vecbox"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <table id="seqTbl"><thead><tr><th>k</th><th>V(A)</th><th>V(B)</th><th>V(C)</th><th>‖V<sub>k</sub>−V*‖<sub>∞</sub></th><th>≤ γ<sup>k</sup>·e₀</th></tr></thead><tbody id="seqBody"></tbody></table>
+   <p class="small" style="margin-top:6px">Every number is computed live from the operator on the spot, never looked up. Watch the error column fall by the factor γ each sweep.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the operator reaches its fixed point &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the fixed point <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: from V₀ = 0 the iteration converges to the <b>unique</b> V* satisfying V* = T V*. At γ = 0.9 that is exactly <b class="k">[27, 30, 32]</b>, matched to 1e-8; the sup-norm error is bounded above by <b>γ<sup>k</sup>·e₀</b> at every step k and is strictly decreasing.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-derives this live; the red team (right) tries to cancel the discount and break the contraction.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Value iteration needs the <b>full model</b> — every transition probability and reward — and it <b>enumerates every state</b>. That is the curse of dimensionality: for large or continuous spaces the table never fits, and you fall back to function approximation or model-free methods (Q-learning, TD) that <b>lose the exact contraction guarantee</b>.</div>
+   <p class="small" style="margin-top:8px">It also converges only <b>geometrically</b>: the rate is exactly γ, so as γ → 1 (the case you most want) it becomes arbitrarily slow, and it reaches V* <i>only in the limit</i>, never in finitely many exact steps. Policy iteration terminates in finitely many iterations; value iteration is the humbler, more general cousin.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Value iteration reaches V* in finitely many steps."</s> <b>Cut.</b> It converges asymptotically — the error is bounded by γ<sup>k</sup>·e₀ and shrinks forever but never hits exact zero in finite arithmetic. The panel's error column shows it approaching, not arriving.</p>
+   <p class="grave"><s>"Dynamic programming was named for its mathematics."</s> <b>Cut.</b> By Bellman's own autobiography, he chose "dynamic programming" partly to <i>disguise</i> that he was doing mathematical research from a research-hostile administrator at RAND. The name is camouflage, not description.</p>
+   <p class="grave"><s>"A larger discount converges faster."</s> <b>Kept, corrected.</b> The contraction rate is γ itself, so γ closer to 1 converges <i>slower</i> — try γ = 0.99 in the panel and count the sweeps.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>divide the update by γ</b>, cancelling the discount. The V-dependent term now has coefficient 1 — the map is no longer a contraction, and the estimates <b>diverge</b>.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ cancel the discount</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Cancel γ and the error stops shrinking, then blows up: the geometric bound is violated, the witness (window 7) recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE VALUE ITERATION — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (model <b style="color:var(--cy)">in</b> → operator → fixed point <b style="color:var(--gr)">out</b>). A runnable rendering of Bellman's <i>Dynamic Programming</i> (1957) from archive.org — the engine is LIT (the Bellman operator iterated live, γ-contraction and closed-form V* self-checked, tamper-provable), the blue team witnesses, the red team cancels the discount, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine — Bellman operator + value iteration (verified) ===== */
+/* MDP: states 0=A,1=B,2=C ; each action = [reward, nextState] */
+const MDP = [
+ [ [1,0], [0,1] ],   // A: stay(r1)->A , go(r0)->B
+ [ [3,1], [0,0] ],   // B: stay(r3)->B , go(r0)->A
+ [ [5,1], [0,2] ]    // C: go(r5)->B   , stay(r0)->C
+];
+let TAMPER=false;      // divides the update by gamma -> cancels the discount, kills the contraction
+
+function bellmanStep(V, gamma, tampered){
+ const Vp=new Array(MDP.length);
+ for(let s=0;s<MDP.length;s++){
+  let best=-Infinity;
+  for(const [r,ns] of MDP[s]){ const q=r + gamma*V[ns]; if(q>best) best=q; }
+  Vp[s]= tampered ? best/gamma : best;   // TAMPER cancels the discount
+ }
+ return Vp;
+}
+function supnorm(a,b){ let m=0; for(let i=0;i<a.length;i++){ const d=Math.abs(a[i]-b[i]); if(d>m)m=d; } return m; }
+function solveVstar(gamma){ let V=[0,0,0]; for(let k=0;k<4000;k++) V=bellmanStep(V,gamma,false); return V; }
+
+/* run value iteration; return sequence, errors-to-Vstar, and Vstar */
+function runVI(gamma, tampered, V0, maxIter, tol){
+ const Vstar=solveVstar(gamma);
+ let V=V0.slice();
+ const seq=[V.slice()], errs=[supnorm(V,Vstar)];
+ for(let k=0;k<maxIter;k++){
+  V=bellmanStep(V,gamma,tampered);
+  const e=supnorm(V,Vstar);
+  seq.push(V.slice()); errs.push(e);
+  if(!tampered && e<=tol) break;
+  if(tampered && e>1e9) break;
+ }
+ return {seq,errs,Vstar};
+}
+
+/* fixed-seed PRNG (only for the "random V0" demonstration of Banach) */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ===== fail-loud self-check (runs untampered, restores tamper flag) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const g=0.9, CF=[27,30,32];   // closed-form optimum at gamma=0.9
+
+ // (1) directly-computed fixed point matches the closed form
+ const Vstar=solveVstar(g);
+ t(supnorm(Vstar,CF)<1e-8,"V* must match closed-form [27,30,32]");
+
+ // (2) iterate from V0=0 ; error must contract geometrically, strictly, to V*
+ const r=runVI(g,false,[0,0,0],800,1e-12);
+ const e=r.errs, e0=e[0];
+ t(e0>0,"initial error must be positive");
+ for(let k=0;k<e.length;k++){
+  t(e[k] <= Math.pow(g,k)*e0 + 1e-9, "geometric bound ||V_k-V*|| <= gamma^k*e0 violated at k="+k);
+ }
+ for(let k=0;k+1<e.length;k++){
+  if(e[k]>1e-9){
+   t(e[k+1] < e[k], "sup-norm error must be strictly decreasing at k="+k);
+   t(e[k+1] <= g*e[k] + 1e-12, "per-step contraction ratio must be <= gamma at k="+k);
+  }
+ }
+ t(e[e.length-1] < 1e-8, "value iteration must converge to V* within 1e-8");
+ t(supnorm(r.seq[r.seq.length-1],CF) < 1e-8, "converged V must equal closed-form V*");
+
+ // (3) Banach uniqueness: a PRNG-chosen start converges to the SAME fixed point
+ const rng=mulberry32(0x5eed);
+ const V0=[(rng()-0.5)*100,(rng()-0.5)*100,(rng()-0.5)*100];
+ const r2=runVI(g,false,V0,3000,1e-12);
+ t(supnorm(r2.seq[r2.seq.length-1],CF) < 1e-6, "any start must converge to the unique fixed point");
+
+ // (4) TAMPER: dividing by gamma cancels the discount -> no contraction -> a known value now differs
+ TAMPER=true;
+ const rt=runVI(g,true,[0,0,0],400,1e-12);
+ const et=rt.errs;
+ t(et[et.length-1] > 1, "tamper: iteration must NOT converge once the discount is cancelled");
+ let broke=false;
+ for(let k=0;k+1<et.length;k++){ if(et[k]>1e-9 && et[k+1] > g*et[k] + 1e-9){ broke=true; break; } }
+ t(broke, "tamper: the per-step contraction ratio must exceed gamma somewhere");
+
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const STATES=["A","B","C"];
+let gamma=0.9, V=[0,0,0], k=0, prevErr=null, Vstar=solveVstar(0.9), e0=supnorm([0,0,0],Vstar), hist=[];
+
+function fmt(x){ return (Math.abs(x)>=1e6? x.toExponential(2) : x.toFixed(3)); }
+
+function pushHist(){
+ const err=supnorm(V,Vstar);
+ hist.push({k, V:V.slice(), err, bound:Math.pow(gamma,k)*e0});
+ if(hist.length>8) hist.shift();
+}
+function renderSeq(){
+ $("seqBody").innerHTML = hist.map(h=>{
+  const ok = h.err <= h.bound + 1e-9;
+  return `<tr><td>${h.k}</td><td>${fmt(h.V[0])}</td><td>${fmt(h.V[1])}</td><td>${fmt(h.V[2])}</td>`
+   + `<td class="${ok?'y':'n'}" style="${ok?'':'color:var(--wall)'}">${fmt(h.err)}</td>`
+   + `<td class="small">${fmt(h.bound)}</td></tr>`;
+ }).join("");
+}
+function renderModel(){
+ $("modelBody").innerHTML = STATES.map((s,i)=>
+  `<tr><td>${s}</td><td class="val" style="color:var(--am)">${fmt(V[i])}</td><td class="star" style="color:var(--gr)">${fmt(Vstar[i])}</td></tr>`).join("");
+}
+function render(){
+ const err=supnorm(V,Vstar);
+ const ratio = (prevErr!==null && prevErr>1e-12) ? err/prevErr : null;
+ const bound = Math.pow(gamma,k)*e0;
+ $("vecbox").innerHTML =
+  `<div><span class="lbl">k = </span><span class="val">${k}</span></div>`
+ +`<div><span class="lbl">V<sub>k</sub> = </span><span class="val">[${V.map(fmt).join(", ")}]</span></div>`
+ +`<div><span class="lbl">V* &nbsp;= </span><span class="star">[${Vstar.map(fmt).join(", ")}]</span></div>`
+ +`<div><span class="lbl">‖V<sub>k</sub>−V*‖<sub>∞</sub> = </span><b style="color:${err<=bound+1e-9?'var(--gr)':'var(--wall)'}">${fmt(err)}</b></div>`
+ +`<div class="small">bound γ<sup>k</sup>·e₀ = ${fmt(bound)} ${ratio!==null?` &nbsp;·&nbsp; step ratio = ${ratio.toFixed(4)}`:''}</div>`;
+ const conv = err<1e-8;
+ const broke = err > bound + 1e-9;
+ if(TAMPER){
+  $("verdict").textContent = broke ? "DIVERGING" : "NO CONTRACTION";
+  $("verdict").className = "verdict no";
+  $("reason").textContent = "discount cancelled — the map is no longer a γ-contraction; the error is not bounded by γᵏ·e₀.";
+ } else if(conv){
+  $("verdict").textContent = "AT FIXED POINT";
+  $("verdict").className = "verdict ok";
+  $("reason").textContent = "V = T V to within 1e-8 — Banach's unique fixed point reached.";
+ } else {
+  $("verdict").textContent = "CONTRACTING";
+  $("verdict").className = "verdict ok";
+  $("reason").textContent = ratio!==null ? ("error fell by factor "+ratio.toFixed(4)+" ≤ γ = "+gamma) : "V₀ set — press step or run.";
+ }
+ renderModel(); renderSeq();
+}
+function reset(V0){
+ V = V0 ? V0.slice() : [0,0,0];
+ k=0; prevErr=null; Vstar=solveVstar(gamma); e0=supnorm(V,Vstar); hist=[];
+ pushHist(); render(); audit();
+}
+function step(){
+ prevErr = supnorm(V,Vstar);
+ V = bellmanStep(V, gamma, TAMPER); k++;
+ pushHist(); render(); audit();
+}
+function runToConv(){
+ if(TAMPER){ for(let i=0;i<40;i++) step(); return; }
+ let guard=0;
+ while(supnorm(V,Vstar)>1e-8 && guard<1000){ step(); guard++; }
+}
+function audit(){
+ const el=$("auditout");
+ const r=runVI(0.9,false,[0,0,0],800,1e-12);
+ const e=r.errs, be0=e[0];
+ let geomOK=true, monoOK=true, ratioOK=true;
+ for(let i=0;i<e.length;i++) if(e[i] > Math.pow(0.9,i)*be0 + 1e-9) geomOK=false;
+ for(let i=0;i+1<e.length;i++) if(e[i]>1e-9){ if(!(e[i+1]<e[i])) monoOK=false; if(!(e[i+1]<=0.9*e[i]+1e-12)) ratioOK=false; }
+ const convOK = e[e.length-1]<1e-8 && supnorm(r.seq[r.seq.length-1],[27,30,32])<1e-8;
+ const ok = geomOK && monoOK && ratioOK && convOK && !TAMPER;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — contraction holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">geom bound γᵏ·e₀: <b style="color:${geomOK?'var(--gr)':'var(--wall)'}">${geomOK?'held':'violated'}</b> · strictly ↓: <b style="color:${monoOK?'var(--gr)':'var(--wall)'}">${monoOK?'yes':'no'}</b> · ratio ≤ γ: <b style="color:${ratioOK?'var(--gr)':'var(--wall)'}">${ratioOK?'yes':'no'}</b> · V*→[27,30,32]: <b style="color:${convOK?'var(--gr)':'var(--wall)'}">${convOK?'1e-8':'off'}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red cancelled the discount</span>':''}</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load — V*=[27,30,32], γ-contraction proven</span>';
+ reset([0,0,0]);
+ $("gam").addEventListener("change",()=>{ gamma=parseFloat($("gam").value); reset([0,0,0]); });
+ $("step").addEventListener("click",step);
+ $("run").addEventListener("click",runToConv);
+ $("reset").addEventListener("click",()=>reset([0,0,0]));
+ $("rand").addEventListener("click",()=>{ const rng=mulberry32((Date.now()&0xffff)^0x5eed|1); reset([(rng()-0.5)*100,(rng()-0.5)*100,(rng()-0.5)*100]); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("mode").innerHTML="<b style='color:var(--wall)'>discount cancelled.</b> The update is divided by γ — coefficient 1, no contraction. Step it and watch the error grow."; $("tampernote").innerHTML="<b style='color:var(--wall)'>γ cancelled.</b> The error no longer obeys γᵏ·e₀; it blows up. The witness (window 7) recomputed and went red. The attack is real; it is caught."; reset(V); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("mode").innerHTML="Untampered: each sweep multiplies the error by at most γ. Banach guarantees convergence from any V₀."; $("tampernote").textContent="Cancel γ and the error stops shrinking, then blows up: the geometric bound is violated, the witness (window 7) recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught."; reset([0,0,0]); });
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the value-iteration engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

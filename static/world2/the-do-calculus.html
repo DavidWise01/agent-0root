@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE DO-CALCULUS</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --bg:#07160e; --bg2:#0c2117; --bg3:#102c1e;
+  --ink:#dcefe4; --dim:#8fb6a3; --line:#1d3f2d;
+  --blue:#6fb3ff; --red:#ff7d7d; --amber:#ffcf6b; --lit:#7fe0c0;
+  --wall:#ff7d7d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 78% -8%, rgba(127,224,192,.10), transparent 60%),
+    radial-gradient(900px 600px at 10% 108%, rgba(111,179,255,.06), transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted rgba(127,224,192,.5)}
+a:hover{border-bottom-style:solid}
+.wrap{max-width:1180px;margin:0 auto}
+
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+h1{
+  font-size:clamp(30px,6vw,54px);letter-spacing:.06em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 26px rgba(127,224,192,.28);font-weight:800;
+}
+.sub{color:var(--ink);max-width:74ch;margin:6px 0 12px;font-size:14px}
+.sub b{color:var(--am)}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.rendered{color:var(--dim);font-style:italic;margin-left:4px}
+
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.14em;font-weight:700;
+  padding:2px 8px;border-radius:20px;border:1px solid currentColor;vertical-align:middle;
+  text-transform:uppercase;
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.16fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:800;
+  padding:7px 10px;border-radius:8px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(111,179,255,.4);background:rgba(111,179,255,.05)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,125,125,.4);background:rgba(255,125,125,.05)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(127,224,192,.4);background:rgba(127,224,192,.05)}
+
+.win{
+  background:linear-gradient(180deg,var(--bg2),rgba(12,33,23,.6));
+  border:1px solid var(--line);border-radius:12px;padding:13px 14px 15px;position:relative;
+}
+.win h3{margin:0 0 8px;font-size:13px;letter-spacing:.05em;color:var(--ink);display:flex;align-items:center;gap:8px}
+.badge{
+  flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  font-size:12px;font-weight:800;border:1px solid var(--line);color:var(--dim);background:var(--bg3);
+}
+.col.blue .badge{color:var(--blue);border-color:rgba(111,179,255,.5)}
+.col.red .badge{color:var(--red);border-color:rgba(255,125,125,.5)}
+.col.center .badge{color:var(--am);border-color:rgba(127,224,192,.5)}
+.win p{margin:6px 0;font-size:12.7px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.win.panel{border-color:rgba(127,224,192,.45);box-shadow:0 0 0 1px rgba(127,224,192,.12),0 14px 40px rgba(0,0,0,.35)}
+
+.flow{text-align:center;color:var(--am);font-size:12px;letter-spacing:.3em;opacity:.75;margin:-4px 0}
+.flow span{display:inline-block;transform:translateY(2px)}
+
+.mono{font-family:inherit}
+.eq{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin:8px 0;font-size:12.4px;color:var(--am);overflow-x:auto}
+.eq .c{color:var(--dim)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:12.3px;margin:6px 0}
+.kv b{color:var(--ink)} .kv span{color:var(--am);text-align:right}
+
+.wall-note{border-left:3px solid var(--wall);padding-left:10px;color:#f0c9c9;font-size:12.6px}
+.dead{color:#6f8a7c}
+.dead s{color:#5a7266}
+.dead .fix{color:var(--am);display:block;margin-top:3px}
+
+.btn{
+  font:inherit;font-size:12px;letter-spacing:.05em;cursor:pointer;
+  background:var(--bg3);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+  padding:7px 12px;margin:4px 6px 4px 0;transition:.15s;
+}
+.btn:hover{border-color:var(--am);color:var(--am)}
+.btn.warn:hover{border-color:var(--red);color:var(--red)}
+
+.result{
+  display:flex;gap:16px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--line);
+  border-radius:10px;padding:11px 13px;margin:8px 0;
+}
+.result .cell{min-width:120px}
+.result .lab{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.result .num{font-size:22px;font-weight:800;margin-top:2px}
+.num.do{color:var(--am)} .num.see{color:var(--blue)} .num.gap{color:var(--amber)}
+
+svg.dag{width:100%;height:150px;display:block;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.dag text{font:11px ui-monospace,monospace;fill:var(--ink)}
+.dag .node{fill:var(--bg3);stroke:var(--line)}
+.dag .node.set{fill:rgba(127,224,192,.14);stroke:var(--am);stroke-width:2}
+.dag .edge{stroke:var(--dim);stroke-width:1.6;fill:none;marker-end:url(#ah)}
+.dag .edge.cut{stroke:var(--red);stroke-dasharray:4 4;opacity:.55;marker-end:url(#ahr)}
+.dagcap{font-size:11px;color:var(--dim);text-align:center;margin:5px 0 2px;letter-spacing:.08em}
+
+.witbadge{
+  font-size:12.5px;font-weight:700;padding:9px 11px;border-radius:9px;border:1px solid;
+  display:block;letter-spacing:.03em;
+}
+.wit-ok{color:var(--lit);border-color:rgba(127,224,192,.55);background:rgba(127,224,192,.07)}
+.wit-bad{color:var(--red);border-color:rgba(255,125,125,.6);background:rgba(255,125,125,.10)}
+
+.litbadge{font-size:12.5px;font-weight:800;color:var(--lit)}
+#failb{display:none;background:rgba(255,125,125,.12);border:1px solid var(--red);color:var(--red);
+  padding:10px 12px;border-radius:9px;margin:14px 0;font-size:12.5px}
+
+footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12px}
+footer b{color:var(--am)}
+.controls{margin:8px 0}
+label.pick{font-size:12px;color:var(--dim);margin-right:8px}
+select{font:inherit;font-size:12px;background:var(--bg3);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>THE DO-CALCULUS</h1>
+  <p class="sub">The <b>do-operator</b> is surgery on the graph: it severs a variable from its causes so we can ask what <b>forcing</b> a value does, not merely what <b>seeing</b> it predicts. <b>do(X=x)</b> deletes every edge into X (the mutilated graph) and pins X=x; the interventional law is the <b>truncated factorization</b> P(v&nbsp;|&nbsp;do(x)) = &prod;<sub>i&nbsp;:&nbsp;X<sub>i</sub>&notin;X</sub> P(x<sub>i</sub> | pa<sub>i</sub>). Under confounding, seeing and doing part ways &mdash; and here the engine proves it.</p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>Pearl, J. &mdash; <a href="https://academic.oup.com/biomet/article/82/4/669/251647" target="_blank" rel="noopener">Causal Diagrams for Empirical Research</a>, <i>Biometrika</i> <b>82</b>(4):669&ndash;688 (1995), doi:10.1093/biomet/82.4.669.</span>
+    <span class="rendered">Rendered, not quoted.</span>
+  </div>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ============ BLUE TEAM (LEFT) ============ -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <h3><span class="badge">3</span> THE MODEL</h3>
+      <p>A discrete, fully-enumerable Structural Causal Model with a back-door confounder <b>U</b>. Every variable is a deterministic function of its parents and its own noise (canonical response form), so the whole law is exact &mdash; no sampling needed.</p>
+      <p class="mono" style="color:var(--ink)">Graph: &nbsp;U &rarr; X &nbsp;&middot;&nbsp; U &rarr; Y &nbsp;&middot;&nbsp; X &rarr; Y</p>
+      <div class="eq">
+<span class="c">// exogenous, no parents</span><br>
+P(U=1) = 0.3<br>
+<span class="c">// back-door mechanism U&rarr;X</span><br>
+P(X=1|U=0)=0.2 &nbsp; P(X=1|U=1)=0.7<br>
+<span class="c">// outcome X&rarr;Y &larr;U</span><br>
+P(Y=1|0,0)=.1 &nbsp; P(Y=1|0,1)=.4<br>
+P(Y=1|1,0)=.6 &nbsp; P(Y=1|1,1)=.9
+      </div>
+      <p>Because U pushes X and Y the same way, a plain regression of Y on X is contaminated. do() is the fix: cut U&rarr;X, keep U~P(U), and read Y off the surgery.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="badge">5</span> THE LINEAGE</h3>
+      <p>This is the algebra that feeds <b>the-backdoor-criterion</b>: once do() has been written down, the back-door adjustment rewrites it into a sum over observed strata &mdash; something we can actually <i>estimate</i>. do() states the target; the criterion licenses the estimator.</p>
+      <p>On Pearl&rsquo;s ladder it is the <b>second rung</b> &mdash; intervention &mdash; standing above <b>the-bayes</b>, which lives on rung one and only ever <i>sees</i>. Conditioning cannot climb; only surgery can.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="badge">7</span> THE WITNESS</h3>
+      <p>A live re-check of the load-bearing invariant: under this confounder, do(X=1) must <i>differ</i> from see(X=1). If the engine in window 0 is corrupted into mere conditioning, the two collapse together and this badge flips red.</p>
+      <div id="auditout" class="witbadge wit-ok">checking&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ============ THE MACHINE (CENTER) ============ -->
+  <div class="col center">
+    <div class="teamhdr">The Machine &middot; seeing vs. doing</div>
+
+    <div class="win panel">
+      <h3><span class="badge">4</span> DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>Choose the intervention. The engine performs graph surgery on the model above &mdash; it does not look anything up.</p>
+      <div class="controls">
+        <label class="pick" for="xpick">query &nbsp;do(X = </label>
+        <select id="xpick"><option value="1">1</option><option value="0">0</option></select>
+        <span class="pick">)&nbsp; vs &nbsp;see(X = same)</span>
+      </div>
+
+      <div class="flow"><span>&darr; &nbsp; surgery &nbsp; &darr;</span></div>
+
+      <h3><span class="badge">0</span> THE PANEL <span class="tag t-lit">lit</span></h3>
+      <div class="dagcap">left: observational graph &nbsp;&middot;&nbsp; right: mutilated graph do(X)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><div id="dagPre"></div></div>
+        <div><div id="dagPost"></div></div>
+      </div>
+      <div class="result">
+        <div class="cell"><div class="lab">P(Y=1 | do X)</div><div class="num do" id="rDo">&mdash;</div></div>
+        <div class="cell"><div class="lab">P(Y=1 | X)  see</div><div class="num see" id="rSee">&mdash;</div></div>
+        <div class="cell"><div class="lab">gap (do &minus; see)</div><div class="num gap" id="rGap">&mdash;</div></div>
+      </div>
+      <div class="eq" id="workOut"></div>
+
+      <div class="flow"><span>&darr; &nbsp; proven &nbsp; &darr;</span></div>
+
+      <h3><span class="badge">8</span> DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p class="litbadge" id="litbadge">booting&hellip;</p>
+      <p>Cross-checked three ways: truncated-factorization formula, direct noise simulation (same noise, X forced), and a fixed-seed Monte-Carlo &mdash; all agree to 1e-9 (exact) / 1e-2 (sampled).</p>
+    </div>
+  </div>
+
+  <!-- ============ RED TEAM (RIGHT) ============ -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <h3><span class="badge">1</span> THE ADVERSARY <span class="tag t-wall">wall</span></h3>
+      <p class="wall-note">do() is a target, not a guarantee. The algebra is only as good as the graph, and the graph can make the effect <b>non-identifiable</b>:</p>
+      <p class="wall-note">&bull; If U is <b>unobserved</b> and no valid adjustment set exists, no formula in observed quantities equals P(Y|do X). The bow-arc X&larr;&rarr;Y kills identification outright.</p>
+      <p class="wall-note">&bull; A wrong DAG gives a wrong do(). Conditioning on a <b>collider</b> or a <b>mediator</b> opens or closes the wrong paths &mdash; the surgery inherits every modelling lie.</p>
+      <p class="wall-note">&bull; do() assumes the intervention is <b>atomic and well-defined</b>. &ldquo;do(obesity=0)&rdquo; has no single surgery. Positivity failures (P(X=x|U)=0) leave strata with nothing to push through.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="badge">2</span> THE GRAVEYARD</h3>
+      <p class="dead"><s>&ldquo;P(Y|do X) is just P(Y|X) with fancier notation.&rdquo;</s>
+        <span class="fix">&rarr; Here see(X=1)=0.780 but do(X=1)=0.690. The confounder inflates the seen number; only surgery removes it.</span></p>
+      <p class="dead"><s>&ldquo;Adjust for everything you measured to be safe.&rdquo;</s>
+        <span class="fix">&rarr; Adjusting for a collider or mediator biases do(). More covariates is not more truth.</span></p>
+      <p class="dead"><s>&ldquo;Enough data makes causation appear.&rdquo;</s>
+        <span class="fix">&rarr; Infinite samples fix variance, not confounding. do() needs the graph, not just N.</span></p>
+    </div>
+
+    <div class="win">
+      <h3><span class="badge">6</span> THE TAMPER</h3>
+      <p>The disclosed planted void: rewire do() as ordinary <b>conditioning</b> &mdash; keep X&rsquo;s incoming edges and just filter to X=x. Back-door paths stay open, so do() collapses onto the observational see(). The WITNESS in window 7 catches it live.</p>
+      <button class="btn warn" id="tamper">&#9888; plant the void (do &rarr; condition)</button>
+      <button class="btn" id="restore">restore surgery</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE DO-CALCULUS</b> &mdash; rung two of the ladder, rendered as a working instrument. The engine computes every causal quantity from an enumerable SCM; a fail-loud selfcheck() throws on any violation and a live witness catches the planted void. Source: Pearl (1995), <i>Biometrika</i> 82(4). WORLD&nbsp;II &middot; THE FOLD &middot; ud0 corpus of David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+</div>
+
+<script>
+/* ================= ENGINE (pure, node-verifiable) =================
+   Discrete confounded SCM:  U -> X , U -> Y , X -> Y
+   Every node is a deterministic function of parents + its own uniform
+   grid-noise (0..9), so the whole interventional law is EXACT by
+   enumeration. do(X=x) = graph surgery: replace X's structural equation
+   with the constant x and push the SAME noise through. ================ */
+
+var PU1 = 0.3;                                   // P(U=1); U is exogenous
+var PX1 = {0:0.2, 1:0.7};                        // P(X=1 | U=u)  (back-door)
+var PY1 = {"0,0":0.1,"0,1":0.4,"1,0":0.6,"1,1":0.9}; // P(Y=1 | X,U)
+
+var TAMPER = false;                              // disclosed planted void (win 6)
+
+function pU(u){ return u===1 ? PU1 : 1-PU1; }
+function pXgivenU(x,u){ var p=PX1[u]; return x===1 ? p : 1-p; }
+
+// deterministic structural functions over uniform grid noise 0..9 -> exact CPT
+function fX(u,nx){ return (nx < Math.round(PX1[u]*10)) ? 1 : 0; }
+function fY(x,u,ny){ return (ny < Math.round(PY1[x+","+u]*10)) ? 1 : 0; }
+
+// Observational joint P(U,X,Y) by exact enumeration of the full noise space
+function observationalJoint(){
+  var J={};
+  for(var u=0;u<=1;u++)
+    for(var nx=0;nx<10;nx++)
+      for(var ny=0;ny<10;ny++){
+        var x=fX(u,nx), y=fY(x,u,ny);
+        var w=pU(u)*(1/10)*(1/10);
+        var k=u+","+x+","+y; J[k]=(J[k]||0)+w;
+      }
+  return J;
+}
+
+// Seeing: observational P(Y=1 | X=x)
+function seeY1(x){
+  var J=observationalJoint(), num=0, den=0;
+  for(var u=0;u<=1;u++){
+    var p1=J[u+","+x+",1"]||0, p0=J[u+","+x+",0"]||0;
+    num+=p1; den+=p0+p1;
+  }
+  return num/den;
+}
+
+// Doing (A): truncated-factorization formula P(Y=1|do x)=sum_u P(u)P(Y=1|x,u)
+function doTruncatedY1(x){
+  if(TAMPER){                                    // corrupted: keep P(x|u) factor
+    var num=0,den=0;
+    for(var u=0;u<=1;u++){ num+=pU(u)*pXgivenU(x,u)*PY1[x+","+u]; den+=pU(u)*pXgivenU(x,u); }
+    return num/den;                              // == observational conditioning
+  }
+  var s=0; for(var u=0;u<=1;u++){ s+=pU(u)*PY1[x+","+u]; } return s;
+}
+
+// Doing (B): direct noise simulation. Surgery = force X=x, push SAME noise through.
+function doSimulateY1(x){
+  var num=0, den=0;
+  for(var u=0;u<=1;u++)
+    for(var ny=0;ny<10;ny++){
+      var w;
+      if(TAMPER){                                // planted void: DON'T cut U->X;
+        var acc=0;                               // filter noise to fX(u,nx)==x
+        for(var nx=0;nx<10;nx++){ if(fX(u,nx)===x) acc++; }
+        w = pU(u)*(acc/10)*(1/10);               // reweight u by P(x|u) => see()
+      } else {
+        w = pU(u)*(1/10);                        // surgery: nx irrelevant, edge cut
+      }
+      var y=fY(x,u,ny);
+      den+=w; if(y===1) num+=w;
+    }
+  return num/den;
+}
+
+// do(U=u): U has no parents -> surgery cuts nothing -> identical to conditioning
+function doU_Y1(u){
+  var s=0; for(var x=0;x<=1;x++){ s+=pXgivenU(x,u)*PY1[x+","+u]; } return s;
+}
+function seeU_Y1(u){
+  var J=observationalJoint(), num=0,den=0;
+  for(var x=0;x<=1;x++){ var p1=J[u+","+x+",1"]||0, p0=J[u+","+x+",0"]||0; num+=p1; den+=p0+p1; }
+  return num/den;
+}
+
+// Non-descendant: P(U=1 | do X=x) must stay at the prior; see() reweights it.
+function doX_marginU1(x){
+  if(TAMPER){ var n=pU(1)*pXgivenU(x,1); return n/(n+pU(0)*pXgivenU(x,0)); }
+  return pU(1);                                  // surgery leaves P(u) untouched
+}
+
+// fixed-seed PRNG for the sampled cross-check
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function mcDoY1(x,N,seed){
+  var r=mulberry32(seed>>>0), c=0;
+  for(var i=0;i<N;i++){
+    var u = r()<PU1 ? 1 : 0;                      // draw U ~ prior
+    var y = r()<PY1[x+","+u] ? 1 : 0;             // X forced to x (no draw for X)
+    if(y===1) c++;
+  }
+  return c/N;
+}
+
+function approx(a,b,t){ return Math.abs(a-b) <= (t===undefined?1e-9:t); }
+
+// fail-loud: THROWS on any violation, RETURNS true on success. Saves/restores TAMPER.
+function selfcheck(){
+  var savedT = TAMPER;
+  TAMPER = false;
+
+  // 1. truncated product == direct noise simulation (the surgery identity), exact
+  if(!approx(doTruncatedY1(1), doSimulateY1(1), 1e-9)) throw new Error("truncated != simulation, do(X=1)");
+  if(!approx(doTruncatedY1(0), doSimulateY1(0), 1e-9)) throw new Error("truncated != simulation, do(X=0)");
+
+  // 2. seeing is NOT doing under confounding
+  if(!(Math.abs(doSimulateY1(1)-seeY1(1)) > 1e-3)) throw new Error("do == see under confounding");
+
+  // 3. exact closed-form ground truth
+  if(!approx(doSimulateY1(1), 0.69, 1e-9)) throw new Error("do(X=1) != 0.69");
+  if(!approx(seeY1(1),       0.78, 1e-9)) throw new Error("see(X=1) != 0.78");
+  if(!approx(doSimulateY1(0), 0.19, 1e-9)) throw new Error("do(X=0) != 0.19");
+
+  // 4. no parents: do(U=u) agrees with conditioning U=u
+  if(!approx(doU_Y1(1), seeU_Y1(1), 1e-9)) throw new Error("no-parent: do(U) != see(U)");
+
+  // 5. intervening does not change a non-descendant's law
+  if(!approx(doX_marginU1(1), PU1, 1e-9)) throw new Error("non-descendant U changed by do(X)");
+
+  // 6. sampled cross-check, fixed seed (deterministic)
+  if(!approx(mcDoY1(1,200000,12345), 0.69, 1e-2)) throw new Error("Monte-Carlo do mismatch");
+
+  // ---- planted void: corrupt do() into conditioning; the WITNESS must catch it ----
+  TAMPER = true;
+  if(Math.abs(doSimulateY1(1)-seeY1(1)) > 1e-9) throw new Error("tamper not wired: corrupted do should equal see");
+
+  TAMPER = savedT;                                // restore
+  return true;
+}
+
+// live witness invariant (respects current TAMPER flag): healthy iff do != see
+function witnessHealthy(){ return Math.abs(doSimulateY1(1)-seeY1(1)) > 1e-3; }
+
+/* ===== UI ===== */
+
+function fmt(x){ return x.toFixed(3); }
+
+function dagSVG(surgery){
+  // U top-center, X bottom-left, Y bottom-right
+  var cutClass = surgery ? " cut" : "";
+  var xClass   = surgery ? "node set" : "node";
+  return ''
+  + '<svg class="dag" viewBox="0 0 240 150" preserveAspectRatio="xMidYMid meet">'
+  + '<defs>'
+  +   '<marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8fb6a3"/></marker>'
+  +   '<marker id="ahr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ff7d7d"/></marker>'
+  + '</defs>'
+  // edges
+  + '<path class="edge'+cutClass+'" d="M112,42 C90,60 72,78 60,96"/>'   // U->X
+  + '<path class="edge" d="M128,42 C150,60 168,78 180,96"/>'            // U->Y
+  + '<path class="edge" d="M78,112 L162,112"/>'                         // X->Y
+  // nodes
+  + '<circle class="node" cx="120" cy="30" r="16"/><text x="120" y="34" text-anchor="middle">U</text>'
+  + '<circle class="'+xClass+'" cx="60" cy="112" r="16"/><text x="60" y="116" text-anchor="middle">X</text>'
+  + '<circle class="node" cx="180" cy="112" r="16"/><text x="180" y="116" text-anchor="middle">Y</text>'
+  + (surgery ? '<text x="60" y="142" text-anchor="middle" fill="#7fe0c0">do X=</text>' : '<text x="120" y="146" text-anchor="middle" fill="#8fb6a3">observe</text>')
+  + '</svg>';
+}
+
+function renderPanel(){
+  var x = parseInt(document.getElementById('xpick').value,10);
+  var doV  = doSimulateY1(x);
+  var seeV = seeY1(x);
+  document.getElementById('dagPre').innerHTML  = dagSVG(false);
+  document.getElementById('dagPost').innerHTML = dagSVG(true);
+  document.getElementById('rDo').textContent  = fmt(doV);
+  document.getElementById('rSee').textContent = fmt(seeV);
+  document.getElementById('rGap').textContent = (doV-seeV>=0?'+':'')+fmt(doV-seeV);
+  var work =
+    '<span class="c">// truncated factorization, drop P(X|U):</span><br>'
+    +'P(Y=1|do X='+x+') = &Sigma;<sub>u</sub> P(u)&middot;P(Y=1|'+x+',u)<br>'
+    +'&nbsp;= 0.7&middot;'+PY1[x+',0']+' + 0.3&middot;'+PY1[x+',1']+' = <b style="color:var(--am)">'+fmt(doV)+'</b><br><br>'
+    +'<span class="c">// conditioning keeps the back-door path open:</span><br>'
+    +'P(Y=1|X='+x+') = P(X='+x+',Y=1)/P(X='+x+') = <b style="color:var(--blue)">'+fmt(seeV)+'</b>';
+  if(TAMPER) work += '<br><br><span style="color:var(--red)">// TAMPER ACTIVE: do() has been rewired to conditioning &mdash; the two now coincide.</span>';
+  document.getElementById('workOut').innerHTML = work;
+  renderWitness();
+}
+
+function renderWitness(){
+  var el = document.getElementById('auditout');
+  var d = doSimulateY1(1), s = seeY1(1);
+  if(witnessHealthy()){
+    el.className='witbadge wit-ok';
+    el.innerHTML='&#10003; WITNESS &mdash; do &ne; see &nbsp;('+fmt(d)+' vs '+fmt(s)+'). Surgery intact.';
+  } else {
+    el.className='witbadge wit-bad';
+    el.innerHTML='&#9888; TAMPER DETECTED &mdash; do == see ('+fmt(d)+'). do() collapsed into conditioning; the back-door path is open.';
+  }
+}
+
+// boot: fail-loud selfcheck in try/catch
+(function boot(){
+  try{
+    var ok = selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    document.getElementById('litbadge').innerHTML =
+      'LIT &mdash; P(Y=1|do X=1)=<b>0.690</b> &ne; P(Y=1|X=1)=<b>0.780</b>. Verified &plusmn;1e-9 (exact) / &plusmn;1e-2 (sampled).';
+  }catch(e){
+    var fb=document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent='SELFCHECK FAILED: '+e.message;
+    document.getElementById('litbadge').textContent='FAILED';
+    document.getElementById('litbadge').style.color='var(--red)';
+    throw e;                                       // rethrow: fail loud
+  }
+  document.getElementById('xpick').addEventListener('change', renderPanel);
+  document.getElementById('tamper').addEventListener('click', function(){ TAMPER=true; renderPanel(); });
+  document.getElementById('restore').addEventListener('click', function(){ TAMPER=false; renderPanel(); });
+  renderPanel();
+})();
+</script>
+</body>
+</html>

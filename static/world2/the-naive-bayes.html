@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE NAIVE BAYES · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffd23f; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffd23f; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,210,63,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,210,63,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,210,63,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;flex-wrap:wrap;gap:6px;margin:2px 0;}
+.toggle button{border:1px solid var(--line);border-radius:5px;padding:5px 12px;}
+.toggle button.on{background:var(--am);color:#1a1204;font-weight:700;border-color:var(--am);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .w{color:var(--am);font-weight:700;} .sent .off{color:var(--dim);text-decoration:line-through;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+tr.win-row td{color:var(--gr);font-weight:700;background:rgba(57,252,107,.08);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II &middot; THE FOLD</a><span>THE OCHO &middot; <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE NAIVE BAYES</h1>
+ <p class="sub">Assume the features are independent given the class. The assumption is <b>false</b> — words in a document are not independent — and the classifier works anyway. Down the center a document flows: word-presence goes <b style="color:var(--cy)">in</b>, the posterior is computed by <b>P(c) &times; &prod;<sub>i</sub> P(x<sub>i</sub>|c)</b>, the predicted class comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> proves it equals the true Bayes posterior; the <b style="color:var(--red)">red team</b> drops the prior and watches it break.</p>
+ <p class="src"><span class="tag t-amber">source</span> M. E. Maron, <i>Automatic Indexing: An Experimental Inquiry</i>, Journal of the ACM <b>8</b>(3), 404&ndash;417, 1961 (the "idiot Bayes" / probabilistic indexing origin) &mdash; <a href="https://dl.acm.org/doi/10.1145/321075.321084">doi:10.1145/321075.321084</a>. No stable free full text; cited by journal+year <span class="tag t-amber">AMBER</span>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team &middot; builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL &mdash; a log-linear machine</h2>
+   <p>Take logs and the product becomes a sum. The <b>log-odds</b> between any two classes is an <b>affine</b> function of the features:</p>
+   <p class="small"><b>log</b> P(a|x)/P(b|x) = w&#8320; + &sum;<sub>i</sub> w<sub>i</sub>&middot;x<sub>i</sub></p>
+   <p class="small">Live weights, <b>sports</b> vs <b>tech</b> (computed from the model, never looked up):</p>
+   <table id="wTbl"><thead><tr><th>term</th><th>weight</th></tr></thead><tbody id="wBody"></tbody></table>
+   <p class="small">Naive Bayes <i>is</i> a linear classifier &mdash; a straight decision boundary in feature space, which is why it is fast, tiny, and hard to overfit.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE &mdash; from the-bayes <span class="tag t-amber">AVAN</span></h2>
+   <p>The exact posterior is <a href="https://davidwise01.github.io/the-bayes/" style="color:var(--cy)">Bayes' rule</a>: P(c|x) &prop; P(c)&middot;P(x|c). The bottleneck is P(x|c) &mdash; the joint over all feature combinations, which explodes.</p>
+   <p>Naive Bayes adds <b>one bold assumption</b>: P(x|c) = &prod;<sub>i</sub> P(x<sub>i</sub>|c). That single factorization turns an exponential table into a handful of numbers. It is the-bayes with its premise deliberately broken &mdash; and it is the baseline <b>every text and spam model is measured against</b>.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>Re-runs the engine over <b>all 2<sup>4</sup>=16</b> documents and checks two invariants live: posteriors sum to 1, and the factored NB posterior equals the full-joint Bayes posterior exactly. If red drops the prior, this badge catches it.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN &mdash; the document <span class="tag t-in">in &#8595;</span></h2>
+   <p>A document is reduced to <b>which of four words appear</b> (Bernoulli bag-of-words): x<sub>i</sub> = 1 if word <i>i</i> is present, else 0. Three candidate classes, each with a prior and per-word likelihoods:</p>
+   <table><thead><tr><th>class</th><th>P(c)</th><th>P(ball)</th><th>P(chip)</th><th>P(vote)</th><th>P(tax)</th></tr></thead>
+    <tbody id="modelBody"></tbody></table>
+   <p class="small">Each P(word|c) is the chance that class emits that word. These are the model's <b>parameters</b> &mdash; the whole classifier is four rows of numbers, fed into the panel below.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the document into the engine &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL &mdash; the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>words present</label></div>
+     <div class="toggle" id="wordToggle"></div>
+     <div class="sent" id="sent"></div>
+     <div class="row"><button id="rand">&#8635; random doc</button><button id="clear">&empty; clear</button></div>
+     <p class="small">Toggle any word &mdash; the log-posterior is recomputed from P(c)&middot;&prod; P(x<sub>i</sub>|c) on the spot, never looked up.</p>
+    </div>
+    <div class="readout">
+     <table id="postTbl"><thead><tr><th>class</th><th>log P(c)</th><th>log P(x|c)</th><th>log-post</th><th>P(c|x)</th></tr></thead><tbody id="postBody"></tbody></table>
+     <div class="verdict ok" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits the argmax class &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT &mdash; the decision <span class="tag t-out">out &#8595;</span></h2>
+   <p>What the machine produces, proven: the predicted class is the <b>argmax posterior</b>, and that posterior is computed <b>two independent ways</b> &mdash; factored (NB, log-space) and by normalizing the full 3&times;16 joint table &mdash; agreeing to <b class="k">1e-9</b> on every one of the 16 documents.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) confirms the agreement live; the red team (right) drops the prior to break it.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team &middot; attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The independence premise is <b>simply false</b>. In real text "New" and "York" co-occur far more than P(New)&middot;P(York) predicts. When features are correlated, naive Bayes <b>double-counts</b> the evidence, so its posterior probabilities are badly <b>mis-calibrated</b> &mdash; often pushed to 0.99 or 0.01 on flimsy evidence.</div>
+   <p class="small" style="margin-top:8px">It survives because <b>classification only needs the argmax</b>, not the number. The ranking of classes is often right even when the probabilities are nonsense. Trust the label; never trust the confidence.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"The 0.98 posterior means 98% sure."</s> <b>Cut.</b> Correlated features make the probabilities meaningless; only the <i>argmax</i> is defensible. Calibrate before you believe a number.</p>
+   <p class="grave"><s>"Independence must roughly hold or it fails."</s> <b>Cut.</b> It classifies well even under heavy dependence &mdash; the decision boundary can be right while the model of P(x|c) is wrong.</p>
+   <p class="grave"><s>"A word never seen for a class kills it."</s> <b>Kept, corrected.</b> A zero likelihood zeroes the whole product &mdash; real; fixed by <b>Laplace smoothing</b> (add-one), not by pretending it cannot happen.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER &mdash; break it</h2>
+   <p>The red team's move: <b>drop the class prior</b> P(c) &mdash; treat sports/tech/politics as equally likely when they are not (0.5 / 0.3 / 0.2). The blue witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; drop the prior</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Drop the prior and the rare class (politics) is over-predicted; the factored posterior no longer equals the true Bayes posterior. The witness recomputes, the exact match breaks, and the badge turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE NAIVE BAYES &mdash; World II &middot; THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (document <b style="color:var(--cy)">in</b> &rarr; posterior &rarr; class <b style="color:var(--gr)">out</b>). A runnable rendering of Maron's 1961 probabilistic indexing &mdash; the engine is LIT (all 16 documents scored live, factored NB proven equal to full-joint Bayes to 1e-9, log-odds proven affine, tamper-provable), the blue team witnesses, the red team drops the prior, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: factored NB == full-joint Bayes, log-odds affine) ===== */
+const CLASSES=["sports","tech","politics"];
+const FEATS=["ball","chip","vote","tax"];
+const PRIOR=[0.5,0.3,0.2];
+const LIK=[                       /* LIK[c][i] = P(feature i = 1 | class c) */
+ [0.70,0.10,0.05,0.05],           /* sports   */
+ [0.10,0.80,0.10,0.20],           /* tech     */
+ [0.05,0.15,0.70,0.60]            /* politics */
+];
+const K=CLASSES.length, N=FEATS.length;
+let DROP_PRIOR=false;             /* TAMPER: treat all classes as equally likely */
+
+const logPrior=c=> DROP_PRIOR ? Math.log(1/K) : Math.log(PRIOR[c]);
+function logLik(c,x){ let s=0; for(let i=0;i<N;i++) s += x[i]?Math.log(LIK[c][i]):Math.log(1-LIK[c][i]); return s; }
+function logPostU(x){ const o=[]; for(let c=0;c<K;c++) o.push(logPrior(c)+logLik(c,x)); return o; } /* unnormalized log posterior */
+function posterior(x){ const lu=logPostU(x); let m=lu[0]; for(let c=1;c<K;c++) if(lu[c]>m)m=lu[c];
+ let z=0; const e=lu.map(v=>{const t=Math.exp(v-m); z+=t; return t;}); return e.map(t=>t/z); }
+function predict(x){ const lu=logPostU(x); let bi=0; for(let c=1;c<K;c++) if(lu[c]>lu[bi]) bi=c; return bi; }
+
+/* true Bayes posterior via the FULL joint (uses the real prior; ignores DROP_PRIOR) */
+function jointCX(c,x){ let p=PRIOR[c]; for(let i=0;i<N;i++) p *= x[i]?LIK[c][i]:(1-LIK[c][i]); return p; }
+function truePost(x){ const j=[]; let z=0; for(let c=0;c<K;c++){ const v=jointCX(c,x); j.push(v); z+=v; } return j.map(v=>v/z); }
+
+function allX(){ const out=[]; for(let m=0;m<(1<<N);m++){ const x=[]; for(let i=0;i<N;i++) x.push((m>>i)&1); out.push(x);} return out; }
+
+/* log-odds weights for class a over class b (the affine / log-linear form) */
+function logOddsWeights(a,b){ const w=[];
+ for(let i=0;i<N;i++) w.push((Math.log(LIK[a][i])-Math.log(1-LIK[a][i])) - (Math.log(LIK[b][i])-Math.log(1-LIK[b][i])));
+ let w0=Math.log(PRIOR[a])-Math.log(PRIOR[b]);
+ for(let i=0;i<N;i++) w0 += Math.log(1-LIK[a][i])-Math.log(1-LIK[b][i]);
+ return {w0,w}; }
+
+/* ===== fail-loud self-check (runs untampered, restores the flag) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const eps=1e-9, save=DROP_PRIOR; DROP_PRIOR=false;
+ const X=allX();
+ t(Math.abs(PRIOR.reduce((a,b)=>a+b,0)-1)<eps,"class priors must sum to 1");
+ for(const x of X){
+  /* 1: posteriors sum to 1 after normalization */
+  t(Math.abs(posterior(x).reduce((a,b)=>a+b,0)-1)<eps,"posterior must sum to 1 at "+x.join(""));
+  /* 2: under conditional independence, NB == the true Bayes-optimal posterior, exactly */
+  const nb=posterior(x), tr=truePost(x);
+  for(let c=0;c<K;c++) t(Math.abs(nb[c]-tr[c])<eps,"NB must equal true Bayes posterior at "+x.join("")+" c"+c);
+  /* 4: predicted class == argmax posterior */
+  let bi=0; for(let c=1;c<K;c++) if(nb[c]>nb[bi]) bi=c;
+  t(predict(x)===bi,"prediction must be argmax posterior at "+x.join(""));
+ }
+ /* 3: the log-odds is AFFINE in the features for every class pair */
+ for(const [a,b] of [[0,1],[1,2],[0,2]]){ const {w0,w}=logOddsWeights(a,b);
+  for(const x of X){ let aff=w0; for(let i=0;i<N;i++) aff+=w[i]*x[i];
+   const lo=logPostU(x)[a]-logPostU(x)[b];
+   t(Math.abs(lo-aff)<eps,"log-odds must be affine in features, pair "+a+","+b+" at "+x.join("")); } }
+ /* TAMPER (disclosed planted void): dropping the prior breaks the exact Bayes match on imbalanced priors */
+ DROP_PRIOR=true; let worst=0;
+ for(const x of X){ const nb=posterior(x), tr=truePost(x); for(let c=0;c<K;c++){ const d=Math.abs(nb[c]-tr[c]); if(d>worst)worst=d; } }
+ t(worst>1e-6,"dropping the prior MUST break the match to true Bayes on imbalanced priors");
+ DROP_PRIOR=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let doc=[0,0,0,0];
+let seed=0x9e3779b9>>>0;
+function rnd(){ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; }
+
+function initTables(){
+ $("modelBody").innerHTML=CLASSES.map((c,ci)=>`<tr><td><b style="color:var(--am)">${c}</b></td><td>${PRIOR[ci].toFixed(2)}</td>`+
+  LIK[ci].map(v=>`<td>${v.toFixed(2)}</td>`).join("")+`</tr>`).join("");
+ const {w0,w}=logOddsWeights(0,1);
+ $("wBody").innerHTML=`<tr><td>w&#8320; (bias)</td><td>${w0>=0?"+":""}${w0.toFixed(3)}</td></tr>`+
+  FEATS.map((f,i)=>`<tr><td>w&middot;${f}</td><td>${w[i]>=0?"+":""}${w[i].toFixed(3)}</td></tr>`).join("");
+ $("wordToggle").innerHTML=FEATS.map((f,i)=>`<button data-i="${i}">${f}</button>`).join("");
+ $("wordToggle").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ const i=+b.dataset.i; doc[i]=doc[i]?0:1; render(); audit(); }));
+}
+function render(){
+ FEATS.forEach((f,i)=>$("wordToggle").children[i].classList.toggle("on",!!doc[i]));
+ const present=FEATS.filter((f,i)=>doc[i]);
+ $("sent").innerHTML = "document = { "+FEATS.map((f,i)=>doc[i]?`<span class="w">${f}</span>`:`<span class="off">${f}</span>`).join(", ")+" }"+
+  (present.length?"":' <span class="mut">(empty)</span>');
+ const lu=logPostU(doc), post=posterior(doc), pred=predict(doc);
+ $("postBody").innerHTML=CLASSES.map((c,ci)=>`<tr class="${ci===pred?"win-row":""}"><td>${c}</td><td>${logPrior(ci).toFixed(3)}</td><td>${logLik(ci,doc).toFixed(3)}</td><td>${lu[ci].toFixed(3)}</td><td>${(post[ci]*100).toFixed(1)}%</td></tr>`).join("");
+ $("verdict").textContent="→ "+CLASSES[pred].toUpperCase();
+ $("moodname").innerHTML=`argmax posterior &nbsp;&middot;&nbsp; <b>P = ${(post[pred]*100).toFixed(1)}%</b>`;
+ const tr=truePost(doc); let d=0; for(let c=0;c<K;c++) d=Math.max(d,Math.abs(post[c]-tr[c]));
+ $("reason").innerHTML = DROP_PRIOR
+  ? `<span style="color:var(--wall)">prior dropped &mdash; factored vs true Bayes differ by ${d.toExponential(1)}</span>`
+  : `factored NB = full-joint Bayes (gap ${d.toExponential(1)})`;
+}
+function audit(){
+ const X=allX(); let sumOK=true, worst=0, wx=null;
+ for(const x of X){ if(Math.abs(posterior(x).reduce((a,b)=>a+b,0)-1)>1e-9) sumOK=false;
+  const nb=posterior(x), tr=truePost(x); for(let c=0;c<K;c++){ const dd=Math.abs(nb[c]-tr[c]); if(dd>worst){worst=dd;wx=x;} } }
+ const matchOK = worst<1e-9, ok=sumOK&&matchOK;
+ $("auditout").innerHTML=`<span class="badge ${ok?"pass":"failb"}">${ok?"✓ WITNESS — holds":"✗ WITNESS — broken"}</span>`+
+  `<div class="small" style="margin-top:6px">sum-to-1 over 16 docs: <b style="color:${sumOK?"var(--gr)":"var(--wall)"}">${sumOK?"yes":"no"}</b> &nbsp;&middot;&nbsp; max |NB &minus; trueBayes|: <b style="color:${matchOK?"var(--gr)":"var(--wall)"}">${worst.toExponential(1)}</b>`+
+  (DROP_PRIOR?` &nbsp; &mdash; <span style="color:var(--wall)">red dropped the prior at doc [${wx.join("")}]</span>`:"")+`</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ initTables();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("rand").addEventListener("click",()=>{ for(let i=0;i<N;i++) doc[i]=rnd()<0.5?0:1; render(); audit(); });
+ $("clear").addEventListener("click",()=>{ doc=[0,0,0,0]; render(); audit(); });
+ $("tamper").addEventListener("click",()=>{ DROP_PRIOR=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Prior dropped.</b> Politics (true prior 0.20) is now treated as likely as sports (0.50); the factored posterior diverges from the true Bayes posterior. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ DROP_PRIOR=false; $("tampernote").textContent="Drop the prior and the rare class (politics) is over-predicted; the factored posterior no longer equals the true Bayes posterior. The witness recomputes, the exact match breaks, and the badge turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ doc=[1,0,0,0]; render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the naive Bayes engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

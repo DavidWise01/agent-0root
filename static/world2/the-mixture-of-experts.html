@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE MIXTURE OF EXPERTS · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff7a7a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,122,122,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,122,122,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,122,122,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.vecbox{font-size:13px;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.vecbox .lab{color:var(--dim);font-size:11px;letter-spacing:1px;}
+.num{color:var(--gr);} .numc{color:var(--cy);}
+.verdict{font-size:17px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;color:var(--gr);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.y{color:var(--gr);font-weight:700;} .n{color:var(--dim);}
+.bar{height:9px;background:#0a130c;border:1px solid var(--line);border-radius:3px;overflow:hidden;min-width:46px;}
+.bar > i{display:block;height:100%;background:var(--dim);}
+.bar.on > i{background:var(--gr);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE MIXTURE OF EXPERTS</h1>
+ <p class="sub">More parameters, same compute. A layer holds <b>N</b> small expert networks and one <b>gate</b>. The gate scores the input, a softmax turns the scores into weights, and only the <b class="k">top-k</b> experts are ever run — the output is the renormalized, gate-weighted sum of just those <b class="k">k</b>. The FLOPs track <b>k</b>, not <b>N</b>: that is how a model buys billions of parameters it does not have to compute. Terms go <b style="color:var(--cy)">in</b>, the router fires, the vector comes <b style="color:var(--gr)">out</b>. <b style="color:var(--blue)">Blue</b> builds it; <b style="color:var(--red)">red</b> breaks it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Shazeer et al., <i>Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer</i> (2017) — <a href="https://arxiv.org/abs/1701.06538">arxiv.org/abs/1701.06538</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — gate, route, sum</h2>
+   <p>The layer is four exact steps, no training required to <i>decide</i> them:</p>
+   <p><b class="k">1</b> the gate maps the input to <b>N</b> logits, one per expert. <b class="k">2</b> a <b>softmax</b> turns them into a distribution (sums to 1, all ≥ 0). <b class="k">3</b> <b>top-k</b> keeps the k highest-weighted experts; the rest are never evaluated. <b class="k">4</b> those k weights are <b>renormalized</b> to sum to 1, and the output is their weighted sum of the selected experts' outputs.</p>
+   <p class="small">Live routing for the current input (fired experts in green):</p>
+   <table id="modelTbl"><thead><tr><th>expert</th><th>gate p</th><th></th><th>fired</th><th>weight</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — scale by sparsity <span class="tag t-amber">AVAN</span></h2>
+   <p>A dense transformer block runs <i>one</i> feed-forward network for every token. MoE replaces that single FFN with <b style="color:var(--am)">N</b> of them and a gate — but still runs only <b class="k">k</b>. Parameter count grows ×(N/k) while FLOPs stay flat.</p>
+   <p>That is the whole downstream story: the <a href="https://davidwise01.github.io/ud0/world2/" style="color:var(--cy)">dense feed-forward</a> sphere is this one's premise — MoE is what you get when you let the block hold more weight than it spends. <span class="mut">The exact neighbouring slug is AMBER pending the FOLD index.</span></p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive the gate softmax, confirm the router fired the <b>k highest</b> gate values, and count that <b>exactly k</b> experts were evaluated. If red reroutes, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the input &amp; the bank <span class="tag t-in">in ↓</span></h2>
+   <p>An input vector <b class="numc" id="inDim">x ∈ ℝ⁴</b> meets a fixed bank of <b class="k" id="inN">N</b> experts and one gate, all seeded once (deterministic weights). Each expert is an affine map <b>Wᵢx + bᵢ → ℝ³</b>; the gate is a single matrix <b>W_g x → ℝᴺ</b>.</p>
+   <div class="vecbox"><span class="lab">CURRENT INPUT x</span><br><span id="inVec"></span></div>
+   <p class="small">Pick an input and a sparsity <b>k</b> below. The gate has never seen a label — it just scores, and the softmax + top-k do the rest.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed x into the router &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>input</label>
+      <select id="inp"><option value="0">x₀</option><option value="1">x₁</option><option value="2">x₂</option><option value="3">x₃</option></select></div>
+     <div class="row"><label>top-k</label>
+      <select id="kk"><option value="1">k = 1</option><option value="2" selected>k = 2</option><option value="3">k = 3</option></select></div>
+     <div class="row"><label>routing</label><span id="routemode" class="numc">top-k (highest gate)</span></div>
+     <div class="row"><button id="rand">↺ random input</button></div>
+     <p class="small">Every number below is computed on the spot from the seeded weights — the softmax, the selection, and the weighted sum are never looked up.</p>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+     <div class="vecbox"><span class="lab">LAYER OUTPUT y ∈ ℝ³</span><br><span id="outVec"></span></div>
+     <div class="small" id="callnote"></div>
+    </div>
+   </div>
+  </div>
+  <div class="flow">▼ &nbsp; the router emits one vector &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: the gate is a real softmax, <b>top-k</b> selects exactly the <b class="k">k</b> highest-scored experts, the output equals the <b>renormalized</b> gate-weighted sum of <i>only</i> those experts, and the evaluation count is <b class="k">k</b> — not <b>N</b>. That last equality <i>is</i> the sparsity claim.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) recomputes this live; the red team (right) tries to make the wrong experts run.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Sparsity is not free. A hard top-k gate is <b>non-differentiable</b> in its choice, so the router trains only through the experts it happens to pick — and it can <b>collapse</b>, sending nearly every token to a few favourites while the rest starve. Shazeer's paper needs an added <i>load-balancing loss</i> and noise just to keep the experts in use.</div>
+   <p class="small" style="margin-top:8px">And the win is memory-bandwidth-bound, not FLOP-bound: the parameters still must be <i>stored</i> and shuffled across devices. "Same compute" is true for the matmuls and quietly false for the interconnect.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"An MoE with N experts is N× bigger for free."</s> <b>Cut.</b> Capacity grows ×(N/k); the compute saving is real, but routing, replication, and comms overhead are not zero.</p>
+   <p class="grave"><s>"The gate picks the single best expert."</s> <b>Cut.</b> That is only k=1. For k≥2 the output is a <i>renormalized blend</i> of several — the engine computes exactly that sum.</p>
+   <p class="grave"><s>"Unused experts cost nothing."</s> <b>Kept, corrected.</b> They cost no FLOPs, but they cost memory and can go dead — hence the balancing loss the paper adds.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: flip the router to select the <b>bottom-k</b> experts — the lowest gate scores — so the wrong experts run and the output changes. The blue team's witness (window 7) is watching the gate order.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ route to bottom-k</button><button id="restore">↺ restore top-k</button></div>
+   <p class="small" id="tampernote">Reroute to the least-favoured experts and the witness recomputes: the fired set is no longer the k highest gate values, so it disagrees with the reference and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE MIXTURE OF EXPERTS — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (input <b style="color:var(--cy)">in</b> → gate + top-k router → vector <b style="color:var(--gr)">out</b>). A runnable rendering of Shazeer et al.'s sparsely-gated MoE layer from arXiv — the engine is LIT (real softmax gate, exact top-k routing, renormalized weighted sum, k-not-N evaluation counted live and tamper-provable), the blue team witnesses, the red team reroutes, and the graveyard + adversary carry what the FLOP count alone hides. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (sparsely-gated mixture of experts, seeded & exact) ===== */
+const D=4, N=6, M=3;                 // input dim, experts, output dim
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function buildParams(){
+ const r=mulberry32(0x51A2E7);
+ const Wg=[]; for(let i=0;i<N;i++){const row=[];for(let j=0;j<D;j++)row.push(r()*2-1);Wg.push(row);}
+ const experts=[]; for(let i=0;i<N;i++){const W=[];for(let a=0;a<M;a++){const row=[];for(let j=0;j<D;j++)row.push(r()*2-1);W.push(row);}const b=[];for(let a=0;a<M;a++)b.push(r()*2-1);experts.push({W,b});}
+ return {Wg,experts};
+}
+const P=buildParams();
+const INPUTS=[[1,0,0.5,-0.5],[0.2,-1,0.8,0.3],[-0.6,0.5,-0.4,1],[0.9,0.85,-0.2,-0.7]];
+
+function matvec(W,x){return W.map(row=>row.reduce((s,w,j)=>s+w*x[j],0));}
+function softmax(z){const mx=Math.max.apply(null,z);const e=z.map(v=>Math.exp(v-mx));const s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s);}
+function gate(x){return softmax(matvec(P.Wg,x));}
+
+let EXPERT_CALLS=0;                  // counts real expert evaluations (sparsity meter)
+function expertPure(i,x){const e=P.experts[i];return e.W.map((row,a)=>row.reduce((s,w,j)=>s+w*x[j],0)+e.b[a]);}
+function expert(i,x){EXPERT_CALLS++;return expertPure(i,x);}
+
+let ROUTE_BOTTOM=false;              // TAMPER flag: pick the lowest gate values instead of the highest
+function selectK(g,k){
+ const idx=g.map((v,i)=>i);
+ idx.sort((a,b)=> ROUTE_BOTTOM ? (g[a]-g[b]) : (g[b]-g[a]));   // ascending vs descending
+ return idx.slice(0,k).sort((a,b)=>a-b);
+}
+function forward(x,k){
+ EXPERT_CALLS=0;
+ const g=gate(x);
+ const sel=selectK(g,k);
+ const wsum=sel.reduce((s,i)=>s+g[i],0);
+ const w=sel.map(i=>g[i]/wsum);      // renormalized over the selected experts
+ const out=new Array(M).fill(0);
+ sel.forEach((i,t)=>{const ei=expert(i,x);for(let a=0;a<M;a++)out[a]+=w[t]*ei[a];});
+ return {g,sel,w,out,calls:EXPERT_CALLS};
+}
+
+/* ===== fail-loud self-check (runs untampered, then plants & catches the void) ===== */
+function selfcheck(){
+ const t=(c,m)=>{if(!c)throw new Error(m);};
+ const save=ROUTE_BOTTOM; ROUTE_BOTTOM=false;
+ const x=INPUTS[0], k=2;
+ const g=gate(x);
+ // 1. the full gate is a softmax: sums to 1, all >= 0
+ const gs=g.reduce((a,b)=>a+b,0);
+ t(Math.abs(gs-1)<1e-9,"gate must be a softmax that sums to 1");
+ t(g.every(v=>v>=0),"gate probabilities must all be >= 0");
+ const r=forward(x,k);
+ // 2. top-k selects EXACTLY k experts, and they are the k highest gate values
+ t(r.sel.length===k,"router must select exactly k experts");
+ const unsel=g.map((v,i)=>i).filter(i=>r.sel.indexOf(i)<0);
+ const minSel=Math.min.apply(null,r.sel.map(i=>g[i]));
+ const maxUnsel=Math.max.apply(null,unsel.map(i=>g[i]));
+ t(minSel>=maxUnsel,"selected experts must be the k HIGHEST gate values");
+ // 3. output equals the renormalized gate-weighted sum of the selected experts
+ t(Math.abs(r.w.reduce((a,b)=>a+b,0)-1)<1e-9,"selected weights must renormalize to 1");
+ const wsum=r.sel.reduce((s,i)=>s+g[i],0);
+ const ref=new Array(M).fill(0);
+ r.sel.forEach(i=>{const ei=expertPure(i,x);for(let a=0;a<M;a++)ref[a]+=(g[i]/wsum)*ei[a];});
+ for(let a=0;a<M;a++) t(Math.abs(r.out[a]-ref[a])<1e-9,"output must equal renormalized weighted sum of selected experts");
+ // 4. sparsity: EXACTLY k experts evaluated, not N
+ t(k<N,"k<N so sparsity is meaningful");
+ t(r.calls===k,"exactly k expert evaluations (sparsity) — not N");
+ // --- planted void: reroute to bottom-k and prove the witness would catch it ---
+ ROUTE_BOTTOM=true;
+ const rt=forward(x,k);
+ t(JSON.stringify(rt.sel)!==JSON.stringify(r.sel),"bottom-k routing must select a different expert set");
+ const minSelT=Math.min.apply(null,rt.sel.map(i=>g[i]));
+ const unselT=g.map((v,i)=>i).filter(i=>rt.sel.indexOf(i)<0);
+ const maxUnselT=Math.max.apply(null,unselT.map(i=>g[i]));
+ t(minSelT<maxUnselT,"tamper must break the 'k highest' invariant (witness-detectable)");
+ let differs=false; for(let a=0;a<M;a++) if(Math.abs(rt.out[a]-r.out[a])>1e-9) differs=true;
+ t(differs,"tamper (bottom-k) must change the layer output");
+ ROUTE_BOTTOM=save;                  // restore the flag we saved
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const f3=v=>(v>=0?" ":"")+v.toFixed(3);
+function curInput(){return INPUTS[+$("inp").value];}
+function curK(){return +$("kk").value;}
+
+function render(){
+ const x=curInput(), k=curK();
+ const r=forward(x,k);
+ $("inDim").textContent="x ∈ ℝ"+String(D).replace(/[0-9]/g,d=>"⁰¹²³⁴⁵⁶⁷⁸⁹"[d]);
+ $("inN").textContent=N;
+ $("inVec").innerHTML="[ "+x.map(v=>'<span class="numc">'+f3(v)+'</span>').join("&nbsp; ")+" ]";
+ $("outVec").innerHTML="[ "+r.out.map(v=>'<span class="num">'+f3(v)+'</span>').join("&nbsp; ")+" ]";
+ // routing table
+ $("modelBody").innerHTML=P.Wg.map((_,i)=>{
+  const on=r.sel.indexOf(i)>=0;
+  const wi=on? r.w[r.sel.indexOf(i)] : 0;
+  const pct=Math.round(r.g[i]*100);
+  return '<tr><td>e'+i+'</td><td>'+r.g[i].toFixed(3)+'</td>'
+   +'<td><span class="bar'+(on?' on':'')+'"><i style="width:'+pct+'%"></i></span></td>'
+   +'<td class="'+(on?'y':'n')+'">'+(on?'✓':'—')+'</td>'
+   +'<td>'+(on?wi.toFixed(3):'<span class="n">—</span>')+'</td></tr>';
+ }).join("");
+ // verdict / readout
+ const nm=ROUTE_BOTTOM?"BOTTOM-k (tampered)":"TOP-k";
+ $("verdict").textContent="fired experts: "+r.sel.map(i=>"e"+i).join(", ");
+ $("verdict").style.color=ROUTE_BOTTOM?"var(--wall)":"var(--gr)";
+ $("reason").textContent=nm+" routing over N="+N+" experts, k="+k+"; weights renormalized to sum 1.";
+ $("callnote").innerHTML='expert evaluations: <b class="'+(r.calls===k?'k':'')+'" style="color:'+(r.calls===k?'var(--gr)':'var(--wall)')+'">'+r.calls+'</b> of '+N+' &nbsp;·&nbsp; FLOPs track k, not N.';
+ $("routemode").textContent=ROUTE_BOTTOM?"bottom-k (TAMPERED)":"top-k (highest gate)";
+ $("routemode").style.color=ROUTE_BOTTOM?"var(--wall)":"var(--cy)";
+ audit();
+}
+
+/* live witness: confirm the fired set is the k highest gate values and exactly k ran */
+function audit(){
+ const x=curInput(), k=curK();
+ const r=forward(x,k), g=r.g;
+ const unsel=g.map((v,i)=>i).filter(i=>r.sel.indexOf(i)<0);
+ const minSel=Math.min.apply(null,r.sel.map(i=>g[i]));
+ const maxUnsel=unsel.length?Math.max.apply(null,unsel.map(i=>g[i])):-Infinity;
+ const highest = minSel>=maxUnsel;
+ const sparse = r.calls===k;
+ const ok = highest && sparse;
+ const el=$("auditout");
+ if(ok){
+  el.innerHTML='<span class="badge pass">✓ WITNESS OK — fired set = k highest gate values · '+r.calls+' experts run</span>';
+ }else{
+  el.innerHTML='<span class="badge failb">✗ TAMPER CAUGHT — router did NOT fire the k highest gate values (bottom-k reroute)</span>';
+ }
+}
+
+function litboot(){
+ const x=INPUTS[0];
+ const r=forward(x,2);
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT — softmax gate · exact top-k · renormalized sum · '+r.calls+'-of-'+N+' evaluated (self-checked)</span>';
+}
+
+/* boot: fail-loud self-check, then wire the UI */
+try{
+ const ok=selfcheck();
+ if(ok!==true) throw new Error("selfcheck did not return true");
+ litboot();
+}catch(err){
+ $("failb").style.display="block";
+ $("failb").textContent="SELF-CHECK FAILED: "+err.message+" — the engine is not LIT.";
+ throw err;
+}
+
+$("inp").addEventListener("change",render);
+$("kk").addEventListener("change",render);
+$("rand").addEventListener("click",()=>{ $("inp").value=String(Math.floor(Math.random()*INPUTS.length)); render(); });
+$("tamper").addEventListener("click",()=>{ ROUTE_BOTTOM=true; render(); $("tampernote").innerHTML='<b style="color:var(--wall)">Rerouted to bottom-k.</b> The witness (window 7) sees the fired set is not the k highest gate values and flips red. Restore to clear.'; });
+$("restore").addEventListener("click",()=>{ ROUTE_BOTTOM=false; render(); $("tampernote").textContent="Reroute to the least-favoured experts and the witness recomputes: the fired set is no longer the k highest gate values, so it disagrees with the reference and turns red. Nothing is faked; the attack is real and it is caught."; });
+render();
+</script>
+</body>
+</html>

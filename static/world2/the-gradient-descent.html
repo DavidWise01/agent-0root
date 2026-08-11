@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE GRADIENT DESCENT · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee06a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#12200a;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+input[type=range]{padding:0;height:20px;accent-color:var(--am);flex:1;min-width:120px;}
+canvas{width:100%;max-width:340px;height:auto;border:1px solid var(--line);border-radius:6px;background:#040805;display:block;cursor:crosshair;image-rendering:auto;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+.mono{font-family:inherit;color:var(--am);}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE GRADIENT DESCENT</h1>
+ <p class="sub">Stand anywhere on a hill in fog. Feel the ground's slope with your feet, and step downhill. Repeat. In 1847 Cauchy wrote that rule as arithmetic — <span class="mono">(x,y) ← (x,y) − η·∇f</span> — and it is <b>runnable</b>: on a convex bowl the loss falls every step to the true minimum, while one wrong knob (a step too big) sends it flying. Down the center, data flows: the surface and a start point go <b style="color:var(--cy)">in</b>, the engine steps, the descending trace comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> A.-L. Cauchy, <i>Méthode générale pour la résolution des systèmes d'équations simultanées</i>, Comptes rendus Acad. Sci. Paris <b>25</b> (1847), p. 536 — in vol. 25 at <a href="https://archive.org/details/comptesrendusheb25acad">archive.org/details/comptesrendusheb25acad</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — steepest descent</h2>
+   <p>The gradient <span class="mono">∇f</span> points <b>uphill</b>, fastest; its negative points downhill, fastest. Take a step of size <b class="k">η</b> against it: <span class="mono">x ← x − η∂f/∂x</span>. On the bowl <span class="mono">f = a·x² + b·y²</span> the update is per-axis linear, <span class="mono">x ← x·(1 − 2aη)</span>, so it converges only while each factor's size is under 1.</p>
+   <p class="small">For the current η, the two contraction factors (want <b>|·| &lt; 1</b>):</p>
+   <table id="modelTbl"><thead><tr><th>axis</th><th>curvature</th><th>factor 1−2·η</th><th>stable?</th></tr></thead><tbody id="modelBody"></tbody></table>
+   <p class="small" id="modelnote"></p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the engine of learning <span class="tag t-amber">AVAN</span></h2>
+   <p>Cauchy's 1847 half-page is the ancestor of nearly every fitting procedure since. <b>Least squares</b> descends a quadratic error; <b>k-means</b> descends within-cluster variance by alternating steps; <b>backpropagation</b> is exactly this update with <span class="mono">∇f</span> supplied by the chain rule through a deep network.</p>
+   <p>One deletion made it the engine of modern AI: don't solve for the minimum in closed form — <i>step toward it</i>. That scales to billions of parameters where no closed form exists. The next sphere in the arc feeds this gradient <b>backward through the layers</b>: <a href="https://davidwise01.github.io/ud0/world2/" style="color:var(--cy)">THE FOLD ▸ the backward pass</a>. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live re-check: re-run the descent from scratch and confirm the bowl run <b>falls</b> to the minimum, a too-large η <b>diverges</b>, and the analytic gradient equals a finite-difference probe. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the surface &amp; the start <span class="tag t-in">in ↓</span></h2>
+   <p>Gradient descent needs three inputs: a differentiable <b>loss</b> <span class="mono">f(x,y)</span>, a <b class="S" style="color:var(--cy)">start point</b>, and a <b style="color:var(--am)">learning rate η</b>. From the loss it derives one more thing analytically — the <b>gradient</b>:</p>
+   <table><thead><tr><th>surface</th><th>f(x,y)</th><th>∇f = (∂/∂x, ∂/∂y)</th><th>minimum</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>bowl (convex)</td><td>a·x² + b·y²</td><td class="y">(2a·x, 2b·y)</td><td class="y">(0, 0)</td></tr>
+     <tr><td>Rosenbrock</td><td>(1−x)² + 100(y−x²)²</td><td class="y">see engine</td><td class="y">(1, 1)</td></tr>
+    </tbody></table>
+   <p class="small">The bowl uses <b>a=1, b=3</b> — an <b>AMBER</b> choice: a mild ellipse (condition number 3) so the zig-zag is visible without being pathological. Feed these into the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the surface into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <canvas id="cv" width="340" height="300"></canvas>
+     <p class="small" style="margin-top:4px">Click the surface to drop a new start point.</p>
+     <div class="row"><label>surface</label>
+      <span class="toggle"><button id="tBowl" class="on">BOWL</button><button id="tRos">ROSENBROCK</button></span></div>
+     <div class="row"><label>learning η</label><input id="eta" type="range" min="0.005" max="0.55" step="0.005" value="0.1"><span id="etaval" class="mono"></span></div>
+     <div class="row"><button id="run">▶ run</button><button id="stepb">⏭ step</button><button id="reset">↺ reset</button><button id="randb">⟲ random start</button></div>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+     <table style="margin-top:8px"><thead><tr><th>step</th><th>x</th><th>y</th><th>f(x,y)</th></tr></thead><tbody id="traceBody"></tbody></table>
+     <p class="small" id="statline" style="margin-top:6px"></p>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every point on the trace is computed live: step = current point minus η times the analytic gradient. Nothing is looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits a descending trace &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the descent <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, live: on the convex bowl with a stable η the loss <b class="k">decreases every step</b> and the point converges to the true minimum <b class="k">(0,0)</b> within tolerance; the analytic gradient matches a finite-difference probe to <b class="k">~1e−6</b>; and a step size above the threshold <span class="mono" id="threshOut">η* = 0.333</span> makes the loss <b style="color:var(--wall)">diverge</b> instead. All three are re-checked by the witness on the left.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these live; the red team (right) tries to make the descent lie.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Descent is only <b>local</b> and only <b>first-order</b>. On a non-convex surface it walks into the nearest minimum or saddle — not the global one. Flip to <b>Rosenbrock</b>: the curved valley makes it crawl and stall, because it knows the slope but ignores the <b>curvature</b> a second-order method (Newton) would use.</div>
+   <p class="small" style="margin-top:8px">And the step size is fragile: too small crawls, too big diverges (the slider proves it), and the safe band shrinks as the surface gets more ill-conditioned. "Gradient descent works" is a claim about <i>convex, well-conditioned</i> problems — everything real needs momentum, adaptivity, or luck in the initialisation.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Gradient descent finds the global minimum."</s> <b>Cut.</b> Only for convex f. On the Rosenbrock demo it stalls in the valley; the bowl is convex, so there it does reach the one true minimum.</p>
+   <p class="grave"><s>"A bigger learning rate always trains faster."</s> <b>Cut.</b> Above <span class="mono">η* = 1/max(a,b)</span> = 0.333 the loss <i>increases</i> — the divergence you can trigger on the slider right now.</p>
+   <p class="grave"><s>"Cauchy invented backpropagation."</s> <b>Kept, corrected.</b> Cauchy gave the <i>descent step</i> (1847). Efficient reverse-mode gradients are Linnainmaa (1970); backprop for nets is Rumelhart–Hinton–Williams (1986). His is the step, not the chain rule.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: flip the update's sign so it reads <span class="mono">x ← x + η∇f</span> — <b>ascent</b>, climbing away from the minimum. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ flip sign (ascend)</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Flip the sign and the descent becomes an ascent: the loss rises instead of falling. The witness recomputes the bowl run, finds it no longer converges, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE GRADIENT DESCENT — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (surface <b style="color:var(--cy)">in</b> → engine → descending trace <b style="color:var(--gr)">out</b>). A runnable rendering of Cauchy's 1847 note from archive.org — the engine is LIT (the descent computed live from the analytic gradient, convergence / divergence / gradient-check self-verified, sign-flip tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single convex bowl cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: bowl a=1,b=3 → f falls to (0,0); η>0.333 diverges) ===== */
+const A=1, B=3;                       // bowl curvatures (AMBER choice)
+let TAMPER=false;                     // red flips the update sign when true — the witness must catch it
+
+/* fixed-seed PRNG (mulberry32) so any randomness is deterministic */
+let _seed=0x1a2b3c4d;
+function rng(){ _seed|=0; _seed=(_seed+0x6D2B79F5)|0; let t=Math.imul(_seed^(_seed>>>15),1|_seed); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }
+function seedRng(s){ _seed=s|0; }
+
+/* loss surfaces and their analytic gradients */
+function fval(p,S){
+ if(S.kind==="ros"){ const dx=1-p.x, dy=p.y-p.x*p.x; return dx*dx + 100*dy*dy; }
+ return S.a*p.x*p.x + S.b*p.y*p.y;
+}
+function grad(p,S){
+ if(S.kind==="ros"){ const t=p.y-p.x*p.x; return {x:-2*(1-p.x)-400*p.x*t, y:200*t}; }
+ return {x:2*S.a*p.x, y:2*S.b*p.y};
+}
+/* central finite-difference gradient — the independent check on grad() */
+function fdGrad(p,S,h){
+ return {x:(fval({x:p.x+h,y:p.y},S)-fval({x:p.x-h,y:p.y},S))/(2*h),
+         y:(fval({x:p.x,y:p.y+h},S)-fval({x:p.x,y:p.y-h},S))/(2*h)};
+}
+/* one descent step; TAMPER flips the sign to +η∇f (ascent) */
+function step(p,eta,S){ const g=grad(p,S), s=TAMPER?1:-1; return {x:p.x+s*eta*g.x, y:p.y+s*eta*g.y}; }
+/* full trajectory, including f at every point */
+function descend(p0,eta,S,n){
+ const path=[{x:p0.x,y:p0.y,f:fval(p0,S)}]; let p=p0;
+ for(let i=0;i<n;i++){ p=step(p,eta,S); path.push({x:p.x,y:p.y,f:fval(p,S)}); }
+ return path;
+}
+/* stability threshold for the bowl: |1-2·L·eta|<1 for the largest curvature L=max(a,b) */
+function threshold(S){ return S.kind==="ros"? NaN : 1/Math.max(S.a,S.b); }
+
+/* ===== fail-loud self-check (always runs untampered; restores TAMPER) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const Q={kind:"quad",a:A,b:B}, R={kind:"ros"};
+
+ // 1) convex bowl, stable eta: f decreases EVERY step and converges to (0,0)
+ const good=descend({x:4,y:4},0.1,Q,150);
+ t(good.every((p,i)=> i===0 || p.f < good[i-1].f), "bowl η=0.1: f must decrease every step");
+ t(good[good.length-1].f < 1e-6, "bowl η=0.1: must converge to f≈0");
+ t(Math.hypot(good[good.length-1].x,good[good.length-1].y) < 1e-3, "bowl η=0.1: must reach (0,0)");
+
+ // 2) analytic gradient matches finite difference (bowl: essentially exact)
+ const gp={x:1.3,y:-0.7}, ga=grad(gp,Q), gf=fdGrad(gp,Q,1e-4);
+ t(Math.abs(ga.x-gf.x)<1e-6 && Math.abs(ga.y-gf.y)<1e-6, "bowl gradient must match finite difference to 1e-6");
+ // Rosenbrock: analytic gradient matches FD too (looser — FD is O(h^2) for non-quadratic)
+ const rp={x:0.5,y:0.5}, ra=grad(rp,R), rf=fdGrad(rp,R,1e-4);
+ t(Math.abs(ra.x-rf.x)<1e-4 && Math.abs(ra.y-rf.y)<1e-4, "Rosenbrock gradient must match finite difference");
+
+ // 3) too-large eta DIVERGES: f increases (η=0.5 > threshold 0.333)
+ t(threshold(Q)>0.33 && threshold(Q)<0.34, "bowl threshold must be 1/3");
+ const div=descend({x:4,y:4},0.5,Q,6);
+ t(div[div.length-1].f > div[0].f, "bowl η=0.5: too-large step must diverge (f increases)");
+
+ // 4) planted void — flip the sign and the SAME stable run must now ASCEND (make noise)
+ TAMPER=true;
+ const bad=descend({x:4,y:4},0.1,Q,5);
+ t(bad[bad.length-1].f > bad[0].f, "tamper (ascent) must make the bowl run's f increase");
+ TAMPER=save;   // restore — selfcheck always leaves the flag as found
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let S={kind:"quad",a:A,b:B};
+let eta=0.1;
+let start={x:-4,y:4};
+const NSTEPS=90;
+let path=[];
+let shown=1;
+let timer=null;
+
+function view(){ return S.kind==="ros"
+ ? {xmin:-2,xmax:2,ymin:-1,ymax:3.2,mx:1,my:1}
+ : {xmin:-5,xmax:5,ymin:-5,ymax:5,mx:0,my:0}; }
+function w2p(p,V,W,H){ return {px:(p.x-V.xmin)/(V.xmax-V.xmin)*W, py:H-(p.y-V.ymin)/(V.ymax-V.ymin)*H}; }
+function p2w(px,py,V,W,H){ return {x:V.xmin+px/W*(V.xmax-V.xmin), y:V.ymin+(H-py)/H*(V.ymax-V.ymin)}; }
+
+function recompute(){ path=descend(start,eta,S,NSTEPS); }
+
+function draw(){
+ const cv=$("cv"), ctx=cv.getContext("2d"), W=cv.width, H=cv.height, V=view();
+ // heat field (log scale): bright accent at low f, dark at high f
+ const gs=4; let fmax=1e-9;
+ for(let px=0;px<W;px+=gs){ for(let py=0;py<H;py+=gs){ const wp=p2w(px+gs/2,py+gs/2,V,W,H); const f=fval(wp,S); if(f>fmax)fmax=f; } }
+ const lg=Math.log(1+fmax);
+ for(let px=0;px<W;px+=gs){ for(let py=0;py<H;py+=gs){
+   const wp=p2w(px+gs/2,py+gs/2,V,W,H), f=fval(wp,S);
+   const lv=Math.log(1+f)/lg;                 // 0 low .. 1 high
+   const r=Math.round(158-140*lv), g=Math.round(224-200*lv), b=Math.round(106-92*lv);
+   ctx.fillStyle="rgb("+r+","+g+","+b+")"; ctx.fillRect(px,py,gs,gs);
+ } }
+ // minimum marker
+ const mp=w2p({x:V.mx,y:V.my},V,W,H);
+ ctx.strokeStyle="#eafff0"; ctx.lineWidth=1.4;
+ ctx.beginPath(); ctx.moveTo(mp.px-5,mp.py); ctx.lineTo(mp.px+5,mp.py); ctx.moveTo(mp.px,mp.py-5); ctx.lineTo(mp.px,mp.py+5); ctx.stroke();
+ // trace up to `shown`
+ ctx.lineWidth=1.6; ctx.strokeStyle=TAMPER?"#ff7a7a":"#57e0d0";
+ ctx.beginPath();
+ for(let i=0;i<shown && i<path.length;i++){ const pp=w2p(path[i],V,W,H); if(i===0)ctx.moveTo(pp.px,pp.py); else ctx.lineTo(pp.px,pp.py); }
+ ctx.stroke();
+ for(let i=0;i<shown && i<path.length;i++){ const pp=w2p(path[i],V,W,H); ctx.fillStyle=(i===shown-1)?"#ffffff":(TAMPER?"#ff7a7a":"#9ee06a"); ctx.beginPath(); ctx.arc(pp.px,pp.py,i===shown-1?3.2:1.8,0,7); ctx.fill(); }
+}
+
+function classify(){
+ const f0=path[0].f, last=path[Math.min(shown,path.length)-1], fl=last.f;
+ const diverging = !isFinite(fl) || fl>f0*1.0001 || Math.abs(last.x)>1e4 || Math.abs(last.y)>1e4;
+ const conv = fl < (S.kind==="ros"?1e-3:1e-4);
+ return {diverging,conv,f0,fl,last};
+}
+
+function renderReadout(){
+ const c=classify(), V=view();
+ const v=$("verdict");
+ if(TAMPER){ v.textContent="ASCENDING"; v.className="verdict no"; }
+ else if(c.diverging){ v.textContent="DIVERGING"; v.className="verdict no"; }
+ else if(c.conv){ v.textContent="CONVERGED"; v.className="verdict ok"; }
+ else { v.textContent="DESCENDING"; v.className="verdict ok"; }
+ $("reason").innerHTML = TAMPER
+   ? "sign flipped — the step climbs uphill, loss rising"
+   : (c.diverging? "η above the stable threshold — the step overshoots and the loss blows up"
+      : (c.conv? "reached the minimum: gradient ≈ 0, loss ≈ 0"
+         : "each step reduces f along −∇f; still moving downhill"));
+ // trace table: a few evenly-spaced rows up to shown
+ const idx=[], top=Math.min(shown,path.length); const picks=[0];
+ for(let k=1;k<=4;k++){ picks.push(Math.round(k/4*(top-1))); }
+ const seen={}; const rows=picks.filter(i=>{ if(i<0||i>=top||seen[i])return false; seen[i]=1; return true; });
+ $("traceBody").innerHTML=rows.map(i=>{ const p=path[i]; const ff=p.f;
+   return "<tr><td>"+i+"</td><td>"+p.x.toFixed(3)+"</td><td>"+p.y.toFixed(3)+"</td><td class=\""+(i>0&&path[i-1]&&ff<path[i-1].f?'y':'')+"\">"+(Math.abs(ff)>=1e4||Math.abs(ff)<1e-4&&ff!==0?ff.toExponential(2):ff.toFixed(4))+"</td></tr>";
+ }).join("");
+ const th=threshold(S);
+ $("statline").innerHTML = "start ("+start.x.toFixed(2)+", "+start.y.toFixed(2)+") · η = <b class=\"mono\">"+eta.toFixed(3)+"</b>"
+   + (S.kind==="ros"? " · Rosenbrock: no simple η threshold — the valley is the obstacle"
+      : " · stable while η &lt; <b class=\"mono\">"+th.toFixed(3)+"</b> (optimal ≈ 0.250)");
+}
+
+function renderModel(){
+ const th=threshold(S);
+ if(S.kind==="ros"){
+   $("modelBody").innerHTML="<tr><td colspan=4 class=\"mut\">Rosenbrock is non-quadratic — no constant per-axis factor. The curved valley, not a single η, is the limit.</td></tr>";
+   $("modelnote").innerHTML="Switch to the <b>bowl</b> for the closed-form contraction factors.";
+   return;
+ }
+ const rows=[["x",2*S.a,1-2*S.a*eta],["y",2*S.b,1-2*S.b*eta]];
+ $("modelBody").innerHTML=rows.map(r=>{ const st=Math.abs(r[2])<1;
+   return "<tr><td>"+r[0]+"</td><td>"+r[1]+"</td><td>"+r[2].toFixed(3)+"</td><td class=\""+(st?'y':'n')+"\">"+(st?'yes':'NO')+"</td></tr>";
+ }).join("");
+ $("modelnote").innerHTML = "Both factors' sizes are under 1 only while η &lt; <b class=\"mono\">"+th.toFixed(3)+"</b>. The larger curvature (2b) sets the limit.";
+}
+
+function audit(){
+ const el=$("auditout"), Q={kind:"quad",a:A,b:B};
+ // live re-run using the CURRENT tamper state — the sign flip must break convergence
+ const good=descend({x:4,y:4},0.1,Q,150);
+ const conv = good[good.length-1].f<1e-6 && good.every((p,i)=>i===0||p.f<=good[i-1].f);
+ const div  = descend({x:4,y:4},0.5,Q,6);
+ const diverges = div[div.length-1].f>div[0].f;
+ const gp={x:1.3,y:-0.7}, ga=grad(gp,Q), gf=fdGrad(gp,Q,1e-4);
+ const gmatch = Math.abs(ga.x-gf.x)<1e-6 && Math.abs(ga.y-gf.y)<1e-6;
+ const ok = conv && diverges && gmatch;
+ el.innerHTML = "<span class=\"badge "+(ok?'pass':'failb')+"\">"+(ok?'✓ WITNESS — descent holds':'✗ WITNESS — broken')+"</span>"
+  + "<div class=\"small\" style=\"margin-top:6px\">bowl η=0.1 falls to min: <b style=\"color:"+(conv?'var(--gr)':'var(--wall)')+"\">"+(conv?'yes':'NO')+"</b>"
+  + " · η=0.5 diverges: <b style=\"color:"+(diverges?'var(--gr)':'var(--wall)')+"\">"+(diverges?'yes':'NO')+"</b>"
+  + " · ∇f = finite-diff: <b style=\"color:"+(gmatch?'var(--gr)':'var(--wall)')+"\">"+(gmatch?'yes':'NO')+"</b>"
+  + (TAMPER?' &nbsp; — <span style="color:var(--wall)">red flipped the sign to ascent</span>':'')+"</div>";
+}
+
+function full(){ renderReadout(); renderModel(); draw(); audit(); }
+function stopAnim(){ if(timer){ clearInterval(timer); timer=null; } }
+function play(){ stopAnim(); shown=1; timer=setInterval(()=>{ if(shown>=path.length){ stopAnim(); return; } shown++; renderReadout(); draw(); }, 55); }
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("threshOut").textContent="η* = "+threshold({kind:"quad",a:A,b:B}).toFixed(3);
+ $("etaval").textContent=eta.toFixed(3);
+ recompute(); shown=path.length; full();
+
+ function setSurface(kind){
+   stopAnim();
+   S = kind==="ros" ? {kind:"ros"} : {kind:"quad",a:A,b:B};
+   $("tBowl").classList.toggle("on",kind!=="ros"); $("tRos").classList.toggle("on",kind==="ros");
+   const V=view(); start = kind==="ros" ? {x:-1.4,y:2.6} : {x:-4,y:4};
+   recompute(); shown=path.length; full();
+ }
+ $("tBowl").addEventListener("click",()=>setSurface("quad"));
+ $("tRos").addEventListener("click",()=>setSurface("ros"));
+ $("eta").addEventListener("input",e=>{ eta=parseFloat(e.target.value); $("etaval").textContent=eta.toFixed(3); recompute(); shown=path.length; full(); });
+ $("run").addEventListener("click",()=>{ recompute(); play(); });
+ $("stepb").addEventListener("click",()=>{ stopAnim(); if(shown<path.length)shown++; renderReadout(); draw(); });
+ $("reset").addEventListener("click",()=>{ stopAnim(); recompute(); shown=1; full(); });
+ $("randb").addEventListener("click",()=>{ stopAnim(); const V=view(); start={x:V.xmin+rng()*(V.xmax-V.xmin), y:V.ymin+rng()*(V.ymax-V.ymin)}; recompute(); shown=path.length; full(); });
+ $("cv").addEventListener("click",e=>{ stopAnim(); const cv=$("cv"), r=cv.getBoundingClientRect(); const px=(e.clientX-r.left)/r.width*cv.width, py=(e.clientY-r.top)/r.height*cv.height; start=p2w(px,py,view(),cv.width,cv.height); recompute(); shown=path.length; full(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; recompute(); shown=path.length; $("tampernote").innerHTML="<b style='color:var(--wall)'>Sign flipped.</b> The update is now +η∇f — it climbs. The bowl trace rises, the witness (window 7) recomputed and went red. The attack is real; it is caught."; full(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; recompute(); shown=path.length; $("tampernote").textContent="Flip the sign and the descent becomes an ascent: the loss rises instead of falling. The witness recomputes the bowl run, finds it no longer converges, and turns red. Nothing is faked; the attack is real and it is caught."; full(); });
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the gradient-descent engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE CONTROL LOOP · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee06a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;height:22px;accent-color:var(--am);vertical-align:middle;}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#0f1a06;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:230px;} .readout{flex:1;min-width:250px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:86px;}
+.val{color:var(--am);font-weight:700;}
+.sent{font-size:13px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+canvas{width:100%;height:150px;background:#0a130c;border:1px solid var(--line);border-radius:6px;margin-top:6px;display:block;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE CONTROL LOOP</h1>
+ <p class="sub">Aim at a target, measure how far off you are, push by an amount proportional to the miss, measure again. That circle — <b>error → correction → re-measure</b> — is the mathematics of purpose. Wiener named it <i>cybernetics</i>, from the Greek for <b>steersman</b>. Down the center, data flows: the setpoint and gain go <b style="color:var(--cy)">in</b>, the loop runs, the settled value comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Norbert Wiener, <i>Cybernetics: or Control and Communication in the Animal and the Machine</i> (1948) — <a href="https://archive.org/details/cyberneticsorcon00wien">archive.org/details/cyberneticsorcon00wien</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — one line of algebra</h2>
+   <p>The plant is a pure <b>integrator</b>: it keeps whatever it has and adds the push, <b class="k">x&#8345;&#8330;&#8321; = x&#8345; + u&#8345;</b>. The controller looks at the miss and pushes proportionally, <b class="k">u = K&#8345; · e</b>, where <b>e = r − x</b> (setpoint minus measured).</p>
+   <p>Substitute and the loop collapses to a single recurrence on the error:</p>
+   <p style="text-align:center;font-size:14px"><b class="k">e&#8345;&#8330;&#8321; = (1 − K&#8345;) · e&#8345;</b></p>
+   <p>So the error is multiplied by <b>|1 − K&#8345;|</b> every step. It shrinks — the loop converges — <b>iff</b> that factor is below 1, i.e. <b class="k">0 &lt; K&#8345; &lt; 2</b>. Live, for the current gain:</p>
+   <table id="modelTbl"><thead><tr><th>quantity</th><th>value</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the governor, generalized <span class="tag t-amber">AVAN</span></h2>
+   <p>Watt's 1788 <b>flyball governor</b> was one physical loop: spin too fast, the balls fly out, the valve closes, the engine slows. Wiener's move was to strip away the brass and keep the <b>math</b> — feedback as the general form of <i>goal-seeking</i>, indifferent to whether the steersman is a valve, a nerve, a thermostat, or an optimizer.</p>
+   <p>The same three lines sit under a <b>thermostat</b> and under a <b>training loop</b>: measure the loss, take a step proportional to the gradient, re-measure. Where <a href="https://davidwise01.github.io/the-syllogism/" style="color:var(--cy)">the syllogism</a> made <i>deduction</i> mechanical, this makes <i>purpose</i> mechanical. Each sphere is the next one's premise — and the next one is <b>gradient descent</b>, this loop with the plant replaced by a landscape.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run the loop over a sweep of gains and confirm the three laws — a stable gain converges, feedback OFF never does, and more gain (overdamped) needs fewer-or-equal steps. If red flips the sign, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the inputs <span class="tag t-in">in ↓</span></h2>
+   <p>A control loop needs four numbers fed in:</p>
+   <table><thead><tr><th>input</th><th>symbol</th><th>here</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>setpoint (target)</td><td class="M" style="color:var(--am)">r</td><td class="y">10</td></tr>
+     <tr><td>start value</td><td class="S" style="color:var(--cy)">x&#8320;</td><td class="y">0</td></tr>
+     <tr><td>gain</td><td class="P" style="color:var(--gr)">K&#8345;</td><td class="y">slider ▶</td></tr>
+     <tr><td>plant</td><td class="M" style="color:var(--am)">·</td><td class="n">integrator</td></tr>
+    </tbody></table>
+   <p class="small">The measured value starts far from the target. The gain sets how hard the controller reacts to the miss — too little and it crawls, too much and it overshoots and rings. That is the one dial you feed the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed setpoint + gain into the loop &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the loop <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>gain K&#8345;</label><input type="range" id="gain" min="0" max="48" value="20" step="1" style="flex:1;min-width:120px"><span class="val" id="gainv">1.00</span></div>
+     <div class="row"><label>feedback</label>
+      <span class="toggle"><button id="fbOn" class="on">ON</button><button id="fbOff">OFF</button></span></div>
+     <p class="small" id="readmode">Feedback ON: the controller sees the error and pushes. A stable gain drives the miss to zero.</p>
+     <div class="row"><button id="bSlug">sluggish 0.30</button><button id="bDead">deadbeat 1.0</button></div>
+     <div class="row"><button id="bOver">overshoot 1.60</button><button id="bUns">unstable 2.20</button></div>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+     <canvas id="plot" width="480" height="150"></canvas>
+     <div class="sent small" id="sent"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Move the gain — the trajectory, the settle time, and the verdict are all simulated on the spot from x&#8345;&#8330;&#8321; = x&#8345; + K&#8345;(r − x&#8345;), never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the loop settles (or does not) &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, live: with feedback and any gain in <b class="k">0 &lt; K&#8345; &lt; 2</b> the measured value converges to the setpoint; at <b class="k">K&#8345; = 1</b> it lands in a single step (<i>deadbeat</i>); with feedback <b>OFF</b> it never moves toward the target; and within the overdamped band more gain settles in fewer-or-equal steps. The current settle time is above; these laws are the output.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-runs these laws live; the red team (right) flips the feedback sign to break them.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> This loop is <b>rigged easy</b>. The plant is a pure integrator with <b>no delay, no noise, no saturation</b> — the three things that actually destabilize real control. Add dead time and even a "stable" gain rings and blows up; add a sensor bias and the loop settles to the wrong place, confidently.</div>
+   <p class="small" style="margin-top:8px">And the exact-landing is a gift of the plant choice: proportional control hits the setpoint <b>only</b> because an integrator has infinite DC gain. Put in a first-order <i>lag</i> plant and a pure P controller leaves a permanent <b>steady-state offset</b> — you need the integral term (the I in PID) to kill it. Nyquist and phase-margin theory subsume this whole one-liner; the loop here is the first rung, not the ladder.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"More gain always settles faster."</s> <b>Cut.</b> True only up to K&#8345;=1. Past it the loop overshoots and rings; at K&#8345;≥2 it never settles; above 2 it diverges — the engine shows the turn.</p>
+   <p class="grave"><s>"Feedback makes a system stable."</s> <b>Cut.</b> Feedback of the <i>wrong sign</i> or <i>too much magnitude</i> is exactly what makes it unstable — the tamper below proves it by flipping one minus sign.</p>
+   <p class="grave"><s>"A P controller removes all error."</s> <b>Kept, corrected.</b> Here it does — because the plant is an integrator. On a lag plant it leaves a steady-state offset; that gap is why PI exists.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: flip the sign of the feedback so the controller pushes <b>toward</b> the error instead of against it — positive feedback. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ flip feedback sign</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Flip the sign and every gain sends the error away from the setpoint — the loop diverges, the witness recomputes, disagrees with the known laws, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE CONTROL LOOP — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (setpoint + gain <b style="color:var(--cy)">in</b> → loop → settled value <b style="color:var(--gr)">out</b>). A runnable rendering of Norbert Wiener's <i>Cybernetics</i> (1948) from archive.org — the engine is LIT (every trajectory simulated live from x&#8345;&#8330;&#8321; = x&#8345; + K&#8345;(r−x&#8345;), the 0&lt;K&#8345;&lt;2 stability band self-checked, sign-flip tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one scalar loop cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: plant x_{n+1}=x_n+u, u=sign*Kp*(r-x); stable iff 0<Kp<2) ===== */
+const SP=10, X0=0, N=200, TOL=1e-6;   // fixed inputs for the self-check + witness
+let TAMPER=false;                     // flips the feedback sign when true — the witness must catch it
+function fbsign(){ return TAMPER ? -1 : 1; }
+
+// one loop step: measure the miss, push proportionally, let the integrator accumulate it
+function step(x, sp, Kp, sign){ const err = sp - x; return x + sign*Kp*err; }
+
+// full trajectory of the measured value over N steps
+function simulate(sp, Kp, x0, n, sign){ let x=x0; const tr=[x]; for(let i=0;i<n;i++){ x=step(x,sp,Kp,sign); tr.push(x); } return tr; }
+
+// steps until |error| <= tol, or Infinity if it never gets there within n
+function stepsToConverge(sp, Kp, x0, n, tol, sign){ let x=x0; for(let i=0;i<=n;i++){ if(Math.abs(sp-x)<=tol) return i; x=step(x,sp,Kp,sign); } return Infinity; }
+
+// signed error remaining after n steps
+function finalError(sp, Kp, x0, n, sign){ const tr=simulate(sp,Kp,x0,n,sign); return sp - tr[tr.length-1]; }
+
+/* ===== fail-loud self-check (always begins untampered) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ // exact arithmetic anchors (all binary-exact)
+ t(step(0,10,1,1)===10,"deadbeat gain must hit the setpoint in one step");
+ const half=simulate(10,0.5,0,3,1);
+ t(half[0]===0&&half[1]===5&&half[2]===7.5&&half[3]===8.75,"Kp=0.5 trajectory must be 0,5,7.5,8.75");
+ // (1) a stable gain converges to the setpoint within N
+ t(stepsToConverge(SP,1,X0,N,TOL,1)===1,"deadbeat must converge in exactly 1 step");
+ t(Number.isFinite(stepsToConverge(SP,0.5,X0,N,TOL,1)),"stable gain 0.5 must converge within N");
+ t(Number.isFinite(stepsToConverge(SP,1.6,X0,N,TOL,1)),"underdamped gain 1.6 must still converge");
+ // (2) feedback OFF (Kp=0) never reaches the setpoint
+ t(!Number.isFinite(stepsToConverge(SP,0,X0,N,TOL,1)),"with Kp=0 the loop must never converge");
+ t(simulate(SP,0,X0,5,1).every(v=>v===X0),"with Kp=0 the plant must never move");
+ // marginal / unstable gains do not settle
+ t(!Number.isFinite(stepsToConverge(SP,2,X0,N,TOL,1)),"Kp=2 (marginal) must not settle");
+ t(!Number.isFinite(stepsToConverge(SP,2.2,X0,N,TOL,1)),"Kp>2 (unstable) must diverge");
+ // (3) increasing gain in the overdamped band converges in fewer-or-equal steps
+ let prev=Infinity;
+ for(const g of [0.2,0.4,0.6,0.8,1.0]){ const s=stepsToConverge(SP,g,X0,N,TOL,1); t(s<=prev,"more gain must not need more steps at Kp="+g); prev=s; }
+ // ---- planted void: flip the feedback sign and prove the loop now diverges ----
+ TAMPER=true;
+ t(!Number.isFinite(stepsToConverge(SP,0.5,X0,N,TOL,fbsign())),"TAMPER (sign flip) must break convergence");
+ t(Math.abs(finalError(SP,0.5,X0,10,fbsign()))>Math.abs(SP-X0),"TAMPER must drive the error away from the setpoint");
+ t(!Number.isFinite(stepsToConverge(SP,1,X0,N,TOL,fbsign())),"even deadbeat gain must diverge once the sign is flipped");
+ TAMPER=false;
+ t(stepsToConverge(SP,1,X0,N,TOL,fbsign())===1,"restoring the sign must re-converge");
+ // ---- end planted void ----
+ TAMPER=save; return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let feedback=true;
+function kp(){ return feedback ? (+$("gain").value)/20 : 0; }   // slider 0..48 -> Kp 0..2.40 (20 -> 1.00 exact)
+
+function regime(Kp,fbOn,sign){
+ if(!fbOn||Kp===0) return {name:"OPEN LOOP — no feedback",cls:"no"};
+ if(sign<0)        return {name:"POSITIVE FEEDBACK — diverging (tampered)",cls:"no"};
+ if(Kp<1)  return {name:"SLUGGISH — overdamped, monotone approach",cls:"ok"};
+ if(Kp===1)return {name:"DEADBEAT — one step to the setpoint",cls:"ok"};
+ if(Kp<2)  return {name:"UNDERDAMPED — overshoots, rings, but converges",cls:"ok"};
+ if(Kp===2)return {name:"MARGINAL — sustained oscillation, never settles",cls:"no"};
+ return {name:"UNSTABLE — gain too high, diverging",cls:"no"};
+}
+
+function drawPlot(traj,sp,x0){
+ const c=$("plot"), g=c.getContext("2d"), W=c.width, H=c.height, pad=6;
+ g.clearRect(0,0,W,H);
+ const A=Math.max(Math.abs(sp-x0),1);
+ const lo=Math.min(x0,sp)-0.6*A-1, hi=Math.max(x0,sp)+0.6*A+1;
+ const Y=v=>{ let y=H-pad-((v-lo)/(hi-lo))*(H-2*pad); return Math.max(-20,Math.min(H+20,y)); };
+ const nd=Math.min(traj.length-1,60), X=i=>pad+(i/nd)*(W-2*pad);
+ // setpoint line
+ g.strokeStyle="#9ee06a"; g.globalAlpha=.5; g.setLineDash([4,4]); g.beginPath(); g.moveTo(pad,Y(sp)); g.lineTo(W-pad,Y(sp)); g.stroke();
+ g.setLineDash([]); g.globalAlpha=1;
+ g.fillStyle="#5f8a68"; g.font="10px monospace"; g.fillText("setpoint r="+sp, pad+2, Y(sp)-3);
+ // trajectory
+ const conv=Number.isFinite(stepsToConverge(sp,kp(),x0,N,TOL,fbsign()));
+ g.strokeStyle=conv?"#39fc6b":"#ff6b6b"; g.lineWidth=1.6; g.beginPath();
+ for(let i=0;i<=nd;i++){ const px=X(i),py=Y(traj[i]); i?g.lineTo(px,py):g.moveTo(px,py); }
+ g.stroke();
+ g.fillStyle=conv?"#39fc6b":"#ff6b6b";
+ for(let i=0;i<=nd;i++){ g.beginPath(); g.arc(X(i),Y(traj[i]),1.7,0,7); g.fill(); }
+}
+
+function render(){
+ const Kp=kp(), s=fbsign();
+ const traj=simulate(SP,Kp,X0,N,s);
+ const steps=stepsToConverge(SP,Kp,X0,N,TOL,s);
+ const reg=regime(Kp,feedback,s);
+ const conv=Number.isFinite(steps);
+ $("gainv").textContent=((+$("gain").value)/20).toFixed(2);
+ $("verdict").textContent = conv ? ("CONVERGED in "+steps+" step"+(steps===1?"":"s")) : "NEVER SETTLES";
+ $("verdict").className="verdict "+(conv?"ok":"no");
+ $("moodname").textContent = reg.name;
+ const fe=finalError(SP,Kp,X0,60,s), last=traj[Math.min(traj.length-1,60)];
+ $("reason").innerHTML = "closed-loop factor |1 − K&#8345;| = <b>"+Math.abs(1-Kp).toFixed(2)+"</b> "+(Math.abs(1-Kp)<1?"(< 1 → shrinks)":(Math.abs(1-Kp)===1?"(= 1 → holds)":"(> 1 → grows)"));
+ $("sent").innerHTML = "after 60 steps: measured = <b style='color:"+(conv?"var(--gr)":"var(--wall)")+"'>"+last.toFixed(4)+"</b> &nbsp;·&nbsp; remaining error = <b>"+fe.toFixed(4)+"</b>";
+ // blue MODEL table
+ $("modelBody").innerHTML=[
+  ["gain K&#8345;",Kp.toFixed(2)],
+  ["factor |1 − K&#8345;|",Math.abs(1-Kp).toFixed(3)],
+  ["stable? (0&lt;K&#8345;&lt;2)", (feedback&&s>0&&Kp>0&&Kp<2)?"<b class='k'>yes</b>":"<b style='color:var(--wall)'>no</b>"],
+  ["steps to settle", conv?String(steps):"<b style='color:var(--wall)'>∞</b>"]
+ ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
+ drawPlot(traj,SP,X0);
+}
+
+function setFeedback(on){ feedback=on; $("fbOn").classList.toggle("on",on); $("fbOff").classList.toggle("on",!on);
+ $("readmode").innerHTML = on?"Feedback ON: the controller sees the error and pushes. A stable gain drives the miss to zero."
+  :"Feedback OFF (K&#8345;=0): the controller is deaf. Nothing pushes the plant — the measured value never leaves its start.";
+ render(); audit(); }
+
+function audit(){
+ const el=$("auditout"), s=fbsign();
+ const c1=stepsToConverge(SP,1,X0,N,TOL,s)===1;                       // stable gain converges
+ const c2=!Number.isFinite(stepsToConverge(SP,0,X0,N,TOL,s));         // feedback OFF never converges
+ let prev=Infinity,c3=true;                                           // more gain -> fewer-or-equal steps
+ for(const g of [0.2,0.4,0.6,0.8,1.0]){ const st=stepsToConverge(SP,g,X0,N,TOL,s); if(!(st<=prev))c3=false; prev=st; }
+ const ok=c1&&c2&&c3;
+ const d1=stepsToConverge(SP,1,X0,N,TOL,s);
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — laws hold':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">deadbeat settles in <b style="color:${c1?'var(--gr)':'var(--wall)'}">${Number.isFinite(d1)?d1:'∞'}</b> step (=1) &nbsp;·&nbsp; OFF never settles <b style="color:${c2?'var(--gr)':'var(--wall)'}">${c2}</b> &nbsp;·&nbsp; more-gain-monotone <b style="color:${c3?'var(--gr)':'var(--wall)'}">${c3}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red flipped the feedback sign</span>':''}</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("gain").addEventListener("input",()=>{ render(); audit(); });
+ $("fbOn").addEventListener("click",()=>setFeedback(true));
+ $("fbOff").addEventListener("click",()=>setFeedback(false));
+ const setg=v=>{ feedback=true; $("fbOn").classList.add("on"); $("fbOff").classList.remove("on"); $("gain").value=Math.round(v*20); render(); audit(); };
+ $("bSlug").addEventListener("click",()=>setg(0.30));
+ $("bDead").addEventListener("click",()=>setg(1.00));
+ $("bOver").addEventListener("click",()=>setg(1.60));
+ $("bUns").addEventListener("click",()=>setg(2.20));
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Sign flipped.</b> The controller now pushes with the error, not against it — every gain diverges away from the setpoint. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Flip the sign and every gain sends the error away from the setpoint — the loop diverges, the witness recomputes, disagrees with the known laws, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the control-loop engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

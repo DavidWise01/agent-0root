@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ON COMPUTABLE NUMBERS · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#6ca8ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1120px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 15% 0,rgba(108,168,255,.06),transparent 55%),radial-gradient(circle at 90% 100%,rgba(57,252,107,.06),transparent 55%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(108,168,255,.05),transparent);}
+h1{font-size:22px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px;}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:8px;right:10px;font-size:26px;color:var(--line);font-weight:700;}
+.win h2{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:34px;}
+.win p{font-size:13px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.full{grid-column:1 / -1;}
+.tag{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;} select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.row{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);}
+.tape{display:flex;gap:3px;justify-content:center;margin:12px 0;overflow-x:auto;padding:6px 0;}
+.cell{flex:0 0 auto;width:26px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:4px;font-size:15px;background:#0a130c;color:#cfe8d0;}
+.cell.one{color:var(--gr);border-color:#2c5a38;font-weight:700;}
+.cell.head{outline:2px solid var(--am);outline-offset:1px;color:#fff;box-shadow:0 0 10px rgba(108,168,255,.5);}
+.stat{display:flex;gap:18px;justify-content:center;font-size:13px;margin-top:4px;flex-wrap:wrap;} .stat b{color:var(--am);font-size:16px;}
+.stat .halt{color:var(--gr);} .stat .run{color:var(--amber);}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:8px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);}
+.grave{color:#8aa;font-size:12.5px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12.5px;margin-top:6px;}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · 八 · the spine: proof → syllogism → algebra → program → <b style="color:var(--am)">machine</b></span></div>
+
+<header>
+ <h1>ON COMPUTABLE NUMBERS</h1>
+ <p class="sub">Ada wrote <i>a</i> program. In 1936 Turing wrote the <b>machine that runs every program</b>: a tape, a head, a table of states. From that toy he defined exactly what a "computable number" is — and proved there are questions no machine can answer. Here the tape actually moves.</p>
+ <p class="src"><span class="tag t-amber">source</span> A. M. Turing, <i>On Computable Numbers, with an Application to the Entscheidungsproblem</i> (1936), via Petzold, <i>The Annotated Turing</i> — <a href="https://archive.org/details/annotatedturingg0000petz">archive.org/details/annotatedturingg0000petz</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="grid">
+
+ <div class="win"><span class="no">一</span><h2>THE SOURCE</h2>
+  <p>Turing's <b>a-machine</b>: an endless <b>tape</b> of cells, a <b>head</b> that reads and writes one symbol, and a finite <b>table</b> of rules. Each rule says: in this state, seeing this symbol — write that, move left or right, change state. That is all a computer is.</p>
+  <p>A number is <b>computable</b> if some such table prints its digits. Almost all real numbers are <i>not</i> — there are only countably many tables. Then the twist: one table, the <b>universal machine</b>, reads any other table off the tape and imitates it.</p>
+ </div>
+
+ <div class="win"><span class="no">二</span><h2>THE FORM — the busy beaver</h2>
+  <p>To <i>see</i> a machine halt, use Radó's <b>busy beaver</b>: among all N-state machines that stop, the one that writes the most <b>1</b>s. These are exact, known landmarks —</p>
+  <table><thead><tr><th>machine</th><th>halts in</th><th>writes</th></tr></thead><tbody>
+   <tr><td>BB(2)</td><td>6 steps</td><td class="k">4 ones</td></tr>
+   <tr><td>BB(3)</td><td>14 steps</td><td class="k">6 ones</td></tr>
+  </tbody></table>
+  <p class="small">Small tables, provably terminating — the perfect thing to run and check. BB(5) already runs 47,176,870 steps; BB(6) is beyond reach.</p>
+ </div>
+
+ <div class="win full"><span class="no">三</span><h2>THE ENGINE <span class="tag t-lit">LIT</span></h2>
+  <div class="row" style="justify-content:center">
+   <label>machine</label>
+   <select id="mach"><option value="bb3" selected>Busy Beaver BB(3) — halts, 6 ones</option><option value="bb2">Busy Beaver BB(2) — halts, 4 ones</option><option value="inc">Binary +1 — compute 11 → 12</option></select>
+   <button id="step">▸ step</button><button id="run">▶ run to halt</button><button id="reset">↺ reset</button>
+  </div>
+  <div class="tape" id="tape"></div>
+  <div class="stat" id="stat"></div>
+  <p class="small" style="text-align:center;margin-top:8px">Every cell, the head, and the state change only by the table's rules — one step at a time. The beavers <b>halt</b>; the increment machine <b>computes a number</b>. Nothing is scripted.</p>
+ </div>
+
+ <div class="win"><span class="no">四</span><h2>THE MODEL — program = data</h2>
+  <p>Ada's Note G was one algorithm, wired to one task. Turing's leap: put the <b>table itself on the tape</b>. Then a single <b>universal machine</b> reads any program and carries it out — the same hardware runs the beaver, the increment, or a word processor.</p>
+  <p class="small">That identity — <b>program is just more data</b> — is the whole idea of software, of the stored-program computer, of everything downstream. Ada's program is this machine's input.</p>
+ </div>
+
+ <div class="win"><span class="no">五</span><h2>THE INVERSE — the uncrossable edge <span class="tag t-amber">AVAN</span></h2>
+  <p>The machine that can run everything cannot know everything about itself. Turing proved the <b>halting problem</b>: no machine decides, for every machine and input, whether it will stop.</p>
+  <p>The busy-beaver numbers make it concrete — BB(N) grows faster than <i>any</i> computable function, so it is <b>uncomputable</b>: no program can output it in general. The model that defined the computable also drew the line no computation can cross. That edge is the sharpest thing on the spine.</p>
+ </div>
+
+ <div class="win"><span class="no">六</span><h2>THE AUDIT <span class="tag t-lit">live</span></h2>
+  <p>Runs BB(2) and BB(3) to completion and checks the halt, the step count, and the ones against Radó's known values; also checks the increment computes n+1. Then corrupt a rule.</p>
+  <div id="auditout"></div>
+  <div class="row" style="margin-top:8px"><button id="tamper">⚠ TAMPER — rewrite one BB(3) rule</button><button id="restore">↺ restore</button></div>
+  <p class="small" id="tampernote">Change a single transition and BB(3) no longer halts at 14 with 6 ones — the audit compares to the known landmark and turns red.</p>
+ </div>
+
+ <div class="win"><span class="no">七</span><h2>THE GRAVEYARD</h2>
+  <p class="grave"><s>"The tape is finite / it's a real computer."</s> <b>Cut.</b> The a-machine has an <b>unbounded</b> tape — that is the idealization that makes it a definition of "computable," not a physical device. Real computers are finite-state; strictly they are less than Turing machines.</p>
+  <p class="grave"><s>"Turing built this computer in 1936."</s> <b>Cut.</b> The a-machine is <b>mathematics</b>, a proof about the Entscheidungsproblem. Turing later built real machines (Bombe, ACE) — different objects; this sphere runs the math.</p>
+  <p class="grave"><s>"Busy-beaver values are conjectural."</s> <b>Kept, corrected.</b> BB(2)=4 and BB(3)=6 are <b>proven</b>; the machines here run to those exact numbers. BB(5) was only settled in 2024; BB(6) remains open.</p>
+ </div>
+
+ <div class="win"><span class="no">八</span><h2>THE ADVERSARY</h2>
+  <p>The strongest case <b>against</b>, stated fairly:</p>
+  <div class="wall-note"><span class="tag t-wall">WALL</span> The Turing machine says what is <b>computable</b>, never what is <b>feasible</b>. It ignores time and energy; a program that halts "eventually" may need more steps than atoms in the universe. Complexity theory (P vs NP, space/time) is the real constraint on machines that exist, and it lives entirely inside Turing's boundary.</div>
+  <p class="small" style="margin-top:8px">And the model is one of several equivalent definitions (λ-calculus, recursion) — the Church–Turing thesis that they capture "effective computation" is a <b>thesis</b>, not a theorem. What is proven is the boundary itself and that the halting question sits outside it. The engine shows the inside; the adversary marks the wall.</p>
+ </div>
+
+</div>
+
+<footer>ON COMPUTABLE NUMBERS — World II · THE FOLD, in THE OCHO (八). A runnable rendering of Turing's 1936 a-machine (via Petzold's Annotated Turing, archive.org): a real tape/head/state machine you step by hand — the busy beavers BB(2)/BB(3) halt at their proven landmarks and a binary machine computes n+1, all self-checked and tamper-provable. The universal reader that runs <a href="https://davidwise01.github.io/first-program/">Ada's program</a>. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the a-machine ===== */
+let TAMPER=false;
+const MACH={
+ bb2:{ start:"A", tbl:{"A0":[1,"R","B"],"A1":[1,"L","B"],"B0":[1,"L","A"],"B1":[1,"R","H"]}, kind:"beaver", expect:{steps:6,ones:4}, label:"BB(2)" },
+ bb3:{ start:"A", tbl:{"A0":[1,"R","B"],"A1":[1,"R","H"],"B0":[0,"R","C"],"B1":[1,"R","B"],"C0":[1,"L","C"],"C1":[1,"L","A"]}, kind:"beaver", expect:{steps:14,ones:6}, label:"BB(3)" },
+ inc:{ start:"I", tbl:{"I1":[0,"R","I"],"I0":[1,"R","H"]}, kind:"inc", label:"+1" }
+};
+function tblOf(mid){ const t=Object.assign({},MACH[mid].tbl); if(TAMPER && mid==="bb3"){ t["C1"]=[1,"L","H"]; } return t; }   // tamper: C1 halts instead of ->A
+function newTape(mid,n){ const tape=new Map(); if(mid==="inc"){ n=(n===undefined?11:n); for(let i=0;i<16;i++){ if((n>>i)&1) tape.set(i,1); } } return {tape,head:(mid==="inc"?0:0),st:MACH[mid].start,steps:0}; }
+function stepMachine(mid,S){ if(S.st==="H") return false; const t=tblOf(mid); const rd=S.tape.get(S.head)||0; const r=t[S.st+rd]; if(!r){ S.st="H"; return false; } S.tape.set(S.head,r[0]); S.head+=(r[1]==="R"?1:-1); S.st=r[2]; S.steps++; return true; }
+function runFull(mid,n){ const S=newTape(mid,n); let guard=0; while(S.st!=="H" && guard<100000){ if(!stepMachine(mid,S)) break; guard++; } let ones=0,val=0; for(const [p,v] of S.tape){ if(v===1){ ones++; if(mid==="inc"&&p>=0) val+=Math.pow(2,p); } } return {halted:S.st==="H",steps:S.steps,ones,val}; }
+
+/* ===== fail-loud self-check (untampered) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const b2=runFull("bb2"); t(b2.halted&&b2.steps===6&&b2.ones===4,"BB(2) must halt in 6 with 4 ones");
+ const b3=runFull("bb3"); t(b3.halted&&b3.steps===14&&b3.ones===6,"BB(3) must halt in 14 with 6 ones");
+ for(let n=0;n<=40;n++){ const r=runFull("inc",n); t(r.halted && r.val===n+1,"increment "+n+" must give "+(n+1)+" got "+r.val); }
+ TAMPER=save; return true;
+}
+
+/* ===== live stepping UI ===== */
+const $=id=>document.getElementById(id);
+let MID="bb3", ST=newTape("bb3");
+function drawTape(){
+ const lo=ST.head-9, hi=ST.head+9; let h="";
+ for(let p=lo;p<=hi;p++){ const v=ST.tape.get(p)||0; h+=`<div class="cell${v?' one':''}${p===ST.head?' head':''}">${v}</div>`; }
+ $("tape").innerHTML=h;
+ const halted=ST.st==="H";
+ const extra = MID==="inc" ? (()=>{ let val=0; for(const[p,v] of ST.tape){ if(v===1&&p>=0) val+=Math.pow(2,p);} return `value <b>${val}</b>`; })()
+   : `ones <b>${(()=>{let o=0;for(const v of ST.tape.values())if(v===1)o++;return o;})()}</b>`;
+ $("stat").innerHTML=`state <b>${halted?'HALT':ST.st}</b> · step <b>${ST.steps}</b> · ${extra} · <span class="${halted?'halt':'run'}">${halted?'■ halted':'▸ running'}</span>`;
+}
+function reset(){ ST=newTape(MID); drawTape(); }
+function step(){ stepMachine(MID,ST); drawTape(); }
+function runToHalt(){ let g=0; while(ST.st!=="H" && g<100000){ if(!stepMachine(MID,ST)) break; g++; } drawTape(); }
+function audit(){
+ const b2=runFull("bb2"), b3=runFull("bb3");
+ const okB2=b2.halted&&b2.steps===6&&b2.ones===4;
+ const okB3=b3.halted&&b3.steps===14&&b3.ones===6;
+ let okInc=true; for(let n=0;n<=20;n++){ if(runFull("inc",n).val!==n+1){okInc=false;break;} }
+ const ok=okB2&&okB3&&okInc;
+ $("auditout").innerHTML=`<span class="badge ${ok?'pass':'failb'}">${ok?'✓ AUDIT PASSED':'✗ AUDIT FAILED'}</span>`
+  +`<div class="small" style="margin-top:6px">BB(2)=6/4: <b style="color:${okB2?'var(--gr)':'var(--wall)'}">${okB2}</b> · BB(3)=14/6: <b style="color:${okB3?'var(--gr)':'var(--wall)'}">${okB3}</b> (got ${b3.halted?b3.steps+'/'+b3.ones:'no-halt'}) · +1: <b style="color:${okInc?'var(--gr)':'var(--wall)'}">${okInc}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">a BB(3) rule is rewritten</span>':''}</div>`;
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("mach").addEventListener("change",e=>{ MID=e.target.value; reset(); });
+ $("step").addEventListener("click",step);
+ $("run").addEventListener("click",runToHalt);
+ $("reset").addEventListener("click",reset);
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Rule C1 rewritten.</b> BB(3) no longer reaches its landmark — the badge is red because the run disagrees with the proven value. If BB(3) is loaded, reset to see it change."; audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Change a single transition and BB(3) no longer halts at 14 with 6 ones — the audit compares to the known landmark and turns red."; audit(); });
+ reset(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the machine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

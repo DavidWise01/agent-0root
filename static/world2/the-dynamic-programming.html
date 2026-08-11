@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE DYNAMIC PROGRAMMING · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fd4ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,212,255,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,212,255,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,212,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+input:focus,select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:250px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.strin{width:130px;letter-spacing:2px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;color:var(--gr);}
+.verdict b{color:var(--am);font-size:26px;}
+.reason{font-size:12px;color:var(--dim);}
+.align{font-size:15px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;white-space:pre;overflow-x:auto;}
+.align .sub{color:var(--wall);} .align .gap{color:var(--am);} .align .mat{color:var(--gr);}
+.oprow{font-size:11px;color:var(--dim);margin-top:4px;letter-spacing:1px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dptbl td{width:26px;height:22px;color:var(--dim);} .dptbl th{color:var(--cy);font-weight:700;}
+.dptbl td.on{background:rgba(127,212,255,.18);color:var(--am);font-weight:700;border-color:var(--am);}
+.dptbl td.corner{background:rgba(57,252,107,.16);color:var(--gr);font-weight:700;}
+.dptbl .hdr{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE DYNAMIC PROGRAMMING</h1>
+ <p class="sub">Do not re-solve what you have already solved. Bellman's method breaks a hard optimization into overlapping sub-problems, solves each once, and stores the answer — the <b>principle of optimality</b>. Here it is <b>runnable</b>: the least-cost way to turn one word into another, built one table cell at a time as <b class="k">min(insert, delete, substitute)</b>. Down the center, data flows: two strings go <b style="color:var(--cy)">in</b>, the table fills, the edit distance and its alignment come <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Bellman, <i>Dynamic Programming</i>, Princeton University Press (1957) — <a href="https://archive.org/details/dynamicprogrammi0000bell">archive.org/details/dynamicprogrammi0000bell</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the recurrence</h2>
+   <p>Let <b>D[i][j]</b> be the cheapest way to turn the first <b>i</b> letters of A into the first <b>j</b> letters of B. It is built from three neighbours already solved:</p>
+   <p><b class="k">D[i][j] = min(</b> D[i−1][j] + 1 &nbsp;<span class="mut">(delete A[i])</span>, &nbsp;D[i][j−1] + 1 &nbsp;<span class="mut">(insert B[j])</span>, &nbsp;D[i−1][j−1] + <b>c</b> &nbsp;<span class="mut">(match/substitute)</span> <b class="k">)</b>, where <b>c = 0</b> if the letters agree, else <b>1</b>.</p>
+   <p class="small">Base cases: an empty string costs its counterpart's length. The answer is the bottom-right corner. Every cell is computed <b>once</b> — that is the whole saving. The live table, and the traced path, are in the panel.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — optimal substructure <span class="tag t-amber">AVAN</span></h2>
+   <p>Bellman (<b style="color:var(--am)">1957</b>) named the load-bearing fact: an optimal solution is built from optimal solutions of its parts — the <b>principle of optimality</b>. Overlapping sub-problems + optimal substructure = solve-once, reuse.</p>
+   <p>That single shape recurs downstream: <b>sequence alignment</b> (Needleman–Wunsch) is this exact table with a scoring scheme; <b>Viterbi</b> is it over hidden states; <b>reinforcement learning</b> is it over time, where D becomes the <a href="https://davidwise01.github.io/the-bellman-equation/" style="color:var(--cy)">value function</a>. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute the DP distance for a <b>fixed battery</b> of string pairs and confirm every one against a brute-force recursive oracle. If red tampers, the DP disagrees with the oracle and this badge goes red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — two strings <span class="tag t-in">in ↓</span></h2>
+   <p>The input is a pair of strings, <b class="S" style="color:var(--cy)">A</b> (source) and <b class="P" style="color:var(--gr)">B</b> (target), over any alphabet. Three edit operations are allowed, each costing <b>1</b>:</p>
+   <table><thead><tr><th>op</th><th>does</th><th>move in table</th></tr></thead>
+    <tbody>
+     <tr><td>insert</td><td>add a letter of B</td><td>from the left</td></tr>
+     <tr><td>delete</td><td>drop a letter of A</td><td>from above</td></tr>
+     <tr><td>substitute</td><td>swap A's letter for B's</td><td>diagonal (+1)</td></tr>
+     <tr><td>match</td><td>letters already agree</td><td>diagonal (+0)</td></tr>
+    </tbody></table>
+   <p class="small">Edit the two strings below and the table refills. That is what you feed the panel — nothing else is assumed.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the strings into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>string A</label><input id="sa" class="strin" maxlength="12" value="kitten"></div>
+     <div class="row"><label>string B</label><input id="sb" class="strin" maxlength="12" value="sitting"></div>
+     <div class="row"><button id="ex1">kitten → sitting</button><button id="ex2">sunday → saturday</button></div>
+     <div class="row"><button id="ex3">flaw → lawn</button><button id="rand">↺ random</button></div>
+     <p class="small" style="margin-top:4px">The table below fills live — <span style="color:var(--am)">highlighted</span> cells are the traced optimal path; the <span style="color:var(--gr)">green corner</span> is the answer.</p>
+     <div style="overflow-x:auto"><table class="dptbl" id="dptbl"></table></div>
+    </div>
+    <div class="readout">
+     <div class="verdict">edit distance = <b id="dist">·</b></div>
+     <div class="reason" id="reason"></div>
+     <p class="small" style="margin-top:8px">one optimal alignment:</p>
+     <div class="align" id="align"></div>
+     <div class="oprow" id="oprow"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change either string — the distance is filled cell by cell from the recurrence on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits distance + alignment &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: the minimum edit cost equal to a brute-force recursive oracle across the witness battery; the classic <b class="k">kitten → sitting = 3</b>; every interior cell satisfying the recurrence; and a traced-back alignment whose cost equals the table's bottom-right value.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The unit-cost model is a <b>choice</b>, not a law. Real biology needs <b>affine gaps</b> (a long deletion is not <i>k</i> independent ones) — Gotoh's variant, not this one. Under arbitrary edit costs the distance need not even be a metric.</div>
+   <p class="small" style="margin-top:8px">And DP is not free: the full table is <b>O(nm)</b> time <i>and</i> space. Hirschberg recovers the alignment in O(n) space; band/greedy methods trade optimality for speed. The traceback also returns just <b>one</b> optimal alignment — ties are silently broken. DP is the first proof the problem has a computable shape, not the last word on solving it.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Dynamic programming is about computer programming."</s> <b>Cut.</b> Bellman's "programming" means <i>planning / tabular optimization</i>, from operations research — the name predates the modern sense of code.</p>
+   <p class="grave"><s>"Edit distance is always symmetric: d(A,B)=d(B,A)."</s> <b>Cut for the general case.</b> True for unit costs (shown here), but false once insert and delete cost differently.</p>
+   <p class="grave"><s>"Greedy letter-matching gives the minimum."</s> <b>Cut.</b> Greedy fails; only the full recurrence over sub-problems is guaranteed optimal — which is exactly why DP exists.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>drop the substitution</b> from the recurrence, leaving only insert and delete, and try to pass off the inflated number as the true distance. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ drop substitution</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Without substitution, changing a letter costs a delete <i>plus</i> an insert — so kitten → sitting reads 5, not 3. The witness recomputes, disagrees with the oracle, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE DYNAMIC PROGRAMMING — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (strings <b style="color:var(--cy)">in</b> → filled table → distance + alignment <b style="color:var(--gr)">out</b>). A runnable rendering of Bellman's <i>Dynamic Programming</i> (1957) from archive.org — the engine is LIT (edit distance filled live, checked against a brute-force oracle, kitten→sitting=3, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one unit-cost table cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine — edit distance (Levenshtein) DP (verified) ===== */
+let TAMPER=false;   // when true, drops the SUBSTITUTION move — the witness must catch it
+
+/* deterministic PRNG (LCG) so the self-check battery is reproducible */
+function makeRng(seed){ let s=seed>>>0; return function(){ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; }
+const ALPHA="abcd";
+function randStr(rng,maxLen){ const L=(rng()*(maxLen+1))|0; let s=""; for(let k=0;k<L;k++) s+=ALPHA[(rng()*ALPHA.length)|0]; return s; }
+
+/* the DP table: D[i][j] = edit distance of a[:i] -> b[:j].
+   moves per cell: delete (from above +1), insert (from left +1),
+   diagonal: free (cost 0) when chars match, else SUBSTITUTE (+1) — dropped when TAMPER. */
+function dpTable(a,b){
+ const n=a.length,m=b.length,D=[];
+ for(let i=0;i<=n;i++){ D.push(new Array(m+1).fill(0)); D[i][0]=i; }
+ for(let j=0;j<=m;j++){ D[0][j]=j; }
+ for(let i=1;i<=n;i++){
+  for(let j=1;j<=m;j++){
+   const del=D[i-1][j]+1, ins=D[i][j-1]+1;
+   let best=del<ins?del:ins;
+   const same=a[i-1]===b[j-1];
+   if(same){ if(D[i-1][j-1]<best) best=D[i-1][j-1]; }            // free match, always allowed
+   else if(!TAMPER){ if(D[i-1][j-1]+1<best) best=D[i-1][j-1]+1; } // substitution — the tampered-away move
+   D[i][j]=best;
+  }
+ }
+ return D;
+}
+function editDistance(a,b){ const D=dpTable(a,b); return D[a.length][b.length]; }
+
+/* brute-force oracle: recursive, NO memo, substitution ALWAYS allowed (true Levenshtein).
+   independent of TAMPER — this is the ground truth the witness compares against. */
+function bruteForce(a,b){
+ if(a.length===0) return b.length;
+ if(b.length===0) return a.length;
+ const cost=a[0]===b[0]?0:1;
+ const del=bruteForce(a.slice(1),b)+1;
+ const ins=bruteForce(a,b.slice(1))+1;
+ const sub=bruteForce(a.slice(1),b.slice(1))+cost;
+ return Math.min(del,Math.min(ins,sub));
+}
+
+/* trace one optimal alignment back from the bottom-right corner; sum its move costs */
+function traceback(a,b,D){
+ let i=a.length,j=b.length,cost=0; const ops=[]; const path=[i+","+j];
+ while(i>0||j>0){
+  let moved=false;
+  if(i>0&&j>0){
+   const same=a[i-1]===b[j-1];
+   const diag = same ? D[i-1][j-1] : (TAMPER? Infinity : D[i-1][j-1]+1);
+   if(D[i][j]===diag){ ops.push({t:same?"match":"sub",a:a[i-1],b:b[j-1]}); cost+=same?0:1; i--;j--; moved=true; }
+  }
+  if(!moved && i>0 && D[i][j]===D[i-1][j]+1){ ops.push({t:"del",a:a[i-1],b:"-"}); cost+=1; i--; moved=true; }
+  if(!moved && j>0 && D[i][j]===D[i][j-1]+1){ ops.push({t:"ins",a:"-",b:b[j-1]}); cost+=1; j--; moved=true; }
+  if(!moved) break; // safety — should never fire
+  path.push(i+","+j);
+ }
+ ops.reverse();
+ return {ops:ops,cost:cost,path:new Set(path)};
+}
+
+/* verify one table obeys the full (untampered) recurrence in every interior cell */
+function recurrenceHolds(a,b){
+ const save=TAMPER; TAMPER=false; const D=dpTable(a,b); TAMPER=save;
+ for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++){
+  const same=a[i-1]===b[j-1];
+  const exp=Math.min(D[i-1][j]+1, Math.min(D[i][j-1]+1, D[i-1][j-1]+(same?0:1)));
+  if(D[i][j]!==exp) return false;
+ }
+ return true;
+}
+
+/* ===== fail-loud self-check (runs untampered; saves/restores TAMPER) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+
+ // 1. DP equals the brute-force oracle across many small pairs (deterministic)
+ const rng=makeRng(0x51E7);
+ let pairs=0;
+ for(let k=0;k<160;k++){
+  const a=randStr(rng,4), b=randStr(rng,4);
+  t(editDistance(a,b)===bruteForce(a,b), "DP != brute force for "+JSON.stringify([a,b]));
+  pairs++;
+ }
+ t(pairs===160,"expected 160 checked pairs");
+
+ // 2. the classic case
+ t(editDistance("kitten","sitting")===3, "kitten->sitting must be 3");
+ t(bruteForce("kitten","sitting")===3, "brute force kitten->sitting must be 3");
+
+ // 3. boundary + known small values
+ t(editDistance("","abc")===3 && editDistance("abc","")===3, "empty-string edits = length");
+ t(editDistance("abc","abc")===0, "identical strings = 0");
+ t(editDistance("flaw","lawn")===2, "flaw->lawn must be 2");
+ t(editDistance("sunday","saturday")===3, "sunday->saturday must be 3");
+
+ // 4. every interior cell satisfies the recurrence
+ t(recurrenceHolds("kitten","sitting"),"recurrence must hold for kitten/sitting");
+ t(recurrenceHolds("saturday","sunday"),"recurrence must hold for saturday/sunday");
+
+ // 5. traced-back alignment cost equals the table's bottom-right value
+ for(const pr of [["kitten","sitting"],["flaw","lawn"],["sunday","saturday"],["","abc"],["abcd","abcd"]]){
+  const D=dpTable(pr[0],pr[1]), tb=traceback(pr[0],pr[1],D);
+  t(tb.cost===D[pr[0].length][pr[1].length], "alignment cost != table corner for "+JSON.stringify(pr));
+ }
+
+ // 6. THE PLANTED VOID — dropping substitution must make a computed value WRONG (too high)
+ TAMPER=true;
+ const tampered=editDistance("kitten","sitting");
+ t(tampered!==3, "tamper must change the distance");
+ t(tampered>3, "dropping substitution can only raise the distance");
+ t(tampered!==bruteForce("kitten","sitting"), "tampered DP must disagree with the oracle");
+ TAMPER=save; // restore
+
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const esc=c=>c==="<"?"&lt;":c===">"?"&gt;":c==="&"?"&amp;":c;
+
+function renderTable(a,b,D,path){
+ let h="<tr><th class='hdr'></th><th class='hdr'>&#949;</th>";
+ for(let j=0;j<b.length;j++) h+="<th>"+esc(b[j])+"</th>";
+ h+="</tr>";
+ for(let i=0;i<=a.length;i++){
+  h+="<tr><th>"+(i===0?"&#949;":esc(a[i-1]))+"</th>";
+  for(let j=0;j<=b.length;j++){
+   const corner=(i===a.length&&j===b.length);
+   const on=path.has(i+","+j);
+   const cls=corner?"corner":(on?"on":"");
+   h+="<td class='"+cls+"'>"+D[i][j]+"</td>";
+  }
+  h+="</tr>";
+ }
+ return h;
+}
+
+function renderAlign(ops){
+ let top="",bot="",opl="";
+ for(const o of ops){
+  const cls=o.t==="sub"?"sub":(o.t==="del"||o.t==="ins"?"gap":"mat");
+  top+="<span class='"+cls+"'>"+esc(o.a)+"</span>";
+  bot+="<span class='"+cls+"'>"+esc(o.b)+"</span>";
+  opl+=(o.t==="match"?"·":o.t==="sub"?"S":o.t==="del"?"D":"I");
+ }
+ return {two:top+"\n"+bot, ops:opl};
+}
+
+function render(){
+ const a=$("sa").value, b=$("sb").value;
+ const D=dpTable(a,b);
+ const dist=D[a.length][b.length];
+ const tb=traceback(a,b,D);
+ $("dist").textContent=dist;
+ const nsub=tb.ops.filter(o=>o.t==="sub").length,
+       ndel=tb.ops.filter(o=>o.t==="del").length,
+       nins=tb.ops.filter(o=>o.t==="ins").length;
+ $("reason").innerHTML="traced path cost = <b style='color:var(--gr)'>"+tb.cost+"</b> (matches corner) &nbsp;·&nbsp; "
+   +nsub+(TAMPER?" sub <span style='color:var(--wall)'>[disabled]</span>":" sub")+" · "+ndel+" del · "+nins+" ins"
+   +(TAMPER?"<br><span style='color:var(--wall)'>substitution dropped — this number is inflated</span>":"");
+ $("dptbl").innerHTML=renderTable(a,b,D,tb.path);
+ const al=renderAlign(tb.ops);
+ $("align").innerHTML=al.two||"<span class='mut'>(both empty)</span>";
+ $("oprow").textContent=al.ops?("ops: "+al.ops+"   (·match  S sub  D del  I ins)"):"";
+}
+
+function audit(){
+ const el=$("auditout");
+ // fixed battery, compared to the brute-force oracle (oracle is TAMPER-independent)
+ const rng=makeRng(0xBE11);
+ let checked=0, mism=0;
+ for(let k=0;k<120;k++){
+  const a=randStr(rng,4), b=randStr(rng,4);
+  if(editDistance(a,b)!==bruteForce(a,b)) mism++;
+  checked++;
+ }
+ const kit = editDistance("kitten","sitting");
+ const ok = mism===0 && kit===3;
+ el.innerHTML = "<span class='badge "+(ok?"pass":"failb")+"'>"+(ok?"&#10003; WITNESS — holds":"&#10007; WITNESS — broken")+"</span>"
+  + "<div class='small' style='margin-top:6px'>battery: <b style='color:"+(mism===0?"var(--gr)":"var(--wall)")+"'>"+(checked-mism)+"</b>/"+checked+" agree with the oracle &nbsp;·&nbsp; kitten&rarr;sitting = <b style='color:"+(kit===3?"var(--gr)":"var(--wall)")+"'>"+kit+"</b>/3"
+  + (TAMPER?" &nbsp; — <span style='color:var(--wall)'>red dropped substitution</span>":"")+"</div>";
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">&#10003; LIT · self-check passed on load</span>';
+ const redraw=()=>{ render(); audit(); };
+ ["sa","sb"].forEach(id=>$(id).addEventListener("input",redraw));
+ $("ex1").addEventListener("click",()=>{ $("sa").value="kitten"; $("sb").value="sitting"; redraw(); });
+ $("ex2").addEventListener("click",()=>{ $("sa").value="sunday"; $("sb").value="saturday"; redraw(); });
+ $("ex3").addEventListener("click",()=>{ $("sa").value="flaw"; $("sb").value="lawn"; redraw(); });
+ let rseed=1;
+ $("rand").addEventListener("click",()=>{ const rng=makeRng(0x9E37*rseed+(rseed++)); $("sa").value=randStr(rng,7)||"a"; $("sb").value=randStr(rng,7)||"b"; redraw(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Substitution dropped.</b> A letter change now costs delete + insert, so distances inflate — the witness (window 7) recomputed against the oracle and went red. The attack is real; it is caught."; redraw(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Without substitution, changing a letter costs a delete plus an insert — so kitten -> sitting reads 5, not 3. The witness recomputes, disagrees with the oracle, and turns red. Nothing is faked; the attack is real and it is caught."; redraw(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the dynamic-programming engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

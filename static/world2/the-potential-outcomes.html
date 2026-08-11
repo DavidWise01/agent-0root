@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE POTENTIAL OUTCOMES</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --bg:#0b1a12;
+  --bg2:#0f2318;
+  --panel:#102a1c;
+  --ink:#e8f5ec;
+  --dim:#9db9a8;
+  --line:#204334;
+  --blue:#6db3ff;
+  --red:#ff7a7a;
+  --amber:#ffcf6b;
+  --lit:#7dffb0;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 12% -10%, #14311f 0%, transparent 55%),
+    radial-gradient(1000px 700px at 110% 10%, #12261a 0%, transparent 50%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted #6b4fa0}
+a:hover{border-bottom-style:solid}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{
+  font-size:30px;margin:0 0 6px;letter-spacing:.5px;
+  color:var(--am);
+  text-shadow:0 0 22px rgba(200,162,255,.28);
+}
+.sub{color:var(--ink);margin:0 0 10px;max-width:82ch}
+.src{color:var(--dim);font-size:12.5px}
+.tag{
+  display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;
+  font-weight:700;letter-spacing:.4px;border:1px solid;vertical-align:middle;
+}
+.t-amber{color:var(--amber);border-color:#6b551f;background:#231b09}
+.t-lit{color:var(--lit);border-color:#1f5d3c;background:#082013}
+.t-in{color:var(--blue);border-color:#204b6b;background:#081722}
+.t-out{color:var(--am);border-color:#4a366b;background:#160f24}
+.t-wall{color:var(--red);border-color:#6b2424;background:#220b0b}
+.rendered{color:var(--dim);font-size:11.5px;font-style:italic;margin-top:6px}
+
+.ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;
+  padding:7px 10px;border-radius:6px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#204b6b;background:#081722}
+.col.center .teamhdr{color:var(--am);border-color:#4a366b;background:#160f24;text-align:center}
+.col.red .teamhdr{color:var(--red);border-color:#6b2424;background:#220b0b;text-align:right}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:8px;
+  background:linear-gradient(180deg,var(--bg2),var(--panel));
+  padding:12px 12px 12px 12px;
+}
+.win .num{
+  position:absolute;top:-10px;left:-10px;width:24px;height:24px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:#07130c;border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .win .num{color:var(--blue);border-color:#204b6b}
+.col.center .win .num{color:var(--am);border-color:#4a366b}
+.col.red .win .num{color:var(--red);border-color:#6b2424}
+.win h3{margin:2px 0 8px;font-size:13px;letter-spacing:.5px;color:var(--ink)}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+.win.panel{border-color:#3a2c57;box-shadow:0 0 26px rgba(200,162,255,.12) inset}
+
+.flow{
+  text-align:center;color:var(--am);font-size:12px;letter-spacing:2px;
+  margin:2px 0;opacity:.8;
+}
+
+table.scm{width:100%;border-collapse:collapse;font-size:12px;margin:6px 0}
+table.scm th,table.scm td{border:1px solid var(--line);padding:4px 6px;text-align:right}
+table.scm th{color:var(--dim);font-weight:700;background:#0a1c12}
+table.scm td.k{text-align:left;color:var(--ink)}
+
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;
+  padding:3px 0;border-bottom:1px dotted #1c3a2b}
+.kv b{color:var(--ink);font-weight:600}
+.kv .v{color:var(--lit);font-variant-numeric:tabular-nums}
+.kv .vbad{color:var(--red);font-variant-numeric:tabular-nums}
+
+.ctl{display:flex;align-items:center;gap:8px;margin:9px 0;font-size:12px;color:var(--dim);flex-wrap:wrap}
+input[type=range]{accent-color:var(--am);flex:1;min-width:120px}
+button{
+  font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+  background:#12261a;border:1px solid var(--line);border-radius:6px;padding:5px 10px;
+}
+button:hover{border-color:var(--am);color:var(--am)}
+button.danger{border-color:#6b2424;color:var(--red)}
+button.danger:hover{background:#2a0d0d}
+
+.badge{
+  display:inline-block;padding:4px 9px;border-radius:6px;font-size:12px;font-weight:800;
+  border:1px solid;letter-spacing:.5px;
+}
+.badge.ok{color:var(--lit);border-color:#1f5d3c;background:#082013}
+.badge.bad{color:var(--red);border-color:#6b2424;background:#220b0b}
+.badge.wait{color:var(--amber);border-color:#6b551f;background:#231b09}
+
+.wall-note{border-left:3px solid var(--red);padding-left:10px;color:var(--dim);font-size:12.5px}
+.dead{color:#6f8a7b}
+.dead s{color:#c56b6b;text-decoration-thickness:2px}
+.fix{color:var(--lit)}
+
+#failb{display:none;margin:10px 0;padding:10px;border:1px solid var(--red);
+  border-radius:8px;background:#220b0b;color:var(--red);font-size:12.5px;white-space:pre-wrap}
+
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;
+  color:var(--dim);font-size:12px}
+code.mono{color:var(--am)}
+.small{font-size:11px;color:#6f8a7b}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE POTENTIAL OUTCOMES</h1>
+  <p class="sub">Every unit carries two numbers at once — <code class="mono">Y(1)</code>, the outcome if treated, and <code class="mono">Y(0)</code>, the outcome if not. Assignment reveals exactly one and hides the other forever. Causation is not something we observe; it is a comparison of one seen value against one that never happened.</p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    Neyman (1923, transl. <i>Statistical Science</i> 5(4):465–472, 1990) / Rubin,
+    &ldquo;Estimating Causal Effects of Treatments&hellip;&rdquo; (1974),
+    <i>J. Educ. Psychol.</i> <b>66</b>:688&ndash;701 &mdash;
+    <a href="https://eric.ed.gov/?id=EJ118470" target="_blank" rel="noopener">ERIC&nbsp;EJ118470</a>.
+    No open full text; classic cited by journal + year <span class="tag t-amber">AMBER</span>.
+  </div>
+  <div class="rendered">Rendered, not quoted. The framework is rebuilt as a live structural causal model, not summarized.</div>
+  <div id="failb"></div>
+</header>
+
+<div class="ocho">
+
+  <!-- ===================== BLUE TEAM ===================== -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="num">3</div>
+      <h3>THE MODEL</h3>
+      <p>A finite population split into two strata. Each unit has a fixed pair of potential outcomes; nothing is random about the unit itself.</p>
+      <table class="scm" id="modeltbl">
+        <tr><th class="k">stratum</th><th>share</th><th>Y(0)</th><th>Y(1)</th><th>Y(1)&minus;Y(0)</th></tr>
+      </table>
+      <p>Individual effect <code class="mono">&tau;_i = Y_i(1) &minus; Y_i(0)</code>. Population target
+      <code class="mono">ATE = E[Y(1) &minus; Y(0)]</code>. Observed outcome obeys consistency
+      <code class="mono">Y = T&middot;Y(1) + (1&minus;T)&middot;Y(0)</code>.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">5</div>
+      <h3>THE LINEAGE</h3>
+      <p>This is <b>the-counterfactual written as missing data</b>. In Rubin&rsquo;s reading, causal inference <i>is</i> imputation: the unseen outcome is a hole in a table, not a metaphysical mystery. It is the twin of Pearl&rsquo;s <code class="mono">do(&middot;)</code> operator (same target, different language) and the foundation the-propensity-score stands on — balance <code class="mono">Y(0),Y(1)</code> across T and the naive difference stops lying.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">7</div>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check. Recomputes the reported estimate against the known ATE. Green while the engine reports the randomized (unbiased) number; flips red the instant window 6 swaps in the confounded number under a false randomization label.</p>
+      <div id="auditout" class="badge wait">witness idle</div>
+    </div>
+  </div>
+
+  <!-- ===================== CENTER ===================== -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="num">4</div>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>The population above, plus two assignment mechanisms for T:</p>
+      <div class="kv"><b>Randomized: P(T=1) constant, T &perp; {Y(0),Y(1)}</b><span class="v" id="in_rand"></span></div>
+      <div class="kv"><b>Confounded: P(T=1 | stratum) — high-Y(0) units treated more</b><span class="v" id="in_conf"></span></div>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win panel">
+      <div class="num">0</div>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <p>All numbers below are computed live from the SCM — closed form where exact, seeded sample where noted.</p>
+      <div class="kv"><b>True ATE = E[Y(1)&minus;Y(0)]</b><span class="v" id="p_ate"></span></div>
+      <div class="kv"><b>do(T=1)&minus;do(T=0) on population</b><span class="v" id="p_do"></span></div>
+      <div class="kv"><b>Randomized naive diff E[Y|T=1]&minus;E[Y|T=0]</b><span class="v" id="p_rand"></span></div>
+      <div class="kv"><b>Confounded naive diff (same formula)</b><span class="vbad" id="p_conf"></span></div>
+      <div class="kv"><b>Selection bias = confounded &minus; ATE</b><span class="vbad" id="p_bias"></span></div>
+      <div class="kv"><b>Decomposition ATT + baseline bias</b><span class="v" id="p_decomp"></span></div>
+
+      <div class="ctl">
+        <label for="ptb">confounding strength&nbsp;P(T=1|high stratum)</label>
+        <input type="range" id="ptb" min="0" max="1" step="0.01" value="0.8">
+        <span class="v" id="ptbval">0.80</span>
+      </div>
+      <div class="kv"><b>&rarr; confounded diff at this setting</b><span class="vbad" id="p_conf_live"></span></div>
+      <div class="ctl">
+        <button id="runmc">run seeded finite sample (N=1000)</button>
+        <span class="v" id="mcout">&mdash;</span>
+      </div>
+      <p class="small">Fundamental problem: the observed table only ever holds Y(T). The other column is <code class="mono">null</code> — the individual effect &tau;_i is never a row you can read.</p>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win">
+      <div class="num">8</div>
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p>Proven: randomization makes the naive difference an unbiased estimator of the ATE; confounding breaks it by a known selection term. Same arithmetic, opposite truth-value.</p>
+      <div id="litbadge" class="badge wait">booting&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ===================== RED TEAM ===================== -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="num">1</div>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note">&ldquo;You measured the effect — treated did better than controls, so the treatment works.&rdquo; The wall: without randomization, E[Y|T=1]&minus;E[Y|T=0] equals ATT <b>plus</b> a baseline gap E[Y(0)|T=1]&minus;E[Y(0)|T=0]. When sicker (higher-Y(0)) units self-select into treatment, that gap can swamp — even reverse the sign of — the real effect. The number is real; its <i>meaning</i> is not the effect.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">2</div>
+      <h3>THE GRAVEYARD</h3>
+      <p class="dead"><s>&ldquo;The individual causal effect can be estimated for each person.&rdquo;</s><br>
+      <span class="fix">&rarr; No. Only one potential outcome per unit is ever observed; &tau;_i is fundamentally unobservable — we recover averages, not individuals.</span></p>
+      <p class="dead"><s>&ldquo;Adjust for enough covariates and observational = experimental.&rdquo;</s><br>
+      <span class="fix">&rarr; Only under ignorability T &perp; {Y(0),Y(1)} | X. Unmeasured confounders leave the baseline gap intact and untestable.</span></p>
+      <p class="dead"><s>&ldquo;A bigger sample removes the bias.&rdquo;</s><br>
+      <span class="fix">&rarr; Confounding bias is a property of the estimand, not the variance. N&rarr;&infin; converges to the <i>wrong</i> number.</span></p>
+    </div>
+
+    <div class="win">
+      <div class="num">6</div>
+      <h3>THE TAMPER</h3>
+      <p>Report the confounded naive difference while labeling the study &ldquo;randomized.&rdquo; The headline estimate jumps to the biased value; the WITNESS (7) catches the mismatch against the known ATE.</p>
+      <div class="ctl">
+        <button id="tamper" class="danger">relabel confounded as randomized</button>
+        <button id="restore">restore</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p><span class="tag t-lit">LIT</span> The engine computes every causal quantity live from a two-stratum SCM; the do-intervention replaces T&rsquo;s equation with a constant to give the ground truth the identification formulas are checked against, exact to 1e-9. The planted void in window 6 is disclosed and caught by window 7.</p>
+  <p>WORLD II &middot; THE FOLD &middot; <code class="mono">the-potential-outcomes</code> &mdash; built by David Lee Wise (ROOT0) with AVAN.</p>
+</footer>
+</div>
+
+<script>
+// ================= ENGINE (pure logic; node-extractable) =================
+"use strict";
+
+// Two-stratum structural causal model with KNOWN coefficients.
+var SCM = {
+  pA: 0.6, pB: 0.4,      // population shares (exact)
+  yA0: 10, yA1: 14,      // stratum A potential outcomes  (effect 4)
+  yB0: 30, yB1: 36,      // stratum B potential outcomes  (effect 6)
+  pTrand: 0.44,          // randomized: constant P(T=1), independent of stratum
+  pTA: 0.20              // confounded: P(T=1 | stratum A, low Y0)
+};
+var PTB = 0.80;          // confounded: P(T=1 | stratum B, high Y0) — UI-tunable
+
+// disclosed planted void: when true the engine reports the confounded number as if randomized
+var TAMPER = false;
+
+// closed-form population quantities -------------------------------------
+function ate(){ return SCM.pA*(SCM.yA1-SCM.yA0) + SCM.pB*(SCM.yB1-SCM.yB0); }
+
+// randomized: treated group is a representative sample => E[Y|T=1]=E[Y(1)], etc.
+function randomizedDiff(){
+  var eY1 = SCM.pA*SCM.yA1 + SCM.pB*SCM.yB1;
+  var eY0 = SCM.pA*SCM.yA0 + SCM.pB*SCM.yB0;
+  return eY1 - eY0;               // == ate() exactly
+}
+
+// confounded naive difference, closed form, for a given P(T=1|B)=ptb
+function confoundedNaiveDiff(ptb){
+  if(ptb===undefined) ptb = PTB;
+  var pT1 = SCM.pA*SCM.pTA + SCM.pB*ptb;      // P(T=1)
+  var pT0 = 1 - pT1;
+  var aGiven1 = SCM.pA*SCM.pTA / pT1;
+  var bGiven1 = SCM.pB*ptb     / pT1;
+  var aGiven0 = SCM.pA*(1-SCM.pTA) / pT0;
+  var bGiven0 = SCM.pB*(1-ptb)     / pT0;
+  var eYt1 = aGiven1*SCM.yA1 + bGiven1*SCM.yB1;   // treated reveal Y(1)
+  var eYt0 = aGiven0*SCM.yA0 + bGiven0*SCM.yB0;   // controls reveal Y(0)
+  return eYt1 - eYt0;
+}
+
+// decomposition pieces under the confounded mechanism
+function att(ptb){
+  if(ptb===undefined) ptb = PTB;
+  var pT1 = SCM.pA*SCM.pTA + SCM.pB*ptb;
+  var aGiven1 = SCM.pA*SCM.pTA / pT1;
+  var bGiven1 = SCM.pB*ptb     / pT1;
+  return aGiven1*(SCM.yA1-SCM.yA0) + bGiven1*(SCM.yB1-SCM.yB0);
+}
+function baselineBias(ptb){
+  if(ptb===undefined) ptb = PTB;
+  var pT1 = SCM.pA*SCM.pTA + SCM.pB*ptb;
+  var pT0 = 1 - pT1;
+  var aGiven1 = SCM.pA*SCM.pTA / pT1;
+  var bGiven1 = SCM.pB*ptb     / pT1;
+  var aGiven0 = SCM.pA*(1-SCM.pTA) / pT0;
+  var bGiven0 = SCM.pB*(1-ptb)     / pT0;
+  var eY0given1 = aGiven1*SCM.yA0 + bGiven1*SCM.yB0;
+  var eY0given0 = aGiven0*SCM.yA0 + bGiven0*SCM.yB0;
+  return eY0given1 - eY0given0;
+}
+
+// the reported headline estimate; tamper swaps in the biased number
+function reportedEstimate(){
+  return TAMPER ? confoundedNaiveDiff() : randomizedDiff();
+}
+
+// consistency + the fundamental problem ---------------------------------
+// observing a unit reveals ONLY Y(T); the counterfactual stays null forever.
+function observedRow(unit, T){
+  return { T:T, yObs: (T? unit.y1 : unit.y0), yMis: null };
+}
+
+// exact finite population, proportioned so sample means equal population values
+function buildExactPop(){
+  var pop = [], i;
+  for(i=0;i<600;i++) pop.push({stratum:'A', y0:SCM.yA0, y1:SCM.yA1});
+  for(i=0;i<400;i++) pop.push({stratum:'B', y0:SCM.yB0, y1:SCM.yB1});
+  return pop;
+}
+
+// do(T=t): replace T's structural equation with the constant t, push through.
+// ground truth the identification formulas are checked against.
+function doIntervention(pop, t){
+  var s=0, k;
+  for(k=0;k<pop.length;k++){ s += observedRow(pop[k], t).yObs; }  // consistency inside
+  return s/pop.length;
+}
+
+// fixed-seed PRNG (mulberry32) so any sampling is deterministic
+function mulberry32(a){
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function assignRandomized(pop, prng){
+  return pop.map(function(u){ return prng() < SCM.pTrand ? 1 : 0; });
+}
+function naiveDiff(pop, Tvec){
+  var s1=0,n1=0,s0=0,n0=0,k,row;
+  for(k=0;k<pop.length;k++){
+    row = observedRow(pop[k], Tvec[k]);
+    if(Tvec[k]){ s1+=row.yObs; n1++; } else { s0+=row.yObs; n0++; }
+  }
+  return (s1/n1) - (s0/n0);
+}
+
+// ---------------------- FAIL-LOUD SELF-CHECK ----------------------------
+function assertClose(x, y, eps, msg){
+  if(!(Math.abs(x-y) <= eps)) throw new Error(msg+"  ("+x+" vs "+y+", eps="+eps+")");
+}
+function assert(cond, msg){ if(!cond) throw new Error(msg); }
+
+function selfcheck(){
+  var EPS = 1e-9;
+  var savedTamper = TAMPER;          // save tamper flag
+  var savedPTB = PTB;
+  try{
+    // 0. ATE closed form
+    var A = ate();
+    assertClose(A, 4.8, EPS, "ATE closed form");
+
+    // 1. RANDOMIZED naive diff is exactly unbiased for the ATE
+    assertClose(randomizedDiff(), A, EPS, "randomized diff must equal ATE");
+
+    // 2. do-intervention on the exact population reproduces the ATE
+    var pop = buildExactPop();
+    var eY1 = doIntervention(pop, 1);   // do(T=1)
+    var eY0 = doIntervention(pop, 0);   // do(T=0)
+    assertClose(eY1, 22.8, EPS, "do(T=1) mean");
+    assertClose(eY0, 18.0, EPS, "do(T=0) mean");
+    assertClose(eY1 - eY0, A, EPS, "do-ATE must equal closed-form ATE");
+
+    // 3. CONFOUNDED naive diff is BIASED — differs from the ATE by a known term
+    var cd = confoundedNaiveDiff(0.80);
+    assertClose(cd, 120/7, 1e-9, "confounded diff closed form (120/7)");
+    assert(Math.abs(cd - A) > 1.0, "confounded diff must be biased away from ATE");
+
+    // 4. selection-bias decomposition: naive = ATT + baseline gap  (exact)
+    assertClose(cd, att(0.80) + baselineBias(0.80), EPS, "decomposition ATT + baseline");
+    assertClose(cd - A, 432/35, EPS, "selection bias magnitude");
+
+    // 5. randomization removes the bias at every strength setting
+    var s;
+    for(s=0.1; s<=0.9001; s+=0.1){
+      // if BOTH strata treated at the SAME rate s, assignment is unconfounded
+      var pT1 = SCM.pA*s + SCM.pB*s;                 // = s
+      if(pT1>1e-3 && pT1<1-1e-3){                    // stay clear of division blow-up
+        var aG1 = SCM.pA*s/pT1, bG1 = SCM.pB*s/pT1;      // = shares exactly
+        var aG0 = SCM.pA*(1-s)/(1-pT1), bG0 = SCM.pB*(1-s)/(1-pT1);
+        var diff = (aG1*SCM.yA1+bG1*SCM.yB1) - (aG0*SCM.yA0+bG0*SCM.yB0);
+        assertClose(diff, A, 1e-9, "equal-rate assignment must be unbiased at s="+s.toFixed(1));
+      }
+    }
+
+    // 6. FUNDAMENTAL PROBLEM + consistency: only Y(T) is seen; the twin is null
+    var u = {stratum:'A', y0:SCM.yA0, y1:SCM.yA1};
+    var r1 = observedRow(u, 1), r0 = observedRow(u, 0);
+    assertClose(r1.yObs, u.y1, EPS, "consistency Y = Y(1) when T=1");
+    assertClose(r0.yObs, u.y0, EPS, "consistency Y = Y(0) when T=0");
+    assert(r1.yMis === null && r0.yMis === null, "counterfactual must be masked (null)");
+    // individual effect is NOT recoverable from a single observed row
+    assert((r1.yMis === null) && !(typeof (u.y1 - r1.yMis) === "number" && (u.y1 - r1.yMis) === (u.y1-u.y0)),
+           "individual effect must not be readable from observed data");
+
+    // 7. seeded Monte-Carlo (must sample): randomized estimate near ATE, robust tol
+    var prng = mulberry32(0x1234ABCD);
+    var Tv = assignRandomized(pop, prng);
+    var mc = naiveDiff(pop, Tv);
+    assert(Math.abs(mc - A) < 2.0, "seeded randomized sample should track ATE within robust tol");
+
+    // 8. TAMPER: relabel confounded as randomized => witness value diverges from ATE
+    TAMPER = false;
+    assertClose(reportedEstimate(), A, EPS, "untampered report must equal ATE");
+    TAMPER = true;                                  // set the tamper flag
+    assert(Math.abs(reportedEstimate() - A) > 1.0, "tamper must be detectable (report != ATE)");
+    assertClose(reportedEstimate(), cd, 1e-9, "tampered report equals the confounded number");
+  } finally {
+    TAMPER = savedTamper;   // restore tamper flag
+    PTB = savedPTB;
+  }
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function f(x){ return (Math.round(x*1e6)/1e6).toString(); }
+
+  // boot: run selfcheck fail-loud
+  try{
+    var ok = selfcheck();
+    if(ok !== true) throw new Error("selfcheck did not return true");
+    $("litbadge").textContent = "LIT — randomized unbiased, confounded biased (verified)";
+    $("litbadge").className = "badge ok";
+  }catch(e){
+    var fb = $("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED\n" + (e && e.message ? e.message : e);
+    $("litbadge").textContent = "SELFCHECK FAILED";
+    $("litbadge").className = "badge bad";
+    throw e;   // rethrow
+  }
+
+  // fill model table
+  var rows = [
+    ["A", SCM.pA, SCM.yA0, SCM.yA1],
+    ["B", SCM.pB, SCM.yB0, SCM.yB1]
+  ];
+  var tbl = $("modeltbl");
+  rows.forEach(function(r){
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td class='k'>"+r[0]+"</td><td>"+r[1].toFixed(2)+"</td><td>"+r[2]+
+                   "</td><td>"+r[3]+"</td><td>"+(r[3]-r[2])+"</td>";
+    tbl.appendChild(tr);
+  });
+
+  // DATA IN
+  $("in_rand").textContent = "P(T=1)=" + SCM.pTrand.toFixed(2);
+  $("in_conf").textContent = "P(T=1|A)=" + SCM.pTA.toFixed(2) + ", P(T=1|B)=" + PTB.toFixed(2);
+
+  // PANEL static numbers
+  var A = ate();
+  var pop = buildExactPop();
+  $("p_ate").textContent  = f(A);
+  $("p_do").textContent   = f(doIntervention(pop,1) - doIntervention(pop,0));
+  $("p_rand").textContent = f(randomizedDiff());
+
+  function refreshConf(){
+    var cd = confoundedNaiveDiff();
+    $("p_conf").textContent  = f(cd);
+    $("p_bias").textContent  = f(cd - A);
+    $("p_decomp").textContent = f(att() + baselineBias());
+    $("in_conf").textContent = "P(T=1|A)=" + SCM.pTA.toFixed(2) + ", P(T=1|B)=" + PTB.toFixed(2);
+    $("p_conf_live").textContent = f(cd);
+  }
+  refreshConf();
+
+  // interactive confounding-strength slider
+  $("ptb").addEventListener("input", function(){
+    PTB = parseFloat(this.value);
+    $("ptbval").textContent = PTB.toFixed(2);
+    refreshConf();
+    witness();   // keep witness honest as inputs move
+  });
+
+  // seeded finite sample
+  $("runmc").addEventListener("click", function(){
+    var prng = mulberry32(0x1234ABCD);
+    var Tv = assignRandomized(pop, prng);
+    var mc = naiveDiff(pop, Tv);
+    $("mcout").textContent = "randomized est = " + f(mc) + "  (ATE " + f(A) + ")";
+  });
+
+  // WITNESS (window 7): compare live reported estimate to the known ATE
+  function witness(){
+    var w = $("auditout");
+    var diff = Math.abs(reportedEstimate() - A);
+    if(diff < 1e-9){
+      w.textContent = "WITNESS OK — reported = ATE (" + f(A) + ")";
+      w.className = "badge ok";
+    }else{
+      w.textContent = "TAMPER DETECTED — reported " + f(reportedEstimate()) + " != ATE " + f(A);
+      w.className = "badge bad";
+    }
+  }
+  witness();
+
+  // TAMPER controls (window 6)
+  $("tamper").addEventListener("click", function(){
+    TAMPER = true;
+    refreshConf();
+    witness();
+    $("litbadge").textContent = "REPORT TAMPERED — see witness";
+    $("litbadge").className = "badge bad";
+  });
+  $("restore").addEventListener("click", function(){
+    TAMPER = false;
+    refreshConf();
+    witness();
+    $("litbadge").textContent = "LIT — randomized unbiased, confounded biased (verified)";
+    $("litbadge").className = "badge ok";
+  });
+})();
+</script>
+</body>
+</html>

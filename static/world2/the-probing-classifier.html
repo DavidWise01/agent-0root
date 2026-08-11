@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PROBING CLASSIFIER · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;flex-wrap:wrap;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#082018;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:18px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);} .verdict.mid{color:var(--amber);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);margin-top:4px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.bar{height:12px;background:#0a130c;border:1px solid var(--line);border-radius:3px;overflow:hidden;margin:2px 0;}
+.bar > i{display:block;height:100%;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE PROBING CLASSIFIER</h1>
+ <p class="sub">Read a feature off the activations &mdash; with the control that keeps you honest. A <b>linear probe</b> is trained to predict a feature from hidden states; if it succeeds, the feature is said to be there. But a probe with enough capacity can predict <i>anything</i> &mdash; even a column of coin-flips. The fix (Hewitt &amp; Liang, 2019) is a <b>control task</b>: train an identical probe on <b class="k">random</b> labels; <b style="color:var(--am)">selectivity = real accuracy &minus; control accuracy</b> is the honest number. Down the center: activations go <b style="color:var(--cy)">in</b>, two probes fit, selectivity comes <b style="color:var(--gr)">out</b>. <b style="color:var(--blue)">Blue</b> builds it; <b style="color:var(--red)">red</b> drops the control and calls a coin-flip a discovery.</p>
+ <p class="src"><span class="tag t-amber">source</span> Alain &amp; Bengio, <i>Understanding intermediate layers using linear classifier probes</i> (2016) &mdash; <a href="https://arxiv.org/abs/1610.01644">arxiv.org/abs/1610.01644</a> · Hewitt &amp; Liang, <i>Designing and Interpreting Probes with Control Tasks</i> (2019) &mdash; <a href="https://arxiv.org/abs/1909.03368">arxiv.org/abs/1909.03368</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — probe &amp; control</h2>
+   <p>The activations here are <b>constructed by hand</b>, not trained: <b class="k">K</b> feature-types, each a fixed random point in <b class="k">48</b>-dim space; the probe sees only the first <b class="k">d</b> coordinates. The real label is a <b>closed form</b> of the hidden state (a sign, or an XOR of two signs). Two probes are fit by <b>ridge least-squares</b> (convex, closed-form &mdash; the global optimum, no training luck):</p>
+   <p><b class="k">real probe</b> &rarr; predicts the true feature. <b class="k">control probe</b> &rarr; predicts a <i>random</i> label pinned per type (Hewitt&ndash;Liang's control task). Both report held-out accuracy:</p>
+   <table id="mdlTbl"><thead><tr><th>scenario</th><th>d</th><th>K</th><th>probe</th><th>control</th></tr></thead><tbody id="mdlBody"></tbody></table>
+   <p class="small">Selectivity is the gap. A real feature: big gap. Over-capacity: no gap.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the line, on trial <span class="tag t-amber">AVAN</span></h2>
+   <p><a href="https://davidwise01.github.io/the-linear-representation/" style="color:var(--cy)">The linear representation</a> claims a feature lives along a <b>direction</b> in activation space. The probe is how you'd <i>test</i> that claim &mdash; fit a line, read the accuracy.</p>
+   <p>But a bare probe can't tell "<b>the model represents it</b>" from "<b>the probe just learned it</b>." Hewitt&ndash;Liang's control task is the cross-examination: subtract what the probe can learn from noise. This sphere puts the previous one on trial &mdash; each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>Blue's live check: recompute all three scenarios and confirm the honest verdicts &mdash; the linear feature reads REAL, the over-capacity case reads spurious (control high). If red drops the control, the coin-flip is called a discovery and this badge goes red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the activations <span class="tag t-in">in &#8595;</span></h2>
+   <p>Three regimes of hidden state feed the panel. Each is a set of feature-types; test tokens sit near their type's prototype:</p>
+   <table><thead><tr><th>regime</th><th>the feature is&hellip;</th><th>probe sees</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>linear</td><td class="y">on one direction</td><td>d=2, K=40</td></tr>
+     <tr><td>nonlinear</td><td class="n">XOR of two signs</td><td>d=6, K=40</td></tr>
+     <tr><td>over&#8209;capacity</td><td class="y">on one direction</td><td>d=20, K=16</td></tr>
+    </tbody></table>
+   <p class="small">The only knobs are which regime and whether you subtract the control. Everything downstream is computed, never looked up.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; fit both probes on the activations &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>regime</label>
+      <span class="toggle"><button id="sLin" class="on">LINEAR</button><button id="sNon">NONLINEAR</button><button id="sOvr">OVER-CAP</button></span></div>
+     <div class="row"><label>metric</label>
+      <span class="toggle"><button id="mSel" class="on">SELECTIVITY</button><button id="mRaw">RAW ACC</button></span></div>
+     <p class="small" id="readmode">Honest: report <b>selectivity</b> = probe &minus; control. A high-capacity probe fitting random labels is subtracted away.</p>
+     <div class="row"><button id="rLin">&rarr; linear</button><button id="rOvr">&rarr; over-capacity</button></div>
+     <p class="small" style="margin-top:2px">Least-squares is closed-form: same activations &rarr; same weights, every load. No seed roulette.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Switch to RAW ACC and the over-capacity case suddenly "discovers" a feature that is not there &mdash; that is the tamper, live.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits a selectivity &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the verdict <span class="tag t-out">out &#8595;</span></h2>
+   <p>What the machine proves, live: on a <b>linearly-encoded</b> feature the probe hits <b class="k">100%</b> and the control sits at <b>~55%</b> &mdash; selectivity <b class="k">+0.45</b>, a real find. On the <b>over-capacity</b> feature both probes hit <b>100%</b> &mdash; selectivity <b class="k">0.00</b>: the probe fit random labels just as well, so its success means nothing. On <b>XOR</b> the linear probe stalls near chance &mdash; the feature is present but not <i>linearly</i> readable.</p>
+   <div id="litbadge"></div>
+   <p class="small">The witness (left) confirms these numbers live; the red team (right) tries to erase the control.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> High probe accuracy does not mean the model <b>uses</b> the feature, or even that it is <i>there</i> in any load-bearing way &mdash; only that it is <b>linearly decodable</b> from the activations. A probe reads a correlation; it never touches a cause. Ablate the direction and behavior may not budge; the probe would never know.</div>
+   <p class="small" style="margin-top:8px">Selectivity fixes the "probe just memorized it" failure &mdash; not the "correlation isn't causation" failure. That needs interventions (causal mediation, activation patching), which no probe performs. A probe is a witness, not a surgeon.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"The probe hit 95%, so the model represents the feature."</s> <b>Cut.</b> Without a control, 95% may be the probe's own capacity. Report selectivity &mdash; probe minus control &mdash; or report nothing.</p>
+   <p class="grave"><s>"A stronger probe (deep MLP) is a better probe."</s> <b>Cut.</b> More capacity lifts the control too; Hewitt&ndash;Liang show selectivity often <i>drops</i>. Favor the simplest probe that separates the task from its control.</p>
+   <p class="grave"><s>"Low linear-probe accuracy means the feature is absent."</s> <b>Kept, corrected.</b> It means not <i>linearly</i> present &mdash; see XOR: the probe reads chance while the feature is fully determined.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>Red's move: <b>drop the control</b>. Report raw probe accuracy and call it selectivity. Now the over-capacity probe &mdash; fitting pure noise at 100% &mdash; looks like a landmark discovery. The witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; drop the control</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Drop the control and raw accuracy stands in for selectivity: the over-capacity coin-flip reads REAL, the witness recomputes, disagrees with the honest verdict, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE PROBING CLASSIFIER — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (activations <b style="color:var(--cy)">in</b> &rarr; two probes &rarr; selectivity <b style="color:var(--gr)">out</b>). A runnable rendering of Alain&ndash;Bengio's linear probe and Hewitt&ndash;Liang's control task &mdash; the engine is LIT (three constructed regimes, ridge least-squares in closed form, selectivity self-checked and tamper-provable), the blue team witnesses, the red team drops the control, and the graveyard + adversary carry what a single number cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* engine: constructed activations + ridge-least-squares probe + Hewitt-Liang control (verified: linear sel about +0.45, over-capacity sel about 0.00) */
+function mkrng(seed){ let a=seed>>>0; return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+const DFULL=48, T=6, TRAIN=3, LAM=1e-3;
+const SCEN={ linear:{d:2,K:40}, nonlinear:{d:6,K:40}, overcap:{d:20,K:16} };
+function realLabel(sc,p){ if(sc==="nonlinear") return ((p[0]>0)!==(p[1]>0))?1:-1; return p[0]>0?1:-1; }
+function buildData(sc){
+ const cfg=SCEN[sc], d=cfg.d, K=cfg.K, rng=mkrng(1234567);
+ const P=[]; for(let k=0;k<K;k++){ const v=[]; for(let j=0;j<DFULL;j++) v.push(2*rng()-1); P.push(v); }
+ const C=[]; for(let k=0;k<K;k++) C.push(rng()<0.5?-1:1);   // random control label, pinned per type
+ const Xtr=[],ytr=[],ctr=[],Xte=[],yte=[],cte=[];
+ for(let k=0;k<K;k++){ const yl=realLabel(sc,P[k]);
+  for(let t=0;t<T;t++){ const x=[]; for(let j=0;j<d;j++) x.push(P[k][j]+(2*rng()-1)*0.05);
+   if(t<TRAIN){ Xtr.push(x); ytr.push(yl); ctr.push(C[k]); } else { Xte.push(x); yte.push(yl); cte.push(C[k]); } } }
+ return {Xtr,ytr,ctr,Xte,yte,cte,d,K};
+}
+function solve(A,b){ const n=A.length, M=A.map((r,i)=>r.concat([b[i]]));
+ for(let c=0;c<n;c++){ let piv=c; for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[piv][c])) piv=r; const tmp=M[c]; M[c]=M[piv]; M[piv]=tmp;
+  const dv=M[c][c]; for(let j=c;j<=n;j++) M[c][j]/=dv;
+  for(let r=0;r<n;r++){ if(r===c) continue; const f=M[r][c]; for(let j=c;j<=n;j++) M[r][j]-=f*M[c][j]; } }
+ return M.map(r=>r[n]); }
+function fitProbe(X,t){ const n=X.length, d=X[0].length, D=d+1, Z=X.map(r=>r.concat([1]));
+ const A=[]; for(let i=0;i<D;i++) A.push(new Array(D).fill(0)); const bt=new Array(D).fill(0);
+ for(let i=0;i<n;i++) for(let a=0;a<D;a++){ bt[a]+=Z[i][a]*t[i]; for(let b=0;b<D;b++) A[a][b]+=Z[i][a]*Z[i][b]; }
+ for(let a=0;a<D;a++) A[a][a]+=LAM;
+ return solve(A,bt); }  // last entry is bias
+function acc(X,t,w){ let ok=0; for(let i=0;i<X.length;i++){ let s=w[w.length-1]; for(let j=0;j<X[i].length;j++) s+=w[j]*X[i][j]; if((s>=0?1:-1)===t[i]) ok++; } return ok/X.length; }
+function cosDM(X,y,w){ const d=X[0].length, mp=new Array(d).fill(0), mn=new Array(d).fill(0); let np=0,nn=0;
+ for(let i=0;i<X.length;i++){ if(y[i]>0){ for(let j=0;j<d;j++) mp[j]+=X[i][j]; np++; } else { for(let j=0;j<d;j++) mn[j]+=X[i][j]; nn++; } }
+ let dot=0,na=0,nb=0; for(let j=0;j<d;j++){ const dm=mp[j]/np-mn[j]/nn; dot+=dm*w[j]; na+=dm*dm; nb+=w[j]*w[j]; }
+ return dot/Math.sqrt(na*nb); }
+function analyze(sc){ const D=buildData(sc), wr=fitProbe(D.Xtr,D.ytr), wc=fitProbe(D.Xtr,D.ctr);
+ const probe=acc(D.Xte,D.yte,wr), control=acc(D.Xte,D.cte,wc);
+ return {sc,d:D.d,K:D.K,probe,control,selectivity:probe-control,cos:cosDM(D.Xtr,D.ytr,wr)}; }
+let DROP_CONTROL=false;   // the tamper: report raw accuracy as if it were selectivity
+function reported(a){ return DROP_CONTROL ? a.probe : a.selectivity; }   // honest = probe - control
+const SEL_THRESH=0.25;
+function verdictOf(a){ const r=reported(a);
+ if(r>=SEL_THRESH) return {v:"REAL FEATURE",cls:"ok",why:"linearly decodable above what the probe can fake"};
+ if(a.probe<0.70) return {v:"NOT LINEARLY READABLE",cls:"mid",why:"probe near chance — feature is present only non-linearly"};
+ return {v:"SPURIOUS",cls:"no",why:"probe fits random labels equally well — over-capacity, not a real feature"}; }
+
+/* fail-loud self-check (runs untampered, saves/restores the tamper flag, returns true) */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=DROP_CONTROL; DROP_CONTROL=false;
+ const L=analyze("linear"), N=analyze("nonlinear"), O=analyze("overcap");
+ // a linearly-encoded feature: probe near-perfect, control near chance, selectivity high
+ t(L.probe>=0.90,"linear probe must reach high accuracy on a linearly-encoded feature");
+ t(L.control<=0.70,"control probe on random labels must stay near chance for the linear regime");
+ t(L.selectivity>=0.30,"linear selectivity must be high");
+ // the probe direction aligns with the difference-of-means direction
+ t(L.cos>=0.90,"probe direction must align with the difference-of-means direction");
+ // a non-linear (XOR) feature is NOT linearly decodable: linear probe near chance
+ t(N.probe<=0.70,"linear probe must fail on a purely non-linear (XOR) feature");
+ // over-capacity: real AND random labels both fit -> control high, selectivity ~ 0 (exposes raw accuracy)
+ t(O.probe>=0.90,"over-capacity real probe reaches high accuracy");
+ t(O.control>=0.90,"over-capacity CONTROL also reaches high accuracy — the tell of over-capacity");
+ t(O.selectivity<=0.15,"over-capacity selectivity must collapse to ~0");
+ // honest verdicts: only the linear regime is a real feature
+ t(verdictOf(L).v==="REAL FEATURE","linear regime must read REAL when the control is subtracted");
+ t(verdictOf(O).v!=="REAL FEATURE","over-capacity regime must NOT read REAL when honest");
+ // the planted void: drop the control and the over-capacity coin-flip is reported as a discovery
+ DROP_CONTROL=true;
+ t(reported(O) > O.selectivity + 0.5,"tamper must inflate the reported number by dropping the control");
+ t(verdictOf(O).v==="REAL FEATURE","with the control dropped, the spurious feature falsely reads REAL — this is what the witness catches");
+ DROP_CONTROL=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let scen="linear";
+const NAME={linear:"LINEAR — feature on one direction",nonlinear:"NONLINEAR — XOR of two signs",overcap:"OVER-CAPACITY — d exceeds the type count"};
+function bar(frac,col){ return '<div class="bar"><i style="width:'+Math.round(frac*100)+'%;background:'+col+'"></i></div>'; }
+function fmt(x){ return (x>=0?"+":"")+x.toFixed(2); }
+function render(){
+ const a=analyze(scen), vd=verdictOf(a), r=reported(a);
+ $("sent").innerHTML =
+   '<b style="color:var(--am)">'+NAME[scen]+'</b><br>'
+  +'<span class="small">probe · real labels</span> &nbsp; <b class="k">'+(a.probe*100).toFixed(0)+'%</b>'+bar(a.probe,'var(--gr)')
+  +'<span class="small">control · random labels</span> &nbsp; <b style="color:var(--wall)">'+(a.control*100).toFixed(0)+'%</b>'+bar(a.control,'var(--wall)')
+  +'<span class="small">reported '+(DROP_CONTROL?'(RAW — control dropped)':'selectivity = probe &minus; control')+'</span> &nbsp; <b style="color:'+(DROP_CONTROL?'var(--wall)':'var(--am)')+'">'+fmt(r)+'</b>';
+ $("verdict").textContent=vd.v; $("verdict").className="verdict "+vd.cls;
+ $("moodname").innerHTML='reported '+(DROP_CONTROL?'raw accuracy':'selectivity')+' = <b>'+fmt(r)+'</b> &nbsp;·&nbsp; probe&ndash;control alignment cos = <b>'+a.cos.toFixed(2)+'</b>';
+ $("reason").textContent=vd.why+(DROP_CONTROL&&scen==="overcap"?"  ← the control would have exposed this.":"");
+}
+function setScen(s){ scen=s; $("sLin").classList.toggle("on",s==="linear"); $("sNon").classList.toggle("on",s==="nonlinear"); $("sOvr").classList.toggle("on",s==="overcap"); render(); }
+function setDrop(v){ DROP_CONTROL=v; $("mSel").classList.toggle("on",!v); $("mRaw").classList.toggle("on",v);
+ $("readmode").innerHTML = v
+   ? '<b style="color:var(--wall)">Control dropped.</b> Raw probe accuracy is reported as if it were selectivity — an over-capacity probe now looks like a discovery.'
+   : 'Honest: report <b>selectivity</b> = probe &minus; control. A high-capacity probe fitting random labels is subtracted away.';
+ $("tampernote").innerHTML = v
+   ? '<b style="color:var(--wall)">Control dropped.</b> Raw accuracy stands in for selectivity — the over-capacity coin-flip reads REAL. The witness (window 7) recomputed and went red. The attack is real; it is caught.'
+   : 'Drop the control and raw accuracy stands in for selectivity: the over-capacity coin-flip reads REAL, the witness recomputes, disagrees with the honest verdict, and turns red. Nothing is faked; the attack is real and it is caught.';
+ render(); audit(); }
+function fillModel(){
+ const rows=["linear","nonlinear","overcap"].map(s=>{ const a=analyze(s);
+  return '<tr><td>'+s+'</td><td>'+a.d+'</td><td>'+a.K+'</td><td class="'+(a.probe>=0.9?'y':(a.probe<0.7?'n':''))+'">'+(a.probe*100).toFixed(0)+'%</td><td class="'+(a.control>=0.9?'n':'')+'">'+(a.control*100).toFixed(0)+'%</td></tr>'; });
+ $("mdlBody").innerHTML=rows.join("");
+}
+function audit(){
+ const L=analyze("linear"), N=analyze("nonlinear"), O=analyze("overcap");
+ // ground truth: only LINEAR is a real feature; honest engine must not call NONLINEAR/OVERCAP real
+ const ok = verdictOf(L).v==="REAL FEATURE" && verdictOf(N).v!=="REAL FEATURE" && verdictOf(O).v!=="REAL FEATURE";
+ $("auditout").innerHTML =
+   '<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — holds':'✗ WITNESS — false discovery')+'</span>'
+  +'<div class="small" style="margin-top:6px">linear: <b style="color:var(--gr)">'+verdictOf(L).v+'</b> &nbsp;·&nbsp; over-cap: <b style="color:'+(verdictOf(O).v==='REAL FEATURE'?'var(--wall)':'var(--gr)')+'">'+verdictOf(O).v+'</b> (sel '+fmt(O.selectivity)+', control '+(O.control*100).toFixed(0)+'%)'
+  +(DROP_CONTROL?' &nbsp; — <span style="color:var(--wall)">red dropped the control</span>':'')+'</div>';
+}
+
+/* boot */
+try{
+ selfcheck();
+ fillModel();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("sLin").addEventListener("click",()=>setScen("linear"));
+ $("sNon").addEventListener("click",()=>setScen("nonlinear"));
+ $("sOvr").addEventListener("click",()=>setScen("overcap"));
+ $("mSel").addEventListener("click",()=>setDrop(false));
+ $("mRaw").addEventListener("click",()=>setDrop(true));
+ $("rLin").addEventListener("click",()=>{ setDrop(false); setScen("linear"); });
+ $("rOvr").addEventListener("click",()=>{ setScen("overcap"); });
+ $("tamper").addEventListener("click",()=>{ setScen("overcap"); setDrop(true); });
+ $("restore").addEventListener("click",()=>setDrop(false));
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the probing engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

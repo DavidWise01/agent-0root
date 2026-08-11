@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE DIFFERENTIAL PRIVACY · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffd23f; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffd23f; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,210,63,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,210,63,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,210,63,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;height:22px;accent-color:var(--am);}
+input[type=number]{width:88px;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:220px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:92px;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+.big{font-size:17px;color:var(--am);font-weight:700;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE DIFFERENTIAL PRIVACY</h1>
+ <p class="sub">A privacy promise stated as an <b>inequality</b>, not a hope: change any one record and the released answer barely moves. The engine is the <b>Laplace mechanism</b> — to release a query <b class="k">f</b> of sensitivity <b style="color:var(--am)">Δ</b> under <b style="color:var(--am)">ε</b>-DP, publish <b>f(D) + Laplace(Δ/ε)</b>. Down the center, data flows: the query and its sensitivity go <b style="color:var(--cy)">in</b>, the mechanism adds calibrated noise, the private release comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Dwork, McSherry, Nissim &amp; Smith, <i>Calibrating Noise to Sensitivity in Private Data Analysis</i>, TCC 2006, LNCS 3876:265–284 — <a href="https://doi.org/10.1007/11681878_14">doi.org/10.1007/11681878_14</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — calibrated noise</h2>
+   <p>The Laplace density is <b>p(z) = e<sup>−|z|/b</sup> / (2b)</b> with scale <b class="k">b = Δ/ε</b>. Because it decays as <i>|z|</i>, shifting the center by up to <b>Δ</b> changes the log-density at every point by at most <b>Δ/b = ε</b> — that bound <b>is</b> the guarantee.</p>
+   <p><b class="k">ε-DP.</b> For adjacent datasets (differ in one record, so |f(D)−f(D′)| ≤ Δ) the ratio of output densities is ≤ e<sup>ε</sup> everywhere. <b class="k">Composition.</b> Two ε-DP releases together are 2ε-DP — log-ratios add. <b class="k">Unbiased.</b> E[output] = f, variance <b>2(Δ/ε)²</b>.</p>
+   <p class="small">Live, for the current ε and Δ:</p>
+   <div id="modelout" class="small"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the bounded ratio <span class="tag t-amber">AVAN</span></h2>
+   <p>The sphere behind the line is <a href="https://davidwise01.github.io/the-membership-inference/" style="color:var(--cy)">the-membership-inference</a>: an attacker asks <i>was this record in D?</i> by comparing how likely the release is with vs. without it — a <b>likelihood ratio</b>.</p>
+   <p>ε-DP <b>caps that ratio at e<sup>ε</sup></b>, for <i>every</i> record and <i>every</i> adversary, no matter their side knowledge. The attack does not become impossible; its evidence becomes provably <b>bounded</b>. Privacy stated as an inequality, not a hope. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute the worst-case log density ratio and the noise variance for the current setting and confirm them against the known formulas (ε and 2(Δ/ε)²). If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — query &amp; sensitivity <span class="tag t-in">in ↓</span></h2>
+   <p>A release has three inputs: the true answer <b class="P" style="color:var(--gr)">f(D)</b> (a statistic — say a count), the <b class="M" style="color:var(--am)">sensitivity Δ</b> (the most one record can move f), and the privacy budget <b style="color:var(--am)">ε</b>. Adjacency <b class="S" style="color:var(--cy)">d = |f(D)−f(D′)|</b> is how far a one-record change actually pushes the answer — always ≤ Δ.</p>
+   <table><thead><tr><th>symbol</th><th>meaning</th><th>role</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>ε</td><td>privacy budget</td><td class="y">smaller = stronger</td></tr>
+     <tr><td>Δ</td><td>query sensitivity</td><td class="n">sets noise size</td></tr>
+     <tr><td>b = Δ/ε</td><td>Laplace scale</td><td class="y">the calibration</td></tr>
+     <tr><td>d ≤ Δ</td><td>one-record shift</td><td class="n">the adjacency</td></tr>
+    </tbody></table>
+   <p class="small">Calibrating <b>b</b> to Δ and ε is the whole game — and it is what you feed the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the query into the mechanism &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the Laplace mechanism <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>budget ε</label>
+      <select id="eps"><option value="2">2.0</option><option value="1">1.0</option><option value="0.5" selected>0.5</option><option value="0.25">0.25</option><option value="0.1">0.1</option></select></div>
+     <div class="row"><label>sensitivity Δ</label>
+      <select id="delta"><option value="1" selected>1</option><option value="2">2</option><option value="5">5</option></select></div>
+     <div class="row"><label>true f(D)</label><input id="fval" type="number" value="42" step="1"></div>
+     <div class="row"><label>adjacency d</label><input id="adj" type="range" min="0" max="1" step="0.05" value="1"><span id="adjv" class="k"></span></div>
+     <div class="row"><button id="resample">↺ resample noise</button><button id="worst">→ worst case d=Δ</button></div>
+     <p class="small" id="readmode">The noise is drawn with a fixed-seed PRNG, so the mechanism is honest and reproducible; resample steps the seed deterministically.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change any control — the release and the ε-guarantee are computed from the density on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the mechanism emits a private release &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the private release <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: a noisy answer whose distribution shifts by at most a factor <b>e<sup>ε</sup></b> when any one record changes. For adjacency d ≤ Δ the worst-case log density ratio is <b class="k">d/b ≤ ε</b> — the mechanism is <b style="color:var(--am)">ε-DP</b>. k releases compose to <b>kε</b>. The noise is unbiased; only its <i>variance</i> 2(Δ/ε)² is the price.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms the bound and variance live; the red team (right) tries to make the guarantee false.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The guarantee is only as true as its <b>sensitivity bound</b>. Underestimate Δ and the calibration is too small — the real log-ratio exceeds ε and the proof is void. Group privacy: for k correlated records the bound degrades to <b>kε</b>. And composition is relentless — every query spends budget; enough releases erode ε to meaninglessness.</div>
+   <p class="small" style="margin-top:8px">Worse, the ideal is over the reals: Mironov (2012) showed a naïve floating-point Laplace sampler leaks bits and breaks DP outright. ε itself is a <b>policy choice</b>, not a proof — DP bounds the leak per query; it never says which ε is "private enough."</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"DP makes the data anonymous — re-identification is impossible."</s> <b>Cut.</b> DP bounds how much <i>more</i> an adversary learns from your record; it is not anonymization and forbids no inference that holds without you.</p>
+   <p class="grave"><s>"Any added noise gives privacy."</s> <b>Cut.</b> Only noise <i>calibrated</i> to Δ/ε. Wrong scale voids it — the tamper (window 6) is exactly this, caught live.</p>
+   <p class="grave"><s>"ε is a privacy percentage."</s> <b>Kept, corrected.</b> ε bounds a <i>log</i>-likelihood-ratio (factor e<sup>ε</sup>), not a probability. Small ε = strong; it is unbounded above.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: invert the calibration — scale the noise by <b>ε/Δ</b> instead of <b>Δ/ε</b>. For ε&lt;1 the noise <i>shrinks</i>, the density ratio blows past e<sup>ε</sup>, and the ε-DP promise is false. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ invert scale → ε/Δ</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Invert b to ε/Δ and the worst-case log-ratio becomes Δ²/ε — for ε&lt;1 that exceeds ε, so the guarantee fails. The witness recomputes, disagrees with the known bound, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE DIFFERENTIAL PRIVACY — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (query <b style="color:var(--cy)">in</b> → Laplace mechanism → private release <b style="color:var(--gr)">out</b>). A runnable rendering of Dwork, McSherry, Nissim &amp; Smith (TCC 2006) — the engine is LIT (the ε-bound, composition, and variance computed live and self-checked to 1e-9, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single inequality cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// the mechanism (verified: max log-ratio = epsilon, variance = 2(Delta/epsilon)^2)
+let TAMPER=false;   // inverts the scale to epsilon/Delta when true — the witness must catch it
+function bScale(eps,D){ return TAMPER ? (eps/D) : (D/eps); }      // Laplace scale b
+function maxLogRatio(d,b){ return d/b; }                          // worst-case log density ratio over adjacency gap d
+function lapVar(b){ return 2*b*b; }                               // variance of Laplace(b)
+function lapStd(b){ return Math.SQRT2*b; }
+function lapPdf(z,b){ return Math.exp(-Math.abs(z)/b)/(2*b); }
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function lapSample(rng,b){ const u=rng()-0.5; return -b*Math.sign(u)*Math.log(1-2*Math.abs(u)); }
+// pointwise worst log density ratio between adjacent releases centered at f and f+d, scanned on a grid
+function pointwiseWorst(f,d,b){
+ let worst=0;
+ for(let y=f-20*b;y<=f+d+20*b;y+=b/8){ const r=Math.abs(Math.log(lapPdf(y-f,b)/lapPdf(y-(f+d),b))); if(r>worst)worst=r; }
+ return worst;
+}
+// fail-loud self-check (runs untampered, then plants and catches the tamper)
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const approx=(a,b)=>Math.abs(a-b)<1e-9;
+ const save=TAMPER; TAMPER=false;
+ const eps=0.5, D=1;
+ const b=bScale(eps,D);
+ t(approx(b,2),"scale b must equal Delta/epsilon = 2");
+ // epsilon-DP: worst-case adjacency d=Delta gives log-ratio exactly epsilon
+ t(approx(maxLogRatio(D,b),eps),"worst-case log-ratio at d=Delta must equal epsilon");
+ // for every adjacency d<=Delta the log-ratio stays <= epsilon
+ for(const d of [0,0.25,0.5,0.75,1]) t(maxLogRatio(d,b)<=eps+1e-12,"log-ratio must be <= epsilon for d="+d);
+ // pointwise density check on a grid reaches epsilon and never exceeds it
+ const pw=pointwiseWorst(10,D,b);
+ t(pw<=eps+1e-9,"pointwise log density ratio must not exceed epsilon");
+ t(approx(pw,eps),"pointwise worst log ratio must reach epsilon exactly");
+ // composition: two epsilon-DP releases -> 2*epsilon
+ t(approx(maxLogRatio(D,b)+maxLogRatio(D,b),2*eps),"composition of two eps-DP must be 2*eps");
+ // unbiased: Laplace density is symmetric => E[noise]=0 => E[output]=f
+ for(const z of [0.3,1.7,5,12.5]) t(approx(lapPdf(z,b),lapPdf(-z,b)),"Laplace density must be symmetric (zero-mean noise)");
+ // variance closed form, and privacy trades against utility
+ t(approx(lapVar(b),2*b*b),"variance must be 2 b^2");
+ t(approx(lapVar(b),2*(D/eps)*(D/eps)),"variance must be 2 (Delta/epsilon)^2");
+ const bHalf=bScale(eps/2,D);
+ t(approx(bHalf,2*b),"halving epsilon must double the scale");
+ t(approx(lapVar(bHalf),4*lapVar(b)),"halving epsilon must quadruple the variance");
+ // now plant the tamper and confirm the guarantee breaks
+ TAMPER=true;
+ const bt=bScale(eps,D);
+ t(approx(bt,eps/D),"tampered scale must equal epsilon/Delta");
+ const bad=maxLogRatio(D,bt);
+ t(approx(bad,D*D/eps),"tampered worst-case log-ratio must equal Delta^2/epsilon");
+ t(bad>eps+1e-9,"tamper must push the log-ratio above epsilon (epsilon-DP violated)");
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let SEED=1234567;
+function cur(){ return {eps:+$("eps").value, D:+$("delta").value, f:+$("fval").value, d:+$("adj").value}; }
+function syncAdj(){ const {D}=cur(); const a=$("adj"); a.max=String(D); if(+a.value>D) a.value=String(D); a.step=String(D/20); }
+function render(){
+ syncAdj();
+ const {eps,D,f,d}=cur();
+ const b=bScale(eps,D);
+ const rng=mulberry32(SEED);
+ const z=lapSample(rng,b);
+ const y=f+z;
+ const worst=maxLogRatio(d,b);
+ const ok = worst<=eps+1e-9;
+ $("adjv").textContent = d.toFixed(2)+" / "+D;
+ $("sent").innerHTML =
+   "release &nbsp; <span class='P'>y</span> = <span class='P'>f(D)</span> + Laplace(b) &nbsp;=&nbsp; "+f+" + ("+z.toFixed(3)+")<br>"+
+   "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = <span class='big'>"+y.toFixed(3)+"</span> &nbsp;<span class='mut'>(scale b = Δ/ε = "+b.toFixed(3)+")</span>";
+ $("verdict").textContent = ok ? "ε-DP HOLDS" : "ε-DP VIOLATED";
+ $("verdict").className = "verdict "+(ok?"ok":"no");
+ $("moodname").innerHTML = "max log density ratio = d/b = <b>"+worst.toFixed(4)+"</b> &nbsp;·&nbsp; budget ε = <b>"+eps.toFixed(3)+"</b> &nbsp;·&nbsp; e<sup>ε</sup> = "+Math.exp(eps).toFixed(3);
+ $("reason").innerHTML = ok
+   ? "adjacent releases differ by ≤ e<sup>ε</sup> everywhere — variance 2(Δ/ε)² = <b>"+lapVar(b).toFixed(3)+"</b>, std = "+lapStd(b).toFixed(3)
+   : "the density ratio exceeds e<sup>ε</sup> — the calibration is wrong (scale is "+b.toFixed(3)+", not Δ/ε="+(D/eps).toFixed(3)+")";
+ // model window live readout
+ $("modelout").innerHTML =
+   "scale <b class='k'>b = Δ/ε = "+(D/eps).toFixed(3)+"</b> &nbsp;·&nbsp; worst-case log-ratio (d=Δ) = <b class='k'>"+maxLogRatio(D, D/eps).toFixed(3)+"</b> = ε<br>"+
+   "variance <b class='k'>2(Δ/ε)² = "+(2*(D/eps)*(D/eps)).toFixed(3)+"</b> &nbsp;·&nbsp; two releases compose to <b class='k'>"+(2*eps).toFixed(3)+"</b>-DP";
+}
+function audit(){
+ const el=$("auditout");
+ const {eps,D}=cur();
+ const b=bScale(eps,D);
+ const worst=maxLogRatio(D,b);            // worst-case adjacency, reads TAMPER via bScale
+ const knownRatio=eps, knownVar=2*(D/eps)*(D/eps);
+ const ratioOk = Math.abs(worst-knownRatio)<1e-9 && worst<=eps+1e-9;
+ const varOk = Math.abs(lapVar(b)-knownVar)<1e-9;
+ const ok = ratioOk && varOk;
+ el.innerHTML = "<span class='badge "+(ok?"pass":"failb")+"'>"+(ok?"✓ WITNESS — bound holds":"✗ WITNESS — broken")+"</span>"
+  + "<div class='small' style='margin-top:6px'>worst log-ratio: <b style='color:"+(ratioOk?"var(--gr)":"var(--wall)")+"'>"+worst.toFixed(4)+"</b> vs ε="+eps.toFixed(3)
+  + " &nbsp;·&nbsp; variance: <b style='color:"+(varOk?"var(--gr)":"var(--wall)")+"'>"+lapVar(b).toFixed(3)+"</b> vs 2(Δ/ε)²="+knownVar.toFixed(3)
+  + (TAMPER?" &nbsp; — <span style='color:var(--wall)'>red inverted the scale</span>":"")+"</div>";
+}
+function refresh(){ render(); audit(); }
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ ["eps","delta","fval","adj"].forEach(id=>$(id).addEventListener("input",refresh));
+ $("resample").addEventListener("click",()=>{ SEED=(Math.imul(SEED,1664525)+1013904223)>>>0; render(); });
+ $("worst").addEventListener("click",()=>{ const {D}=cur(); $("adj").value=String(D); refresh(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Scale inverted to ε/Δ.</b> The noise shrank, the density ratio blew past e<sup>ε</sup>, and the witness (window 7) recomputed and went red. The attack is real; it is caught."; refresh(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Invert b to ε/Δ and the worst-case log-ratio becomes Δ²/ε — for ε<1 that exceeds ε, so the guarantee fails. The witness recomputes, disagrees with the known bound, and turns red. Nothing is faked; the attack is real and it is caught."; refresh(); });
+ refresh();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the differential-privacy engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>
