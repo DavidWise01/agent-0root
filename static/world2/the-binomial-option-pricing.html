@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BINOMIAL OPTION PRICING · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff9e6a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,158,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,158,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,158,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=number]{width:82px;}
+input[type=range]{padding:0;width:120px;accent-color:var(--am);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#1a1204;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:220px;} .readout{flex:1;min-width:240px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:88px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+.tree{width:100%;height:auto;background:#0a130c;border:1px solid var(--line);border-radius:6px;margin-top:6px;}
+.num{color:#eafff0;font-weight:700;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE BINOMIAL OPTION PRICING</h1>
+ <p class="sub">Price an option the honest way: build a lattice of up/down moves, pick the one probability that removes all arbitrage, and roll the payoff back to today. Shrink the time step and the lattice becomes <b>Black–Scholes</b> before your eyes. Down the center, data flows: the market inputs go <b style="color:var(--cy)">in</b>, the tree computes by backward induction, the price comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it. This is a <b>model</b>, not investment advice.</p>
+ <p class="src"><span class="tag t-amber">source</span> Cox, Ross &amp; Rubinstein, <i>Option Pricing: A Simplified Approach</i>, J. Financial Economics <b>7</b>(3) 229–263 (1979) — <a href="https://ideas.repec.org/a/eee/jfinec/v7y1979i3p229-263.html">ideas.repec.org/a/eee/jfinec/v7y1979i3p229-263</a> · doi:10.1016/0304-405X(79)90015-1. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the CRR lattice</h2>
+   <p>Over one step of length <b>dt</b> the stock either multiplies by <b class="k">u = e^(σ√dt)</b> or by <b class="k">d = 1/u</b>. The recombining tree of these moves is the whole state space.</p>
+   <p>The valuation probability is <b>not</b> the real-world odds — it is the unique <b>risk-neutral</b> weight <b class="k">p = (e^(r·dt) − d) / (u − d)</b> that makes today's stock its own discounted expectation. Then every option is</p>
+   <p style="text-align:center;color:var(--am)">price = e^(−r·dt) · [ p·V<sub>up</sub> + (1−p)·V<sub>down</sub> ]</p>
+   <p class="small">applied backward from the terminal payoff. Live values for the current inputs:</p>
+   <table id="latTbl"><tbody id="latBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — discrete → continuous <span class="tag t-amber">AVAN</span></h2>
+   <p>This sphere is <a href="https://davidwise01.github.io/the-risk-neutral-pricing/" style="color:var(--cy)">the-risk-neutral-pricing</a> <b>made discrete</b>. One replicating step — a stock-plus-bond hedge — pins the price with no probabilities at all; iterate the step and the risk-neutral measure appears as bookkeeping.</p>
+   <p>Now let <b>n → ∞</b>. The binomial log-return is a sum of tiny ±σ√dt shocks; the Central Limit Theorem carries it to a normal, and the lattice price converges to <a href="https://davidwise01.github.io/the-black-scholes/" style="color:var(--cy)">the-black-scholes</a> closed form. Each sphere is the next one's limit.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute the <b>500-step</b> lattice price and compare it to the Black–Scholes closed form. If red swaps the risk-neutral p for a coin flip, convergence breaks and this badge turns red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the market inputs <span class="tag t-in">in ↓</span></h2>
+   <p>A European option needs five numbers plus a step count. Each is fed straight into the lattice below:</p>
+   <table><thead><tr><th>symbol</th><th>meaning</th></tr></thead>
+    <tbody class="dist">
+     <tr><td class="y">S</td><td>spot price of the stock today</td></tr>
+     <tr><td class="y">K</td><td>strike — the agreed exercise price</td></tr>
+     <tr><td class="y">r</td><td>risk-free rate (continuously compounded)</td></tr>
+     <tr><td class="y">σ</td><td>volatility <span class="tag t-amber">assumed constant</span></td></tr>
+     <tr><td class="y">T</td><td>time to expiry, in years</td></tr>
+     <tr><td class="y">n</td><td>number of lattice steps (dt = T/n)</td></tr>
+    </tbody></table>
+   <p class="small">From these, the engine derives <b>u, d, p</b> and rolls the payoff back. Feed them into the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the inputs into the lattice &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>spot S</label><input type="number" id="S" value="100" step="1"></div>
+     <div class="row"><label>strike K</label><input type="number" id="K" value="100" step="1"></div>
+     <div class="row"><label>rate r</label><input type="number" id="r" value="0.05" step="0.01"></div>
+     <div class="row"><label>vol σ</label><input type="number" id="sig" value="0.20" step="0.01"></div>
+     <div class="row"><label>expiry T</label><input type="number" id="T" value="1" step="0.25"></div>
+     <div class="row"><label>steps n</label><input type="range" id="n" min="1" max="500" value="500"><span id="nlab" class="num">500</span></div>
+     <div class="row"><label>type</label>
+      <span class="toggle"><button id="tCall" class="on">CALL</button><button id="tPut">PUT</button></span></div>
+     <div class="row"><button id="rand">↺ randomize</button><button id="reset">→ defaults</button></div>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+     <svg class="tree" id="tree" viewBox="0 0 360 210" preserveAspectRatio="xMidYMid meet"></svg>
+     <p class="small" id="treecap"></p>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change any input — u, d, p and the price are recomputed from the closed-form lattice on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the lattice emits a price &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the price <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: the arbitrage-free option price, the no-arbitrage band <b class="k">d &lt; e^(r·dt) &lt; u</b>, and the gap to Black–Scholes shrinking toward zero as steps grow. Backward induction and the discounted risk-neutral expectation agree to <b>1e-9</b>; a one-step tree is exactly replicated by a stock-plus-bond hedge.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-checks convergence live; the red team (right) tries to make the lattice lie.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The lattice assumes a world that does not exist: <b>constant volatility</b>, prices that move only in tidy log-normal up/down ticks with <b>no jumps</b>, <b>frictionless</b> trading with no bid–ask spread, taxes or borrowing limits, and a single known risk-free rate. Real markets gap on news, smile in implied vol, and charge to trade.</div>
+   <p class="small" style="margin-top:8px">So the "no-arbitrage price" is only exact <i>inside the model</i>. It is a disciplined benchmark, not a promise — and never advice to buy or sell anything.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"p is the real probability the stock goes up."</s> <b>Cut.</b> p is a pricing weight, not a forecast — it depends on r, not on any view of returns. The lattice prices correctly even when the true drift is nothing like it.</p>
+   <p class="grave"><s>"The binomial model is just an approximation of Black–Scholes."</s> <b>Corrected.</b> It is a self-contained no-arbitrage model in its own right; BS is its <i>limit</i>, and the lattice also prices American and path-dependent options BS cannot.</p>
+   <p class="grave"><s>"More steps always means a smoother, better price."</s> <b>Kept, corrected.</b> Convergence is real but oscillates with n's parity (odd/even) around the strike — it settles, it does not slide straight in.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: replace the risk-neutral <b>p</b> with a naïve real-world coin flip <b>p = 0.5</b>. The lattice still returns a number — but it is the wrong number, it no longer converges to Black–Scholes, and it admits arbitrage. The witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ use p = 0.5</button><button id="restore">↺ restore p</button></div>
+   <p class="small" id="tampernote">Swap the risk-neutral weight for 0.5 and the 500-step price drifts far from the closed form — the witness recomputes, sees the gap blow past tolerance, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE BINOMIAL OPTION PRICING — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (inputs <b style="color:var(--cy)">in</b> → lattice → price <b style="color:var(--gr)">out</b>). A runnable rendering of Cox–Ross–Rubinstein (1979) — the engine is LIT (u/d/p and price computed live by backward induction, no-arbitrage and convergence-to-Black–Scholes self-checked, replication proven, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single frame cannot. These are models with named assumptions, not investment advice. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: CRR lattice → Black–Scholes) ===== */
+
+// normal CDF via Abramowitz & Stegun 7.1.26 erf approximation (|err| < 1.5e-7)
+function erf(x){
+ const s=x<0?-1:1; x=Math.abs(x);
+ const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,pp=0.3275911;
+ const t=1/(1+pp*x);
+ const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+ return s*y;
+}
+const Ncdf=x=>0.5*(1+erf(x/Math.SQRT2));
+
+function bsPrice(S,K,r,sig,T,call){
+ const sd=sig*Math.sqrt(T);
+ const d1=(Math.log(S/K)+(r+sig*sig/2)*T)/sd, d2=d1-sd;
+ return call ? S*Ncdf(d1)-K*Math.exp(-r*T)*Ncdf(d2)
+             : K*Math.exp(-r*T)*Ncdf(-d2)-S*Ncdf(-d1);
+}
+
+let TAMPER=false;   // when true the lattice uses p=0.5 instead of risk-neutral p — the witness must catch it
+function riskNeutralP(r,sig,dt){
+ const u=Math.exp(sig*Math.sqrt(dt)), d=1/u;
+ return TAMPER ? 0.5 : (Math.exp(r*dt)-d)/(u-d);
+}
+
+// price by backward induction on the recombining lattice
+function crrPrice(S,K,r,sig,T,n,call){
+ const dt=T/n, u=Math.exp(sig*Math.sqrt(dt)), d=1/u, p=riskNeutralP(r,sig,dt), disc=Math.exp(-r*dt);
+ const v=new Array(n+1);
+ for(let j=0;j<=n;j++){ const ST=S*Math.pow(u,j)*Math.pow(d,n-j); v[j]=call?Math.max(ST-K,0):Math.max(K-ST,0); }
+ for(let i=n-1;i>=0;i--) for(let j=0;j<=i;j++) v[j]=disc*(p*v[j+1]+(1-p)*v[j]);
+ return v[0];
+}
+
+// same price as a discounted risk-neutral expectation over terminal nodes (log-binomial, stable)
+function rnExpect(S,K,r,sig,T,n,call){
+ const dt=T/n, u=Math.exp(sig*Math.sqrt(dt)), d=1/u, p=riskNeutralP(r,sig,dt);
+ let lnC=0, sum=0;
+ for(let j=0;j<=n;j++){
+  if(j>0) lnC+=Math.log((n-j+1)/j);
+  const prob=Math.exp(lnC + j*Math.log(p) + (n-j)*Math.log(1-p));
+  const ST=S*Math.pow(u,j)*Math.pow(d,n-j);
+  sum+=prob*(call?Math.max(ST-K,0):Math.max(K-ST,0));
+ }
+ return Math.exp(-r*T)*sum;
+}
+
+// one-step delta-hedge replication: delta shares of stock + B in bonds reproduces the payoff
+function replicate(S,K,r,sig,T,call){
+ const dt=T, u=Math.exp(sig*Math.sqrt(dt)), d=1/u;
+ const Vu=call?Math.max(S*u-K,0):Math.max(K-S*u,0);
+ const Vd=call?Math.max(S*d-K,0):Math.max(K-S*d,0);
+ const delta=(Vu-Vd)/(S*u-S*d);
+ const B=Math.exp(-r*dt)*(u*Vd-d*Vu)/(u-d);
+ return {delta:delta, bond:B, cost:delta*S+B};
+}
+
+function noArb(r,sig,dt){
+ const u=Math.exp(sig*Math.sqrt(dt)), d=1/u, g=Math.exp(r*dt);
+ return {u:u,d:d,g:g,ok:(d<g && g<u)};
+}
+
+// deterministic fixed-seed PRNG (UI randomize only; selfcheck never depends on it)
+let SEED=0x2f6e2b1;
+function rng(){ SEED=(1103515245*SEED+12345)&0x7fffffff; return SEED/0x7fffffff; }
+
+/* ===== fail-loud self-check (runs untampered, then plants + catches the tamper) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const S=100,K=100,r=0.05,sig=0.20,T=1;
+
+ // erf / normal CDF accuracy
+ t(Math.abs(erf(1)-0.8427007929)<1e-6,"erf approximation out of tolerance");
+
+ // put-call parity (exact identity): C - P = S - K e^{-rT}, to 1e-6
+ const C=bsPrice(S,K,r,sig,T,true), P=bsPrice(S,K,r,sig,T,false);
+ t(Math.abs((C-P)-(S-K*Math.exp(-r*T)))<1e-6,"put-call parity must hold to 1e-6");
+
+ // NO-ARBITRAGE: d < e^{r dt} < u, giving p in (0,1)
+ const na=noArb(r,sig,T/500);
+ t(na.ok,"no-arbitrage requires d < e^(r*dt) < u");
+ const p500=riskNeutralP(r,sig,T/500);
+ t(p500>0 && p500<1,"risk-neutral p must lie in (0,1)");
+
+ // CONVERGENCE: 500-step binomial within tolerance of Black–Scholes
+ const b500=crrPrice(S,K,r,sig,T,500,true);
+ t(Math.abs(b500-C)<0.05,"binomial must converge to BS within 0.05 at 500 steps");
+
+ // RISK-NEUTRAL VALUATION: backward induction == discounted expectation under p (to 1e-9)
+ const nb=50;
+ t(Math.abs(rnExpect(S,K,r,sig,T,nb,true)-crrPrice(S,K,r,sig,T,nb,true))<1e-9,"risk-neutral expectation must equal backward induction");
+ t(Math.abs(rnExpect(S,K,r,sig,T,nb,false)-crrPrice(S,K,r,sig,T,nb,false))<1e-9,"risk-neutral expectation must equal backward induction (put)");
+
+ // REPLICATION: one-step hedge cost equals the one-step lattice price (to 1e-6)
+ const rep=replicate(S,K,r,sig,T,true);
+ t(Math.abs(rep.cost-crrPrice(S,K,r,sig,T,1,true))<1e-6,"one-step replication cost must equal the price");
+
+ // planted void: swap in the real-world p=0.5 — convergence to BS must break
+ TAMPER=true;
+ const bTamp=crrPrice(S,K,r,sig,T,500,true);
+ t(Math.abs(bTamp-C)>0.5,"tamper (p=0.5) must break convergence to BS");
+ TAMPER=save;   // restore
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let call=true;
+
+function inputs(){
+ return {S:+$("S").value, K:+$("K").value, r:+$("r").value, sig:+$("sig").value, T:+$("T").value, n:+$("n").value};
+}
+
+function fmt(x,d){ return Number(x).toFixed(d===undefined?4:d); }
+
+function drawTree(S,r,sig,T,n){
+ const svg=$("tree");
+ const steps=Math.min(n,5);
+ const dt=T/n, u=Math.exp(sig*Math.sqrt(dt)), d=1/u;
+ const W=360,H=210,padX=30,padY=16;
+ const gapX=(W-2*padX)/steps;
+ const midY=H/2, vGap=(H-2*padY)/(2*steps || 2);
+ const px=i=>padX+i*gapX;
+ const py=(i,j)=>midY-(2*j-i)*vGap;
+ let edges="",nodes="";
+ for(let i=0;i<steps;i++) for(let j=0;j<=i;j++){
+  const x1=px(i),y1=py(i,j);
+  edges+=`<line x1="${x1}" y1="${y1}" x2="${px(i+1)}" y2="${py(i+1,j+1)}" stroke="#264a30" stroke-width="1"/>`;
+  edges+=`<line x1="${x1}" y1="${y1}" x2="${px(i+1)}" y2="${py(i+1,j)}" stroke="#264a30" stroke-width="1"/>`;
+ }
+ for(let i=0;i<=steps;i++) for(let j=0;j<=i;j++){
+  const x=px(i),y=py(i,j), price=S*Math.pow(u,j)*Math.pow(d,i-j);
+  nodes+=`<circle cx="${x}" cy="${y}" r="2.6" fill="#ff9e6a"/>`;
+  nodes+=`<text x="${x}" y="${y-5}" font-size="7.5" fill="#a8e6b4" text-anchor="middle">${price.toFixed(price>=100?0:1)}</text>`;
+ }
+ svg.innerHTML=edges+nodes;
+}
+
+function render(){
+ const {S,K,r,sig,T,n}=inputs();
+ $("nlab").textContent=n;
+ const dt=T/n, na=noArb(r,sig,dt), p=riskNeutralP(r,sig,dt);
+ const price=crrPrice(S,K,r,sig,T,n,call);
+ const bs=bsPrice(S,K,r,sig,T,call);
+ const err=Math.abs(price-bs);
+
+ $("verdict").textContent = (call?"CALL ":"PUT ")+"= "+fmt(price,4);
+ $("verdict").className="verdict "+(na.ok?"ok":"no");
+ $("moodname").innerHTML = `u = ${fmt(na.u,5)} &nbsp;·&nbsp; d = ${fmt(na.d,5)} &nbsp;·&nbsp; p = <b>${TAMPER?'<span style="color:var(--wall)">0.5 (tampered)</span>':fmt(p,5)}</b>`;
+ $("reason").innerHTML = na.ok
+   ? `no-arbitrage holds: d &lt; e^(r·dt)=${fmt(na.g,5)} &lt; u &nbsp;·&nbsp; Black–Scholes = <b>${fmt(bs,4)}</b> &nbsp;·&nbsp; gap = <b style="color:${err<0.05?'var(--gr)':'var(--wall)'}">${fmt(err,4)}</b>`
+   : `<span style="color:var(--wall)">arbitrage: e^(r·dt)=${fmt(na.g,5)} is outside [d,u] — raise σ or lower r/dt</span>`;
+
+ // left-column live lattice table
+ const rep=replicate(S,K,r,sig,T,call);
+ $("latBody").innerHTML =
+   `<tr><td>dt = T/n</td><td class="num">${fmt(dt,5)}</td></tr>`+
+   `<tr><td>u = e^(σ√dt)</td><td class="num">${fmt(na.u,5)}</td></tr>`+
+   `<tr><td>d = 1/u</td><td class="num">${fmt(na.d,5)}</td></tr>`+
+   `<tr><td>e^(r·dt)</td><td class="num">${fmt(na.g,5)}</td></tr>`+
+   `<tr><td>risk-neutral p</td><td class="num">${TAMPER?'0.5':fmt(p,5)}</td></tr>`+
+   `<tr><td>1-step Δ hedge</td><td class="num">${fmt(rep.delta,3)} sh + ${fmt(rep.bond,2)} bond</td></tr>`;
+
+ drawTree(S,r,sig,T,n);
+ $("treecap").innerHTML = `Stock lattice, first ${Math.min(n,5)} of ${n} step${n===1?'':'s'} (recombining). Price rolls back from the terminal payoff.`;
+}
+
+function audit(){
+ const el=$("auditout");
+ const S=100,K=100,r=0.05,sig=0.20,T=1;
+ const bs=bsPrice(S,K,r,sig,T,true);
+ const b500=crrPrice(S,K,r,sig,T,500,true);
+ const gap=Math.abs(b500-bs);
+ const na=noArb(r,sig,T/500);
+ const ok = gap<0.05 && na.ok;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — converges':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">500-step lattice: <b style="color:${gap<0.05?'var(--gr)':'var(--wall)'}">${fmt(b500,4)}</b> &nbsp;·&nbsp; Black–Scholes: <b>${fmt(bs,4)}</b> &nbsp;·&nbsp; gap <b style="color:${gap<0.05?'var(--gr)':'var(--wall)'}">${fmt(gap,4)}</b> (tol 0.05) &nbsp;·&nbsp; no-arb ${na.ok?'✓':'✗'}${TAMPER?' &nbsp; — <span style="color:var(--wall)">red set p = 0.5</span>':''}</div>`;
+}
+
+function setType(c){ call=c; $("tCall").classList.toggle("on",c); $("tPut").classList.toggle("on",!c); render(); }
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ ["S","K","r","sig","T","n"].forEach(id=>$(id).addEventListener("input",()=>{render();audit();}));
+ $("tCall").addEventListener("click",()=>setType(true));
+ $("tPut").addEventListener("click",()=>setType(false));
+ $("rand").addEventListener("click",()=>{
+  $("S").value=(80+Math.round(rng()*40)); $("K").value=(80+Math.round(rng()*40));
+  $("r").value=(0.01+rng()*0.06).toFixed(3); $("sig").value=(0.10+rng()*0.30).toFixed(3);
+  $("T").value=(0.25+Math.round(rng()*7)*0.25).toFixed(2); $("n").value=(50+Math.round(rng()*450));
+  render();audit();
+ });
+ $("reset").addEventListener("click",()=>{
+  $("S").value=100;$("K").value=100;$("r").value=0.05;$("sig").value=0.20;$("T").value=1;$("n").value=500;
+  render();audit();
+ });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>p forced to 0.5.</b> The lattice now discounts the wrong expectation — the 500-step price no longer matches Black–Scholes and the tree admits arbitrage. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Swap the risk-neutral weight for 0.5 and the 500-step price drifts far from the closed form — the witness recomputes, sees the gap blow past tolerance, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the binomial pricing engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

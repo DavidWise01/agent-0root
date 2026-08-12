@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LSM TREE · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffb0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,176,208,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,176,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,176,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+input[type=number]{width:74px;}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:250px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:52px;}
+.kv{font-size:12.5px;padding:6px 9px;background:#0a130c;border:1px solid var(--line);border-radius:5px;margin:5px 0;}
+.kv .lbl{color:var(--dim);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:3px;}
+.runline{font-size:12px;margin:3px 0;padding:5px 8px;background:#08110a;border:1px solid var(--line);border-radius:5px;}
+.runlbl{color:var(--dim);font-size:10px;letter-spacing:1px;margin-right:6px;}
+.sent{font-size:13px;line-height:1.7;margin:6px 0;padding:9px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE LSM TREE</h1>
+ <p class="sub">Random writes are slow because they scatter the disk head. The log-structured merge-tree makes every write <b>sequential</b>: buffer it in a memtable, flush it as an immutable <b>sorted run</b>, and merge later. Reads walk the memtable then the runs <b class="k">newest-first</b>; a delete is a <b>tombstone</b>; <b>compaction</b> reclaims the space. Down the center, data flows: writes go <b style="color:var(--cy)">in</b>, the engine resolves a key, the answer comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> O'Neil, Cheng, Gawlick &amp; O'Neil, <i>The Log-Structured Merge-Tree (LSM-tree)</i>, Acta Informatica <b>33</b> (1996), 351–385 — <a href="https://doi.org/10.1007/s002360050048">doi.org/10.1007/s002360050048</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — memtable, runs, tombstones</h2>
+   <p>Three parts, one invariant: <b>a read returns the newest write.</b></p>
+   <p><b class="k">MEMTABLE</b> — an in-memory sorted map of the most recent writes. <b class="k">RUNS</b> — immutable sorted files (SSTables), each a frozen former memtable, ordered newest→oldest. <b class="k">TOMBSTONE</b> — a delete writes a marker, not an erase. A read checks the memtable, then the runs newest-first, and stops at the first hit.</p>
+   <p class="small">Live read path for the panel's current state — which layer answers each key:</p>
+   <table><thead><tr><th>key</th><th>resolved at</th><th>value</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — writes turned sequential <span class="tag t-amber">AVAN</span></h2>
+   <p>One idea: <b>buffer, flush sorted, merge later.</b> Trade many small random writes for a few big sequential ones, and pay it back with background compaction. That is the write-optimized structure under <b style="color:var(--am)">Cassandra</b>, <b style="color:var(--am)">RocksDB</b>, and <b style="color:var(--am)">LevelDB</b>.</p>
+   <p>It is the opposite bet from <a href="https://davidwise01.github.io/the-b-plus-tree/" style="color:var(--cy)">the-b-plus-tree</a>: that structure pays on <i>writes</i> to keep every read a single lookup; the LSM pays on <i>reads</i> (and space) to keep every write an append. Each sphere is the other's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: replay the canonical write/delete log, then read <b>every key</b> back and confirm each equals the reference map. If red reverses precedence, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the writes <span class="tag t-in">in ↓</span></h2>
+   <p>Every mutation is an <b>append</b>, never an in-place edit of a run:</p>
+   <table><thead><tr><th>op</th><th>what it does</th></tr></thead>
+    <tbody>
+     <tr><td><b style="color:var(--cy)">put k,v</b></td><td>write (k,v) into the memtable — newest wins on read</td></tr>
+     <tr><td><b style="color:var(--cy)">del k</b></td><td>write a <b>tombstone</b> for k into the memtable</td></tr>
+     <tr><td><b style="color:var(--cy)">flush</b></td><td>freeze the memtable as a new immutable <b>newest</b> run</td></tr>
+     <tr><td><b style="color:var(--cy)">compact</b></td><td>merge runs, keep latest per key, drop tombstones</td></tr>
+    </tbody></table>
+   <p class="small">Runs are write-once. A newer value for a key does <i>not</i> overwrite the old one — it sits in a newer run and shadows it. That is what you feed the engine below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the writes into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>key</label><select id="uk"></select>
+      <label style="min-width:34px">val</label><input id="uv" type="number" value="1"></div>
+     <div class="row"><button id="bput">▸ put</button><button id="bdel">⊘ delete</button></div>
+     <div class="row"><button id="bflush">⤓ flush</button><button id="bcompact">⇉ compact</button></div>
+     <div class="row"><button id="bget">🔍 get</button><button id="breset">↺ reset</button></div>
+     <p class="small">Every result is computed live from the read path — memtable first, then runs newest-first — never looked up.</p>
+     <div class="kv"><span class="lbl">get result</span><div id="uget"><span class="mut">pick a key and press get</span></div></div>
+    </div>
+    <div class="readout">
+     <div class="kv"><span class="lbl">memtable · in memory</span><div id="umem"></div></div>
+     <div class="kv"><span class="lbl">runs · immutable SSTables (newest at bottom)</span><div id="uruns"></div></div>
+     <div class="kv"><span class="lbl">reference key→value map (ground truth)</span><div id="uref"></div></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">The reference map is a plain dictionary updated by the same ops. The engine's reads must match it exactly — that is the LIT claim.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine resolves the key &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, exactly: after any mix of puts and deletes over a fixed log, an LSM read equals a reference key→value map for <b>every</b> key — newest wins, tombstones mask, compaction preserves the latest live value and drops the dead. Integer and set truths, checked by full comparison.</p>
+   <div id="litbadge"></div>
+   <p class="small" id="outstats"></p>
+   <p class="small">The blue team's witness (left) confirms it live; the red team (right) tries to make a read go stale.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The LSM trade is not free. Turning random writes sequential is paid for in <b>read</b> and <b>space</b> amplification: a point read may probe the memtable and <i>every</i> run, and superseded versions plus tombstones inflate storage until compaction reclaims them. Compaction itself competes for I/O and causes write stalls.</div>
+   <p class="small" style="margin-top:8px">Real systems paper over the read cost with Bloom filters and fence pointers per run, and bound the space with tiered/leveled compaction policies — none of which is in the base structure. A B+tree keeps reads at one lookup; the LSM is the write-heavy specialist, not a universal win.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"LSM-trees make reads free."</s> <b>Cut.</b> A read can touch the memtable and every run; unhelped, a point lookup is O(runs). The gain is write throughput, not read latency.</p>
+   <p class="grave"><s>"A delete removes the data at once."</s> <b>Cut.</b> A delete writes a tombstone; the old value physically survives in older runs until a compaction that spans them reaches it.</p>
+   <p class="grave"><s>"Compaction is a background nicety."</s> <b>Kept, corrected.</b> Compaction is load-bearing — it bounds run count, reclaims tombstones and stale versions, and is where the read/space debt is paid down.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: on a read, take the value from the <b>OLDEST</b> run first instead of the newest — reverse the precedence. An updated key then returns a stale value. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ reverse run precedence</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Reverse the precedence — read the OLDEST run first instead of the newest — and an updated key returns a stale value. The witness recomputes against the reference map, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE LSM TREE — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (writes <b style="color:var(--cy)">in</b> → engine → answer <b style="color:var(--gr)">out</b>). A runnable rendering of O'Neil, Cheng, Gawlick &amp; O'Neil's <i>log-structured merge-tree</i> — the engine is LIT (reads verified equal to a reference key→value map after a full write/delete log, tombstones and compaction checked exactly, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// LSM-tree engine — memtable + immutable sorted runs (SSTables), newest-first reads, tombstones, compaction.
+let TAMPER=false;   // when true, reads scan runs OLDEST-first (reversed precedence) — the witness must catch it
+
+function prng(seed){ let s=seed>>>0; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+function makeLSM(){ return {mem:new Map(), runs:[]}; }
+function lsmPut(db,k,v){ db.mem.set(k,{val:v,tomb:false}); }              // sequential append into the memtable
+function lsmDel(db,k){ db.mem.set(k,{val:null,tomb:true}); }              // a delete is a tombstone write
+function lsmFlush(db){ if(db.mem.size===0) return; db.runs.push(new Map(db.mem)); db.mem=new Map(); } // freeze memtable as new NEWEST run
+function lsmLookup(db,k){
+ if(db.mem.has(k)) return db.mem.get(k);                                  // memtable is always newest
+ const n=db.runs.length;
+ if(!TAMPER){ for(let i=n-1;i>=0;i--) if(db.runs[i].has(k)) return db.runs[i].get(k); } // runs newest-first
+ else { for(let i=0;i<n;i++) if(db.runs[i].has(k)) return db.runs[i].get(k); }          // tampered: oldest-first
+ return null;
+}
+function lsmGet(db,k){ const e=lsmLookup(db,k); if(!e||e.tomb) return undefined; return e.val; } // tombstone masks
+function lsmCompact(db){
+ lsmFlush(db);
+ const merged=new Map(), seen=new Set();
+ for(let i=db.runs.length-1;i>=0;i--){                                    // newest-first, keep latest per key
+  for(const [k,e] of db.runs[i]){ if(seen.has(k)) continue; seen.add(k); if(!e.tomb) merged.set(k,{val:e.val,tomb:false}); } // drop tombstones
+ }
+ db.runs=[merged]; return merged;
+}
+function applyOp(db,ref,o){
+ if(o[0]==="P"){ lsmPut(db,o[1],o[2]); ref.set(o[1],o[2]); }
+ else if(o[0]==="D"){ lsmDel(db,o[1]); ref.delete(o[1]); }
+ else if(o[0]==="F"){ lsmFlush(db); }
+ else if(o[0]==="C"){ lsmCompact(db); }
+}
+function buildCanonical(){
+ const db=makeLSM(), ref=new Map(), ops=[];
+ ops.push(["P","kx",10],["F"],["P","kx",20],["F"]);                       // kx spans two runs — the tamper target
+ const rnd=prng(0x5eed), ks=["k0","k1","k2","k3","k4","k5"];
+ for(let i=0;i<40;i++){ const k=ks[(rnd()*ks.length)|0];
+  if(rnd()<0.75) ops.push(["P",k,1+((rnd()*98)|0)]); else ops.push(["D",k]);
+  if(i%7===6) ops.push(["F"]); }
+ ops.push(["F"]);                                                         // final flush — memtable empty
+ for(const o of ops) applyOp(db,ref,o);
+ return {db,ref};
+}
+function compareAll(db,ref,keys){ for(const k of keys){ const got=lsmGet(db,k), exp=ref.has(k)?ref.get(k):undefined; if(got!==exp) return {ok:false,k}; } return {ok:true}; }
+
+const KEYS=["k0","k1","k2","k3","k4","k5","kx"];
+
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const {db,ref}=buildCanonical();
+ // 1. every read returns the LATEST value across memtable + all runs, newest wins — exact vs a reference map
+ t(compareAll(db,ref,KEYS).ok,"LSM read must equal the reference map for every key");
+ { const d=makeLSM(); lsmPut(d,"a",1); lsmFlush(d); lsmPut(d,"a",2); t(lsmGet(d,"a")===2,"memtable must shadow an older run — newest wins"); }
+ // 2. writes are sequential appends — an immutable run is never updated in place
+ { const d=makeLSM(); lsmPut(d,"a",1); lsmFlush(d); const snap=JSON.stringify([...d.runs[0]]), n=d.runs.length;
+   lsmPut(d,"a",2); lsmPut(d,"b",3);
+   t(d.runs.length===n,"a put must not create or alter a run — memtable only");
+   t(JSON.stringify([...d.runs[0]])===snap,"an immutable run must never be updated in place");
+   t(d.mem.get("a").val===2,"the newer value lives in the memtable, not the frozen run"); }
+ // 3. a tombstone masks a deleted key in reads, and stays physically present until compaction removes it
+ { const d=makeLSM(); lsmPut(d,"a",5); lsmFlush(d); lsmDel(d,"a"); lsmFlush(d);
+   t(lsmGet(d,"a")===undefined,"a deleted key must read as absent — tombstone masks");
+   let present=false; for(const r of d.runs) if(r.has("a")&&r.get("a").tomb) present=true; t(present,"the tombstone must be physically present before compaction");
+   lsmCompact(d);
+   let gone=true; for(const r of d.runs) if(r.has("a")) gone=false; t(gone,"compaction must physically remove the tombstoned key");
+   t(lsmGet(d,"a")===undefined,"the key stays absent after compaction"); }
+ // 4. compaction keeps the latest value per key and drops tombstones — merged run == reference live keys, exactly
+ { const {db:d2,ref:r2}=buildCanonical(); lsmCompact(d2); t(d2.runs.length===1,"compaction collapses runs to one");
+   const merged=d2.runs[0];
+   for(const [,e] of merged) t(!e.tomb,"no tombstone may survive compaction");
+   t(merged.size===r2.size,"merged run size must equal the live-key count");
+   for(const [k,v] of r2) t(merged.has(k)&&merged.get(k).val===v,"merged run must equal the reference live map");
+   for(const [k] of merged) t(r2.has(k),"merged run must not contain a dead key");
+   t(compareAll(d2,r2,KEYS).ok,"reads must stay exact after compaction"); }
+ // 5. TAMPER — reversing run precedence returns a STALE value the reference check rejects
+ TAMPER=true;
+ t(lsmGet(db,"kx")===10,"tampered read (oldest-first) must return the STALE kx=10");
+ t(ref.get("kx")===20,"the reference kx is the latest write, 20");
+ t(!compareAll(db,ref,KEYS).ok,"tamper must make the reference comparison FAIL");
+ TAMPER=save; return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const UIKEYS=["k0","k1","k2","k3","k4","k5"];
+let UIDB, UIREF;
+function seed(){ UIDB=makeLSM(); UIREF=new Map();
+ [["P","k0",42],["P","k1",7],["P","k2",13],["F"],["P","k0",99],["D","k1"],["F"]].forEach(o=>applyOp(UIDB,UIREF,o)); }
+function mapStr(m){ if(m.size===0) return '<span class="mut">∅ empty</span>';
+ return [...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).map(([k,e])=> e.tomb?`${k}:<span style="color:var(--wall)">⊘tomb</span>`:`${k}:<b class="k">${e.val}</b>`).join('&nbsp;&nbsp; '); }
+function refStr(m){ if(m.size===0) return '<span class="mut">∅ empty</span>';
+ return [...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).map(([k,v])=>`${k}:<b class="k">${v}</b>`).join('&nbsp;&nbsp; '); }
+function lsmTrace(db,k){
+ if(db.mem.has(k)) return {where:"memtable", e:db.mem.get(k)};
+ const n=db.runs.length;
+ if(!TAMPER){ for(let i=n-1;i>=0;i--) if(db.runs[i].has(k)) return {where:"run "+i+(i===n-1?" (newest)":""), e:db.runs[i].get(k)}; }
+ else { for(let i=0;i<n;i++) if(db.runs[i].has(k)) return {where:"run "+i+" · OLDEST-first (tampered)", e:db.runs[i].get(k)}; }
+ return {where:"not found", e:null};
+}
+function renderUI(){
+ $("umem").innerHTML=mapStr(UIDB.mem);
+ $("uruns").innerHTML = UIDB.runs.length ? UIDB.runs.map((r,i)=>`<div class="runline"><span class="runlbl">SST ${i}${i===UIDB.runs.length-1?' · newest':(i===0?' · oldest':'')}</span> ${mapStr(r)}</div>`).join('') : '<span class="mut">∅ no runs flushed yet</span>';
+ $("uref").innerHTML=refStr(UIREF);
+ $("modelBody").innerHTML = UIKEYS.map(k=>{ const tr=lsmTrace(UIDB,k), g=lsmGet(UIDB,k);
+  return `<tr><td>${k}</td><td class="small">${tr.where}</td><td>${g===undefined?'<span class="mut">absent</span>':'<b class="k">'+g+'</b>'}</td></tr>`; }).join('');
+}
+function doGet(k){
+ const tr=lsmTrace(UIDB,k), got=lsmGet(UIDB,k), exp=UIREF.has(k)?UIREF.get(k):undefined, match=got===exp;
+ const res = got===undefined? '<span style="color:var(--wall)">absent</span>' : `<b class="k">${got}</b>`;
+ $("uget").innerHTML=`get(<b style="color:var(--cy)">${k}</b>) → <b>${tr.where}</b> → ${res}`
+  +`<div class="small" style="margin-top:4px">reference: ${exp===undefined?'<span class="mut">absent</span>':'<b>'+exp+'</b>'} &nbsp;·&nbsp; <span style="color:${match?'var(--gr)':'var(--wall)'}">${match?'✓ matches reference':'✗ STALE — precedence reversed'}</span></div>`;
+}
+function audit(){
+ const el=$("auditout"); const {db,ref}=buildCanonical();
+ let matched=0, firstBad=null;
+ for(const k of KEYS){ const got=lsmGet(db,k), exp=ref.has(k)?ref.get(k):undefined; if(got===exp) matched++; else if(firstBad===null) firstBad=k; }
+ const ok=matched===KEYS.length;
+ el.innerHTML=`<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — reads match reference':'✗ WITNESS — stale read'}</span>`
+  +`<div class="small" style="margin-top:6px">keys reconciled: <b style="color:${ok?'var(--gr)':'var(--wall)'}">${matched}</b>/${KEYS.length} against the reference map${ok?'':` &nbsp;·&nbsp; <span style="color:var(--wall)">stale at ${firstBad}: kx reads ${lsmGet(db,'kx')}, latest is 20</span>`}${TAMPER?' &nbsp; — <span style="color:var(--wall)">red reversed run precedence</span>':''}</div>`;
+}
+
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ const c=buildCanonical();
+ $("outstats").innerHTML=`reconciled <b class="k">${KEYS.length}</b> keys against the reference map across <b class="k">${c.db.runs.length}</b> immutable runs — <b class="k">${c.ref.size}</b> live keys — 0 mismatches, exact.`;
+ $("uk").innerHTML=UIKEYS.map(k=>`<option value="${k}">${k}</option>`).join('');
+ seed(); renderUI(); audit();
+ $("bput").addEventListener("click",()=>{ const k=$("uk").value, v=parseInt($("uv").value,10); if(Number.isNaN(v)) return; lsmPut(UIDB,k,v); UIREF.set(k,v); renderUI(); doGet(k); });
+ $("bdel").addEventListener("click",()=>{ const k=$("uk").value; lsmDel(UIDB,k); UIREF.delete(k); renderUI(); doGet(k); });
+ $("bflush").addEventListener("click",()=>{ lsmFlush(UIDB); renderUI(); doGet($("uk").value); });
+ $("bcompact").addEventListener("click",()=>{ lsmCompact(UIDB); renderUI(); doGet($("uk").value); });
+ $("bget").addEventListener("click",()=>doGet($("uk").value));
+ $("breset").addEventListener("click",()=>{ seed(); renderUI(); $("uget").innerHTML='<span class="mut">reset — pick a key and press get</span>'; });
+ $("uk").addEventListener("change",()=>doGet($("uk").value));
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Run precedence reversed.</b> Reads now take the OLDEST run first — an updated key returns a stale value. The witness (window 7) recomputed and went red. The attack is real; it is caught."; renderUI(); doGet($("uk").value); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Reverse the precedence — read the OLDEST run first instead of the newest — and an updated key returns a stale value. The witness recomputes against the reference map, disagrees, and turns red. Nothing is faked; the attack is real and it is caught."; renderUI(); doGet($("uk").value); audit(); });
+ doGet("k0");
+}catch(e){ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the LSM-tree engine did not check out: "+e.message; throw e; }
+</script>
+</body></html>

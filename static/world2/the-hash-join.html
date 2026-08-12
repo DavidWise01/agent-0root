@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE HASH JOIN</title>
+<style>
+:root{
+  --am:#ff7a7a;
+  --ground:#0a140f;
+  --ground2:#0e1c14;
+  --ink:#dff3e6;
+  --dim:#8fb3a0;
+  --line:#1d3a2b;
+  --blue:#6fb7ff;
+  --blueb:#123049;
+  --red:#ff8a8a;
+  --redb:#3a1420;
+  --lit:#6ff2a8;
+  --amber:#ffc663;
+  --card:#0c1a13;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 78% -8%, #14301f 0%, rgba(20,48,31,0) 60%),
+    radial-gradient(1000px 600px at 8% 108%, #10281b 0%, rgba(16,40,27,0) 55%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1220px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{
+  font-size:30px;letter-spacing:.14em;margin:0 0 8px;
+  color:#fff;text-shadow:0 0 22px rgba(255,122,122,.35);
+}
+h1 .dot{color:var(--am)}
+.sub{color:var(--dim);max-width:80ch;margin:0 0 12px;font-size:14px}
+.src{font-size:12px;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;border:1px solid transparent;vertical-align:middle;
+}
+.t-amber{background:rgba(255,198,99,.12);color:var(--amber);border-color:#5a4416}
+.t-lit{background:rgba(111,242,168,.13);color:var(--lit);border-color:#1c5238}
+.t-in{background:rgba(111,183,255,.12);color:var(--blue);border-color:#1b3a55}
+.t-out{background:rgba(255,122,122,.13);color:var(--am);border-color:#5a2230}
+.t-wall{background:rgba(255,138,138,.1);color:var(--red);border-color:#5a2230}
+
+.ocho{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  padding:7px 10px;border-radius:5px;font-weight:700;
+}
+.col.blue .teamhdr{color:var(--blue);background:rgba(111,183,255,.07);border:1px solid var(--blueb)}
+.col.center .teamhdr{color:var(--am);background:rgba(255,122,122,.06);border:1px solid #4a2028;text-align:center}
+.col.red .teamhdr{color:var(--red);background:rgba(255,138,138,.06);border:1px solid var(--redb)}
+
+.win{
+  position:relative;background:var(--card);border:1px solid var(--line);
+  border-radius:8px;padding:13px 13px 14px;
+}
+.col.blue .win{border-left:2px solid #244a68}
+.col.red .win{border-right:2px solid #5a2836}
+.win.panel{border:1px solid #4a2530;box-shadow:0 0 0 1px rgba(255,122,122,.08),0 0 34px rgba(255,122,122,.06)}
+.num{
+  position:absolute;top:-10px;left:12px;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;font-size:11px;font-weight:700;
+  background:var(--ground2);border:1px solid var(--line);color:var(--dim);
+}
+.col.center .num{left:50%;transform:translateX(-50%);color:var(--am);border-color:#5a2836}
+.wtitle{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin:2px 0 8px;font-weight:700}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+.win b{color:var(--ink)}
+.k{color:var(--am)}
+.mono{font-size:11.5px}
+
+.flow{
+  text-align:center;color:var(--am);font-size:15px;letter-spacing:.4em;
+  margin:2px 0;opacity:.7;
+}
+
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:4px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:3px 6px;text-align:left}
+.tbl th{color:var(--dim);font-weight:600;background:rgba(255,255,255,.02)}
+.buckets{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.bkt{display:flex;gap:6px;align-items:flex-start;font-size:11.5px}
+.bkt .lbl{color:var(--blue);min-width:52px}
+.chip{display:inline-block;padding:1px 6px;margin:1px 2px;border-radius:3px;background:rgba(111,183,255,.1);border:1px solid var(--blueb);color:var(--ink)}
+.chip.miss{background:rgba(255,138,138,.08);border-color:var(--redb);color:var(--red)}
+.plog{margin-top:6px;font-size:11px}
+.plog div{padding:2px 0;border-bottom:1px dashed var(--line)}
+.plog .hit{color:var(--lit)}
+.plog .no{color:var(--red)}
+.outrow{display:inline-block;padding:2px 7px;margin:2px 3px;border-radius:4px;background:rgba(111,242,168,.09);border:1px solid #1c5238;color:var(--ink);font-size:11.5px}
+.outrow.gone{background:rgba(255,138,138,.09);border-color:var(--redb);color:var(--red);text-decoration:line-through}
+
+.badge{
+  display:block;margin-top:8px;padding:8px 10px;border-radius:6px;font-size:12px;
+  background:rgba(111,242,168,.08);border:1px solid #1c5238;color:var(--lit);
+}
+.badge.bad{background:rgba(255,90,90,.12);border-color:#5a2028;color:#ff8a8a}
+#litbadge{font-weight:700}
+
+.wall-note{background:rgba(255,138,138,.05);border:1px dashed #5a2836;border-radius:6px;padding:9px 10px;font-size:12px;color:var(--red)}
+.grave{margin:6px 0;font-size:12px}
+.grave s{color:#a06a72}
+.grave .fix{color:var(--lit)}
+.stat{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px dotted var(--line)}
+.stat b{color:var(--am)}
+
+button{
+  font:inherit;font-size:12px;cursor:pointer;margin:6px 6px 0 0;
+  background:var(--ground2);color:var(--ink);border:1px solid var(--line);
+  border-radius:5px;padding:6px 12px;
+}
+button#tamper{border-color:#5a2836;color:var(--red)}
+button#restore{border-color:#1c5238;color:var(--lit)}
+button:hover{filter:brightness(1.25)}
+
+#failb{display:none;margin:14px 0;padding:12px;border:1px solid #7a1f2a;background:rgba(255,60,60,.1);color:#ff9a9a;border-radius:6px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:11.5px}
+footer .am{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE HASH JOIN<span class="dot">.</span></h1>
+  <p class="sub">Match rows by <b>hashing</b>, not by scanning every pair. Build a hash table on the smaller relation keyed by the join attribute; probe it with each row of the larger relation; emit all matches. The witness proves the result is the <b>exact same multiset</b> a nested-loop join would produce — in <b>O(n+m)</b> comparisons instead of <b>O(n·m)</b>. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> &nbsp;Kjell Bratbergsengen, <b>Hashing Methods and Relational Algebra Operations</b>, VLDB 1984, pp. 323–333 — <a href="https://www.vldb.org/conf/1984/P323.PDF" target="_blank" rel="noopener">vldb.org/conf/1984/P323.PDF</a></p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ============ BLUE TEAM ============ -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <div class="num">3</div>
+      <div class="wtitle">The Model</div>
+      <p>Two relations join on a shared attribute <span class="k">k</span>. Naively you compare every build row against every probe row — <b>n·m</b> comparisons.</p>
+      <p>Hashing replaces the scan: <b>partition</b> the build side into buckets by <span class="k">h(k)=k mod 4</span>, then each probe row visits <b>only its own bucket</b>. Equal keys always land in the same bucket, so no match can be missed; unequal keys sharing a bucket (a <b>collision</b>) are rejected by an explicit key test.</p>
+      <table class="tbl"><tr><th>side</th><th>rows</th></tr>
+        <tr><td>BUILD R (small)</td><td>5</td></tr>
+        <tr><td>PROBE S (large)</td><td>6</td></tr></table>
+    </div>
+
+    <div class="win">
+      <div class="num">5</div>
+      <div class="wtitle">The Lineage</div>
+      <p>Joining <b>by hashing</b> — the build-and-probe algorithm is <b>the-hash-table</b> lifted into relational algebra. The same bucket-and-key-test that powers a dictionary now powers the equi-join.</p>
+      <p>It is the workhorse of query execution and <b>the-query-optimization</b>'s favourite operator: whenever the optimizer can afford to build a table in memory, hash join beats sort-merge and nested-loop on unindexed equi-joins.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">7</div>
+      <div class="wtitle">The Witness</div>
+      <p>Live re-check: recompute the hash join under the <b>current</b> flag and compare its output multiset to the nested-loop ground truth.</p>
+      <div id="auditout" class="badge">witness pending…</div>
+    </div>
+  </div>
+
+  <!-- ============ CENTER · MACHINE ============ -->
+  <div class="col center">
+    <div class="teamhdr">The Machine · build → probe → join</div>
+
+    <div class="win">
+      <div class="num">4</div>
+      <div class="wtitle">Data In &nbsp;<span class="tag t-in">in ↓</span></div>
+      <p>BUILD side <b>R</b> = (k, r):</p>
+      <div class="mono" id="rin"></div>
+      <p>PROBE side <b>S</b> = (k, s):</p>
+      <div class="mono" id="sin"></div>
+    </div>
+
+    <div class="flow">↓ ↓ ↓</div>
+
+    <div class="win panel">
+      <div class="num">0</div>
+      <div class="wtitle">The Panel &nbsp;<span class="tag t-lit">LIT</span></div>
+      <p><b>Build</b> — hash R into buckets by k mod 4:</p>
+      <div class="buckets" id="buildtbl"></div>
+      <p style="margin-top:10px"><b>Probe</b> — each S row visits one bucket, key-tests every entry:</p>
+      <div class="plog" id="probelog"></div>
+    </div>
+
+    <div class="flow">↓ ↓ ↓</div>
+
+    <div class="win">
+      <div class="num">8</div>
+      <div class="wtitle">Data Out &nbsp;<span class="tag t-out">out ↓</span></div>
+      <p>Joined rows <span class="mono">(k : r › s)</span>:</p>
+      <div id="joinout"></div>
+      <div id="litbadge" class="badge">booting…</div>
+    </div>
+  </div>
+
+  <!-- ============ RED TEAM ============ -->
+  <div class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="num">1</div>
+      <div class="wtitle">The Adversary</div>
+      <div class="wall-note"><span class="tag t-wall">WALL</span> &nbsp;Hashing does not make correctness free. Real failure modes:</div>
+      <p><b>Skew.</b> If one key owns most rows, its bucket degrades to a linear scan and O(n+m) collapses toward O(n·m). Bratbergsengen's cost model assumes near-uniform hashing.</p>
+      <p><b>Memory.</b> The build side must fit in RAM. If it doesn't, you spill — the <b>Grace</b> / hybrid partitioning the paper analyses — or the in-memory table thrashes.</p>
+      <p><b>Collisions are not matches.</b> Two keys in one bucket must still be compared. Drop the key test and you emit garbage; skip duplicate entries and you under-join (window 6).</p>
+    </div>
+
+    <div class="win">
+      <div class="num">2</div>
+      <div class="wtitle">The Graveyard</div>
+      <p class="grave"><s>"Same bucket means the rows join."</s><br><span class="fix">→ No. k=5 and k=1 collide in bucket 1 (both ≡1 mod 4); the explicit key test keeps them apart. z›Z matches only c, never a or b.</span></p>
+      <p class="grave"><s>"One match per probe row is enough."</s><br><span class="fix">→ Duplicate keys demand the full cross-product. k=1 has 2 build rows × 2 probe rows = 4 output rows, not 1.</span></p>
+      <p class="grave"><s>"Hash join and nested-loop can differ."</s><br><span class="fix">→ For an equi-join they are provably the same bag. Any difference is a bug — exactly what the witness catches.</span></p>
+    </div>
+
+    <div class="win">
+      <div class="num">6</div>
+      <div class="wtitle">The Tamper</div>
+      <p>Planted void (disclosed): make probe <b>stop at the first matching build row</b> in each bucket — ignore duplicate keys. Probe rows with several matches get under-joined; the output no longer equals the nested-loop join.</p>
+      <button id="tamper">Inject: first-match-only</button>
+      <button id="restore">Restore</button>
+      <p class="mono">The witness in window 7 flips red the instant this fires.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b class="am">THE HASH JOIN</b> · WORLD II · THE FOLD · ud0 corpus. Engine is genuinely LIT: it computes a hash join live and a fail-loud selfcheck throws unless the result is the exact multiset of a nested-loop join over the same tables, in far fewer comparisons. Figure: DeWitt / Bratbergsengen. Built by <span class="am">David Lee Wise (ROOT0) with AVAN.</span>
+</footer>
+</div>
+
+<script>
+// ===================== ENGINE (pure logic, node-extractable) =====================
+var NB = 4;
+// Constructed tables: duplicate keys on both sides + a deliberate hash collision (1 and 5 share bucket 1).
+var R = [ {k:1,r:'a'}, {k:1,r:'b'}, {k:5,r:'c'}, {k:2,r:'d'}, {k:3,r:'e'} ];          // BUILD (small)
+var S = [ {k:1,s:'X'}, {k:1,s:'Y'}, {k:5,s:'Z'}, {k:2,s:'W'}, {k:7,s:'Q'}, {k:9,s:'V'} ]; // PROBE (large)
+var TAMPER = false; // the planted-void flag (window 6). read live by hashJoin.
+
+function hashKey(k){ return ((k % NB) + NB) % NB; }
+
+// BUILD: insert every build-side row under its join key into its bucket, preserving order.
+function buildTable(rel){
+  var buckets = [];
+  for (var i=0;i<NB;i++) buckets.push([]);
+  var size = 0;
+  for (var i=0;i<rel.length;i++){ buckets[hashKey(rel[i].k)].push(rel[i]); size++; }
+  return { buckets: buckets, size: size };
+}
+
+// PROBE: for each probe row, key-test every entry in its bucket; emit all matches.
+// firstOnly === the TAMPER: stop after the first match (drops duplicate-key matches).
+function hashJoin(rel, pr, firstOnly){
+  if (firstOnly === undefined) firstOnly = TAMPER;
+  var ht = buildTable(rel);
+  var rows = [], comparisons = 0;
+  for (var i=0;i<pr.length;i++){
+    var s = pr[i];
+    var bucket = ht.buckets[hashKey(s.k)];
+    for (var j=0;j<bucket.length;j++){
+      comparisons++;                        // one key comparison
+      if (bucket[j].k === s.k){
+        rows.push({ k:s.k, r:bucket[j].r, s:s.s });
+        if (firstOnly) break;               // TAMPER path: ignore the rest of the bucket
+      }
+    }
+  }
+  return { rows: rows, comparisons: comparisons, size: ht.size, buckets: ht.buckets };
+}
+
+// GROUND TRUTH: nested-loop join. O(n*m) comparisons, compares every pair.
+function nestedLoopJoin(rel, pr){
+  var rows = [], comparisons = 0;
+  for (var i=0;i<pr.length;i++){
+    for (var j=0;j<rel.length;j++){
+      comparisons++;
+      if (rel[j].k === pr[i].k) rows.push({ k:pr[i].k, r:rel[j].r, s:pr[i].s });
+    }
+  }
+  return { rows: rows, comparisons: comparisons };
+}
+
+function serRow(x){ return x.k + ':' + x.r + '>' + x.s; }
+// exact BAG (multiset) equality — order-independent
+function bagEqual(a, b){
+  if (a.length !== b.length) return false;
+  var A = a.map(serRow).sort(), B = b.map(serRow).sort();
+  for (var i=0;i<A.length;i++) if (A[i] !== B[i]) return false;
+  return true;
+}
+
+function assert(cond, msg){ if (!cond) throw new Error('selfcheck FAILED: ' + msg); }
+
+// Fail-loud, deterministic. Saves/restores TAMPER. Returns true on success.
+function selfcheck(){
+  var savedTamper = TAMPER;
+
+  var NL = nestedLoopJoin(R, S);
+  TAMPER = false;
+  var HJ = hashJoin(R, S);
+
+  // (1) hash join == nested-loop join as an exact multiset
+  assert(bagEqual(HJ.rows, NL.rows), 'hash join must equal nested-loop join (bag equality)');
+  assert(HJ.rows.length === 6 && NL.rows.length === 6, 'both joins must emit exactly 6 rows');
+
+  // (2) build inserted EVERY build-side row
+  assert(HJ.size === R.length && HJ.size === 5, 'build must insert all 5 build rows');
+
+  // (3) duplicate keys yield the full cross-product (k=1: 2 build x 2 probe = 4 rows)
+  assert(HJ.rows.filter(function(x){return x.k===1;}).length === 4, 'k=1 must produce a 2x2 cross-product = 4 rows');
+
+  // (4) hash-bucket collision handled: k=5 and k=1 share bucket 1, but k=5 probe matches only c
+  var k5 = HJ.rows.filter(function(x){return x.k===5;});
+  assert(k5.length === 1 && k5[0].r === 'c', 'k=5 (colliding with k=1 in bucket 1) must match only c');
+
+  // (5) no false matches from collisions: k=9 and k=7 probe rows find nothing
+  assert(HJ.rows.filter(function(x){return x.s==='V';}).length === 0, 'k=9 (bucket 1, no build key 9) must not match');
+  assert(HJ.rows.filter(function(x){return x.s==='Q';}).length === 0, 'k=7 must not match');
+
+  // (6) complexity: hash join does FAR fewer comparisons than nested loop
+  assert(NL.comparisons === 30, 'nested loop must do n*m = 30 comparisons');
+  assert(HJ.comparisons === 14, 'hash join must do 14 bucket comparisons');
+  assert(HJ.comparisons < NL.comparisons, 'hash join must beat nested loop on comparisons');
+
+  // (7) planted void: set the tamper flag, prove the result now DIFFERS, then restore
+  TAMPER = true;
+  var BAD = hashJoin(R, S);                 // reads TAMPER === true
+  assert(!bagEqual(BAD.rows, NL.rows), 'TAMPER must break bag equality (under-join)');
+  assert(BAD.rows.length === 4, 'first-match-only tamper drops the duplicate matches (6 -> 4)');
+  TAMPER = false;
+  assert(bagEqual(hashJoin(R, S).rows, NL.rows), 'restoring the flag must restore correctness');
+
+  TAMPER = savedTamper;                     // restore whatever the UI had
+  return true;
+}
+/* ===== UI ===== */
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function renderInputs(){
+  document.getElementById('rin').innerHTML =
+    R.map(function(x){return '('+x.k+', '+esc(x.r)+')';}).join(' &nbsp;');
+  document.getElementById('sin').innerHTML =
+    S.map(function(x){return '('+x.k+', '+esc(x.s)+')';}).join(' &nbsp;');
+}
+
+function render(){
+  var ht = buildTable(R);
+  // build table (buckets)
+  var bh = '';
+  for (var i=0;i<NB;i++){
+    var chips = ht.buckets[i].map(function(e){ return '<span class="chip">'+e.k+':'+esc(e.r)+'</span>'; }).join('');
+    if (!chips) chips = '<span class="chip miss">∅</span>';
+    bh += '<div class="bkt"><span class="lbl">bucket '+i+'</span><span>'+chips+'</span></div>';
+  }
+  document.getElementById('buildtbl').innerHTML = bh;
+
+  // probe log
+  var res = hashJoin(R, S);   // current TAMPER
+  var pl = '';
+  for (var i=0;i<S.length;i++){
+    var s = S[i], b = hashKey(s.k), bucket = ht.buckets[b];
+    var hits = [];
+    for (var j=0;j<bucket.length;j++){
+      if (bucket[j].k === s.k){ hits.push(bucket[j].r); if (TAMPER) break; }
+    }
+    if (hits.length){
+      pl += '<div class="hit">probe ('+s.k+','+esc(s.s)+') → bucket '+b+' → match '+hits.map(esc).join(', ')+'</div>';
+    } else {
+      pl += '<div class="no">probe ('+s.k+','+esc(s.s)+') → bucket '+b+' → no match</div>';
+    }
+  }
+  document.getElementById('probelog').innerHTML = pl;
+
+  // output rows (mark dropped ones when tampered, vs ground truth)
+  var NL = nestedLoopJoin(R, S);
+  var have = {}; res.rows.forEach(function(x){ have[serRow(x)] = (have[serRow(x)]||0)+1; });
+  var seen = {};
+  var oh = NL.rows.map(function(x){
+    var key = serRow(x);
+    seen[key] = (seen[key]||0)+1;
+    var present = (have[key]||0) >= seen[key];
+    return '<span class="outrow'+(present?'':' gone')+'">'+x.k+' : '+esc(x.r)+' › '+esc(x.s)+'</span>';
+  }).join('');
+  document.getElementById('joinout').innerHTML = oh;
+}
+
+function runWitness(){
+  var NL = nestedLoopJoin(R, S);
+  var HJ = hashJoin(R, S);   // current TAMPER
+  var el = document.getElementById('auditout');
+  if (bagEqual(HJ.rows, NL.rows)){
+    el.className = 'badge';
+    el.innerHTML = '✓ WITNESS · hash-join output = nested-loop ground truth ('+HJ.rows.length+' rows, exact multiset) · '+HJ.comparisons+' vs '+NL.comparisons+' comparisons';
+  } else {
+    el.className = 'badge bad';
+    el.innerHTML = '✗ TAMPER DETECTED · under-joined: '+HJ.rows.length+' rows ≠ '+NL.rows.length+' nested-loop rows. Duplicate-key matches were dropped.';
+  }
+}
+
+document.getElementById('tamper').addEventListener('click', function(){
+  TAMPER = true; render(); runWitness();
+});
+document.getElementById('restore').addEventListener('click', function(){
+  TAMPER = false; render(); runWitness();
+});
+
+// boot: fail-loud selfcheck, then light the panel
+(function(){
+  try {
+    var ok = selfcheck();
+    if (ok !== true) throw new Error('selfcheck did not return true');
+    renderInputs();
+    render();
+    runWitness();
+    var lb = document.getElementById('litbadge');
+    lb.className = 'badge';
+    lb.innerHTML = '<span class="tag t-lit">LIT</span> &nbsp;6 joined rows = nested-loop join, proven live · 14 vs 30 comparisons';
+  } catch (e){
+    var fb = document.getElementById('failb');
+    fb.style.display = 'block';
+    fb.textContent = 'ENGINE DARK — ' + e.message;
+    var lb = document.getElementById('litbadge');
+    if (lb){ lb.className = 'badge bad'; lb.textContent = 'selfcheck failed'; }
+    throw e; // rethrow: fail loud
+  }
+})();
+</script>
+</body>
+</html>

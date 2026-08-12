@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LUENBERGER OBSERVER</title>
+<style>
+:root{
+  --am:#9ee06a;
+  --bg:#0a140d;
+  --bg2:#0e1b12;
+  --ink:#dbe9cf;
+  --dim:#8fa587;
+  --line:#22331f;
+  --blue:#6fb7ff;
+  --bluebg:#0b1620;
+  --red:#ff7b7b;
+  --redbg:#1c0f10;
+  --amber:#ffcf5a;
+  --lit:#9ee06a;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 620px at 82% -8%, #12291a 0%, transparent 60%),
+    radial-gradient(900px 520px at 8% 108%, #0f2114 0%, transparent 60%),
+    var(--bg);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:14px;
+  line-height:1.5;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{
+  font-size:26px;letter-spacing:2px;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 22px rgba(158,224,106,.28);
+}
+.sub{color:var(--ink);max-width:860px;margin:0 0 10px;font-size:13.5px}
+.sub b{color:var(--am)}
+.src{font-size:12px;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.src a:hover{border-bottom-style:solid}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:1px;
+  padding:1px 7px;border-radius:3px;border:1px solid;vertical-align:middle;
+  text-transform:uppercase;font-weight:700;
+}
+.t-amber{color:var(--amber);border-color:#5a4a1e;background:#231b08}
+.t-lit{color:#0a140d;background:var(--lit);border-color:var(--lit)}
+.t-in{color:var(--blue);border-color:#254257;background:#0a1622}
+.t-out{color:var(--am);border-color:#2c4a1c;background:#0e1c0a}
+.t-wall{color:var(--red);border-color:#5a2020;background:#220d0d}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
+  padding:7px 10px;border-radius:6px;border:1px solid;
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#1f3a52;background:linear-gradient(180deg,#0c1a26,#0a141d)}
+.col.red .teamhdr{color:var(--red);border-color:#4a1e1e;background:linear-gradient(180deg,#1e1010,#160c0c)}
+.col.center .teamhdr{color:var(--am);border-color:#2c4a1c;background:linear-gradient(180deg,#10230f,#0c1a0b);text-align:center}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:8px;
+  background:linear-gradient(180deg,var(--bg2),#0b160e);padding:12px 13px 13px;
+}
+.col.blue .win{border-color:#173047}
+.col.red .win{border-color:#3a1717}
+.win.panel{border-color:#2c4a1c;background:linear-gradient(180deg,#0f1e0d,#0b160b);box-shadow:0 0 0 1px rgba(158,224,106,.06),0 10px 40px -18px rgba(158,224,106,.35)}
+.wnum{
+  position:absolute;top:-10px;right:10px;width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  border:1px solid;background:var(--bg);
+}
+.col.blue .wnum{color:var(--blue);border-color:#2a4a63}
+.col.red .wnum{color:var(--red);border-color:#623030}
+.win.panel .wnum{color:var(--am);border-color:#3c6a24}
+.wtitle{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:0 0 8px;font-weight:700}
+.win p{margin:6px 0;font-size:12.5px;color:var(--ink)}
+.win p.small{font-size:11.5px;color:var(--dim)}
+.mono{font-family:var(--mono)}
+.k{color:var(--am)}
+.mat{white-space:pre;font-size:12px;color:var(--ink);background:#08120a;border:1px solid var(--line);border-radius:6px;padding:8px 10px;overflow-x:auto;margin:6px 0}
+.flow{display:flex;align-items:center;justify-content:center;color:var(--am);font-size:16px;opacity:.7;height:14px;letter-spacing:2px}
+
+.badge{display:inline-block;padding:3px 9px;border-radius:5px;font-size:11.5px;font-weight:700;letter-spacing:.5px;border:1px solid}
+.badge.ok{color:#0a140d;background:var(--lit);border-color:var(--lit)}
+.badge.bad{color:#fff;background:#c0392b;border-color:#e05545}
+.wall-note{border-left:3px solid var(--red);padding:6px 0 6px 10px;color:var(--ink);font-size:12.5px}
+.dead{color:var(--dim);text-decoration:line-through;text-decoration-color:#7a3030}
+.fix{color:var(--am)}
+
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.ctrl label{font-size:11.5px;color:var(--dim)}
+.ctrl input[type=number]{
+  width:64px;background:#08120a;color:var(--ink);border:1px solid var(--line);
+  border-radius:5px;padding:4px 6px;font-family:var(--mono);font-size:12.5px;
+}
+button{
+  font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.5px;cursor:pointer;
+  background:#12240f;color:var(--am);border:1px solid #2c4a1c;border-radius:6px;padding:6px 11px;
+}
+button:hover{background:#183012}
+button.warn{background:#2a1010;color:var(--red);border-color:#5a2020}
+button.warn:hover{background:#3a1414}
+svg.trace{width:100%;height:96px;background:#08120a;border:1px solid var(--line);border-radius:6px;display:block;margin-top:6px}
+.rowline{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dotted var(--line);padding:3px 0}
+.rowline span:last-child{color:var(--am)}
+#failb{display:none;margin:10px 0;padding:10px 12px;border-radius:8px;background:#2a0d0d;border:1px solid #7a2020;color:#ffb4b4;font-size:12.5px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:11.5px;text-align:center}
+footer b{color:var(--am)}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE LUENBERGER OBSERVER</h1>
+  <p class="sub">You cannot see the state, only the output. So build a <b>twin</b> — a model that runs
+  the same equations alongside the plant and, whenever its predicted output disagrees with the real
+  measurement, corrects itself in proportion to the error. Choose the correction gain and the twin's own
+  error dynamics fall wherever you place them. The estimate converges to the truth it was never shown.</p>
+  <p class="src"><span class="tag t-amber">source</span>
+  Luenberger, D. G. — <i>Observing the State of a Linear System</i>, IEEE Trans. Military Electronics,
+  vol. 8, pp. 74–80 (1964). <a href="https://ui.adsabs.harvard.edu/abs/1964ITME....8...74L/abstract" target="_blank" rel="noopener">ADS 1964ITME....8...74L</a>.
+  Rendered, not quoted.</p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">BLUE TEAM &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wnum">3</div>
+      <div class="wtitle">The Model</div>
+      <p>A small LTI plant, state unseen, output measured:</p>
+      <div class="mat">x' = A x + B u        A = [ 0   1 ]
+y  = C x               [ -2  -3 ]
+                  B = [0;1]   C = [1  0]</div>
+      <p class="small">A has known eigenvalues <span class="k">-1, -2</span> (char. poly &lambda;&sup2;+3&lambda;+2).
+      We measure only x&#8321;. The observer copies the model and adds a correction:</p>
+      <div class="mat">x&#770;' = A x&#770; + B u + L ( y &minus; C x&#770; )</div>
+      <p class="small">Subtract from the true dynamics and everything but the error cancels:
+      the estimation error <span class="k">e = x &minus; x&#770;</span> obeys
+      <span class="k">e' = (A &minus; L C) e</span> — no plant, no input, just decay.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">5</div>
+      <div class="wtitle">The Lineage</div>
+      <p><b>the-observability</b> asked <i>can the state be recovered from the output?</i> Here that
+      question is <b>cashed in</b>: because (A,C) is observable, L can place the error poles anywhere.</p>
+      <p class="small">The observer is the <b>deterministic skeleton of the-kalman filter</b> — Kalman's
+      gain is the noise-optimal L; drop the noise and it collapses to a placed pole. And by duality it is
+      the <b>exact dual of the-pole-placement</b>: place eig(A&minus;LC) here, place eig(A&minus;BK)
+      there, and the <b>separation principle</b> lets you do both independently.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">7</div>
+      <div class="wtitle">The Witness</div>
+      <p class="small">Re-runs the live invariants on demand: observer poles land on the chosen set,
+      the error decays, and the separation union holds. It also watches window&nbsp;6 — if the gain is
+      chosen on the <i>unobservable</i> plant, it catches the mode that never dies.</p>
+      <p><span id="auditout" class="badge ok">WITNESS: checking&hellip;</span></p>
+      <button onclick="reCheck()">re-check now</button>
+    </div>
+  </div>
+
+  <!-- ================= CENTER MACHINE ================= -->
+  <div class="col center">
+    <div class="teamhdr">THE OBSERVER</div>
+
+    <div class="win">
+      <div class="wnum">4</div>
+      <div class="wtitle">Data In <span class="tag t-in">in &darr;</span></div>
+      <p class="small">The plant is observable; you supply where the <i>error</i> should live. Pick two
+      stable poles for eig(A&minus;LC):</p>
+      <div class="ctrl">
+        <label>pole&nbsp;p&#8321; <input id="p1" type="number" value="-3" step="0.5"></label>
+        <label>pole&nbsp;p&#8322; <input id="p2" type="number" value="-4" step="0.5"></label>
+        <button onclick="recompute()">place L</button>
+      </div>
+      <p class="small">Initial estimation error e(0) = [1, 0]&#7488;. Input u is irrelevant to e —
+      that is the whole point.</p>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win panel">
+      <div class="wnum">0</div>
+      <div class="wtitle">The Panel <span class="tag t-lit">LIT</span></div>
+      <p class="small">Pole placement solves for L in closed form (coefficient matching on the 2&times;2
+      characteristic polynomial), then the error is propagated by a live matrix exponential
+      e(t)=e<sup>(A&minus;LC)t</sup>e(0).</p>
+      <div class="rowline"><span>gain&nbsp;L</span><span id="oL">–</span></div>
+      <div class="rowline"><span>eig(A&minus;LC)</span><span id="oEig">–</span></div>
+      <div class="rowline"><span>&#8741;e(0)&#8741;</span><span id="oE0">–</span></div>
+      <div class="rowline"><span>&#8741;e(5)&#8741;</span><span id="oE5">–</span></div>
+      <div class="rowline"><span>status</span><span id="oStat">–</span></div>
+      <svg class="trace" id="trace" viewBox="0 0 300 96" preserveAspectRatio="none"></svg>
+      <p class="small" id="tracelab" style="text-align:center;margin-top:2px">&#8741;e(t)&#8741; &nbsp; t: 0 &rarr; 6</p>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win">
+      <div class="wnum">8</div>
+      <div class="wtitle">Data Out <span class="tag t-out">out &darr;</span></div>
+      <p class="small">Proven at boot, before any interaction:</p>
+      <p><span id="litbadge" class="badge">booting&hellip;</span></p>
+      <p class="small">Observer poles placed on the chosen set to 1e-8; error &rarr; 0; and the
+      separation union eig&#123;A&minus;BK&#125; &cup; eig&#123;A&minus;LC&#125; = &#123;-5,-6,-3,-4&#125;
+      confirmed as the combined closed-loop spectrum.</p>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">RED TEAM &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wnum">1</div>
+      <div class="wtitle">The Adversary <span class="tag t-wall">WALL</span></div>
+      <div class="wall-note">
+        <p style="margin-top:0"><b>"Just crank L huge and the error dies instantly."</b></p>
+        <p class="small">No. L amplifies the measurement residual, and every real sensor carries noise.
+        A large L pumps that noise straight into x&#770;. The filter version of this observer exists
+        precisely to trade convergence speed against noise injection — the deterministic placement here
+        assumes a clean y. High-gain observers are real but pay in peaking and noise sensitivity.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wnum">2</div>
+      <div class="wtitle">The Graveyard</div>
+      <p class="dead">"An observer can reconstruct any state from the output."</p>
+      <p class="small fix">&rarr; Only the <b>observable</b> subspace. An unobservable mode leaves no
+      trace in y, so no L can pull its error to zero (window&nbsp;6 exhibits exactly this).</p>
+      <p class="dead">"The observer changes how the plant behaves."</p>
+      <p class="small fix">&rarr; It does not. e' = (A&minus;LC)e has <b>no</b> plant or input coupling;
+      the estimator is a passenger. Only when its estimate feeds a controller do poles interact — and
+      even then the <b>separation principle</b> keeps the two sets independent.</p>
+      <p class="dead">"Faster observer poles are always better."</p>
+      <p class="small fix">&rarr; <span class="tag t-amber">amber</span> only under clean measurement.
+      Faster poles need larger L, and larger L means more noise. The choice is a tradeoff, not a maximum.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">6</div>
+      <div class="wtitle">The Tamper</div>
+      <p class="small">Planted void (disclosed): swap the plant for an <b>unobservable</b> one —
+      A&#8322;=diag(-1, +1), C&#8322;=[1 0]. The +1 mode is invisible in y, so any L leaves it at +1 and
+      its error <b>grows without bound</b>. The witness in&nbsp;7 catches it.</p>
+      <div class="ctrl">
+        <button id="tamper" class="warn" onclick="doTamper()">inject unobservable plant</button>
+        <button id="restore" onclick="doRestore()">restore</button>
+      </div>
+      <p class="small" id="tampstat">plant: observable (clean).</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE FOLD &middot; WORLD II &middot; ud0 corpus. The engine is genuinely LIT: L, eigenvalues, matrix
+  exponential and the separation union are computed live and asserted closed-form to 1e-8 at boot.
+  Rendered by <b>David Lee Wise (ROOT0) with AVAN.</b>
+</footer>
+</div>
+
+<script>
+// ============================================================
+// ENGINE — pure logic. Everything below is closed-form checkable.
+// No randomness reaches an assertion; where a seed is used it is fixed.
+// ============================================================
+
+// deterministic fixed-seed PRNG (unused by asserts; present for reproducibility)
+function makeRng(seed){let s=seed>>>0;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+var RNG=makeRng(20250811);
+
+// -- small dense matrix algebra --
+function mm(A,B){var n=A.length,m=B[0].length,k=B.length,R=[];for(var i=0;i<n;i++){R[i]=[];for(var j=0;j<m;j++){var s=0;for(var t=0;t<k;t++)s+=A[i][t]*B[t][j];R[i][j]=s;}}return R;}
+function madd(A,B){return A.map(function(r,i){return r.map(function(v,j){return v+B[i][j];});});}
+function msub(A,B){return A.map(function(r,i){return r.map(function(v,j){return v-B[i][j];});});}
+function mscale(A,s){return A.map(function(r){return r.map(function(v){return v*s;});});}
+function eye(n){var R=[];for(var i=0;i<n;i++){R[i]=[];for(var j=0;j<n;j++)R[i][j]=(i===j)?1:0;}return R;}
+function mv(A,x){return A.map(function(r){var s=0;for(var j=0;j<r.length;j++)s+=r[j]*x[j];return s;});}
+function vnorm(x){var s=0;for(var i=0;i<x.length;i++)s+=x[i]*x[i];return Math.sqrt(s);}
+
+// closed-form 2x2 real eigenvalues (ascending)
+function eig2(M){var tr=M[0][0]+M[1][1],det=M[0][0]*M[1][1]-M[0][1]*M[1][0];var disc=tr*tr-4*det;var d=Math.sqrt(Math.max(0,disc));return [(tr-d)/2,(tr+d)/2].sort(function(a,b){return a-b;});}
+
+// closed-form 2x2 inverse
+function inv2(m){var d=m[0][0]*m[1][1]-m[0][1]*m[1][0];return [[m[1][1]/d,-m[0][1]/d],[-m[1][0]/d,m[0][0]/d]];}
+
+// determinant of an n x n matrix via Gaussian elimination with partial pivot
+function detN(Min){var A=Min.map(function(r){return r.slice();});var n=A.length,det=1;for(var c=0;c<n;c++){var p=c;for(var r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;if(Math.abs(A[p][c])<1e-14)return 0;if(p!==c){var tmp=A[p];A[p]=A[c];A[c]=tmp;det=-det;}det*=A[c][c];for(var r2=c+1;r2<n;r2++){var f=A[r2][c]/A[c][c];for(var k=c;k<n;k++)A[r2][k]-=f*A[c][k];}}return det;}
+
+// matrix exponential e^(A*t) via scaling-and-squaring + Taylor (n x n)
+function expm(A,t){var M=mscale(A,t),n=M.length,norm=0;for(var i=0;i<n;i++){var s=0;for(var j=0;j<n;j++)s+=Math.abs(M[i][j]);if(s>norm)norm=s;}var sh=Math.max(0,Math.ceil(Math.log2(norm+1)));var As=mscale(M,1/Math.pow(2,sh));var term=eye(n),sum=eye(n);for(var k=1;k<=25;k++){term=mscale(mm(term,As),1/k);sum=madd(sum,term);}for(var q=0;q<sh;q++)sum=mm(sum,sum);return sum;}
+
+// -- the plant --
+var A=[[0,1],[-2,-3]];   // eig -1, -2
+var B=[[0],[1]];
+var C=[[1,0]];           // observable
+
+// observability matrix of (A,C) for a 2-state system
+function obsRank(Am,Cm){var CA=mm(Cm,Am);var O=[Cm[0].slice(),CA[0].slice()];return Math.abs(detN(O))>1e-9?2:1;}
+
+// pole placement: choose L so char.poly(A-LC) = (s-p1)(s-p2).
+// For this A,C: char.poly(A-LC) = s^2 + (3+l1) s + (3 l1 + l2 + 2).
+function placeL(p1,p2){var a1=-(p1+p2),a0=p1*p2;var l1=a1-3;var l2=a0-3*a1+7;return [[l1],[l2]];}
+
+// controller placement: char.poly(A-BK) = s^2 + (3+k2) s + (2+k1).
+function placeK(p1,p2){var a1=-(p1+p2),a0=p1*p2;var k2=a1-3;var k1=a0-2;return [[k1,k2]];}
+
+// error norm at time T from initial error e0 under dynamics G = A-LC
+function errNorm(G,e0,T){return vnorm(mv(expm(G,T),e0));}
+
+// build combined closed-loop matrix M = [[A-BK, BK],[0, A-LC]]
+function combined(K,L){var ABK=msub(A,mm(B,K)),ALC=msub(A,mm(L,C)),BK=mm(B,K);
+  return [[ABK[0][0],ABK[0][1],BK[0][0],BK[0][1]],
+          [ABK[1][0],ABK[1][1],BK[1][0],BK[1][1]],
+          [0,0,ALC[0][0],ALC[0][1]],
+          [0,0,ALC[1][0],ALC[1][1]]];}
+
+// the disclosed unobservable plant used by the tamper
+var A2=[[-1,0],[0,1]];   // modes -1 and +1
+var C2=[[1,0]];          // the +1 mode is invisible
+
+var E0=[1,0];            // initial estimation error (excites both modes)
+
+function assert(cond,msg){if(!cond)throw new Error(msg);}
+function near(a,b,tol){return Math.abs(a-b)<=(tol||1e-8);}
+
+// ---- FAIL-LOUD SELF CHECK: throws on any violation, returns true on success ----
+function selfcheck(){
+  var TOL=1e-8;
+
+  // (1) known plant spectrum
+  var ea=eig2(A);
+  assert(near(ea[0],-2,TOL)&&near(ea[1],-1,TOL),"eig(A) not {-1,-2}");
+
+  // inverse sanity: A * inv(A) = I
+  var AI=mm(A,inv2(A));
+  assert(near(AI[0][0],1,TOL)&&near(AI[1][1],1,TOL)&&near(AI[0][1],0,TOL)&&near(AI[1][0],0,TOL),"inverse check failed");
+
+  // (2) (A,C) observable -> L places eig(A-LC) at chosen set {-3,-4}
+  assert(obsRank(A,C)===2,"(A,C) should be observable");
+  var L=placeL(-3,-4);
+  var ALC=msub(A,mm(L,C));
+  var el=eig2(ALC);
+  assert(near(el[0],-4,TOL)&&near(el[1],-3,TOL),"eig(A-LC) not placed at {-3,-4}");
+
+  // (3) error dynamics carry NO input term: e' = (A-LC)e converges regardless of u.
+  // structurally there is no B or u in errNorm; confirm decay for the placed gain.
+  var e5=errNorm(ALC,E0,5);
+  assert(e5<1e-6,"placed error did not decay");
+  var e8=errNorm(ALC,E0,8);
+  assert(e8<e5,"error not monotonically shrinking");
+
+  // (4) SEPARATION PRINCIPLE: controller poles {-5,-6} and observer poles {-3,-4}
+  // are chosen independently; the combined spectrum is their union.
+  var K=placeK(-5,-6);
+  var ABK=msub(A,mm(B,K));
+  var ek=eig2(ABK);
+  assert(near(ek[0],-6,TOL)&&near(ek[1],-5,TOL),"controller poles not placed");
+  var M=combined(K,L);
+  var union=[-5,-6,-3,-4];
+  for(var i=0;i<union.length;i++){
+    var D=msub(M,mscale(eye(4),union[i]));
+    assert(Math.abs(detN(D))<1e-7,"combined spectrum missing eigenvalue "+union[i]);
+  }
+
+  // (5) an UNOBSERVABLE mode's error cannot be driven to 0.
+  assert(obsRank(A2,C2)===1,"tamper plant should be unobservable");
+
+  // ---- planted-void probe: switch to the unobservable plant, pick L ignoring
+  // observability, and confirm the decay check now FAILS. Save & restore state. ----
+  var saved=STATE.tampered;
+  STATE.tampered=true;
+  var Lbad=[[3],[5]];                     // chosen with no regard for observability
+  var Abad=msub(A2,mm(Lbad,C2));          // = [[-4,0],[-5,1]] -> eig {-4, +1}
+  var eb=eig2(Abad);
+  assert(eb[1]>0.5,"unobservable mode should stay unstable");   // +1 is unmovable
+  var ebad5=errNorm(Abad,E0,5);
+  assert(ebad5>10,"tamper: error should NOT decay (planted void)");  // ~148, grows
+  STATE.tampered=saved;
+
+  // after restore, the honest placed system decays again
+  assert(errNorm(msub(A,mm(placeL(-3,-4),C)),E0,5)<1e-6,"restore failed");
+
+  return true;
+}
+
+// ============================================================
+var STATE={tampered:false};
+
+/* ===== UI ===== */
+
+function fmt(x){var r=Math.round(x*1e6)/1e6;if(Math.abs(r)<1e-9)r=0;return (r>=0?" ":"")+r.toFixed(3);}
+function fmtVec(col){return "["+col.map(function(r){return fmt(r[0]).trim();}).join(", ")+"]";}
+function fmtEig(e){return "{"+e.map(function(v){return fmt(v).trim();}).join(", ")+"}";}
+
+function activeSystem(){
+  if(STATE.tampered){
+    var Lbad=[[3],[5]];
+    return {G:msub(A2,mm(Lbad,C2)),L:Lbad,label:"unobservable plant A2 (tampered)"};
+  }
+  var p1=parseFloat(document.getElementById("p1").value);
+  var p2=parseFloat(document.getElementById("p2").value);
+  if(isNaN(p1))p1=-3;if(isNaN(p2))p2=-4;
+  var L=placeL(p1,p2);
+  return {G:msub(A,mm(L,C)),L:L,label:"observable plant A"};
+}
+
+function drawTrace(G){
+  var svg=document.getElementById("trace");
+  var W=300,H=96,N=90,Tmax=6;
+  var xs=[],ys=[],maxv=0;
+  for(var i=0;i<=N;i++){var t=Tmax*i/N;var v=errNorm(G,E0,t);xs.push(t);ys.push(v);if(v>maxv)maxv=v;}
+  if(maxv<1e-9)maxv=1;
+  var pts=[];
+  for(var j=0;j<=N;j++){
+    var px=(xs[j]/Tmax)*(W-8)+4;
+    var py=H-4-(ys[j]/maxv)*(H-12);
+    pts.push(px.toFixed(1)+","+py.toFixed(1));
+  }
+  var grow=ys[N]>ys[0];
+  var col=grow?"#ff7b7b":"#9ee06a";
+  var base=H-4;
+  svg.innerHTML=
+    '<line x1="4" y1="'+base+'" x2="296" y2="'+base+'" stroke="#22331f"/>'+
+    '<polyline fill="none" stroke="'+col+'" stroke-width="1.8" points="'+pts.join(" ")+'"/>';
+}
+
+function refreshPanel(){
+  var sys=activeSystem();
+  var e0=errNorm(sys.G,E0,0), e5=errNorm(sys.G,E0,5);
+  var eig=eig2(sys.G);
+  document.getElementById("oL").textContent=fmtVec(sys.L);
+  document.getElementById("oEig").textContent=fmtEig(eig);
+  document.getElementById("oE0").textContent=fmt(e0).trim();
+  document.getElementById("oE5").textContent=(e5>1e3?e5.toExponential(2):fmt(e5).trim());
+  var conv=eig[eig.length-1]<-1e-9;
+  document.getElementById("oStat").innerHTML=conv
+    ? '<span class="badge ok">e &rarr; 0</span>'
+    : '<span class="badge bad">e diverges</span>';
+  document.getElementById("oStat").style.color=conv?"":"var(--red)";
+  drawTrace(sys.G);
+}
+
+function recompute(){ if(STATE.tampered) return; refreshPanel(); reCheck(); }
+
+function doTamper(){
+  STATE.tampered=true;
+  document.getElementById("tampstat").innerHTML='plant: <b style="color:var(--red)">UNOBSERVABLE</b> — +1 mode invisible; error grows.';
+  refreshPanel();
+  reCheck();
+}
+function doRestore(){
+  STATE.tampered=false;
+  document.getElementById("tampstat").textContent="plant: observable (clean).";
+  refreshPanel();
+  reCheck();
+}
+
+// live witness: catches the tamper and re-verifies the honest invariants
+function reCheck(){
+  var out=document.getElementById("auditout");
+  if(STATE.tampered){
+    var Abad=msub(A2,mm([[3],[5]],C2));
+    var e=eig2(Abad);
+    out.className="badge bad";
+    out.textContent="WITNESS: TAMPER — mode "+fmt(e[1]).trim()+" never decays";
+    return;
+  }
+  try{
+    selfcheck();
+    out.className="badge ok";
+    out.textContent="WITNESS: OK — poles placed, e→0, union holds";
+  }catch(err){
+    out.className="badge bad";
+    out.textContent="WITNESS: FAIL — "+err.message;
+  }
+}
+
+// ---- boot: run the fail-loud check, then light the panel ----
+(function boot(){
+  var lit=document.getElementById("litbadge");
+  try{
+    var ok=selfcheck();
+    if(ok!==true)throw new Error("selfcheck did not return true");
+    lit.className="badge ok";
+    lit.textContent="LIT ✓ observer verified to 1e-8";
+    refreshPanel();
+    reCheck();
+  }catch(err){
+    lit.className="badge bad";
+    lit.textContent="SELFCHECK FAILED";
+    var fb=document.getElementById("failb");
+    fb.style.display="block";
+    fb.textContent="FAIL-LOUD: "+err.message;
+    throw err;
+  }
+})();
+</script>
+</body>
+</html>

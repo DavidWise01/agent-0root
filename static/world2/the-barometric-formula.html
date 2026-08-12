@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BAROMETRIC FORMULA</title>
+<style>
+:root{
+  --am:#9ee0d0;
+  --ground:#0c1a12;
+  --ground2:#0f2318;
+  --ink:#e8f6ef;
+  --dim:#9fbcae;
+  --line:#1f3a2b;
+  --blue:#7fb2ff;
+  --bluebg:#0d1a2b;
+  --blueln:#1c3350;
+  --red:#ff8f8f;
+  --redbg:#2a0f12;
+  --redln:#552027;
+  --amber:#ffcf6b;
+  --lit:#7dffb0;
+  --wall:#ff8f8f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 70% -10%, #14301f 0%, transparent 60%),
+    linear-gradient(180deg,var(--ground2),var(--ground));
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+  padding:22px 18px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{
+  font-size:29px;letter-spacing:.08em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 22px rgba(158,224,208,.25);
+}
+.sub{color:var(--ink);max-width:78ch;margin:0 0 10px}
+.src{font-size:12.5px;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.12em;
+  padding:1px 7px;border-radius:3px;margin-right:6px;vertical-align:middle;
+  border:1px solid currentColor;text-transform:uppercase;font-weight:600;
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;
+  font-weight:700;padding:6px 10px;border-radius:5px;
+}
+.col.blue .teamhdr{color:var(--blue);background:var(--bluebg);border:1px solid var(--blueln)}
+.col.red .teamhdr{color:var(--red);background:var(--redbg);border:1px solid var(--redln)}
+.col.center .teamhdr{color:var(--am);background:#0c211a;border:1px solid var(--line);text-align:center}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:8px;
+  background:linear-gradient(180deg,rgba(255,255,255,.015),rgba(0,0,0,.12));
+  padding:12px 13px 13px;
+}
+.col.blue .win{border-color:var(--blueln)}
+.col.red .win{border-color:var(--redln)}
+.win .no{
+  position:absolute;top:-10px;right:10px;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;font-size:11px;font-weight:700;
+  background:var(--ground);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .win .no{color:var(--blue);border-color:var(--blueln)}
+.col.red .win .no{color:var(--red);border-color:var(--redln)}
+.win.panel{border-color:var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.14),0 0 30px rgba(158,224,208,.08)}
+.win.panel .no{color:var(--am);border-color:var(--am)}
+.win h3{
+  margin:0 0 8px;font-size:12px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--am);font-weight:700;
+}
+.col.blue .win h3{color:var(--blue)}
+.col.red .win h3{color:var(--red)}
+.win p{margin:6px 0;font-size:13px;color:var(--ink)}
+.win small{color:var(--dim);font-size:12px}
+.k{color:var(--am)}
+.mono{font-family:inherit}
+.eq{
+  background:#08150e;border:1px solid var(--line);border-radius:6px;
+  padding:8px 10px;margin:8px 0;font-size:13px;color:var(--am);overflow-x:auto;
+}
+.flow{
+  text-align:center;color:var(--dim);font-size:16px;letter-spacing:.3em;
+  margin:2px 0;user-select:none;
+}
+.grave{color:var(--dim)}
+.grave s{color:var(--red);opacity:.8}
+.grave b{color:var(--lit)}
+.wall-note{
+  border-left:3px solid var(--wall);background:rgba(255,80,80,.05);
+  padding:6px 10px;margin:8px 0;font-size:12.5px;color:var(--ink);
+}
+canvas{display:block;width:100%;height:150px;background:#07130d;border:1px solid var(--line);border-radius:6px;margin-top:8px}
+.readout{font-size:12px;color:var(--dim);margin-top:6px}
+.readout b{color:var(--am)}
+button{
+  font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+  background:#161b18;border:1px solid var(--line);border-radius:5px;
+  padding:5px 11px;margin:4px 6px 0 0;
+}
+button:hover{border-color:var(--am)}
+#tamper{border-color:var(--redln);color:var(--red)}
+#restore{border-color:var(--blueln);color:var(--blue)}
+.badge{
+  display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.06em;
+  padding:3px 9px;border-radius:5px;margin-top:6px;
+}
+.badge.ok{color:var(--lit);background:rgba(80,255,150,.08);border:1px solid rgba(80,255,150,.35)}
+.badge.bad{color:var(--wall);background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.45)}
+#failb{display:none;margin:10px 0;padding:9px 12px;border-radius:6px;
+  color:var(--wall);background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.5);font-size:13px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;color:var(--dim);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE BAROMETRIC FORMULA</h1>
+  <p class="sub">Why the air thins with height and your ears pop: gravity pulls the atmosphere down, pressure holds it up, and the balance makes pressure fall <em>exponentially</em> — not linearly — halving every few kilometres. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Pascal, <em>Récit de la grande expérience de l'équilibre des liqueurs</em> (Puy-de-Dôme experiment carried out by F. Périer, 19 Sept 1648); formula formalized by Laplace, <em>Traité de Mécanique Céleste</em> vol. 4 (1805). No stable primary DOI — cited author/title/year, marked AMBER. <a href="https://plato.stanford.edu/entries/pascal/">context</a></p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ============ BLUE ============ -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win"><span class="no">3</span>
+      <h3>The Model</h3>
+      <p>Hydrostatic balance: a slab of air of thickness <span class="k">dz</span> is held up by the pressure difference across it against its own weight.</p>
+      <div class="eq">dP/dz = −ρ·g&nbsp;&nbsp;·&nbsp;&nbsp;ρ = P·M/(R·T)</div>
+      <p>For an isothermal column this integrates to a pure exponential:</p>
+      <div class="eq">P(z) = P₀·e^(−z/H),&nbsp;&nbsp;H = R·T/(M·g)</div>
+      <p><small>H is the <b class="k">scale height</b> — the rise over which pressure drops by a factor of <span class="k">e</span> (≈2.718). For Earth's dry air near <span class="k">273 K</span>, H ≈ <span class="k">8.0 km</span>.</small></p>
+    </div>
+
+    <div class="win"><span class="no">5</span>
+      <h3>The Lineage</h3>
+      <p>Air thins with height — the barometric formula: <span class="k">P = P₀·e^(−z/H)</span>, H = RT/Mg ≈ 8 km, halving every ≈5.5 km. The same hydrostatic balance that sets this pressure structure sits directly above <span class="k">the-adiabatic-lapse-rate</span>: pressure falls exponentially, and a parcel dragged up that pressure gradient cools at g/c_p ≈ 9.8 K/km.</p>
+      <p><small>Barometer → lapse rate → the whole vertical thermodynamics of the troposphere.</small></p>
+    </div>
+
+    <div class="win"><span class="no">7</span>
+      <h3>The Witness</h3>
+      <p>Re-runs the pure engine on load and confirms the exponential holds, P&gt;0 everywhere, and the scale-height dependencies. Flips <b class="k">red</b> if the machine is tampered.</p>
+      <div id="auditout" class="badge ok">witness idle</div>
+    </div>
+  </div>
+
+  <!-- ============ CENTER ============ -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win"><span class="no">4</span>
+      <h3><span class="tag t-in">in ↓</span>Data In</h3>
+      <p>Surface pressure <span class="k">P₀ = 101 325 Pa</span>, temperature <span class="k">T</span> (K), molar mass <span class="k">M</span> (kg/mol), gravity <span class="k">g = 9.80665</span>, gas constant <span class="k">R = 8.31446</span>.</p>
+      <p><small>Drag the temperature to watch the column swell or shrink.</small></p>
+      <input id="tslider" type="range" min="220" max="320" value="273" step="1" style="width:100%">
+      <div class="readout">T = <b id="tval">273 K</b>&nbsp;·&nbsp;gas = <b id="gasval">dry air</b> <button id="gastog" style="padding:2px 8px">→ CO₂</button></div>
+    </div>
+
+    <div class="flow">↓</div>
+
+    <div class="win panel"><span class="no">0</span>
+      <h3><span class="tag t-lit">lit</span>The Panel</h3>
+      <p><small>Live: pressure profile P(z) from surface to 30 km. The dashed line marks one scale height H (P falls to 1/e); the dotted line marks the half-height H·ln2.</small></p>
+      <canvas id="cv" width="520" height="150"></canvas>
+      <div class="readout">H = <b id="hout">8.00 km</b> · P falls to 1/e at <b id="eout">8.00 km</b> · halves every <b id="halfout">5.54 km</b> · ρ₀ = <b id="rhoout">1.225 kg/m³</b></div>
+    </div>
+
+    <div class="flow">↓</div>
+
+    <div class="win"><span class="no">8</span>
+      <h3><span class="tag t-out">out ↓</span>Data Out</h3>
+      <p>Proven: pressure and density fall on the <em>same</em> exponential, never reaching zero — the atmosphere has no top edge, it just fades.</p>
+      <div id="litbadge" class="badge ok">computing…</div>
+    </div>
+  </div>
+
+  <!-- ============ RED ============ -->
+  <div class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win"><span class="no">1</span>
+      <h3>The Adversary</h3>
+      <div class="wall-note"><span class="tag t-wall">wall</span> "The isothermal formula is a lie — the real atmosphere isn't one temperature."</div>
+      <p><small>True, and named honestly: the troposphere cools ~6.5 K/km, so a single H under-shoots high up and the exact profile needs T(z). But the <em>form</em> survives — locally P still obeys dP/dz=−ρg, and the isothermal law is the exact solution of the clean limit and a tight approximation over a scale height. The exponential is the skeleton, not the fiction.</small></p>
+    </div>
+
+    <div class="win"><span class="no">2</span>
+      <h3>The Graveyard</h3>
+      <p class="grave"><s>Pressure falls off linearly and the air ends at a definite ceiling.</s> → <b>Exponential; P&gt;0 for all finite z — no ceiling, only thinning.</b></p>
+      <p class="grave"><s>Heavier air (more humid) presses harder, so humid air is denser.</s> → <b>Water vapour (M≈18) is LIGHTER than dry air (M≈29); humid air is less dense — larger effective H.</b></p>
+      <p class="grave"><s>Halving height and 1/e height are the same distance.</s> → <b>Half at H·ln2 ≈ 5.5 km; 1/e at H ≈ 8.0 km. ln2 &lt; 1.</b></p>
+    </div>
+
+    <div class="win"><span class="no">6</span>
+      <h3>The Tamper</h3>
+      <p>Swap the engine to the linear model <span class="k">P = P₀·(1 − z/H)</span> — pressure hits <b>zero</b> at z=H and goes <b>negative</b> above. The Witness (7) catches it live.</p>
+      <button id="tamper">inject linear model</button>
+      <button id="restore">restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE FOLD · WORLD II · ud0 corpus — an offline instrument. Engine LIT (pure hydrostatic integration); projections beyond one scale height AMBER (real T(z) required). Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- constants ----
+var R=8.314462618, G=9.80665, M_AIR=0.0289644, M_CO2=0.0440095, P0=101325;
+
+// fixed-seed PRNG (deterministic; used only for cosmetic canvas jitter)
+var _seed=1648>>>0;
+function rnd(){ _seed=(_seed*1664525+1013904223)>>>0; return _seed/4294967296; }
+
+// tamper flag — plain top-level var so selfcheck runs headless
+var tampered=false;
+
+// ---- pure engine ----
+function scaleHeight(T,M){ return R*T/(M*G); }
+
+// pressure profile. Honest exponential unless tampered → planted-void linear model.
+function pressure(z,H){
+  if(tampered) return P0*(1 - z/H);      // planted bad model: zero at z=H, negative above
+  return P0*Math.exp(-z/H);
+}
+function densitySurface(T,M){ return P0*M/(R*T); }
+function density(z,H,T,M){
+  if(tampered) return densitySurface(T,M)*(1 - z/H);
+  return densitySurface(T,M)*Math.exp(-z/H);
+}
+
+// ---- fail-loud selfcheck: THROWS on any violation, RETURNS true on success ----
+function selfcheck(){
+  var EPS=1e-6;
+  var save=tampered;           // save tamper flag
+  tampered=false;              // untampered checks
+
+  var H0=scaleHeight(273.15,M_AIR);
+  // scale height ~8 km near 0C
+  if(Math.abs(H0-7995.6)>5) throw "H(273K) off: "+H0;
+  // H about 8 km across 250-290 K
+  var Hlo=scaleHeight(250,M_AIR), Hhi=scaleHeight(290,M_AIR);
+  if(!(Hlo>7000 && Hlo<8700)) throw "H(250) out of band: "+Hlo;
+  if(!(Hhi>7000 && Hhi<8700)) throw "H(290) out of band: "+Hhi;
+
+  // P falls to 1/e of surface at exactly z=H
+  if(Math.abs(pressure(H0,H0)/P0 - Math.exp(-1))>EPS) throw "1/e check failed";
+  // pressure HALVES every H*ln2 (the half-height)
+  var zHalf=H0*Math.log(2);
+  if(Math.abs(pressure(zHalf,H0)/P0 - 0.5)>EPS) throw "half-height check failed";
+  if(Math.abs(zHalf-5542.1)>5) throw "half-height value off: "+zHalf;
+
+  // density falls with the SAME exponential (rho/rho0 == P/P0)
+  var zt=3000;
+  var rr=density(zt,H0,273.15,M_AIR)/densitySurface(273.15,M_AIR);
+  var pr=pressure(zt,H0)/P0;
+  if(Math.abs(rr-pr)>EPS) throw "density/pressure profile mismatch";
+
+  // WARMER atmosphere => LARGER H (H proportional to T)
+  if(!(scaleHeight(300,M_AIR) > scaleHeight(260,M_AIR))) throw "warmer-larger-H failed";
+  // heavier gas (larger M) => SMALLER H
+  if(!(scaleHeight(273.15,M_CO2) < scaleHeight(273.15,M_AIR))) throw "heavier-smaller-H failed";
+
+  // P>0 EVERYWHERE for the honest model (no ceiling)
+  for(var z=0; z<=120000; z+=2000){
+    if(!(pressure(z,H0)>0)) throw "honest model went non-positive at z="+z;
+  }
+
+  // ---- disclosed planted void: tamper and confirm the known value now breaks ----
+  tampered=true;
+  var far=2*H0;                 // at twice the scale height
+  var honest=P0*Math.exp(-far/H0);           // true value: positive, ~13.5% of P0
+  if(!(honest>0)) throw "sanity: honest far-value should be positive";
+  if(!(pressure(far,H0) < 0)) throw "tamper not detected: linear model should be negative at 2H";
+  if(pressure(H0,H0)!==0) throw "tamper not detected: linear model should be exactly 0 at H";
+  tampered=save;               // restore tamper flag
+
+  return true;
+}
+/* ===== UI ===== */
+
+var failb=document.getElementById('failb');
+try{
+  var ok=selfcheck();
+  var Hb=scaleHeight(273.15,M_AIR);
+  document.getElementById('litbadge').className='badge ok';
+  document.getElementById('litbadge').textContent='LIT · P=P₀e^(−z/H), H='+(Hb/1000).toFixed(2)+' km, halves every '+((Hb*Math.log(2))/1000).toFixed(2)+' km · selfcheck '+ok;
+}catch(e){
+  failb.style.display='block';
+  failb.textContent='SELFCHECK FAILED — engine not LIT: '+e;
+  var lb=document.getElementById('litbadge'); if(lb){lb.className='badge bad';lb.textContent='DEAD';}
+  throw e;
+}
+
+// ---- controls / canvas ----
+var T=273.15, gas='air', Mcur=M_AIR;
+var slider=document.getElementById('tslider'),
+    tval=document.getElementById('tval'),
+    gasval=document.getElementById('gasval'),
+    gastog=document.getElementById('gastog'),
+    cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+
+function fmt(v){return v.toFixed(2);}
+
+function refresh(){
+  var H=scaleHeight(T,Mcur);
+  document.getElementById('hout').textContent=fmt(H/1000)+' km';
+  document.getElementById('eout').textContent=fmt(H/1000)+' km';
+  document.getElementById('halfout').textContent=fmt(H*Math.log(2)/1000)+' km';
+  document.getElementById('rhoout').textContent=fmt(densitySurface(T,Mcur))+' kg/m³';
+  draw(H);
+  runWitness();
+}
+
+function draw(H){
+  var w=cv.width,h=cv.height;
+  ctx.clearRect(0,0,w,h);
+  var zmax=30000;
+  // grid
+  ctx.strokeStyle='#153826';ctx.lineWidth=1;
+  for(var i=0;i<=6;i++){var x=i/6*w;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  // profile P(z) mapped: x=z, y=P
+  ctx.strokeStyle=tampered?'#ff8f8f':'#9ee0d0';ctx.lineWidth=2;
+  ctx.beginPath();
+  for(var p=0;p<=w;p++){
+    var z=p/w*zmax;
+    var P=pressure(z,H);
+    var y=h-(P/P0)*(h-6)-3;
+    if(P<0)y=h+40;
+    if(p===0)ctx.moveTo(p,y);else ctx.lineTo(p,y);
+  }
+  ctx.stroke();
+  // scale-height marker (1/e)
+  var xe=(H/zmax)*w;
+  ctx.strokeStyle='#6fe0c4';ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(xe,0);ctx.lineTo(xe,h);ctx.stroke();
+  // half-height marker
+  var xh=(H*Math.log(2)/zmax)*w;
+  ctx.strokeStyle='#4f8f7f';ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(xh,0);ctx.lineTo(xh,h);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#9fbcae';ctx.font='10px monospace';
+  ctx.fillText('0 km',2,h-3);ctx.fillText('30 km',w-38,h-3);
+  ctx.fillText('P₀',3,11);
+}
+
+var auditout=document.getElementById('auditout');
+function runWitness(){
+  try{
+    var r=selfcheck();
+    if(tampered){
+      auditout.className='badge bad';
+      auditout.textContent='TAMPER LIVE · linear model → P<0 above H (engine not trustworthy)';
+    }else{
+      auditout.className='badge ok';
+      auditout.textContent='witness OK · exponential holds, P>0 everywhere ('+r+')';
+    }
+  }catch(e){
+    auditout.className='badge bad';
+    auditout.textContent='WITNESS CAUGHT: '+e;
+  }
+}
+
+slider.addEventListener('input',function(){
+  T=parseFloat(slider.value); tval.textContent=slider.value+' K'; refresh();
+});
+gastog.addEventListener('click',function(){
+  if(gas==='air'){gas='co2';Mcur=M_CO2;gasval.textContent='CO₂';gastog.textContent='→ dry air';}
+  else{gas='air';Mcur=M_AIR;gasval.textContent='dry air';gastog.textContent='→ CO₂';}
+  refresh();
+});
+document.getElementById('tamper').addEventListener('click',function(){tampered=true;refresh();});
+document.getElementById('restore').addEventListener('click',function(){tampered=false;refresh();});
+
+refresh();
+</script>
+</body>
+</html>

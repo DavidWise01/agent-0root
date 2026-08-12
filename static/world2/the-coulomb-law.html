@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE COULOMB LAW</title>
+<style>
+:root{
+  --am:#ff7a7a;
+  --bg0:#241042; --bg1:#2f1657; --bg2:#1b0c34;
+  --ink:#f3e9ff; --dim:#c3b0e6; --line:#4a2b78;
+  --blue:#6fb7ff; --red:#ff8a8a; --lit:#8ef0b0; --amber:#ffcf6b;
+  --ground:#123b28;
+  --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:var(--mono);
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 620px at 78% -8%, #45208a55, transparent 60%),
+    radial-gradient(980px 560px at 8% 108%, var(--ground), transparent 55%),
+    linear-gradient(160deg,var(--bg1),var(--bg0) 46%,var(--bg2));
+  min-height:100vh;
+  padding:22px clamp(12px,3vw,40px) 60px;
+  line-height:1.5;
+}
+header{max-width:1220px;margin:0 auto 20px}
+h1{
+  font-size:clamp(26px,4.6vw,50px);
+  margin:.1em 0 .18em;letter-spacing:.06em;
+  color:#fff;
+  text-shadow:0 0 22px var(--am);
+}
+.sub{color:var(--dim);max-width:74ch;margin:.2em 0 .8em;font-size:15px}
+.src{font-size:12.5px;color:var(--dim);margin:0}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.09em;
+  padding:2px 7px;border-radius:5px;font-weight:700;
+  border:1px solid #ffffff30;vertical-align:middle;
+}
+.t-amber{background:#3a2a08;color:var(--amber);border-color:#7a5a12}
+.t-in{background:#0d2b3a;color:#7fd8ff;border-color:#1d5a78}
+.t-out{background:#0d3a24;color:var(--lit);border-color:#1d7a4c}
+.t-lit{background:#0d3a24;color:var(--lit);border-color:#2aa564;box-shadow:0 0 10px #1d7a4c66}
+.t-wall{background:#3a0d16;color:var(--red);border-color:#7a1d2c}
+
+.ocho{
+  max-width:1220px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start;
+}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11.5px;letter-spacing:.14em;font-weight:700;
+  padding:7px 11px;border-radius:8px;text-transform:uppercase;
+  border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);background:#0f244a55;border-color:#274a86}
+.col.red  .teamhdr{color:var(--red); background:#3a121c55;border-color:#7a2333}
+.col.center .teamhdr{color:var(--am);background:#2a1450aa;border-color:#5a2f92;text-align:center}
+
+.win{
+  position:relative;
+  background:linear-gradient(180deg,#2a1550cc,#1f0f40cc);
+  border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px 14px;
+  box-shadow:0 8px 24px #00000040;
+}
+.col.blue .win{border-left:3px solid #3f7fd0}
+.col.red  .win{border-left:3px solid #d05a5a}
+.win.panel{border-color:#5a2f92;background:linear-gradient(180deg,#31175fdd,#210f45dd)}
+.wn{
+  position:absolute;top:-11px;left:12px;
+  width:23px;height:23px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:var(--bg2);border:1px solid var(--line);color:var(--dim);
+}
+.col.center .win.panel .wn{color:var(--am);border-color:#7a4fc2}
+.wt{font-size:12.5px;letter-spacing:.12em;font-weight:700;color:#fff;margin:2px 0 8px}
+.win p,.win li{font-size:12.8px;color:var(--dim);margin:.35em 0}
+.win b{color:var(--ink)}
+.flow{text-align:center;color:var(--am);font-size:18px;line-height:1;opacity:.8}
+
+.wall-note{
+  background:#2a0c14;border:1px dashed #7a2333;border-radius:8px;
+  padding:9px 10px;font-size:12.4px;color:#ffc9c9;margin-top:6px;
+}
+.grave{list-style:none;padding:0;margin:.2em 0 0}
+.grave li{padding:6px 0;border-bottom:1px dotted #4a2b7855}
+.grave s{color:#8a6ea8}
+.grave .fix{color:var(--lit)}
+.grave .fix.amb{color:var(--amber)}
+
+canvas{width:100%;height:auto;display:block;border-radius:9px;background:#140a2b;border:1px solid var(--line);margin:4px 0 8px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--dim);margin:2px 0}
+.ctl input[type=range]{flex:1;min-width:110px;accent-color:var(--am)}
+.readout{font-size:12.5px;color:var(--ink);background:#160a30;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:6px}
+.readout b{color:var(--lit)}
+button{
+  font-family:var(--mono);font-size:12px;cursor:pointer;
+  background:#3a1560;color:var(--ink);border:1px solid #6a3fae;
+  border-radius:7px;padding:6px 11px;
+}
+button:hover{background:#4a1d78}
+button.warn{background:#4a1220;border-color:#7a2333;color:#ffbcbc}
+button.ok{background:#123b28;border-color:#2aa564;color:var(--lit)}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;margin-top:6px}
+.badge.good{background:#0d3a24;color:var(--lit);border:1px solid #2aa564}
+.badge.bad{background:#3a0d16;color:var(--red);border:1px solid #d05a5a;box-shadow:0 0 12px #d05a5a66}
+#failb{
+  display:none;max-width:1220px;margin:16px auto 0;
+  background:#3a0d16;border:1px solid #d05a5a;border-radius:10px;
+  padding:12px 14px;color:#ffbcbc;font-size:13px;
+}
+footer{max-width:1220px;margin:26px auto 0;font-size:11.5px;color:var(--dim);border-top:1px solid var(--line);padding-top:12px}
+code{background:#160a30;padding:1px 5px;border-radius:4px;color:#ffd9d9;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>THE COULOMB LAW</h1>
+  <p class="sub">Two charges, one line between them, and a force that answers only to the <b>square</b> of the distance. Halve the gap and the push quadruples; unlike signs pull, like signs shove. Electrostatics' first equation, rendered, not quoted &mdash; the engine below computes every force live and dares the red team to break the exponent.</p>
+  <p class="src"><span class="tag t-amber">source</span> Coulomb, <i>Premier m&eacute;moire sur l'&eacute;lectricit&eacute; et le magn&eacute;tisme</i> (1785), <i>Hist. Acad. R. Sci.</i>, pp.&nbsp;569&ndash;577 &mdash; <a href="https://archive.org/details/mmoiressurllectr00coul" target="_blank" rel="noopener">M&eacute;moires sur l'&eacute;lectricit&eacute; (Internet Archive)</a></p>
+</header>
+
+<div class="ocho">
+
+  <!-- LEFT: BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wn">3</span>
+      <div class="wt">THE MODEL</div>
+      <p>A point charge is an idealised speck holding charge <b>q</b> at a point. Between two such specks separated by <b>r</b>:</p>
+      <p><code>F = k&middot;q&#8321;&middot;q&#8322; / r&sup2;</code>, with <code>k = 1/(4&pi;&epsilon;&#8320;) &asymp; 8.988&times;10&#8313; N&middot;m&sup2;/C&sup2;</code>.</p>
+      <p>The force lies <b>along the line</b> joining them. Its sign follows the product <code>q&#8321;q&#8322;</code>: positive (like charges) means <b>repel</b>, negative (unlike) means <b>attract</b>. The field a charge makes is the force per unit test charge, <code>E = F/q&#8348;</code> &mdash; a property of space, not of whatever you drop into it.</p>
+      <p>For many sources the net force is the <b>vector sum</b> of the individual Coulomb forces: superposition, because vacuum electrostatics is linear.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">5</span>
+      <div class="wt">THE LINEAGE</div>
+      <p><b>the-coulomb-law &rarr; the-gauss-law.</b> Coulomb (1785) measured the force between two charges and found the inverse square. Gauss repackages that same <code>1/r&sup2;</code> as <b>flux through any closed surface</b>: because the field of a point charge thins exactly as the area of a sphere grows, the total flux is source-only and shape-free.</p>
+      <p>Same physics, two faces &mdash; the point-charge force here is the seed whose flux the neighbouring sphere collects for arbitrary surfaces.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">7</span>
+      <div class="wt">THE WITNESS</div>
+      <p>Live re-check of the running engine. It reads the <b>current</b> force law and confirms the inverse-square ratio <code>F(2r)/F(r)=1/4</code>. If window&nbsp;6 tampers the exponent, this badge flips red on the spot.</p>
+      <span id="auditout" class="badge good">&mdash;</span>
+    </div>
+  </div>
+
+  <!-- CENTER: THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win panel">
+      <span class="wn">4</span>
+      <span class="tag t-in">in &darr;</span>
+      <div class="wt">DATA IN</div>
+      <p>Charges <code>q&#8321;, q&#8322;</code> (sign &amp; magnitude), separation <code>r</code>, and source positions in the plane. A movable <b>+1 test charge</b> samples the field. Everything below is computed from these &mdash; no stored answers.</p>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <span class="wn">0</span>
+      <span class="tag t-lit">LIT</span>
+      <div class="wt">THE PANEL</div>
+      <canvas id="cv" width="660" height="300"></canvas>
+      <div class="ctl">
+        <label>r</label>
+        <input id="rng" type="range" min="0.5" max="3" step="0.01" value="1">
+        <span id="rval">r = 1.00</span>
+      </div>
+      <div class="ctl">
+        <button id="flip">flip q&#8322; sign</button>
+        <span id="mode">q&#8321;=+1, q&#8322;=+1 &rarr; like &middot; repel</span>
+      </div>
+      <div class="readout" id="ro">&mdash;</div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <span class="wn">8</span>
+      <span class="tag t-out">out &darr;</span>
+      <div class="wt">DATA OUT</div>
+      <p>Proven live: force is strictly <b>inverse-square</b>, <b>linear in each charge</b>, sign set by <code>q&#8321;q&#8322;</code>, forces <b>superpose</b> (a charge midway between two equal like charges feels exactly zero), and the field is <b>independent of the test charge</b>.</p>
+      <span id="litbadge" class="badge good">&mdash;</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wn">1</span>
+      <div class="wt">THE ADVERSARY</div>
+      <p>Where the clean law stops being clean:</p>
+      <div class="wall-note"><span class="tag t-wall">WALL</span> <b>Point-charge fiction.</b> Real charge has extent; near contact the <code>1/r&sup2;</code> mislead-s and multipoles matter. As <code>r&rarr;0</code> the law diverges to infinite force &mdash; unphysical, patched only by quantum electrodynamics.</div>
+      <div class="wall-note"><span class="tag t-wall">WALL</span> <b>Static only.</b> Coulomb assumes charges at rest. Move them and magnetic forces, retarded potentials and radiation appear &mdash; this is the electrostatic limit of the full Maxwell field.</div>
+      <div class="wall-note"><span class="tag t-wall">WALL</span> <b>Vacuum &amp; linearity.</b> In matter, dielectrics screen the force (replace <code>&epsilon;&#8320;</code> by <code>&epsilon;</code>); superposition itself leans on linearity, which extreme-field QED vacuum quietly bends.</div>
+    </div>
+
+    <div class="win">
+      <span class="wn">2</span>
+      <div class="wt">THE GRAVEYARD</div>
+      <ul class="grave">
+        <li><s>The force falls off as 1/r.</s><br><span class="fix">&rarr; Inverse <b>square</b>, 1/r&sup2;. Double r and F drops to a <b>quarter</b>, not a half.</span></li>
+        <li><s>Force depends only on the distance.</s><br><span class="fix">&rarr; It scales with the <b>product</b> q&#8321;q&#8322; too &mdash; double either charge and F doubles.</span></li>
+        <li><s>The inverse square is exact at every scale.</s><br><span class="fix amb">&rarr; AMBER: verified experimentally to extraordinary precision (photon-mass / exponent-deviation bounds), but QED corrections enter at subatomic scales and matter screens it. "Exact" only in classical vacuum.</span></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <span class="wn">6</span>
+      <div class="wt">THE TAMPER</div>
+      <p>The disclosed planted void. This button swaps the real <code>1/r&sup2;</code> for an inverse-<b>linear</b> <code>1/r</code> law. Doubling r would then only <b>halve</b> F. Window&nbsp;7's witness catches it live.</p>
+      <div class="ctl">
+        <button id="tamper" class="warn">tamper: use 1/r</button>
+        <button id="restore" class="ok">restore 1/r&sup2;</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="failb"></div>
+
+<footer>
+  WORLD II &middot; THE FOLD &mdash; the-coulomb-law. The engine is genuinely LIT: every force is <code>F = k q&#8321;q&#8322;/r&sup2;</code> computed live; the self-check throws on any violation and the tamper is caught by the witness, not hidden. Rendered, not quoted. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+// ---- ENGINE (pure logic; runs headless with no canvas / DOM) ----
+var k = 8.9875517873681764e9;   // 1/(4*pi*eps0), N m^2 / C^2
+var tampered = false;           // plain top-level flag so selfcheck runs headless
+
+// distance power in the denominator: r^2 (true law) or r (planted void)
+function denom(r){ return tampered ? r : r*r; }
+
+// signed scalar force along the separation axis (sign follows q1*q2)
+function forceScalar(q1,q2,r){ return k*q1*q2/denom(r); }
+
+// vector Coulomb force on test t from source s; both = {q,x,y}
+function coulombForce(s,t){
+  var dx=t.x-s.x, dy=t.y-s.y;
+  var r2=dx*dx+dy*dy, r=Math.sqrt(r2);
+  var mag=k*s.q*t.q/denom(r);     // magnitude with sign of q_s*q_t
+  return {fx:mag*dx/r, fy:mag*dy/r};
+}
+
+// net force = vector sum over all sources (superposition)
+function netForce(sources,t){
+  var fx=0, fy=0;
+  for(var i=0;i<sources.length;i++){
+    var f=coulombForce(sources[i],t);
+    fx+=f.fx; fy+=f.fy;
+  }
+  return {fx:fx, fy:fy};
+}
+
+// electric field at a point = net force on a test charge, per unit test charge
+function fieldAt(sources,x,y,qtest){
+  var f=netForce(sources,{q:qtest,x:x,y:y});
+  return {ex:f.fx/qtest, ey:f.fy/qtest};
+}
+
+// fail-loud self-check: THROWS on any violation, RETURNS true on success
+function selfcheck(){
+  var save=tampered; tampered=false;
+
+  // 1) INVERSE SQUARE: doubling r quarters F
+  var Fr=forceScalar(1,1,1), F2r=forceScalar(1,1,2);
+  if(Math.abs(F2r/Fr - 0.25) > 1e-12) throw new Error("not inverse-square: F(2r)/F(r) != 1/4");
+
+  // 2) PROPORTIONAL TO PRODUCT: doubling q1 doubles F
+  var Fa=forceScalar(1,1,1), Fb=forceScalar(2,1,1);
+  if(Math.abs(Fb/Fa - 2) > 1e-12) throw new Error("not linear in charge product");
+
+  // 3) LIKE REPEL, UNLIKE ATTRACT: sign follows q1*q2
+  if(!(forceScalar(1,1,1)  > 0)) throw new Error("like charges should repel (F>0)");
+  if(!(forceScalar(1,-1,1) < 0)) throw new Error("unlike charges should attract (F<0)");
+
+  // 4) SUPERPOSITION: test charge midway between two equal like charges feels ZERO
+  var pair=[{q:1,x:-1,y:0},{q:1,x:1,y:0}];
+  var mid=netForce(pair,{q:1,x:0,y:0});
+  if(Math.hypot(mid.fx,mid.fy) > 1e-12) throw new Error("superposition symmetry broken");
+
+  // 5) FIELD INDEPENDENT OF TEST-CHARGE MAGNITUDE
+  var src=[{q:2,x:-1,y:0},{q:-3,x:1,y:0}];
+  var e1=fieldAt(src,0.5,0.3,1);
+  var e2=fieldAt(src,0.5,0.3,7);
+  if(Math.abs(e1.ex-e2.ex)>1e-9 || Math.abs(e1.ey-e2.ey)>1e-9) throw new Error("field depends on test charge");
+
+  // ---- PLANTED VOID: assert the tamper is detectable, then restore ----
+  tampered=true;
+  var Ftr=forceScalar(1,1,1), Ft2r=forceScalar(1,1,2);
+  if(Math.abs(Ft2r/Ftr - 0.25) < 1e-9) throw new Error("tamper (1/r) not detectable");   // now ratio is 1/2
+  if(Math.abs(Ft2r/Ftr - 0.5)  > 1e-9) throw new Error("tampered ratio is not 1/2");
+  tampered=save;
+
+  return true;
+}
+
+// headless export for node verification
+if(typeof module!=="undefined"&&module.exports){module.exports={selfcheck:selfcheck,forceScalar:forceScalar,netForce:netForce,fieldAt:fieldAt};}
+
+/* ===== UI ===== */
+(function(){
+  if(typeof document==="undefined") return;
+
+  // boot: run the self-check fail-loud
+  try{
+    var ok=selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    document.getElementById("litbadge").textContent="LIT — 5 invariants proven, tamper caught";
+  }catch(e){
+    var fb=document.getElementById("failb");
+    fb.style.display="block";
+    fb.textContent="SELF-CHECK FAILED: "+e.message;
+    document.getElementById("litbadge").className="badge bad";
+    document.getElementById("litbadge").textContent="DEAD — "+e.message;
+    throw e;
+  }
+
+  var q1=1, q2=1, r=1;
+  var cv=document.getElementById("cv"), g=cv.getContext("2d");
+  var rng=document.getElementById("rng"), rval=document.getElementById("rval");
+  var ro=document.getElementById("ro"), modeEl=document.getElementById("mode");
+  var auditEl=document.getElementById("auditout");
+
+  function witness(){
+    // live re-check reading the CURRENT force law (catches window 6)
+    var ratio=forceScalar(1,1,2)/forceScalar(1,1,1);
+    var good=Math.abs(ratio-0.25)<1e-9;
+    if(good){
+      auditEl.className="badge good";
+      auditEl.textContent="CONFIRMED — F(2r)/F(r) = "+ratio.toFixed(4)+" = 1/4";
+    }else{
+      auditEl.className="badge bad";
+      auditEl.textContent="TAMPER DETECTED — F(2r)/F(r) = "+ratio.toFixed(4)+" ≠ 1/4";
+    }
+  }
+
+  function fmt(x){
+    var a=Math.abs(x);
+    if(a===0) return "0";
+    if(a>=1e4||a<1e-2) return x.toExponential(3);
+    return x.toFixed(3);
+  }
+
+  function draw(){
+    g.clearRect(0,0,cv.width,cv.height);
+    // divider
+    g.strokeStyle="#3a2260"; g.lineWidth=1;
+    g.beginPath(); g.moveTo(cv.width/2,10); g.lineTo(cv.width/2,cv.height-10); g.stroke();
+
+    // ---- LEFT: F vs r curve ----
+    var L=cv.width/2, pad=26, x0=pad, x1=L-14, y0=cv.height-pad, y1=22;
+    var rmin=0.5, rmax=3;
+    g.fillStyle="#c3b0e6"; g.font="11px monospace";
+    g.fillText("F vs r", x0, 16);
+    g.fillText("r", x1-6, y0+16); g.fillText("F", x0-14, y1+2);
+    // axes
+    g.strokeStyle="#4a2b78";
+    g.beginPath(); g.moveTo(x0,y1); g.lineTo(x0,y0); g.lineTo(x1,y0); g.stroke();
+    var Fref=k*Math.abs(q1*q2)/(rmin*rmin);  // max magnitude scale (true law)
+    function px(rr){ return x0+(rr-rmin)/(rmax-rmin)*(x1-x0); }
+    function py(FF){ return y0-Math.min(FF/Fref,1)*(y0-y1); }
+    // faint true inverse-square (reference), then live curve
+    g.strokeStyle="#4a2b78"; g.setLineDash([3,3]); g.beginPath();
+    for(var rr=rmin,first=1;rr<=rmax+1e-9;rr+=0.03){
+      var F=k*Math.abs(q1*q2)/(rr*rr);
+      if(first){g.moveTo(px(rr),py(F));first=0;}else g.lineTo(px(rr),py(F));
+    }
+    g.stroke(); g.setLineDash([]);
+    // live curve (uses current tampered law)
+    g.strokeStyle=tampered?"#ff8a8a":"#8ef0b0"; g.lineWidth=2; g.beginPath();
+    for(var r2=rmin,f2=1;r2<=rmax+1e-9;r2+=0.03){
+      var Fl=k*Math.abs(q1*q2)/denom(r2);
+      if(f2){g.moveTo(px(r2),py(Fl));f2=0;}else g.lineTo(px(r2),py(Fl));
+    }
+    g.stroke(); g.lineWidth=1;
+    // marker at current r
+    var Fc=k*Math.abs(q1*q2)/denom(r);
+    g.fillStyle="#ff7a7a";
+    g.beginPath(); g.arc(px(r),py(Fc),4,0,7); g.fill();
+
+    // ---- RIGHT: two charges + field vectors on a +1 test grid ----
+    var cx=cv.width*0.5+16, cw=cv.width*0.5-30, ch=cv.height-24, oy=12;
+    var midx=cx+cw/2, midy=oy+ch/2, scale=cw/(2*(1.6+r/2));
+    var sources=[{q:q1,x:-r/2,y:0},{q:q2,x:r/2,y:0}];
+    function sx(X){ return midx+X*scale; }
+    function sy(Y){ return midy-Y*scale; }
+    // field arrows
+    g.strokeStyle="#6b56a0";
+    for(var gi=-2;gi<=2;gi++) for(var gj=-1;gj<=1;gj++){
+      var X=gi*0.55, Y=gj*0.6;
+      var near=false;
+      for(var s=0;s<sources.length;s++){ if(Math.hypot(X-sources[s].x,Y-sources[s].y)<0.28) near=true; }
+      if(near) continue;
+      var E=fieldAt(sources,X,Y,1);
+      var m=Math.hypot(E.ex,E.ey); if(m===0) continue;
+      var ux=E.ex/m, uy=E.ey/m, len=11;
+      var ax=sx(X), ay=sy(Y), bx=ax+ux*len, by=ay-uy*len;
+      g.beginPath(); g.moveTo(ax,ay); g.lineTo(bx,by); g.stroke();
+      g.beginPath();
+      g.moveTo(bx,by);
+      g.lineTo(bx-(ux*4+uy*3),by+(uy*4-ux*3));
+      g.lineTo(bx-(ux*4-uy*3),by+(uy*4+ux*3));
+      g.closePath(); g.fillStyle="#6b56a0"; g.fill();
+    }
+    // charges
+    for(var c=0;c<sources.length;c++){
+      var S=sources[c];
+      g.beginPath(); g.arc(sx(S.x),sy(S.y),10,0,7);
+      g.fillStyle=S.q>0?"#ff7a7a":"#6fb7ff"; g.fill();
+      g.fillStyle="#140a2b"; g.font="bold 13px monospace"; g.textAlign="center"; g.textBaseline="middle";
+      g.fillText(S.q>0?"+":"−", sx(S.x), sy(S.y));
+    }
+    g.textAlign="start"; g.textBaseline="alphabetic";
+    g.fillStyle="#c3b0e6"; g.font="11px monospace";
+    g.fillText("field of q₁ , q₂", cx+4, 16);
+  }
+
+  function update(){
+    q2 = q2>0 ? Math.abs(q2) : -Math.abs(q2); // keep sign
+    var F=forceScalar(q1,q2,r);
+    var like = q1*q2>0;
+    modeEl.innerHTML = "q₁="+(q1>0?"+":"")+q1+", q₂="+(q2>0?"+":"")+q2+" → "+(like?"like · repel":"unlike · attract");
+    var e = fieldAt([{q:q1,x:0,y:0}],r,0,1); // field of q1 alone at test charge location
+    ro.innerHTML =
+      "F = k&middot;q₁q₂/r"+(tampered?"":"²")+" = <b>"+fmt(F)+" N</b> "+
+      "("+(F>0?"repulsive":"attractive")+")<br>"+
+      "|E| from q₁ at r = <b>"+fmt(Math.hypot(e.ex,e.ey))+" N/C</b>"+
+      (tampered?" &nbsp;<span style='color:#ff8a8a'>[TAMPERED: 1/r]</span>":"");
+    draw();
+    witness();
+  }
+
+  rng.addEventListener("input",function(){ r=parseFloat(rng.value); rval.textContent="r = "+r.toFixed(2); update(); });
+  document.getElementById("flip").addEventListener("click",function(){ q2=-q2; update(); });
+  document.getElementById("tamper").addEventListener("click",function(){ tampered=true; update(); });
+  document.getElementById("restore").addEventListener("click",function(){ tampered=false; update(); });
+
+  update();
+})();
+</script>
+</body>
+</html>

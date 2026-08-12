@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE WRITE-AHEAD LOG</title>
+<style>
+  :root{
+    --am:#7fe0c0;
+    --bg:#07130d; --bg2:#0a1a12; --panel:#0e2119; --panel2:#112a20;
+    --ink:#e2f6ee; --mut:#8fb6a8; --line:#1e4234;
+    --blue:#7fb8ff; --red:#ff8f8f; --amber:#ffcf6b; --wall:#ff9b6b;
+    --lit:#7fe0c0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 78% -8%, rgba(127,224,192,.10), transparent 60%),
+      radial-gradient(900px 600px at 8% 108%, rgba(127,184,255,.07), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    -webkit-font-smoothing:antialiased;
+    padding:26px 20px 60px;
+  }
+  .wrap{max-width:1220px;margin:0 auto}
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+  h1{
+    font-size:30px;letter-spacing:.14em;margin:0 0 8px;
+    color:var(--am);text-shadow:0 0 22px rgba(127,224,192,.28);
+  }
+  .sub{color:var(--ink);max-width:900px;margin:0 0 12px;font-size:14px}
+  .sub b{color:var(--am);font-weight:600}
+  .src{font-size:12.5px;color:var(--mut);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .src a{color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue)}
+  .src a:hover{color:#a9d0ff}
+  .rq{margin-left:auto;color:var(--mut);font-style:italic;letter-spacing:.03em}
+
+  .tag{
+    display:inline-block;font-size:10.5px;letter-spacing:.14em;
+    padding:2px 8px;border-radius:999px;border:1px solid currentColor;
+    text-transform:uppercase;vertical-align:middle;
+  }
+  .t-amber{color:var(--amber)}
+  .t-in{color:var(--blue)}
+  .t-lit{color:var(--lit);background:rgba(127,224,192,.08);box-shadow:0 0 14px rgba(127,224,192,.18)}
+  .t-out{color:var(--am)}
+  .t-wall{color:var(--wall)}
+
+  .ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;align-items:start}
+  @media(max-width:880px){ .ocho{grid-template-columns:1fr} }
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    padding:8px 12px;border-radius:8px;border:1px solid var(--line);
+    background:var(--bg2);color:var(--mut);
+  }
+  .col.blue .teamhdr{color:var(--blue);border-color:rgba(127,184,255,.35)}
+  .col.red .teamhdr{color:var(--red);border-color:rgba(255,143,143,.35)}
+  .col.center .teamhdr{color:var(--am);border-color:rgba(127,224,192,.4);text-align:center}
+
+  .win{
+    position:relative;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:14px 14px 13px;
+  }
+  .win.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border-color:rgba(127,224,192,.4);box-shadow:0 0 0 1px rgba(127,224,192,.05),0 14px 40px -20px rgba(127,224,192,.4)}
+  .wn{
+    position:absolute;top:-10px;left:12px;width:22px;height:22px;border-radius:6px;
+    display:grid;place-items:center;font-size:12px;font-weight:700;
+    background:var(--bg);border:1px solid var(--line);color:var(--mut);
+  }
+  .col.blue .wn{color:var(--blue);border-color:rgba(127,184,255,.5)}
+  .col.red .wn{color:var(--red);border-color:rgba(255,143,143,.5)}
+  .col.center .wn{color:var(--am);border-color:rgba(127,224,192,.6)}
+  .win h3{margin:4px 0 8px;font-size:13px;letter-spacing:.08em;color:var(--ink);text-transform:uppercase}
+  .win p{margin:6px 0;font-size:12.7px;color:var(--mut)}
+  .win p b{color:var(--ink);font-weight:600}
+  .win .lead{color:var(--ink)}
+
+  .flow{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--am);font-size:11px;letter-spacing:.2em;opacity:.8}
+  .flow::before,.flow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--am),transparent);opacity:.5}
+
+  table.log{width:100%;border-collapse:collapse;font-size:11.6px;margin-top:4px}
+  table.log th,table.log td{padding:3px 6px;text-align:left;border-bottom:1px solid rgba(30,66,52,.7)}
+  table.log th{color:var(--mut);font-weight:600;letter-spacing:.05em}
+  table.log td.lsn{color:var(--am);font-variant-numeric:tabular-nums}
+  .rec-commit td{color:var(--lit)}
+  .rec-loser td{color:var(--red)}
+  .crashrow td{color:var(--wall);font-weight:700;letter-spacing:.18em;text-align:center;background:rgba(255,155,107,.08)}
+
+  .state{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+  .cell{
+    min-width:58px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);
+    background:var(--bg2);text-align:center;font-variant-numeric:tabular-nums;
+  }
+  .cell .k{font-size:10px;color:var(--mut);letter-spacing:.1em}
+  .cell .v{font-size:15px;color:var(--ink);font-weight:700}
+  .cell.ok{border-color:rgba(127,224,192,.5)}
+  .cell.orphan{border-color:var(--red);background:rgba(255,143,143,.12)}
+  .cell.orphan .v{color:var(--red)}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;margin-top:8px;
+    padding:7px 11px;border-radius:8px;font-size:12px;letter-spacing:.04em;
+    border:1px solid var(--line);background:var(--bg2);
+  }
+  .badge.good{color:var(--lit);border-color:rgba(127,224,192,.5);box-shadow:0 0 16px rgba(127,224,192,.15)}
+  .badge.bad{color:var(--red);border-color:rgba(255,143,143,.6);background:rgba(255,143,143,.08)}
+  .dot{width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor}
+
+  .wall-note{border-left:3px solid var(--wall);padding-left:10px;color:var(--ink);font-size:12.7px}
+  .dead{color:var(--red);text-decoration:line-through;opacity:.8}
+  .fix{color:var(--lit)}
+
+  button{
+    font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+    background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:7px 12px;letter-spacing:.05em;transition:.15s;
+  }
+  button:hover{border-color:var(--am)}
+  button#tamper{color:var(--wall);border-color:rgba(255,155,107,.5)}
+  button#tamper:hover{background:rgba(255,155,107,.12)}
+  button#restore{color:var(--am);border-color:rgba(127,224,192,.4)}
+  .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+  #failb{display:none;margin:14px 0;padding:12px 14px;border-radius:10px;
+    border:1px solid var(--red);background:rgba(255,143,143,.1);color:var(--red);font-size:13px}
+
+  footer{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--mut);font-size:12px;letter-spacing:.03em}
+  footer b{color:var(--am)}
+  code{color:var(--am);background:rgba(127,224,192,.08);padding:1px 5px;border-radius:5px;font-size:.92em}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE WRITE-AHEAD LOG</h1>
+  <p class="sub">Durability and atomicity from one rule: <b>log the change before you make it.</b> The log record is forced to durable storage <b>before</b> its data page. When the machine crashes mid-transaction, recovery reads only the log — it <b>REDOes</b> every committed change and <b>UNDOes</b> every uncommitted one, reconstructing exactly the state the committed transactions left behind.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Mohan, Haderle, Lindsay, Pirahesh &amp; Schwarz — <b>ARIES</b>, <i>ACM Trans. Database Syst.</i> 17(1), 1992
+    <a href="https://dl.acm.org/doi/10.1145/128765.128770" target="_blank" rel="noopener">doi:10.1145/128765.128770</a>
+    <span class="rq">Rendered, not quoted.</span>
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wn">3</span>
+      <h3>The Model</h3>
+      <p class="lead">A tiny bank of pages <code>A B C D</code>, all 100 on durable disk. Transactions write pages; the log records each write as <code>(lsn, tx, key, before, after)</code> and marks a <code>commit</code> when a transaction is durably done.</p>
+      <p><b>Winners</b> (committed): T1, T2. <b>Loser</b> (in-flight at crash): T3.</p>
+      <p><b>REDO</b> replays every logged after-image in LSN order — repeat history. <b>UNDO</b> walks losers' records in reverse, restoring before-images. Recovery reads the <b>log only</b>, never trusting the crashed disk.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">5</span>
+      <h3>The Lineage</h3>
+      <p>This is the log that guarantees <b>ACID's A and D</b>. ARIES's write-ahead rule — <b>log first, then data</b> — sits under every durable database (DB2, SQL Server, Postgres, SQLite). It is the neighbour of <b>steal / no-force</b> buffer management: because dirty uncommitted pages <i>may</i> reach disk (steal) and committed pages <i>need not</i> (no-force), you need both UNDO and REDO — and both come free from the one log.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">7</span>
+      <h3>The Witness</h3>
+      <p>Live re-check: recompute <code>recover(disk, log)</code> from the current run and compare, cell-for-cell, against the independently derived committed state.</p>
+      <div id="auditout" class="badge good"><span class="dot"></span><span>…</span></div>
+      <p style="margin-top:8px">Green while the WAL rule holds. When window 6 writes data before its log, this flips <b style="color:var(--red)">red</b> the instant recovery can no longer reproduce the committed state.</p>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="wn">4</span>
+      <h3>Data In <span class="tag t-in">in ↓</span></h3>
+      <p>Initial durable state <code>A=100 B=100 C=100 D=100</code>. Three transactions run interleaved:</p>
+      <p><b>T1</b> A→70, B→130 · <b>commit</b><br><b>T2</b> C→150 · <b>commit</b><br><b>T3</b> D→175, C→170 · <span style="color:var(--red)">no commit — crash</span></p>
+      <p>At crash the buffer had <b>stolen</b> T3's D page to disk and had <b>not forced</b> T2's C page. The disk is a lie; the log is the truth.</p>
+    </div>
+
+    <div class="flow">R E D O · U N D O</div>
+
+    <div class="win panel">
+      <span class="wn">0</span>
+      <h3>The Panel <span class="tag t-lit">LIT</span></h3>
+      <p style="margin-top:2px">THE LOG (durable at crash):</p>
+      <table class="log" id="logtbl"><tbody></tbody></table>
+
+      <p style="margin:12px 0 2px">DISK AT CRASH <span class="tag t-wall">unreliable</span></p>
+      <div class="state" id="diskstate"></div>
+
+      <p style="margin:12px 0 2px">RECOVERED (REDO winners+repeat, UNDO losers):</p>
+      <div class="state" id="recstate"></div>
+
+      <div class="btns">
+        <button id="rerun" type="button">↻ run recovery</button>
+      </div>
+    </div>
+
+    <div class="flow">P R O V E N</div>
+
+    <div class="win">
+      <span class="wn">8</span>
+      <h3>Data Out <span class="tag t-out">out ↓</span></h3>
+      <p>Recovered state equals the reference committed state — <b>exactly</b>, and verified by exhaustive comparison over all 32 possible flush-subsets.</p>
+      <div id="litbadge" class="badge good"><span class="dot"></span><span>…</span></div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wn">1</span>
+      <h3>The Adversary</h3>
+      <p class="wall-note"><span class="tag t-wall">WALL</span> "Just flush pages when convenient and skip the log — fsync is slow." The WALL: a crash can land <b>between</b> the data write and any later log write. If the data hit disk with no durable log record describing it, recovery has nothing to REDO from and nothing to UNDO with. The change is <b>orphaned</b> — unattributable to any transaction, unrollbackable, silently corrupting the database.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">2</span>
+      <h3>The Graveyard</h3>
+      <p class="dead">"REDO alone is enough — just replay committed work."</p>
+      <p class="fix">↳ Steal means uncommitted pages reach disk; without UNDO, T3's D=175 survives forever. Both directions are mandatory.</p>
+      <p class="dead" style="margin-top:9px">"A committed transaction whose pages never flushed is lost."</p>
+      <p class="fix">↳ No-force: T2's C page never hit disk, yet REDO from the log restores C=150. Commit = log durable, not data durable.</p>
+      <p class="dead" style="margin-top:9px">"Recovery must run to completion once, or state is wrong."</p>
+      <p class="fix">↳ ARIES recovery is <b>idempotent</b> — crash during recovery, run it again, same result. Verified in window 7.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">6</span>
+      <h3>The Tamper</h3>
+      <p>The disclosed planted void: force T3's <b>D data page to disk before its log record</b> (violate WAL), then crash before the log record is durable. The write survives; its log record does not.</p>
+      <div class="btns">
+        <button id="tamper" type="button">✎ break WAL (write data before log)</button>
+        <button id="restore" type="button">↺ restore</button>
+      </div>
+      <p style="margin-top:9px">The orphaned D=175 has no log record to UNDO. Recovery cannot roll it back; the recovered state diverges from the committed reference. <b>Window 7 catches it live.</b></p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE FOLD · WORLD II</b> — the-write-ahead-log · engine LIT, tamper disclosed, witness live · exhaustive over 32 flush-subsets · one log, every crash recoverable. Built by <b>David Lee Wise (ROOT0)</b> with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- engine (pure logic; extractable for node verification) ----
+let TAMPER = false;
+
+const INIT = {A:100, B:100, C:100, D:100};
+
+// the write-ahead log: update records carry before/after images; commit records mark winners
+const LOG_FULL = [
+  {lsn:1, tx:'T1', key:'A', before:100, after:70},
+  {lsn:2, tx:'T1', key:'B', before:100, after:130},
+  {lsn:3, tx:'T1', commit:true},
+  {lsn:4, tx:'T2', key:'C', before:100, after:150},
+  {lsn:5, tx:'T2', commit:true},
+  {lsn:6, tx:'T3', key:'D', before:100, after:175},
+  {lsn:7, tx:'T3', key:'C', before:150, after:170}
+];
+
+// physical time at which each log record became durable (fixed, deterministic)
+const LOGDUR = {1:1, 2:2, 3:4, 4:5, 5:6, 6:7, 7:9};
+
+function recAfter(lsn){ return LOG_FULL.find(function(r){ return r.lsn===lsn; }).after; }
+
+// data pages flushed to disk before the crash. Under TAMPER the D page is written
+// at t=3, BEFORE its log record became durable at t=7 — a WAL violation.
+function flushes(){
+  return [ {key:'B', lsn:2, t:3}, {key:'D', lsn:6, t: TAMPER ? 3 : 8} ];
+}
+
+// WAL rule: every data-page flush must follow its log record becoming durable
+function walHolds(){
+  var fs = flushes();
+  for(var i=0;i<fs.length;i++){ if(!(LOGDUR[fs[i].lsn] < fs[i].t)) return false; }
+  return true;
+}
+
+// on-disk state at the crash (the unreliable image recovery must repair)
+function diskAtCrash(){
+  var d = Object.assign({}, INIT);
+  var fs = flushes();
+  for(var i=0;i<fs.length;i++){ d[fs[i].key] = recAfter(fs[i].lsn); }
+  return d;
+}
+
+// the durable log at crash. Under TAMPER the D record (lsn 6) never reached durable
+// storage, so it is absent — the orphaned data write has no log record.
+function durableLog(){
+  return TAMPER ? LOG_FULL.filter(function(r){ return r.lsn!==6; }) : LOG_FULL.slice();
+}
+
+function committed(log){
+  var s = {};
+  for(var i=0;i<log.length;i++){ if(log[i].commit) s[log[i].tx]=true; }
+  return s;
+}
+
+// reference truth: state of all committed transactions, none of the uncommitted
+function referenceState(){
+  var win = committed(LOG_FULL);
+  var s = Object.assign({}, INIT);
+  for(var i=0;i<LOG_FULL.length;i++){
+    var r = LOG_FULL[i];
+    if(r.key!==undefined && win[r.tx]) s[r.key]=r.after;
+  }
+  return s;
+}
+
+// ARIES recovery: REDO repeats history from the log, then UNDO rolls back losers
+function recover(disk, log){
+  var win = committed(log);
+  var s = Object.assign({}, disk);
+  var ups = log.filter(function(r){ return r.key!==undefined; })
+               .sort(function(a,b){ return a.lsn-b.lsn; });
+  for(var i=0;i<ups.length;i++){ s[ups[i].key]=ups[i].after; }          // REDO
+  for(var j=ups.length-1;j>=0;j--){                                     // UNDO losers
+    var r = ups[j];
+    if(!win[r.tx]) s[r.key]=r.before;
+  }
+  return s;
+}
+
+function eqState(a,b){
+  var ks=['A','B','C','D'];
+  for(var i=0;i<ks.length;i++){ if(a[ks[i]]!==b[ks[i]]) return false; }
+  return true;
+}
+
+// disk image if exactly the update records in `mask` had flushed (for exhaustive test)
+function diskFromSubset(mask){
+  var d = Object.assign({}, INIT);
+  var ups = LOG_FULL.filter(function(r){ return r.key!==undefined; });
+  for(var i=0;i<ups.length;i++){ if(mask & (1<<i)) d[ups[i].key]=ups[i].after; }
+  return d;
+}
+
+// fail-loud: throws on any violation, saves/restores the tamper flag, returns true
+function selfcheck(){
+  var saved = TAMPER;
+  TAMPER = false;
+
+  // 1. WAL rule holds on the base run
+  if(!walHolds()) throw new Error('WAL rule violated in base run');
+
+  var ref = referenceState();
+
+  // 2. recovery reconstructs the committed state EXACTLY
+  var rec = recover(diskAtCrash(), durableLog());
+  if(!eqState(rec, ref)) throw new Error('recovery != reference committed state');
+
+  // 3. recovery is idempotent
+  if(!eqState(recover(rec, durableLog()), rec)) throw new Error('recovery not idempotent');
+
+  // 4. durability: committed changes survive the crash
+  if(rec.B!==130 || rec.C!==150) throw new Error('durability lost a committed change');
+
+  // 5. atomicity: the in-flight transaction leaves no trace
+  if(rec.D!==100 || rec.C===170) throw new Error('atomicity: uncommitted trace remains');
+
+  // 6. EXHAUSTIVE: for every one of the 32 possible flush-subsets, recovery == reference
+  var ups = LOG_FULL.filter(function(r){ return r.key!==undefined; });
+  var n = ups.length;
+  for(var m=0; m<(1<<n); m++){
+    if(!eqState(recover(diskFromSubset(m), LOG_FULL), ref))
+      throw new Error('exhaustive flush-subset '+m+' failed');
+  }
+
+  // 7. TAMPER (disclosed planted void): write data before its log record.
+  TAMPER = true;
+  if(walHolds()) throw new Error('tamper should violate the WAL rule');
+  var recT = recover(diskAtCrash(), durableLog());
+  if(eqState(recT, ref)) throw new Error('tamper should break recovery but did not');
+  if(recT.D!==175) throw new Error('expected orphaned D=175 with no log record to undo it');
+
+  // restore and confirm the base run is intact
+  TAMPER = saved;
+  if(!walHolds()) throw new Error('restore failed');
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  function opText(r){
+    if(r.commit) return 'COMMIT';
+    return r.key+': '+r.before+' \u2192 '+r.after;
+  }
+  function isLoser(tx){ return !committed(LOG_FULL)[tx]; }
+
+  function renderLog(){
+    var body = document.querySelector('#logtbl tbody');
+    var log = durableLog();
+    var rows = '<tr><th>lsn</th><th>tx</th><th>record</th></tr>';
+    for(var i=0;i<log.length;i++){
+      var r = log[i];
+      var cls = r.commit ? 'rec-commit' : (isLoser(r.tx) ? 'rec-loser' : '');
+      rows += '<tr class="'+cls+'"><td class="lsn">'+r.lsn+'</td><td>'+r.tx+'</td><td>'+opText(r)+'</td></tr>';
+    }
+    rows += '<tr class="crashrow"><td colspan="3">\u2014\u2014 CRASH \u2014\u2014</td></tr>';
+    body.innerHTML = rows;
+  }
+
+  function renderState(elId, st, ref, markOrphan){
+    var el = document.getElementById(elId);
+    var ks=['A','B','C','D'], html='';
+    for(var i=0;i<ks.length;i++){
+      var k=ks[i], v=st[k], cls='cell';
+      if(ref){
+        if(markOrphan && v!==ref[k]) cls='cell orphan';
+        else if(v===ref[k]) cls='cell ok';
+      }
+      html += '<div class="'+cls+'"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';
+    }
+    el.innerHTML = html;
+  }
+
+  function renderWitness(){
+    var ref = referenceState();
+    var rec = recover(diskAtCrash(), durableLog());
+    var ok  = walHolds() && eqState(rec, ref);
+    var a = document.getElementById('auditout');
+    a.className = 'badge ' + (ok ? 'good' : 'bad');
+    a.innerHTML = '<span class="dot"></span><span>' +
+      (ok ? 'recovery = committed state \u00b7 WAL holds'
+          : 'ORPHAN D='+rec.D+' \u00b7 WAL BROKEN \u2014 cannot undo') + '</span>';
+    return ok;
+  }
+
+  function renderAll(){
+    var ref = referenceState();
+    var rec = recover(diskAtCrash(), durableLog());
+    renderLog();
+    renderState('diskstate', diskAtCrash(), null, false);
+    renderState('recstate', rec, ref, TAMPER);
+    renderWitness();
+  }
+
+  // boot: run the fail-loud selfcheck, then wire the UI
+  try{
+    var ok = selfcheck();
+    if(ok!==true) throw new Error('selfcheck did not return true');
+    var lb = document.getElementById('litbadge');
+    lb.className = 'badge good';
+    lb.innerHTML = '<span class="dot"></span><span>recovered = committed state \u2014 durable + atomic \u00b7 32/32 exhaustive</span>';
+  }catch(e){
+    var fb = document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent = 'SELFCHECK FAILED \u2014 engine not LIT: ' + e.message;
+    throw e;
+  }
+
+  document.getElementById('tamper').addEventListener('click', function(){ TAMPER=true; renderAll(); });
+  document.getElementById('restore').addEventListener('click', function(){ TAMPER=false; renderAll(); });
+  document.getElementById('rerun').addEventListener('click', renderAll);
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

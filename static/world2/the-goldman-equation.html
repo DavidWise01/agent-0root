@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE GOLDMAN EQUATION</title>
+<style>
+:root{
+  --am:#ff9e6a;
+  --ground:#0a1710;
+  --ground2:#0f2318;
+  --ink:#e8f5ec;
+  --dim:#9db8a6;
+  --line:#1e3a29;
+  --panel:#0d1f16;
+  --blue:#6ab7ff;
+  --red:#ff6a7a;
+  --lit:#7dffa8;
+  --amber:#ffcf6a;
+  --wall:#ff8a5c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 15% -10%, #12301f 0%, transparent 60%),
+    radial-gradient(1000px 600px at 110% 20%, #172a1e 0%, transparent 55%),
+    linear-gradient(160deg,var(--ground) 0%, var(--ground2) 100%);
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  min-height:100vh;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+h1{
+  font-size:clamp(26px,4vw,42px);
+  letter-spacing:.06em;margin:0 0 10px;
+  color:var(--am);
+  text-shadow:0 0 24px rgba(255,158,106,.25);
+}
+.sub{color:var(--ink);max-width:900px;margin:0 0 12px;font-size:15px}
+.sub b{color:var(--am)}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.14em;
+  padding:2px 7px;border-radius:4px;font-weight:700;vertical-align:middle;
+  border:1px solid currentColor;
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{
+  display:grid;
+  grid-template-columns:1fr 1.12fr 1fr;
+  gap:16px;
+  align-items:start;
+}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:12px;letter-spacing:.16em;font-weight:700;
+  padding:7px 10px;border-radius:6px;border:1px solid var(--line);
+  background:rgba(255,255,255,.02);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#204058}
+.col.red .teamhdr{color:var(--red);border-color:#5a2530}
+.col.center .teamhdr{color:var(--am);border-color:#5a3a25;text-align:center}
+
+.win{
+  border:1px solid var(--line);border-radius:8px;
+  background:rgba(6,18,12,.55);
+  padding:12px 13px;position:relative;
+}
+.win.panel{background:rgba(10,26,17,.7);border-color:#2c5238}
+.wnum{
+  position:absolute;top:-9px;right:10px;
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;
+  background:var(--ground2);border:1px solid var(--line);
+}
+.col.blue .wnum{color:var(--blue);border-color:#204058}
+.col.red .wnum{color:var(--red);border-color:#5a2530}
+.col.center .wnum{color:var(--am);border-color:#5a3a25}
+.win h3{margin:0 0 7px;font-size:13px;letter-spacing:.08em;color:var(--ink)}
+.win p{margin:6px 0;font-size:12.8px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.dead{color:#7a6a70;text-decoration:line-through;text-decoration-color:var(--red)}
+.fix{color:var(--lit)}
+.wall-note{border-left:2px solid var(--wall);padding-left:10px}
+.flow{
+  text-align:center;color:var(--am);font-size:16px;letter-spacing:.3em;
+  padding:3px 0;opacity:.7;
+}
+
+.readout{font-size:12.5px;margin-top:8px}
+.rowd{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-bottom:1px dotted var(--line)}
+.rowd span:last-child{color:var(--am);font-variant-numeric:tabular-nums}
+canvas{width:100%;height:150px;display:block;margin:10px 0 4px;border:1px solid var(--line);border-radius:6px;background:#06130c}
+.ctl{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:6px;color:var(--dim)}
+input[type=range]{flex:1;accent-color:var(--am)}
+button{
+  font:inherit;font-size:12px;cursor:pointer;
+  background:#1a1210;color:var(--am);border:1px solid #5a3a25;
+  border-radius:6px;padding:6px 10px;
+}
+button:hover{background:#241713}
+#restore{color:var(--lit);border-color:#2c5238;background:#0d1f16}
+.badge{
+  display:inline-block;margin-top:8px;font-size:11.5px;font-weight:700;
+  padding:5px 9px;border-radius:6px;border:1px solid currentColor;
+}
+.b-ok{color:var(--lit)}
+.b-bad{color:var(--red)}
+#failb{display:none;margin-top:10px;color:var(--red);border:1px solid var(--red);border-radius:6px;padding:8px 10px;font-size:12px}
+footer{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;font-size:12px;color:var(--dim)}
+footer b{color:var(--am)}
+.eq{font-size:12px;color:var(--ink);background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:8px 0;overflow-x:auto}
+.k{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE GOLDMAN EQUATION</h1>
+  <p class="sub">The resting voltage of a living cell, weighting <b>each ion</b> by how easily it crosses the membrane. Not a single battery but a <b>permeability-weighted vote</b> across K, Na and Cl at once. Rendered, not quoted.</p>
+  <p class="src">
+    <span class="tag t-amber">SOURCE</span>
+    Goldman, D.E. (1943) "Potential, Impedance, and Rectification in Membranes," <i>J. Gen. Physiol.</i> <b>27</b>, 37&ndash;60 &mdash; the constant-field GHK voltage; with Hodgkin &amp; Katz (1949), <i>J. Physiol.</i> 108, 37 &mdash;
+    <a href="https://pubmed.ncbi.nlm.nih.gov/19873371/" target="_blank" rel="noopener">PubMed 19873371</a>
+  </p>
+</header>
+
+<div class="ocho">
+
+  <!-- ===================== BLUE TEAM ===================== -->
+  <div class="col blue">
+    <div class="teamhdr">BLUE TEAM &middot; BUILDS &amp; DEFENDS</div>
+
+    <div class="win">
+      <div class="wnum">3</div>
+      <h3>THE MODEL</h3>
+      <div class="eq">V<sub>m</sub> = <span class="k">(RT/F)</span> &middot; ln( ( P<sub>K</sub>[K]<sub>o</sub> + P<sub>Na</sub>[Na]<sub>o</sub> + P<sub>Cl</sub>[Cl]<sub>i</sub> ) / ( P<sub>K</sub>[K]<sub>i</sub> + P<sub>Na</sub>[Na]<sub>i</sub> + P<sub>Cl</sub>[Cl]<sub>o</sub> ) )</div>
+      <p>Each cation is weighted by its permeability P and its concentration ratio. The cell rests where the net current is zero &mdash; a compromise, pulled toward whichever ion is most permeable.</p>
+      <p><b>Anion twist:</b> chloride (charge &minus;1) enters with its concentrations <b>inverted</b> &mdash; inside over outside &mdash; versus the cations. That single flip is what makes GHK correct rather than a naive sum. <span class="tag t-amber">ILLUSTRATIVE PARAMS</span></p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">5</div>
+      <h3>THE LINEAGE</h3>
+      <p>This is the <b>baseline the spike departs from</b>. GHK gives the quiet resting voltage; <b>the-hodgkin-huxley</b> sphere shows what happens when voltage-gated Na channels throw P<sub>Na</sub> upward and V<sub>m</sub> lunges toward E<sub>Na</sub>.</p>
+      <p>Reduce GHK to one ion and you recover <b>Nernst</b> &mdash; the same battery a single-ion sphere assumes. Goldman is Nernst, summed and weighted.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">7</div>
+      <h3>THE WITNESS</h3>
+      <p>Re-runs the full selfcheck live against this DOM. Confirms the Nernst-reduction and correct anion orientation; flips <b>red</b> if window&nbsp;6 tampers with chloride's placement.</p>
+      <div id="auditout" class="badge b-ok">WITNESS: idle</div>
+    </div>
+  </div>
+
+  <!-- ===================== CENTER ===================== -->
+  <div class="col center">
+    <div class="teamhdr">THE MACHINE</div>
+
+    <div class="win panel">
+      <div class="wnum">4</div>
+      <h3>DATA IN <span class="tag t-in">IN &darr;</span></h3>
+      <p>Mammalian concentrations (mM) and relative permeabilities P<sub>K</sub>:P<sub>Na</sub>:P<sub>Cl</sub>.</p>
+      <div class="readout">
+        <div class="rowd"><span>[K]&nbsp; out / in</span><span>5 / 140</span></div>
+        <div class="rowd"><span>[Na] out / in</span><span>145 / 15</span></div>
+        <div class="rowd"><span>[Cl] out / in</span><span>110 / 10</span></div>
+        <div class="rowd"><span>P&nbsp; K : Na : Cl</span><span id="prow">1 : 0.04 : 0.45</span></div>
+        <div class="rowd"><span>T (body)</span><span>310.15 K</span></div>
+      </div>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win panel">
+      <div class="wnum">0</div>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <canvas id="cv" width="520" height="150"></canvas>
+      <div class="ctl">
+        <span>P<sub>Na</sub></span>
+        <input id="pna" type="range" min="0.04" max="20" step="0.01" value="0.04">
+        <span id="pnav">0.04</span>
+      </div>
+      <div class="readout">
+        <div class="rowd"><span>E<sub>K</sub> (Nernst)</span><span id="ek">&mdash;</span></div>
+        <div class="rowd"><span>E<sub>Cl</sub></span><span id="ecl">&mdash;</span></div>
+        <div class="rowd"><span>E<sub>Na</sub></span><span id="ena">&mdash;</span></div>
+        <div class="rowd"><span><b>V<sub>m</sub> (GHK, live)</b></span><span id="vm">&mdash;</span></div>
+      </div>
+      <div id="failb"></div>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win panel">
+      <div class="wnum">8</div>
+      <h3>DATA OUT <span class="tag t-out">OUT &darr;</span></h3>
+      <p>At rest (P<sub>Na</sub>=0.04) the vote lands near <b>&minus;67 mV</b> &mdash; above E<sub>K</sub>, dragged there by the small Na and the Cl leak. Raise P<sub>Na</sub> and V<sub>m</sub> climbs toward E<sub>Na</sub>: a depolarization, computed live.</p>
+      <div id="litbadge" class="badge b-ok">PROVEN &mdash; awaiting boot</div>
+    </div>
+  </div>
+
+  <!-- ===================== RED TEAM ===================== -->
+  <div class="col red">
+    <div class="teamhdr">RED TEAM &middot; ATTACKS &amp; BREAKS</div>
+
+    <div class="win">
+      <div class="wnum">1</div>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <div class="wall-note">
+        <p>"The constant-field assumption is a <b>fiction</b>." True &mdash; real membranes do not hold a perfectly linear field, ions interact, and single-file pores violate independence. GHK is a <b>tractable approximation</b>, not the last word.</p>
+        <p>Permeabilities are themselves <b>voltage- and time-dependent</b>; treating them as fixed constants is the model's honest limit. <span class="tag t-amber">AMBER</span></p>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wnum">2</div>
+      <h3>THE GRAVEYARD</h3>
+      <p class="dead">"Resting potential just equals E<sub>K</sub>."</p>
+      <p class="fix">&rarr; Only if P<sub>Na</sub>=P<sub>Cl</sub>=0. Finite Na/Cl leak pulls it above E<sub>K</sub> to ~&minus;67 mV.</p>
+      <p class="dead">"Add every ion's Nernst potential up."</p>
+      <p class="fix">&rarr; No &mdash; you weight and log a <b>ratio</b>, and the anion's concentrations invert.</p>
+      <p class="dead">"Bigger permeability = bigger voltage."</p>
+      <p class="fix">&rarr; It pulls V<sub>m</sub> toward that ion's <b>own</b> Nernst potential, no further.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">6</div>
+      <h3>THE TAMPER</h3>
+      <p>Flip chloride into the <b>same orientation as the cations</b> (out over in). The resting potential comes out wrong and Cl no longer reduces to E<sub>Cl</sub> &mdash; the WITNESS (7) catches it live.</p>
+      <button id="tamper">TAMPER: invert Cl</button>
+      <button id="restore">RESTORE</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE GOLDMAN EQUATION</b> &mdash; a biophysical MODEL (constant-field approximation; illustrative concentrations &amp; permeabilities marked AMBER; no medical advice). The engine computes V<sub>m</sub> live from the GHK equation; the selfcheck reduces it to Nernst, verifies the anion orientation, and confirms the depolarizing effect of rising P<sub>Na</sub>. WORLD II &middot; THE FOLD &mdash; David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- ENGINE (pure logic; runs headless, no canvas/DOM) ----
+var TAMPER = false;
+
+function RTF(T){ return 8.314 * T / 96485 * 1000; } // mV, = RT/F in millivolts
+
+var CONC = { Ko:5, Ki:140, Nao:145, Nai:15, Clo:110, Cli:10 }; // mM (illustrative, mammalian)
+
+// Goldman-Hodgkin-Katz zero-current voltage (mV).
+// Cations K,Na: outside in numerator. Anion Cl (z=-1): concentrations INVERTED
+// (inside in numerator, outside in denominator). TAMPER flips that orientation.
+function ghk(P, c, T){
+  var num = P.K*c.Ko + P.Na*c.Nao + (TAMPER ? P.Cl*c.Clo : P.Cl*c.Cli);
+  var den = P.K*c.Ki + P.Na*c.Nai + (TAMPER ? P.Cl*c.Cli : P.Cl*c.Clo);
+  return RTF(T) * Math.log(num/den);
+}
+
+// Nernst potential for an ion of valence z (mV).
+function nernst(z, out, inn, T){ return (RTF(T)/z) * Math.log(out/inn); }
+
+var T_BODY = 310.15;
+var P_REST = { K:1, Na:0.04, Cl:0.45 };
+
+function selfcheck(){
+  var T = T_BODY, tol = 1e-6;
+  var saved = TAMPER;   // save the tamper flag
+  TAMPER = false;       // untampered checks
+
+  var EK  = nernst(1,  CONC.Ko,  CONC.Ki,  T);
+  var ENa = nernst(1,  CONC.Nao, CONC.Nai, T);
+  var ECl = nernst(-1, CONC.Clo, CONC.Cli, T);
+
+  // 1. GHK reduces to the potassium Nernst potential when only K is permeable.
+  var Konly = ghk({K:1,Na:0,Cl:0}, CONC, T);
+  if (Math.abs(Konly - EK) > tol) throw new Error("Nernst reduction (K) failed: "+Konly+" vs "+EK);
+
+  // 2. Correct anion orientation: Cl-only GHK equals E_Cl (this is the placement check).
+  var Clonly = ghk({K:0,Na:0,Cl:1}, CONC, T);
+  if (Math.abs(Clonly - ECl) > tol) throw new Error("Anion orientation (Cl) failed: "+Clonly+" vs "+ECl);
+
+  // 3. Realistic resting potential ~ -70 mV, near but ABOVE E_K.
+  var rest = ghk(P_REST, CONC, T);
+  if (!(rest > -72 && rest < -63)) throw new Error("Resting potential out of range: "+rest);
+  if (!(rest > EK)) throw new Error("Rest must sit above E_K: rest="+rest+" EK="+EK);
+  if (Math.abs(rest - (-67.34)) > 0.5) throw new Error("Rest not near -67.3 mV: "+rest);
+
+  // 4. Raising P_Na drives V_m TOWARD E_Na (positive) and is monotone increasing.
+  var vLow  = ghk({K:1,Na:0.04,Cl:0.45}, CONC, T);
+  var vHigh = ghk({K:1,Na:5,   Cl:0.45}, CONC, T);
+  var vHuge = ghk({K:1,Na:5000,Cl:0.45}, CONC, T);
+  if (!(vHigh > vLow)) throw new Error("Rising P_Na must depolarize: "+vHigh+" !> "+vLow);
+  if (!(vHuge > 0)) throw new Error("Huge P_Na must go positive: "+vHuge);
+  if (Math.abs(vHuge - ENa) > 0.5) throw new Error("Huge P_Na must approach E_Na: "+vHuge+" vs "+ENa);
+
+  // 5. Planted void: with Cl inverted the wrong way, results must DIFFER.
+  TAMPER = true;
+  var restBad = ghk(P_REST, CONC, T);
+  var ClonlyBad = ghk({K:0,Na:0,Cl:1}, CONC, T);
+  if (Math.abs(restBad - rest) < 1) throw new Error("Tamper did not change the rest voltage");
+  if (Math.abs(ClonlyBad - ECl) < tol) throw new Error("Tamper should break the anion reduction");
+  TAMPER = saved;       // restore the tamper flag
+
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var ok = false;
+  try { ok = selfcheck(); }
+  catch(e){
+    var fb = document.getElementById('failb');
+    fb.style.display = 'block';
+    fb.textContent = 'SELFCHECK FAILED: ' + e.message;
+    var lb = document.getElementById('litbadge');
+    lb.className = 'badge b-bad'; lb.textContent = 'NOT PROVEN';
+    throw e;
+  }
+
+  var T = T_BODY;
+  var EK  = nernst(1,  CONC.Ko,  CONC.Ki,  T);
+  var ENa = nernst(1,  CONC.Nao, CONC.Nai, T);
+  var ECl = nernst(-1, CONC.Clo, CONC.Cli, T);
+  var fmt = function(x){ return (x>=0?'+':'') + x.toFixed(2) + ' mV'; };
+
+  document.getElementById('ek').textContent  = fmt(EK);
+  document.getElementById('ena').textContent = fmt(ENa);
+  document.getElementById('ecl').textContent = fmt(ECl);
+
+  var lb = document.getElementById('litbadge');
+  var rest0 = ghk(P_REST, CONC, T);
+  lb.className = 'badge b-ok';
+  lb.textContent = 'PROVEN ✓  V_rest = ' + fmt(rest0);
+
+  var cv = document.getElementById('cv'), g = cv.getContext('2d');
+  var pna = document.getElementById('pna'), pnav = document.getElementById('pnav');
+  var vmEl = document.getElementById('vm'), prow = document.getElementById('prow');
+
+  // scale mV -> x pixel across [-100,+70]
+  var VMIN=-100, VMAX=70;
+  function xOf(v){ return 20 + (v-VMIN)/(VMAX-VMIN)*(cv.width-40); }
+
+  function draw(){
+    var P = { K:1, Na:parseFloat(pna.value), Cl:0.45 };
+    var vm = ghk(P, CONC, T);
+    pnav.textContent = P.Na.toFixed(2);
+    prow.textContent = '1 : ' + P.Na.toFixed(2) + ' : 0.45';
+    vmEl.textContent = fmt(vm);
+
+    g.clearRect(0,0,cv.width,cv.height);
+    // axis
+    var y = 100;
+    g.strokeStyle='#2a4a35'; g.lineWidth=1;
+    g.beginPath(); g.moveTo(20,y); g.lineTo(cv.width-20,y); g.stroke();
+    // zero line
+    var xz=xOf(0);
+    g.strokeStyle='#1e3a29'; g.beginPath(); g.moveTo(xz,20); g.lineTo(xz,130); g.stroke();
+    g.fillStyle='#5a7a66'; g.font='10px monospace'; g.fillText('0',xz-3,145);
+
+    function marker(v,label,col){
+      var x=xOf(v);
+      g.strokeStyle=col; g.beginPath(); g.moveTo(x,y-14); g.lineTo(x,y+14); g.stroke();
+      g.fillStyle=col; g.fillText(label, x-10, y-20);
+    }
+    marker(EK,'E_K','#6ab7ff');
+    marker(ECl,'E_Cl','#9db8a6');
+    marker(ENa,'E_Na','#ff6a7a');
+
+    // live V_m ball
+    var xv=xOf(vm);
+    g.fillStyle='#ff9e6a';
+    g.beginPath(); g.arc(xv,y,7,0,6.2832); g.fill();
+    g.strokeStyle='#ffcf6a'; g.lineWidth=2; g.beginPath(); g.arc(xv,y,10,0,6.2832); g.stroke();
+    g.fillStyle='#ffcf6a'; g.font='11px monospace';
+    g.fillText('V_m '+fmt(vm), xv-24, y+34);
+  }
+  pna.addEventListener('input', draw);
+  draw();
+
+  // ---- WITNESS (window 7): live re-check ----
+  var au = document.getElementById('auditout');
+  function witness(){
+    try{
+      var pass = selfcheck();
+      // independent live cross-check of what the panel shows now
+      var reCl = ghk({K:0,Na:0,Cl:1}, CONC, T);
+      var reEK = ghk({K:1,Na:0,Cl:0}, CONC, T);
+      var clash = TAMPER || Math.abs(reCl - ECl) > 1e-6 || Math.abs(reEK - EK) > 1e-6;
+      if (pass && !clash){
+        au.className='badge b-ok'; au.textContent='WITNESS ✓ Nernst-reduction + anion orientation hold';
+      } else {
+        au.className='badge b-bad'; au.textContent='WITNESS ✗ chloride orientation TAMPERED — rest wrong';
+      }
+    }catch(e){
+      au.className='badge b-bad'; au.textContent='WITNESS ✗ '+e.message;
+    }
+  }
+  witness();
+
+  // ---- TAMPER (window 6) ----
+  document.getElementById('tamper').addEventListener('click', function(){
+    TAMPER = true; draw(); witness();
+    lb.className='badge b-bad'; lb.textContent='TAMPERED — V_rest = '+fmt(ghk(P_REST,CONC,T));
+  });
+  document.getElementById('restore').addEventListener('click', function(){
+    TAMPER = false; draw(); witness();
+    lb.className='badge b-ok'; lb.textContent='PROVEN ✓  V_rest = '+fmt(ghk(P_REST,CONC,T));
+  });
+})();
+</script>
+</body>
+</html>

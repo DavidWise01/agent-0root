@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PERIHELION PRECESSION</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --ground:#08130d;
+  --ground2:#0c1c13;
+  --panel:#0f2418;
+  --panel2:#123020;
+  --ink:#dff5ea;
+  --dim:#8fb7a4;
+  --line:#1d3a2a;
+  --blue:#6fb2ff;
+  --red:#ff7a6f;
+  --amber:#ffc24d;
+  --lit:#7fe0c0;
+  --wall:#ff7a6f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 20% -10%, #0e2417 0%, rgba(14,36,23,0) 60%),
+    radial-gradient(1000px 600px at 100% 110%, #0a1b11 0%, rgba(10,27,17,0) 55%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1220px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:22px}
+h1{
+  font-size:30px;letter-spacing:2px;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 24px rgba(127,224,192,.28)
+}
+.sub{color:var(--ink);max-width:900px;margin:0 0 12px;font-size:14px;line-height:1.6}
+.src{font-size:12px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10px;letter-spacing:1px;padding:2px 7px;border-radius:3px;
+  border:1px solid currentColor;text-transform:uppercase;font-weight:700;white-space:nowrap
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
+  padding:7px 10px;border-radius:5px;border:1px solid var(--line)
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#22405f;background:rgba(111,178,255,.05)}
+.col.red .teamhdr{color:var(--red);border-color:#5f2a24;background:rgba(255,122,111,.05)}
+.col.center .teamhdr{color:var(--am);border-color:#1d4a38;background:rgba(127,224,192,.06);text-align:center}
+
+.win{
+  background:linear-gradient(180deg,var(--panel),var(--ground2));
+  border:1px solid var(--line);border-radius:8px;padding:12px 13px;position:relative
+}
+.win .num{
+  position:absolute;top:-9px;left:-9px;width:24px;height:24px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:700;
+  background:var(--ground);border:1px solid var(--line);color:var(--dim)
+}
+.col.blue .win .num{color:var(--blue);border-color:#22405f}
+.col.red .win .num{color:var(--red);border-color:#5f2a24}
+.col.center .win .num{color:var(--am);border-color:#1d4a38}
+.win h3{margin:0 0 8px;font-size:13px;letter-spacing:1px;color:var(--ink);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+.win .panel-body{font-size:12.5px}
+.win.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border-color:#1d4a38}
+.center .win{border-color:#1d4a38}
+
+.flow{
+  text-align:center;color:var(--am);font-size:16px;line-height:1;opacity:.7;margin:2px 0
+}
+.wall-note{
+  border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,122,111,.05);
+  font-size:12px;color:#ffd7d2;border-radius:0 5px 5px 0;margin:6px 0
+}
+.dead{color:#7a938a}
+.dead s{color:#c56;text-decoration-thickness:2px}
+.fix{color:var(--am)}
+.badge{
+  display:inline-block;padding:3px 9px;border-radius:5px;font-size:12px;font-weight:700;
+  border:1px solid currentColor;letter-spacing:.5px
+}
+.b-ok{color:var(--lit)}
+.b-bad{color:var(--wall)}
+kbd{background:#06120c;border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--am);font-size:11px}
+button{
+  font:inherit;font-size:12px;background:#0a1b11;color:var(--am);
+  border:1px solid #1d4a38;border-radius:6px;padding:6px 12px;cursor:pointer;letter-spacing:.5px
+}
+button:hover{background:#0e2717;border-color:var(--am)}
+button.warn{color:var(--wall);border-color:#5f2a24}
+button.warn:hover{background:#1e0f0c;border-color:var(--wall)}
+canvas{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:#05100a;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+td{padding:3px 4px;border-bottom:1px solid var(--line);color:var(--dim)}
+td.v{color:var(--am);text-align:right;font-variant-numeric:tabular-nums}
+.mono{font-variant-numeric:tabular-nums}
+.eq{color:var(--am);font-size:12.5px;background:#06120c;border:1px solid var(--line);border-radius:5px;padding:6px 8px;margin:6px 0;overflow-x:auto}
+#failb{display:none;margin:10px 0;padding:10px 12px;border:1px solid var(--wall);border-radius:6px;background:rgba(255,122,111,.08);color:#ffd7d2;font-size:12.5px}
+footer{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:11.5px;letter-spacing:.5px}
+.lit-line{color:var(--lit)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE PERIHELION PRECESSION</h1>
+  <p class="sub">Mercury's ellipse does not close. Its long axis creeps forward by an extra <b>43 arcseconds a century</b> — a residual Newton's inverse-square law could not spend. Einstein spent it in one line of curved spacetime: the first triumph of general relativity. Rendered, not quoted — the engine computes the advance live from the metric.</p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>Einstein, <i>Erkl&auml;rung der Perihelbewegung des Merkur aus der allgemeinen Relativit&auml;tstheorie</i>, Sitzungsber. Preuss. Akad. Wiss. Berlin (1915) 831&ndash;839; residual measured by Le&nbsp;Verrier (1859).</span>
+    <a href="https://ui.adsabs.harvard.edu/abs/1915SPAW...47..831E/abstract" target="_blank" rel="noopener">ADS&nbsp;1915SPAW...47..831E</a>
+  </div>
+  <div id="failb"></div>
+</header>
+
+<div class="ocho">
+
+  <!-- LEFT · BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">blue team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <h3>THE MODEL</h3>
+      <p>A geodesic in the Schwarzschild metric is a Kepler ellipse plus a slow rotation of its apse. Per orbit the perihelion advances by</p>
+      <div class="eq">&Delta;&phi; = 6&pi;GM / ( a(1&minus;e&sup2;)c&sup2; )</div>
+      <p>The Newtonian ellipse closes exactly (Bertrand's theorem: only inverse-square and Hooke forces give closed orbits). The apsidal angle for a force F&prop;r&#8319; is &pi;/&radic;(3+n); for n=&minus;2 it is exactly &pi;, so precession is zero. The <b>1/c&sup2;</b> term is the whole story — it vanishes as c&rarr;&infin;.</p>
+      <table>
+        <tr><td>a (semi-major)</td><td class="v" id="m_a">&mdash;</td></tr>
+        <tr><td>e (eccentricity)</td><td class="v" id="m_e">&mdash;</td></tr>
+        <tr><td>apsidal angle (n=&minus;2)</td><td class="v" id="m_ap">&mdash;</td></tr>
+      </table>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>Mercury's turning orbit &mdash; Einstein 1915. &Delta;&phi;=6&pi;GM/(a(1&minus;e&sup2;)c&sup2;) closes Le&nbsp;Verrier's 43-arcsec gap. The orbit is a <b>geodesic of curved spacetime</b> &mdash; the path <span class="lit-line">the-geodesic</span> bends. Closer in and more eccentric orbits precess faster; the binary pulsar PSR&nbsp;B1913+16 turns 4.2&deg; per <i>year</i> by the same law.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <h3>THE WITNESS <span class="tag t-lit">live</span></h3>
+      <p>Re-computes &Delta;&phi; for Mercury on every render and compares to the measured 43&Prime;/century. Confirms green; flips <b>red</b> the instant the metric is tampered.</p>
+      <p><span id="auditout" class="badge b-ok">&mdash;</span></p>
+    </div>
+  </div>
+
+  <!-- CENTER · THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">the machine</div>
+
+    <div class="win">
+      <span class="num">4</span>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <div class="panel-body">
+        <p>Mercury's known orbit and the exact constants of gravity and light:</p>
+        <table>
+          <tr><td>G</td><td class="v">6.67430&times;10&#8315;&sup1;&sup1;</td></tr>
+          <tr><td>c</td><td class="v">2.99792458&times;10&#8312;</td></tr>
+          <tr><td>M&#9737;</td><td class="v">1.98892&times;10&sup3;&#8304;</td></tr>
+          <tr><td>a</td><td class="v">5.79091&times;10&sup1;&#8304; m</td></tr>
+          <tr><td>e</td><td class="v">0.205630</td></tr>
+          <tr><td>period</td><td class="v">87.969 d</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <h3>THE PANEL <span class="tag t-lit">lit</span></h3>
+      <div class="panel-body">
+        <p>The rosette: a Kepler ellipse whose apse rotates by &Delta;&phi; each lap (advance exaggerated for the eye; the number below is the true Mercury value).</p>
+        <canvas id="cv" width="380" height="300" aria-label="precessing rosette orbit"></canvas>
+        <table>
+          <tr><td>&Delta;&phi; per orbit</td><td class="v" id="o_orb">&mdash;</td></tr>
+          <tr><td>orbits / century</td><td class="v" id="o_n">&mdash;</td></tr>
+          <tr><td>advance / century</td><td class="v" id="o_cent">&mdash;</td></tr>
+        </table>
+        <p style="margin-top:8px">
+          <button id="tamper" class="warn">tamper: drop the 6</button>
+          <button id="restore">restore</button>
+        </p>
+      </div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win">
+      <span class="num">8</span>
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <div class="panel-body">
+        <p>The proven residual &mdash; general relativity, no free parameters:</p>
+        <p><span id="litbadge" class="badge b-ok mono">&mdash;</span></p>
+        <p style="font-size:11.5px">Le&nbsp;Verrier's unexplained 43&Prime;/century, delivered by 6&pi;GM/(a(1&minus;e&sup2;)c&sup2;).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT · RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">red team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">wall</span></h3>
+      <div class="wall-note">"An unseen planet <b>Vulcan</b> inside Mercury's orbit perturbs it &mdash; no new physics needed." It was never found. The 43&Prime; is not a Newtonian perturbation by any body; it is the metric itself.</div>
+      <div class="wall-note">"Solar oblateness (J&#8322;) explains the residual." Measured J&#8322; is far too small &mdash; it accounts for &lt;0.1&Prime;/century, not 43.</div>
+      <div class="wall-note">Precise inputs matter: a, e, and the period carry real uncertainty. The prediction is robust only to a stated tolerance &mdash; claiming 43.000 is false precision.</div>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p class="dead"><s>The Newtonian ellipse precesses on its own.</s> <span class="fix">&rarr; No. Pure inverse-square gives a <b>closed</b> orbit (Bertrand); apsidal angle = &pi; exactly, precession = 0.</span></p>
+      <p class="dead"><s>The total observed shift (~5600&Prime;/cy) is the GR effect.</s> <span class="fix">&rarr; Most is coordinate (equinox) precession + planetary tugs; the GR piece is only the <b>43&Prime;</b> residual.</span></p>
+      <p class="dead"><s>Drop a constant and it's "close enough."</s> <span class="fix">&rarr; Drop the 6 and you get ~7&Prime; &mdash; see window&nbsp;6. The coefficient is not decorative.</span></p>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <h3>THE TAMPER</h3>
+      <p>The disclosed planted void: replace 6&pi;GM with <b>&pi;GM</b> (one-sixth). Mercury's advance falls to ~7&Prime;/century and misses the measured 43. The WITNESS in window&nbsp;7 catches it live.</p>
+      <p><button id="tamper2" class="warn">apply tamper</button> <button id="restore2">restore</button></p>
+      <p style="font-size:11.5px">selfcheck() re-plants this void headless every boot, asserts the value now differs, then restores &mdash; failing loud if the witness ever misses it.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE PERIHELION PRECESSION &middot; WORLD&nbsp;II &middot; THE&nbsp;FOLD &middot; ud0 corpus &middot; slug the-perihelion-precession &middot; engine LIT, source AMBER-cited, tamper disclosed &middot; David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- constants (exact laws of gravity and light) ----
+var G      = 6.67430e-11;          // m^3 kg^-1 s^-2
+var c      = 2.99792458e8;         // m/s
+var M_sun  = 1.98892e30;           // kg
+var AU     = 1.495978707e11;       // m
+var RAD2ARCSEC = 206264.80625;     // arcsec per radian
+var PI = Math.PI;
+
+// ---- Mercury's known orbit ----
+var MERC_A = 5.7909050e10;         // m, semi-major axis
+var MERC_E = 0.205630;             // eccentricity
+var MERC_T = 87.969 * 86400;       // s, orbital period
+var CENTURY = 100 * 365.25 * 86400;// s, Julian century
+
+// disclosed tamper flag (plain top-level var so selfcheck runs headless)
+var TAMPER = false;
+function grCoeff(){ return TAMPER ? 1 : 6; } // true GR coefficient is 6; tamper drops it to 1
+
+// ---- pure engine ----
+// GR perihelion advance per orbit (radians): coeff*pi*G*M/(a(1-e^2)c^2)
+function precessionPerOrbit(a, e, M, cc){
+  return grCoeff() * PI * G * M / ( a * (1 - e*e) * cc*cc );
+}
+function orbitsPerCentury(T){ return CENTURY / T; }
+function precessionArcsecPerCentury(a, e, M, cc, T){
+  return precessionPerOrbit(a, e, M, cc) * orbitsPerCentury(T) * RAD2ARCSEC;
+}
+// Newtonian closed orbit: apsidal angle for force F ~ r^n is pi/sqrt(3+n).
+// Precession per orbit = 2*apsidalAngle - 2*pi.  n=-2 gives exactly zero.
+function apsidalAngle(n){ return PI / Math.sqrt(3 + n); }
+function newtonianPrecessionPerOrbit(n){ return 2*apsidalAngle(n) - 2*PI; }
+// bonus exact laws
+function schwarzschildRadius(M){ return 2*G*M / (c*c); }        // r_s = 2GM/c^2
+function escapeVelocity(M, r){ return Math.sqrt(2*G*M / r); }   // = c at r_s
+
+// ---- fail-loud selfcheck: THROWS on any violation; RETURNS true on success ----
+function selfcheck(){
+  var TOL = 1e-6;
+  var save = TAMPER;      // save tamper flag
+  TAMPER = false;         // untampered regime
+
+  // 1) Mercury's GR advance is ~43 arcsec / century (Le Verrier's residual)
+  var merc = precessionArcsecPerCentury(MERC_A, MERC_E, M_sun, c, MERC_T);
+  if (!(Math.abs(merc - 43) < 0.5))
+    throw "Mercury GR advance not ~43 arcsec/century: " + merc;
+
+  // 2) pure inverse-square Newtonian orbit does NOT precess (closed ellipse, Bertrand)
+  var newt = newtonianPrecessionPerOrbit(-2);
+  if (!(Math.abs(newt) < TOL))
+    throw "Newtonian inverse-square orbit precessed (should be 0): " + newt;
+  //    ...but a non-inverse-square force law DOES precess (sanity of the apsidal formula)
+  if (!(Math.abs(newtonianPrecessionPerOrbit(-1)) > 1e-3))
+    throw "apsidal formula gave no precession for a precessing force law";
+
+  // 3) precession GROWS for smaller a (closer in) and larger e (more eccentric)
+  var pClose = precessionPerOrbit(MERC_A, MERC_E, M_sun, c);
+  var pFar   = precessionPerOrbit(AU,     MERC_E, M_sun, c);
+  if (!(pClose > pFar))
+    throw "precession did not grow for smaller a";
+  var pLowE  = precessionPerOrbit(MERC_A, 0.10, M_sun, c);
+  var pHighE = precessionPerOrbit(MERC_A, 0.40, M_sun, c);
+  if (!(pHighE > pLowE))
+    throw "precession did not grow for larger e";
+
+  // 4) it is a 1/c^2 correction: it vanishes as c -> infinity
+  var pRel = precessionPerOrbit(MERC_A, MERC_E, M_sun, 1e60);
+  if (!(Math.abs(pRel) < TOL))
+    throw "precession did not vanish as c -> infinity: " + pRel;
+
+  // 5) exact-law anchor: Sun's Schwarzschild radius ~ 2.95 km; v_esc(r_s)=c
+  if (!(Math.abs(schwarzschildRadius(M_sun) - 2954) < 5))
+    throw "Sun r_s not ~2.95 km: " + schwarzschildRadius(M_sun);
+  if (!(Math.abs(escapeVelocity(M_sun, schwarzschildRadius(M_sun)) - c) < 1))
+    throw "escape velocity at r_s is not c";
+
+  // 6) DISCLOSED PLANTED VOID: drop the 6 -> ~7 arcsec/century, missing 43
+  TAMPER = true;
+  var bad = precessionArcsecPerCentury(MERC_A, MERC_E, M_sun, c, MERC_T);
+  if (!(Math.abs(bad - merc) > 1))           // the witnessed value must differ
+    throw "tamper did not change the result";
+  if (!(Math.abs(bad - 43) > 30))            // and must miss the measured 43
+    throw "tampered result still matched 43";
+  TAMPER = false;                            // restore untampered
+  if (!(Math.abs(precessionArcsecPerCentury(MERC_A, MERC_E, M_sun, c, MERC_T) - 43) < 0.5))
+    throw "restore failed";
+
+  TAMPER = save;                              // restore caller's flag
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  try{
+    selfcheck();
+  }catch(err){
+    var fb = document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent = 'SELFCHECK FAILED — engine not LIT: ' + err;
+    var lb = document.getElementById('litbadge');
+    if(lb){ lb.className='badge b-bad mono'; lb.textContent='NOT LIT'; }
+    throw err;
+  }
+
+  function fmt(x, d){ return Number(x).toFixed(d); }
+
+  function render(){
+    var perOrbit = precessionPerOrbit(MERC_A, MERC_E, M_sun, c);
+    var nCent    = orbitsPerCentury(MERC_T);
+    var arcsec   = precessionArcsecPerCentury(MERC_A, MERC_E, M_sun, c, MERC_T);
+
+    document.getElementById('m_a').textContent  = fmt(MERC_A/1e10,4)+'\u00d710\u00b9\u2070 m';
+    document.getElementById('m_e').textContent  = fmt(MERC_E,6);
+    document.getElementById('m_ap').textContent = fmt(apsidalAngle(-2),6)+' rad (=\u03c0)';
+
+    document.getElementById('o_orb').textContent  = perOrbit.toExponential(3)+' rad';
+    document.getElementById('o_n').textContent    = fmt(nCent,2);
+    document.getElementById('o_cent').textContent = fmt(arcsec,3)+'\u2033';
+
+    var lb = document.getElementById('litbadge');
+    var wt = document.getElementById('auditout');
+    var ok = Math.abs(arcsec - 43) < 0.5;
+    if(ok){
+      lb.className='badge b-ok mono'; lb.textContent = fmt(arcsec,2)+'\u2033 / century  \u2713 = 43';
+      wt.className='badge b-ok';      wt.textContent = 'WITNESS \u2713  '+fmt(arcsec,2)+'\u2033/cy \u2248 43';
+    }else{
+      lb.className='badge b-bad mono'; lb.textContent = fmt(arcsec,2)+'\u2033 / century  \u2717 \u2260 43';
+      wt.className='badge b-bad';      wt.textContent = 'WITNESS \u2717 TAMPERED  '+fmt(arcsec,2)+'\u2033/cy \u2260 43';
+    }
+    drawRosette();
+  }
+
+  // rosette canvas — apse rotates by an (exaggerated) advance each lap
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height, CX = W/2, CY = H/2;
+  var phase = 0;
+  function drawRosette(){
+    ctx.clearRect(0,0,W,H);
+    // exaggerate the true precession direction (advance) so it is visible
+    var advPerLap = (grCoeff()===6 ? 0.42 : 0.42/6); // scaled by the live coefficient
+    var e = MERC_E, p = 120*(1-e*e), laps = 14;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = TAMPER ? 'rgba(255,122,111,.85)' : 'rgba(127,224,192,.85)';
+    ctx.beginPath();
+    var first = true;
+    for(var th=0; th<=laps*2*PI; th+=0.03){
+      var lap = th/(2*PI);
+      var omega = lap*advPerLap;             // apse line rotation
+      var r = p/(1 + e*Math.cos(th - omega));
+      var x = CX + r*Math.cos(th), y = CY + r*Math.sin(th);
+      if(first){ ctx.moveTo(x,y); first=false; } else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    // central mass
+    ctx.fillStyle='#ffd66b'; ctx.beginPath(); ctx.arc(CX,CY,4,0,2*PI); ctx.fill();
+    // moving planet on the outermost drawn lap
+    var lap2 = laps-0.5, om2 = lap2*advPerLap, thP = phase;
+    var rr = p/(1 + e*Math.cos(thP - om2));
+    var px = CX + rr*Math.cos(thP + lap2*0 ), py = CY + rr*Math.sin(thP);
+    ctx.fillStyle = TAMPER ? '#ff7a6f' : '#7fe0c0';
+    ctx.beginPath(); ctx.arc(CX + rr*Math.cos(thP), CY + rr*Math.sin(thP), 3.5, 0, 2*PI); ctx.fill();
+  }
+  function tick(){ phase += 0.03; drawRosette(); requestAnimationFrame(tick); }
+
+  function setTamper(v){ TAMPER = v; render(); }
+  document.getElementById('tamper').onclick  = function(){ setTamper(true); };
+  document.getElementById('tamper2').onclick = function(){ setTamper(true); };
+  document.getElementById('restore').onclick  = function(){ setTamper(false); };
+  document.getElementById('restore2').onclick = function(){ setTamper(false); };
+
+  render();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

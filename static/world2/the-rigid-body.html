@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE RIGID BODY</title>
+<style>
+:root{
+  --am:#9ee06a;
+  --bg:#0a160f; --bg2:#0c1c13; --panel:#0f2317; --panel2:#102a1a;
+  --ink:#e9f6ec; --mut:#9fb8a6; --edge:rgba(158,224,106,.20);
+  --blue:#5bc8ff; --red:#ff6f6f; --amber:#ffcf5a;
+  --lit:#9ee06a; --wall:#ff6f6f;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 15% -10%,rgba(158,224,106,.08),transparent 60%),
+    radial-gradient(900px 500px at 100% 0%,rgba(91,200,255,.06),transparent 55%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+  color:var(--ink);
+  font:15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1240px;margin:0 auto}
+header{margin:0 auto 22px;max-width:1000px}
+h1{
+  font-size:clamp(30px,5vw,52px);letter-spacing:.06em;margin:0 0 6px;
+  font-weight:800;color:#fff;
+  text-shadow:0 0 26px rgba(158,224,106,.30);
+}
+h1 .dot{color:var(--am)}
+.sub{color:var(--mut);font-size:16px;max-width:760px;margin:0 0 12px}
+.sub b{color:var(--ink);font-weight:600}
+.src{font-size:12.5px;color:var(--mut);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.src a:hover{opacity:.8}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.12em;
+  padding:2px 8px;border-radius:999px;border:1px solid transparent;text-transform:uppercase;
+}
+.t-amber{color:var(--amber);border-color:rgba(255,207,90,.5);background:rgba(255,207,90,.08)}
+.t-lit{color:#08130b;background:var(--lit);border-color:var(--lit)}
+.t-in{color:var(--blue);border-color:rgba(91,200,255,.5);background:rgba(91,200,255,.08)}
+.t-out{color:var(--am);border-color:rgba(158,224,106,.5);background:rgba(158,224,106,.08)}
+.t-wall{color:var(--red);border-color:rgba(255,111,111,.5);background:rgba(255,111,111,.08)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  padding:8px 12px;border-radius:10px;border:1px solid var(--edge);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(91,200,255,.35);background:rgba(91,200,255,.06)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,111,111,.35);background:rgba(255,111,111,.06)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(158,224,106,.35);background:rgba(158,224,106,.06);text-align:center}
+
+.win{
+  position:relative;border:1px solid var(--edge);border-radius:14px;
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  padding:14px 15px 15px;
+}
+.win h3{margin:0 0 8px;font-size:14px;letter-spacing:.03em;color:#fff;display:flex;align-items:center;gap:8px}
+.win p{margin:7px 0;color:var(--mut);font-size:13px}
+.win p b{color:var(--ink)}
+.wn{
+  position:absolute;top:-11px;right:-9px;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:var(--bg2);border:1px solid var(--edge);color:var(--am);
+}
+.col.blue .wn{color:var(--blue);border-color:rgba(91,200,255,.4)}
+.col.red .wn{color:var(--red);border-color:rgba(255,111,111,.4)}
+.panel{border-color:rgba(158,224,106,.45);box-shadow:0 0 0 1px rgba(158,224,106,.10),0 10px 40px -20px rgba(158,224,106,.5)}
+.flow{text-align:center;color:var(--am);font-size:18px;line-height:1;margin:2px 0;opacity:.7}
+
+.mono{font-family:"Cascadia Code",ui-monospace,Consolas,monospace;font-size:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:8px 0;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.kv span:nth-child(odd){color:var(--mut)}
+.kv span:nth-child(even){color:var(--ink);text-align:right}
+canvas{width:100%;height:190px;display:block;border-radius:10px;border:1px solid var(--edge);background:#08130b;margin:6px 0}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:12.5px;
+  padding:7px 11px;border-radius:9px;border:1px solid var(--edge);margin-top:6px;font-family:ui-monospace,Consolas,monospace;
+}
+.badge.ok{color:#08130b;background:var(--lit);border-color:var(--lit)}
+.badge.bad{color:#fff;background:var(--wall);border-color:var(--wall)}
+.dead{color:var(--red);text-decoration:line-through;opacity:.8}
+.fix{color:var(--am)}
+.wall-note{border-left:3px solid var(--red);padding-left:10px;color:var(--ink);font-size:13px}
+button{
+  font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink);
+  background:#12261a;border:1px solid var(--edge);border-radius:9px;padding:8px 12px;margin:4px 6px 2px 0;
+}
+button:hover{border-color:var(--am)}
+button#tamper{border-color:rgba(255,111,111,.5);color:var(--red)}
+button#restore{border-color:rgba(158,224,106,.5);color:var(--am)}
+#failb{display:none;margin:10px 0;padding:10px 12px;border-radius:9px;background:var(--wall);color:#fff;font-weight:700}
+footer{max-width:1000px;margin:28px auto 0;color:var(--mut);font-size:12px;border-top:1px solid var(--edge);padding-top:14px}
+.eq{color:var(--am);font-family:ui-monospace,Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE RIGID BODY<span class="dot">.</span></h1>
+  <p class="sub">Spin without a pivot. The <b>inertia tensor</b> turns torque into motion and maps angular velocity to angular momentum: <span class="eq">L = I&#969;</span>. With no external torque, <b>L is fixed in space</b> even as &#969; wobbles &mdash; the tensor, not a scalar, is what keeps the books. Rendered, not quoted.</p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>Euler, <a href="https://scholarlycommons.pacific.edu/euler-works/289/" target="_blank" rel="noopener">&ldquo;Theoria motus corporum solidorum seu rigidorum&rdquo;</a> (E289; rotation equations 1758, publ. 1765) &mdash; historical work, no DOI, marked AMBER.</span>
+  </div>
+  <div id="failb"></div>
+</header>
+
+<div class="ocho">
+
+  <!-- LEFT : BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wn">3</span>
+      <h3>THE MODEL</h3>
+      <p>A rigid body has a symmetric, positive-definite <b>inertia tensor</b> I. Its eigenvectors are the <b>principal axes</b>; its eigenvalues are the principal moments <span class="mono">I&#8321;,I&#8322;,I&#8323;</span>. In that frame Euler&rsquo;s torque-free equations govern &#969;:</p>
+      <div class="kv">
+        <span>I&#8321;&#969;&#775;&#8321;</span><span>= (I&#8322;&minus;I&#8323;)&#969;&#8322;&#969;&#8323;</span>
+        <span>I&#8322;&#969;&#775;&#8322;</span><span>= (I&#8323;&minus;I&#8321;)&#969;&#8323;&#969;&#8321;</span>
+        <span>I&#8323;&#969;&#775;&#8323;</span><span>= (I&#8321;&minus;I&#8322;)&#969;&#8321;&#969;&#8322;</span>
+      </div>
+      <p>Body used here: principal moments <b>I = (2, 3, 4)</b>. Conserved: <span class="mono">L = I&#969;</span>, energy <span class="mono">T = &frac12;&#969;&#7488;I&#969;</span>, and &#8741;L&#8741;.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>Rotation in three dimensions. Euler&rsquo;s rigid-body equations give the body a genuine <b>orientation state</b> &mdash; a rotation R in SO(3) evolving alongside &#969;. The inertia tensor is the bridge from angular velocity to angular momentum; conservation of L needs <b>no pivot</b>, only zero torque.</p>
+      <p class="mono" style="color:var(--blue)">neighbour &rarr; the-angular-velocity &middot; rotation as an evolving frame, det R = 1 throughout.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">7</span>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check of L-conservation along the true motion. Confirms while I is a tensor; flips red the instant the tensor is swapped for a scalar in window&nbsp;6.</p>
+      <div id="auditout" class="badge">re-checking&hellip;</div>
+    </div>
+  </div>
+
+  <!-- CENTER : THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="wn">4</span>
+      <h3><span class="tag t-in">in &darr;</span> DATA IN</h3>
+      <p>Torque-free spin started near the <b>intermediate axis</b> (I&#8322;): <span class="mono">&#969;&#8320; = (0.15, 6.0, 0.15)</span>. No external torque. Integrated with RK4 for &#969; and a Rodrigues exponential map for R (keeps R in SO(3)).</p>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win panel">
+      <span class="wn">0</span>
+      <h3><span class="tag t-lit">lit</span> THE PANEL</h3>
+      <canvas id="cv" width="520" height="380"></canvas>
+      <p style="margin:2px 0">Spinning body (green) tumbles &mdash; the <b style="color:var(--red)">tennis-racket flip</b> &mdash; while the angular-momentum vector <b style="color:var(--amber)">L</b> stays nailed in space.</p>
+      <div class="kv" id="live">
+        <span>&#8741;L&#8741; (inertial)</span><span id="vL">&mdash;</span>
+        <span>energy T</span><span id="vE">&mdash;</span>
+        <span>max L-drift</span><span id="vD">&mdash;</span>
+        <span>det R</span><span id="vR">&mdash;</span>
+      </div>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win">
+      <span class="wn">8</span>
+      <h3><span class="tag t-out">out &darr;</span> DATA OUT</h3>
+      <p>Proven result: with a full inertia tensor and zero torque, the inertial angular momentum is conserved to integrator tolerance while &#969; wobbles freely.</p>
+      <div id="litbadge" class="badge">booting&hellip;</div>
+    </div>
+  </div>
+
+  <!-- RIGHT : RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wn">1</span>
+      <h3>THE ADVERSARY</h3>
+      <p class="wall-note"><span class="tag t-wall">wall</span> &ldquo;A spinning body has one number for its inertia, so L is just mass-times-spin and always lines up with &#969;.&rdquo;</p>
+      <p>False for any body that is not a sphere. Off a principal axis, L and &#969; point in <b>different directions</b>; &#969; precesses around the fixed L. Real failure modes the tensor guards against: intermediate-axis instability (the Dzhanibekov flip), gyroscopic coupling, and treating a spacecraft or racket as an isotropic top.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p class="dead">&#969; is constant for a freely spinning body.</p>
+      <p class="fix">&rarr; Only <b>L</b> and energy are conserved; &#969; is generally not &mdash; it wobbles, and about the intermediate axis it flips.</p>
+      <p class="dead">L always points along &#969;.</p>
+      <p class="fix">&rarr; True only when &#969; lies on a principal axis or the body is isotropic; otherwise L = I&#969; tilts away from &#969;.</p>
+      <p class="dead">Energy conservation forces &#969; to hold steady.</p>
+      <p class="fix">&rarr; Energy fixes &#969; to an <b>ellipsoid</b>; &#8741;L&#8741; fixes it to a sphere. Their intersection (polhode) lets &#969; roam.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Planted void (disclosed): replace the inertia <b>tensor</b> with one <b>scalar</b> moment <span class="mono">I&#8347; = (I&#8321;+I&#8322;+I&#8323;)/3</span>. Off-diagonal coupling and the distinct principal moments vanish, so L = I&#8347;&#969; no longer stays fixed under free rotation. The Witness (7) catches it live.</p>
+      <button id="tamper">swap tensor &rarr; scalar</button>
+      <button id="restore">restore tensor</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE RIGID BODY &mdash; WORLD II &middot; THE FOLD. The engine computes live from Euler&rsquo;s torque-free equations; every claim is a conservation law asserted by a fail-loud selfcheck, and the tamper is a disclosed, self-detected void. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===================== ENGINE (pure logic; runs with no DOM) =====================
+var I1=2, I2=3, I3=4;      // principal moments (asymmetric body)
+var Is=(I1+I2+I3)/3;       // tamper: single scalar moment of inertia
+var TAMPER=false;
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function vadd(a,b){return[a[0]+b[0],a[1]+b[1],a[2]+b[2]];}
+function vsub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function vscale(a,s){return[a[0]*s,a[1]*s,a[2]*s];}
+function vdot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function vnorm(a){return Math.sqrt(vdot(a,a));}
+function ident(){return[[1,0,0],[0,1,0],[0,0,1]];}
+function matVec(M,v){return[M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2],M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2],M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]];}
+function matMul(A,B){var C=[[0,0,0],[0,0,0],[0,0,0]];for(var i=0;i<3;i++)for(var j=0;j<3;j++){var s=0;for(var k=0;k<3;k++)s+=A[i][k]*B[k][j];C[i][j]=s;}return C;}
+function transpose(A){return[[A[0][0],A[1][0],A[2][0]],[A[0][1],A[1][1],A[2][1]],[A[0][2],A[1][2],A[2][2]]];}
+function det3(A){return A[0][0]*(A[1][1]*A[2][2]-A[1][2]*A[2][1])-A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0])+A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0]);}
+function skew(w){return[[0,-w[2],w[1]],[w[2],0,-w[0]],[-w[1],w[0],0]];}
+function expSkew(w){ // Rodrigues: rotation matrix for axis-angle vector w, exactly in SO(3)
+  var th=vnorm(w);
+  if(th<1e-14)return ident();
+  var k=vscale(w,1/th), K=skew(k), K2=matMul(K,K), s=Math.sin(th), c=1-Math.cos(th), R=ident();
+  for(var i=0;i<3;i++)for(var j=0;j<3;j++)R[i][j]=R[i][j]+s*K[i][j]+c*K2[i][j];
+  return R;
+}
+function diagTensor(){return[[I1,0,0],[0,I2,0],[0,0,I3]];}
+// L = I*omega in the body frame; TAMPER swaps the tensor for a single scalar moment
+function angMomBody(w){return TAMPER?vscale(w,Is):[I1*w[0],I2*w[1],I3*w[2]];}
+function kinEnergy(w){return 0.5*(I1*w[0]*w[0]+I2*w[1]*w[1]+I3*w[2]*w[2]);} // 0.5 wT I w
+// Euler's torque-free equations in the principal-axis body frame
+function eulerDeriv(w){return[((I2-I3)/I1)*w[1]*w[2],((I3-I1)/I2)*w[2]*w[0],((I1-I2)/I3)*w[0]*w[1]];}
+function step(st,dt){
+  var w=st.w;
+  var k1=eulerDeriv(w);
+  var k2=eulerDeriv(vadd(w,vscale(k1,dt/2)));
+  var k3=eulerDeriv(vadd(w,vscale(k2,dt/2)));
+  var k4=eulerDeriv(vadd(w,vscale(k3,dt)));
+  var wn=vadd(w,vscale(vadd(vadd(k1,vscale(k2,2)),vadd(vscale(k3,2),k4)),dt/6));
+  var wmid=vscale(vadd(w,wn),0.5);
+  var Rn=matMul(st.R,expSkew(vscale(wmid,dt)));
+  return{w:wn,R:Rn};
+}
+function run(w0,N,dt){var st={w:w0.slice(),R:ident()},traj=[st];for(var i=0;i<N;i++){st=step(st,dt);traj.push(st);}return traj;}
+// angular momentum in the INERTIAL frame at a trajectory sample
+function Linertial(st){return matVec(st.R,angMomBody(st.w));}
+// MAX relative drift of inertial L over a trajectory (conserved = constant at EVERY instant)
+function Ldrift(traj){var L0=Linertial(traj[0]),n=vnorm(L0),m=0;for(var s=0;s<traj.length;s++){m=Math.max(m,vnorm(vsub(Linertial(traj[s]),L0)));}return m/n;}
+
+var W0=[0.15,6.0,0.15];   // spin near the INTERMEDIATE axis (I2) -> tennis-racket wobble
+var DT=0.004, NS=1500;
+
+function assert(c,m){if(!c)throw new Error("selfcheck: "+m);}
+function approx(a,b,t){return Math.abs(a-b)<=t;}
+
+function selfcheck(){
+  var savedT=TAMPER;
+  try{
+    // (1) full inertia tensor from a rotated diagonal: symmetric, PD, eigenvectors = principal axes
+    var R0=expSkew([0.3,-0.5,0.7]);
+    var Ifull=matMul(matMul(R0,diagTensor()),transpose(R0));
+    for(var i=0;i<3;i++)for(var j=0;j<3;j++)assert(approx(Ifull[i][j],Ifull[j][i],1e-9),"inertia tensor not symmetric");
+    var pm=[I1,I2,I3];
+    for(var k=0;k<3;k++){
+      var v=[R0[0][k],R0[1][k],R0[2][k]];            // k-th principal axis
+      var Iv=matVec(Ifull,v);
+      assert(vnorm(vsub(Iv,vscale(v,pm[k])))<1e-9,"principal axis is not an eigenvector of I");
+    }
+    // positive-definite via Sylvester's criterion (leading principal minors > 0)
+    var m1=Ifull[0][0];
+    var m2=Ifull[0][0]*Ifull[1][1]-Ifull[0][1]*Ifull[1][0];
+    var m3=det3(Ifull);
+    assert(m1>0&&m2>0&&m3>0,"inertia tensor not positive-definite");
+
+    // (2) L = I*omega definition holds (untampered)
+    TAMPER=false;
+    var wt=[0.4,-1.1,0.7];
+    assert(vnorm(vsub(angMomBody(wt),[I1*wt[0],I2*wt[1],I3*wt[2]]))<1e-12,"L != I*omega");
+
+    // (3) torque-free asymmetric run: energy, |L| and inertial L conserved while omega wobbles
+    var traj=run(W0,NS,DT);
+    var E0=kinEnergy(traj[0].w), maxdE=0, maxLbody=0, minLbody=1e9, maxWob=0;
+    var Lb0sq=(I1*W0[0])*(I1*W0[0])+(I2*W0[1])*(I2*W0[1])+(I3*W0[2])*(I3*W0[2]);
+    for(var s=0;s<traj.length;s++){
+      var w=traj[s].w;
+      maxdE=Math.max(maxdE,Math.abs(kinEnergy(w)-E0));
+      var Lbsq=(I1*w[0])*(I1*w[0])+(I2*w[1])*(I2*w[1])+(I3*w[2])*(I3*w[2]);
+      maxLbody=Math.max(maxLbody,Lbsq); minLbody=Math.min(minLbody,Lbsq);
+      maxWob=Math.max(maxWob,vnorm(vsub(w,W0)));
+    }
+    assert(maxdE/Math.abs(E0)<1e-4,"rotational kinetic energy not conserved");
+    assert((maxLbody-minLbody)/Lb0sq<1e-4,"|L| (body) not conserved");
+    assert(Ldrift(traj)<1e-3,"inertial L not conserved torque-free");
+    assert(maxWob>1.0,"omega should wobble for an asymmetric body");
+
+    // (4) tennis-racket effect: two near ICs about the intermediate axis diverge
+    var rng=mulberry32(12345);
+    var eps=1e-4;
+    var W0b=[W0[0]+eps*(rng()+0.5),W0[1],W0[2]+eps*(rng()+0.5)];
+    var tA=run(W0,NS,DT), tB=run(W0b,NS,DT), sep0=vnorm(vsub(tA[0].w,tB[0].w)), maxSep=0;
+    for(var s2=0;s2<tA.length;s2++)maxSep=Math.max(maxSep,vnorm(vsub(tA[s2].w,tB[s2].w)));
+    assert(maxSep/sep0>5,"nearby trajectories about the intermediate axis should diverge");
+
+    // (5) symmetric top: pure spin about a principal axis is steady
+    var sI1=I1,sI2=I2,sI3=I3;
+    I1=2;I2=2;I3=5;
+    var topTraj=run([0,0,1.3],400,0.01);
+    assert(vnorm(vsub(topTraj[topTraj.length-1].w,[0,0,1.3]))<1e-9,"symmetric top not steady about its principal axis");
+    assert(Ldrift(topTraj)<1e-6,"symmetric top L not conserved");
+    I1=sI1;I2=sI2;I3=sI3;
+
+    // (6) DISCLOSED TAMPER: scalar moment breaks inertial-L conservation on the SAME motion
+    assert(Ldrift(traj)<1e-3,"pre-tamper drift wrong");
+    TAMPER=true;
+    assert(Ldrift(traj)>0.1,"tamper should break L conservation");
+    TAMPER=false;
+    assert(Ldrift(traj)<1e-3,"restore failed");
+
+    return true;
+  } finally { TAMPER=savedT; }
+}
+
+/* ===== UI ===== */
+var TRAJ=null, RUNGOOD=false;
+function boot(){
+  try{
+    var ok=selfcheck();
+    if(ok!==true)throw new Error("selfcheck did not return true");
+    RUNGOOD=true;
+  }catch(e){
+    var fb=document.getElementById("failb");
+    fb.style.display="block";
+    fb.textContent="SELFCHECK FAILED — "+e.message;
+    document.getElementById("litbadge").className="badge bad";
+    document.getElementById("litbadge").textContent="DEAD — selfcheck threw";
+    throw e;
+  }
+  TAMPER=false;
+  TRAJ=run(W0,NS,DT);
+  var L0=Linertial(TRAJ[0]);
+  document.getElementById("vL").textContent=vnorm(L0).toFixed(4);
+  document.getElementById("vE").textContent=kinEnergy(W0).toFixed(4);
+  document.getElementById("litbadge").className="badge ok";
+  document.getElementById("litbadge").textContent="LIT — ‖L‖="+vnorm(L0).toFixed(2)+" conserved (torque-free)";
+  reCheck();
+  animate();
+}
+function reCheck(){
+  if(!TRAJ)return;
+  var d=Ldrift(TRAJ);
+  var el=document.getElementById("auditout");
+  document.getElementById("vD").textContent=d.toExponential(2);
+  if(d<1e-3){
+    el.className="badge ok";
+    el.textContent="WITNESS OK — L conserved, drift "+d.toExponential(1);
+  }else{
+    el.className="badge bad";
+    el.textContent="TAMPER DETECTED — L drifts "+ (d*100).toFixed(0) +"% (scalar inertia)";
+  }
+}
+// ---- canvas: spinning brick + fixed L arrow ----
+var frame=0;
+function project(p){ // simple orthographic with a slight tilt
+  var a=0.5, ca=Math.cos(a), sa=Math.sin(a);
+  var x=p[0], y=p[1]*ca - p[2]*sa, z=p[1]*sa + p[2]*ca;
+  return [x, y - z*0.35];
+}
+function animate(){
+  var cv=document.getElementById("cv"); if(!cv)return;
+  var ctx=cv.getContext("2d"), W=cv.width, H=cv.height, cx=W*0.5, cy=H*0.55, sc=34;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle="#08130b"; ctx.fillRect(0,0,W,H);
+    var st=TRAJ[frame%TRAJ.length];
+    var R=st.R;
+    // brick half-extents along principal axes (longest along axis1 so the flip reads)
+    var hx=2.1, hy=0.55, hz=1.15;
+    var verts=[[-hx,-hy,-hz],[hx,-hy,-hz],[hx,hy,-hz],[-hx,hy,-hz],[-hx,-hy,hz],[hx,-hy,hz],[hx,hy,hz],[-hx,hy,hz]];
+    var P=verts.map(function(v){var r=matVec(R,v);var q=project(r);return[cx+q[0]*sc,cy+q[1]*sc];});
+    var edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+    // faces for a little shading
+    ctx.lineWidth=2;
+    ctx.strokeStyle="rgba(158,224,106,.9)";
+    edges.forEach(function(e){ctx.beginPath();ctx.moveTo(P[e[0]][0],P[e[0]][1]);ctx.lineTo(P[e[1]][0],P[e[1]][1]);ctx.stroke();});
+    // fixed L arrow (inertial, constant) from centre
+    var L=Linertial(st); var Ln=vnorm(L); var Ld=vscale(L,1/Ln);
+    var tip=project(vscale(Ld,3.2));
+    ctx.strokeStyle="#ffcf5a"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+tip[0]*sc, cy+tip[1]*sc); ctx.stroke();
+    ctx.fillStyle="#ffcf5a"; ctx.beginPath(); ctx.arc(cx+tip[0]*sc,cy+tip[1]*sc,4,0,7); ctx.fill();
+    ctx.font="12px ui-monospace,Consolas,monospace"; ctx.fillText("L (fixed)", cx+tip[0]*sc+6, cy+tip[1]*sc);
+    // current omega arrow (moving)
+    var w=st.w, wn=vnorm(w), wd=vscale(w,1/wn), wtip=project(vscale(matVec(R,wd),2.4));
+    ctx.strokeStyle="#5bc8ff"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+wtip[0]*sc,cy+wtip[1]*sc); ctx.stroke();
+    ctx.fillStyle="#5bc8ff"; ctx.fillText("ω", cx+wtip[0]*sc+4, cy+wtip[1]*sc);
+    document.getElementById("vR").textContent=det3(R).toFixed(6);
+    frame+=3;
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+document.getElementById("tamper").addEventListener("click",function(){TAMPER=true;reCheck();});
+document.getElementById("restore").addEventListener("click",function(){TAMPER=false;reCheck();});
+boot();
+</script>
+</body>
+</html>

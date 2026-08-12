@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE MILANKOVITCH CYCLES</title>
+<style>
+  :root{
+    --am:#ffcf5a;
+    --ground:#0c1a12;
+    --ground2:#0f2417;
+    --ink:#e8f2ea;
+    --dim:#9fc0ac;
+    --line:#26492f;
+    --panel:#0a140d;
+    --blue:#6fb2ff;
+    --red:#ff7a6b;
+    --amber:#ffcf5a;
+    --lit:#7dffb0;
+    --wall:#ff5a5a;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 70% -10%, #14301d 0%, transparent 60%),
+      radial-gradient(900px 600px at 0% 110%, #10251a 0%, transparent 55%),
+      var(--ground);
+    color:var(--ink);
+    font-family:var(--mono);
+    line-height:1.5;
+    padding:26px 20px 60px;
+  }
+  .wrap{max-width:1220px;margin:0 auto}
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:20px}
+  h1{
+    font-size:clamp(26px,4.6vw,44px);
+    letter-spacing:.06em;margin:0 0 8px;
+    color:var(--am);
+    text-shadow:0 0 24px rgba(255,207,90,.22);
+  }
+  .sub{color:var(--dim);max-width:78ch;margin:0 0 12px;font-size:14.5px}
+  .src{font-size:12.5px;color:var(--dim)}
+  .src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+  .tag{
+    display:inline-block;font-size:10.5px;letter-spacing:.14em;
+    padding:2px 7px;border-radius:3px;border:1px solid currentColor;
+    text-transform:uppercase;vertical-align:middle;margin-right:6px;font-weight:600;
+  }
+  .t-amber{color:var(--amber)}
+  .t-lit{color:var(--lit)}
+  .t-in{color:var(--blue)}
+  .t-out{color:var(--am)}
+  .t-wall{color:var(--wall)}
+
+  .ocho{
+    display:grid;
+    grid-template-columns:1fr 1.12fr 1fr;
+    gap:16px;
+    align-items:start;
+  }
+  @media(max-width:880px){ .ocho{grid-template-columns:1fr} }
+
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{
+    font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;
+    padding:7px 10px;border-radius:5px;font-weight:700;
+    border:1px solid var(--line);
+  }
+  .col.blue .teamhdr{color:var(--blue);border-color:#244a63;background:rgba(111,178,255,.05)}
+  .col.red  .teamhdr{color:var(--red); border-color:#5c2a26;background:rgba(255,122,107,.05)}
+  .col.center .teamhdr{color:var(--am); border-color:#544217;background:rgba(255,207,90,.06)}
+
+  .win{
+    border:1px solid var(--line);border-radius:8px;
+    background:linear-gradient(180deg,var(--ground2),var(--panel));
+    padding:12px 13px;position:relative;
+  }
+  .win.panel{border-color:#4a3a12;box-shadow:0 0 0 1px rgba(255,207,90,.08),0 8px 30px rgba(0,0,0,.35)}
+  .num{
+    position:absolute;top:-9px;right:10px;
+    font-size:11px;width:22px;height:22px;line-height:20px;text-align:center;
+    border-radius:50%;border:1px solid var(--line);background:var(--ground);
+    color:var(--dim);font-weight:700;
+  }
+  .col.blue .num{color:var(--blue);border-color:#244a63}
+  .col.red  .num{color:var(--red); border-color:#5c2a26}
+  .col.center .num{color:var(--am);border-color:#544217}
+  .win h3{margin:2px 0 7px;font-size:13px;letter-spacing:.05em;color:var(--ink)}
+  .win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+  .win b{color:var(--ink)}
+  code{color:var(--am);font-size:12px}
+
+  .flow{
+    text-align:center;color:var(--am);font-size:13px;letter-spacing:.3em;
+    opacity:.7;margin:2px 0;
+  }
+  canvas{width:100%;height:150px;display:block;border:1px solid var(--line);border-radius:6px;background:#07110b;margin:8px 0}
+  .readout{font-size:11.5px;color:var(--dim);white-space:pre-wrap;line-height:1.6}
+  .readout b{color:var(--am)}
+
+  .badge{
+    display:inline-block;margin-top:8px;padding:5px 10px;border-radius:5px;
+    font-size:12px;font-weight:700;letter-spacing:.05em;border:1px solid currentColor;
+  }
+  .ok{color:var(--lit)}
+  .bad{color:var(--wall)}
+  #litbadge{color:var(--lit);border:1px solid var(--lit)}
+
+  .wall-note{border-left:3px solid var(--wall);padding-left:10px;color:#ffbdb4}
+  .grave s{color:#7d5d5d}
+  .grave .fix{color:var(--lit)}
+  button{
+    font-family:var(--mono);font-size:12px;cursor:pointer;
+    background:#1a0f0d;color:var(--red);border:1px solid #5c2a26;
+    padding:6px 12px;border-radius:5px;margin:4px 6px 4px 0;
+  }
+  button.restore{background:#0d1a12;color:var(--lit);border-color:#245040}
+  button:hover{filter:brightness(1.25)}
+  #failb{display:none;margin-top:10px;color:var(--wall);border:1px solid var(--wall);
+    padding:8px 10px;border-radius:6px;font-size:12px}
+  footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;
+    font-size:11.5px;color:var(--dim);letter-spacing:.04em}
+  .kv{font-size:11.5px;color:var(--dim)}
+  .kv b{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE MILANKOVITCH CYCLES</h1>
+  <p class="sub">Three slow wobbles in Earth's orbit pace the ice ages: eccentricity (~100 kyr) reshapes the orbit, obliquity (~41 kyr) tilts the axis, and precession (~23 kyr) turns the season of closest approach. They barely change the yearly total sunlight — they move it between seasons and hemispheres. Cool northern summers that fail to melt winter snow are the pacemaker. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Milankovitch, M. (1941) <i>Kanon der Erdbestrahlung und seine Anwendung auf das Eiszeitenproblem</i> — Royal Serbian Academy, Special Publication 133, Belgrade (English transl. 1969). <b>AMBER</b>: no stable canonical DOI; cited by author / title / year. <a href="https://www.scirp.org/reference/referencespapers?referenceid=354750" target="_blank" rel="noopener">catalog record</a></p>
+</header>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue team · builds &amp; defends</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <h3>THE MODEL</h3>
+      <p>The summer insolation anomaly at 65&nbsp;N is a <b>superposition of three periodic forcings</b>:</p>
+      <p><code>I(t) = a&#8901;cos(2&pi;t/100) + b&#8901;cos(2&pi;t/41) + c&#8901;cos(2&pi;t/23)</code></p>
+      <p><b>Eccentricity</b> ~100 kyr (orbit shape) &middot; <b>Obliquity</b> ~41 kyr (axial tilt swings 22.1&deg;&ndash;24.5&deg;) &middot; <b>Precession</b> ~23 kyr (the spin axis wobbles). The clocks tick at <b>distinct</b> rates, so the summed forcing carries all three signatures at once.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>Orbital clocks of the ice ages &mdash; <b>Milankovitch 1941</b>. Eccentricity ~100 kyr, obliquity ~41 kyr, and precession ~23 kyr <b>redistribute</b> sunlight rather than change its yearly sum; superposed, they set the <b>pacing of glacial cycles</b>. Neighbour in THE FOLD: the greenhouse energy-balance sphere &mdash; orbital forcing sets the <i>timing</i>, radiative feedbacks set the <i>gain</i>.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check: are there still <b>three distinct clocks</b>, and does the spectrum still hold a peak at each of ~100 / 41 / 23 kyr above the off-period floor? Flips <b>red</b> the moment window 6 collapses them.</p>
+      <div id="auditout" class="badge ok">WITNESS: idle</div>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The machine</div>
+
+    <div class="win">
+      <span class="num">4</span>
+      <h3>DATA IN <span class="tag t-in">in &#8595;</span></h3>
+      <p>Three orbital periods and their forcing weights, plus the obliquity range:</p>
+      <p class="kv"><b>ecc</b> 100 kyr &middot; <b>obl</b> 41 kyr &middot; <b>pre</b> 23 kyr &middot; tilt <b>22.1&ndash;24.5&deg;</b></p>
+    </div>
+
+    <div class="flow">&#9660; &#9660; &#9660;</div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <canvas id="cv" width="520" height="150"></canvas>
+      <div id="readout" class="readout"></div>
+    </div>
+
+    <div class="flow">&#9660; &#9660; &#9660;</div>
+
+    <div class="win">
+      <span class="num">8</span>
+      <h3>DATA OUT <span class="tag t-out">out &#8595;</span></h3>
+      <p>Proven live: three distinct clocks, each a spectral peak in the summed 65&nbsp;N summer forcing; the annual mean barely moves.</p>
+      <div id="litbadge" class="badge">computing&hellip;</div>
+      <div id="failb"></div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note">"One cycle would do &mdash; why insist on three?" Because the paleoclimate record is <b>banded</b>: distinct ~100, ~41 and ~23 kyr power. A single frequency cannot reproduce a three-peaked spectrum. Collapse the periods and the fit to the ice-core / benthic record dies &mdash; see window 6.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p class="grave"><s>The cycles change the total sunlight Earth receives.</s> <span class="fix">Fix: obliquity and precession chiefly <b>redistribute</b> insolation between seasons/hemispheres; eccentricity nudges the annual mean by only ~e&sup2;/2 (&lt;0.2% at e=0.06).</span></p>
+      <p class="grave"><s>The dominant beat is the ~100 kyr eccentricity signal, so its forcing is strongest.</s> <span class="fix">Fix: eccentricity's <b>direct</b> insolation forcing is the <b>weakest</b> of the three; why the record is 100-kyr paced is still debated. <b>AMBER</b>.</span></p>
+      <p class="grave"><s>Precession alone dates the glacials.</s> <span class="fix">Fix: cool <b>northern-summer</b> insolation (obliquity + precession) is the pacemaker &mdash; snow that survives summer. <b>AMBER</b>.</span></p>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Planted void (disclosed): force all three periods <b>equal</b> &mdash; one clock, not three. The ~100/41/23 kyr peaks collapse to a single line; the WITNESS in 7 catches it live.</p>
+      <button id="tamper">collapse to one clock</button>
+      <button id="restore" class="restore">restore three clocks</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE FOLD &middot; WORLD II &mdash; the-milankovitch-cycles &middot; engine is LIT (live spectral superposition, fail-loud selfcheck) &middot; projections &amp; 100-kyr dominance marked AMBER &middot; built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===== ENGINE: Milankovitch cycles (pure logic; selfcheck runs headless) =====
+var NOMINAL = { ecc:100, obl:41, pre:23 };      // kyr
+var PER     = { ecc:100, obl:41, pre:23 };      // kyr (mutable)
+var AMP     = { ecc:0.30, obl:1.00, pre:0.70 }; // dimensionless forcing weights
+var OBL_MIN = 22.1, OBL_MAX = 24.5;             // degrees
+var tampered = false;
+
+// Summer insolation anomaly at 65 N - the superposition of three orbital signals.
+function insol65N(t){
+  return AMP.ecc*Math.cos(2*Math.PI*t/PER.ecc)
+       + AMP.obl*Math.cos(2*Math.PI*t/PER.obl)
+       + AMP.pre*Math.cos(2*Math.PI*t/PER.pre);
+}
+
+// Simple periodogram: power of insol65N at a trial period.
+function power(period){
+  var N=2000, dt=1, re=0, im=0;
+  for(var i=0;i<N;i++){
+    var t=i*dt, v=insol65N(t), w=2*Math.PI*t/period;
+    re+=v*Math.cos(w); im+=v*Math.sin(w);
+  }
+  return (re*re+im*im)/(N*N);
+}
+
+// Eccentricity slightly changes the ANNUAL mean (~e^2/2); obliquity and precession
+// only REDISTRIBUTE sunlight between seasons/hemispheres (annual mean ~0 change).
+function eccMeanChange(e){ return 1/Math.sqrt(1-e*e) - 1; }
+
+function applyTamper(){ tampered=true; PER.obl=PER.ecc; PER.pre=PER.ecc; }
+function clearTamper(){ tampered=false; PER.ecc=NOMINAL.ecc; PER.obl=NOMINAL.obl; PER.pre=NOMINAL.pre; }
+
+function periodsDistinct(){
+  return (PER.ecc!==PER.obl)&&(PER.obl!==PER.pre)&&(PER.ecc!==PER.pre);
+}
+
+// Witness: three distinct periods AND all three spectral peaks stand above the floor.
+function witnessOK(){
+  var floor=power(60);
+  return periodsDistinct()
+      && power(NOMINAL.ecc)>3*floor
+      && power(NOMINAL.obl)>3*floor
+      && power(NOMINAL.pre)>3*floor;
+}
+
+// fail-loud: THROWS on any violation; saves/restores tamper flag; RETURNS true.
+function selfcheck(){
+  var savedT=tampered, se=PER.ecc, so=PER.obl, sp=PER.pre;
+  function A(c,m){ if(!c) throw new Error("selfcheck: "+m); }
+
+  // 1. three DISTINCT periods matching ~100/41/23 kyr (exact laws, tight tolerance)
+  A(Math.abs(PER.ecc-100)<1e-6,"eccentricity must be ~100 kyr");
+  A(Math.abs(PER.obl-41)<1e-6,"obliquity must be ~41 kyr");
+  A(Math.abs(PER.pre-23)<1e-6,"precession must be ~23 kyr");
+  A(periodsDistinct(),"the three periods must be distinct");
+  A(PER.ecc>PER.obl && PER.obl>PER.pre,"periods must order 100 > 41 > 23");
+
+  // 2. obliquity swings 22.1..24.5 degrees
+  A(Math.abs(OBL_MIN-22.1)<1e-6 && Math.abs(OBL_MAX-24.5)<1e-6,"obliquity range must be 22.1..24.5");
+  A(OBL_MAX>OBL_MIN,"obliquity max must exceed min");
+
+  // 3. combined signal is a SUPERPOSITION: a peak at each true period, weak off-period
+  var floor=power(60);
+  A(power(100)>3*floor,"missing ~100 kyr spectral peak");
+  A(power(41) >3*floor,"missing ~41 kyr spectral peak");
+  A(power(23) >3*floor,"missing ~23 kyr spectral peak");
+
+  // 4. cycles change DISTRIBUTION/SEASONALITY, not the annual total much:
+  //    eccentricity's annual-mean change stays under 0.5% for e up to 0.06
+  var dm=eccMeanChange(0.06);
+  A(dm>0 && dm<0.005,"eccentricity annual-mean change must be tiny (<0.5%)");
+
+  // 5. AMBER (paced, not hard-asserted): ice ages track LOW summer 65 N insolation;
+  //    verify only that a summer-65N pacing signal actually varies in time.
+  A(Math.abs(insol65N(0)-insol65N(11))>1e-9,"pacing signal must vary in time");
+
+  // ---- disclosed planted void: TAMPER collapses the three clocks to one ----
+  applyTamper();
+  A(!periodsDistinct(),"TAMPER should equalise the periods");
+  A(!witnessOK(),"WITNESS must catch the collapsed spectrum");
+  var floor2=power(60);
+  A(!(power(41)>3*floor2),"41 kyr peak must vanish once periods are equal");
+  clearTamper();
+  A(periodsDistinct() && witnessOK(),"restore must return three distinct clocks");
+
+  tampered=savedT; PER.ecc=se; PER.obl=so; PER.pre=sp;
+  return true;
+}
+/* ===== UI ===== */
+(function(){
+  var failed=false;
+  try{
+    selfcheck();
+  }catch(e){
+    failed=true;
+    var fb=document.getElementById("failb");
+    fb.style.display="block";
+    fb.textContent="SELFCHECK FAILED - "+e.message;
+    var lb=document.getElementById("litbadge");
+    lb.textContent="ENGINE DEAD"; lb.className="badge bad";
+    throw e;
+  }
+  if(!failed){
+    var p100=power(100),p41=power(41),p23=power(23);
+    var lb=document.getElementById("litbadge");
+    lb.innerHTML="LIT &middot; 3 distinct clocks proven";
+    lb.className="badge ok";
+  }
+
+  var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+  var W=cv.width,H=cv.height;
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // grid
+    ctx.strokeStyle="#153021"; ctx.lineWidth=1;
+    for(var gx=0;gx<=8;gx++){ var x=gx/8*W; ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke(); }
+    ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+
+    var span=800; // kyr window drawn
+    function trace(fn,col,wd){
+      ctx.strokeStyle=col; ctx.lineWidth=wd; ctx.beginPath();
+      for(var px=0;px<=W;px++){
+        var t=px/W*span, v=fn(t);
+        var y=H/2 - v*(H*0.16);
+        if(px===0)ctx.moveTo(px,y); else ctx.lineTo(px,y);
+      }
+      ctx.stroke();
+    }
+    // component clocks (faint), then the summed forcing (bright amber)
+    trace(function(t){return AMP.ecc*Math.cos(2*Math.PI*t/PER.ecc);}, "rgba(111,178,255,.55)",1);
+    trace(function(t){return AMP.obl*Math.cos(2*Math.PI*t/PER.obl);}, "rgba(125,255,176,.5)",1);
+    trace(function(t){return AMP.pre*Math.cos(2*Math.PI*t/PER.pre);}, "rgba(255,122,107,.5)",1);
+    trace(insol65N, tampered? "#ff5a5a":"#ffcf5a", 2.2);
+
+    var ro=document.getElementById("readout");
+    var f=power(60);
+    ro.innerHTML=
+      "summed 65 N summer forcing  =  ecc + obl + pre\n"+
+      "period (kyr):   ecc <b>"+PER.ecc.toFixed(0)+"</b>   obl <b>"+PER.obl.toFixed(0)+"</b>   pre <b>"+PER.pre.toFixed(0)+"</b>\n"+
+      "spectral power: 100k <b>"+power(100).toFixed(4)+"</b>  41k <b>"+power(41).toFixed(4)+"</b>  23k <b>"+power(23).toFixed(4)+"</b>  (floor@60k "+f.toFixed(4)+")\n"+
+      "annual-mean shift @ e=0.06: <b>"+(eccMeanChange(0.06)*100).toFixed(2)+"%</b>   "+
+      (tampered? "state: <b>COLLAPSED - one clock</b>" : "state: <b>three distinct clocks</b>");
+  }
+
+  function updateWitness(){
+    var el=document.getElementById("auditout");
+    if(witnessOK()){
+      el.className="badge ok";
+      el.innerHTML="WITNESS: OK &middot; three clocks intact";
+    }else{
+      el.className="badge bad";
+      el.innerHTML="WITNESS: TAMPER DETECTED &middot; spectrum collapsed";
+    }
+  }
+
+  document.getElementById("tamper").onclick=function(){ applyTamper(); draw(); updateWitness(); };
+  document.getElementById("restore").onclick=function(){ clearTamper(); draw(); updateWitness(); };
+
+  draw(); updateWitness();
+})();
+</script>
+</body>
+</html>

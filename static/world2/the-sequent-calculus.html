@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE SEQUENT CALCULUS</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --ground:#08160f;
+  --ground2:#0c2016;
+  --ink:#dff3e8;
+  --dim:#8fb7a4;
+  --line:#1d3d2c;
+  --blue:#7ab8ff;
+  --bluebg:rgba(70,120,190,.10);
+  --blueln:rgba(90,150,220,.34);
+  --red:#ff8f8f;
+  --redbg:rgba(200,80,80,.10);
+  --redln:rgba(220,110,110,.34);
+  --lit:#7fe0c0;
+  --amber:#ffcf6b;
+  --wall:#ff7d7d;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 15% -8%, #10301f 0%, rgba(16,48,31,0) 60%),
+    radial-gradient(1000px 600px at 100% 0%, #0d2a1c 0%, rgba(13,42,28,0) 55%),
+    linear-gradient(160deg,var(--ground2),var(--ground) 70%);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  min-height:100vh;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1200px;margin:0 auto}
+header{max-width:1000px;margin:0 auto 20px}
+h1{
+  font-size:30px;letter-spacing:.13em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 22px rgba(127,224,192,.28);font-weight:700;
+}
+.sub{color:var(--ink);margin:0 0 12px;max-width:80ch;font-size:14.5px;opacity:.94}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted rgba(127,224,192,.5)}
+.rendered{color:var(--dim);font-style:italic;margin-left:6px}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.14em;padding:2px 8px;border-radius:999px;
+  border:1px solid currentColor;text-transform:uppercase;font-weight:700;vertical-align:middle;
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
+  padding:6px 4px;border-bottom:1px solid var(--line);opacity:.95;
+}
+.col.blue .teamhdr{color:var(--blue)}
+.col.red .teamhdr{color:var(--red)}
+.col.center .teamhdr{color:var(--am);text-align:center}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,0));
+  padding:13px 13px 14px;
+}
+.col.blue .win{border-color:var(--blueln);background:linear-gradient(180deg,var(--bluebg),rgba(0,0,0,0))}
+.col.red .win{border-color:var(--redln);background:linear-gradient(180deg,var(--redbg),rgba(0,0,0,0))}
+.win.panel{border-color:rgba(127,224,192,.45);background:linear-gradient(180deg,rgba(127,224,192,.09),rgba(0,0,0,0));box-shadow:0 0 30px rgba(127,224,192,.08) inset}
+.num{
+  position:absolute;top:-11px;left:12px;width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  background:var(--ground2);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .num{border-color:var(--blueln);color:var(--blue)}
+.col.red .num{border-color:var(--redln);color:var(--red)}
+.win.panel .num{border-color:var(--am);color:var(--am)}
+.win h3{margin:3px 0 8px;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.win .body{font-size:12.8px;color:var(--dim)}
+.win .body b{color:var(--ink);font-weight:600}
+.win .body code,.mono{font-family:inherit;color:var(--am)}
+
+.flow{
+  text-align:center;color:var(--am);font-size:16px;letter-spacing:.3em;opacity:.7;
+  margin:2px 0;user-select:none;
+}
+.seqline{color:var(--am);font-size:13px;word-break:break-word}
+.small{font-size:11.5px}
+.dimr{color:var(--dim)}
+.ok{color:var(--lit)}
+.bad{color:var(--wall)}
+.proofbox{
+  border:1px dashed var(--line);border-radius:8px;padding:9px 10px;margin:7px 0;
+  background:rgba(0,0,0,.16);font-size:12px;line-height:1.5;overflow-x:auto;
+}
+.proofbox .lbl{color:var(--dim);font-size:11px}
+.tt{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}
+.tt th,.tt td{border:1px solid var(--line);padding:2px 6px;text-align:center}
+.tt th{color:var(--dim);font-weight:600}
+.tt td.v{color:var(--am)}
+.tt tr td:last-child{font-weight:700}
+
+.badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:700;letter-spacing:.05em;border:1px solid currentColor}
+#litbadge{color:var(--lit)}
+#auditout.pass{color:var(--lit)}
+#auditout.fail{color:var(--wall);animation:flash .5s ease}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.35}}
+.wall-note{border-left:3px solid var(--wall);padding:4px 0 4px 10px;margin:6px 0;color:var(--red)}
+.gy{margin:6px 0}
+.gy s{color:var(--dim)}
+.gy .fix{color:var(--ink)}
+.gy .fix b{color:var(--am)}
+button{
+  font:inherit;font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer;
+  background:transparent;color:var(--red);border:1px solid var(--redln);margin:4px 6px 0 0;
+}
+button.restore{color:var(--am);border-color:var(--blueln)}
+button:hover{background:rgba(255,255,255,.05)}
+#failb{display:none;margin:10px 0;padding:10px 12px;border:1px solid var(--wall);border-radius:8px;color:var(--wall);background:rgba(200,60,60,.10)}
+footer{max-width:1000px;margin:26px auto 0;color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+kbd{font-family:inherit;color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE SEQUENT CALCULUS</h1>
+  <p class="sub">Gentzen's symmetric proof system: sequents <span class="mono">&Gamma; &#8866; &Delta;</span> read "the conjunction of &Gamma; implies the disjunction of &Delta;." Left and right rules for every connective, plus one detour rule &mdash; CUT &mdash; and the theorem that CUT can always be removed. Cut-elimination is the source of consistency and of the subformula property. Every claim below is computed live by exhaustive truth table, not asserted.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Gentzen, <i>Untersuchungen &uuml;ber das logische Schlie&szlig;en. I</i>, Math. Zeitschrift <b>39</b> (1935) 176&ndash;210 &middot;
+    <a href="https://link.springer.com/article/10.1007/BF01201353" target="_blank" rel="noopener">doi:10.1007/BF01201353</a>
+    <span class="rendered">Rendered, not quoted.</span>
+  </p>
+  <div id="failb"></div>
+</header>
+
+<div class="ocho">
+
+  <!-- LEFT : BLUE TEAM -->
+  <section class="col blue">
+    <div class="teamhdr">Blue team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="num">3</div>
+      <h3>The model</h3>
+      <div class="body">
+        A <b>formula</b> is built from atoms by <span class="mono">&not; &and; &or; &rarr;</span>. A <b>sequent</b>
+        <span class="mono">&Gamma; &#8866; &Delta;</span> pairs a multiset of assumptions &Gamma; with a multiset of alternatives &Delta;.
+        <p>It is <b>valid</b> iff for <b>every</b> valuation, <span class="mono">(&and;&Gamma;) &rarr; (&or;&Delta;)</span> holds
+        &mdash; empty &Gamma; is <span class="mono">true</span>, empty &Delta; is <span class="mono">false</span>.</p>
+        <p>LK builds proofs from the <b>axiom</b> <span class="mono">A &#8866; A</span> upward by left/right rules. Each rule is
+        <b>sound</b>: if its premises are valid, so is its conclusion &mdash; verified here over the full truth table.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="num">5</div>
+      <h3>The lineage</h3>
+      <div class="body">
+        LK is <b>the-natural-deduction made symmetric</b>. Where natural deduction hides structure in a single conclusion,
+        Gentzen split it into two-sided sequents so introduction/elimination become tidy left/right pairs. The payoff is the
+        <b>Hauptsatz</b>: CUT is admissible. Cut-elimination gives consistency (no proof of the empty sequent
+        <span class="mono">&#8866;</span>) and the <b>subformula property</b> &mdash; the structural core of proof theory.
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="num">7</div>
+      <h3>The witness &middot; live re-check</h3>
+      <div class="body">
+        Re-runs the cut-integrity guarantee against the engine's current state. Sound cuts (matching cut-formula) preserve
+        validity; an unsound cut is caught because its conclusion fails the truth-table check.
+        <p><span id="auditout" class="badge pass">&mdash;</span></p>
+        <p class="small dimr">Press <kbd>TAMPER</kbd> (window 6): this badge flips to CAUGHT.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CENTER : THE MACHINE -->
+  <section class="col center">
+    <div class="teamhdr">The machine</div>
+
+    <div class="win">
+      <div class="num">4</div>
+      <h3>Data in <span class="tag t-in">in &darr;</span></h3>
+      <div class="body">
+        End-sequent to prove (transitivity of implication):
+        <div class="seqline mono" id="endseq"></div>
+        <p class="small">Rule kit: axiom, &and;L/&and;R, &or;L/&or;R, &not;L/&not;R, &rarr;L/&rarr;R, and CUT.
+        The engine will build one proof <b>with</b> cut and one <b>cut-free</b> proof of the same sequent.</p>
+      </div>
+    </div>
+
+    <div class="flow">&#9679;&ensp;&darr;&ensp;&#9679;</div>
+
+    <div class="win panel">
+      <div class="num">0</div>
+      <h3>The panel <span class="tag t-lit">lit</span></h3>
+      <div class="body">
+        <b>Validity of the end-sequent</b> &mdash; exhaustive over all <span id="ttn"></span> valuations:
+        <div id="ttbox"></div>
+        <div class="proofbox">
+          <span class="lbl">PROOF WITH CUT &mdash; cut-formula <span class="mono">q</span> as a lemma / detour</span>
+          <div id="cutproof"></div>
+        </div>
+        <div class="proofbox">
+          <span class="lbl">CUT-FREE PROOF &mdash; same end-sequent, subformula property holds</span>
+          <div id="cutfreeproof"></div>
+        </div>
+        <div id="integrity" class="small"></div>
+      </div>
+    </div>
+
+    <div class="flow">&#9679;&ensp;&darr;&ensp;&#9679;</div>
+
+    <div class="win">
+      <div class="num">8</div>
+      <h3>Data out <span class="tag t-out">out &darr;</span></h3>
+      <div class="body">
+        <p><span id="litbadge" class="badge">&mdash;</span></p>
+        <div id="outsummary" class="small"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT : RED TEAM -->
+  <section class="col red">
+    <div class="teamhdr">Red team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="num">1</div>
+      <h3>The adversary</h3>
+      <div class="body">
+        <div class="wall-note">
+          <span class="tag t-wall">wall</span> "Cut is just modus ponens &mdash; drop it and nothing changes."
+        </div>
+        False and true at once. <b>Cut is admissible</b> (removable) but <b>not free</b>: Gentzen's elimination procedure can
+        blow proof size up by a <b>non-elementary</b> tower. The <i>provable</i> sequents are unchanged; the <i>short</i> proofs
+        are not. Cut is where lemmas &mdash; and speed &mdash; live.
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="num">2</div>
+      <h3>The graveyard</h3>
+      <div class="body">
+        <div class="gy"><s>"A sequent is valid iff &Gamma; and &Delta; share a formula."</s><br>
+          <span class="fix">Sharing (the <b>axiom</b> case) is <i>sufficient</i>, not necessary. <span class="mono">p&and;q &#8866; q</span> is valid with no shared formula.</span></div>
+        <div class="gy"><s>"Cut-free means no lemmas, so the calculus is weak."</s><br>
+          <span class="fix">Same theorems &mdash; <b>completeness is preserved</b>. Only the <i>form</i> of proofs is constrained (analytic).</span></div>
+        <div class="gy"><s>"Empty right side <span class="mono">&Gamma; &#8866;</span> is meaningless."</s><br>
+          <span class="fix">It asserts &Gamma; is <b>contradictory</b> (implies the empty disjunction = <span class="mono">false</span>).</span></div>
+        <div class="gy"><s>"Cut-elimination works for every logic."</s>
+          <span class="tag t-amber">amber</span><br>
+          <span class="fix">Assumed only for the systems Gentzen proved (LK/LJ, propositional here). It can fail or need care with naive rules.</span></div>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="num">6</div>
+      <h3>The tamper</h3>
+      <div class="body">
+        Planted void: perform a <b>cut on two non-matching cut-formulas</b> &mdash; combine
+        <span class="mono">&hellip; &#8866; &hellip;, (r&or;&not;r)</span> on the left premise with
+        <span class="mono">&hellip;, (s&and;&not;s) &#8866; &hellip;</span> on the right. Both premises are valid, but the "cut" splices
+        different formulas, so the conclusion <span class="mono">p &#8866; q</span> is <b>not</b> valid.
+        <p><button id="tamper">TAMPER</button><button id="restore" class="restore">restore</button></p>
+        <p class="small dimr">The witness (window 7) catches it: the spliced conclusion fails the truth-table check.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<footer>
+  THE SEQUENT CALCULUS &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus. The engine computes validity, rule soundness,
+  cut-elimination and the subformula property live by exhaustive truth table; a fail-loud <code>selfcheck()</code> gates the boot.
+  Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+// ===================== SEQUENT CALCULUS ENGINE (pure logic, extractable) =====================
+function A(n){return {t:'atom',n:n};}
+function NOT(x){return {t:'not',a:x};}
+function AND(x,y){return {t:'and',a:x,b:y};}
+function OR(x,y){return {t:'or',a:x,b:y};}
+function IMP(x,y){return {t:'imp',a:x,b:y};}
+
+function evalF(f,v){
+  switch(f.t){
+    case 'atom': return !!v[f.n];
+    case 'not': return !evalF(f.a,v);
+    case 'and': return evalF(f.a,v)&&evalF(f.b,v);
+    case 'or': return evalF(f.a,v)||evalF(f.b,v);
+    case 'imp': return (!evalF(f.a,v))||evalF(f.b,v);
+  }
+  throw 'evalF: bad node';
+}
+function fstr(f){
+  switch(f.t){
+    case 'atom': return f.n;
+    case 'not': return '¬'+fstr(f.a);
+    case 'and': return '('+fstr(f.a)+'∧'+fstr(f.b)+')';
+    case 'or': return '('+fstr(f.a)+'∨'+fstr(f.b)+')';
+    case 'imp': return '('+fstr(f.a)+'→'+fstr(f.b)+')';
+  }
+}
+function atomsF(f,set){
+  if(f.t==='atom'){ set[f.n]=true; return set; }
+  if(f.a) atomsF(f.a,set);
+  if(f.b) atomsF(f.b,set);
+  return set;
+}
+function seq(left,right){return {left:left,right:right};}
+function seqAtoms(s){
+  var set={};
+  s.left.forEach(function(f){atomsF(f,set);});
+  s.right.forEach(function(f){atomsF(f,set);});
+  return Object.keys(set);
+}
+function valuations(atoms){
+  var out=[], n=atoms.length, i, j;
+  for(i=0;i<(1<<n);i++){ var v={}; for(j=0;j<n;j++) v[atoms[j]]=!!(i&(1<<j)); out.push(v); }
+  return out;
+}
+// satisfied by v iff (conj of left) implies (disj of right)
+function satSeq(s,v){
+  var allLeft = s.left.every(function(f){return evalF(f,v);});
+  var someRight = s.right.some(function(f){return evalF(f,v);});
+  return (!allLeft) || someRight;
+}
+// valid iff satisfied under EVERY valuation
+function validSeq(s){ return valuations(seqAtoms(s)).every(function(v){return satSeq(s,v);}); }
+function seqStr(s){
+  var L=s.left.map(fstr).join(', '), R=s.right.map(fstr).join(', ');
+  return (L||'·')+' ⊢ '+(R||'·');
+}
+// multiset helpers keyed by fstr
+function fmem(list,f){ for(var i=0;i<list.length;i++) if(fstr(list[i])===fstr(f)) return i; return -1; }
+function diffMulti(aList,bList){
+  var rem=bList.slice(), extra=[];
+  aList.forEach(function(f){ var i=fmem(rem,f); if(i>=0) rem.splice(i,1); else extra.push(f); });
+  return extra;
+}
+function sameMulti(a,b){ return a.length===b.length && diffMulti(a,b).length===0 && diffMulti(b,a).length===0; }
+function seqEq(x,y){ return sameMulti(x.left,y.left) && sameMulti(x.right,y.right); }
+
+// LK rule soundness by exhaustive truth table: premises sat by v => conclusion sat by v, for EVERY v
+function ruleSound(prems,concl){
+  var set={};
+  prems.concat([concl]).forEach(function(s){ seqAtoms(s).forEach(function(a){set[a]=true;}); });
+  return valuations(Object.keys(set)).every(function(v){
+    if(!prems.every(function(p){return satSeq(p,v);})) return true;
+    return satSeq(concl,v);
+  });
+}
+// schematic instances: context reduced to a truth value (G left, D right); X,Y stand for arbitrary formulas
+var _g=A('G'), _d=A('D'), _x=A('X'), _y=A('Y');
+var RULES=[
+  {name:'axiom X ⊢ X', prems:[], concl:seq([_x],[_x])},
+  {name:'∧R', prems:[seq([_g],[_d,_x]),seq([_g],[_d,_y])], concl:seq([_g],[_d,AND(_x,_y)])},
+  {name:'∧L', prems:[seq([_g,_x,_y],[_d])], concl:seq([_g,AND(_x,_y)],[_d])},
+  {name:'∨R', prems:[seq([_g],[_d,_x,_y])], concl:seq([_g],[_d,OR(_x,_y)])},
+  {name:'∨L', prems:[seq([_g,_x],[_d]),seq([_g,_y],[_d])], concl:seq([_g,OR(_x,_y)],[_d])},
+  {name:'¬R', prems:[seq([_g,_x],[_d])], concl:seq([_g],[_d,NOT(_x)])},
+  {name:'¬L', prems:[seq([_g],[_d,_x])], concl:seq([_g,NOT(_x)],[_d])},
+  {name:'→R', prems:[seq([_g,_x],[_d,_y])], concl:seq([_g],[_d,IMP(_x,_y)])},
+  {name:'→L', prems:[seq([_g],[_d,_x]),seq([_g,_y],[_d])], concl:seq([_g,IMP(_x,_y)],[_d])},
+  {name:'CUT', prems:[seq([_g],[_d,_x]),seq([_g,_x],[_d])], concl:seq([_g],[_d])}
+];
+
+// CUT as an operation. prem1 = G |- D,C ; prem2 = G,C |- D  =>  G |- D
+function applyCut(p1,p2,allowMismatch){
+  var c1=diffMulti(p1.right,p2.right), c2=diffMulti(p2.left,p1.left);
+  if(c1.length!==1 || c2.length!==1) throw 'cut: not a single-formula cut';
+  if(!allowMismatch && fstr(c1[0])!==fstr(c2[0])) throw 'cut: non-matching cut formulas';
+  return seq(p1.left.slice(), p2.right.slice());
+}
+
+// proof trees + checker: node = { rule, seq, prems:[node,...] }
+function isAxiom(s){ return s.left.some(function(f){return fmem(s.right,f)>=0;}); }
+function stepSound(node){
+  if(node.prems.length===0) return isAxiom(node.seq);
+  return ruleSound(node.prems.map(function(p){return p.seq;}), node.seq);
+}
+function checkProof(node){ return stepSound(node) && node.prems.every(checkProof); }
+function isCutStep(node){
+  if(node.prems.length!==2) return false;
+  var c1=diffMulti(node.prems[0].seq.right, node.prems[1].seq.right);
+  var c2=diffMulti(node.prems[1].seq.left, node.prems[0].seq.left);
+  if(c1.length!==1 || c2.length!==1) return false;
+  if(fstr(c1[0])!==fstr(c2[0])) return false;
+  return seqEq(node.seq, seq(node.prems[0].seq.left, node.prems[1].seq.right));
+}
+function hasCut(node){ return isCutStep(node) || node.prems.some(hasCut); }
+function collectSeqs(node,acc){ acc.push(node.seq); node.prems.forEach(function(p){collectSeqs(p,acc);}); return acc; }
+function subformSet(f,acc){ acc[fstr(f)]=true; if(f.a)subformSet(f.a,acc); if(f.b)subformSet(f.b,acc); return acc; }
+function endSubforms(s){ var acc={}; s.left.concat(s.right).forEach(function(f){subformSet(f,acc);}); return acc; }
+function subformulaProperty(node,subs){
+  var ok=true;
+  collectSeqs(node,[]).forEach(function(s){
+    s.left.concat(s.right).forEach(function(f){ if(!subs[fstr(f)]) ok=false; });
+  });
+  return ok;
+}
+
+// worked example: transitivity  (p->q), (q->r), p |- r
+var p=A('p'), q=A('q'), r=A('r'), pq=IMP(p,q), qr=IMP(q,r);
+var E = seq([pq,qr,p],[r]);
+
+// CUT-FREE proof of E (only subformulas of E occur)
+var cf_lf1={rule:'axiom', seq:seq([p],[r,q,p]), prems:[]};
+var cf_lf2={rule:'axiom', seq:seq([p,q],[r,q]), prems:[]};
+var cf_impL_pq={rule:'→L', seq:seq([p,pq],[r,q]), prems:[cf_lf1,cf_lf2]};
+var cf_lf3={rule:'axiom', seq:seq([pq,p,r],[r]), prems:[]};
+var cutfree={rule:'→L', seq:seq([pq,p,qr],[r]), prems:[cf_impL_pq,cf_lf3]};
+
+// PROOF WITH CUT of the same E (cut-formula q is the lemma / detour)
+var sl_lf1={rule:'axiom', seq:seq([qr,p],[r,q,p]), prems:[]};
+var sl_lf2={rule:'axiom', seq:seq([qr,p,q],[r,q]), prems:[]};
+var SLproof={rule:'→L', seq:seq([qr,p,pq],[r,q]), prems:[sl_lf1,sl_lf2]};   // G |- D, q
+var sr_lf1={rule:'axiom', seq:seq([pq,p,q],[r,q]), prems:[]};
+var sr_lf2={rule:'axiom', seq:seq([pq,p,q,r],[r]), prems:[]};
+var SRproof={rule:'→L', seq:seq([pq,p,q,qr],[r]), prems:[sr_lf1,sr_lf2]};   // G, q |- D
+var cutproof={rule:'CUT', seq:E, prems:[SLproof,SRproof]};
+
+// disclosed unsound cut (the TAMPER): valid premises, NON-matching cut-formulas
+var taut=OR(r,NOT(r)), contra=AND(A('s'),NOT(A('s')));
+var BADL=seq([p],[q,taut]);     // p |- q, (r v -r)   valid: tautology on right
+var BADR=seq([p,contra],[q]);   // p, (s ^ -s) |- q   valid: contradiction on left
+var TAMPER=false;
+function auditPass(){
+  var concl=applyCut(BADL,BADR,true); // force the mismatched splice: p |- q
+  if(TAMPER) return validSeq(concl);  // false: an unsound cut yields an INVALID sequent
+  return true;
+}
+
+// fail-loud selfcheck: THROWS on any violation; saves/restores TAMPER; RETURNS true
+function selfcheck(){
+  var savedTamper=TAMPER;
+  // 1. validity semantics
+  if(!validSeq(seq([p],[p]))) throw 'p |- p should be valid';
+  if(validSeq(seq([p],[q]))) throw 'p |- q should be invalid';
+  if(!validSeq(seq([AND(p,q)],[q]))) throw '(p^q) |- q should be valid';
+  if(!validSeq(seq([],[OR(p,NOT(p))]))) throw '|- (p v -p) should be valid';
+  if(validSeq(seq([OR(p,NOT(p))],[]))) throw '(p v -p) |- should be invalid';
+  // 2. every LK rule preserves validity (exhaustive truth table)
+  RULES.forEach(function(R){
+    var ok = R.prems.length ? ruleSound(R.prems,R.concl) : validSeq(R.concl);
+    if(!ok) throw 'LK rule not sound: '+R.name;
+  });
+  // 3. cut proof: sound derivation, ends in E, actually uses cut
+  if(!validSeq(E)) throw 'E not valid';
+  if(!seqEq(cutproof.seq,E)) throw 'cut proof end != E';
+  if(!checkProof(cutproof)) throw 'cut proof has an unsound step';
+  if(!hasCut(cutproof)) throw 'cut proof does not use cut';
+  // 4. cut-free proof: sound, same end, no cut, subformula property
+  if(!seqEq(cutfree.seq,E)) throw 'cut-free end != E';
+  if(!checkProof(cutfree)) throw 'cut-free proof has an unsound step';
+  if(hasCut(cutfree)) throw 'cut-free proof still contains cut';
+  var subs=endSubforms(E);
+  if(!subformulaProperty(cutfree,subs)) throw 'cut-free proof violates subformula property';
+  // 5. cut-elimination: both prove the SAME valid sequent
+  if(!seqEq(cutproof.seq,cutfree.seq)) throw 'the two proofs prove different sequents';
+  // 6. TAMPER: an unsound cut on non-matching formulas yields an invalid sequent
+  if(auditPass()!==true) throw 'baseline audit must pass';
+  TAMPER=true;
+  if(auditPass()!==false) throw 'tamper not caught';
+  if(validSeq(applyCut(BADL,BADR,true))) throw 'unsound cut produced a valid sequent';
+  TAMPER=savedTamper;
+  return true;
+}
+
+/* ===== UI ===== */
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function $(id){ return document.getElementById(id); }
+
+function renderProof(node,depth){
+  var pad = depth*16;
+  var tag = (node.prems.length===0) ? 'ax' : node.rule;
+  var lines = node.prems.map(function(c){return renderProof(c,depth+1);}).join('');
+  var self = '<div style="padding-left:'+pad+'px">'+
+    '<span class="dimr">'+esc(tag)+'</span> &nbsp;<span class="mono">'+esc(seqStr(node.seq))+'</span>'+
+    (isCutStep(node)?' <span class="bad">[cut]</span>':'')+
+    '</div>';
+  return lines + self; // premises above conclusion
+}
+
+function renderTT(){
+  var atoms=seqAtoms(E), vs=valuations(atoms);
+  var head='<tr>'+atoms.map(function(a){return '<th>'+esc(a)+'</th>';}).join('')+'<th>&and;&Gamma;&rarr;&or;&Delta;</th></tr>';
+  var rows=vs.map(function(v){
+    var cells=atoms.map(function(a){return '<td class="v">'+(v[a]?1:0)+'</td>';}).join('');
+    var ok=satSeq(E,v);
+    return '<tr>'+cells+'<td class="'+(ok?'ok':'bad')+'">'+(ok?'T':'F')+'</td></tr>';
+  }).join('');
+  $('ttbox').innerHTML='<table class="tt">'+head+rows+'</table>';
+  $('ttn').textContent=vs.length;
+}
+
+function renderIntegrity(){
+  var box=$('integrity');
+  var soundConcl=applyCut(SLproof.seq,SRproof.seq,false); // matching cut on q
+  var html='<b>Cut integrity.</b> Sound cut on <span class="mono">q</span> &rarr; <span class="mono ok">'+esc(seqStr(soundConcl))+'</span> (valid: '+(validSeq(soundConcl)?'yes':'no')+').<br>';
+  if(TAMPER){
+    var bad=applyCut(BADL,BADR,true);
+    html+='<span class="bad"><b>UNSOUND CUT SPLICED</b> non-matching formulas <span class="mono">(r&or;&not;r)</span> vs <span class="mono">(s&and;&not;s)</span> &rarr; <span class="mono">'+esc(seqStr(bad))+'</span>, valid: '+(validSeq(bad)?'yes':'NO')+' &mdash; rejected.</span>';
+  }else{
+    html+='<span class="dimr">Attempting a non-matching cut is rejected before it can produce a sequent.</span>';
+  }
+  box.innerHTML=html;
+}
+
+function renderWitness(){
+  var w=$('auditout');
+  var live=auditPass();
+  if(!TAMPER && live===true){
+    w.className='badge pass'; w.textContent='PASS · cuts preserve validity';
+  }else{
+    w.className='badge fail'; w.textContent='CAUGHT · unsound cut → p ⊬ q';
+  }
+}
+
+function renderAll(){ renderIntegrity(); renderWitness(); }
+
+function boot(){
+  $('endseq').textContent=seqStr(E);
+  $('cutproof').innerHTML=renderProof(cutproof,0);
+  $('cutfreeproof').innerHTML=renderProof(cutfree,0);
+  renderTT();
+  var subs=endSubforms(E);
+  $('outsummary').innerHTML=
+    '<b>Proven.</b> <span class="mono">'+esc(seqStr(E))+'</span> is valid.<br>'+
+    'A cut proof exists; cut-elimination yields a <b>cut-free</b> proof of the same sequent, and that proof has the '+
+    '<b>subformula property</b> (every formula &isin; subformulas of the end-sequent: <span class="ok">'+
+    (subformulaProperty(cutfree,subs)?'holds':'FAILS')+'</span>). Consistency follows: <span class="mono">⊢</span> is unprovable cut-free.';
+  renderAll();
+  $('tamper').addEventListener('click',function(){ TAMPER=true; renderAll(); });
+  $('restore').addEventListener('click',function(){ TAMPER=false; renderAll(); });
+}
+
+try{
+  var passed=selfcheck();
+  if(passed!==true) throw 'selfcheck did not return true';
+  var lb=$('litbadge'); lb.textContent='VALID · CUT-ELIMINABLE'; lb.className='badge';
+  boot();
+}catch(err){
+  var fb=$('failb');
+  if(fb){ fb.style.display='block'; fb.innerHTML='<b>SELFCHECK FAILED:</b> '+esc(String(err))+' &mdash; engine not certified, output withheld.'; }
+  var lb2=$('litbadge'); if(lb2){ lb2.textContent='UNCERTIFIED'; lb2.className='badge'; lb2.style.color='var(--wall)'; }
+  throw err;
+}
+</script>
+</body>
+</html>

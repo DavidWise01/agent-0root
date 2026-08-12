@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BRAVAIS LATTICE · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff9e6a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,158,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO layout: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,158,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,158,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:82px;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+canvas{display:block;margin:6px auto 0;background:#081009;border:1px solid var(--line);border-radius:6px;max-width:100%;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+tr.hi td{background:rgba(255,158,106,.10);color:#eafff0;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE BRAVAIS LATTICE</h1>
+ <p class="sub">There are exactly <b class="k">fourteen</b> ways points can fill space periodically — no more, no fewer. Bravais proved it in 1848. Down the center, data flows: pick a cubic cell <b style="color:var(--cy)">in</b>, the engine counts its atoms and how tightly identical spheres pack it, and the proven fractions come <b style="color:var(--gr)">out</b> — <b class="k">0.52</b> simple, <b class="k">0.68</b> body-centred, <b class="k">0.74</b> face-centred. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> A. Bravais, <i>Mémoire sur les systèmes formés par des points distribués régulièrement sur un plan ou dans l'espace</i>, first presented 1848; pub. <i>J. de l'École Polytechnique</i> <b>19</b> (1850) 1–128 — no stable open-access scan, cited author/title/year <b>AMBER</b>: <a href="https://xray-exhibit.scs.illinois.edu/books/bravais.php">xray-exhibit.scs.illinois.edu/books/bravais.php</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — sharing the cell</h2>
+   <p>Atoms per <b>conventional cubic cell</b> is not counted, it is <b>shared</b>: a corner atom sits in 8 cells so it contributes <b class="k">1/8</b>; a face atom in 2, so <b class="k">1/2</b>; a body-centre belongs wholly to <b class="k">1</b>.</p>
+   <p class="small">Live sharing arithmetic for the current cell:</p>
+   <table id="modelTbl"><thead><tr><th>site</th><th>count</th><th>share</th><th>= atoms</th></tr></thead><tbody id="modelBody"></tbody></table>
+   <p class="small">SC = 8·⅛ = <b class="k">1</b> &nbsp;·&nbsp; BCC = 8·⅛+1 = <b class="k">2</b> &nbsp;·&nbsp; FCC = 8·⅛+6·½ = <b class="k">4</b>.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the fourteen <span class="tag t-amber">AVAN</span></h2>
+   <p>Seven crystal systems, centred in the allowed ways, give <b style="color:var(--am)">14</b> Bravais lattices — Bravais 1848, correcting Frankenheim's miscounted 15. Three are cubic: <b>SC / BCC / FCC</b>, packing <b class="k">0.52 / 0.68 / 0.74</b>.</p>
+   <p>This periodic scaffold is what its neighbours act on: <a href="https://davidwise01.github.io/the-miller-indices/" style="color:var(--cy)">the-miller-indices</a> labels its planes (h k l), and <a href="https://davidwise01.github.io/the-braggs-law/" style="color:var(--cy)">the-braggs-law</a> probes their spacing d = a/√(h²+k²+l²). Each sphere is the next one's lattice.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute the three packing fractions and coordinations from scratch, and confirm <b>FCC is the densest</b>. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the cell <span class="tag t-in">in ↓</span></h2>
+   <p>A cubic Bravais lattice is one edge length <b class="k">a</b> plus a centring rule. Identical hard spheres are grown until they <b>touch</b> — the contact geometry fixes the radius as a fraction of <b>a</b>:</p>
+   <table><thead><tr><th>cell</th><th>touch along</th><th>radius r</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>SC</td><td>cube edge</td><td class="y">a/2</td></tr>
+     <tr><td>BCC</td><td>body diagonal</td><td class="y">a·√3/4</td></tr>
+     <tr><td>FCC</td><td>face diagonal</td><td class="y">a·√2/4</td></tr>
+    </tbody></table>
+   <p class="small">Give the engine a cell and a value of <b>a</b>; that is all it needs — the packing fraction does not depend on <b>a</b>, only on the centring.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the cell into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>cubic cell</label>
+      <select id="struct"><option value="SC">SC · simple cubic</option><option value="BCC">BCC · body-centred</option><option value="FCC" selected>FCC · face-centred</option></select></div>
+     <div class="row"><label>edge a (Å)</label><input type="range" id="aval" min="2" max="6" step="0.1" value="3.6"><span id="alab" class="k"></span></div>
+     <canvas id="cv" width="330" height="270"></canvas>
+     <div class="row" style="margin-top:6px"><button id="rand">↺ random cell</button><button id="fcc">→ FCC (densest)</button></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">APF = (atoms · ⁴⁄₃πr³) / a³, r from the touching geometry. Coordination is <b>counted live</b> by generating the lattice and finding the nearest-neighbour shell — never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits the packing &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves: SC = π/6 = <b class="k">0.5236</b> (Z=6), BCC = π√3/8 = <b class="k">0.6802</b> (Z=8), FCC = π/(3√2) = <b style="color:var(--am)">0.7405</b> (Z=12). FCC ties HCP for the <b>densest possible</b> packing of equal spheres.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) recomputes these live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The 14 lattices are only the <b>translational</b> skeleton. Add a multi-atom basis with screw axes and glide planes and you get the <b>230 space groups</b> — the real symmetry of crystals. The Bravais lattice alone cannot name a single real structure.</div>
+   <p class="small" style="margin-top:8px">APF also assumes <b>identical hard spheres</b> touching. Real bonds are directional: diamond-cubic silicon packs at only <b>0.34</b>, not because its lattice is loose but because covalent bonds forbid close contact. The number is exact; its premise is a fiction.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"There are 14 crystal systems."</s> <b>Cut.</b> There are <b>7</b> crystal systems; the <b>14</b> are Bravais lattices (systems × allowed centrings).</p>
+   <p class="grave"><s>"HCP is a Bravais lattice."</s> <b>Cut.</b> Hexagonal close-packing is <b>not</b> a Bravais lattice — it is a simple-hexagonal lattice with a <b>two-atom basis</b>. It still reaches 0.7405.</p>
+   <p class="grave"><s>"Frankenheim found the 14 first."</s> <b>Kept, corrected.</b> Frankenheim (1842) found <b>15</b> — two of his were identical. Bravais fixed the count to 14.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: model FCC's spheres as touching along the cube <b>edge</b> (SC contact, r = a/2) instead of the face diagonal. Wrong geometry — the blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ mis-set FCC contact</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Use SC's corner-only contact for the face-centred cell and its packing collapses to π/6 ≈ 0.52 — below BCC. FCC stops being densest, the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE BRAVAIS LATTICE — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (cell <b style="color:var(--cy)">in</b> → engine → packing <b style="color:var(--gr)">out</b>). A runnable rendering of Bravais 1848 — the engine is LIT (atoms-per-cell by sharing, APF from touching geometry, coordination counted live from the generated lattice, tamper-provable), the blue team witnesses FCC is densest, the red team attacks, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// the engine (verified: SC 0.5236/Z6, BCC 0.6802/Z8, FCC 0.7405/Z12)
+var TAMPER=false;   // mis-sets FCC contact to SC's r=a/2 when true — the witness must catch it
+
+// touching-sphere contact: atoms per conventional cubic cell (n) and radius as a fraction of a (rk)
+const CONTACT={ SC:{n:1,rk:0.5}, BCC:{n:2,rk:Math.sqrt(3)/4}, FCC:{n:4,rk:Math.sqrt(2)/4} };
+
+// atoms per cell derived from corner/face/body SHARING, not memorised
+function cellAtoms(s){
+ const corners=8*(1/8);
+ const body=(s==="BCC")?1:0;
+ const faces=(s==="FCC")?6*(1/2):0;
+ return corners+body+faces;
+}
+// the disclosed planted void: under TAMPER, FCC borrows SC's corner-only contact (wrong geometry)
+function contactOf(s){
+ if(TAMPER && s==="FCC") return CONTACT.SC;
+ const c=CONTACT[s];
+ if(!c) throw new Error("unknown cell "+s);
+ return c;
+}
+// atomic packing fraction = n * (4/3)pi r^3 / a^3, with a=1 (APF is scale-free)
+function apf(s){ const c=contactOf(s); return c.n*(4/3)*Math.PI*c.rk*c.rk*c.rk; }
+
+// basis vectors (fractional) for each cubic Bravais cell
+function basisOf(s){
+ if(s==="SC")  return [[0,0,0]];
+ if(s==="BCC") return [[0,0,0],[0.5,0.5,0.5]];
+ if(s==="FCC") return [[0,0,0],[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5]];
+ throw new Error("unknown cell "+s);
+}
+// coordination number counted LIVE: generate the lattice, find the nearest-neighbour shell
+function neighbours(s){
+ const basis=basisOf(s), pts=[];
+ for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++)for(let k=-2;k<=2;k++)
+  for(const b of basis) pts.push([i+b[0],j+b[1],k+b[2]]);
+ let min=Infinity;
+ for(const p of pts){ const d2=p[0]*p[0]+p[1]*p[1]+p[2]*p[2]; if(d2>1e-9 && d2<min) min=d2; }
+ let count=0;
+ for(const p of pts){ const d2=p[0]*p[0]+p[1]*p[1]+p[2]*p[2]; if(d2>1e-9 && Math.abs(d2-min)<1e-9) count++; }
+ return {coord:count, nn:Math.sqrt(min)};
+}
+// which cubic cell packs densest, decided by comparing computed APFs
+function densest(){ const L=["SC","BCC","FCC"]; let best=L[0]; for(const s of L) if(apf(s)>apf(best)) best=s; return best; }
+
+// fixed-seed PRNG (mulberry32) — deterministic; selfcheck never needs it
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const RNG=mulberry32(0x00B7A415);
+
+// fail-loud self-check (runs untampered, then exercises the planted void, then restores)
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const TOL=1e-4, EX=1e-9;
+ // atoms per cell by sharing must match the contact table
+ t(cellAtoms("SC")===1,"SC must be 1 atom/cell");
+ t(cellAtoms("BCC")===2,"BCC must be 2 atoms/cell");
+ t(cellAtoms("FCC")===4,"FCC must be 4 atoms/cell");
+ t(cellAtoms("SC")===CONTACT.SC.n && cellAtoms("BCC")===CONTACT.BCC.n && cellAtoms("FCC")===CONTACT.FCC.n,"sharing count must match contact n");
+ // exact touching identities to 1e-9 (edge / body-diagonal / face-diagonal)
+ t(Math.abs(2*CONTACT.SC.rk-1)<EX,"SC touch: 2r=a exactly");
+ t(Math.abs(Math.pow(4*CONTACT.BCC.rk,2)-3)<EX,"BCC touch: (4r)^2=3a^2 (body diagonal)");
+ t(Math.abs(Math.pow(4*CONTACT.FCC.rk,2)-2)<EX,"FCC touch: (4r)^2=2a^2 (face diagonal)");
+ // packing fractions to 1e-4 against closed forms and decimals
+ t(Math.abs(apf("SC")-Math.PI/6)<TOL,"SC APF must be pi/6");
+ t(Math.abs(apf("BCC")-Math.PI*Math.sqrt(3)/8)<TOL,"BCC APF must be pi*sqrt3/8");
+ t(Math.abs(apf("FCC")-Math.PI/(3*Math.sqrt(2)))<TOL,"FCC APF must be pi/(3*sqrt2)");
+ t(Math.abs(apf("SC")-0.5236)<TOL,"SC APF ~ 0.5236");
+ t(Math.abs(apf("BCC")-0.6802)<TOL,"BCC APF ~ 0.6802");
+ t(Math.abs(apf("FCC")-0.7405)<TOL,"FCC APF ~ 0.7405");
+ // FCC is the densest of the three, and the ordering is strict
+ t(densest()==="FCC","FCC must be the densest cubic packing (~0.7405)");
+ t(apf("FCC")>apf("BCC") && apf("BCC")>apf("SC"),"strict ordering FCC>BCC>SC");
+ // coordination counted live from the generated lattice
+ t(neighbours("SC").coord===6,"SC coordination must be 6");
+ t(neighbours("BCC").coord===8,"BCC coordination must be 8");
+ t(neighbours("FCC").coord===12,"FCC coordination must be 12");
+ // nearest-neighbour distances exact to 1e-9
+ t(Math.abs(neighbours("SC").nn-1)<EX,"SC nn distance = a");
+ t(Math.abs(neighbours("BCC").nn-Math.sqrt(3)/2)<EX,"BCC nn distance = a*sqrt3/2");
+ t(Math.abs(neighbours("FCC").nn-1/Math.sqrt(2))<EX,"FCC nn distance = a/sqrt2");
+ // ---- exercise the disclosed planted void ----
+ TAMPER=true;
+ t(Math.abs(apf("FCC")-Math.PI/6)<TOL,"tampered FCC collapses to SC packing pi/6");
+ t(Math.abs(apf("FCC")-0.7405)>0.2,"tampered FCC must differ from the true 0.7405");
+ t(densest()!=="FCC","under tamper FCC is wrongly no longer densest — the void");
+ t(densest()==="BCC","under tamper BCC wrongly wins");
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const NAME={SC:"simple cubic",BCC:"body-centred cubic",FCC:"face-centred cubic"};
+function cur(){ return $("struct").value; }
+function aVal(){ return parseFloat($("aval").value); }
+
+function drawCell(s){
+ const cv=$("cv"); if(!cv||!cv.getContext) return; const g=cv.getContext("2d");
+ const W=cv.width,H=cv.height; g.clearRect(0,0,W,H);
+ const sc=78, ox=W*0.44, oy=H*0.60;
+ const proj=(x,y,z)=>[ ox+(x-z)*sc*0.87, oy - y*sc + (x+z)*sc*0.50 ];
+ const corner=[[0,0,0],[1,0,0],[0,1,0],[0,0,1],[1,1,0],[1,0,1],[0,1,1],[1,1,1]];
+ // edges
+ g.strokeStyle="#2b4a34"; g.lineWidth=1.4;
+ for(const a of corner)for(const b of corner){
+  const d=Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2]);
+  if(d===1){ const p=proj(...a),q=proj(...b); g.beginPath(); g.moveTo(p[0],p[1]); g.lineTo(q[0],q[1]); g.stroke(); }
+ }
+ // atoms: corners always; +body for BCC; +face centres for FCC
+ let extra=[];
+ if(s==="BCC") extra=[[0.5,0.5,0.5]];
+ if(s==="FCC") extra=[[0.5,0.5,0],[0.5,0.5,1],[0.5,0,0.5],[0.5,1,0.5],[0,0.5,0.5],[1,0.5,0.5]];
+ const atoms=corner.map(c=>({p:c,kind:0})).concat(extra.map(c=>({p:c,kind:1})));
+ atoms.sort((u,v)=>(u.p[0]+u.p[2]-u.p[1])-(v.p[0]+v.p[2]-v.p[1]));
+ for(const a of atoms){
+  const p=proj(...a.p), r=a.kind?13:11;
+  const grd=g.createRadialGradient(p[0]-r*0.3,p[1]-r*0.3,r*0.2,p[0],p[1],r);
+  if(a.kind){ grd.addColorStop(0,"#ffd9c0"); grd.addColorStop(1,"#ff7a3c"); }
+  else{ grd.addColorStop(0,"#bfe9ff"); grd.addColorStop(1,"#3b93d8"); }
+  g.fillStyle=grd; g.beginPath(); g.arc(p[0],p[1],r,0,7); g.fill();
+  g.strokeStyle="rgba(0,0,0,.35)"; g.lineWidth=1; g.stroke();
+ }
+ g.fillStyle="#5f8a68"; g.font="10px monospace"; g.textAlign="left";
+ g.fillText(s+" · "+NAME[s], 8, H-8);
+}
+
+function fillModel(s){
+ const rows=[["corner",8,"1/8",1]];
+ if(s==="BCC") rows.push(["body",1,"1",1]);
+ if(s==="FCC") rows.push(["face",6,"1/2",3]);
+ rows.push(["TOTAL","","",cellAtoms(s)]);
+ $("modelBody").innerHTML=rows.map((r,i)=>{
+  const tot=i===rows.length-1;
+  return `<tr${tot?' class="hi"':''}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="k">${r[3]}</td></tr>`;
+ }).join("");
+}
+
+function render(){
+ const s=cur(), a=aVal(), c=contactOf(s), r=c.rk*a, frac=apf(s), nb=neighbours(s), best=densest();
+ $("alab").textContent=a.toFixed(1)+" Å";
+ fillModel(s); drawCell(s);
+ $("sent").innerHTML=
+  `<b style="color:var(--am)">${s}</b> — ${NAME[s]}<br>`+
+  `atoms / cell &nbsp;=&nbsp; <b class="k">${cellAtoms(s)}</b><br>`+
+  `touching radius r &nbsp;=&nbsp; <b class="k">${(c.rk).toFixed(4)}·a</b> = ${r.toFixed(3)} Å<br>`+
+  `coordination Z &nbsp;=&nbsp; <b class="k">${nb.coord}</b> &nbsp;(counted, nn = ${nb.nn.toFixed(4)}·a)`;
+ const good=Math.abs(frac-0.7405)<1e-4 || Math.abs(frac-0.6802)<1e-4 || Math.abs(frac-0.5236)<1e-4;
+ $("verdict").textContent="APF = "+frac.toFixed(4);
+ $("verdict").className="verdict "+(good?"ok":"no");
+ $("moodname").innerHTML=(s===best && frac>0.74)?`<b>densest cubic packing</b> — ties HCP`:(s===best?`<b style="color:var(--wall)">densest? (${best})</b>`:`less dense than ${best} (${apf(best).toFixed(4)})`);
+ $("reason").textContent=good
+  ? "APF = "+cellAtoms(s)+"·(4/3)π r³ / a³ with r from the "+(s==="SC"?"edge":s==="BCC"?"body-diagonal":"face-diagonal")+" contact"
+  : "contact geometry mis-set — this is not the true "+s+" packing";
+}
+
+function audit(){
+ const el=$("auditout");
+ const sc=apf("SC"),bc=apf("BCC"),fc=apf("FCC");
+ const ok = Math.abs(sc-0.5236)<1e-3 && Math.abs(bc-0.6802)<1e-3 && Math.abs(fc-0.7405)<1e-3
+   && densest()==="FCC" && neighbours("FCC").coord===12;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">SC <b style="color:${Math.abs(sc-0.5236)<1e-3?'var(--gr)':'var(--wall)'}">${sc.toFixed(4)}</b>/0.5236 &nbsp;·&nbsp; BCC <b style="color:${Math.abs(bc-0.6802)<1e-3?'var(--gr)':'var(--wall)'}">${bc.toFixed(4)}</b>/0.6802 &nbsp;·&nbsp; FCC <b style="color:${Math.abs(fc-0.7405)<1e-3?'var(--gr)':'var(--wall)'}">${fc.toFixed(4)}</b>/0.7405<br>densest = <b style="color:${densest()==='FCC'?'var(--gr)':'var(--wall)'}">${densest()}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red mis-set FCC contact</span>':''}</div>`;
+}
+
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("struct").addEventListener("change",()=>{render();audit();});
+ $("aval").addEventListener("input",render);
+ $("rand").addEventListener("click",()=>{ const L=["SC","BCC","FCC"]; $("struct").value=L[(RNG()*3)|0]; $("aval").value=(2+RNG()*4).toFixed(1); render();audit(); });
+ $("fcc").addEventListener("click",()=>{ $("struct").value="FCC"; render();audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>FCC contact mis-set to r=a/2.</b> Its packing collapsed to π/6 ≈ 0.52, below BCC — FCC is no longer densest. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Use SC's corner-only contact for the face-centred cell and its packing collapses to π/6 ≈ 0.52 — below BCC. FCC stops being densest, the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Bravais lattice engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

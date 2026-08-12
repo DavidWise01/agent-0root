@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE VARIATIONAL AUTOENCODER · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff9e6a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,158,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,158,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,158,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+input[type=range]{padding:0;accent-color:var(--am);vertical-align:middle;}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:230px;} .readout{flex:1;min-width:240px;}
+.row{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:96px;}
+.row output{color:var(--am);font-weight:700;min-width:42px;}
+.sent{font-size:13.5px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:18px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+canvas{width:100%;height:auto;background:#0a130c;border:1px solid var(--line);border-radius:6px;margin-top:6px;display:block;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE VARIATIONAL AUTOENCODER</h1>
+ <p class="sub">An autoencoder that learns a <b>distribution</b>, not a point. An encoder maps each datum to a Gaussian <b class="k">q(z|x) = N(μ, σ²)</b>; a decoder maps <b>z</b> back to <b>x</b>; both are trained end-to-end by one scalar — the negative <b>ELBO = reconstruction + KL(q‖N(0,1))</b>. For a linear-Gaussian model every quantity is <b>closed-form</b>, so the machine computes exact numbers, never trained guesses. Down the center: a datum goes <b style="color:var(--cy)">in</b>, the ELBO is evaluated, the proven bound comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds it; the <b style="color:var(--red)">red team</b> breaks it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Kingma &amp; Welling, <i>Auto-Encoding Variational Bayes</i> (2013) — <a href="https://arxiv.org/abs/1312.6114">arxiv.org/abs/1312.6114</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — three Gaussians</h2>
+   <p>A <b>prior</b> <b class="k">p(z)=N(0,1)</b>, an <b>encoder</b> <b class="k">q(z|x)=N(μ,σ²)</b>, a <b>decoder</b> <b class="k">p(x|z)=N(g(z),1)</b>. Take the decoder linear — <b class="k">g(z)=W·z+B</b> with fixed <b class="M">W=1.4</b>, <b class="M">B=0.5</b> — and the whole model becomes exactly solvable.</p>
+   <p>Then the KL to the prior is closed-form:</p>
+   <p class="small" style="color:#c3e8ca">KL(N(μ,σ²)‖N(0,1)) = ½(σ² + μ² − 1 − log σ²)</p>
+   <p>The reconstruction is the expected decoder NLL, also closed-form because <b>z</b> is Gaussian; and the marginal <b class="k">p(x)=N(B, W²+1)</b> and true posterior <b>p(z|x)</b> are Gaussians too — so nothing here is estimated.</p>
+   <table id="distTbl"><thead><tr><th>piece</th><th>form</th><th>value now</th></tr></thead><tbody id="distBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — ELBO → architecture <span class="tag t-amber">AVAN</span></h2>
+   <p><a href="https://davidwise01.github.io/the-elbo/" style="color:var(--cy)">the-elbo</a> was a <i>scalar</i> — a lower bound on log&nbsp;p(x). Kingma &amp; Welling made it an <b>architecture</b>: an encoder network emits μ,σ; a decoder network reads z; and the <a href="https://davidwise01.github.io/the-reparameterization-trick/" style="color:var(--cy)">the-reparameterization-trick</a> writes <b class="k">z = μ + σ·ε</b>, ε∼N(0,1), so a gradient can flow <i>through</i> the sampling.</p>
+   <p>That one move — sample outside the graph, scale inside it — turned the ELBO into the <b>first scalable deep generative model</b>. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-evaluate the bound over a grid of data and encoders and confirm the invariants — <b>KL(0,1)=0</b>, <b>−ELBO ≥ NLL</b> everywhere, equality only at q=posterior. If red flips a sign, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — a datum &amp; the fixed decoder <span class="tag t-in">in ↓</span></h2>
+   <p>The input is a single scalar datum <b class="S" style="color:var(--cy)">x</b>. The decoder is fixed once — <b class="M">p(x|z)=N(W·z+B, 1)</b>, <b class="M">W=1.4</b>, <b class="M">B=0.5</b> — so the only free choice is the <b>encoder</b> you feed in: a mean <b class="P" style="color:var(--gr)">μ</b> and a spread <b class="P" style="color:var(--gr)">σ</b>, plus a KL weight <b>β</b>.</p>
+   <p class="small">The reparameterized reconstruction is exact: E<sub>q</sub>[½(x−Wz−B)²] = ½((x−Wμ−B)² + W²σ²). That is what the panel below turns into a loss — no Monte-Carlo noise, no training loop.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the datum + encoder into the ELBO &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the ELBO engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>datum x</label><input type="range" id="x" min="-3" max="3" step="0.05" value="2"><output id="xo"></output></div>
+     <div class="row"><label>encoder μ</label><input type="range" id="mu" min="-3" max="3" step="0.02" value="0"><output id="muo"></output></div>
+     <div class="row"><label>encoder σ</label><input type="range" id="sg" min="0.1" max="2.5" step="0.01" value="1"><output id="sgo"></output></div>
+     <div class="row"><label>KL weight β</label><input type="range" id="bt" min="0" max="6" step="0.05" value="1"><output id="bto"></output></div>
+     <div class="row"><button id="snap">→ snap q to optimal q*(β)</button></div>
+     <div class="row"><button id="prior">reset q → prior</button><button id="rand">↺ random</button></div>
+     <p class="small">The optimal encoder for weight β is closed-form: μ*=W(x−B)/(W²+β), σ*²=β/(W²+β). At β=1 that is the true posterior and the bound is tight.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <canvas id="cv" width="520" height="200"></canvas>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every number is computed from the closed forms on the spot — recon, KL, −ELBO, NLL, and the gap KL(q‖posterior). Nothing is looked up or trained.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits recon + KL and the bound &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the proven bound <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, for <b>any</b> encoder you dial in: the loss <b class="k">−ELBO = recon + β·KL</b>; at β=1 it equals <b>NLL + KL(q‖posterior)</b>, so it <b>upper-bounds the NLL</b> and is equal <i>only</i> at q=posterior. KL(q‖prior) ≥ 0 always, =0 only at N(0,1). Raising β pulls q* toward the prior — the <b>β-VAE</b> behaviour.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these live; the red team (right) flips the KL sign to break them.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The ELBO is a <b>loose</b> bound. A mean-field Gaussian q can never match a multimodal true posterior, so the gap KL(q‖posterior) stays open — the VAE optimizes a proxy, not the likelihood. Push β up and you buy a clean latent with <b>posterior collapse</b>: q(z|x) ignores x and reverts to the prior, and the decoder learns nothing from z.</div>
+   <p class="small" style="margin-top:8px">Two more real failures: the <b>amortization gap</b> (one encoder network must fit every x, and it won't hit each true posterior), and the <b>blurry Gaussian decoder</b> — a fixed-variance Gaussian likelihood averages modes, so samples smear. None of these are bugs in this engine; they are the honest cost of the method.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"The VAE maximizes the likelihood."</s> <b>Cut.</b> It maximizes a <i>lower bound</i>; the shortfall is exactly KL(q‖posterior) ≥ 0, zero only when q hits the true posterior — shown live in the gap.</p>
+   <p class="grave"><s>"The KL term is a regularizer you can tune to zero."</s> <b>Kept, corrected.</b> Set β=0 and you get a plain autoencoder with an unstructured latent — the KL is what makes z a usable <i>distribution</i> you can sample.</p>
+   <p class="grave"><s>"Blurry reconstructions mean the inference is broken."</s> <b>Cut.</b> A Gaussian decoder's optimum is the mean; the blur is the likelihood's fault, not the ELBO's. Swap the decoder, not the bound.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: flip the KL <b>sign</b> — <i>subtract</i> it instead of adding, rewarding divergence from the prior. The posterior flees N(0,1), KL≥0 stops constraining, and the loss dives <b>below</b> the NLL. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ flip KL sign (−KL)</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Flip the sign and −ELBO no longer equals recon+KL and no longer upper-bounds the NLL — the witness recomputes, finds a case where the loss falls under the NLL, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE VARIATIONAL AUTOENCODER — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (datum <b style="color:var(--cy)">in</b> → ELBO → proven bound <b style="color:var(--gr)">out</b>). A runnable rendering of Kingma &amp; Welling's <i>Auto-Encoding Variational Bayes</i> — the engine is LIT (every quantity closed-form for a linear-Gaussian model, the bound self-checked to 1e-9, the sign-flip tamper provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one Gaussian cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// the engine — VAE / ELBO, closed-form for a linear-Gaussian model (verified to 1e-9)
+const W=1.4, B=0.5;                 // fixed linear-Gaussian decoder: x|z ~ N(W z + B, 1)
+const LOG2PI=Math.log(2*Math.PI);
+let TAMPER=false;                   // when true the KL sign is flipped (red's attack)
+
+// KL(N(mu,sigma^2) || N(0,1)) — the closed form
+function klGauss(mu,sigma){ const s2=sigma*sigma; return 0.5*(s2 + mu*mu - 1 - Math.log(s2)); }
+// expected decoder NLL under q, z ~ N(mu,sigma^2): E_q[-log p(x|z)]
+function recon(x,mu,sigma){ const m=W*mu+B; return 0.5*LOG2PI + 0.5*((x-m)*(x-m) + W*W*sigma*sigma); }
+// the loss = negative ELBO = recon + beta*KL ; TAMPER flips the KL sign
+function elboLoss(x,mu,sigma,beta){ const kl=klGauss(mu,sigma); const sign=TAMPER?-1:1; return recon(x,mu,sigma)+sign*beta*kl; }
+// exact marginal NLL: x ~ N(B, W^2+1)
+function nll(x){ const v=W*W+1; return 0.5*Math.log(2*Math.PI*v) + (x-B)*(x-B)/(2*v); }
+// true posterior p(z|x) = N(mu*, s2*)
+function postParams(x){ const s2=1/(W*W+1); return {mu:s2*W*(x-B), s2:s2}; }
+// KL(q || true posterior) — the ELBO slack, >= 0, zero only at q = posterior
+function klToPosterior(x,mu,sigma){ const p=postParams(x); const s2=sigma*sigma; return Math.log(Math.sqrt(p.s2)/sigma) + (s2 + (mu-p.mu)*(mu-p.mu))/(2*p.s2) - 0.5; }
+// optimal encoder for KL weight beta (minimizes recon + beta*KL)
+function optEncoder(x,beta){ return {mu: W*(x-B)/(W*W+beta), s2: beta/(W*W+beta)}; }
+
+// fail-loud self-check: throws on any violation, returns true when clean
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const ae=(a,b,m)=>{ if(Math.abs(a-b)>1e-9) throw new Error(m+" ("+a+" vs "+b+")"); };
+ const save=TAMPER; TAMPER=false;
+ // 1. KL closed form: exact, non-negative, zero at the prior
+ ae(klGauss(0,1),0,"KL(N(0,1) || N(0,1)) must be exactly 0");
+ for(const p of [[0,1],[1,1],[0,0.5],[2,1.5],[-1,0.7]]){
+   const mu=p[0], sg=p[1];
+   const alt=0.5*(sg*sg + mu*mu - 1 + Math.log(1/(sg*sg)));   // independent regrouping
+   ae(klGauss(mu,sg),alt,"KL closed form mismatch");
+   t(klGauss(mu,sg)>=-1e-12,"KL must be >= 0");
+ }
+ // 2. the loss is exactly recon + beta*KL
+ for(const x of [-1,0.5,2]) for(const beta of [0.5,1,3]){
+   ae(elboLoss(x,0.3,0.8,beta), recon(x,0.3,0.8)+beta*klGauss(0.3,0.8),"loss must equal recon + beta*KL");
+ }
+ // 3. decomposition & bound: at beta=1, -ELBO = NLL + KL(q||posterior) >= NLL
+ for(const x of [-2,0,1.3,3]) for(const p of [[0,1],[0.5,0.6],[-1,1.2]]){
+   const mu=p[0], sg=p[1];
+   ae(elboLoss(x,mu,sg,1), nll(x)+klToPosterior(x,mu,sg),"neg-ELBO must decompose as NLL + KL(q||post)");
+   t(elboLoss(x,mu,sg,1) - nll(x) >= -1e-9,"neg-ELBO must upper-bound the NLL");
+ }
+ // 4. bound is tight exactly at q = true posterior
+ for(const x of [-2,0,1.3,3]){
+   const o=postParams(x);
+   ae(elboLoss(x,o.mu,Math.sqrt(o.s2),1), nll(x),"at q = posterior the bound must be exact");
+   ae(klToPosterior(x,o.mu,Math.sqrt(o.s2)),0,"KL(posterior || posterior) must be 0");
+ }
+ // 5. encoder output is a valid distribution (positive variance)
+ t(optEncoder(1,1).s2>0,"encoder sigma^2 must be positive");
+ // 6. beta-VAE: raising beta pulls q* toward the prior N(0,1)
+ const x0=2.5, betas=[0.25,0.5,1,2,4,16];
+ let prevMu=Infinity, prevS2=-Infinity, prevKL=Infinity;
+ for(const beta of betas){
+   const o=optEncoder(x0,beta);
+   t(Math.abs(o.mu) < prevMu + 1e-12,"|mu*| must decrease toward 0 as beta grows");
+   t(o.s2 > prevS2 - 1e-12,"sigma*^2 must increase toward 1 as beta grows");
+   const kl=klGauss(o.mu,Math.sqrt(o.s2));
+   t(kl < prevKL + 1e-12,"KL(q*||prior) must decrease as beta grows");
+   prevMu=Math.abs(o.mu); prevS2=o.s2; prevKL=kl;
+ }
+ const big=optEncoder(x0,1e6); t(Math.abs(big.mu)<1e-3 && Math.abs(big.s2-1)<1e-3,"beta -> inf must approach the prior");
+ // 7. the planted void: flip the KL sign and the two guarantees break
+ TAMPER=true;
+ const klp=klGauss(1.5,1); t(klp>0,"tamper probe KL must be positive");
+ t(Math.abs(elboLoss(2,1.5,1,1) - (recon(2,1.5,1)+klp)) > 1e-6,"tampered loss must differ from recon + KL");
+ t(elboLoss(2,3,1,1) < nll(2) - 1e-6,"wrong-sign KL must break the NLL bound");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const cur=()=>({x:+$("x").value, mu:+$("mu").value, sg:+$("sg").value, bt:+$("bt").value});
+const f2=v=>v.toFixed(2), f3=v=>v.toFixed(3);
+
+function draw(x,mu,sg){
+ const cv=$("cv"), g=cv.getContext("2d"), Wd=cv.width, Hd=cv.height;
+ g.clearRect(0,0,Wd,Hd);
+ const zL=-4, zR=4, pad=6;
+ const X=z=>pad+(z-zL)/(zR-zL)*(Wd-2*pad);
+ const gp=(z,m,s)=>Math.exp(-0.5*((z-m)/s)*((z-m)/s))/(s*Math.sqrt(2*Math.PI));
+ const post=postParams(x), pm=post.mu, ps=Math.sqrt(post.s2);
+ let mx=0; for(let z=zL;z<=zR;z+=0.02){ mx=Math.max(mx,gp(z,0,1),gp(z,mu,sg),gp(z,pm,ps)); }
+ const Y=v=>Hd-pad-(v/mx)*(Hd-2*pad-14);
+ // zero axis
+ g.strokeStyle="#20402a"; g.lineWidth=1; g.beginPath(); g.moveTo(X(0),pad); g.lineTo(X(0),Hd-pad); g.stroke();
+ const curve=(m,s,col,dash)=>{ g.strokeStyle=col; g.lineWidth=2; g.setLineDash(dash||[]); g.beginPath();
+   let first=true; for(let z=zL;z<=zR;z+=0.02){ const px=X(z),py=Y(gp(z,m,s)); if(first){g.moveTo(px,py);first=false;} else g.lineTo(px,py);} g.stroke(); g.setLineDash([]); };
+ curve(0,1,"#5f8a68");                 // prior — dim green
+ curve(pm,ps,"#57e0d0",[4,3]);         // true posterior — cyan dashed (the target)
+ curve(mu,sg,"#ff9e6a");               // your encoder q — accent
+ g.font="10px monospace"; g.fillStyle="#5f8a68"; g.fillText("prior N(0,1)",8,12);
+ g.fillStyle="#57e0d0"; g.fillText("posterior p(z|x)",8,24); g.fillStyle="#ff9e6a"; g.fillText("q(z|x)",8,36);
+}
+
+function render(){
+ const c=cur();
+ const kl=klGauss(c.mu,c.sg), rc=recon(c.x,c.mu,c.sg), loss=elboLoss(c.x,c.mu,c.sg,c.bt);
+ const N=nll(c.x), gap=klToPosterior(c.x,c.mu,c.sg);
+ $("xo").textContent=f2(c.x); $("muo").textContent=f2(c.mu); $("sgo").textContent=f2(c.sg); $("bto").textContent=f2(c.bt);
+ $("sent").innerHTML =
+   `q(z|x) = <span class="M">N(${f2(c.mu)}, ${f2(c.sg*c.sg)})</span> &nbsp;·&nbsp; β = <span class="M">${f2(c.bt)}</span><br>`+
+   `recon = <span class="P">${f3(rc)}</span> &nbsp; KL(q‖prior) = <span class="P">${f3(kl)}</span><br>`+
+   `−ELBO = recon ${TAMPER?'−':'+'} β·KL = <span class="M">${f3(loss)}</span> &nbsp;·&nbsp; NLL = <span class="S">${f3(N)}</span>`;
+ draw(c.x,c.mu,c.sg);
+ // verdict: does the loss still upper-bound the NLL?
+ const holds = (loss - N) >= -1e-9;
+ $("verdict").textContent = holds ? "BOUND HOLDS · −ELBO ≥ NLL" : "BOUND BROKEN · −ELBO < NLL";
+ $("verdict").className = "verdict "+(holds?"ok":"no");
+ const tight = gap < 1e-9;
+ $("moodname").innerHTML = TAMPER
+   ? `<span style="color:var(--wall)">KL sign flipped — the loss rewards leaving the prior</span>`
+   : (tight ? `q = the true posterior &nbsp;·&nbsp; <b>bound is tight</b>` : `slack to tighten: KL(q‖posterior) = <b>${f3(gap)}</b>`);
+ $("reason").textContent = TAMPER
+   ? "restore the sign to make −ELBO a valid bound again"
+   : (tight ? "at β=1 this q is optimal; −ELBO equals the exact NLL" : "snap q to the posterior to close the gap and hit the NLL");
+ // window 3 live table
+ const post=postParams(c.x);
+ const rows=[["prior","N(0,1)","fixed"],
+  ["encoder q","N(μ,σ²)","N("+f2(c.mu)+", "+f2(c.sg*c.sg)+")"],
+  ["KL(q‖prior)","½(σ²+μ²−1−logσ²)",f3(kl)],
+  ["posterior","N(μ*,σ*²)","N("+f2(post.mu)+", "+f2(post.s2)+")"],
+  ["gap KL(q‖post)","−ELBO − NLL",f3(gap)]];
+ $("distBody").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="mut">${r[1]}</td><td class="y">${r[2]}</td></tr>`).join("");
+}
+
+function audit(){
+ const el=$("auditout");
+ let boundOK=true, worst=0, tightErr=0;
+ for(const x of [-2,-0.5,1,2.5]){
+   for(const p of [[0,1],[2,1],[-1.5,0.6],[3,1.3]]){
+     const g = elboLoss(x,p[0],p[1],1) - nll(x);
+     if(g<worst) worst=g;
+     if(g < -1e-9) boundOK=false;
+   }
+   const o=postParams(x);
+   tightErr=Math.max(tightErr, Math.abs(elboLoss(x,o.mu,Math.sqrt(o.s2),1)-nll(x)));
+ }
+ const klZero = Math.abs(klGauss(0,1))<1e-12;
+ const ok = boundOK && klZero && tightErr<1e-9;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — bound holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">KL(0,1)=0: <b style="color:${klZero?'var(--gr)':'var(--wall)'}">${klZero?'yes':'no'}</b> &nbsp;·&nbsp; min(−ELBO−NLL) over grid: <b style="color:${worst>=-1e-9?'var(--gr)':'var(--wall)'}">${worst.toFixed(3)}</b> &nbsp;·&nbsp; tight at posterior: <b style="color:${tightErr<1e-9?'var(--gr)':'var(--wall)'}">${tightErr<1e-9?'exact':'no'}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red flipped the KL sign</span>':''}</div>`;
+}
+
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load (all invariants to 1e-9)</span>';
+ ["x","mu","sg","bt"].forEach(id=>$(id).addEventListener("input",()=>{render();audit();}));
+ $("snap").addEventListener("click",()=>{ const c=cur(); const o=optEncoder(c.x,c.bt); $("mu").value=o.mu.toFixed(2); $("sg").value=Math.sqrt(o.s2).toFixed(2); render();audit(); });
+ $("prior").addEventListener("click",()=>{ $("mu").value="0"; $("sg").value="1"; render();audit(); });
+ $("rand").addEventListener("click",()=>{ $("x").value=(Math.random()*6-3).toFixed(2); $("mu").value=(Math.random()*6-3).toFixed(2); $("sg").value=(0.1+Math.random()*2.4).toFixed(2); $("bt").value=(Math.random()*6).toFixed(2); render();audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>KL sign flipped.</b> −ELBO is now recon − β·KL: it no longer upper-bounds the NLL, and q is rewarded for fleeing the prior. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render();audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Flip the sign and −ELBO no longer equals recon+KL and no longer upper-bounds the NLL — the witness recomputes, finds a case where the loss falls under the NLL, and turns red. Nothing is faked; the attack is real and it is caught."; render();audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the VAE engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

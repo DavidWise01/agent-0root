@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE FRIEDMANN EQUATION</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --ink:#eae6f6;
+  --dim:#a99fc4;
+  --ground:#0c1a12;
+  --ground2:#0f2419;
+  --panel:#141026;
+  --panel2:#1b1533;
+  --line:#2c2450;
+  --blue:#6fb7ff;
+  --red:#ff7a8a;
+  --amber:#ffcf6b;
+  --lit:#8affc0;
+  --wall:#ff8f6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font:15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1100px 640px at 78% -6%, rgba(200,162,255,.18), transparent 60%),
+    linear-gradient(180deg,#120a24 0%, #0f0b1e 44%, var(--ground2) 100%);
+  min-height:100vh;
+}
+.wrap{max-width:1200px;margin:0 auto;padding:26px 18px 60px}
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+h1{
+  margin:0 0 8px;font-size:30px;letter-spacing:.14em;font-weight:800;
+  color:#fff;text-shadow:0 0 26px rgba(200,162,255,.45);
+}
+.sub{margin:0 0 12px;max-width:78ch;color:var(--dim)}
+.sub b{color:var(--am)}
+.src{font-size:12.5px;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.09em;
+  padding:2px 7px;border-radius:5px;margin-right:6px;text-transform:uppercase;
+  border:1px solid transparent;vertical-align:middle;
+}
+.t-amber{background:rgba(255,207,107,.12);color:var(--amber);border-color:rgba(255,207,107,.4)}
+.t-lit{background:rgba(138,255,192,.12);color:var(--lit);border-color:rgba(138,255,192,.4)}
+.t-in{background:rgba(111,183,255,.12);color:var(--blue);border-color:rgba(111,183,255,.4)}
+.t-out{background:rgba(200,162,255,.14);color:var(--am);border-color:rgba(200,162,255,.45)}
+.t-wall{background:rgba(255,143,107,.12);color:var(--wall);border-color:rgba(255,143,107,.42)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  padding:7px 10px;border-radius:7px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);background:rgba(111,183,255,.07);border-color:rgba(111,183,255,.28)}
+.col.red .teamhdr{color:var(--red);background:rgba(255,122,138,.07);border-color:rgba(255,122,138,.28)}
+.col.center .teamhdr{color:var(--am);background:rgba(200,162,255,.08);border-color:rgba(200,162,255,.3);text-align:center}
+
+.win{
+  position:relative;background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:11px;padding:13px 13px 14px;
+}
+.win.panel{border-color:rgba(200,162,255,.5);box-shadow:0 0 0 1px rgba(200,162,255,.12),0 18px 40px -22px rgba(200,162,255,.5)}
+.col.blue .win{border-color:rgba(111,183,255,.24)}
+.col.red .win{border-color:rgba(255,122,138,.24)}
+.wnum{
+  position:absolute;top:-9px;right:12px;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;font-size:11px;font-weight:800;
+  background:var(--ground);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .wnum{color:var(--blue);border-color:rgba(111,183,255,.5)}
+.col.red .wnum{color:var(--red);border-color:rgba(255,122,138,.5)}
+.col.center .wnum{color:var(--am);border-color:rgba(200,162,255,.5)}
+.wtitle{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:0 0 8px;color:var(--ink)}
+.win p{margin:6px 0;font-size:13px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.eq{
+  font-family:"Cascadia Code",Consolas,monospace;font-size:12.5px;color:var(--am);
+  background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:7px;
+  padding:8px 9px;margin:8px 0;overflow-x:auto;white-space:nowrap;
+}
+.flow{text-align:center;color:var(--am);font-size:15px;letter-spacing:.3em;margin:2px 0}
+.mono{font-family:"Cascadia Code",Consolas,monospace}
+.strike{text-decoration:line-through;color:#9a7f7f}
+.fix{color:var(--lit)}
+.wall-note{
+  border-left:3px solid var(--wall);padding:6px 0 6px 10px;margin:8px 0;
+  background:rgba(255,143,107,.05);color:#f0d9cf;font-size:12.5px;
+}
+.badge{
+  display:block;font-family:"Cascadia Code",Consolas,monospace;font-size:12px;
+  padding:8px 10px;border-radius:7px;border:1px solid var(--line);margin-top:8px;
+  background:rgba(0,0,0,.28);color:var(--dim);word-break:break-word;
+}
+.badge.ok{color:var(--lit);border-color:rgba(138,255,192,.45);background:rgba(138,255,192,.06)}
+.badge.bad{color:var(--red);border-color:rgba(255,122,138,.55);background:rgba(255,122,138,.09)}
+.readout{font-family:"Cascadia Code",Consolas,monospace;font-size:12px;color:var(--ink)}
+.readout div{padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.06)}
+.readout span{color:var(--am)}
+.geo{font-weight:800}
+.geo.closed{color:var(--red)}
+.geo.flat{color:var(--lit)}
+.geo.open{color:var(--blue)}
+canvas{width:100%;height:150px;display:block;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.32);margin-top:8px}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{
+  font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+  background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+  border-radius:7px;padding:7px 11px;
+}
+button:hover{border-color:var(--am)}
+#tamper{border-color:rgba(255,122,138,.5);color:var(--red)}
+#restore{border-color:rgba(138,255,192,.5);color:var(--lit)}
+label.rng{display:block;font-size:12px;color:var(--dim);margin-top:8px}
+input[type=range]{width:100%;accent-color:var(--am)}
+#failb{display:none;margin:14px 0;padding:12px;border-radius:9px;border:1px solid var(--red);background:rgba(255,122,138,.1);color:var(--red);font-weight:700}
+footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+footer b{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE FRIEDMANN EQUATION</h1>
+  <p class="sub">The expansion of the <b>whole universe</b>, read off its density. One line turns a snapshot of matter, radiation and curvature into the fate of everything: <b>(a&#775;/a)&sup2; = (8&pi;G/3)&rho; &minus; kc&sup2;/a&sup2; + &Lambda;c&sup2;/3</b>. The critical density splits flat from curved; &Omega;=&rho;/&rho;<sub>c</sub> decides the geometry. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Friedmann, A. &mdash; <i>&Uuml;ber die Kr&uuml;mmung des Raumes</i>, <b>Z. Phys. 10, 377&ndash;386 (1922)</b> &middot; <a href="https://link.springer.com/article/10.1007/BF01332580" target="_blank" rel="noopener">doi:10.1007/BF01332580</a> &middot; <a href="https://ui.adsabs.harvard.edu/abs/1922ZPhy...10..377F/abstract" target="_blank" rel="noopener">ADS&nbsp;1922ZPhy...10..377F</a></p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ============ BLUE TEAM ============ -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wnum">3</div>
+      <h2 class="wtitle">The Model</h2>
+      <p>A homogeneous, isotropic universe (the cosmological principle). Its scale factor <b>a(t)</b> stretches every distance; Einstein's equations collapse to two ODEs.</p>
+      <div class="eq">H&sup2; = (a&#775;/a)&sup2; = (8&pi;G/3)&rho; &minus; kc&sup2;/a&sup2; + &Lambda;c&sup2;/3</div>
+      <div class="eq">a&#776;/a = &minus;(4&pi;G/3)(&rho; + 3p/c&sup2;) + &Lambda;c&sup2;/3</div>
+      <p>Gravity <b>decelerates</b> (the &minus; sign on density); curvature <b>k</b> &isin; {&minus;1,0,+1}; &Lambda; pushes outward.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">5</div>
+      <h2 class="wtitle">The Lineage</h2>
+      <p><b>the-hubble-law</b> &rarr; <b>the-friedmann-equation</b>. Hubble measured <b>v = H&#8320;d</b> &mdash; a snapshot of one instant's expansion rate. Friedmann (1922, seven years earlier) had already written its <b>engine</b>: H itself is dynamical, driven by &rho; against curvature.</p>
+      <p>The critical density <b>&rho;<sub>c</sub> = 3H&#8320;&sup2;/(8&pi;G)</b> is the exact seam between the two spheres &mdash; Hubble's number H&#8320; sets what density would make space flat.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">7</div>
+      <h2 class="wtitle">The Witness</h2>
+      <p>Live re-check of the density&ndash;curvature balance and the &rho;<sub>c</sub>/&Omega; geometry map. Confirms on load; flips <b>red</b> the instant the panel&rsquo;s density term is tampered.</p>
+      <div id="auditout" class="badge">witness &hellip;</div>
+    </div>
+  </div>
+
+  <!-- ============ CENTER ============ -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="wnum">4</div>
+      <h2 class="wtitle">Data In <span class="tag t-in">in &darr;</span></h2>
+      <p>Set the Hubble rate and the matter density, in units of the critical density (&Omega;<sub>m</sub>).</p>
+      <label class="rng">H&#8320; = <span id="hval" class="mono">70</span> km/s/Mpc
+        <input id="hslider" type="range" min="50" max="90" step="1" value="70"></label>
+      <label class="rng">&Omega;<sub>m</sub> = &rho;/&rho;<sub>c</sub> = <span id="oval" class="mono">1.00</span>
+        <input id="oslider" type="range" min="0.10" max="2.00" step="0.01" value="1.00"></label>
+    </div>
+
+    <div class="flow">&#8595;</div>
+
+    <div class="win panel">
+      <div class="wnum">0</div>
+      <h2 class="wtitle">The Panel <span class="tag t-lit">lit</span></h2>
+      <p>Live Friedmann engine. Every number below is computed from the constants and the two inputs &mdash; nothing is stored.</p>
+      <div class="readout" id="readout"></div>
+      <canvas id="cv" width="520" height="150"></canvas>
+      <p style="font-size:11.5px;margin-top:6px">Scale factor a(t) integrated forward from today (a=1): <span class="geo closed">closed</span> recollapses, <span class="geo flat">flat</span> coasts, <span class="geo open">open</span> expands free.</p>
+    </div>
+
+    <div class="flow">&#8595;</div>
+
+    <div class="win">
+      <div class="wnum">8</div>
+      <h2 class="wtitle">Data Out <span class="tag t-out">out &darr;</span></h2>
+      <p>The proven result: at H&#8320;&#8776;70, the critical density is a few hydrogen atoms per cubic metre, and &Omega; alone fixes the sign of the curvature.</p>
+      <div id="litbadge" class="badge">booting&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ============ RED TEAM ============ -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wnum">1</div>
+      <h2 class="wtitle">The Adversary <span class="tag t-wall">wall</span></h2>
+      <div class="wall-note">&ldquo;&Omega; is a free dial &mdash; pick any density and space stays flat.&rdquo; <b>Wall:</b> flatness is <b>k=0</b>, which forces &rho;=&rho;<sub>c</sub> exactly. Off that razor, curvature is non-zero by construction; the balance is not negotiable.</div>
+      <div class="wall-note">&ldquo;Expansion needs a force pushing outward.&rdquo; <b>Wall:</b> no &mdash; a&#775; is an <b>initial condition</b>. Gravity only sets a&#776; (deceleration). Nothing pushes unless &Lambda;&gt;0.</div>
+    </div>
+
+    <div class="win">
+      <div class="wnum">2</div>
+      <h2 class="wtitle">The Graveyard</h2>
+      <p><span class="strike">Static, eternal universe (Einstein 1917, &Lambda; tuned by hand).</span><br><span class="fix">&rarr; That balance is unstable; Friedmann &amp; Hubble showed a(t) actually evolves.</span></p>
+      <p><span class="strike">&rho; ~ a<sup>&minus;4</sup> for matter.</span><br><span class="fix">&rarr; Matter dilutes as a<sup>&minus;3</sup> (volume only); a<sup>&minus;4</sup> is <b>radiation</b> (volume + redshift).</span></p>
+      <p><span class="strike">&Lambda;&gt;0 decelerates.</span><br><span class="fix">&rarr; A positive &Lambda; gives a&#776;&gt;0 &mdash; it <b>accelerates</b> the expansion.</span></p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">6</div>
+      <h2 class="wtitle">The Tamper</h2>
+      <p>Planted void: <b>flip the sign of the density term</b> so gravity would <i>push</i> expansion instead of decelerating it. &rho;<sub>c</sub> goes negative, &Omega; inverts, the geometry map breaks &mdash; the Witness (7) catches it live.</p>
+      <div class="ctl">
+        <button id="tamper">Flip density sign</button>
+        <button id="restore">Restore</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE FRIEDMANN EQUATION</b> &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus. The engine is LIT: it computes live from G, c and H&#8320; with a fail-loud deterministic selfcheck. The one planted void in window 6 is disclosed and caught by window 7. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===== ENGINE (pure logic; runs headless, no DOM/canvas) =====
+var G = 6.674e-11;        // gravitational constant, m^3 kg^-1 s^-2
+var c = 2.998e8;          // speed of light, m/s
+var M_sun = 1.989e30;     // solar mass, kg
+var AU = 1.495978707e11;  // astronomical unit, m
+var Mpc = 3.0856775814913673e22; // megaparsec, m
+var PI = Math.PI;
+
+// Tamper flag: plain top-level var so selfcheck runs with no window/DOM.
+// +1 = physical (gravity decelerates); -1 = planted void.
+var DENS_SIGN = 1;
+
+// Fixed-seed PRNG so any sampling stays deterministic.
+function makeRNG(seed){ var s = seed >>> 0; return function(){ s = (1664525*s + 1013904223) >>> 0; return s/4294967296; }; }
+
+// H0 in SI (s^-1) from km/s/Mpc.
+function H0_SI(kmsMpc){ return kmsMpc*1000/Mpc; }
+
+// Critical density for a flat (k=0) universe: rho_c = 3 H^2 / (8 pi G).
+// Uses DENS_SIGN so the tamper inverts the flat/curved seam.
+function criticalDensity(H){ return 3*H*H/(DENS_SIGN*8*PI*G); }
+
+// Density parameter Omega = rho / rho_c.
+function omega(rho, H){ return rho/criticalDensity(H); }
+
+// Geometry from Omega: >1 CLOSED (k=+1), =1 FLAT (k=0), <1 OPEN (k=-1).
+function curvatureSign(rho, H){
+  var w = omega(rho, H);
+  if (w > 1+1e-12) return 1;
+  if (w < 1-1e-12) return -1;
+  return 0;
+}
+
+// Friedmann H^2 = DENS_SIGN*(8 pi G/3) rho - k c^2/a^2 + Lambda c^2/3.
+function friedmannH2(rho, k, a, Lambda){
+  return DENS_SIGN*(8*PI*G/3)*rho - k*c*c/(a*a) + Lambda*c*c/3;
+}
+
+// Component scaling: matter dilutes as a^-3, radiation as a^-4.
+function scaleDensity(rho0, a, exponent){ return rho0*Math.pow(a, exponent); }
+
+// Acceleration a''/a = -(4 pi G/3)(rho + 3 p/c^2) + Lambda c^2/3.
+function accel(rho, p, Lambda){ return -(4*PI*G/3)*(rho + 3*p/(c*c)) + Lambda*c*c/3; }
+
+// Deterministic scale-factor trajectory (matter + curvature), a''/a from Friedmann.
+// Returns array of a(t) samples; pure, no DOM.
+function trajectory(Omega_m, H0, steps, dtGyr){
+  var rho_c = 3*H0*H0/(8*PI*G);
+  var rho0 = Omega_m*rho_c;           // today's matter density
+  var k = curvatureSign(rho0, H0);    // -1,0,+1
+  // scale so k c^2/a^2 today matches the Friedmann residual at a=1
+  var kc2 = (DENS_SIGN*(8*PI*G/3)*rho0 - H0*H0); // = k c^2 / a^2 at a=1  (Lambda=0)
+  var a = 1, adot = H0;               // start at today, expanding at H0
+  var dt = dtGyr*3.1557e16;           // Gyr -> s
+  var out = [a];
+  for (var i=0;i<steps;i++){
+    var rho = rho0/(a*a*a);           // matter dilutes a^-3
+    var add = -(4*PI*G/3)*rho*a;      // a'' = -(4piG/3) rho a  (curvature carried in kc2 term)
+    adot += add*dt;
+    a += adot*dt;
+    if (a<=0){ out.push(0); break; }
+    out.push(a);
+  }
+  return out;
+}
+
+// Pure RELATIVE tolerance (no absolute floor) so it stays meaningful at ~1e-36 scales.
+function approx(x, y, rel){ if (y===0) return Math.abs(x) <= rel; return Math.abs(x-y) <= rel*Math.abs(y); }
+
+// Fail-loud selfcheck. THROWS on any violation. Saves/restores DENS_SIGN. Returns true.
+function selfcheck(){
+  var saved = DENS_SIGN;
+  DENS_SIGN = 1;
+  var TOL = 1e-6; // stated tolerance for the metric-balance assertion
+  var rng = makeRNG(1922);
+  rng(); // exercise the deterministic PRNG
+
+  var H0 = H0_SI(70);
+
+  // 1. rho_c physical value: ~9e-27 kg/m^3 (a few H atoms per cubic metre).
+  var rc = criticalDensity(H0);
+  if (!(rc > 8.5e-27 && rc < 1.0e-26))
+    throw "rho_c out of physical range: "+rc;
+  if (!approx(rc, 9.204e-27, 1e-3))
+    throw "rho_c wrong value: "+rc;
+
+  // 2. Density-vs-curvature balance: a flat (k=0, Lambda=0) universe at rho=rho_c
+  //    must return exactly H0^2. Assert to 1e-6 (relative).
+  var H2 = friedmannH2(rc, 0, 1, 0);
+  if (!approx(H2, H0*H0, TOL))
+    throw "Friedmann balance broken: "+H2+" vs "+(H0*H0);
+
+  // 3. Omega maps to the three geometries: >1 CLOSED(+1), =1 FLAT(0), <1 OPEN(-1).
+  if (curvatureSign(2.0*rc, H0) !== 1)  throw "Omega>1 must be CLOSED";
+  if (curvatureSign(1.0*rc, H0) !== 0)  throw "Omega=1 must be FLAT";
+  if (curvatureSign(0.5*rc, H0) !== -1) throw "Omega<1 must be OPEN";
+
+  // 4. Component scaling exponents: matter a^-3, radiation a^-4.
+  var rm = scaleDensity(1.0, 2.0, -3), rr = scaleDensity(1.0, 2.0, -4);
+  if (!approx(rm, 1/8, 1e-9)) throw "matter must dilute as a^-3";
+  if (!approx(rr, 1/16, 1e-9)) throw "radiation must dilute as a^-4";
+
+  // 5. Sign of acceleration: Lambda>0 drives a''>0; gravity alone gives a''<0.
+  if (!(accel(0, 0, 1e-35) > 0)) throw "positive Lambda must accelerate";
+  if (!(accel(rc, 0, 0) < 0))    throw "matter alone must decelerate";
+
+  // ---- TAMPER: flip the density sign; the rho_c / Omega geometry must invert. ----
+  DENS_SIGN = -1;
+  var rc_bad = criticalDensity(H0);
+  if (!(rc_bad < 0))
+    throw "tamper undetected: rho_c should go negative";
+  if (approx(friedmannH2(rc, 0, 1, 0), H0*H0, TOL))
+    throw "tamper undetected: flat balance still holds";
+  if (curvatureSign(1.0*rc, H0) === 0)
+    throw "tamper undetected: geometry map should invert";
+  // ---- restore ----
+  DENS_SIGN = saved;
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var failb = document.getElementById('failb');
+  try{
+    var ok = selfcheck();
+    if (ok !== true) throw "selfcheck did not return true";
+  }catch(e){
+    failb.style.display='block';
+    failb.textContent = 'SELFCHECK FAILED — '+e;
+    throw e;
+  }
+
+  var H0_SIu = H0_SI;
+  var litbadge = document.getElementById('litbadge');
+  var auditout = document.getElementById('auditout');
+  var readout  = document.getElementById('readout');
+  var hslider = document.getElementById('hslider');
+  var oslider = document.getElementById('oslider');
+  var hval = document.getElementById('hval');
+  var oval = document.getElementById('oval');
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+
+  function fmt(x){
+    if (x===0) return '0';
+    var e = Math.floor(Math.log10(Math.abs(x)));
+    var m = x/Math.pow(10,e);
+    return m.toFixed(2)+'e'+e;
+  }
+
+  function geomLabel(sign){
+    if (sign>0) return ['CLOSED (k=+1)','closed'];
+    if (sign<0) return ['OPEN (k=−1)','open'];
+    return ['FLAT (k=0)','flat'];
+  }
+
+  function draw(Om, H0){
+    var w=cv.width, h=cv.height;
+    ctx.clearRect(0,0,w,h);
+    // baseline
+    ctx.strokeStyle='rgba(255,255,255,.14)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,h-18); ctx.lineTo(w,h-18); ctx.stroke();
+    ctx.fillStyle='rgba(200,162,255,.7)'; ctx.font='10px monospace';
+    ctx.fillText('a=1 (today)', 6, 12);
+    var cases=[[2.0,'#ff7a8a'],[1.0,'#8affc0'],[0.5,'#6fb7ff']];
+    for (var ci=0;ci<cases.length;ci++){
+      var traj = trajectory(cases[ci][0], H0, 220, 0.15);
+      var maxA=1; for (var j=0;j<traj.length;j++) if(traj[j]>maxA)maxA=traj[j];
+      ctx.strokeStyle=cases[ci][1]; ctx.lineWidth=1.6; ctx.beginPath();
+      for (var i=0;i<traj.length;i++){
+        var x = i/(traj.length-1)*w;
+        var y = (h-18) - (traj[i]/Math.max(maxA,2.2))*(h-30);
+        if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    // user's chosen Omega marker curve (thicker, accent)
+    var ut = trajectory(Om, H0, 220, 0.15);
+    var uMax=1; for (var k2=0;k2<ut.length;k2++) if(ut[k2]>uMax)uMax=ut[k2];
+    ctx.strokeStyle='#c8a2ff'; ctx.lineWidth=2.4; ctx.setLineDash([4,3]); ctx.beginPath();
+    for (var m2=0;m2<ut.length;m2++){
+      var xx=m2/(ut.length-1)*w;
+      var yy=(h-18)-(ut[m2]/Math.max(uMax,2.2))*(h-30);
+      if(m2===0)ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  function update(){
+    var Hk = parseFloat(hslider.value);
+    var Om = parseFloat(oslider.value);
+    hval.textContent = Hk.toFixed(0);
+    oval.textContent = Om.toFixed(2);
+    var H0 = H0_SIu(Hk);
+    var rc = criticalDensity(H0);
+    var rho = Om*rc;
+    var w = omega(rho, H0);
+    var sign = curvatureSign(rho, H0);
+    var lab = geomLabel(sign);
+    var accToday = accel(rho, 0, 0); // Lambda=0, so decelerating
+    readout.innerHTML =
+      '<div>H&#8320; = <span>'+Hk.toFixed(0)+'</span> km/s/Mpc = <span>'+fmt(H0)+'</span> s⁻¹</div>'+
+      '<div>&rho;<sub>c</sub> = 3H&#8320;&sup2;/(8&pi;G) = <span>'+fmt(rc)+'</span> kg/m³</div>'+
+      '<div>&rho; = &Omega;&middot;&rho;<sub>c</sub> = <span>'+fmt(rho)+'</span> kg/m³</div>'+
+      '<div>&Omega; = &rho;/&rho;<sub>c</sub> = <span>'+w.toFixed(3)+'</span></div>'+
+      '<div>geometry: <span class="geo '+lab[1]+'">'+lab[0]+'</span></div>'+
+      '<div>a&#776;/a (matter, &Lambda;=0) = <span>'+fmt(accToday)+'</span> s⁻² (decelerating)</div>';
+    draw(Om, H0);
+    refreshWitness();
+  }
+
+  function refreshWitness(){
+    // Re-run the live balance the Witness guards, using CURRENT DENS_SIGN.
+    var H0 = H0_SIu(70);
+    var rc = criticalDensity(H0);
+    var balanceOK = Math.abs(friedmannH2(rc,0,1,0) - H0*H0) <= 1e-6*H0*H0;
+    var geomOK = (curvatureSign(2*rc,H0)===1 && curvatureSign(rc,H0)===0 && curvatureSign(0.5*rc,H0)===-1);
+    var rcPos = rc > 0;
+    if (balanceOK && geomOK && rcPos){
+      auditout.className='badge ok';
+      auditout.textContent='WITNESS OK — ρc=+'+fmt(rc)+' kg/m³ · flat balance holds to 1e-6 · Ω-geometry map intact';
+    } else {
+      auditout.className='badge bad';
+      auditout.textContent='WITNESS TRIPPED — density sign flipped: ρc='+fmt(rc)+' · balance='+(balanceOK?'ok':'BROKEN')+' · geometry='+(geomOK?'ok':'INVERTED');
+    }
+  }
+
+  // Data Out badge, set once at boot from the proven values.
+  (function(){
+    var H0 = H0_SIu(70);
+    var rc = criticalDensity(H0);
+    litbadge.className='badge ok';
+    litbadge.textContent='LIT — at H₀=70 km/s/Mpc, ρc='+fmt(rc)+' kg/m³ (≈5 H atoms/m³). Ω>1 CLOSED · Ω=1 FLAT · Ω<1 OPEN. selfcheck() passed.';
+  })();
+
+  document.getElementById('tamper').addEventListener('click', function(){
+    DENS_SIGN = -1; update();
+  });
+  document.getElementById('restore').addEventListener('click', function(){
+    DENS_SIGN = 1; update();
+  });
+  hslider.addEventListener('input', update);
+  oslider.addEventListener('input', update);
+  update();
+})();
+</script>
+</body>
+</html>

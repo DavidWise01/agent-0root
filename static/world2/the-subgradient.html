@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE SUBGRADIENT · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff7a7a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,122,122,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO — refined: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,122,122,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,122,122,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;accent-color:var(--am);vertical-align:middle;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:16px;font-weight:700;letter-spacing:.5px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+#plot{margin:8px 0;} #plot svg{background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE SUBGRADIENT</h1>
+ <p class="sub">A gradient for functions with <b>corners</b>. At a smooth point a convex function has one tangent line; at a kink it has a whole <b>fan</b> of supporting lines, and every slope in that fan is a subgradient. For <b class="k">|x|</b> at 0 the fan is exactly the interval <b class="k">[&minus;1, 1]</b>. Down the center a point and a candidate slope go <b style="color:var(--cy)">in</b>, the engine tests the supporting-line inequality, and the verdict &mdash; subgradient or not &mdash; comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> R. T. Rockafellar, <i>Convex Analysis</i>, Princeton University Press (1970) &mdash; Part V, Directional Derivatives and Subgradients. <a href="https://doi.org/10.1515/9781400873173">doi.org/10.1515/9781400873173</a>. Rendered, not quoted. <span class="tag t-amber">AMBER</span> classic print source, secondary link.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the supporting line</h2>
+   <p>A vector <b>g</b> is a <b>subgradient</b> of a convex <b>f</b> at <b>x&#8320;</b> when the line through <b>(x&#8320;, f(x&#8320;))</b> with slope <b>g</b> never rises above the graph:</p>
+   <p class="sent" style="text-align:center">f(y) &nbsp;&ge;&nbsp; f(x&#8320;) + g·(y &minus; x&#8320;) &nbsp;&nbsp;<span class="mut">for all y</span></p>
+   <p>The set of all such g is the <b>subdifferential</b> &part;f(x&#8320;). At a smooth point it is a single number &mdash; the derivative. At a kink it is a closed <b>interval</b> of one-sided derivatives.</p>
+   <p class="small">For the point on the panel below, its subdifferential and whether your slider slope lies inside it:</p>
+   <table id="modelTbl"><thead><tr><th>x&#8320;</th><th>&part;|x| at x&#8320;</th><th>your g</th><th>inside?</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — descent where no gradient exists <span class="tag t-amber">AVAN</span></h2>
+   <p>This is <a href="https://davidwise01.github.io/the-gradient-descent/" style="color:var(--cy)">the-gradient-descent</a> made to work where the gradient <b>does not exist</b>. Replace &nabla;f by <i>any</i> subgradient and the same step, <b>x &minus; t·g</b>, still moves toward the minimum of a non-smooth convex f.</p>
+   <p>That single move unlocks the kink in <b>the-lasso</b>'s |&beta;| penalty and the corner of the <b>ReLU</b> &mdash; convex optimization without smoothness. Each sphere is the next one's premise: the derivative becomes a <i>set</i>, and optimization keeps running.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-recover &part;|x| at 0 by scanning slopes, and re-test the engine's <i>own</i> claimed subgradient against the supporting-line inequality. If red claims a slope outside [&minus;1, 1], its line rises above |x| and this badge turns red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE · data in -> panel -> data out -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — a point and a slope <span class="tag t-in">in &darr;</span></h2>
+   <p>Two numbers feed the engine: a <b style="color:var(--cy)">point x&#8320;</b> on the graph of <b class="k">f(x) = |x|</b>, and a <b style="color:var(--cy)">candidate slope g</b> for a supporting line at that point. The question the machine answers: is that line a genuine subgradient &mdash; does it stay on or below |x| <i>everywhere</i>?</p>
+   <p class="small">At a smooth point (x&#8320; &ne; 0) exactly one slope works: the derivative sign(x&#8320;). At the kink (x&#8320; = 0) a whole interval works. Feed the values into the panel below.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the point and slope into the engine &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>point x&#8320;</label><input type="range" id="x0" min="-3" max="3" step="0.1" value="0" style="flex:1"><span id="x0v" class="k" style="min-width:34px">0.0</span></div>
+     <div class="row"><label>slope g</label><input type="range" id="gs" min="-2" max="2" step="0.05" value="0" style="flex:1"><span id="gsv" class="k" style="min-width:34px">0.00</span></div>
+     <div class="row"><button id="kink">&rarr; the kink (x=0)</button><button id="snap">&rarr; a valid subgradient</button></div>
+     <div id="plot"></div>
+     <p class="small">Amber = |x|. Dashed = your supporting line: <b style="color:var(--gr)">green</b> if it stays on/below |x|, <b style="color:var(--wall)">red</b> if it rises above.</p>
+    </div>
+    <div class="readout">
+     <div class="sent">f(x&#8320;) = <b class="k" id="fx">0.00</b> &nbsp;·&nbsp; &part;|x| at x&#8320; = <b class="k" id="subd">[&minus;1, 1]</b></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+     <div class="row" style="margin-top:8px"><button id="run">&#9654; run subgradient descent from x&#8320;=3</button></div>
+     <p class="small" id="descout">Diminishing step t&#8342; = 0.5/&radic;(k+1). The method has no true &ldquo;descent&rdquo; guarantee &mdash; only the best-so-far value provably converges, bounded by a closed-form rate.</p>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Move either slider &mdash; the verdict is computed live from the supporting-line inequality on a grid of test points, never looked up.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits the proven facts &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out &darr;</span></h2>
+   <p>What the machine proves, checked live at boot: &part;|x| at 0 is <b>exactly</b> the interval <b class="k">[&minus;1, 1]</b> &mdash; every slope inside is a subgradient, none outside is; at any x&#8320; &ne; 0 the subgradient is <b>unique</b> and equals sign(x&#8320;); each subgradient's line is a <b>supporting hyperplane</b> lying on or below |x|; and the subgradient method with a diminishing step reaches the known minimizer <b class="k">x&#42; = 0</b>, honouring its closed-form convergence bound.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-derives these live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The subgradient is the right <b>object</b>; the raw subgradient <b>method</b> is rarely the right algorithm. It converges at <b>O(1/&radic;k)</b> &mdash; far slower than smooth gradient descent's O(1/k) or Newton &mdash; and it is <b>not a descent method</b>: &minus;g need not point downhill, so f can rise from step to step, killing line search.</div>
+   <p class="small" style="margin-top:8px">In practice the structure is exploited instead: proximal-gradient / ISTA for the-lasso, or smoothing (Moreau &mdash; Nesterov) to recover a true gradient. The subgradient tells you a supporting line <i>exists</i>; it does not by itself tell you the <i>fast</i> way down.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>&ldquo;The subgradient is just the gradient, generalized to one vector.&rdquo;</s> <b>Cut.</b> At a kink it is a whole <i>set</i> &mdash; the subdifferential &mdash; a closed convex interval, not a single slope.</p>
+   <p class="grave"><s>&ldquo;Subgradient descent is a descent method.&rdquo;</s> <b>Cut.</b> The value can increase; only the distance to x&#42; (proper step) and the best-so-far value provably fall. It is the subgradient <i>method</i>, not descent.</p>
+   <p class="grave"><s>&ldquo;Any slope near the corner counts at the kink.&rdquo;</s> <b>Kept, corrected.</b> Exactly the interval of one-sided derivatives [f&prime;&#8331;, f&prime;&#8330;] = [&minus;1, 1] for |x| at 0 &mdash; and nothing outside it.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: claim slope <b class="k">1.5</b> &mdash; outside [&minus;1, 1] &mdash; is a subgradient of |x| at 0. Its line 1.5&middot;x rises <b>above</b> |x| for small positive x, so the inequality fails. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; claim g = 1.5 at 0</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Assert a slope outside the fan and the supporting line breaks the surface. The witness recomputes the max violation, disagrees with the known [&minus;1, 1], and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE SUBGRADIENT — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (point + slope <b style="color:var(--cy)">in</b> &rarr; supporting-line test &rarr; verdict <b style="color:var(--gr)">out</b>). A runnable rendering of Rockafellar's <i>Convex Analysis</i> &mdash; the engine is LIT (&part;|x|(0)=[&minus;1,1] recovered live, uniqueness off the kink, the subgradient bound honoured, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what the raw method cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// pure engine — the subdifferential of f(x)=|x|. all logic lives before the UI marker.
+function f(x){ return Math.abs(x); }
+
+// deterministic grid of test points y used to verify the supporting-line inequality
+const YGRID=(function(){ const a=[]; for(let i=-100;i<=100;i++) a.push(i*0.03); return a; })();
+const EPS=1e-9;
+
+// g is a subgradient of f at x0 iff the supporting line lies on or below f:
+//   f(y) >= f(x0) + g*(y - x0)   for every y
+function isSubgrad(g,x0){
+  const b=f(x0);
+  for(let i=0;i<YGRID.length;i++){ const y=YGRID[i];
+    if( b + g*(y-x0) > f(y) + EPS ) return false;   // line rose above f -> not a subgradient
+  }
+  return true;
+}
+
+// worst (most positive) excess of the supporting line over f; <= 0 means a valid subgradient
+function maxViolation(g,x0){
+  const b=f(x0); let w=-Infinity;
+  for(let i=0;i<YGRID.length;i++){ const y=YGRID[i]; const v=(b+g*(y-x0))-f(y); if(v>w)w=v; }
+  return w;
+}
+
+// closed-form subdifferential of |x|: unique off the kink, the interval [-1,1] at 0
+function subdiffClosed(x0){ if(x0>0)return[1,1]; if(x0<0)return[-1,-1]; return[-1,1]; }
+
+// RECOVER the subdifferential numerically: keep every scanned slope whose line stays on/below f
+function subdiffScan(x0){
+  let lo=Infinity,hi=-Infinity;
+  for(let k=-250;k<=250;k++){ const g=k*0.01; if(isSubgrad(g,x0)){ if(g<lo)lo=g; if(g>hi)hi=g; } }
+  return [lo,hi];
+}
+
+// the disclosed tamper: when true the engine CLAIMS slope 1.5 is a subgradient at x=0 (it is not)
+let TAMPER=false;
+function claimedSlope(x0){ if(x0===0 && TAMPER) return 1.5; const d=subdiffClosed(x0); return (d[0]+d[1])/2; }
+
+// subgradient method on |x|: x_{k+1} = x_k - t_k*g_k, diminishing step t_k = s0/sqrt(k+1)
+function subgradientRun(x0,K,s0){
+  let x=x0, best=f(x0), bestx=x0, sumT=0, sumT2=0;
+  const G=1; // every subgradient of |x| has |g| <= 1
+  for(let k=0;k<K;k++){
+    const g = x>0?1:(x<0?-1:0);
+    const t = s0/Math.sqrt(k+1);
+    sumT+=t; sumT2+=t*t;
+    x = x - t*g;
+    const fx=f(x); if(fx<best){ best=fx; bestx=x; }
+  }
+  // Boyd's subgradient bound (a theorem): min_i f(x_i) - f* <= (R^2 + G^2*sum t^2) / (2*sum t)
+  const bound=(x0*x0 + G*G*sumT2)/(2*sumT);
+  return {best,bestx,bound,sumT,sumT2};
+}
+
+// fail-loud self-check — throws on any violation; returns true on success
+function selfcheck(){
+  const t=(c,m)=>{ if(!c) throw new Error(m); };
+  const save=TAMPER; TAMPER=false;
+
+  // 1. the subdifferential of |x| at 0 is EXACTLY [-1,1]: every g inside is a subgradient, none outside is
+  [-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1].forEach(g=> t(isSubgrad(g,0), "g="+g+" must be a subgradient of |x| at 0"));
+  [-1.5,-1.25,-1.05,1.05,1.25,1.5].forEach(g=> t(!isSubgrad(g,0), "g="+g+" must NOT be a subgradient of |x| at 0"));
+  const s0=subdiffScan(0); t(Math.abs(s0[0]+1)<0.02 && Math.abs(s0[1]-1)<0.02, "recovered subdifferential at 0 must be [-1,1]");
+
+  // 2. at a differentiable point the subgradient is UNIQUE and equals the derivative sign(x)
+  t(isSubgrad(1,2) && !isSubgrad(0.9,2) && !isSubgrad(1.1,2), "the subgradient at x=2 must be exactly 1");
+  const s2=subdiffScan(2);  t(Math.abs(s2[0]-1)<0.02 && Math.abs(s2[1]-1)<0.02, "subdifferential at x=2 must be the single point {1}");
+  const s3=subdiffScan(-2); t(Math.abs(s3[0]+1)<0.02 && Math.abs(s3[1]+1)<0.02, "subdifferential at x=-2 must be the single point {-1}");
+
+  // 3. a subgradient defines a SUPPORTING hyperplane lying on or below f everywhere
+  t(maxViolation(0,0)<=EPS, "the g=0 supporting line at 0 must stay on/below |x|");
+  t(maxViolation(1,2)<=EPS, "the g=1 supporting line at 2 must stay on/below |x|");
+
+  // 4. subgradient method with a diminishing step reaches the known minimizer x*=0, f*=0
+  const r=subgradientRun(3,10000,0.5);
+  t(r.best <= r.bound + EPS, "Boyd's subgradient bound must hold: best <= bound");
+  t(r.best < 0.2, "the diminishing-step subgradient method must approach the minimum value 0");
+  t(Math.abs(r.bestx) < 0.2, "the best iterate must approach the known minimizer x*=0");
+  const rShort=subgradientRun(3,200,0.5);
+  t(r.bound < rShort.bound, "the guaranteed bound must shrink as iterations grow (the known rate)");
+
+  // TAMPER (disclosed planted void): claim slope 1.5 is a subgradient at 0. it is not --
+  // the supporting line 1.5*y rises above |x| for small positive y, so the witness fires.
+  t(isSubgrad(1.5,0)===false, "control: 1.5 is not a subgradient at 0");
+  TAMPER=true;
+  const cs=claimedSlope(0); t(cs===1.5, "under tamper the engine claims slope 1.5 at 0");
+  t(maxViolation(cs,0) > 0.01, "the tampered 1.5 line must rise above |x| (violate the inequality)");
+  t(isSubgrad(cs,0)===false, "the witness must reject the tampered claim");
+  TAMPER=save;
+  return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+
+function drawSVG(x0,g,valid){
+  const W=320,H=210,YMIN=-1.5,YMAX=3.4;
+  const xm=x=>((x+3)/6*W).toFixed(1);
+  const ym=y=>(H-(y-YMIN)/(YMAX-YMIN)*H).toFixed(1);
+  const col=valid?"var(--gr)":"var(--wall)";
+  const absPts=[[-3,3],[0,0],[3,3]].map(p=>xm(p[0])+","+ym(p[1])).join(" ");
+  const ly0=f(x0)+g*(-3-x0), ly1=f(x0)+g*(3-x0);
+  let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="max-width:340px">';
+  s+='<line x1="0" y1="'+ym(0)+'" x2="'+W+'" y2="'+ym(0)+'" stroke="var(--line)"/>';
+  s+='<line x1="'+xm(0)+'" y1="0" x2="'+xm(0)+'" y2="'+H+'" stroke="var(--line)"/>';
+  s+='<polyline points="'+absPts+'" fill="none" stroke="var(--am)" stroke-width="2"/>';
+  s+='<line x1="'+xm(-3)+'" y1="'+ym(ly0)+'" x2="'+xm(3)+'" y2="'+ym(ly1)+'" stroke="'+col+'" stroke-width="1.6" stroke-dasharray="4 3"/>';
+  s+='<circle cx="'+xm(x0)+'" cy="'+ym(f(x0))+'" r="3.6" fill="'+col+'"/>';
+  s+='<text x="7" y="14" fill="var(--dim)" font-size="9">y = |x| &#183; supporting line (dashed)</text>';
+  s+='</svg>';
+  $("plot").innerHTML=s;
+}
+
+function fmtInt(d){ return d[0]===d[1] ? "{ "+d[0].toFixed(0)+" }" : "[ "+d[0].toFixed(0)+", "+d[1].toFixed(0)+" ]"; }
+
+function render(){
+  const x0=+(+$("x0").value).toFixed(1), g=+$("gs").value;
+  $("x0v").textContent=x0.toFixed(1); $("gsv").textContent=g.toFixed(2);
+  const d=subdiffClosed(x0);
+  const viol=maxViolation(g,x0), valid=viol<=EPS;
+  $("fx").textContent=f(x0).toFixed(2);
+  $("subd").innerHTML=fmtInt(d);
+  $("verdict").textContent = valid ? "g = "+g.toFixed(2)+"  IS a subgradient" : "g = "+g.toFixed(2)+"  is NOT a subgradient";
+  $("verdict").className="verdict "+(valid?"ok":"no");
+  $("reason").innerHTML = valid
+    ? "the line f(x&#8320;) + g&middot;(y&minus;x&#8320;) stays on or below |x| for every y"+(x0!==0?" &mdash; and at this smooth point it is the <b>only</b> slope that does":" &mdash; one of the whole fan [&minus;1, 1]")
+    : "the line rises <b>above</b> |x| (max excess +"+viol.toFixed(2)+") &mdash; the inequality f(y) &ge; f(x&#8320;)+g(y&minus;x&#8320;) fails";
+  const inside = g>=d[0]-1e-9 && g<=d[1]+1e-9;
+  $("modelBody").innerHTML="<tr><td>"+x0.toFixed(1)+"</td><td>"+fmtInt(d)+"</td><td>"+g.toFixed(2)+"</td><td class=\""+(inside?"y":"n")+"\">"+(inside?"yes":"no")+"</td></tr>";
+  drawSVG(x0,g,valid);
+}
+
+function audit(){
+  const el=$("auditout");
+  const s0=subdiffScan(0);
+  const okInterval = Math.abs(s0[0]+1)<0.02 && Math.abs(s0[1]-1)<0.02;
+  const cs=claimedSlope(0);
+  const claimValid=isSubgrad(cs,0);
+  const mv=maxViolation(cs,0);
+  const ok = okInterval && claimValid;
+  el.innerHTML='<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'&#10003; WITNESS — holds':'&#10007; WITNESS — broken')+'</span>'
+   +'<div class="small" style="margin-top:6px">&part;|x|(0) recovered: <b class="k">['+s0[0].toFixed(2)+', '+s0[1].toFixed(2)+']</b> vs [&minus;1, 1] &nbsp;&#183;&nbsp; engine claims slope <b style="color:'+(claimValid?'var(--gr)':'var(--wall)')+'">'+cs.toFixed(2)+'</b> at 0 &mdash; its line '+(claimValid?'stays on/below |x|':'RISES ABOVE |x| by +'+mv.toFixed(2))+(TAMPER?' &nbsp;&mdash; <span style="color:var(--wall)">red claimed a slope outside [&minus;1, 1]</span>':'')+'</div>';
+}
+
+// boot
+try{
+  selfcheck();
+  $("litbadge").innerHTML='<span class="badge pass">&#10003; LIT · self-check passed on load</span>';
+  render(); audit();
+  ["x0","gs"].forEach(id=>$(id).addEventListener("input",()=>{render();audit();}));
+  $("kink").addEventListener("click",()=>{ $("x0").value="0"; render(); });
+  $("snap").addEventListener("click",()=>{ const x0=+(+$("x0").value).toFixed(1); const d=subdiffClosed(x0); $("gs").value=((d[0]+d[1])/2).toFixed(2); render(); });
+  $("run").addEventListener("click",()=>{
+    const r=subgradientRun(3,10000,0.5);
+    $("descout").innerHTML="from x&#8320; = 3, step t&#8342; = 0.5/&radic;(k+1): best value reached <b class='k'>"+r.best.toExponential(2)+"</b> (minimum is 0), best iterate x = <b class='k'>"+r.bestx.toFixed(4)+"</b> (minimizer is 0). Boyd guarantee: best &minus; f&#42; &le; <b>"+r.bound.toFixed(4)+"</b> &mdash; and the run honours it. This bound falls like O(1/&radic;k), the known rate.";
+  });
+  $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Claimed g = 1.5 at 0.</b> The line 1.5&middot;x now rises above |x| for small positive x &mdash; the witness (window 7) recomputed the violation and went red. The attack is real; it is caught."; audit(); });
+  $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Assert a slope outside the fan and the supporting line breaks the surface. The witness recomputes the max violation, disagrees with the known [-1, 1], and turns red. Nothing is faked; the attack is real and it is caught."; audit(); });
+}catch(e){
+  const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the subgradient engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE POLE PLACEMENT</title>
+<style>
+:root{
+  --am:#9ee0d0;
+  --ground:#0b1f18;
+  --ground2:#123026;
+  --ink:#eafbf4;
+  --dim:#9fc4b6;
+  --panel:#122a20;
+  --panel2:#0e241b;
+  --line:#274b3d;
+  --blue:#7db8ff;
+  --blueb:#22405f;
+  --red:#ff8f8f;
+  --redb:#5c2a2a;
+  --amber:#ffcf6b;
+  --lit:#7ef0c8;
+  --wall:#ff9d6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:linear-gradient(160deg,var(--ground),var(--ground2));
+  color:var(--ink);
+  font-family:"Iosevka",ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
+  font-size:15px;line-height:1.5;
+  padding:22px 18px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:20px}
+h1{
+  font-size:30px;letter-spacing:2px;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 18px rgba(158,224,208,.25);
+}
+.sub{color:var(--ink);max-width:820px;margin:0 0 10px;font-size:14.5px}
+.src{font-size:12.5px;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:1px;font-weight:700;
+  padding:1px 7px;border-radius:3px;vertical-align:middle;margin-right:6px;
+  border:1px solid transparent;text-transform:uppercase;
+}
+.t-amber{background:rgba(255,207,107,.13);color:var(--amber);border-color:var(--amber)}
+.t-lit{background:rgba(126,240,200,.13);color:var(--lit);border-color:var(--lit)}
+.t-in{background:rgba(125,184,255,.13);color:var(--blue);border-color:var(--blue)}
+.t-out{background:rgba(158,224,208,.13);color:var(--am);border-color:var(--am)}
+.t-wall{background:rgba(255,157,107,.13);color:var(--wall);border-color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11.5px;letter-spacing:2px;font-weight:700;text-transform:uppercase;
+  padding:7px 10px;border-radius:5px;text-align:center;
+}
+.col.blue .teamhdr{background:rgba(125,184,255,.10);color:var(--blue);border:1px solid var(--blueb)}
+.col.center .teamhdr{background:rgba(158,224,208,.10);color:var(--am);border:1px solid var(--line)}
+.col.red .teamhdr{background:rgba(255,143,143,.10);color:var(--red);border:1px solid var(--redb)}
+
+.win{
+  position:relative;background:var(--panel);border:1px solid var(--line);
+  border-radius:8px;padding:13px 13px 14px;
+}
+.col.blue .win{border-left:3px solid var(--blueb)}
+.col.red .win{border-left:3px solid var(--redb)}
+.win.panel{background:var(--panel2);border-color:var(--am);box-shadow:0 0 22px rgba(158,224,208,.10)}
+.wn{
+  position:absolute;top:-9px;right:-9px;width:22px;height:22px;border-radius:50%;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  background:var(--ground2);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .wn{color:var(--blue);border-color:var(--blueb)}
+.col.red .wn{color:var(--red);border-color:var(--redb)}
+.win.panel .wn{color:var(--am);border-color:var(--am)}
+.win h3{margin:0 0 8px;font-size:13px;letter-spacing:1px;color:var(--am);text-transform:uppercase}
+.col.blue .win h3{color:var(--blue)}
+.col.red .win h3{color:var(--red)}
+.win p{margin:0 0 8px;font-size:13px;color:var(--ink)}
+.win p.small,.small{font-size:12px;color:var(--dim)}
+.mono{font-family:inherit}
+.mx{
+  display:inline-block;background:var(--panel2);border:1px solid var(--line);
+  border-radius:5px;padding:6px 9px;margin:4px 6px 4px 0;font-size:12.5px;white-space:pre;color:var(--ink);
+}
+.k{color:var(--am);font-weight:700}
+.bad{color:var(--red)}
+.flow{
+  text-align:center;color:var(--am);font-size:16px;letter-spacing:3px;margin:2px 0;opacity:.7;
+}
+.wall-note{border-left:3px solid var(--wall);padding-left:10px}
+.gy{margin:0 0 8px}
+.gy s{color:#7f9a8e}
+.gy .fix{color:var(--am)}
+label{font-size:12px;color:var(--dim);display:block;margin:8px 0 3px}
+input[type=number]{
+  width:88px;background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  border-radius:5px;padding:5px 7px;font-family:inherit;font-size:13px;
+}
+button{
+  font-family:inherit;font-size:12px;letter-spacing:.5px;cursor:pointer;
+  background:var(--panel);color:var(--ink);border:1px solid var(--line);
+  border-radius:6px;padding:7px 12px;margin:6px 6px 0 0;
+}
+button:hover{border-color:var(--am)}
+#tamper{border-color:var(--redb);color:var(--red)}
+#tamper:hover{background:rgba(255,143,143,.10)}
+#restore{border-color:var(--line)}
+.badge{
+  display:inline-block;font-size:12px;font-weight:700;letter-spacing:.5px;
+  padding:5px 10px;border-radius:6px;margin-top:8px;
+}
+.badge.ok{background:rgba(126,240,200,.12);color:var(--lit);border:1px solid var(--lit)}
+.badge.fail{background:rgba(255,143,143,.14);color:var(--red);border:1px solid var(--red)}
+#failb{display:none;margin-top:12px;padding:10px 12px;border-radius:7px;
+  background:rgba(255,143,143,.12);border:1px solid var(--red);color:var(--red);font-size:12.5px}
+.res{font-size:12.5px;color:var(--ink);margin-top:8px}
+.res b{color:var(--am)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-size:12px;color:var(--dim)}
+.hair{height:1px;background:var(--line);margin:9px 0;opacity:.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE POLE PLACEMENT</h1>
+  <p class="sub">Pole placement &mdash; if you can steer it, you can choose its dynamics. For a controllable pair (A,B), state feedback u&nbsp;=&nbsp;&minus;K&middot;x bends the open loop into A&nbsp;&minus;&nbsp;B&middot;K; pick the eigenvalues you want and solve for K by matching the characteristic polynomial. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Ackermann, J. &mdash; <a href="https://doi.org/10.1524/auto.1972.20.112.297" target="_blank" rel="noopener">Der Entwurf linearer Regelungssysteme im Zustandsraum</a>, at &ndash; Automatisierungstechnik <b>20</b> (1972), 297&ndash;300 (Bass&ndash;Gura, 1965). AMBER &mdash; paywalled, no stable open copy; year and venue verified.</p>
+</header>
+
+<div class="ocho">
+
+  <!-- ===================== BLUE TEAM ===================== -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wn">3</div>
+      <h3>The Model</h3>
+      <p>A single-input continuous LTI plant, held in a small controllable canonical shape so every check is closed-form.</p>
+      <span class="mx">A = [ 0   1 ]
+    [ -2   3 ]</span>
+      <span class="mx">B = [ 0 ]
+    [ 1 ]</span>
+      <p class="small">Open-loop eigenvalues are <b class="k">+1</b> and <b class="k">+2</b> &mdash; both in the right half-plane, so the free plant blows up. The controllability matrix C&nbsp;=&nbsp;[B&nbsp;&nbsp;AB] is nonsingular, so every mode is reachable and every pole is ours to move.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">5</div>
+      <h3>The Lineage</h3>
+      <p><b>the-controllability</b> cashed in. Controllability only proved the modes <i>could</i> be reached; pole placement is where you spend that reach &mdash; design the dynamics you want by feedback and move <b>the-state-space</b>'s modes at will.</p>
+      <p class="small">The classical, deterministic sibling of <b>the-lqr</b>: LQR earns its gain from a cost trade-off; Ackermann just <i>names</i> the poles and matches the polynomial. Same closed loop A&nbsp;&minus;&nbsp;BK, two different ways to choose K.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">7</div>
+      <h3>The Witness</h3>
+      <p class="small">Live re-check of the placed system. It recomputes the closed-loop characteristic polynomial from the raw matrices and confirms it equals the desired one &mdash; and it re-runs after any tamper.</p>
+      <div id="auditout" class="badge ok">witness idle</div>
+      <div class="hair"></div>
+      <p class="small">Green: the placement is real (poles land where asked). Red: the claim no longer matches the matrices &mdash; e.g. someone tried to place an uncontrollable mode.</p>
+    </div>
+  </div>
+
+  <!-- ===================== CENTER ===================== -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="wn">4</div>
+      <h3><span class="tag t-in">in &darr;</span>Data In</h3>
+      <p class="small">The plant (A,B) above, plus the poles you want the closed loop to have. Choose two desired real eigenvalues; the engine forms the desired polynomial s&sup2;&nbsp;+&nbsp;d&#8321;s&nbsp;+&nbsp;d&#8320; and hands it to Ackermann's formula.</p>
+      <label>desired pole p&#8321;</label>
+      <input type="number" id="p1" value="-1" step="0.5">
+      <label>desired pole p&#8322;</label>
+      <input type="number" id="p2" value="-3" step="0.5">
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <div class="wn">0</div>
+      <h3><span class="tag t-lit">lit</span>The Panel</h3>
+      <p class="small">K = [0&nbsp;1]&nbsp;&middot;&nbsp;C&#8315;&sup1;&nbsp;&middot;&nbsp;p(A) &mdash; Ackermann's formula, run live on the matrices above.</p>
+      <div class="res" id="panelout"></div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win">
+      <div class="wn">8</div>
+      <h3><span class="tag t-out">out &darr;</span>Data Out</h3>
+      <p class="small">The gain K and the eigenvalues of A&nbsp;&minus;&nbsp;BK. For a controllable plant they equal your requested poles exactly.</p>
+      <div class="res" id="dataout"></div>
+      <div id="litbadge" class="badge ok" style="display:none">&mdash;</div>
+      <div id="failb"></div>
+    </div>
+  </div>
+
+  <!-- ===================== RED TEAM ===================== -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wn">1</div>
+      <h3>The Adversary</h3>
+      <div class="wall-note">
+        <p><span class="tag t-wall">wall</span>Reachability is not a promise of grace.</p>
+        <p class="small">Ackermann's formula inverts the controllability matrix C. As a plant approaches uncontrollability, C becomes ill-conditioned and C&#8315;&sup1; explodes &mdash; the gains blow up and floating point rots. It is single-input and numerically fragile for n&nbsp;&gt;&nbsp;~5; robust designs use Kautsky&ndash;Nichols (<span class="tag t-amber">amber</span> <i>place</i>), not the raw formula.</p>
+        <p class="small">Pushing poles far into the left half-plane looks powerful and costs everything: enormous K, saturated actuators, amplified sensor noise, a closed loop that is brittle to the model it never perfectly knew.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wn">2</div>
+      <h3>The Graveyard</h3>
+      <p class="gy"><s>You can place the poles of any system anywhere you like.</s><br><span class="fix">&rarr; Only controllable modes move. An uncontrollable eigenvalue is a fixed point of A&nbsp;&minus;&nbsp;BK for every K.</span></p>
+      <p class="gy"><s>Faster (further-left) poles are always the better design.</s><br><span class="fix">&rarr; Far-left poles demand huge gain, amplify noise and saturate actuators; bandwidth is bought, not free.</span></p>
+      <p class="gy"><s>Ackermann's formula is a safe way to compute the gain.</s><br><span class="fix">&rarr; C&#8315;&sup1; is ill-conditioned; the formula is a proof, not a production solver.</span></p>
+    </div>
+
+    <div class="win">
+      <div class="wn">6</div>
+      <h3>The Tamper</h3>
+      <p class="small">The planted void, disclosed. Take an <i>uncontrollable</i> plant &mdash; A&nbsp;=&nbsp;diag(1,&nbsp;5), B&nbsp;=&nbsp;[1;&nbsp;0], where mode 5 is unreachable &mdash; run the placement formula anyway and <i>claim</i> the poles were set to your target. Mode 5 will not move; the char-poly stops matching; window&nbsp;7 catches it.</p>
+      <button id="tamper">apply placement to the uncontrollable plant</button>
+      <button id="restore">restore</button>
+      <div id="tampstate" class="small" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE POLE PLACEMENT &mdash; WORLD II &middot; THE FOLD. The engine is genuinely LIT: K, A&nbsp;&minus;&nbsp;BK and its eigenvalues are computed live from the matrices; a fail-loud selfcheck() asserts them against known closed-form values (K&nbsp;=&nbsp;[1,&nbsp;7], poles &minus;1 and &minus;3, the fixed uncontrollable eigenvalue 5) and throws on any violation. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===== engine (pure logic; extractable for node verification) =====
+
+// fixed-seed PRNG (deterministic selfcheck)
+function makePRNG(seed){ var s = seed>>>0; return function(){ s = (s*1664525 + 1013904223)>>>0; return s/4294967296; }; }
+
+// 2x2 linear algebra
+function ident(){ return [[1,0],[0,1]]; }
+function mm(A,B){ return [
+  [A[0][0]*B[0][0]+A[0][1]*B[1][0], A[0][0]*B[0][1]+A[0][1]*B[1][1]],
+  [A[1][0]*B[0][0]+A[1][1]*B[1][0], A[1][0]*B[0][1]+A[1][1]*B[1][1]] ]; }
+function madd(A,B){ return [[A[0][0]+B[0][0],A[0][1]+B[0][1]],[A[1][0]+B[1][0],A[1][1]+B[1][1]]]; }
+function msub(A,B){ return [[A[0][0]-B[0][0],A[0][1]-B[0][1]],[A[1][0]-B[1][0],A[1][1]-B[1][1]]]; }
+function sc(A,k){ return [[A[0][0]*k,A[0][1]*k],[A[1][0]*k,A[1][1]*k]]; }
+function tr2(A){ return A[0][0]+A[1][1]; }
+function det2(A){ return A[0][0]*A[1][1]-A[0][1]*A[1][0]; }
+function inv2(A){ var d=det2(A); return [[A[1][1]/d,-A[0][1]/d],[-A[1][0]/d,A[0][0]/d]]; }
+function fro(A){ return Math.sqrt(A[0][0]*A[0][0]+A[0][1]*A[0][1]+A[1][0]*A[1][0]+A[1][1]*A[1][1]); }
+
+// B is 2x1 [[b0],[b1]]; K is 1x2 [k0,k1]; outer product B*K is 2x2
+function BK(B,K){ return [[B[0][0]*K[0],B[0][0]*K[1]],[B[1][0]*K[0],B[1][0]*K[1]]]; }
+
+// controllability matrix [ B  A*B ] as 2x2
+function ctrb(A,B){
+  var ab0 = A[0][0]*B[0][0]+A[0][1]*B[1][0];
+  var ab1 = A[1][0]*B[0][0]+A[1][1]*B[1][0];
+  return [[B[0][0],ab0],[B[1][0],ab1]];
+}
+
+// characteristic polynomial of a 2x2: s^2 - tr*s + det  ->  [1, -tr, det]
+function charpoly(A){ return [1, -tr2(A), det2(A)]; }
+function polyEval(c,s){ return c[0]*s*s + c[1]*s + c[2]; }
+
+// eigenvalues of a 2x2 (real or complex conjugate)
+function eig2(A){
+  var b=-tr2(A), c=det2(A), disc=b*b-4*c;
+  if(disc>=0){ var r=Math.sqrt(disc); return [{re:(-b+r)/2,im:0},{re:(-b-r)/2,im:0}]; }
+  var q=Math.sqrt(-disc); return [{re:-b/2,im:q/2},{re:-b/2,im:-q/2}];
+}
+
+// Ackermann's formula for single-input 2x2: desired poly s^2 + d1 s + d0
+function ackermann(A,B,d1,d0){
+  var pA = madd(madd(mm(A,A), sc(A,d1)), sc(ident(),d0)); // p(A)=A^2+d1 A+d0 I
+  var Ci = inv2(ctrb(A,B));
+  var M  = mm(Ci,pA);
+  return [M[1][0], M[1][1]]; // [0 1] * Ci * p(A)
+}
+
+// matrix exponential via scaling-and-squaring Taylor (proves free-response decay)
+function expm(A){
+  var n=Math.max(Math.abs(A[0][0])+Math.abs(A[0][1]), Math.abs(A[1][0])+Math.abs(A[1][1]));
+  var s=0; while(n>0.5){ n/=2; s++; }
+  var As=sc(A,1/Math.pow(2,s));
+  var term=ident(), sum=ident();
+  for(var k=1;k<=24;k++){ term=sc(mm(term,As),1/k); sum=madd(sum,term); }
+  for(var i=0;i<s;i++){ sum=mm(sum,sum); }
+  return sum;
+}
+
+// the fixed plants and target
+var A_ctrl=[[0,1],[-2,3]];   // controllable, open-loop eigenvalues +1, +2
+var B_in  =[[0],[1]];
+var A_unc =[[1,0],[0,5]];    // uncontrollable: mode at 5 is unreachable
+var B_unc =[[1],[0]];
+var DES1=4, DES0=3;          // desired poly s^2+4s+3  ->  poles -1, -3
+
+// the disclosed planted void
+var tampered=false;
+
+// the value the witness watches: the char-poly of the "placed" closed loop
+function placedPoly(){
+  if(!tampered){
+    var K=ackermann(A_ctrl,B_in,DES1,DES0);
+    return charpoly(msub(A_ctrl, BK(B_in,K)));
+  } else {
+    // apply the placement formula to the UNCONTROLLABLE plant and claim success;
+    // best-effort K aims the reachable mode at -1, but eigenvalue 5 will not move
+    var Kbad=[2,0];
+    return charpoly(msub(A_unc, BK(B_unc,Kbad)));
+  }
+}
+
+// fail-loud selfcheck: throws on any violation, returns true on success
+function selfcheck(){
+  var saved=tampered; tampered=false;
+  function assert(c,m){ if(!c) throw new Error(m); }
+  function close(a,b,t){ return Math.abs(a-b) <= (t||1e-8); }
+
+  // 1) controllable plant -> pole placement is exact
+  assert(Math.abs(det2(ctrb(A_ctrl,B_in)))>1e-9, "controllable pair must have nonsingular ctrb matrix");
+  var K=ackermann(A_ctrl,B_in,DES1,DES0);
+  assert(close(K[0],1)&&close(K[1],7), "Ackermann K must equal [1,7]");
+  var Acl=msub(A_ctrl,BK(B_in,K));
+  var cp=charpoly(Acl);
+  assert(close(cp[0],1)&&close(cp[1],DES1)&&close(cp[2],DES0), "closed-loop char poly must equal the desired polynomial");
+  var ev=eig2(Acl).map(function(e){return e.re;}).sort(function(a,b){return a-b;});
+  assert(close(ev[0],-3)&&close(ev[1],-1), "placed eigenvalues must be exactly -1 and -3");
+  assert(ev[0]<0 && ev[1]<0, "all placed poles must lie in the left half-plane");
+
+  // 2) stable closed loop => free response decays to 0
+  assert(fro(expm(sc(Acl,20)))<1e-6, "stable closed-loop free response must decay to 0");
+
+  // 3) an uncontrollable mode cannot be moved by any K (eigenvalue 5 is fixed)
+  assert(Math.abs(det2(ctrb(A_unc,B_unc)))<1e-12, "uncontrollable pair must have singular ctrb matrix");
+  var rng=makePRNG(20260811);
+  for(var i=0;i<200;i++){
+    var Kr=[(rng()-0.5)*40,(rng()-0.5)*40];
+    var Ar=msub(A_unc,BK(B_unc,Kr));
+    assert(Math.abs(polyEval(charpoly(Ar),5))<1e-9, "uncontrollable eigenvalue 5 must persist for every K");
+  }
+
+  // untampered witness value matches the desired placement
+  var good=placedPoly();
+  assert(close(good[1],DES1)&&close(good[2],DES0), "untampered placement must match the desired polynomial");
+
+  // 4) TAMPER: place on the uncontrollable plant, claim success -> the check must fire
+  tampered=true;
+  var bad=placedPoly();
+  assert(!(close(bad[1],DES1)&&close(bad[2],DES0)), "TAMPER must be caught: uncontrollable placement cannot match the desired polynomial");
+  assert(Math.abs(polyEval(bad,5))<1e-9, "tampered closed loop must still contain the fixed eigenvalue 5");
+  tampered=saved;
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+function fmt(x){ if(Math.abs(x)<1e-9) x=0; var v=Math.round(x*10000)/10000; return (v>=0?" ":"") + v.toFixed(4); }
+function evLabel(e){ if(Math.abs(e.im)<1e-9) return fmt(e.re).trim(); var s=e.im>=0?"+":"-"; return fmt(e.re).trim()+" "+s+" "+Math.abs(e.im).toFixed(4)+"i"; }
+
+function renderPanel(){
+  var p1=parseFloat(document.getElementById("p1").value);
+  var p2=parseFloat(document.getElementById("p2").value);
+  if(!isFinite(p1)||!isFinite(p2)){ return; }
+  var d1=-(p1+p2), d0=p1*p2;                 // desired s^2 + d1 s + d0
+  var K=ackermann(A_ctrl,B_in,d1,d0);
+  var Acl=msub(A_ctrl,BK(B_in,K));
+  var ev=eig2(Acl);
+
+  document.getElementById("panelout").innerHTML =
+    "desired  s&sup2; + <b>"+fmt(d1).trim()+"</b>s + <b>"+fmt(d0).trim()+"</b><br>"+
+    "p(A) &rarr; C&#8315;&sup1; &rarr; <b class='k'>K = ["+fmt(K[0]).trim()+", "+fmt(K[1]).trim()+"]</b>";
+
+  var reqSorted=[p1,p2].sort(function(a,b){return a-b;});
+  var gotSorted=ev.map(function(e){return e.re;}).sort(function(a,b){return a-b;});
+  var match = Math.abs(reqSorted[0]-gotSorted[0])<1e-6 && Math.abs(reqSorted[1]-gotSorted[1])<1e-6 && Math.abs(ev[0].im)<1e-9 && Math.abs(ev[1].im)<1e-9;
+
+  document.getElementById("dataout").innerHTML =
+    "<b>K</b> = ["+fmt(K[0]).trim()+", "+fmt(K[1]).trim()+"]<br>"+
+    "A &minus; BK = [ "+fmt(Acl[0][0])+"  "+fmt(Acl[0][1])+" ;  "+fmt(Acl[1][0])+"  "+fmt(Acl[1][1])+" ]<br>"+
+    "<b>eig(A &minus; BK)</b> = { "+evLabel(ev[0])+" ,  "+evLabel(ev[1])+" }<br>"+
+    (match ? "<span class='k'>&#10003; poles landed on your request</span>"
+           : "<span class='bad'>&#9888; requested poles not reached</span>");
+  runWitness();
+}
+
+function runWitness(){
+  var out=document.getElementById("auditout");
+  var c=placedPoly();
+  var ok = Math.abs(c[1]-DES1)<1e-8 && Math.abs(c[2]-DES0)<1e-8;
+  if(ok){
+    out.className="badge ok";
+    out.textContent="witness OK  \u2713  char-poly = s\u00B2 + "+DES1+"s + "+DES0+"  (poles -1, -3)";
+  } else {
+    var roots=eig2([[0,1],[-c[2],-c[1]]]); // eigenvalues of the companion of c
+    out.className="badge fail";
+    out.innerHTML="witness FAIL &#9888; uncontrollable mode 5 did not move &mdash; placement false. "+
+      "closed-loop poly = s&sup2; + "+fmt(c[1]).trim()+"s + "+fmt(c[2]).trim()+" &ne; desired.";
+  }
+}
+
+document.getElementById("p1").addEventListener("input",renderPanel);
+document.getElementById("p2").addEventListener("input",renderPanel);
+document.getElementById("tamper").addEventListener("click",function(){
+  tampered=true;
+  document.getElementById("tampstate").innerHTML="<span class='bad'>TAMPER active &mdash; placement formula applied to the uncontrollable plant.</span>";
+  runWitness();
+});
+document.getElementById("restore").addEventListener("click",function(){
+  tampered=false;
+  document.getElementById("tampstate").textContent="restored: witness recomputes clean.";
+  runWitness();
+});
+
+// boot: run fail-loud selfcheck, then light the panel
+(function boot(){
+  var lit=document.getElementById("litbadge");
+  var fb=document.getElementById("failb");
+  try{
+    var ok=selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    renderPanel();
+    lit.style.display="inline-block";
+    lit.className="badge ok";
+    lit.textContent="LIT \u2713 placement proven: K=[1,7], poles -1,-3, mode 5 fixed";
+  }catch(e){
+    fb.style.display="block";
+    fb.textContent="SELFCHECK FAILED \u2014 "+e.message;
+    lit.style.display="inline-block";
+    lit.className="badge fail";
+    lit.textContent="DEAD";
+    throw e;
+  }
+})();
+</script>
+</body>
+</html>

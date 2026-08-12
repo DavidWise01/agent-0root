@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BCS THEORY</title>
+<style>
+:root{
+  --am:#ffcf5a;
+  --bg:#071310; --bg2:#0a1a15; --ink:#dcece3; --mut:#8ba99b;
+  --blue:#5ac8ff; --red:#ff6f6b; --lit:#7ee787; --wall:#ff9d5c;
+  --line:#173026;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 78% -8%, rgba(255,207,90,.10), transparent 60%),
+    radial-gradient(900px 600px at 10% 108%, rgba(90,200,255,.07), transparent 60%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+  padding:26px 18px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin:0 0 22px}
+h1{
+  font-size:clamp(26px,4.4vw,44px);margin:0 0 8px;letter-spacing:.5px;
+  color:var(--am);text-shadow:0 0 26px rgba(255,207,90,.28);font-weight:800;
+}
+.sub{margin:0 0 12px;max-width:760px;color:var(--ink);font-size:15.5px}
+.src{font-size:12.5px;color:var(--mut);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted rgba(255,207,90,.5)}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.7px;
+  padding:2px 8px;border-radius:999px;border:1px solid;white-space:nowrap;text-transform:uppercase;
+}
+.t-amber{color:var(--am);border-color:rgba(255,207,90,.55);background:rgba(255,207,90,.08)}
+.t-in{color:var(--blue);border-color:rgba(90,200,255,.5);background:rgba(90,200,255,.08)}
+.t-lit{color:var(--lit);border-color:rgba(126,231,135,.5);background:rgba(126,231,135,.08)}
+.t-out{color:var(--am);border-color:rgba(255,207,90,.5);background:rgba(255,207,90,.08)}
+.t-wall{color:var(--wall);border-color:rgba(255,157,92,.5);background:rgba(255,157,92,.08)}
+
+.ocho{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{
+  border:1px solid var(--line);border-radius:14px;padding:14px 13px 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.015),rgba(0,0,0,.12));
+}
+.col.blue{border-color:rgba(90,200,255,.30);box-shadow:inset 0 0 0 1px rgba(90,200,255,.05)}
+.col.red{border-color:rgba(255,111,107,.30);box-shadow:inset 0 0 0 1px rgba(255,111,107,.05)}
+.col.center{border-color:rgba(255,207,90,.34);box-shadow:0 0 30px rgba(255,207,90,.06) inset}
+.teamhdr{
+  font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;
+  margin:2px 0 12px;padding-bottom:8px;border-bottom:1px dashed var(--line);
+}
+.col.blue .teamhdr{color:var(--blue)}
+.col.red .teamhdr{color:var(--red)}
+.col.center .teamhdr{color:var(--am)}
+
+.win{margin:0 0 14px;position:relative}
+.win:last-child{margin-bottom:0}
+.winhd{display:flex;align-items:center;gap:9px;margin:0 0 6px}
+.winnum{
+  flex:0 0 auto;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
+  font-size:12px;font-weight:800;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--mut);
+}
+.col.blue .winnum{color:var(--blue);border-color:rgba(90,200,255,.4)}
+.col.red .winnum{color:var(--red);border-color:rgba(255,111,107,.4)}
+.col.center .winnum{color:var(--am);border-color:rgba(255,207,90,.45)}
+.wintt{font-size:12px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--ink)}
+.win p{margin:5px 0;color:var(--ink);font-size:13px}
+.win .mut{color:var(--mut);font-size:12px}
+.k{color:var(--am);font-weight:700}
+.mono{font-family:inherit}
+s{color:#93756a;text-decoration-color:rgba(255,111,107,.7)}
+
+.panel{background:linear-gradient(180deg,rgba(255,207,90,.05),rgba(0,0,0,.18))}
+.flow{
+  text-align:center;color:var(--mut);font-size:15px;margin:8px 0;letter-spacing:2px;user-select:none;
+}
+.enginebox{border:1px solid var(--line);border-radius:10px;padding:11px;background:rgba(0,0,0,.28)}
+canvas{width:100%;height:150px;display:block;border-radius:8px;background:#040d0a;border:1px solid var(--line)}
+.readout{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:10px;font-size:12px}
+.readout div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line);padding:2px 0}
+.readout b{color:var(--am);font-weight:700}
+.ctl{display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap}
+.ctl label{font-size:11px;color:var(--mut)}
+input[type=range]{width:100%;accent-color:var(--am)}
+.badge{
+  display:inline-block;font-size:11px;font-weight:800;letter-spacing:.6px;padding:4px 10px;border-radius:8px;
+  border:1px solid rgba(126,231,135,.5);color:var(--lit);background:rgba(126,231,135,.09);
+}
+.badge.bad{border-color:rgba(255,111,107,.6);color:var(--red);background:rgba(255,111,107,.10)}
+.wall-note{
+  border:1px solid rgba(255,157,92,.4);background:rgba(255,157,92,.06);border-radius:10px;
+  padding:9px 11px;font-size:12.5px;color:var(--ink);
+}
+button{
+  font:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink);
+  background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:6px 12px;
+}
+button:hover{border-color:var(--am);color:var(--am)}
+#tamper:hover{border-color:var(--red);color:var(--red)}
+#failb{display:none;margin:10px 0;padding:10px 12px;border-radius:10px;
+  border:1px solid rgba(255,111,107,.6);background:rgba(255,111,107,.10);color:var(--red);font-size:12.5px}
+footer{margin-top:26px;padding-top:14px;border-top:1px dashed var(--line);color:var(--mut);font-size:12px}
+.eq{color:var(--am);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE BCS THEORY</h1>
+  <p class="sub">Electrons repel — yet just below <span class="k">Tc</span> they quietly pair through the lattice and condense into one frictionless quantum state. The Fermi sea is unstable to <em>any</em> attraction; a gap <span class="eq">2&Delta;</span> opens, and the critical temperature is exponentially small in the coupling. Rendered, not quoted.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Bardeen, Cooper &amp; Schrieffer, &ldquo;Theory of Superconductivity,&rdquo; <em>Phys. Rev.</em> <b>108</b>, 1175 (1957) &mdash;
+    <a href="https://doi.org/10.1103/PhysRev.108.1175" target="_blank" rel="noopener">doi:10.1103/PhysRev.108.1175</a>
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ===================== BLUE TEAM ===================== -->
+  <section class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="winhd"><span class="winnum">3</span><span class="wintt">The Model</span></div>
+      <p>Two electrons added above a <em>filled</em> Fermi sea, with a weak phonon-mediated attraction acting only within a Debye shell <span class="mono">&plusmn;&#295;&omega;<sub>D</sub></span> of E<sub>F</sub>.</p>
+      <p class="mut">Cooper binding: <span class="mono">E<sub>b</sub> = 2&#295;&omega;<sub>D</sub>&middot;e<sup>&minus;2/N&#8320;V</sup></span> &mdash; nonzero for <b>any</b> N&#8320;V&gt;0.</p>
+      <p class="mut">Gap &amp; T<sub>c</sub>: <span class="mono">&Delta;(0)=2&#295;&omega;<sub>D</sub>e<sup>&minus;1/N&#8320;V</sup></span>, <span class="mono">k<sub>B</sub>T<sub>c</sub>=1.134&#295;&omega;<sub>D</sub>e<sup>&minus;1/N&#8320;V</sup></span>.</p>
+    </div>
+
+    <div class="win">
+      <div class="winhd"><span class="winnum">5</span><span class="wintt">The Lineage</span></div>
+      <p>Cooper pairs from a phonon attraction, a gap <span class="mono">2&Delta;=3.53&nbsp;k<sub>B</sub>T<sub>c</sub></span>, an isotope effect <span class="mono">T<sub>c</sub>&prop;M<sup>&minus;&frac12;</sup></span>.</p>
+      <p class="mut">This is the microscopic engine behind <b>the-meissner-effect</b> &mdash; the condensate that expels B is exactly this paired ground state. Neighbour sphere in THE FOLD.</p>
+    </div>
+
+    <div class="win">
+      <div class="winhd"><span class="winnum">7</span><span class="wintt">The Witness</span></div>
+      <p class="mut">Live re-check of the engine. Confirms the untampered laws; flips red the instant the gap is voided.</p>
+      <span id="auditout" class="badge">witness idle</span>
+    </div>
+  </section>
+
+  <!-- ===================== CENTER ===================== -->
+  <section class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="winhd"><span class="winnum">4</span><span class="wintt">Data In</span> <span class="tag t-in">in &darr;</span></div>
+      <p class="mut">Coupling <span class="mono">N&#8320;V</span>, Debye temperature <span class="mono">&Theta;<sub>D</sub></span>, ionic mass <span class="mono">M</span>. Constants: e, k<sub>B</sub>, m<sub>e</sub>, &#295;.</p>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <div class="winhd"><span class="winnum">0</span><span class="wintt">The Panel</span> <span class="tag t-lit">LIT</span></div>
+      <div class="enginebox">
+        <canvas id="cv" width="520" height="150"></canvas>
+        <div class="ctl">
+          <label>coupling N&#8320;V <b id="gval" class="k"></b></label>
+          <input id="gsl" type="range" min="0.10" max="0.55" step="0.01" value="0.30">
+        </div>
+        <div class="readout">
+          <div><span>T<sub>c</sub></span><b id="rTc"></b></div>
+          <div><span>&Delta;(0)</span><b id="rD"></b></div>
+          <div><span>2&Delta;/k<sub>B</sub>T<sub>c</sub></span><b id="rRatio"></b></div>
+          <div><span>E<sub>b</sub> (Cooper)</span><b id="rEb"></b></div>
+          <div><span>T<sub>c</sub>/&Theta;<sub>D</sub></span><b id="rFrac"></b></div>
+          <div><span>isotope &alpha;</span><b id="rAlpha"></b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win">
+      <div class="winhd"><span class="winnum">8</span><span class="wintt">Data Out</span> <span class="tag t-out">out &darr;</span></div>
+      <p class="mut">The proven result of the run:</p>
+      <span id="litbadge" class="badge">booting&hellip;</span>
+    </div>
+  </section>
+
+  <!-- ===================== RED TEAM ===================== -->
+  <section class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="winhd"><span class="winnum">1</span><span class="wintt">The Adversary</span> <span class="tag t-wall">WALL</span></div>
+      <div class="wall-note">
+        &ldquo;Like charges repel &mdash; a bound electron pair is impossible.&rdquo; True in vacuum. The wall is the <b>filled Fermi sea</b>: it supplies a constant density of states so that even an arbitrarily weak attraction produces a bound state. The instability is in the medium, not the two electrons alone.
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="winhd"><span class="winnum">2</span><span class="wintt">The Graveyard</span></div>
+      <p><s>Superconductivity is a perfect classical conductor (&sigma;&rarr;&infin; only).</s></p>
+      <p class="mut">&rarr; It is a distinct thermodynamic phase that <b>expels</b> field (Meissner); a perfect conductor would merely freeze flux in.</p>
+      <p><s>The gap is a fixed material constant.</s></p>
+      <p class="mut">&rarr; &Delta;(T) collapses to 0 at T<sub>c</sub>; only the <b>ratio</b> 2&Delta;(0)/k<sub>B</sub>T<sub>c</sub>&asymp;3.53 is universal.</p>
+      <p><s>Isotope mass is irrelevant to an electronic effect.</s></p>
+      <p class="mut">&rarr; T<sub>c</sub>&prop;M<sup>&minus;&frac12;</sup> &mdash; the phonon fingerprint that proved the lattice mediates the pairing.</p>
+    </div>
+
+    <div class="win">
+      <div class="winhd"><span class="winnum">6</span><span class="wintt">The Tamper</span></div>
+      <p class="mut">Planted void: force the gap to zero (2&Delta;=0), so pairing yields no gap and the 3.53 ratio dies. The Witness (7) catches it live.</p>
+      <div class="ctl">
+        <button id="tamper">void the gap</button>
+        <button id="restore">restore</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  THE BCS THEORY &middot; WORLD II &middot; THE FOLD &middot; ud0 &mdash; the engine is LIT: T<sub>c</sub>, the gap and the 3.53 ratio are computed live from BCS weak-coupling laws; the Drude/free-electron picture that precedes it is a classical idealization (AMBER). Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- pure engine + selfcheck (headless: no DOM/canvas) ----
+const e_C   = 1.602176634e-19;    // elementary charge (C)
+const kB    = 1.380649e-23;       // Boltzmann (J/K)
+const m_e   = 9.1093837015e-31;   // electron mass (kg)
+const hbar  = 1.054571817e-34;    // reduced Planck (J s)
+const EULER = 0.5772156649015329; // Euler-Mascheroni
+const BCS_PRE = 2*Math.exp(EULER)/Math.PI; // = 1.13387...  (k_B T_c = BCS_PRE * hbar*wD * exp(-1/N0V))
+
+var TAMPER = false; // plain top-level flag so selfcheck runs headless
+
+// fixed-seed PRNG (visual jitter only; correctness never depends on it)
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// Cooper single-pair binding energy above the Fermi sea (J). >0 for ANY N0V>0.
+function cooperBinding(N0V, ThetaD){
+  const hwD = kB*ThetaD;                 // hbar*omega_D = k_B*ThetaD
+  return 2*hwD*Math.exp(-2/N0V);         // exp(-2/N0V): the Cooper instability
+}
+// BCS critical temperature (K) — exponentially small in the coupling.
+function tcBCS(N0V, ThetaD){
+  return BCS_PRE*ThetaD*Math.exp(-1/N0V);
+}
+// Zero-T energy gap Delta(0) (J). Voided when TAMPER is set — the planted defect.
+function delta0(N0V, ThetaD){
+  if(TAMPER) return 0;
+  return 2*kB*ThetaD*Math.exp(-1/N0V);
+}
+// Universal gap ratio 2*Delta(0)/(kB*Tc) for the live engine state.
+function gapRatio(N0V, ThetaD){
+  return 2*delta0(N0V, ThetaD)/(kB*tcBCS(N0V, ThetaD));
+}
+// Isotope model: Debye temperature scales as M^(-1/2), so Tc inherits it.
+function tcIsotope(N0V, ThetaD0, M0, M){
+  return tcBCS(N0V, ThetaD0*Math.sqrt(M0/M));
+}
+
+function selfcheck(){
+  const T = 1e-9;
+
+  // 1. Cooper instability: bound at ANY finite coupling — no threshold, only weaker
+  //    as N0V shrinks (the binding vanishes solely in the limit N0V->0, never at a
+  //    finite value). Couplings kept representable; exp(-2/N0V) is finite for all N0V>0.
+  var gs = [1.0, 0.3, 0.1, 0.05, 0.02], prev = Infinity;
+  gs.forEach(function(g){
+    var Eb = cooperBinding(g, 300);
+    if(!(Eb > 0))    throw new Error('Cooper pair not bound at N0V='+g);
+    if(!(Eb < prev)) throw new Error('binding not monotone in coupling at N0V='+g);
+    prev = Eb;
+  });
+  if(!isFinite(-2/1e-9)) throw new Error('binding exponent diverged (spurious threshold)');
+
+  // 2. Universal gap: 2Delta(0) = 3.53 kB Tc, independent of coupling and ThetaD.
+  const r1 = gapRatio(0.30, 300);
+  const r2 = gapRatio(0.15, 450);
+  if(Math.abs(r1 - r2) > T)          throw new Error('gap ratio not universal');
+  if(Math.abs(r1 - 4/BCS_PRE) > T)   throw new Error('gap ratio formula wrong');
+  if(Math.abs(r1 - 3.53) > 0.01)     throw new Error('gap ratio not 3.53: '+r1);
+
+  // 3. Exponentially small, monotone-rising Tc, staying well below the Debye temperature.
+  const Th = 300;
+  const ta = tcBCS(0.20, Th), tb = tcBCS(0.30, Th), tc = tcBCS(0.40, Th);
+  if(!(ta < tb && tb < tc))          throw new Error('Tc not rising with coupling');
+  if(!(tc < Th))                     throw new Error('Tc not below Debye temperature');
+  const lnform = Math.log(tb/(BCS_PRE*Th));
+  if(Math.abs(lnform - (-1/0.30)) > T) throw new Error('Tc not exponential in coupling');
+
+  // 4. Isotope effect: Tc ~ M^(-1/2), exponent alpha = 1/2 (the phonon fingerprint).
+  const M0 = 63.5, M1 = 65.4;
+  const t0 = tcIsotope(0.30, Th, M0, M0), t1 = tcIsotope(0.30, Th, M0, M1);
+  const alpha = -Math.log(t1/t0)/Math.log(M1/M0);
+  if(Math.abs(alpha - 0.5) > T)      throw new Error('isotope exponent not 1/2: '+alpha);
+
+  // TAMPER: void the gap, prove the ratio dies, then restore exactly.
+  const saved = TAMPER;
+  TAMPER = true;
+  const rBad = gapRatio(0.30, 300);
+  if(rBad !== 0)                      throw new Error('tamper should zero the gap');
+  if(Math.abs(rBad - 3.53) < 0.01)   throw new Error('tamper undetected: ratio still valid');
+  TAMPER = saved;
+  if(Math.abs(gapRatio(0.30, 300) - 3.53) > 0.01) throw new Error('restore failed');
+
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var ok=false;
+  try{ ok = selfcheck(); }
+  catch(err){
+    var fb=document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent='SELFCHECK FAILED — '+err.message;
+    throw err;
+  }
+
+  var Th=300, M0=63.5;
+  var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  var rng=mulberry32(1957);
+  var lit=document.getElementById('litbadge');
+  var wit=document.getElementById('auditout');
+
+  function fmt(x,d){return x.toFixed(d===undefined?2:d);}
+
+  function witness(){
+    var r = gapRatio(0.30, Th);
+    var good = Math.abs(r - 3.53) < 0.01;
+    if(good){
+      wit.className='badge';
+      wit.textContent='WITNESS OK · 2Δ/kᴮTc = '+fmt(r);
+    }else{
+      wit.className='badge bad';
+      wit.textContent='TAMPER DETECTED · gap voided (ratio='+fmt(r)+')';
+    }
+    return good;
+  }
+
+  function drawDOS(D_J){
+    var w=cv.width,h=cv.height;
+    ctx.clearRect(0,0,w,h);
+    // energy window in units of a reference gap so the picture stays framed
+    var Dref = 2*kB*Th*Math.exp(-1/0.30);      // reference Delta(0)
+    var d = (Dref>0)? D_J/Dref : 0;            // gap in units of Dref (0..~1.3)
+    var span=3.0, cx=w/2, sc=(w*0.46)/span;
+    // axis
+    ctx.strokeStyle='#173026'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx,10); ctx.lineTo(cx,h-16); ctx.stroke();
+    ctx.fillStyle='#8ba99b'; ctx.font='10px monospace';
+    ctx.fillText('Eꟳ',cx+4,h-4);
+    // BCS DOS  N(E) = |E|/sqrt(E^2 - D^2) for |E|>D, else 0
+    function dos(E){var a=Math.abs(E); if(a<=d) return 0; return a/Math.sqrt(a*a-d*d);}
+    ctx.strokeStyle='#ffcf5a'; ctx.lineWidth=2; ctx.beginPath();
+    var started=false;
+    for(var px=0;px<=w;px++){
+      var E=(px-cx)/sc;
+      var v=dos(E);
+      var y = h-16 - Math.min(v,3.2)*((h-30)/3.4);
+      if(v===0){ started=false; continue; }
+      if(!started){ ctx.moveTo(px,y); started=true; } else ctx.lineTo(px,y);
+    }
+    ctx.stroke();
+    // shade the gap 2D at the Fermi level
+    if(d>0){
+      ctx.fillStyle='rgba(90,200,255,.12)';
+      ctx.fillRect(cx-d*sc,10,2*d*sc,h-26);
+      ctx.strokeStyle='rgba(90,200,255,.55)';
+      ctx.beginPath(); ctx.moveTo(cx-d*sc,10); ctx.lineTo(cx-d*sc,h-16);
+      ctx.moveTo(cx+d*sc,10); ctx.lineTo(cx+d*sc,h-16); ctx.stroke();
+      ctx.fillStyle='#5ac8ff'; ctx.fillText('2Δ',cx-8,20);
+    }else{
+      ctx.fillStyle='#ff6f6b'; ctx.fillText('no gap',cx-18,20);
+    }
+    // faint phonon jitter dots (fixed seed) around the sea
+    ctx.fillStyle='rgba(255,207,90,.25)';
+    for(var i=0;i<24;i++){ ctx.fillRect(rng()*w, h-20-rng()*8, 1.5,1.5); }
+  }
+
+  function run(){
+    var g=parseFloat(document.getElementById('gsl').value);
+    document.getElementById('gval').textContent=fmt(g,2);
+    var Tc=tcBCS(g,Th), D=delta0(g,Th), R=gapRatio(g,Th), Eb=cooperBinding(g,Th);
+    var t0=tcIsotope(g,Th,M0,M0), t1=tcIsotope(g,Th,M0,M0*1.05);
+    var alpha=-Math.log(t1/t0)/Math.log(1.05);
+    document.getElementById('rTc').textContent=fmt(Tc,2)+' K';
+    document.getElementById('rD').textContent=(D/e_C*1000).toFixed(3)+' meV';
+    document.getElementById('rRatio').textContent=(Tc>0? fmt(R):'—');
+    document.getElementById('rEb').textContent=(Eb/e_C*1000).toExponential(2)+' meV';
+    document.getElementById('rFrac').textContent=fmt(Tc/Th,3);
+    document.getElementById('rAlpha').textContent=fmt(alpha,3);
+    drawDOS(D);
+    witness();
+  }
+
+  document.getElementById('gsl').addEventListener('input',run);
+  document.getElementById('tamper').addEventListener('click',function(){ TAMPER=true; run(); });
+  document.getElementById('restore').addEventListener('click',function(){ TAMPER=false; run(); });
+
+  // boot: proven result stamped from the live run
+  var Rboot=gapRatio(0.30,Th), Tcboot=tcBCS(0.30,Th);
+  lit.textContent='VERIFIED · 2Δ(0)='+fmt(Rboot)+' kᴮTc · Tc='+fmt(Tcboot)+' K · α=0.50';
+  run();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE OCCUPANCY GRID</title>
+<style>
+  :root{
+    --am:#9ee0d0;
+    --bg0:#2a1d47; --bg1:#1b1230; --bg2:#120c22;
+    --ground:#0b2018;
+    --ink:#efeaff; --dim:#b3a9d6; --faint:#8b81ad;
+    --blue:#5cc0ff; --bluebg:rgba(92,192,255,.07); --blueln:rgba(92,192,255,.28);
+    --red:#ff7092; --redbg:rgba(255,112,146,.07); --redln:rgba(255,112,146,.28);
+    --amber:#ffb454; --lit:#7cffb0; --wall:#ff7092;
+    --line:rgba(255,255,255,.12);
+    --panel:rgba(255,255,255,.035);
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(158,224,208,.10), transparent 60%),
+      radial-gradient(900px 700px at 100% 0%, rgba(255,112,146,.08), transparent 55%),
+      linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 42%, var(--bg2) 70%, var(--ground) 100%);
+    min-height:100vh;
+    line-height:1.5;
+    padding:28px 20px 60px;
+  }
+  .wrap{max-width:1240px;margin:0 auto}
+  header{margin-bottom:22px}
+  h1{
+    font-size:clamp(26px,4.4vw,44px);
+    letter-spacing:.5px;margin:0 0 8px;
+    font-weight:800;
+    color:#fff;
+    text-shadow:0 0 26px rgba(158,224,208,.28);
+  }
+  h1 .dot{color:var(--am)}
+  .sub{max-width:80ch;color:var(--dim);font-size:15.5px;margin:0 0 12px}
+  .sub b{color:var(--ink)}
+  .src{font-family:var(--mono);font-size:12.5px;color:var(--faint);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .src a{color:var(--am);text-decoration:none;border-bottom:1px solid rgba(158,224,208,.35)}
+  .src a:hover{border-bottom-color:var(--am)}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;
+    letter-spacing:.7px;padding:2px 7px;border-radius:5px;text-transform:uppercase;vertical-align:middle}
+  .t-amber{background:rgba(255,180,84,.16);color:var(--amber);border:1px solid rgba(255,180,84,.4)}
+  .t-lit{background:rgba(124,255,176,.14);color:var(--lit);border:1px solid rgba(124,255,176,.4)}
+  .t-in{background:rgba(92,192,255,.14);color:var(--blue);border:1px solid rgba(92,192,255,.4)}
+  .t-out{background:rgba(158,224,208,.16);color:var(--am);border:1px solid rgba(158,224,208,.45)}
+  .t-wall{background:rgba(255,112,146,.15);color:var(--wall);border:1px solid rgba(255,112,146,.42)}
+
+  .ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+  @media (max-width:880px){ .ocho{grid-template-columns:1fr} }
+
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:1.4px;
+    text-transform:uppercase;padding:8px 10px;border-radius:8px;border:1px solid var(--line)}
+  .col.blue .teamhdr{color:var(--blue);background:var(--bluebg);border-color:var(--blueln)}
+  .col.red .teamhdr{color:var(--red);background:var(--redbg);border-color:var(--redln);text-align:right}
+  .col.center .teamhdr{color:var(--am);background:rgba(158,224,208,.06);border-color:rgba(158,224,208,.3);text-align:center}
+
+  .win{position:relative;border:1px solid var(--line);border-radius:12px;background:var(--panel);
+    padding:14px 14px 13px;backdrop-filter:blur(3px)}
+  .col.blue .win{border-color:var(--blueln)}
+  .col.red .win{border-color:var(--redln)}
+  .win.panel{background:linear-gradient(180deg, rgba(158,224,208,.06), rgba(0,0,0,.14));border-color:rgba(158,224,208,.34)}
+  .wnum{position:absolute;top:-9px;left:12px;font-family:var(--mono);font-size:11px;font-weight:800;
+    width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+    background:var(--bg1);border:1px solid var(--line);color:var(--dim)}
+  .col.blue .wnum{color:var(--blue);border-color:var(--blueln)}
+  .col.red .wnum{left:auto;right:12px;color:var(--red);border-color:var(--redln)}
+  .col.center .wnum{color:var(--am);border-color:rgba(158,224,208,.4)}
+  .wtitle{font-size:13px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;margin:2px 0 8px;color:var(--ink)}
+  .col.red .wtitle{text-align:right}
+  .wbody{font-size:13.5px;color:var(--dim)}
+  .wbody p{margin:0 0 8px}
+  .wbody b{color:var(--ink)}
+  .wbody code{font-family:var(--mono);font-size:12px;color:var(--am);background:rgba(158,224,208,.08);padding:1px 5px;border-radius:4px}
+
+  .flow{height:26px;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:18px}
+  .flow::before{content:"\25BC"}
+
+  canvas{width:100%;height:auto;display:block;border-radius:9px;border:1px solid rgba(158,224,208,.22);background:#0c0a18}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .sw{width:11px;height:11px;border-radius:3px;display:inline-block;border:1px solid rgba(255,255,255,.15)}
+  .readout{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:9px;line-height:1.7}
+  .readout b{color:var(--am)}
+  .readout .k{color:var(--faint)}
+
+  .badge{font-family:var(--mono);font-size:12px;font-weight:700;padding:7px 10px;border-radius:8px;
+    display:inline-block;margin-top:4px}
+  #litbadge{background:rgba(124,255,176,.12);border:1px solid rgba(124,255,176,.4);color:var(--lit)}
+  #auditout.ok{background:rgba(124,255,176,.12);border:1px solid rgba(124,255,176,.4);color:var(--lit)}
+  #auditout.bad{background:rgba(255,112,146,.14);border:1px solid rgba(255,112,146,.5);color:var(--wall)}
+  #failb{display:none;margin:10px 0;background:rgba(255,112,146,.14);border:1px solid var(--wall);
+    color:var(--wall);font-family:var(--mono);font-size:12.5px;padding:10px;border-radius:8px}
+
+  .btn{font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;border-radius:7px;
+    padding:7px 11px;margin:3px 6px 3px 0;background:rgba(255,255,255,.05);color:var(--ink);border:1px solid var(--line)}
+  .btn.warn{border-color:var(--redln);color:var(--red);background:var(--redbg)}
+  .btn.good{border-color:rgba(158,224,208,.4);color:var(--am);background:rgba(158,224,208,.06)}
+  .btn:hover{filter:brightness(1.2)}
+  .strike{text-decoration:line-through;color:var(--faint)}
+  .wall-note{border-left:3px solid var(--wall);padding-left:10px}
+  .fix{color:var(--lit)}
+  .amberword{color:var(--amber)}
+  footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:11.5px;color:var(--faint);text-align:center}
+  footer b{color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>THE OCCUPANCY GRID<span class="dot">.</span></h1>
+    <p class="sub">A map as a lattice of beliefs &mdash; each cell probably free or probably full. Every range reading updates the cells along the beam by an <b>inverse sensor model</b>: add log-odds for a hit, subtract for a miss. Storing <b>log-odds</b> instead of raw probability turns a fragile product of tiny numbers into a stable running sum &mdash; and makes the update exactly the per-cell Bayes filter. <b>Rendered, not quoted.</b></p>
+    <div class="src">
+      <span class="tag t-amber">source</span>
+      A. Elfes, &ldquo;Using Occupancy Grids for Mobile Robot Perception and Navigation,&rdquo; <i>IEEE Computer</i> 22(6), June 1989, pp.&nbsp;46&ndash;57.
+      <a href="https://doi.org/10.1109/2.30720" target="_blank" rel="noopener">doi:10.1109/2.30720</a>
+    </div>
+    <div id="failb"></div>
+  </header>
+
+  <div class="ocho">
+
+    <!-- LEFT : BLUE TEAM -->
+    <div class="col blue">
+      <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+      <div class="win">
+        <div class="wnum">3</div>
+        <div class="wtitle">The Model</div>
+        <div class="wbody">
+          <p>Each cell holds a scalar <code>l</code>, its <b>log-odds</b> of being occupied, starting at <code>0</code> (prior 0.5). A reading updates one cell additively:</p>
+          <p><code>l &larr; l + L_hit</code> on a hit, <code>l &larr; l + L_miss</code> on a miss, with <code>L_hit = ln(p/(1&minus;p))</code> and <code>L_miss = &minus;L_hit</code>.</p>
+          <p>Occupancy probability is recovered by <code>p = &sigma;(l) = 1/(1+e^&minus;l)</code>. Because the prior is 0.5, the running sum of log-odds <b>is</b> the Bayesian posterior odds &mdash; no normalisation step, no drift.</p>
+        </div>
+      </div>
+
+      <div class="win">
+        <div class="wnum">5</div>
+        <div class="wtitle">The Lineage</div>
+        <div class="wbody">
+          <p>Neighbour sphere: <b>the-bayes</b>. Bayes&rsquo; rule applied per cell, carried in log-odds &mdash; Elfes and Moravec&rsquo;s occupancy grid. The map is a field of independent binary Bayes filters; the log-odds form is what makes thousands of noisy readings <b>accumulate</b> into a stable estimate rather than collapse.</p>
+          <p>Robust to sensor noise by construction: a wrong reading nudges one cell by <code>&plusmn;L</code>, and consistent evidence outvotes it.</p>
+        </div>
+      </div>
+
+      <div class="win">
+        <div class="wnum">7</div>
+        <div class="wtitle">The Witness</div>
+        <div class="wbody">
+          <p>Live re-check of a well-observed <b>free</b> cell (3000 miss readings): the log-odds estimate must stay finite and equal the closed-form posterior (&asymp;0). If the engine is tampered, the raw-product form underflows to <code>0/0 = NaN</code> and this badge flips red.</p>
+          <div id="auditout" class="badge">&mdash;</div>
+          <div><button class="btn" id="recheck">re-run witness</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER : THE MACHINE -->
+    <div class="col center">
+      <div class="teamhdr">The Machine</div>
+
+      <div class="win panel">
+        <div class="wnum">4</div>
+        <div class="wtitle">Data In <span class="tag t-in">in &darr;</span></div>
+        <div class="wbody">
+          <p>A ranging sensor sweeps rays from the robot. Each ray marks the cells it passes through as <b>miss</b> (probably free) and the cell it stops on as <b>hit</b> (probably full). Readings carry ~8% flip noise, applied from a fixed seed.</p>
+        </div>
+      </div>
+
+      <div class="flow"></div>
+
+      <div class="win panel">
+        <div class="wnum">0</div>
+        <div class="wtitle">The Panel <span class="tag t-lit">LIT</span></div>
+        <div class="wbody">
+          <canvas id="grid" width="600" height="360"></canvas>
+          <div class="legend">
+            <span><i class="sw" style="background:#bff3e4"></i>free (p&rarr;0)</span>
+            <span><i class="sw" style="background:#6a5a8f"></i>unknown 0.5</span>
+            <span><i class="sw" style="background:#141024"></i>occupied (p&rarr;1)</span>
+            <span><i class="sw" style="background:#ffd24a"></i>robot</span>
+          </div>
+          <div class="readout" id="readout"></div>
+        </div>
+      </div>
+
+      <div class="flow"></div>
+
+      <div class="win panel">
+        <div class="wnum">8</div>
+        <div class="wtitle">Data Out <span class="tag t-out">out &darr;</span></div>
+        <div class="wbody">
+          <p>The proven map: for every cell, the additive log-odds estimate equals the exact per-cell Bayesian posterior, and long observation sequences never underflow.</p>
+          <div id="litbadge" class="badge">booting&hellip;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT : RED TEAM -->
+    <div class="col red">
+      <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+      <div class="win">
+        <div class="wnum">1</div>
+        <div class="wtitle">The Adversary</div>
+        <div class="wbody wall-note">
+          <p><span class="tag t-wall">wall</span> The occupancy grid assumes <b>cell independence</b> &mdash; each cell filtered alone. Real worlds have structure: a doorway, a thin table leg, a glass wall the sonar sees through. Independence lets a beam paint a whole corridor free and miss the chair in it.</p>
+          <p>The <b>inverse sensor model</b> itself is a hand-tuned assumption <span class="amberword">(AMBER)</span>: wrong beam width or range variance biases every update. Dynamic obstacles violate the static-world premise outright.</p>
+        </div>
+      </div>
+
+      <div class="win">
+        <div class="wnum">2</div>
+        <div class="wtitle">The Graveyard</div>
+        <div class="wbody">
+          <p><span class="strike">&ldquo;Just multiply the cell&rsquo;s occupancy probability by each reading&rsquo;s likelihood.&rdquo;</span><br><span class="fix">&rarr; Products of many numbers below 1 underflow to 0; a well-observed cell becomes <code>0/0</code>. Add log-odds instead.</span></p>
+          <p><span class="strike">&ldquo;A confident cell should saturate at p = 1.&rdquo;</span><br><span class="fix">&rarr; Hard 1 or 0 can never be revised when the world changes. Log-odds is clamped to &plusmn;20 so the map can still learn.</span></p>
+          <p><span class="strike">&ldquo;Order the updates for accuracy.&rdquo;</span><br><span class="fix">&rarr; Addition is commutative; the estimate is order-independent by construction. The verifier shuffles and confirms.</span></p>
+        </div>
+      </div>
+
+      <div class="win">
+        <div class="wnum">6</div>
+        <div class="wtitle">The Tamper</div>
+        <div class="wbody">
+          <p><b>Disclosed planted void.</b> This swaps the additive log-odds for the naive form &mdash; <b>multiply raw probabilities directly</b>. Algebraically identical, but a long sequence underflows: a certified-free cell collapses to <code>NaN</code> and can no longer be read as free. The Witness (7) catches it live.</p>
+          <div>
+            <button class="btn warn" id="tamper">multiply raw probs</button>
+            <button class="btn good" id="restore">restore log-odds</button>
+          </div>
+          <div class="readout" id="tstate"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    THE OCCUPANCY GRID &middot; WORLD II &middot; THE FOLD &mdash; the map a robot accumulates, robust by design.<br>
+    Rendered by <b>David Lee Wise (ROOT0) with AVAN.</b>
+  </footer>
+</div>
+
+<script>
+"use strict";
+// ----- occupancy-grid log-odds engine (pure logic; verified in selfcheck) -----
+var P_HIT = 0.7;                        // inverse-sensor model: P(occupied | one hit reading)
+var L_HIT = Math.log(P_HIT/(1-P_HIT));  // log-odds increment for a HIT
+var L_MISS = -L_HIT;                    // symmetric decrement for a MISS
+var TAMPER = false;                     // the disclosed planted void (window 6)
+
+function sigmoid(l){ return 1/(1+Math.exp(-l)); }
+
+// one cell update: ADD log-odds (hit=true adds L_HIT, miss=false adds L_MISS)
+function updateCell(l, hit){ return l + (hit ? L_HIT : L_MISS); }
+
+// accumulate a sequence of boolean readings into an occupancy probability
+function occProb(readings){
+  var i;
+  if(TAMPER){
+    // planted void: MULTIPLY raw probabilities instead of adding log-odds.
+    // algebraically the same, but a long sequence UNDERFLOWS to 0/0 = NaN.
+    var num = 1, den = 1;
+    for(i=0;i<readings.length;i++){
+      var p = readings[i] ? P_HIT : (1-P_HIT);
+      num *= p; den *= (1-p);
+    }
+    return num/(num+den);
+  }
+  var l = 0;
+  for(i=0;i<readings.length;i++) l = updateCell(l, readings[i]);
+  return sigmoid(l);
+}
+
+// closed-form model belief from counts (order provably cannot matter)
+function occProbCount(nHit, nMiss){ return sigmoid((nHit-nMiss)*L_HIT); }
+
+// independent closed-form Bayesian posterior via the product of odds
+function bayesPosterior(nHit, nMiss){
+  var O = Math.pow(P_HIT/(1-P_HIT), nHit) * Math.pow((1-P_HIT)/P_HIT, nMiss);
+  return O/(1+O);
+}
+
+// seeded PRNG (mulberry32) so every check and the display are deterministic
+function prng(seed){ return function(){
+  seed |= 0; seed = (seed + 0x6D2B79F5)|0;
+  var t = Math.imul(seed ^ (seed>>>15), 1 | seed);
+  t = (t + Math.imul(t ^ (t>>>7), 61 | t)) ^ t;
+  return ((t ^ (t>>>14))>>>0)/4294967296;
+};}
+
+function shuffled(arr, seed){
+  var a = arr.slice(), r = prng(seed), i, j, t;
+  for(i=a.length-1;i>0;i--){ j=Math.floor(r()*(i+1)); t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+
+// a long, well-observed FREE cell used by the live witness
+function longFree(k){ var a=[],i; for(i=0;i<k;i++) a.push(false); return a; }
+var REF_LONG = longFree(3000);
+
+// live audit (window 7): recompute the free reference under the CURRENT tamper flag
+function liveAudit(){
+  var p = occProb(REF_LONG);
+  return isFinite(p) && Math.abs(p - 0) < 1e-6;
+}
+
+// fail-loud selfcheck: THROWS on any violation, RETURNS true on success
+function selfcheck(){
+  var save = TAMPER; TAMPER = false;
+  var i, tol = 1e-12;
+
+  // (1) additive log-odds EQUALS the closed-form Bayesian posterior, exactly
+  var cases = [[6,0],[9,4],[3,11],[20,0],[0,20]];
+  for(i=0;i<cases.length;i++){
+    var nh = cases[i][0], nm = cases[i][1];
+    if(Math.abs(occProbCount(nh,nm) - bayesPosterior(nh,nm)) > tol)
+      throw new Error("log-odds does not equal the Bayesian posterior");
+  }
+
+  // (2) repeated consistent HITS drive toward 1, MISSES toward 0, monotone
+  if(!(occProbCount(20,0) > 0.999)) throw new Error("hits do not drive occupancy toward 1");
+  if(!(occProbCount(40,0) > occProbCount(20,0))) throw new Error("occupancy is not monotone in hits");
+  if(!(occProbCount(0,20) < 0.001)) throw new Error("misses do not drive occupancy toward 0");
+
+  // (3) equal hits and misses return to the prior 0.5 (exactly)
+  if(occProbCount(7,7) !== 0.5) throw new Error("balanced evidence does not return to the prior");
+
+  // (4) log-odds AVOIDS UNDERFLOW where a raw product cannot
+  var pLong = occProb(REF_LONG);            // untampered: additive form
+  if(!(isFinite(pLong) && pLong >= 0 && pLong < 1e-6))
+    throw new Error("long free sequence underflowed under log-odds");
+  if(Math.abs(pLong - bayesPosterior(0,3000)) > 1e-9)
+    throw new Error("underflow-free result disagrees with the posterior");
+
+  // (5) ORDER INDEPENDENCE: a shuffled sequence gives the same result
+  var seq = [], nh2 = 13, nm2 = 17;
+  for(i=0;i<nh2;i++) seq.push(true);
+  for(i=0;i<nm2;i++) seq.push(false);
+  var a = occProb(shuffled(seq, 12345));
+  var b = occProb(shuffled(seq, 98765));
+  if(Math.abs(a-b) > 1e-9) throw new Error("result depends on update order");
+  if(Math.abs(a - occProbCount(nh2,nm2)) > 1e-9) throw new Error("shuffled result disagrees with the counts");
+
+  // (6) TAMPER detection: multiplying raw probabilities underflows on a long BALANCED
+  //     sequence (equal hits and misses -> true posterior 0.5) to num=den=0 -> 0/0 = NaN,
+  //     which differs from the posterior. (A long all-miss sequence would underflow to 0,
+  //     which coincides with its ~0 posterior and would NOT reveal the void — so we use a
+  //     balanced case where the correct answer is non-extreme.)
+  TAMPER = true;
+  var balanced = [];
+  for(var b6=0;b6<1500;b6++){ balanced.push(true); balanced.push(false); }  // 1500 hits + 1500 misses
+  var pT = occProb(balanced);
+  if(!(isNaN(pT) || Math.abs(pT - 0.5) > 1e-6)){
+    TAMPER = save;
+    throw new Error("tamper not detected: raw-product form still matched the posterior");
+  }
+  TAMPER = save;
+  return true;
+}
+
+/* ===== UI ===== */
+
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+
+  // boot: run the fail-loud selfcheck, light the badge or surface the failure
+  try{
+    var ok = selfcheck();
+    if(ok !== true) throw new Error("selfcheck did not return true");
+    $("litbadge").textContent = "LIT \u00b7 log-odds \u2261 Bayes (exact) \u00b7 underflow-free";
+  }catch(e){
+    var fb = $("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED: " + e.message;
+    throw e;
+  }
+
+  // ---- live occupancy-grid demonstration ----
+  var GW = 30, GH = 18, CS = 20;
+  var cv = $("grid"), ctx = cv.getContext("2d");
+  var logo = new Float64Array(GW*GH);
+  var rngUI = prng(4242);
+  var T = 0;
+
+  function trueOcc(x,y){
+    if(x<=0 || y<=0 || x>=GW-1 || y>=GH-1) return true;   // outer walls
+    if(x>=9 && x<=13 && y>=4 && y<=12) return true;       // box obstacle
+    if(y>=8 && y<=9 && x>=17 && x<=26) return true;       // wall segment
+    return false;
+  }
+
+  function frameScan(rx, ry){
+    var nRays = 170, i;
+    for(i=0;i<nRays;i++){
+      var ang = (i/nRays)*Math.PI*2;
+      var dx = Math.cos(ang), dy = Math.sin(ang);
+      var x = rx, y = ry, px = Math.floor(rx), py = Math.floor(ry), dist = 0;
+      while(dist < 46){
+        x += dx*0.25; y += dy*0.25; dist += 0.25;
+        var cx = Math.floor(x), cy = Math.floor(y);
+        if(cx === px && cy === py) continue;
+        px = cx; py = cy;
+        if(cx<0 || cy<0 || cx>=GW || cy>=GH) break;
+        var occ = trueOcc(cx,cy);
+        var reading = occ;
+        if(rngUI() < 0.08) reading = !reading;             // fixed-seed sensor noise
+        var idx = cy*GW + cx;
+        logo[idx] = updateCell(logo[idx], reading);
+        if(logo[idx] > 20) logo[idx] = 20;                 // clamp: keep the map revisable
+        if(logo[idx] < -20) logo[idx] = -20;
+        if(occ) break;                                     // the ray physically stops at the obstacle
+      }
+    }
+  }
+
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function cellColor(p){
+    // p<0.5 free -> mint ; p==0.5 unknown -> violet-grey ; p>0.5 occupied -> ink
+    var r,g,b;
+    if(p <= 0.5){
+      var t = p/0.5;
+      r = lerp(191,106,t); g = lerp(243,90,t); b = lerp(228,143,t);
+    }else{
+      var u = (p-0.5)/0.5;
+      r = lerp(106,20,u); g = lerp(90,16,u); b = lerp(143,36,u);
+    }
+    return "rgb(" + (r|0) + "," + (g|0) + "," + (b|0) + ")";
+  }
+
+  function draw(rx, ry){
+    var x,y;
+    for(y=0;y<GH;y++) for(x=0;x<GW;x++){
+      var p = sigmoid(logo[y*GW+x]);
+      ctx.fillStyle = cellColor(p);
+      ctx.fillRect(x*CS, y*CS, CS-1, CS-1);
+    }
+    // a few beams
+    ctx.strokeStyle = "rgba(255,210,74,.16)";
+    ctx.lineWidth = 1;
+    var i;
+    for(i=0;i<20;i++){
+      var ang = (i/20)*Math.PI*2;
+      ctx.beginPath();
+      ctx.moveTo(rx*CS, ry*CS);
+      ctx.lineTo((rx+Math.cos(ang)*7)*CS, (ry+Math.sin(ang)*7)*CS);
+      ctx.stroke();
+    }
+    // robot
+    ctx.fillStyle = "#ffd24a";
+    ctx.beginPath();
+    ctx.arc(rx*CS, ry*CS, 5, 0, Math.PI*2);
+    ctx.fill();
+
+    if(TAMPER){
+      ctx.fillStyle = "rgba(255,112,146,.14)";
+      ctx.fillRect(0,0,cv.width,cv.height);
+      ctx.fillStyle = "#ff7092";
+      ctx.font = "bold 15px monospace";
+      ctx.fillText("TAMPERED \u2014 belief math underflowing", 14, 24);
+    }
+  }
+
+  function updateReadout(){
+    // live proof-of-life on the free reference cell used by the witness
+    var p = occProb(REF_LONG);
+    var lodds = sigmoid ? Math.log((p<=0?1e-300:p)/((1-p)<=0?1e-300:(1-p))) : 0;
+    var pTxt = isNaN(p) ? "NaN" : p.toExponential(3);
+    $("readout").innerHTML =
+      "<span class='k'>free ref cell, 3000 miss readings</span><br>" +
+      "log-odds sum &nbsp;<b>" + (isFinite(3000*L_MISS) ? (3000*L_MISS).toFixed(1) : "\u2212\u221e") + "</b>" +
+      " &nbsp;&rarr;&nbsp; p(occupied) = <b>" + pTxt + "</b><br>" +
+      "<span class='k'>Bayesian posterior</span> = <b>" + bayesPosterior(0,3000).toExponential(3) + "</b>" +
+      " &nbsp;&middot;&nbsp; " + (TAMPER ? "<span style='color:#ff7092'>DIVERGED (underflow)</span>" : "<span style='color:#7cffb0'>match</span>");
+  }
+
+  function refreshWitness(){
+    var ok = liveAudit();
+    var b = $("auditout");
+    b.className = "badge " + (ok ? "ok" : "bad");
+    b.textContent = ok
+      ? "WITNESS PASS \u00b7 free cell finite \u2261 posterior"
+      : "WITNESS FAIL \u00b7 free cell underflowed to NaN";
+    $("tstate").innerHTML = TAMPER
+      ? "<span style='color:#ff7092'>state: MULTIPLY raw probs (tampered)</span>"
+      : "<span style='color:#7cffb0'>state: additive log-odds (intact)</span>";
+    updateReadout();
+  }
+
+  // controls
+  $("tamper").addEventListener("click", function(){ TAMPER = true; refreshWitness(); });
+  $("restore").addEventListener("click", function(){ TAMPER = false; refreshWitness(); });
+  $("recheck").addEventListener("click", refreshWitness);
+
+  // animation loop
+  var last = 0;
+  function loop(ts){
+    if(ts - last > 110){
+      last = ts; T += 1;
+      var rx = 4 + 1.6*Math.sin(T*0.06);
+      var ry = 9 + 1.1*Math.cos(T*0.045);
+      frameScan(rx, ry);
+      draw(rx, ry);
+      if((T % 6) === 0) updateReadout();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  refreshWitness();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

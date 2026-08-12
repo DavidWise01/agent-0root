@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE STRESS-STRAIN CURVE</title>
+<style>
+  :root{
+    --am:#9ee06a;
+    --bg:#0c160e;
+    --bg2:#0f1e13;
+    --panel:#102416;
+    --ink:#e7f5e0;
+    --dim:#9fc19a;
+    --line:#1e3a26;
+    --blue:#5aa9ff;
+    --red:#ff6b6b;
+    --amber:#ffbf47;
+    --wall:#ff7a7a;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #14301c 0%, transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, #10261a 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font:15px/1.55 var(--mono);
+    padding:26px 20px 60px;
+  }
+  .wrap{max-width:1220px;margin:0 auto}
+  header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+  h1{
+    font-size:30px;line-height:1.1;margin:0 0 8px;letter-spacing:.5px;
+    color:#fff;
+    text-shadow:0 0 22px rgba(158,224,106,.28);
+  }
+  h1 b{color:var(--am)}
+  .sub{color:var(--dim);max-width:78ch;margin:0 0 12px;font-size:14px}
+  .src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+  .src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+  .src a:hover{opacity:.85}
+  .tag{
+    display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:1px;
+    padding:2px 7px;border-radius:4px;text-transform:uppercase;white-space:nowrap;
+    border:1px solid currentColor;
+  }
+  .t-amber{color:var(--amber)}
+  .t-lit{color:var(--am)}
+  .t-in{color:var(--blue)}
+  .t-out{color:var(--am)}
+  .t-wall{color:var(--wall)}
+  .rendered{color:var(--dim);font-style:italic;font-size:12px;margin-top:6px}
+
+  .ocho{
+    display:grid;
+    grid-template-columns:1fr 1.15fr 1fr;
+    gap:16px;
+    align-items:start;
+  }
+  @media(max-width:880px){ .ocho{grid-template-columns:1fr} }
+
+  .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .teamhdr{
+    font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+    padding:8px 10px;border-radius:7px;border:1px solid var(--line);
+  }
+  .col.blue .teamhdr{color:var(--blue);border-color:#204066;background:#0c1826}
+  .col.red .teamhdr{color:var(--red);border-color:#5c2222;background:#1c0e0e}
+  .col.center .teamhdr{color:var(--am);border-color:#28502f;background:#0e2214;text-align:center}
+
+  .win{
+    position:relative;border:1px solid var(--line);border-radius:9px;
+    background:linear-gradient(180deg,var(--bg2),var(--panel));
+    padding:13px 13px 14px;min-width:0;
+  }
+  .win.panel{border-color:#2c5a34;box-shadow:0 0 0 1px rgba(158,224,106,.08),0 8px 30px rgba(0,0,0,.35)}
+  .wnum{
+    position:absolute;top:-9px;left:12px;width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+    background:var(--bg);border:1px solid var(--line);color:var(--dim);
+  }
+  .col.blue .wnum{color:var(--blue);border-color:#204066}
+  .col.red .wnum{color:var(--red);border-color:#5c2222}
+  .col.center .wnum{color:var(--am);border-color:#2c5a34}
+  .wt{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink);margin:2px 0 8px}
+  .win p{margin:6px 0;font-size:13px;color:var(--dim)}
+  .win b.k{color:var(--ink)}
+  code,.mono{font-family:var(--mono)}
+  .eq{
+    display:block;background:#0a1610;border:1px solid var(--line);border-radius:6px;
+    padding:8px 10px;margin:8px 0;font-size:12.5px;color:var(--am);overflow-x:auto;white-space:nowrap;
+  }
+  .flow{
+    text-align:center;color:#3f7a4c;font-size:16px;letter-spacing:3px;margin:2px 0;
+    user-select:none;
+  }
+  .dead{color:#6f8a6a}
+  .dead s{color:var(--red);text-decoration-thickness:2px}
+  .wall-note{border-left:3px solid var(--wall);padding-left:10px;background:#170c0c;border-radius:0 6px 6px 0}
+  .badge{
+    display:inline-block;font-size:12px;font-weight:700;padding:4px 9px;border-radius:6px;
+    border:1px solid currentColor;margin-top:4px;
+  }
+  .ok{color:var(--am)}
+  .bad{color:var(--red)}
+  button{
+    font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;
+    background:#1a0e0e;color:var(--red);border:1px solid #5c2222;border-radius:6px;
+    padding:7px 12px;margin:4px 6px 4px 0;letter-spacing:.5px;
+  }
+  button.restore{background:#0e2214;color:var(--am);border-color:#28502f}
+  button:hover{filter:brightness(1.2)}
+  canvas{width:100%;height:auto;display:block;background:#08120b;border:1px solid var(--line);border-radius:7px;margin-top:6px}
+  .num{color:var(--am)}
+  .cap{font-size:11px;color:#6f8a6a;margin-top:5px;text-align:center}
+  #failb{display:none;margin:14px 0;padding:12px 14px;border:1px solid var(--red);border-radius:8px;background:#1a0b0b;color:var(--red);font-weight:700}
+  footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:#6f8a6a;font-size:12px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--dim)}
+  .legend i{width:20px;height:3px;display:inline-block;vertical-align:middle;margin-right:4px;border-radius:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>THE <b>STRESS-STRAIN</b> CURVE</h1>
+  <p class="sub">Pull a bar and record the truth it tells: a straight <b>elastic</b> line whose slope is Young's modulus E, a <b>yield</b> knee where the metal forgets its shape, a climb through <b>plastic</b> flow to the ultimate strength, and then <b>fracture</b>. A material's whole life story in one curve.</p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>Thomas Young, <em>A Course of Lectures on Natural Philosophy and the Mechanical Arts</em>, vol. II (1807) — first definition of the elastic modulus; the engineering stress–strain curve is a later synthesis of tensile testing.</span>
+    <a href="https://archive.org/details/lecturescourseof02younrich" target="_blank" rel="noopener">archive.org/lecturescourseof02younrich</a>
+  </div>
+  <div class="rendered">Rendered, not quoted — the curve is computed live from Hooke's law and a hardening model, not traced from a figure.</div>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ============ BLUE TEAM ============ -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wnum">3</span>
+      <div class="wt">The Model</div>
+      <p>Engineering stress <b class="k">&sigma; = F/A&#8320;</b> against engineering strain <b class="k">&epsilon; = &Delta;L/L&#8320;</b>. Four regimes stitched into one function &sigma;(&epsilon;):</p>
+      <span class="eq">elastic:  &sigma; = E&middot;&epsilon;    (&epsilon; &le; &epsilon;_y)</span>
+      <span class="eq">yield:    (&epsilon;_y, &sigma;_y),  &sigma;_y = E&middot;&epsilon;_y</span>
+      <span class="eq">plastic:  hardening &rarr; UTS at &epsilon;_u</span>
+      <span class="eq">necking:  decline to fracture at &epsilon;_f</span>
+      <p>Constants: <span class="num">E = 200000&nbsp;MPa</span>, <span class="num">&sigma;_y = 240&nbsp;MPa</span>, <span class="num">UTS = 400&nbsp;MPa</span>. E is <b class="k">exactly the slope</b> of the elastic line — recovered from two points, not stored twice.</p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">5</span>
+      <div class="wt">The Lineage</div>
+      <p>The straight part of this curve <b class="k">is</b> <a class="src" style="color:var(--am)" href="#">the-hookes-law</a> region: &sigma; = E&epsilon;, slope E. Where this sphere ends — the yield point &sigma;_y — the neighbouring sphere <b class="k">the-hall-petch</b> begins: &sigma;_y = &sigma;&#8320; + k/&radic;d, so a finer grain <b class="k">raises the knee</b> and moves the whole plastic story upward. One curve hands off to the next law at the exact strain where linearity dies.</p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">7</span>
+      <div class="wt">The Witness</div>
+      <p>Live re-check: recover E from two low-strain points and confirm the elastic slope is <b class="k">positive and equal to E</b>. If window 6 flips the slope sign, this badge catches it within one frame.</p>
+      <span id="auditout" class="badge ok">WITNESS: —</span>
+    </div>
+  </div>
+
+  <!-- ============ CENTER ============ -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="wnum">4</span>
+      <div class="wt"><span class="tag t-in">in &darr;</span> &nbsp;Data In</div>
+      <p>A strain sweep <b class="k">&epsilon; : 0 &rarr; &epsilon;_f</b> (0 to 0.25) fed one point at a time into &sigma;(&epsilon;). Plus two probe strains for slope recovery and one unload command per point.</p>
+    </div>
+
+    <div class="flow">&#9662; &#9662; &#9662;</div>
+
+    <div class="win panel">
+      <span class="wnum">0</span>
+      <div class="wt"><span class="tag t-lit">LIT</span> &nbsp;The Panel — live engine</div>
+      <canvas id="cv" width="520" height="360" aria-label="stress-strain curve"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--am)"></i>&sigma;(&epsilon;)</span>
+        <span><i style="background:var(--blue)"></i>elastic slope E</span>
+        <span><i style="background:var(--amber)"></i>0.2% offset yield</span>
+        <span><i style="background:var(--red)"></i>UTS (max)</span>
+      </div>
+      <div class="cap" id="cap">elastic &middot; yield &middot; plastic &middot; fracture</div>
+    </div>
+
+    <div class="flow">&#9662; &#9662; &#9662;</div>
+
+    <div class="win">
+      <span class="wnum">8</span>
+      <div class="wt"><span class="tag t-out">out &darr;</span> &nbsp;Data Out</div>
+      <span id="litbadge" class="badge ok">booting…</span>
+      <p>Proven at boot: E recovered as the elastic slope; resilience = ½&sigma;_y&sup2;/E; elastic loading reversible; plastic unload leaves permanent set; UTS is the curve's maximum.</p>
+    </div>
+  </div>
+
+  <!-- ============ RED TEAM ============ -->
+  <div class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wnum">1</span>
+      <div class="wt">The Adversary</div>
+      <div class="wall-note">
+        <p><span class="tag t-wall">wall</span> &nbsp;"Engineering stress is the true stress." <b class="k">No.</b> &sigma;=F/A&#8320; uses the <em>original</em> area A&#8320;; as the bar necks the real area shrinks, so <em>true</em> stress keeps rising even while the engineering curve falls after UTS. The decline past the peak is an <b class="k">area artifact</b>, not softening. This engine reports the engineering curve and says so.</p>
+      </div>
+      <p><span class="tag t-amber">amber</span> The hardening shape (parabola to UTS, linear necking) is a plausible model, not this exact alloy — the <b class="k">laws</b> (E=slope, resilience, reversibility, UTS=max) are exact; the specific &epsilon;_u, &epsilon;_f are chosen.</p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">2</span>
+      <div class="wt">The Graveyard</div>
+      <p class="dead"><s>Yield strength is where the curve stops being straight.</s> &rarr; Departure from linearity is gradual and hard to read; engineers define yield by the <b class="k">0.2% offset</b> line parallel to the elastic slope.</p>
+      <p class="dead"><s>UTS is the stress at which the bar breaks.</s> &rarr; UTS is the <b class="k">maximum</b> of the curve; fracture happens later, at <em>lower</em> engineering stress, after necking.</p>
+      <p class="dead"><s>A stiffer material (high E) is a stronger material.</s> &rarr; E is <b class="k">stiffness</b> (slope); strength is &sigma;_y / UTS (heights). Rubber is weak but compliant; glass is stiff but brittle.</p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">6</span>
+      <div class="wt">The Tamper</div>
+      <p>Planted void (disclosed): flip the sign of the elastic slope so E comes out <b class="k">negative</b> — stress would <em>fall</em> as you pull. Physically impossible; the witness in 7 must catch it.</p>
+      <button id="tamper">↯ flip elastic slope sign</button>
+      <button id="restore" class="restore">↺ restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE STRESS-STRAIN CURVE · WORLD II · THE FOLD · ud0 corpus. The engine is genuinely LIT: &sigma;(&epsilon;) and the recovered modulus are computed live; a fail-loud selfcheck throws at boot on any violation. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+</div>
+
+<script>
+// ---- ENGINE (pure logic; runs headless, no canvas/DOM) ----
+var E_MOD   = 200000;   // MPa — Young's modulus = elastic slope
+var STRAIN_Y = 0.0012;  // yield strain
+var SIGMA_Y = E_MOD * STRAIN_Y; // 240 MPa
+var STRAIN_U = 0.15;    // strain at ultimate tensile strength
+var SIGMA_U = 400;      // MPa — UTS
+var STRAIN_F = 0.25;    // fracture strain
+var SIGMA_F = 300;      // MPa — engineering stress at fracture
+var TOL = 1e-9;         // finite-difference / residual tolerance
+
+var slopeSign = 1;      // TAMPER FLAG: +1 true, -1 flips the elastic slope
+
+function elasticStress(strain){ return slopeSign * E_MOD * strain; }
+
+function stress(strain){
+  if(strain <= 0) return 0;
+  if(strain <= STRAIN_Y) return elasticStress(strain);
+  if(strain <= STRAIN_U){
+    var t = (STRAIN_U - strain) / (STRAIN_U - STRAIN_Y);
+    return SIGMA_Y + (SIGMA_U - SIGMA_Y) * (1 - t*t); // parabola peaking at STRAIN_U
+  }
+  var f = (strain - STRAIN_U) / (STRAIN_F - STRAIN_U);
+  return SIGMA_U + (SIGMA_F - SIGMA_U) * f;           // linear necking decline
+}
+
+// E recovered as the SLOPE between two low-strain elastic points
+function recoverE(s1, s2){ return (elasticStress(s2) - elasticStress(s1)) / (s2 - s1); }
+
+// elastic resilience = area under the elastic line up to yield
+function resilienceIntegral(){
+  var N = 2000, h = STRAIN_Y / N, integ = 0;
+  for(var i=0;i<N;i++){ var a=i*h, b=(i+1)*h; integ += 0.5*(E_MOD*a + E_MOD*b)*h; }
+  return integ;
+}
+function resilienceClosed(){ return 0.5 * SIGMA_Y * SIGMA_Y / E_MOD; }
+
+// residual strain after unloading from strainMax along +E (unload modulus is |E|)
+function residualStrain(strainMax){ return strainMax - stress(strainMax) / E_MOD; }
+
+// live witness: elastic slope must be positive and equal to E
+function witnessOK(){
+  var e = recoverE(0.0003, 0.0009);
+  return e > 0 && Math.abs(e - E_MOD)/E_MOD < TOL;
+}
+
+function selfcheck(){
+  function assert(c,m){ if(!c) throw new Error('selfcheck: '+m); }
+  var saved = slopeSign;
+
+  // 1 — elastic region is LINEAR and E is exactly the recovered slope
+  var Erec = recoverE(0.0003, 0.0009);
+  assert(Math.abs(Erec - E_MOD)/E_MOD < TOL, 'E is not the recovered elastic slope');
+  var mid = stress(0.0006), avg = 0.5*(stress(0.0003)+stress(0.0009));
+  assert(Math.abs(mid - avg) < 1e-6, 'elastic region is not linear');
+
+  // 2 — resilience = 0.5 * sigma_y^2 / E (integral matches closed form)
+  var Ui = resilienceIntegral(), Uc = resilienceClosed();
+  assert(Math.abs(Ui - Uc)/Uc < TOL, 'resilience integral != 0.5 sigma_y^2 / E');
+  assert(Math.abs(Uc - 0.144) < 1e-9, 'resilience value drifted from 0.144 MJ/m^3');
+
+  // 3 — elastic loading/unloading REVERSIBLE; plastic leaves permanent set
+  assert(Math.abs(residualStrain(0.0008)) < TOL, 'elastic unload is not reversible');
+  assert(Math.abs(residualStrain(STRAIN_Y)) < TOL, 'unload at yield not reversible');
+  var rp = residualStrain(0.10);
+  assert(rp > 1e-4, 'no permanent plastic strain after yield');
+  assert(Math.abs(rp - (0.10 - stress(0.10)/E_MOD)) < TOL, 'residual strain formula mismatch');
+
+  // 4 — UTS is the MAXIMUM of the curve, located at STRAIN_U
+  var mx=-Infinity, mxs=0, step=STRAIN_F/4000;
+  for(var s=0;s<=STRAIN_F+1e-12;s+=step){ var v=stress(s); if(v>mx){mx=v;mxs=s;} }
+  assert(Math.abs(mx - SIGMA_U) < 1e-6, 'UTS is not the curve maximum');
+  assert(Math.abs(mxs - STRAIN_U) < step*2, 'maximum is not at STRAIN_U');
+  assert(SIGMA_U > SIGMA_Y && SIGMA_U > SIGMA_F, 'UTS must exceed yield and fracture stress');
+
+  // TAMPER — flip elastic slope sign so E comes out negative; assert it now DIFFERS
+  slopeSign = -1;
+  var Ebad = recoverE(0.0003, 0.0009);
+  assert(Ebad < 0, 'tamper must make the elastic slope negative');
+  assert(!(Math.abs(Ebad - E_MOD)/E_MOD < TOL), 'tampered E must differ from the true E');
+  assert(!witnessOK(), 'witness must fail under tamper');
+  slopeSign = saved; // restore
+
+  // restored value recovers cleanly
+  assert(Math.abs(recoverE(0.0003,0.0009) - E_MOD)/E_MOD < TOL, 'restore failed');
+  assert(witnessOK(), 'witness must pass after restore');
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  try{
+    var ok = selfcheck();
+    if(ok !== true) throw new Error('selfcheck did not return true');
+  }catch(err){
+    var fb = document.getElementById('failb');
+    if(fb){ fb.style.display='block'; fb.textContent = 'SELFCHECK FAILED — ' + err.message; }
+    var lb = document.getElementById('litbadge');
+    if(lb){ lb.className='badge bad'; lb.textContent='ENGINE DEAD'; }
+    throw err;
+  }
+
+  var lb = document.getElementById('litbadge');
+  lb.className='badge ok';
+  lb.textContent = 'LIT · E=200000 MPa = elastic slope · U_r=0.144 MJ/m³ · UTS=400 MPa (max)';
+
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height, PADL = 52, PADB = 40, PADT = 18, PADR = 16;
+  var SIGMAX = 460; // MPa axis top
+  function xOf(e){ return PADL + (e/STRAIN_F)*(W-PADL-PADR); }
+  function yOf(s){ return H-PADB - (s/SIGMAX)*(H-PADT-PADB); }
+
+  function grid(){
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#173322'; ctx.fillStyle='#5f8a68'; ctx.lineWidth=1;
+    ctx.font='10px monospace';
+    for(var g=0; g<=SIGMAX; g+=100){
+      var y=yOf(g); ctx.beginPath(); ctx.moveTo(PADL,y); ctx.lineTo(W-PADR,y); ctx.stroke();
+      ctx.fillText(g+'', 6, y+3);
+    }
+    for(var e=0; e<=STRAIN_F+1e-9; e+=0.05){
+      var x=xOf(e); ctx.beginPath(); ctx.moveTo(x,PADT); ctx.lineTo(x,H-PADB); ctx.strokeStyle='#122a1b'; ctx.stroke();
+      ctx.fillStyle='#5f8a68'; ctx.fillText(e.toFixed(2), x-10, H-PADB+14);
+    }
+    ctx.fillStyle='#7fae86';
+    ctx.fillText('σ (MPa)', 6, 12);
+    ctx.fillText('ε (strain)', W-70, H-6);
+  }
+
+  function draw(){
+    grid();
+    // elastic slope guide (blue), extended dashed
+    ctx.strokeStyle='#5aa9ff'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(xOf(0),yOf(0));
+    var eGuide = slopeSign>0 ? 0.01 : 0.01;
+    ctx.lineTo(xOf(eGuide), yOf(elasticStress(eGuide))); ctx.stroke();
+    // 0.2% offset yield line (amber), parallel to elastic slope
+    ctx.strokeStyle='#ffbf47'; ctx.beginPath();
+    var off=0.002;
+    ctx.moveTo(xOf(off), yOf(0));
+    ctx.lineTo(xOf(off+ (SIGMA_Y*1.4)/E_MOD), yOf(SIGMA_Y*1.4)); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // main curve
+    ctx.strokeStyle='#9ee06a'; ctx.lineWidth=2.4; ctx.beginPath();
+    var first=true;
+    for(var e=0;e<=STRAIN_F+1e-9;e+=STRAIN_F/600){
+      var x=xOf(e), y=yOf(stress(e));
+      if(first){ctx.moveTo(x,y);first=false;} else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // markers
+    function dot(e,s,col){ ctx.fillStyle=col; ctx.beginPath(); ctx.arc(xOf(e),yOf(s),4,0,7); ctx.fill(); }
+    dot(STRAIN_Y, SIGMA_Y, '#ffbf47');           // yield
+    dot(STRAIN_U, SIGMA_U, '#ff6b6b');           // UTS (max)
+    dot(STRAIN_F, SIGMA_F, '#c96');              // fracture
+    ctx.fillStyle='#cfe8c2'; ctx.font='10px monospace';
+    ctx.fillText('yield 240', xOf(STRAIN_Y)+6, yOf(SIGMA_Y)+2);
+    ctx.fillText('UTS 400 (max)', xOf(STRAIN_U)-24, yOf(SIGMA_U)-8);
+    ctx.fillText('fracture', xOf(STRAIN_F)-46, yOf(SIGMA_F)+2);
+
+    var cap=document.getElementById('cap');
+    cap.textContent = slopeSign>0
+      ? 'elastic (slope E>0) · yield 240 · plastic · UTS 400 · fracture'
+      : 'TAMPERED: elastic slope E<0 — stress falls as you pull (impossible)';
+    cap.style.color = slopeSign>0 ? '#6f8a6a' : '#ff6b6b';
+  }
+
+  function updateWitness(){
+    var a=document.getElementById('auditout');
+    if(witnessOK()){
+      a.className='badge ok';
+      a.textContent='WITNESS: OK · slope=+200000 MPa';
+    }else{
+      var e=recoverE(0.0003,0.0009);
+      a.className='badge bad';
+      a.textContent='WITNESS: TAMPER · slope='+Math.round(e)+' MPa (E≤0)';
+    }
+  }
+
+  document.getElementById('tamper').addEventListener('click', function(){
+    slopeSign = -1; draw(); updateWitness();
+  });
+  document.getElementById('restore').addEventListener('click', function(){
+    slopeSign = 1; draw(); updateWitness();
+  });
+
+  draw();
+  updateWitness();
+})();
+</script>
+</body>
+</html>

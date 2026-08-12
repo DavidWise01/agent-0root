@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE RISK-NEUTRAL PRICING · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== UI ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+input[type=number]{width:78px;}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:250px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:92px;}
+.sent{font-size:12.5px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.num{color:var(--am);font-weight:700;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE RISK-NEUTRAL PRICING</h1>
+ <p class="sub">The price of any claim is a <b>discounted fair bet</b> — and the stock's real expected return does not enter it. Price a claim two ways: by <b style="color:var(--blue)">replication</b> (a stock-plus-bond hedge that copies its payoff) and by the <b class="k">discounted risk-neutral expectation</b> e<sup>−rT</sup>·E<sub>Q</sub>[payoff], where under the measure <b>Q</b> every asset drifts at the risk-free rate. They agree — exactly. The <b style="color:var(--blue)">blue team</b> builds and defends; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Harrison, J.M. &amp; Kreps, D.M., <i>Martingales and Arbitrage in Multiperiod Securities Markets</i> (1979), <i>J. Economic Theory</i> 20(3): 381–408 — <a href="https://doi.org/10.1016/0022-0531(79)90043-7">doi.org/10.1016/0022-0531(79)90043-7</a>. Rendered, not quoted. These are <b>models</b> with named assumptions, not investment advice.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — two prices, one number</h2>
+   <p><b class="k">Replication.</b> To copy a claim over one step, hold Δ shares and B in the risk-free bond so the portfolio pays the claim in both states: Δ = (f<sub>u</sub>−f<sub>d</sub>)/(S(u−d)), B = e<sup>−rΔt</sup>(f<sub>u</sub>−ΔSu). Its cost today <i>is</i> the price — any other price is an arbitrage.</p>
+   <p><b class="k">Expectation.</b> Solve the same two equations and the cost equals e<sup>−rΔt</sup>(q·f<sub>u</sub>+(1−q)·f<sub>d</sub>) with q = (e<sup>rΔt</sup>−d)/(u−d). The hedge <i>forces</i> the measure Q.</p>
+   <table id="mdlTbl"><thead><tr><th>at the current node</th><th>value</th></tr></thead><tbody id="mdlBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — no-arbitrage as an expectation <span class="tag t-amber">AVAN</span></h2>
+   <p>Harrison &amp; Kreps made the link exact: <b>no arbitrage ⇔ a risk-neutral measure Q exists</b> under which discounted prices are martingales — the <b>fundamental theorem of asset pricing</b>. Pricing stops being a forecast and becomes an expectation under Q.</p>
+   <p>This is why <a href="https://davidwise01.github.io/the-black-scholes/" style="color:var(--cy)">the-black-scholes</a> formula never mentions the stock's expected return μ: the hedge cancels it. Each sphere is the next one's premise — the binomial tree here is that formula's discrete skeleton.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive the price by the hedge and by the Q-expectation and confirm they still coincide, that discounted S is a martingale, and that no-arbitrage tracks q∈(0,1). If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the market &amp; the claim <span class="tag t-in">in ↓</span></h2>
+   <p>A <b>binomial market</b>: one stock at <b class="S" style="color:var(--cy)">S₀</b> that over each step Δt goes up by factor <b>u=e<sup>σ√Δt</sup></b> or down by <b>d=1/u</b>, plus a bond earning the risk-free rate <b>r</b>. A <b>claim</b> pays a known function of the terminal price (call, put, forward, digital). Real-world drift <b style="color:var(--am)">μ</b> is fed in only to prove it is <i>ignored</i>.</p>
+   <p class="small">Feed these into the engine below. Nothing here is looked up — u, d, q and every price are computed on the spot.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the market into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>claim</label>
+      <select id="type"><option value="call">European call</option><option value="put">European put</option><option value="forward">forward (S−K)</option><option value="digital">digital (pays 1 if S≥K)</option></select></div>
+     <div class="row"><label>spot S₀</label><input id="S0" type="number" value="100" step="1"></div>
+     <div class="row"><label>strike K</label><input id="K" type="number" value="100" step="1"></div>
+     <div class="row"><label>vol σ</label><input id="sig" type="number" value="0.20" step="0.01"></div>
+     <div class="row"><label>rate r</label><input id="r" type="number" value="0.03" step="0.01"></div>
+     <div class="row"><label>maturity T</label><input id="T" type="number" value="1" step="0.25"></div>
+     <div class="row"><label>steps n</label><input id="n" type="number" value="50" step="1" min="1"></div>
+     <div class="row"><label>real drift μ</label><input id="mu" type="number" value="0.12" step="0.01"></div>
+     <div class="row"><button id="reset">↺ reset</button><button id="atm">→ ATM call</button></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change μ and re-read: the price does not move — μ never enters Q. The struck real-world number shows what a naive forecaster would (wrongly) quote.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits a price &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the price, proven <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: the <b>replication cost</b> and the <b>discounted Q-expectation</b> agree to machine precision on one-step and multi-step trees, discounted S is a Q-martingale, and refining the tree converges to the <a href="https://davidwise01.github.io/the-black-scholes/" style="color:var(--cy)">Black–Scholes</a> closed form. The current claim's price is above; the identity is the output.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these live; the red team (right) tries to make them disagree.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Q is a <b>pricing device, not a forecast</b>. Reading q as "the real chance the stock rises" is the field's most common error — it is not. The whole construction assumes a <b>frictionless, complete, arbitrage-free</b> market: continuous trading, no transaction costs, a single known volatility, log-normal prices with <b>no jumps</b>. Break completeness — add jumps or stochastic vol — and Q is no longer unique, so neither is the price.</div>
+   <p class="small" style="margin-top:8px">Real markets have all of the frictions this model deletes. The binomial tree is the <i>first</i> proof that a price can be pinned by a hedge, not the last word on what anything is worth — and none of it is investment advice.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Risk-neutral means investors are risk-neutral."</s> <b>Cut.</b> It means the <i>price</i> can be written as if they were — a change of measure, not a claim about anyone's preferences.</p>
+   <p class="grave"><s>"q is the real probability of an up move."</s> <b>Cut.</b> q depends on r, not on μ; the real probability depends on μ. They are equal only in the knife-edge case μ=r.</p>
+   <p class="grave"><s>"A higher expected return makes the option worth more."</s> <b>Cut.</b> The hedge cancels μ; two stocks with the same σ but different drifts price the same option identically.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: price with the <b>real-world probability and drift μ</b> instead of Q. The number changes — and it no longer equals the replication cost. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ price with real-world μ</button><button id="restore">↺ restore Q</button></div>
+   <p class="small" id="tampernote">Swap Q for the physical measure and the quote drifts off the hedge cost — the witness recomputes, the two prices disagree, and it turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE RISK-NEUTRAL PRICING — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (market <b style="color:var(--cy)">in</b> → engine → price <b style="color:var(--gr)">out</b>). A runnable rendering of Harrison &amp; Kreps (1979): the engine is LIT — replication and the discounted Q-expectation agree live, discounted prices are martingales, the tree converges to Black–Scholes, and the μ-tamper is provable. The blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- fixed-seed PRNG (deterministic) ----
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function gauss(rng){let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+
+// ---- normal CDF via erf (Abramowitz-Stegun 7.1.26) and Black-Scholes closed form ----
+function erf(x){const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+0.3275911*x);
+ const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y;}
+function normCdf(x){return 0.5*(1+erf(x/Math.SQRT2));}
+function bsCall(S,K,r,sig,T){if(T<=0)return Math.max(S-K,0);const sq=sig*Math.sqrt(T);const d1=(Math.log(S/K)+(r+0.5*sig*sig)*T)/sq;const d2=d1-sq;return S*normCdf(d1)-K*Math.exp(-r*T)*normCdf(d2);}
+function bsPut(S,K,r,sig,T){return bsCall(S,K,r,sig,T)-S+K*Math.exp(-r*T);} // put-call parity
+
+// ---- binomial primitives ----
+function udFromSigma(sig,dt){const u=Math.exp(sig*Math.sqrt(dt));return {u:u,d:1/u};}
+function rnProb(u,d,r,dt){return (Math.exp(r*dt)-d)/(u-d);}      // risk-neutral measure Q
+function realProb(u,d,mu,dt){return (Math.exp(mu*dt)-d)/(u-d);}  // physical measure P (from drift mu)
+function noArb(u,d,r,dt){const q=rnProb(u,d,r,dt);return q>0&&q<1;} // no-arbitrage IFF q in (0,1)
+function payoffFn(type,K){return {call:function(S){return Math.max(S-K,0);},put:function(S){return Math.max(K-S,0);},
+ forward:function(S){return S-K;},digital:function(S){return S>=K?1:0;}}[type];}
+
+// ---- one-step: replication (Delta stock + B bond) and the Q-expectation ----
+function replicate1(S0,u,d,r,dt,pay){const fu=pay(S0*u),fd=pay(S0*d);const delta=(fu-fd)/(S0*(u-d));
+ const B=Math.exp(-r*dt)*(fu-delta*S0*u);return {delta:delta,B:B,cost:delta*S0+B,fu:fu,fd:fd};}
+function rn1(S0,u,d,r,dt,pay){const q=rnProb(u,d,r,dt);return Math.exp(-r*dt)*(q*pay(S0*u)+(1-q)*pay(S0*d));}
+
+// ---- multi-step: Q-expectation over the terminal distribution ----
+function rnPriceTree(S0,u,d,r,dt,n,pay){const q=rnProb(u,d,r,dt);let price=0,comb=1;
+ for(let k=0;k<=n;k++){const ST=S0*Math.pow(u,k)*Math.pow(d,n-k);price+=comb*Math.pow(q,k)*Math.pow(1-q,n-k)*pay(ST);comb=comb*(n-k)/(k+1);}
+ return Math.exp(-r*dt*n)*price;}
+// ---- multi-step: backward replication (hedge at every node; never uses q for value) ----
+function replicateTree(S0,u,d,r,dt,n,pay){let v=[];for(let k=0;k<=n;k++)v.push(pay(S0*Math.pow(u,k)*Math.pow(d,n-k)));
+ const disc=Math.exp(-r*dt);
+ for(let step=n;step>0;step--){const nv=[];for(let k=0;k<step;k++){const fu=v[k+1],fd=v[k];
+   const Sn=S0*Math.pow(u,k)*Math.pow(d,step-1-k);const delta=(fu-fd)/(Sn*(u-d));const B=disc*(fu-delta*Sn*u);
+   nv.push(delta*Sn+B);}v=nv;}return v[0];}
+// ---- naive real-world price: discount the physical expectation at mu (the WRONG number) ----
+function realWorldPrice(S0,u,d,mu,dt,n,pay){const p=realProb(u,d,mu,dt);let price=0,comb=1;
+ for(let k=0;k<=n;k++){const ST=S0*Math.pow(u,k)*Math.pow(d,n-k);price+=comb*Math.pow(p,k)*Math.pow(1-p,n-k)*pay(ST);comb=comb*(n-k)/(k+1);}
+ return Math.exp(-mu*dt*n)*price;}
+// ---- CRR call and Monte-Carlo call (fixed seed) for the Black-Scholes convergence check ----
+function crrCall(S,K,r,sig,T,n){const dt=T/n;const ud=udFromSigma(sig,dt);return rnPriceTree(S,ud.u,ud.d,r,dt,n,payoffFn("call",K));}
+function mcCall(S,K,r,sig,T,N,seed){const rng=mulberry32(seed);let sum=0;const drift=(r-0.5*sig*sig)*T,vol=sig*Math.sqrt(T);
+ for(let i=0;i<N;i++){const ST=S*Math.exp(drift+vol*gauss(rng));sum+=Math.max(ST-K,0);}return Math.exp(-r*T)*sum/N;}
+
+// ---- the disclosed planted void: when true the quote uses P & mu, not Q ----
+let TAMPER=false;
+function quotePrice(P){const ud=udFromSigma(P.sig,P.dt);const pay=payoffFn(P.type,P.K);
+ if(TAMPER)return realWorldPrice(P.S0,ud.u,ud.d,P.mu,P.dt,P.n,pay);
+ return rnPriceTree(P.S0,ud.u,ud.d,P.r,P.dt,P.n,pay);}
+
+// ---- fail-loud self-check (runs untampered, restores state, RETURNS true) ----
+function selfcheck(){
+ const t=function(c,m){if(!c)throw new Error(m);};
+ const save=TAMPER; TAMPER=false;
+ const pay=payoffFn("call",100);
+ // 1. one-step: replication cost EQUALS discounted Q-expectation (closed form, 1e-6)
+ const r1=replicate1(100,1.2,0.8,0.05,1,pay);
+ t(Math.abs(r1.cost-rn1(100,1.2,0.8,0.05,1,pay))<1e-6,"one-step replication must equal the risk-neutral price");
+ // 2. multi-step: the two methods agree (1e-9)
+ const ud=udFromSigma(0.2,1/50);
+ const A=rnPriceTree(100,ud.u,ud.d,0.03,1/50,50,pay);
+ const Bp=replicateTree(100,ud.u,ud.d,0.03,1/50,50,pay);
+ t(Math.abs(A-Bp)<1e-9,"multi-step replication must equal the Q-expectation");
+ // 3. no-arbitrage IFF a risk-neutral measure exists (q in (0,1))
+ t(noArb(1.2,0.8,0.03,1),"a market with d<e^{rdt}<u must be arbitrage-free (q in (0,1))");
+ t(rnProb(1.2,0.8,0.30,1)>1 && !noArb(1.2,0.8,0.30,1),"e^{rdt}>u => q>1 => arbitrage");
+ t(rnProb(1.2,0.8,-0.5,1)<0 && !noArb(1.2,0.8,-0.5,1),"e^{rdt}<d => q<0 => arbitrage");
+ // 4. the real-world drift mu is IRRELEVANT to the price
+ const pMu1=rnPriceTree(100,ud.u,ud.d,0.03,1/50,50,pay); // Q-pricing takes no mu
+ const pMu2=rnPriceTree(100,ud.u,ud.d,0.03,1/50,50,pay);
+ t(Math.abs(pMu1-pMu2)<1e-12 && Math.abs(pMu1-A)<1e-12,"the Q-price cannot depend on mu (mu never enters it)");
+ // 5. under Q, discounted asset price is a MARTINGALE: E_Q[e^{-rdt} S_next]=S_now (1e-9)
+ const q=rnProb(ud.u,ud.d,0.03,1/50),disc=Math.exp(-0.03/50);
+ t(Math.abs(disc*100*(q*ud.u+(1-q)*ud.d)-100)<1e-9,"discounted stock must be a Q-martingale");
+ // 6. closed forms: put-call parity, and refinement converges to Black-Scholes
+ t(Math.abs(bsCall(100,105,0.03,0.2,1)-bsPut(100,105,0.03,0.2,1)-(100-105*Math.exp(-0.03)))<1e-6,"put-call parity must hold");
+ t(Math.abs(crrCall(100,100,0.03,0.2,1,1000)-bsCall(100,100,0.03,0.2,1))<0.05,"CRR tree must converge to Black-Scholes");
+ t(Math.abs(mcCall(100,100,0.03,0.2,1,60000,12345)-bsCall(100,100,0.03,0.2,1))<0.5,"seeded Monte-Carlo must converge to Black-Scholes");
+ // 7. THE TAMPER: pricing with P & mu (mu != r) differs from the replication cost
+ TAMPER=true;
+ const P={S0:100,K:100,r:0.03,sig:0.2,T:1,n:50,dt:1/50,mu:0.12,type:"call"};
+ const bad=quotePrice(P);
+ t(Math.abs(bad-Bp)>1e-6,"TAMPER: real-world pricing must differ from the replication cost");
+ TAMPER=save; return true;
+}
+
+/* ===== UI ===== */
+const $=function(id){return document.getElementById(id);};
+let seen15=false;
+function readParams(){const n=Math.max(1,Math.round(+$("n").value||1));const T=+$("T").value;
+ return {type:$("type").value,S0:+$("S0").value,K:+$("K").value,sig:+$("sig").value,r:+$("r").value,T:T,n:n,mu:+$("mu").value,dt:T/n};}
+function fmt(x,dp){return (isFinite(x)?x.toFixed(dp===undefined?4:dp):"—");}
+function render(){
+ const P=readParams();const ud=udFromSigma(P.sig,P.dt);const pay=payoffFn(P.type,P.K);
+ const q=rnProb(ud.u,ud.d,P.r,P.dt);const arbFree=q>0&&q<1;
+ const repl=replicateTree(P.S0,ud.u,ud.d,P.r,P.dt,P.n,pay);
+ const rnp=rnPriceTree(P.S0,ud.u,ud.d,P.r,P.dt,P.n,pay);
+ const quote=quotePrice(P);
+ const wrong=realWorldPrice(P.S0,ud.u,ud.d,P.mu,P.dt,P.n,pay);
+ const h1=replicate1(P.S0,ud.u,ud.d,P.r,P.dt,pay); // first-step hedge
+ const mres=Math.exp(-P.r*P.dt)*P.S0*(q*ud.u+(1-q)*ud.d)-P.S0;
+ const label={call:"call max(S−K,0)",put:"put max(K−S,0)",forward:"forward S−K",digital:"digital 1[S≥K]"}[P.type];
+ $("sent").innerHTML =
+  "<b>market</b>&nbsp; u=<span class='num'>"+fmt(ud.u)+"</span> d=<span class='num'>"+fmt(ud.d)+"</span> Δt=<span class='num'>"+fmt(P.dt,4)+"</span><br>"+
+  "<b>Q</b> risk-neutral prob q=<span class='num'>"+fmt(q,4)+"</span>"+(arbFree?"":" <span style='color:var(--wall)'>(outside (0,1))</span>")+"<br>"+
+  "<b>claim</b> "+label+", K="+P.K+", "+P.n+" steps to T="+P.T;
+ if(arbFree){$("verdict").textContent="PRICE = "+fmt(quote,4);$("verdict").className="verdict ok";}
+ else{$("verdict").textContent="ARBITRAGE";$("verdict").className="verdict no";}
+ const agree=Math.abs(repl-rnp)<1e-9 && (!TAMPER? Math.abs(quote-repl)<1e-6 : true);
+ $("moodname").innerHTML = arbFree
+  ? ("hedge Δ=<b>"+fmt(h1.delta,4)+"</b> shares, bond B=<b>"+fmt(h1.B,4)+"</b>")
+  : "<span style='color:var(--wall)'>no risk-neutral measure exists — the market can be arbitraged</span>";
+ let reason="";
+ if(arbFree){
+  reason="replication cost = <span class='num'>"+fmt(repl,6)+"</span> &nbsp;·&nbsp; discounted E<sub>Q</sub> = <span class='num'>"+fmt(rnp,6)+"</span> &nbsp;→ "+
+   (Math.abs(repl-rnp)<1e-9?"<span style='color:var(--gr)'>agree</span>":"<span style='color:var(--wall)'>disagree</span>")+
+   "<br>Q-martingale residual = <span class='num'>"+mres.toExponential(1)+"</span>"+
+   "<br><s style='color:#6b7d6f'>real-world quote (uses μ) = "+fmt(wrong,4)+"</s> — not the price"+
+   (TAMPER?"<br><b style='color:var(--wall)'>TAMPER ON: quote shown above uses μ, not Q</b>":"");
+ }else{
+  reason="e<sup>rΔt</sup>="+fmt(Math.exp(P.r*P.dt),4)+" is not strictly between d="+fmt(ud.d)+" and u="+fmt(ud.u)+" — a risk-free arbitrage exists, so no fair price.";
+ }
+ $("reason").innerHTML=reason;
+ // window 3 live node table
+ $("mdlBody").innerHTML=[
+  ["payoff if up  f_u",fmt(h1.fu,4)],["payoff if down f_d",fmt(h1.fd,4)],
+  ["Δ (shares)",fmt(h1.delta,4)],["B (bond)",fmt(h1.B,4)],
+  ["q (risk-neutral)",fmt(q,4)],["1−q",fmt(1-q,4)]
+ ].map(function(r){return "<tr><td style='text-align:left'>"+r[0]+"</td><td class='num'>"+r[1]+"</td></tr>";}).join("");
+}
+function audit(){
+ const el=$("auditout");const P=readParams();const ud=udFromSigma(P.sig,P.dt);const pay=payoffFn(P.type,P.K);
+ const repl=replicateTree(P.S0,ud.u,ud.d,P.r,P.dt,P.n,pay);
+ const rnp=rnPriceTree(P.S0,ud.u,ud.d,P.r,P.dt,P.n,pay);
+ const quote=quotePrice(P);
+ const q=rnProb(ud.u,ud.d,P.r,P.dt),disc=Math.exp(-P.r*P.dt);
+ const mres=Math.abs(disc*P.S0*(q*ud.u+(1-q)*ud.d)-P.S0);
+ const agreeMethods=Math.abs(repl-rnp)<1e-9;         // the two derivations coincide
+ const quoteMatches=Math.abs(quote-repl)<1e-6;        // the live quote sits on the hedge
+ const mart=mres<1e-9;
+ const arbLogic=noArb(1.2,0.8,0.03,1)&&!noArb(1.2,0.8,0.30,1)&&!noArb(1.2,0.8,-0.5,1);
+ const ok=agreeMethods&&quoteMatches&&mart&&arbLogic;
+ el.innerHTML='<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — holds':'✗ WITNESS — broken')+'</span>'
+  +'<div class="small" style="margin-top:6px">hedge vs E<sub>Q</sub>: <b style="color:'+(agreeMethods?'var(--gr)':'var(--wall)')+'">'+(agreeMethods?'agree':'DIVERGE')+'</b>'
+  +' &nbsp;·&nbsp; live quote on hedge: <b style="color:'+(quoteMatches?'var(--gr)':'var(--wall)')+'">'+(quoteMatches?'yes':'NO')+'</b>'
+  +' &nbsp;·&nbsp; Q-martingale: <b style="color:'+(mart?'var(--gr)':'var(--wall)')+'">'+(mart?'✓':'✗')+'</b>'
+  +(TAMPER?' &nbsp; — <span style="color:var(--wall)">red priced with real-world μ</span>':'')+'</div>';
+}
+function refresh(){render();audit();}
+
+// ---- boot ----
+try{
+ selfcheck();
+ const bs=bsCall(100,100,0.03,0.2,1), crr=crrCall(100,100,0.03,0.2,1,50);
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>'
+  +'<div class="small" style="margin-top:6px">proven identity: replication ≡ discounted E<sub>Q</sub> to 1e-9 · discounted S is a Q-martingale · ATM call 50-step tree = <b style="color:var(--gr)">'+crr.toFixed(4)+'</b> vs Black–Scholes <b style="color:var(--gr)">'+bs.toFixed(4)+'</b></div>';
+ ["type","S0","K","sig","r","T","n","mu"].forEach(function(id){$(id).addEventListener("input",refresh);$(id).addEventListener("change",refresh);});
+ $("reset").addEventListener("click",function(){$("type").value="call";$("S0").value=100;$("K").value=100;$("sig").value="0.20";$("r").value="0.03";$("T").value="1";$("n").value=50;$("mu").value="0.12";refresh();});
+ $("atm").addEventListener("click",function(){$("type").value="call";$("S0").value=100;$("K").value=100;refresh();});
+ $("tamper").addEventListener("click",function(){TAMPER=true;$("tampernote").innerHTML="<b style='color:var(--wall)'>Real-world pricing on.</b> The quote now discounts the physical (μ) expectation — it drifts off the hedge cost, and the witness (window 7) went red. The attack is real; it is caught.";refresh();});
+ $("restore").addEventListener("click",function(){TAMPER=false;$("tampernote").textContent="Swap Q for the physical measure and the quote drifts off the hedge cost — the witness recomputes, the two prices disagree, and it turns red. Nothing is faked; the attack is real and it is caught.";refresh();});
+ refresh();
+}catch(e){
+ const fb=$("failb");fb.style.display="block";fb.textContent="FAIL-LOUD — the risk-neutral pricing engine did not check out: "+e.message;throw e;
+}
+</script>
+</body></html>

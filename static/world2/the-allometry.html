@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE ALLOMETRY</title>
+<style>
+  :root{
+    --am:#ffcf5a;
+    --ground:#0c1a12;
+    --ground2:#0f2418;
+    --ink:#eaf5ec;
+    --dim:#9fc3ac;
+    --line:#1f4530;
+    --blue:#6fb6ff;
+    --red:#ff7b7b;
+    --lit:#7dffb0;
+    --amber:#ffcf5a;
+    --wall:#ff9b6b;
+    --panel:#0e2016;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 20% -10%, #12301f 0%, rgba(18,48,31,0) 60%),
+      radial-gradient(1000px 800px at 110% 20%, #10261a 0%, rgba(16,38,26,0) 55%),
+      var(--ground);
+    color:var(--ink);
+    font:15px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    padding:26px 18px 60px;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+  h1{
+    font-size:30px;letter-spacing:3px;margin:0 0 8px;
+    color:var(--am);text-shadow:0 0 22px rgba(255,207,90,.28);font-weight:800;
+  }
+  .sub{color:var(--ink);max-width:860px;margin:0 0 10px;font-size:14px}
+  .sub b{color:var(--am)}
+  .src{font-size:12px;color:var(--dim)}
+  .src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+  .tag{display:inline-block;font-size:10px;letter-spacing:1.5px;padding:2px 7px;border-radius:3px;font-weight:700;vertical-align:middle}
+  .t-amber{background:rgba(255,207,90,.14);color:var(--amber);border:1px solid rgba(255,207,90,.5)}
+  .t-lit{background:rgba(125,255,176,.13);color:var(--lit);border:1px solid rgba(125,255,176,.5)}
+  .t-in{background:rgba(111,182,255,.13);color:var(--blue);border:1px solid rgba(111,182,255,.5)}
+  .t-out{background:rgba(125,255,176,.13);color:var(--lit);border:1px solid rgba(125,255,176,.5)}
+  .t-wall{background:rgba(255,155,107,.13);color:var(--wall);border:1px solid rgba(255,155,107,.5)}
+
+  .ocho{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px}
+  @media(max-width:880px){.ocho{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{
+    font-size:12px;letter-spacing:2px;font-weight:800;padding:7px 10px;border-radius:5px;
+    text-transform:uppercase;border:1px solid var(--line)
+  }
+  .col.blue .teamhdr{color:var(--blue);background:rgba(111,182,255,.08);border-color:rgba(111,182,255,.35)}
+  .col.red .teamhdr{color:var(--red);background:rgba(255,123,123,.08);border-color:rgba(255,123,123,.35)}
+  .col.center .teamhdr{color:var(--am);background:rgba(255,207,90,.08);border-color:rgba(255,207,90,.35);text-align:center}
+
+  .win{
+    position:relative;background:linear-gradient(180deg,var(--ground2),var(--panel));
+    border:1px solid var(--line);border-radius:8px;padding:13px 13px 14px;
+  }
+  .win.panel{border-color:rgba(255,207,90,.4);box-shadow:0 0 26px rgba(255,207,90,.07) inset}
+  .wnum{
+    position:absolute;top:-9px;right:10px;width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;
+    background:var(--ground);border:1px solid var(--line)
+  }
+  .col.blue .wnum{color:var(--blue);border-color:rgba(111,182,255,.5)}
+  .col.red .wnum{color:var(--red);border-color:rgba(255,123,123,.5)}
+  .col.center .wnum{color:var(--am);border-color:rgba(255,207,90,.5)}
+  .wtitle{font-size:12px;letter-spacing:1.5px;font-weight:800;margin:0 0 8px;color:var(--ink)}
+  .win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+  .win p b{color:var(--ink)}
+  .mono{font-size:12px;color:var(--am)}
+  .kv{font-size:12px;color:var(--ink)}
+  .kv span{color:var(--am)}
+  .flow{text-align:center;color:var(--am);font-size:14px;letter-spacing:3px;opacity:.7;margin:2px 0}
+
+  .badge{display:inline-block;padding:3px 9px;border-radius:4px;font-size:11px;font-weight:800;letter-spacing:1px}
+  .badge.ok{background:rgba(125,255,176,.14);color:var(--lit);border:1px solid rgba(125,255,176,.55)}
+  .badge.bad{background:rgba(255,123,123,.16);color:var(--red);border:1px solid rgba(255,123,123,.6)}
+  #failb{display:none;margin-top:8px;padding:8px;border-radius:5px;background:rgba(255,123,123,.12);border:1px solid var(--red);color:var(--red);font-size:12px}
+  button{
+    font:inherit;font-size:11px;letter-spacing:1px;cursor:pointer;color:var(--ink);
+    background:#14311f;border:1px solid var(--line);border-radius:5px;padding:6px 10px;margin:4px 6px 0 0
+  }
+  button:hover{border-color:var(--am);color:var(--am)}
+  .wall-note{border-left:3px solid var(--wall);padding-left:10px}
+  .dead{text-decoration:line-through;color:#7c9a86;opacity:.75}
+  canvas{width:100%;height:158px;display:block;border:1px solid var(--line);border-radius:6px;background:#08140d;margin-top:8px}
+  .amberdot{color:var(--amber);font-weight:700}
+  table.mini{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}
+  table.mini td{border-top:1px solid var(--line);padding:3px 4px;color:var(--dim)}
+  table.mini td:first-child{color:var(--ink)}
+  table.mini td:last-child{color:var(--am);text-align:right}
+  footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>THE ALLOMETRY</h1>
+    <p class="sub">Why an elephant burns far less energy <b>per kilogram</b> than a mouse. Metabolic rate follows a power law across roughly <b>20 orders of magnitude</b> of body mass — a straight line of slope <b>3/4</b> on a log-log plot. Rendered, not quoted.</p>
+    <p class="src">
+      <span class="tag t-amber">SOURCE</span>
+      Kleiber, M. — <i>Body size and metabolism</i>, <b>Hilgardia 6</b>(11):315–353 (1932).
+      <a href="https://doi.org/10.3733/hilg.v06n11p315" target="_blank" rel="noopener">doi:10.3733/hilg.v06n11p315</a>
+      <span class="amberdot">· AMBER: coefficients illustrative; the 3/4 exponent and its origin remain debated. No medical advice.</span>
+    </p>
+  </header>
+
+  <div class="ocho">
+
+    <!-- ===================== BLUE / LEFT ===================== -->
+    <div class="col blue">
+      <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+      <div class="win">
+        <div class="wnum">3</div>
+        <div class="wtitle">THE MODEL</div>
+        <p>The allometric law: <span class="mono">Y = a·M^b</span>. For whole-organism <b>metabolic rate</b> Kleiber found <span class="mono">B = a·M^(3/4)</span>.</p>
+        <p>Take logs: <span class="mono">log B = log a + b·log M</span> — a <b>straight line</b> of slope <b>b</b>. Recover b from any two masses: <span class="mono">b = Δ(log B) / Δ(log M)</span>.</p>
+        <p>Because <b>b &lt; 1</b>, the rate <b>per unit mass</b> is <span class="mono">B/M = a·M^(b−1) = a·M^(−1/4)</span> — it <b>falls</b> as animals get bigger.</p>
+        <table class="mini" id="modeltab"><tbody></tbody></table>
+      </div>
+
+      <div class="win">
+        <div class="wnum">5</div>
+        <div class="wtitle">THE LINEAGE</div>
+        <p>Life's power law — Kleiber 1932. <span class="mono">B ~ M^(3/4)</span> makes per-mass metabolism fall as <span class="mono">M^(−1/4)</span>; paired with lifespan <span class="mono">~M^(1/4)</span> and heart rate <span class="mono">~M^(−1/4)</span>, heartbeats-per-life are roughly <b>invariant</b>.</p>
+        <p>This is the <b>whole-organism</b> scaling standing <i>above</i> the single cell of <b>the-hodgkin-huxley</b> — one spike, then a whole zoo of bodies obeying one line.</p>
+      </div>
+
+      <div class="win">
+        <div class="wnum">7</div>
+        <div class="wtitle">THE WITNESS</div>
+        <p>Live re-check of the engine's invariants. Green = the slope recovers to 3/4 and per-mass metabolism declines. If window 6 tampers the exponent, this flips <b>red</b>.</p>
+        <p><span id="auditout" class="badge ok">WITNESS: booting…</span></p>
+        <div id="failb"></div>
+      </div>
+    </div>
+
+    <!-- ===================== CENTER ===================== -->
+    <div class="col center">
+      <div class="teamhdr">The Machine</div>
+
+      <div class="win">
+        <div class="wnum">4</div>
+        <div class="wtitle">DATA IN <span class="tag t-in">IN ↓</span></div>
+        <p>Two reference bodies plus a coefficient. All parameters <span class="amberdot">AMBER (illustrative)</span>.</p>
+        <table class="mini"><tbody>
+          <tr><td>exponent b (Kleiber)</td><td>3/4</td></tr>
+          <tr><td>coefficient a</td><td>3.4 kcal·d⁻¹</td></tr>
+          <tr><td>mouse M₁</td><td>0.02 kg</td></tr>
+          <tr><td>elephant M₂</td><td>5000 kg</td></tr>
+        </tbody></table>
+      </div>
+
+      <div class="flow">↓</div>
+
+      <div class="win panel">
+        <div class="wnum">0</div>
+        <div class="wtitle">THE PANEL <span class="tag t-lit">LIT</span> <span id="litbadge" class="badge ok">—</span></div>
+        <p>Live log-log line <span class="mono">B = a·M^b</span> across 6 decades of mass. Slope drawn from the pure functions; the dot grid is the per-mass rate <span class="mono">B/M</span> collapsing as M grows.</p>
+        <canvas id="cv" width="560" height="316"></canvas>
+        <div class="kv" id="readout" style="margin-top:8px"></div>
+      </div>
+
+      <div class="flow">↓</div>
+
+      <div class="win">
+        <div class="wnum">8</div>
+        <div class="wtitle">DATA OUT <span class="tag t-out">OUT ↓</span></div>
+        <p><b>Proven result:</b> the recovered slope equals <b>3/4</b> exactly; the mouse burns far more <b>per gram</b> than the elephant; heartbeats-per-life are constant.</p>
+        <div class="kv" id="outkv"></div>
+      </div>
+    </div>
+
+    <!-- ===================== RED / RIGHT ===================== -->
+    <div class="col red">
+      <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+      <div class="win">
+        <div class="wnum">1</div>
+        <div class="wtitle">THE ADVERSARY</div>
+        <p class="wall-note"><span class="tag t-wall">WALL</span> "The exponent is <b>obviously</b> 2/3 — metabolism just tracks <b>surface area</b> (M^(2/3)) shedding heat." A clean geometric argument, and wrong at the population level: broad datasets sit nearer <b>3/4</b>. The <b>West–Brown–Enquist</b> fractal-network model derives 3/4 from space-filling transport, but it is <b>contested</b> <span class="amberdot">(AMBER — debated)</span>.</p>
+      </div>
+
+      <div class="win">
+        <div class="wnum">2</div>
+        <div class="wtitle">THE GRAVEYARD</div>
+        <p class="dead">"Bigger animals have faster metabolism per kilogram."</p>
+        <p><b>Correction:</b> total B rises with M, but B/M ~ M^(−1/4) <b>falls</b> — a shrew must eat near-constantly; an elephant idles per gram.</p>
+        <p class="dead">"One clean exponent (exactly 3/4) fits every taxon."</p>
+        <p><b>Correction:</b> fitted exponents vary by clade and method (~0.66–0.85); 3/4 is a central tendency, not a law of nature <span class="amberdot">(AMBER)</span>.</p>
+        <p class="dead">"Allometry lets you predict drug/energy doses for humans exactly."</p>
+        <p><b>Correction:</b> scaling gives an order-of-magnitude guide only — not medical advice.</p>
+      </div>
+
+      <div class="win">
+        <div class="wnum">6</div>
+        <div class="wtitle">THE TAMPER</div>
+        <p>Planted void (disclosed): force <b>b = 1</b> (isometric) so metabolism is <i>proportional</i> to mass and per-gram cost becomes <b>constant</b> — the mouse/elephant gap vanishes. The Witness (7) must catch it.</p>
+        <button id="tamper">⚠ Inject b = 1</button>
+        <button id="restore">↺ Restore b = 3/4</button>
+        <p class="kv" id="tampstate">state: <span>untampered</span></p>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    THE ALLOMETRY · WORLD II · THE FOLD — the-allometry · figure: Max Kleiber · engine LIT (pure allometric functions, fail-loud selfcheck) · biophysical model, illustrative parameters AMBER, no medical advice · David Lee Wise (ROOT0) with AVAN.
+  </footer>
+</div>
+
+<script>
+// ---- ENGINE (pure logic; runs headless, NO canvas/DOM) ----
+var EXP_KLEIBER = 0.75;     // Kleiber metabolic exponent b = 3/4
+var EXP_SURFACE = 2/3;      // naive surface-area prediction
+var A_COEF = 3.4;           // illustrative coefficient (kcal/day) — AMBER
+var tampered = false;       // plain top-level flag (headless)
+
+function bExponent(){ return tampered ? 1.0 : EXP_KLEIBER; }
+
+// metabolic rate  B = a * M^b
+function metabolicRate(M){ return A_COEF * Math.pow(M, bExponent()); }
+// per-unit-mass rate  B/M = a * M^(b-1)
+function perMassRate(M){ return metabolicRate(M) / M; }
+// slope recovered from two masses on a log-log plot
+function recoverSlope(M1, M2){
+  var B1 = metabolicRate(M1), B2 = metabolicRate(M2);
+  return (Math.log(B2) - Math.log(B1)) / (Math.log(M2) - Math.log(M1));
+}
+// illustrative allied traits (AMBER coefficients); exponents are the content
+function heartRate(M){ return 240 * Math.pow(M, -0.25); }   // beats/min ~ M^(-1/4)
+function lifespanYears(M){ return 4 * Math.pow(M, 0.25); }  // years ~ M^(1/4)
+// heartbeats over a life: product exponent = -1/4 + 1/4 = 0  -> invariant
+function beatsPerLife(M){ return heartRate(M) * lifespanYears(M) * 60 * 24 * 365; }
+
+// deterministic fixed-seed PRNG (kept for reproducible sampling; unused by asserts)
+function mkPRNG(seed){ var s = seed>>>0; return function(){ s = (s*1664525 + 1013904223)>>>0; return s/4294967296; }; }
+
+function assert(cond, msg){ if(!cond){ throw new Error("selfcheck: " + msg); } }
+
+function selfcheck(){
+  var M_small = 0.02, M_big = 5000, tol = 1e-6;
+
+  // (1) untampered slope recovers EXACTLY 3/4 on the log-log line
+  assert(!tampered, "must enter selfcheck untampered");
+  var slope = recoverSlope(M_small, M_big);
+  assert(Math.abs(slope - 0.75) < tol, "slope must recover to 3/4, got " + slope);
+
+  // (2) b < 1 => per-mass metabolism DECREASES with body size
+  assert(bExponent() < 1, "Kleiber exponent must be below 1");
+  assert(perMassRate(M_small) > perMassRate(M_big) + tol, "per-mass rate must fall with mass");
+  // and it should fall along the whole range, monotonically
+  var m1 = perMassRate(1), m10 = perMassRate(10), m100 = perMassRate(100);
+  assert(m1 > m10 && m10 > m100, "per-mass rate must be monotonically decreasing");
+
+  // (3) 3/4 differs from the naive surface-area 2/3 prediction
+  assert(Math.abs(EXP_KLEIBER - EXP_SURFACE) > 0.08, "3/4 must differ from 2/3");
+
+  // (4) heartbeats-per-life invariant: M^(-1/4)*M^(1/4) = M^0 (a constant)
+  var bpl_small = beatsPerLife(M_small), bpl_big = beatsPerLife(M_big);
+  var rel = Math.abs(bpl_small - bpl_big) / bpl_small;
+  assert(rel < tol, "heartbeats-per-life must be mass-invariant, rel=" + rel);
+  // exponent bookkeeping: -1/4 + 1/4 = 0
+  assert(Math.abs((-0.25) + (0.25)) < tol, "trait exponents must sum to zero");
+
+  // (5) TAMPER: planted void — force b = 1 (isometric). Save flag, tamper, verify
+  //     the invariants BREAK, then restore.
+  var saved = tampered;
+  tampered = true;
+  var slopeT = recoverSlope(M_small, M_big);
+  assert(Math.abs(slopeT - 0.75) > 0.2, "tamper must move slope off 3/4");
+  assert(Math.abs(slopeT - 1.0) < tol, "tampered slope must be 1 (isometric)");
+  // per-mass rate now CONSTANT — the mouse/elephant gap vanishes
+  assert(Math.abs(perMassRate(M_small) - perMassRate(M_big)) < tol, "tampered per-mass must be constant");
+  tampered = saved;
+
+  // restored: invariants hold again
+  assert(Math.abs(recoverSlope(M_small, M_big) - 0.75) < tol, "restore must return slope to 3/4");
+  return true;
+}
+
+/* ===== UI ===== */
+
+var OK = false;
+try{
+  OK = selfcheck();
+}catch(e){
+  var fb = document.getElementById('failb');
+  if(fb){ fb.style.display='block'; fb.textContent = 'ENGINE FAILED — ' + e.message; }
+  var ab = document.getElementById('auditout');
+  if(ab){ ab.className='badge bad'; ab.textContent='WITNESS: FAIL'; }
+  throw e;
+}
+
+(function(){
+  var lit = document.getElementById('litbadge');
+  lit.className = 'badge ok';
+  lit.textContent = 'LIT ✓ slope 3/4';
+
+  var masses = [0.02, 0.2, 2, 30, 300, 5000];
+  var names  = ['mouse','rat','cat','human','horse','elephant'];
+
+  // model table (window 3)
+  var tb = document.querySelector('#modeltab tbody');
+  tb.innerHTML = '<tr><td>M (kg)</td><td>B/M (per-mass)</td></tr>' +
+    masses.map(function(m,i){
+      return '<tr><td>'+names[i]+' · '+m+'</td><td>'+perMassRate(m).toFixed(3)+'</td></tr>';
+    }).join('');
+
+  // out (window 8)
+  var slope = recoverSlope(0.02, 5000);
+  document.getElementById('outkv').innerHTML =
+    'recovered slope = <span>'+slope.toFixed(6)+'</span> · '+
+    'B/M mouse = <span>'+perMassRate(0.02).toFixed(2)+'</span> vs elephant = <span>'+perMassRate(5000).toFixed(4)+'</span> · '+
+    'beats/life ≈ <span>'+(beatsPerLife(0.02)/1e9).toFixed(2)+'×10⁹</span> (mass-invariant)';
+
+  // ---- canvas: log-log line + per-mass dots ----
+  var cv = document.getElementById('cv'), g = cv.getContext('2d');
+  var W = cv.width, H = cv.height, PADL = 46, PADB = 30, PADT = 14, PADR = 14;
+  var logMlo = Math.log10(0.01), logMhi = Math.log10(10000);
+  function xOf(M){ return PADL + (Math.log10(M)-logMlo)/(logMhi-logMlo)*(W-PADL-PADR); }
+  var Bvals = masses.map(metabolicRate);
+  var logBlo = Math.log10(A_COEF*Math.pow(0.01,0.75))-0.2;
+  var logBhi = Math.log10(A_COEF*Math.pow(10000,0.75))+0.2;
+  function yOf(B){ return H-PADB - (Math.log10(B)-logBlo)/(logBhi-logBlo)*(H-PADB-PADT); }
+
+  function draw(){
+    g.clearRect(0,0,W,H);
+    // grid
+    g.strokeStyle='#153524'; g.lineWidth=1;
+    for(var d=-2; d<=4; d++){ var x=xOf(Math.pow(10,d)); g.beginPath(); g.moveTo(x,PADT); g.lineTo(x,H-PADB); g.stroke(); }
+    // axes labels
+    g.fillStyle='#9fc3ac'; g.font='10px monospace';
+    g.fillText('log M (kg) →', W-108, H-8);
+    g.save(); g.translate(12,H/2); g.rotate(-Math.PI/2); g.fillText('log B (metabolic rate)', -60, 0); g.restore();
+
+    // the Kleiber line B = a M^b (sampled continuously from the pure function)
+    g.strokeStyle='#ffcf5a'; g.lineWidth=2.4; g.beginPath();
+    for(var i=0;i<=120;i++){
+      var lm = logMlo + i/120*(logMhi-logMlo);
+      var M = Math.pow(10,lm), B = metabolicRate(M);
+      var x=xOf(M), y=yOf(B);
+      if(i===0) g.moveTo(x,y); else g.lineTo(x,y);
+    }
+    g.stroke();
+
+    // reference 2/3 surface-area line (dashed, dim) for contrast
+    g.strokeStyle='rgba(255,123,123,.55)'; g.lineWidth=1.3; g.setLineDash([5,4]); g.beginPath();
+    for(var j=0;j<=120;j++){
+      var lm2 = logMlo + j/120*(logMhi-logMlo);
+      var M2 = Math.pow(10,lm2), B2 = A_COEF*Math.pow(M2, 2/3);
+      var x2=xOf(M2), y2=yOf(B2);
+      if(j===0) g.moveTo(x2,y2); else g.lineTo(x2,y2);
+    }
+    g.stroke(); g.setLineDash([]);
+
+    // sample bodies as dots, sized by per-mass rate
+    for(var k=0;k<masses.length;k++){
+      var M=masses[k], B=metabolicRate(M), x=xOf(M), y=yOf(B);
+      var pm = perMassRate(M);
+      var r = 3 + Math.max(0, Math.min(9, pm*1.1));
+      g.fillStyle='#7dffb0'; g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill();
+      g.fillStyle='#eaf5ec'; g.font='9px monospace';
+      g.fillText(names[k], x-6, y-r-3);
+    }
+  }
+  draw();
+
+  var ro = document.getElementById('readout');
+  function refreshReadout(){
+    var s = recoverSlope(0.02,5000);
+    ro.innerHTML = 'live slope = <span style="color:var(--am)">'+s.toFixed(4)+'</span>' +
+      (tampered ? '  <span style="color:var(--red)">(TAMPERED · isometric b=1)</span>'
+                : '  <span style="color:var(--lit)">(Kleiber b=3/4)</span>') +
+      ' · gold line = Kleiber, dashed red = naive 2/3 surface law';
+  }
+  refreshReadout();
+
+  // ---- WITNESS (window 7): live re-check ----
+  var auditout = document.getElementById('auditout');
+  function witness(){
+    try{
+      // re-run the full invariant battery on the CURRENT state
+      var slope = recoverSlope(0.02,5000);
+      var pmFalls = perMassRate(0.02) > perMassRate(5000) + 1e-6;
+      var isKleiber = Math.abs(slope-0.75) < 1e-6 && pmFalls && !tampered;
+      if(isKleiber){
+        // and the deterministic full selfcheck still passes
+        var ok = selfcheck();
+        auditout.className='badge ok';
+        auditout.textContent='WITNESS: slope 3/4 ✓ per-mass falls ✓ beats invariant ✓';
+      }else{
+        auditout.className='badge bad';
+        auditout.textContent='WITNESS: TAMPER CAUGHT — slope='+slope.toFixed(3)+' (expected 0.750), per-mass constant';
+      }
+    }catch(err){
+      auditout.className='badge bad';
+      auditout.textContent='WITNESS: FAIL — '+err.message;
+    }
+  }
+  witness();
+
+  // ---- TAMPER controls (window 6) ----
+  var tstate = document.querySelector('#tampstate span');
+  document.getElementById('tamper').addEventListener('click', function(){
+    tampered = true; tstate.textContent='TAMPERED (b=1, isometric)'; tstate.style.color='var(--red)';
+    draw(); refreshReadout(); witness();
+  });
+  document.getElementById('restore').addEventListener('click', function(){
+    tampered = false; tstate.textContent='untampered'; tstate.style.color='';
+    draw(); refreshReadout(); witness();
+  });
+})();
+</script>
+</body>
+</html>

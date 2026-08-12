@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE GEOSTROPHIC BALANCE</title>
+<style>
+:root{
+  --am:#ff9e6a;
+  --bg:#0c1a12; --bg2:#0f2419; --ink:#e8f5ea; --dim:#9db9a6;
+  --line:#1f3a2b; --panel:#102a1c; --card:#0e2317;
+  --blue:#5fb0ff; --red:#ff6f6f; --amber:#ffcf5f;
+  --lit:#7ee08a; --wall:#ff8f8f;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1100px 620px at 82% -8%, rgba(255,158,106,.10), transparent 60%),
+    radial-gradient(900px 560px at 8% 108%, rgba(95,176,255,.07), transparent 60%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  padding:26px 16px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+h1{
+  font-size:clamp(24px,4.4vw,40px);letter-spacing:.06em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 24px rgba(255,158,106,.28)
+}
+.sub{color:var(--ink);max-width:78ch;margin:0 0 10px;font-size:14.5px}
+.src{color:var(--dim);font-size:12.5px;margin:0 0 20px}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10.5px;
+  letter-spacing:.08em;font-weight:700;vertical-align:middle}
+.t-amber{background:rgba(255,207,95,.14);color:var(--amber);border:1px solid rgba(255,207,95,.4)}
+.t-lit{background:rgba(126,224,138,.14);color:var(--lit);border:1px solid rgba(126,224,138,.45)}
+.t-in{background:rgba(95,176,255,.14);color:var(--blue);border:1px solid rgba(95,176,255,.4)}
+.t-out{background:rgba(255,158,106,.16);color:var(--am);border:1px solid rgba(255,158,106,.5)}
+.t-wall{background:rgba(255,111,111,.14);color:var(--wall);border:1px solid rgba(255,111,111,.45)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:14px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font-size:11px;letter-spacing:.14em;font-weight:700;text-transform:uppercase;
+  padding:4px 2px;border-bottom:1px solid var(--line)}
+.col.blue .teamhdr{color:var(--blue)}
+.col.red .teamhdr{color:var(--red)}
+.col.center .teamhdr{color:var(--am)}
+
+.win{position:relative;background:linear-gradient(180deg,var(--card),var(--bg2));
+  border:1px solid var(--line);border-radius:10px;padding:13px 13px 14px}
+.win h3{margin:0 0 7px;font-size:12.5px;letter-spacing:.05em;color:var(--ink);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.win p{margin:6px 0;font-size:12.7px;color:var(--dim)}
+.win .num{position:absolute;top:9px;right:11px;font-size:10.5px;color:var(--dim);
+  border:1px solid var(--line);border-radius:50%;width:19px;height:19px;
+  display:grid;place-items:center}
+.col.blue .win .num{color:var(--blue);border-color:rgba(95,176,255,.4)}
+.col.red .win .num{color:var(--red);border-color:rgba(255,111,111,.4)}
+.col.center .win .num{color:var(--am);border-color:rgba(255,158,106,.45)}
+.win.panel{border-color:rgba(255,158,106,.4);
+  box-shadow:0 0 0 1px rgba(255,158,106,.08),0 8px 40px rgba(0,0,0,.35)}
+b{color:var(--ink)}
+code{color:var(--am);background:rgba(255,158,106,.08);padding:0 4px;border-radius:3px;font-size:12px}
+.flow{height:20px;display:grid;place-items:center;color:var(--am);font-size:14px;opacity:.7}
+
+.strike{text-decoration:line-through;color:var(--red);opacity:.75}
+.fix{color:var(--lit)}
+.wall-note{border-left:3px solid var(--red);padding-left:10px}
+
+canvas{width:100%;height:auto;display:block;border:1px solid var(--line);
+  border-radius:7px;background:#081410;margin:6px 0}
+.badge{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:5px;display:inline-block}
+.ok{background:rgba(126,224,138,.14);color:var(--lit);border:1px solid rgba(126,224,138,.5)}
+.bad{background:rgba(255,111,111,.16);color:var(--wall);border:1px solid rgba(255,111,111,.55)}
+button{font:inherit;font-size:11.5px;background:#14301f;color:var(--ink);
+  border:1px solid var(--line);border-radius:6px;padding:5px 11px;cursor:pointer}
+button:hover{border-color:var(--am)}
+#failb{display:none;margin:8px 0;padding:8px 10px;border-radius:7px;
+  background:rgba(255,111,111,.12);border:1px solid var(--wall);color:var(--wall);font-size:12px}
+.rd{font-size:12px;color:var(--ink);margin:4px 0}
+.mono{font-size:11.5px;color:var(--dim);white-space:pre-wrap;line-height:1.4}
+footer{margin-top:26px;color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>THE GEOSTROPHIC BALANCE</h1>
+  <p class="sub">Why the wind blows <b>along</b> the isobars, not across them. Air starts to fall down
+  the pressure gradient from high to low &mdash; but the Coriolis veer turns it until the pressure push
+  and the Coriolis force exactly cancel. What is left runs <b>parallel</b> to the isobars. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">SOURCE</span> Buys Ballot, C.H.D., &ldquo;Note sur le rapport de
+  l&rsquo;intensit&eacute; et de la direction du vent&hellip;&rdquo;, <i>Comptes rendus de l&rsquo;Acad&eacute;mie des
+  sciences</i>, 9 Nov 1857, pp.765&ndash;768 &mdash; no stable open link (Ferrel 1856 has theoretical priority);
+  cite author/title/year. <a href="https://en.wikipedia.org/wiki/Buys_Ballot%27s_law" target="_blank" rel="noopener">law overview</a>.</p>
+
+  <div class="ocho">
+
+    <!-- ===================== BLUE TEAM ===================== -->
+    <div class="col blue">
+      <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+      <div class="win">
+        <span class="num">3</span>
+        <h3>THE MODEL</h3>
+        <p>Large-scale, slow air feels two horizontal forces. The <b>pressure-gradient force</b>
+        pushes from high toward low with magnitude <code>(1/&rho;)&middot;dP/dn</code>. The <b>Coriolis
+        force</b> deflects the moving air to the right (northern hemisphere), magnitude <code>f&middot;v</code>,
+        where <code>f = 2&Omega;sin&phi;</code>.</p>
+        <p>At <b>balance</b> the two are equal and opposite: <code>f&middot;v = (1/&rho;)&middot;dP/dn</code>.
+        Solving gives the <b>geostrophic wind</b> <code>v&#8320; = (1/&rho;f)&middot;dP/dn</code>. Because Coriolis
+        acts sideways to the motion, the balanced flow is <b>perpendicular to the pressure gradient</b>
+        &mdash; it runs along the isobars.</p>
+      </div>
+
+      <div class="win">
+        <span class="num">5</span>
+        <h3>THE LINEAGE</h3>
+        <p>The turning that makes this balance possible is the <b>Coriolis effect</b>. Geostrophic balance
+        is <code>f v = (1/&rho;) dP/dn</code>, so the flow parallels the isobars with low pressure on the left
+        in the north &mdash; <b>the-coriolis-effect</b> supplying the veer that balances the pressure push, and
+        <b>Buys Ballot&rsquo;s law</b> naming the geometry.</p>
+        <p class="rd">neighbour &rarr; <b>the-coriolis-effect</b> &middot; <b>this</b> &rarr; the-geostrophic-balance</p>
+      </div>
+
+      <div class="win">
+        <span class="num">7</span>
+        <h3>THE WITNESS</h3>
+        <p>Re-runs the balance checks live and confirms the geometry. If Red&rsquo;s tamper (6) makes the
+        wind cross the isobars, this flips red at once.</p>
+        <div id="auditout" class="badge ok">witness idle</div>
+        <div id="failb"></div>
+      </div>
+    </div>
+
+    <!-- ===================== CENTER ===================== -->
+    <div class="col center">
+      <div class="teamhdr">The machine</div>
+
+      <div class="win">
+        <span class="num">4</span>
+        <h3>DATA IN <span class="tag t-in">IN &darr;</span></h3>
+        <p>Air density <code>&rho; = 1.2 kg/m&sup3;</code>, Coriolis parameter <code>f = 1&times;10&#8315;&#8308; s&#8315;&sup1;</code>
+        (mid-latitude), and a pressure gradient <code>dP/dn = 1&times;10&#8315;&sup3; Pa/m</code>
+        (&asymp; 1 hPa per 100 km) pointing from low toward high.</p>
+      </div>
+
+      <div class="flow">&darr;</div>
+
+      <div class="win panel">
+        <span class="num">0</span>
+        <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+        <canvas id="cv" width="520" height="300" aria-label="isobars and balanced wind"></canvas>
+        <div class="mono" id="readout"></div>
+      </div>
+
+      <div class="flow">&darr;</div>
+
+      <div class="win">
+        <span class="num">8</span>
+        <h3>DATA OUT <span class="tag t-out">OUT &darr;</span></h3>
+        <p>Geostrophic wind speed and direction, proven perpendicular to the gradient with low on the left:</p>
+        <div id="litbadge" class="badge ok">computing&hellip;</div>
+      </div>
+    </div>
+
+    <!-- ===================== RED TEAM ===================== -->
+    <div class="col red">
+      <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+      <div class="win">
+        <span class="num">1</span>
+        <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+        <div class="wall-note">
+        <p>&ldquo;Wind is just air falling from high to low pressure &mdash; straight down the gradient.&rdquo;</p>
+        <p>That is the <b>initial</b> impulse, not the steady flow. On a rotating planet the deflection accumulates
+        until the wind runs <b>90&deg; away</b> from that push. Ignore Coriolis and every weather map is wrong:
+        you would predict wind crossing the isobars instead of circling the lows and highs.</p>
+        </div>
+      </div>
+
+      <div class="win">
+        <span class="num">2</span>
+        <h3>THE GRAVEYARD</h3>
+        <p class="strike">Faster spin (larger f) means a stronger wind.</p>
+        <p class="fix">&rarr; Opposite: <code>v&#8320; &prop; 1/f</code>. Larger f means a <b>weaker</b> geostrophic wind
+        for the same gradient; near the equator f&rarr;0 and the balance breaks down entirely. <span class="tag t-amber">AMBER</span></p>
+        <p class="strike">Geostrophic balance holds everywhere, always.</p>
+        <p class="fix">&rarr; Only for <b>large-scale, slow</b> flow (small Rossby number). Tight, fast systems
+        &mdash; tornadoes, tropical cyclone cores &mdash; add centrifugal terms and deviate. <span class="tag t-amber">AMBER</span></p>
+      </div>
+
+      <div class="win">
+        <span class="num">6</span>
+        <h3>THE TAMPER</h3>
+        <p>Force the wind to blow <b>down</b> the pressure gradient &mdash; across the isobars, as if Coriolis
+        did not exist. Buys Ballot&rsquo;s law and the along-isobar flow both break; the Witness (7) catches it.</p>
+        <button id="tamper">Blow across isobars</button>
+        <button id="restore">Restore balance</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    THE GEOSTROPHIC BALANCE &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus.
+    The engine computes the balance <code>f v = (1/&rho;) dP/dn</code> live from real logic; projections beyond
+    the geostrophic regime are marked AMBER. Built by David Lee Wise (ROOT0) with AVAN.
+  </footer>
+</div>
+
+<script>
+// ---- pure engine (headless: no canvas / DOM below this block) ----
+var TAMPER = false;
+
+// geostrophic wind vector from density, Coriolis parameter, and pressure-gradient (Gx,Gy).
+// balance: f*v = (1/rho)*|gradP|, and the balanced wind is perpendicular to gradP.
+// V = (1/(rho*f)) * ( -Gy, Gx )  -> rotates the down-gradient push 90deg (right-of-motion Coriolis, NH).
+// TAMPER makes the flow run straight down the gradient (Coriolis ignored).
+function geostrophicWind(rho, f, Gx, Gy){
+  var m = 1/(rho*f);
+  if(TAMPER){ return [-m*Gx, -m*Gy]; }   // down-gradient: across the isobars (WRONG)
+  return [-m*Gy, m*Gx];                    // along the isobars (balance)
+}
+function speed(rho, f, Gx, Gy){ var V=geostrophicWind(rho,f,Gx,Gy); return Math.hypot(V[0],V[1]); }
+function dot(a,b){ return a[0]*b[0]+a[1]*b[1]; }
+function coriolisParam(latDeg, Omega){ return 2*Omega*Math.sin(latDeg*Math.PI/180); }
+
+function selfcheck(){
+  var EPS=1e-6;
+  var rho=1.2, f=1e-4, G=1e-3;      // gradient points in +x; low pressure lies toward -x
+  var Gx=G, Gy=0;
+  var saved=TAMPER; TAMPER=false;
+
+  // (a) speed law: v_g = G/(rho*f)
+  var v=speed(rho,f,Gx,Gy);
+  if(Math.abs(v - G/(rho*f)) > EPS) throw "speed law off";
+
+  // (b) PROPORTIONAL to the pressure gradient: doubling G doubles v
+  if(Math.abs(speed(rho,f,2*Gx,0) - 2*v) > EPS) throw "not proportional to gradient";
+
+  // (c) INVERSE in the Coriolis parameter f: doubling f halves v
+  if(Math.abs(speed(rho,2*f,Gx,0) - 0.5*v) > EPS) throw "not inverse in f";
+
+  // (d) ALONG the isobars: wind is perpendicular to the pressure gradient (90deg)
+  var V=geostrophicWind(rho,f,Gx,Gy);
+  if(Math.abs(dot(V,[Gx,Gy])) > EPS) throw "wind not perpendicular to gradient";
+
+  // (e) BUYS BALLOT: back to the wind, LOW is on the LEFT (NH).
+  //     left-of-wind = rot90ccw(V) = (-Vy, Vx); low-pressure direction = -gradP.
+  var left=[-V[1], V[0]];
+  var lowDir=[-Gx,-Gy];
+  var ln=Math.hypot(left[0],left[1]), lo=Math.hypot(lowDir[0],lowDir[1]);
+  if(Math.abs(left[0]/ln - lowDir[0]/lo) > EPS) throw "Buys Ballot sign wrong (x)";
+  if(Math.abs(left[1]/ln - lowDir[1]/lo) > EPS) throw "Buys Ballot sign wrong (y)";
+
+  // (f) f weaker near the equator (so geostrophic wind is not defined at the equator)
+  var Om=7.292e-5;
+  if(!(coriolisParam(10,Om) < coriolisParam(45,Om))) throw "f not weaker near equator";
+  if(Math.abs(coriolisParam(0,Om)) > EPS) throw "f nonzero at equator";
+
+  // ---- disclosed planted void: the TAMPER must break perpendicularity ----
+  TAMPER=true;
+  var Vt=geostrophicWind(rho,f,Gx,Gy);
+  if(Math.abs(dot(Vt,[Gx,Gy])) <= EPS) throw "tamper did not change the flow";  // must now cross isobars
+  TAMPER=false;
+
+  TAMPER=saved;
+  return true;
+}
+/* ===== UI ===== */
+(function(){
+  var failb=document.getElementById('failb');
+  var lit=document.getElementById('litbadge');
+  var aud=document.getElementById('auditout');
+  try{
+    selfcheck();
+  }catch(e){
+    failb.style.display='block';
+    failb.textContent='selfcheck FAILED: '+e;
+    lit.className='badge bad'; lit.textContent='LIT check failed';
+    throw e;
+  }
+
+  var rho=1.2, f=1e-4, G=1e-3, Gx=G, Gy=0;
+  var V=geostrophicWind(rho,f,Gx,Gy);
+  var spd=Math.hypot(V[0],V[1]);
+  lit.textContent='v₀ = '+spd.toFixed(2)+' m/s · along isobars · low on left';
+
+  var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  var W=cv.width,H=cv.height;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#081410'; ctx.fillRect(0,0,W,H);
+    // isobars: vertical lines; pressure increases to the right (low on the left)
+    var n=6;
+    for(var i=0;i<n;i++){
+      var x=40+i*(W-80)/(n-1);
+      ctx.strokeStyle='rgba(95,176,255,'+(0.25+0.09*i)+')';
+      ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(x,20); ctx.lineTo(x,H-24); ctx.stroke();
+      ctx.fillStyle='rgba(157,185,166,.8)'; ctx.font='11px monospace';
+      ctx.fillText((996+i*4)+'',x-12,H-8);
+    }
+    ctx.fillStyle='rgba(95,176,255,.9)'; ctx.font='12px monospace';
+    ctx.fillText('LOW',44,16); ctx.fillText('HIGH',W-70,16);
+
+    // pressure-gradient arrow (points to high, +x)
+    arrow(ctx,W/2-70,H/2,W/2-70+64,H/2,'rgba(255,207,95,.9)',2);
+    ctx.fillStyle='rgba(255,207,95,.95)'; ctx.fillText('∇P',W/2-70,H/2-8);
+
+    // wind vector (scaled), along isobars unless tampered
+    var Vd=geostrophicWind(rho,f,Gx,Gy);
+    var s=90/Math.hypot(Vd[0],Vd[1]);
+    var wx=Vd[0]*s, wy=-Vd[1]*s; // canvas y is down
+    arrow(ctx,W/2+40,H/2, W/2+40+wx, H/2+wy, TAMPER?'rgba(255,111,111,.95)':'rgba(255,158,106,.95)',3);
+    ctx.fillStyle=TAMPER?'rgba(255,111,111,.95)':'rgba(255,158,106,.95)';
+    ctx.fillText(TAMPER?'wind (crosses isobars)':'wind (along isobars)',W/2-30,H-40);
+  }
+  function arrow(c,x1,y1,x2,y2,col,w){
+    c.strokeStyle=col; c.fillStyle=col; c.lineWidth=w;
+    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+    var a=Math.atan2(y2-y1,x2-x1);
+    c.beginPath(); c.moveTo(x2,y2);
+    c.lineTo(x2-9*Math.cos(a-0.4),y2-9*Math.sin(a-0.4));
+    c.lineTo(x2-9*Math.cos(a+0.4),y2-9*Math.sin(a+0.4));
+    c.closePath(); c.fill();
+  }
+  function readout(){
+    var Vd=geostrophicWind(rho,f,Gx,Gy);
+    var d=dot(Vd,[Gx,Gy]);
+    document.getElementById('readout').textContent=
+      'V = ['+Vd[0].toFixed(3)+', '+Vd[1].toFixed(3)+'] m/s   |V| = '+Math.hypot(Vd[0],Vd[1]).toFixed(2)+' m/s\n'+
+      'V · ∇P = '+d.toFixed(6)+'   ('+(Math.abs(d)<1e-9?'perpendicular → along isobars':'crossing isobars')+')';
+  }
+  function witness(){
+    try{
+      // live re-check of the invariant on the CURRENT flow
+      var Vd=geostrophicWind(rho,f,Gx,Gy);
+      var perp = Math.abs(dot(Vd,[Gx,Gy])) < 1e-9;
+      if(TAMPER || !perp){
+        aud.className='badge bad';
+        aud.textContent='TAMPER caught: wind crosses the isobars — Buys Ballot broken';
+      }else{
+        selfcheck();
+        aud.className='badge ok';
+        aud.textContent='witness OK — f·v = (1/ρ)dP/dn, along isobars, low on left';
+      }
+    }catch(e){ aud.className='badge bad'; aud.textContent='witness FAIL: '+e; }
+  }
+  function refresh(){ draw(); readout(); witness(); }
+
+  document.getElementById('tamper').onclick=function(){ TAMPER=true; refresh(); };
+  document.getElementById('restore').onclick=function(){ TAMPER=false; refresh(); };
+  refresh();
+})();
+</script>
+</body>
+</html>

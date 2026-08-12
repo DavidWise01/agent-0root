@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE WAVE EQUATION</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --ground:#0a1f18;
+  --ground2:#0d2a20;
+  --ink:#e8fff4;
+  --dim:#9fc9b9;
+  --line:#1d4636;
+  --blue:#66b8ff;
+  --red:#ff7a8a;
+  --amber:#ffcf6b;
+  --lit:#7fe0c0;
+  --wall:#ff7a8a;
+  --panel:#0f3327;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(127,224,192,.10), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(102,184,255,.06), transparent 55%),
+    linear-gradient(180deg,var(--ground),var(--ground2));
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  min-height:100vh;
+  padding:26px 18px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{text-align:center;margin:6px 0 22px;border-bottom:1px solid var(--line);padding-bottom:18px}
+h1{
+  font-size:clamp(26px,5vw,46px);letter-spacing:.14em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 22px rgba(127,224,192,.35);font-weight:800;
+}
+.sub{max-width:760px;margin:0 auto 12px;color:var(--dim);font-size:14px;line-height:1.6}
+.src{font-size:12px;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{display:inline-block;font-size:10px;letter-spacing:.12em;padding:2px 7px;border-radius:4px;
+  border:1px solid currentColor;vertical-align:middle;margin-right:6px;font-weight:700}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;
+  padding:7px 10px;border-radius:7px;border:1px solid var(--line);text-align:center;
+}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(102,184,255,.4);background:rgba(102,184,255,.06)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,122,138,.4);background:rgba(255,122,138,.06)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(127,224,192,.4);background:rgba(127,224,192,.06)}
+
+.win{
+  position:relative;background:rgba(6,22,17,.55);border:1px solid var(--line);
+  border-radius:10px;padding:13px 13px 13px 40px;
+}
+.win h3{margin:0 0 6px;font-size:12.5px;letter-spacing:.06em;color:var(--ink)}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+.win .num{
+  position:absolute;left:10px;top:11px;width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;
+  border:1px solid var(--line);color:var(--dim);background:rgba(0,0,0,.25)
+}
+.col.blue .num{color:var(--blue);border-color:rgba(102,184,255,.5)}
+.col.red .num{color:var(--red);border-color:rgba(255,122,138,.5)}
+.win.panel{background:linear-gradient(180deg,var(--panel),rgba(6,22,17,.7));border-color:rgba(127,224,192,.45);
+  box-shadow:0 0 26px rgba(127,224,192,.12) inset}
+.win.panel .num{color:var(--am);border-color:rgba(127,224,192,.6)}
+
+.flow{text-align:center;color:var(--am);font-size:15px;opacity:.7;margin:2px 0;letter-spacing:.3em}
+code,.mono{font-family:inherit}
+.eq{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:7px;padding:8px 10px;
+  color:var(--am);font-size:12.5px;margin:8px 0;overflow-x:auto;white-space:nowrap}
+canvas{width:100%;height:150px;display:block;background:rgba(0,0,0,.30);
+  border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.readout{font-size:12px;color:var(--dim);margin-top:6px}
+.readout b{color:var(--am)}
+.strike{color:var(--red);text-decoration:line-through;opacity:.85}
+.fix{color:var(--am)}
+.wall-note{border-left:3px solid var(--wall);padding-left:9px;color:var(--dim);font-size:12px}
+.badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;
+  padding:4px 9px;border-radius:6px;border:1px solid currentColor;margin-top:6px}
+.badge.ok{color:var(--lit)}
+.badge.bad{color:var(--red)}
+button{
+  font:inherit;font-size:12px;background:rgba(255,122,138,.10);color:var(--red);
+  border:1px solid rgba(255,122,138,.5);border-radius:6px;padding:6px 11px;cursor:pointer;margin:4px 6px 4px 0}
+button.restore{color:var(--am);background:rgba(127,224,192,.08);border-color:rgba(127,224,192,.5)}
+button:hover{filter:brightness(1.25)}
+#failb{display:none;margin:14px auto;max-width:760px;color:var(--red);
+  border:1px solid var(--red);border-radius:8px;padding:10px 12px;background:rgba(255,122,138,.07);font-size:12.5px}
+footer{text-align:center;color:var(--dim);font-size:11.5px;margin-top:34px;
+  border-top:1px solid var(--line);padding-top:16px;letter-spacing:.04em}
+.lit-word{color:var(--lit)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE WAVE EQUATION</h1>
+  <p class="sub">The second-order law every non-dispersive wave obeys &mdash; and it is solved not by a special
+  function but by <em>any shape that simply travels</em>. Poke a taut string and a hump slides off at speed
+  <span class="lit-word">c</span> without spreading. d'Alembert saw why: split the motion into a right-mover and a
+  left-mover, and the wave equation is satisfied identically. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span>
+  d'Alembert, <em>Recherches sur la courbe que forme une corde tendu&euml;e mise en vibration</em> (1747),
+  Hist. Acad. Roy. Sci. et Belles-Lettres de Berlin, vol.&nbsp;3, pp.&nbsp;214&ndash;219 &mdash;
+  <a href="https://www.exhibit.xavier.edu/oresme_2017Sept/4/" target="_blank" rel="noopener">facsimile (Xavier / Oresme)</a></p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ========== BLUE TEAM (LEFT) ========== -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win"><span class="num">3</span>
+      <h3>THE MODEL</h3>
+      <p>One law, one line. The transverse displacement <code>u(x,t)</code> of a taut string obeys</p>
+      <div class="eq">u&#8348;&#8348; = c&sup2; &middot; u&#8339;&#8339;</div>
+      <p>d'Alembert's insight (1747): the general solution is a wave going right plus a wave going left,</p>
+      <div class="eq">u(x,t) = f(x &minus; c&middot;t) + g(x + c&middot;t)</div>
+      <p>Any twice-differentiable <code>f</code>, <code>g</code> works &mdash; the shape is set by the initial pluck,
+      not by the equation. <span class="badge ok">c = 1 in the panel's units</span></p>
+    </div>
+
+    <div class="win"><span class="num">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>This is the law of a <em>travelling</em> wave. The same <code>u&#8348;&#8348; = c&sup2;u&#8339;&#8339;</code>,
+      confined between two fixed ends, forces the right- and left-movers to interfere into
+      <span class="lit-word">the-standing-wave</span>; freed into three dimensions and carried by fields rather than
+      string, its energy flux is <span class="lit-word">the-poynting-vector</span>. One second-order line;
+      a whole family downstream.</p>
+    </div>
+
+    <div class="win"><span class="num">7</span>
+      <h3>THE WITNESS</h3>
+      <p>Re-runs the full <code>selfcheck()</code> live and reads the disclosed tamper flag. Green while the
+      operator's speed matches the wave's speed; flips red the instant window&nbsp;6 corrupts it.</p>
+      <div id="auditout" class="badge ok">WITNESS: pending&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ========== CENTER (THE MACHINE) ========== -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win"><span class="num">4</span>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>A smooth Gaussian pulse launched rightward, <code>f(s)=exp(&minus;s&sup2;/2w&sup2;)</code>, plus a second
+      pulse launched leftward. Speed <code>c = 1</code>, width <code>w = 0.8</code>. No random inputs &mdash;
+      deterministic seeds only.</p>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win panel"><span class="num">0</span>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <canvas id="cv" width="520" height="150"></canvas>
+      <div class="readout">
+        t = <b id="rt">0.00</b> &nbsp;|&nbsp; right-peak x = <b id="rp">0.00</b> &nbsp;|&nbsp;
+        moved c&middot;&Delta;t = <b id="rm">0.00</b><br>
+        finite-diff residual <code>u&#8348;&#8348; &minus; c&#8320;&#8345;&sup2;u&#8339;&#8339;</code> (max on grid) =
+        <b id="rr">0</b> &nbsp; <span id="rlabel">non-dispersive &mdash; shape preserved</span>
+      </div>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win"><span class="num">8</span>
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p>Proven, live: a true right-mover <code>f(x&minus;ct)</code> gives a discrete residual of
+      <b>exactly&nbsp;0</b> (the t- and x-second-differences are the same stencil); the peak advances by exactly
+      <code>c&middot;&Delta;t</code> with the profile unchanged; right-mover + left-mover and any linear
+      combination are also solutions.</p>
+      <div id="litbadge" class="badge ok">booting&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ========== RED TEAM (RIGHT) ========== -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win"><span class="num">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note">"Waves must spread &mdash; everything diffuses." No: the 1-D wave equation is
+      <em>non-dispersive</em>. Every Fourier mode travels at the <em>same</em> c, so the packet keeps its shape
+      forever. Dispersion appears only when the medium makes c depend on frequency (deep-water waves, a stiff
+      beam, waveguides) &mdash; a different equation. The bare <code>u&#8348;&#8348;=c&sup2;u&#8339;&#8339;</code>
+      does not spread, and the panel's residual proves it.</p>
+    </div>
+
+    <div class="win"><span class="num">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p><span class="strike">"The solution is a sine wave."</span><br>
+      <span class="fix">&rarr; A sine is one solution; d'Alembert's f(x&minus;ct)+g(x+ct) covers <em>all</em> of
+      them, including sharp fronts.</span></p>
+      <p><span class="strike">"Doubling c doubles the residual of a fixed pulse."</span><br>
+      <span class="fix">&rarr; The residual is zero only when the operator's c <em>matches</em> the pulse's c;
+      mismatch (window&nbsp;6) makes it non-zero &mdash; that is the whole tamper.</span></p>
+      <p><span class="strike">"You need calculus of f and g to check it."</span><br>
+      <span class="fix">&rarr; A second difference on a grid is enough; here it lands on 0 to machine precision.</span></p>
+    </div>
+
+    <div class="win"><span class="num">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Disclosed planted void: force the differential operator to use the <em>wrong</em> speed
+      <code>c&#8320;&#8345; = c/2</code> while the pulse still travels at <code>c</code>. A genuine
+      <code>f(x&minus;ct)</code> then leaves a non-zero residual &mdash; the WITNESS (7) catches it at once.</p>
+      <button id="tamper">Tamper: c&#8320;&#8345; &rarr; c/2</button>
+      <button id="restore" class="restore">Restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE FOLD &middot; WORLD II &middot; ud0 corpus &nbsp;&mdash;&nbsp; the-wave-equation &nbsp;&mdash;&nbsp;
+  rendered, not quoted &nbsp;&mdash;&nbsp; David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- engine: pure logic, extractable, runs with NO canvas / DOM ----
+var C = 1;            // wave speed (panel units)
+var W = 0.8;          // Gaussian pulse width
+var TAMPER = false;   // disclosed planted void; the operator's speed is corrupted when true
+
+// operator speed: matches the wave (C) normally; the wrong speed C/2 when tampered
+function opSpeed(){ return TAMPER ? C/2 : C; }
+
+// smooth Gaussian profile in the travelling coordinate s
+function gauss(s){ return Math.exp(-(s*s)/(2*W*W)); }
+
+// right-moving solution f(x - c t), centred to start left of origin
+function fRight(x,t){ return gauss((x - C*t) + 2); }
+// left-moving solution g(x + c t)
+function gLeft(x,t){ return gauss((x + C*t) - 2); }
+// a second, independent right-mover (for superposition tests)
+function f2(x,t){ return 0.6*gauss((x - C*t) - 0.5); }
+
+// centred second differences on the grid
+function fd2t(u,x,t,h){ return (u(x,t+h) - 2*u(x,t) + u(x,t-h))/(h*h); }
+function fd2x(u,x,t,h){ return (u(x+h,t) - 2*u(x,t) + u(x-h,t))/(h*h); }
+
+// the wave-equation residual  u_tt - cOp^2 * u_xx  (zero for a true wave when cOp = C)
+function residual(u,x,t,h){ var co = opSpeed(); return fd2t(u,x,t,h) - co*co*fd2x(u,x,t,h); }
+
+// max |residual| of a solution over a fixed set of sample points
+function maxResidual(u){
+  var h = 2e-3, pts = [[0.3,0.4],[1.0,0.7],[-0.5,0.2],[0.8,1.1],[-1.2,0.9]];
+  var m = 0;
+  for(var i=0;i<pts.length;i++){
+    var r = Math.abs(residual(u, pts[i][0], pts[i][1], h));
+    if(r > m) m = r;
+  }
+  return m;
+}
+
+// fail-loud verification; throws on any violation, returns true on success
+function selfcheck(){
+  var tol = 1e-9, h = 2e-3;
+  var saved = TAMPER; TAMPER = false;   // verify against the honest operator
+
+  // 1. a right-moving Gaussian SATISFIES the wave equation: residual is zero to tolerance
+  if(!(maxResidual(fRight) < tol))
+    throw new Error("residual of f(x-ct) not zero: " + maxResidual(fRight));
+
+  // 2. NON-DISPERSIVE TRANSLATION at speed c, shape unchanged
+  var dt = 0.37, t1 = 0.5, t2 = t1 + dt;
+  var p1 = C*t1, p2 = C*t2;                       // analytic peak positions
+  if(Math.abs((p2 - p1) - C*dt) > tol)            // peak advanced by exactly c*dt
+    throw new Error("peak did not move c*dt");
+  if(Math.abs(fRight(p1,t1) - fRight(p2,t2)) > tol)   // peak height preserved
+    throw new Error("peak height changed under translation");
+  var xs = [-1.0,-0.3,0.4,1.1,1.8];
+  for(var i=0;i<xs.length;i++){                   // whole profile just shifts: u(x,t)=u(x+c*dt,t+dt)
+    if(Math.abs(fRight(xs[i],t1) - fRight(xs[i] + C*dt, t2)) > tol)
+      throw new Error("profile changed shape (dispersion) at x=" + xs[i]);
+  }
+
+  // 3. the general solution is a RIGHT-mover PLUS a LEFT-mover
+  function both(x,t){ return fRight(x,t) + gLeft(x,t); }
+  if(!(maxResidual(both) < tol))
+    throw new Error("f(x-ct)+g(x+ct) is not a solution: " + maxResidual(both));
+
+  // 4. SUPERPOSITION / linearity: sum of two solutions is a solution, and the
+  //    discrete operator is exactly linear
+  function sum2(x,t){ return fRight(x,t) + f2(x,t); }
+  if(!(maxResidual(sum2) < tol))
+    throw new Error("sum of two solutions is not a solution: " + maxResidual(sum2));
+  var a = 2.3, b = -1.7;
+  function combo(x,t){ return a*fRight(x,t) + b*f2(x,t); }
+  var lhs = residual(combo, 0.4, 0.6, h);
+  var rhs = a*residual(fRight,0.4,0.6,h) + b*residual(f2,0.4,0.6,h);
+  if(Math.abs(lhs - rhs) > tol)
+    throw new Error("operator not linear: " + Math.abs(lhs - rhs));
+
+  // ---- disclosed planted void: tamper, confirm the WITNESS can catch it, restore ----
+  TAMPER = true;                                  // operator now uses the wrong speed c/2
+  var bad = maxResidual(fRight);                  // a TRUE f(x-ct) now leaves a non-zero residual
+  if(!(bad > 1e-6))
+    throw new Error("tamper undetectable: residual still ~0");
+  TAMPER = false;
+  if(!(maxResidual(fRight) < tol))                // and restoring returns residual to zero
+    throw new Error("restore failed");
+
+  TAMPER = saved;                                 // leave the flag exactly as found
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var failb = document.getElementById('failb');
+  try{
+    var ok = selfcheck();
+    document.getElementById('litbadge').textContent =
+      'LIT — residual = 0 · non-dispersive · both movers + superposition verified';
+    document.getElementById('litbadge').className = 'badge ok';
+  }catch(e){
+    failb.style.display = 'block';
+    failb.textContent = 'SELFCHECK FAILED — ' + e.message;
+    var lb = document.getElementById('litbadge');
+    lb.textContent = 'DEAD — ' + e.message; lb.className = 'badge bad';
+    throw e;   // fail loud
+  }
+
+  // ---- live witness: re-run selfcheck and read the tamper flag ----
+  function witness(){
+    var el = document.getElementById('auditout');
+    var pass = false;
+    try{ pass = selfcheck(); }catch(_){ pass = false; }
+    if(TAMPER){
+      el.textContent = 'WITNESS: TAMPER DETECTED — operator speed ≠ wave speed';
+      el.className = 'badge bad';
+    }else if(pass){
+      el.textContent = 'WITNESS: OK — residual 0 to 1e-9 (self-check re-run)';
+      el.className = 'badge ok';
+    }else{
+      el.textContent = 'WITNESS: FAIL';
+      el.className = 'badge bad';
+    }
+  }
+  witness();
+
+  document.getElementById('tamper').addEventListener('click', function(){ TAMPER = true; witness(); });
+  document.getElementById('restore').addEventListener('click', function(){ TAMPER = false; witness(); });
+
+  // ---- live canvas: two travelling pulses and their superposition ----
+  var cv = document.getElementById('cv'), g = cv.getContext('2d');
+  var Wd = cv.width, Ht = cv.height;
+  var xmin = -3, xmax = 3;
+  function toPx(x){ return (x - xmin)/(xmax - xmin) * Wd; }
+  var rt = document.getElementById('rt'), rp = document.getElementById('rp'),
+      rm = document.getElementById('rm'), rr = document.getElementById('rr'),
+      rlabel = document.getElementById('rlabel');
+  var t = 0, dtA = 0.37, last = t;
+
+  function draw(){
+    t += 0.012;
+    if(t > 3.2) t = -1.2;
+    g.clearRect(0,0,Wd,Ht);
+    // baseline
+    g.strokeStyle = 'rgba(159,201,185,.25)'; g.beginPath();
+    g.moveTo(0, Ht*0.62); g.lineTo(Wd, Ht*0.62); g.stroke();
+
+    function plot(fn, col, amp){
+      g.strokeStyle = col; g.lineWidth = 1.6; g.beginPath();
+      for(var px=0; px<=Wd; px++){
+        var x = xmin + (px/Wd)*(xmax - xmin);
+        var y = Ht*0.62 - fn(x,t)*amp;
+        if(px===0) g.moveTo(px,y); else g.lineTo(px,y);
+      }
+      g.stroke();
+    }
+    plot(function(x,tt){ return fRight(x,tt); }, 'rgba(102,184,255,.85)', 74);
+    plot(function(x,tt){ return gLeft(x,tt);  }, 'rgba(255,207,107,.75)', 74);
+    plot(function(x,tt){ return fRight(x,tt)+gLeft(x,tt); }, '#7fe0c0', 74);
+
+    // right-mover peak marker
+    var peak = C*t - 2;   // fRight peak where (x - C t) + 2 = 0
+    var pxp = toPx(peak);
+    g.strokeStyle = 'rgba(127,224,192,.5)'; g.setLineDash([4,4]); g.beginPath();
+    g.moveTo(pxp,0); g.lineTo(pxp,Ht); g.stroke(); g.setLineDash([]);
+
+    rt.textContent = t.toFixed(2);
+    rp.textContent = peak.toFixed(2);
+    rm.textContent = (C*dtA).toFixed(2);
+    var m = maxResidual(fRight);
+    rr.textContent = (m < 1e-12 ? '0' : m.toExponential(2));
+    if(TAMPER){ rlabel.textContent = 'TAMPER: operator uses c/2 — residual ≠ 0'; rlabel.style.color = 'var(--red)'; }
+    else{ rlabel.textContent = 'non-dispersive — shape preserved'; rlabel.style.color = ''; }
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

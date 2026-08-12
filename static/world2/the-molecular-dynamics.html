@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE MOLECULAR DYNAMICS</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --bg:#0c1512;
+  --bg2:#0f1c17;
+  --ink:#e8f5ee;
+  --dim:#8fb4a5;
+  --line:#1e3a30;
+  --blue:#5fb0ff;
+  --red:#ff6d6d;
+  --amber:#ffb454;
+  --lit:#7fe0c0;
+  --wall:#ff6d6d;
+  --panel:#0e1b16;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 15% -10%, #12271f 0%, transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, #10201a 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px solid rgba(127,224,192,.35)}
+a:hover{border-bottom-color:var(--am)}
+.wrap{max-width:1240px;margin:0 auto}
+header{margin:0 0 22px}
+h1{
+  font-size:30px;letter-spacing:.14em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 26px rgba(127,224,192,.28);
+  font-weight:700;
+}
+.sub{color:var(--ink);max-width:78ch;margin:0 0 12px;font-size:14px}
+.sub b{color:var(--am)}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.14em;font-weight:700;
+  padding:2px 8px;border-radius:3px;vertical-align:middle;white-space:nowrap;
+}
+.t-amber{background:rgba(255,180,84,.14);color:var(--amber);border:1px solid rgba(255,180,84,.5)}
+.t-in{background:rgba(95,176,255,.13);color:var(--blue);border:1px solid rgba(95,176,255,.5)}
+.t-out{background:rgba(127,224,192,.13);color:var(--am);border:1px solid rgba(127,224,192,.5)}
+.t-lit{background:rgba(127,224,192,.16);color:var(--lit);border:1px solid rgba(127,224,192,.6)}
+.t-wall{background:rgba(255,109,109,.13);color:var(--wall);border:1px solid rgba(255,109,109,.5)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11.5px;letter-spacing:.16em;font-weight:700;
+  padding:7px 11px;border-radius:5px;border:1px solid var(--line);
+  background:var(--bg2);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(95,176,255,.35)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,109,109,.35)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(127,224,192,.4)}
+
+.win{
+  position:relative;background:var(--bg2);
+  border:1px solid var(--line);border-radius:8px;padding:13px 14px 14px;
+}
+.win.panel{background:var(--panel);border-color:rgba(127,224,192,.32);box-shadow:0 0 40px rgba(127,224,192,.06) inset}
+.col.blue .win{border-left:2px solid rgba(95,176,255,.4)}
+.col.red .win{border-left:2px solid rgba(255,109,109,.4)}
+.num{
+  position:absolute;top:-9px;right:12px;
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;background:var(--bg);border:1px solid var(--line);
+}
+.col.blue .num{color:var(--blue);border-color:rgba(95,176,255,.5)}
+.col.red .num{color:var(--red);border-color:rgba(255,109,109,.5)}
+.col.center .num{color:var(--am);border-color:rgba(127,224,192,.5)}
+.wtitle{font-size:12px;letter-spacing:.12em;font-weight:700;margin:0 0 8px;color:var(--ink)}
+.wtitle .k{color:var(--dim);font-weight:400}
+.win p{margin:6px 0;font-size:13px;color:var(--dim)}
+.win p b{color:var(--ink);font-weight:600}
+.mono{font-size:12px;color:var(--am)}
+code{background:rgba(127,224,192,.08);padding:1px 5px;border-radius:3px;color:var(--am);font-size:12px}
+
+.flow{
+  text-align:center;color:var(--dim);font-size:16px;letter-spacing:.3em;
+  margin:2px 0;user-select:none;
+}
+canvas{
+  width:100%;height:200px;display:block;border-radius:6px;
+  background:radial-gradient(120% 120% at 50% 20%,#0d211a,#081310);
+  border:1px solid var(--line);margin:8px 0 6px;
+}
+.readout{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;
+  font-size:12px;margin:6px 0 2px;
+}
+.readout .lab{color:var(--dim)}
+.readout .val{color:var(--am);text-align:right;font-variant-numeric:tabular-nums}
+.badge{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
+  padding:4px 10px;border-radius:5px;margin-top:8px;
+  border:1px solid var(--line);background:var(--bg);
+}
+.badge.ok{color:var(--lit);border-color:rgba(127,224,192,.55);background:rgba(127,224,192,.08)}
+.badge.bad{color:var(--red);border-color:rgba(255,109,109,.6);background:rgba(255,109,109,.1)}
+#failb{display:none;margin-top:10px;color:var(--red);border:1px solid rgba(255,109,109,.6);
+  background:rgba(255,109,109,.1);padding:9px 11px;border-radius:6px;font-size:12.5px}
+.wall-note{border-left:2px solid var(--wall);padding-left:10px;color:var(--red)}
+.grave del{color:#6f8a7e;text-decoration:line-through;text-decoration-color:rgba(255,109,109,.7)}
+.grave .fix{color:var(--ink)}
+.btn{
+  font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+  background:var(--bg);border:1px solid var(--line);border-radius:6px;
+  padding:6px 12px;margin:4px 6px 2px 0;transition:.15s;
+}
+.btn:hover{border-color:var(--am)}
+.btn.warn:hover{border-color:var(--red);color:var(--red)}
+footer{
+  margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
+  color:var(--dim);font-size:12px;letter-spacing:.04em;
+}
+footer b{color:var(--am)}
+.eq{color:var(--am);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE MOLECULAR DYNAMICS</h1>
+  <p class="sub">Push atoms with forces, step them in time, and watch matter behave. Pairwise <b>Lennard-Jones</b> forces integrated by <b>velocity Verlet</b> &mdash; a symplectic map that keeps total energy bounded, so a box of classical particles obeys statistical mechanics you can simulate. Rendered, not quoted.</p>
+  <p class="src">
+    <span class="tag t-amber">SOURCE</span>
+    Alder &amp; Wainwright, &ldquo;Studies in Molecular Dynamics. I. General Method,&rdquo; <i>J. Chem. Phys.</i> <b>31</b>(2), 459&ndash;466 (1959) &mdash;
+    <a href="https://doi.org/10.1063/1.1730376" target="_blank" rel="noopener">doi:10.1063/1.1730376</a>
+  </p>
+</header>
+
+<div class="ocho">
+
+  <!-- LEFT: BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">BLUE TEAM &middot; BUILDS &amp; DEFENDS</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <div class="wtitle">THE MODEL <span class="k">/ what is asserted</span></div>
+      <p>Each atom is a classical point mass. Every pair feels the Lennard-Jones potential</p>
+      <p class="eq">V(r) = 4&epsilon;[(&sigma;/r)<sup>12</sup> &minus; (&sigma;/r)<sup>6</sup>]</p>
+      <p>repulsive core, attractive tail, minimum <b>&minus;&epsilon;</b> at exactly <b>r = 2<sup>1/6</sup>&sigma;</b>. The force on <code>i</code> is the sum of pair forces along each separation. Time advances by <b>velocity Verlet</b>: half-kick the velocity, drift the position, recompute forces, half-kick again. In the NVE ensemble &mdash; no thermostat &mdash; the map conserves total energy and (from equal-and-opposite pair forces) total momentum.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <div class="wtitle">THE LINEAGE <span class="k">/ where it connects</span></div>
+      <p><b>Atoms stepped by forces.</b> Alder &amp; Wainwright (1959) ran the first molecular-dynamics simulation on a computer. The forces here are <b>the-lennard-jones</b> pair potential; the stepper is <b>the-symplectic-integrator</b> (velocity Verlet). Together they turn a force law into <b>statistical mechanics you can simulate</b> &mdash; temperature, pressure, phase behaviour emerging from Newton alone.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <div class="wtitle">THE WITNESS <span class="k">/ live re-check</span></div>
+      <p>Re-runs <code>selfcheck()</code> against the live engine: energy bounded under Verlet, momentum conserved, the map time-reversible, temperature = equipartition. It also arms the planted void in window 6 and confirms the tamper is caught.</p>
+      <div id="auditout" class="badge">witness idle</div>
+    </div>
+  </div>
+
+  <!-- CENTER: THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">THE MACHINE &middot; THE MD LOOP</div>
+
+    <div class="win panel">
+      <span class="num">4</span>
+      <div class="wtitle">DATA IN <span class="tag t-in">IN &darr;</span></div>
+      <p>Six atoms near an FCC-corner spacing (<code>r &asymp; 2<sup>1/6</sup>&sigma;</code>), seeded random nudges and velocities, <b>net momentum removed</b>. Reduced units: &epsilon;=&sigma;=m=k<sub>B</sub>=1, dt=0.004.</p>
+
+      <div class="flow">&darr; &darr; &darr;</div>
+
+      <div style="text-align:center">
+        <span class="num" style="position:static;display:inline-flex;margin-bottom:6px">0</span>
+      </div>
+      <div class="wtitle">THE PANEL <span class="tag t-lit">LIT</span></div>
+      <p style="margin-top:2px">Live velocity-Verlet MD. Positions projected x&ndash;y; total energy tracked every step.</p>
+      <canvas id="cv" width="440" height="200"></canvas>
+      <div class="readout">
+        <span class="lab">temperature T</span><span class="val" id="rT">&mdash;</span>
+        <span class="lab">kinetic KE</span><span class="val" id="rK">&mdash;</span>
+        <span class="lab">potential PE</span><span class="val" id="rP">&mdash;</span>
+        <span class="lab">total E</span><span class="val" id="rE">&mdash;</span>
+        <span class="lab">|momentum|</span><span class="val" id="rM">&mdash;</span>
+        <span class="lab">E drift (rel)</span><span class="val" id="rD">&mdash;</span>
+      </div>
+
+      <div class="flow">&darr; &darr; &darr;</div>
+
+      <div class="wtitle">DATA OUT <span class="tag t-out">OUT &darr;</span></div>
+      <p style="margin-top:2px">Over the fixed selfcheck run: Verlet keeps <code>&Delta;E/E</code> bounded while Euler drifts &mdash; the proven separation.</p>
+      <div id="litbadge" class="badge">booting&hellip;</div>
+      <div id="failb"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">RED TEAM &middot; ATTACKS &amp; BREAKS</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <div class="wtitle">THE ADVERSARY <span class="tag t-wall">WALL</span></div>
+      <p class="wall-note">&ldquo;Just step it however &mdash; a smaller dt fixes any integrator.&rdquo; False. Non-symplectic steppers (forward Euler, plain RK4) have no bounded energy invariant; error accumulates <b>secularly</b> and the NVE ensemble is destroyed at every dt. Shrinking dt only delays the blow-up; it does not conserve energy. The wall is that <b>structure</b>, not step size, buys conservation.</p>
+    </div>
+
+    <div class="win grave">
+      <span class="num">2</span>
+      <div class="wtitle">THE GRAVEYARD <span class="k">/ struck claims</span></div>
+      <p><del>Total energy is conserved because forces are computed exactly.</del><br><span class="fix">&rarr; Forces being exact does not conserve energy &mdash; the <b>integrator</b> does. Verlet conserves a shadow Hamiltonian; Euler does not.</span></p>
+      <p><del>Temperature is an input you set.</del><br><span class="fix">&rarr; In NVE, T is <b>read out</b> from motion: T = (2/DIM)&middot;KE/(N&middot;k<sub>B</sub>) by equipartition.</span></p>
+      <p><del>The LJ minimum sits at r = &sigma;.</del><br><span class="fix">&rarr; V(&sigma;)=0. The minimum is at <b>r = 2<sup>1/6</sup>&sigma;</b>, depth <b>&minus;&epsilon;</b>.</span></p>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <div class="wtitle">THE TAMPER <span class="k">/ planted void</span></div>
+      <p>Disclosed sabotage: swap velocity Verlet for <b>the-forward-euler</b> stepper. Energy then drifts secularly and NVE is no longer conserved &mdash; the energy-bound check in window 7 fails and flips red.</p>
+      <button class="btn warn" id="tamper">inject forward-Euler</button>
+      <button class="btn" id="restore">restore Verlet</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE MOLECULAR DYNAMICS &mdash; a LIT instrument in WORLD II &middot; THE FOLD of the ud0 corpus.
+  The engine computes live; the witness re-proves it; the void is disclosed, not hidden.
+  Built by <b>David Lee Wise (ROOT0)</b> with AVAN.
+</footer>
+</div>
+
+<script>
+// ============================================================
+// ENGINE + SELFCHECK  (pure logic; runs with no canvas/DOM)
+// ============================================================
+var KB=1.0, EPS=1.0, SIG=1.0, MASS=1.0, DIM=3;
+var TAMPER=false;                 // disclosed planted-void flag
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+function ljPair(r2){
+  var s2=SIG*SIG/r2, s6=s2*s2*s2, s12=s6*s6;
+  var pe=4*EPS*(s12-s6);
+  var fscalar=24*EPS*(2*s12-s6)/r2;   // (force magnitude)/r, along separation
+  return {pe:pe, fscalar:fscalar};
+}
+function ljMinR(){return Math.pow(2,1/6)*SIG;}
+
+function computeForces(pos){
+  var N=pos.length, f=[], i, j;
+  for(i=0;i<N;i++)f.push([0,0,0]);
+  var pe=0;
+  for(i=0;i<N;i++)for(j=i+1;j<N;j++){
+    var dx=pos[i][0]-pos[j][0], dy=pos[i][1]-pos[j][1], dz=pos[i][2]-pos[j][2];
+    var r2=dx*dx+dy*dy+dz*dz;
+    var p=ljPair(r2); pe+=p.pe; var fs=p.fscalar;
+    f[i][0]+=fs*dx; f[i][1]+=fs*dy; f[i][2]+=fs*dz;   // Newton third law:
+    f[j][0]-=fs*dx; f[j][1]-=fs*dy; f[j][2]-=fs*dz;   // equal and opposite
+  }
+  return {f:f, pe:pe};
+}
+function kinetic(vel){var k=0,i;for(i=0;i<vel.length;i++){var v=vel[i];k+=0.5*MASS*(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);}return k;}
+function temperature(vel){return (2/DIM)*kinetic(vel)/(vel.length*KB);}
+function momentum(vel){var p=[0,0,0],i;for(i=0;i<vel.length;i++){var v=vel[i];p[0]+=MASS*v[0];p[1]+=MASS*v[1];p[2]+=MASS*v[2];}return p;}
+function clone(a){return a.map(function(r){return r.slice();});}
+
+// one integrator step; mutates pos/vel; returns potential energy after the step.
+// TAMPER=false : velocity Verlet (symplectic).  TAMPER=true : forward Euler (drifts).
+function step(pos,vel,dt){
+  var N=pos.length, i, k, a0=computeForces(pos).f;
+  if(TAMPER){
+    for(i=0;i<N;i++)for(k=0;k<3;k++){ pos[i][k]+=vel[i][k]*dt; vel[i][k]+=a0[i][k]*dt; }
+    return computeForces(pos).pe;
+  }
+  for(i=0;i<N;i++)for(k=0;k<3;k++) pos[i][k]+=vel[i][k]*dt+0.5*a0[i][k]*dt*dt;
+  var r=computeForces(pos), a1=r.f;
+  for(i=0;i<N;i++)for(k=0;k<3;k++) vel[i][k]+=0.5*(a0[i][k]+a1[i][k])*dt;
+  return r.pe;
+}
+
+function makeSystem(){
+  var rnd=mulberry32(0x1959), d=ljMinR(), pos=[], vel=[], i;
+  var base=[[0,0,0],[d,0,0],[0,d,0],[0,0,d],[d,d,0],[d,0,d]];
+  for(i=0;i<base.length;i++)pos.push([base[i][0]+(rnd()-0.5)*0.15, base[i][1]+(rnd()-0.5)*0.15, base[i][2]+(rnd()-0.5)*0.15]);
+  for(i=0;i<base.length;i++)vel.push([(rnd()-0.5)*0.4,(rnd()-0.5)*0.4,(rnd()-0.5)*0.4]);
+  var p=momentum(vel), N=vel.length;
+  for(i=0;i<N;i++){ vel[i][0]-=p[0]/N; vel[i][1]-=p[1]/N; vel[i][2]-=p[2]/N; }  // zero net momentum
+  return {pos:pos, vel:vel};
+}
+
+// fixed-seed run: returns energy envelope + peak momentum drift
+function runEnvelope(dt,steps){
+  var s=makeSystem(), pos=clone(s.pos), vel=clone(s.vel);
+  var pe=computeForces(pos).pe, E0=kinetic(vel)+pe, emin=E0, emax=E0, pmax=0, t;
+  for(t=0;t<steps;t++){
+    pe=step(pos,vel,dt);
+    var E=kinetic(vel)+pe; if(E<emin)emin=E; if(E>emax)emax=E;
+    var m=momentum(vel), mm=Math.hypot(m[0],m[1],m[2]); if(mm>pmax)pmax=mm;
+  }
+  return {E0:E0, rel:(emax-emin)/Math.abs(E0), pmax:pmax};
+}
+
+function assert(c,msg){ if(!c) throw new Error("selfcheck failed: "+msg); }
+
+// Fail-loud proof. Returns true. Saves/restores the tamper flag.
+function selfcheck(){
+  var saved=TAMPER;
+  try{
+    // 1. LJ closed form: minimum is exactly -EPS at r = 2^(1/6) sigma, force zero there.
+    var rm=ljMinR(), atMin=ljPair(rm*rm);
+    assert(Math.abs(atMin.pe-(-EPS))<1e-12, "LJ minimum depth must be -EPS");
+    assert(Math.abs(atMin.fscalar)<1e-9,    "LJ force must vanish at the minimum");
+    assert(Math.abs(ljPair(SIG*SIG).pe)<1e-12, "V(sigma) must be exactly 0");
+
+    // 2. temperature = equipartition relation, exactly.
+    var s=makeSystem();
+    assert(Math.abs(temperature(s.vel)-(2/DIM)*kinetic(s.vel)/(s.vel.length*KB))<1e-12, "T must equal (2/DIM)KE/(N kB)");
+
+    // 3. Verlet (untampered) NVE: energy bounded, momentum conserved to machine eps.
+    TAMPER=false;
+    var V=runEnvelope(0.004,500);
+    assert(V.rel<1e-3, "Verlet energy must stay bounded (no secular drift)");
+    assert(V.pmax<1e-9, "total momentum must stay zero");
+
+    // 4. velocity Verlet is time-reversible: run forward, flip v, run forward, return to start.
+    var q=makeSystem(), pos=clone(q.pos), vel=clone(q.vel), p0=clone(pos), n=200, dt=0.004, t, i, k;
+    for(t=0;t<n;t++)step(pos,vel,dt);
+    for(i=0;i<vel.length;i++){vel[i][0]=-vel[i][0];vel[i][1]=-vel[i][1];vel[i][2]=-vel[i][2];}
+    for(t=0;t<n;t++)step(pos,vel,dt);
+    var md=0; for(i=0;i<pos.length;i++)for(k=0;k<3;k++)md=Math.max(md,Math.abs(pos[i][k]-p0[i][k]));
+    assert(md<1e-9, "velocity Verlet must be time-reversible");
+
+    // 5. PLANTED VOID: swap in forward Euler -> energy now drifts, NVE broken, check fails.
+    TAMPER=true;
+    var E=runEnvelope(0.004,500);
+    assert(E.rel>1e-2, "tamper must make the energy DRIFT beyond the bound");
+    assert(E.rel>50*V.rel, "Euler drift must dwarf the Verlet bound");
+
+    return true;
+  } finally {
+    TAMPER=saved;   // always restore the disclosed flag
+  }
+}
+
+/* ===== UI ===== */
+(function(){
+  var litb=document.getElementById("litbadge");
+  var failb=document.getElementById("failb");
+  var audit=document.getElementById("auditout");
+  var ok=false;
+  try{
+    ok=selfcheck();
+    litb.className="badge ok";
+    litb.textContent="LIT — energy bounded under Verlet; Euler drifts; witness armed";
+  }catch(e){
+    failb.style.display="block";
+    failb.textContent="✗ "+e.message;
+    litb.className="badge bad";
+    litb.textContent="ENGINE DARK — selfcheck threw";
+    throw e;   // rethrow: fail loud
+  }
+
+  function runWitness(){
+    try{
+      var pass=selfcheck();
+      var euler=(TAMPER===true);
+      if(euler){
+        // live engine is currently tampered: witness reports the caught void
+        audit.className="badge bad";
+        audit.textContent="✗ TAMPER CAUGHT — Euler injected; energy drifting, NVE broken";
+      }else if(pass){
+        audit.className="badge ok";
+        audit.textContent="✓ WITNESS — energy bounded, momentum 0, map reversible, T=equipartition";
+      }
+    }catch(err){
+      audit.className="badge bad";
+      audit.textContent="✗ WITNESS — "+err.message;
+    }
+  }
+  runWitness();
+
+  // ---- live canvas MD (drawing only; correctness lives above) ----
+  var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+  var W=cv.width, H=cv.height;
+  var live=makeSystem(), pos=live.pos, vel=live.vel, dt=0.004;
+  var pe=computeForces(pos).pe, E0=kinetic(vel)+pe, emin=E0, emax=E0;
+  var rT=document.getElementById("rT"), rK=document.getElementById("rK"),
+      rP=document.getElementById("rP"), rE=document.getElementById("rE"),
+      rM=document.getElementById("rM"), rD=document.getElementById("rD");
+
+  function view(){
+    // project x,y; auto-fit to the current spread
+    var minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9,i;
+    for(i=0;i<pos.length;i++){var p=pos[i];
+      if(p[0]<minx)minx=p[0]; if(p[0]>maxx)maxx=p[0];
+      if(p[1]<miny)miny=p[1]; if(p[1]>maxy)maxy=p[1];}
+    var cx=(minx+maxx)/2, cy=(miny+maxy)/2;
+    var span=Math.max(maxx-minx,maxy-miny,2.5)*1.35;
+    var sc=Math.min(W,H)/span;
+    return {cx:cx,cy:cy,sc:sc};
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    var vw=view(), i, j;
+    // bonds within LJ range
+    ctx.lineWidth=1;
+    for(i=0;i<pos.length;i++)for(j=i+1;j<pos.length;j++){
+      var dx=pos[i][0]-pos[j][0],dy=pos[i][1]-pos[j][1],dz=pos[i][2]-pos[j][2];
+      var r=Math.sqrt(dx*dx+dy*dy+dz*dz);
+      if(r<1.6*SIG){
+        var a=Math.max(0,1-(r-1.0)/0.8);
+        ctx.strokeStyle="rgba(127,224,192,"+(0.35*a).toFixed(3)+")";
+        ctx.beginPath();
+        ctx.moveTo(W/2+(pos[i][0]-vw.cx)*vw.sc, H/2+(pos[i][1]-vw.cy)*vw.sc);
+        ctx.lineTo(W/2+(pos[j][0]-vw.cx)*vw.sc, H/2+(pos[j][1]-vw.cy)*vw.sc);
+        ctx.stroke();
+      }
+    }
+    for(i=0;i<pos.length;i++){
+      var px=W/2+(pos[i][0]-vw.cx)*vw.sc, py=H/2+(pos[i][1]-vw.cy)*vw.sc;
+      var depth=pos[i][2];
+      var rad=6+depth*0.6;
+      if(rad<3)rad=3;
+      var g=ctx.createRadialGradient(px-rad*0.3,py-rad*0.3,1,px,py,rad);
+      g.addColorStop(0, TAMPER?"#ffd0d0":"#d6fff0");
+      g.addColorStop(1, TAMPER?"#c23b3b":"#2f9d7c");
+      ctx.fillStyle=g;
+      ctx.beginPath();ctx.arc(px,py,rad,0,7);ctx.fill();
+    }
+  }
+  function tick(){
+    var k, sub=4;
+    for(k=0;k<sub;k++) pe=step(pos,vel,dt);
+    var ke=kinetic(vel), E=ke+pe;
+    if(E<emin)emin=E; if(E>emax)emax=E;
+    var m=momentum(vel);
+    rT.textContent=temperature(vel).toFixed(4);
+    rK.textContent=ke.toFixed(4);
+    rP.textContent=pe.toFixed(4);
+    rE.textContent=E.toFixed(4);
+    rM.textContent=Math.hypot(m[0],m[1],m[2]).toExponential(2);
+    var rel=Math.abs(E0)>0?((emax-emin)/Math.abs(E0)):0;
+    rD.textContent=rel.toExponential(2);
+    rD.style.color = (TAMPER? "var(--red)":"var(--am)");
+    draw();
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  // ---- tamper controls ----
+  function reseat(){
+    var s=makeSystem(); pos=s.pos; vel=s.vel;
+    pe=computeForces(pos).pe; E0=kinetic(vel)+pe; emin=E0; emax=E0;
+  }
+  document.getElementById("tamper").addEventListener("click",function(){
+    TAMPER=true; reseat(); runWitness();
+  });
+  document.getElementById("restore").addEventListener("click",function(){
+    TAMPER=false; reseat(); runWitness();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE RADEMACHER COMPLEXITY · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff7a7a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,122,122,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,122,122,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,122,122,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+.bignum{font-size:30px;font-weight:700;color:var(--am);letter-spacing:1px;}
+.stat{background:#0a130c;border:1px solid var(--line);border-radius:6px;padding:9px 11px;margin:8px 0;}
+table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px;} th,td{border:1px solid var(--line);padding:2px 4px;text-align:center;} th{color:var(--dim);}
+.mono{font-family:inherit;}
+.sig .p{color:var(--gr);font-weight:700;} .sig .m{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE RADEMACHER COMPLEXITY</h1>
+ <p class="sub">Capacity is not a fixed number of a class &mdash; it is measured <b>on your data</b>: how well the class can fit pure coin-flips. Line up your sample, throw random signs <b class="k">&sigma; &isin; {&plusmn;1}</b> at it, and ask the class to correlate with the noise as hard as it can. The average best correlation <b>is</b> the complexity. Down the center, data flows: the sample and its <b class="k">2<sup>m</sup></b> sign patterns go <b style="color:var(--cy)">in</b>, the engine takes the <b>sup</b> then the mean, and R comes <b style="color:var(--gr)">out</b> &mdash; exact, by enumeration. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Bartlett &amp; Mendelson, <i>Rademacher and Gaussian Complexities: Risk Bounds and Structural Results</i>, JMLR <b>3</b> (2002) 463&ndash;482 &mdash; <a href="https://www.jmlr.org/papers/v3/bartlett02a.html">jmlr.org/papers/v3/bartlett02a.html</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — sup over h, mean over &sigma;</h2>
+   <p>Fix a sample of <b>m</b> points. A random sign vector <b class="k">&sigma;</b> labels them by coin-flip. The class earns its capacity by <b>correlating</b> with that noise:</p>
+   <p class="mono" style="color:#eafff0">R(H) = E<sub>&sigma;</sub> [ <b class="k">sup</b><sub>h&isin;H</sub> (1/m) &Sigma;<sub>i</sub> &sigma;<sub>i</sub> h(x<sub>i</sub>) ]</p>
+   <p>Two operators, in order: the <b>sup</b> is worst-case &mdash; the single best-aligned hypothesis for THIS sign pattern. The <b>mean</b> over all <b class="k">2<sup>m</sup></b> equally-likely &sigma; is exact, no sampling. The current class H, as label vectors on the m points:</p>
+   <div id="classbox" class="small"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — VC, made real-valued <span class="tag t-amber">AVAN</span></h2>
+   <p>The <a href="https://davidwise01.github.io/the-vc-dimension/" style="color:var(--cy)">VC dimension</a> counts the largest sample a class can <i>shatter</i> &mdash; a coarse, combinatorial, worst-case-over-all-distributions integer.</p>
+   <p>Rademacher complexity is that same idea made <b>data-dependent</b> and <b>real-valued</b>: not "can it shatter <i>some</i> m points" but "how much does it correlate with noise on <i>these</i> points". A class that shatters the sample scores <b class="k">R = 1</b>; VC is recovered as the loose ceiling. Each sphere is the next one's premise: VC in, a tighter, distribution-aware capacity out.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute R for the two exactly-known classes (a shattering class must give <b class="k">1</b>, a constant hypothesis <b class="k">0</b>), confirm Massart's bound holds, and confirm the generalization gap stays covered over fixed-seed samples. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — sample &amp; sign patterns <span class="tag t-in">in &darr;</span></h2>
+   <p>Two things feed the engine: a <b>sample</b> of m points (here abstract indices x<sub>1</sub>&hellip;x<sub>m</sub>) and the full set of <b class="k">2<sup>m</sup></b> random-sign labelings <b class="k">&sigma; &isin; {&minus;1,+1}<sup>m</sup></b>. Every &sigma; is one throw of m fair coins; enumerating all of them makes the expectation <b>exact</b>, not sampled.</p>
+   <p class="small">A hypothesis h is a labeling of the same m points into <b>{&minus;1,+1}</b>. The class H is a set of such labelings &mdash; that is the whole input to the panel below.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed sample + signs into the engine &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>class H</label>
+      <select id="cls">
+       <option value="threshold">thresholds (m+1 hyps)</option>
+       <option value="interval">intervals</option>
+       <option value="shatter">shatters all 2&#8319;</option>
+       <option value="constant">constant (1 hyp)</option>
+      </select></div>
+     <div class="row"><label>points m</label>
+      <select id="mm"><option>3</option><option selected>4</option><option>5</option><option>6</option></select></div>
+     <p class="small" id="aggnote">Aggregation over h: <b style="color:var(--gr)">SUP</b> &mdash; worst-case, the definition.</p>
+    </div>
+    <div class="readout">
+     <div class="stat"><span class="small">empirical Rademacher complexity R(H)</span><br><span class="bignum" id="rval">&mdash;</span></div>
+     <div class="verdict" id="shatv"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">All <b class="k">2<sup>m</sup></b> sign patterns for the current class &mdash; the winning hypothesis and its per-pattern correlation (1/m)&middot;sup&lang;&sigma;,h&rang;:</p>
+   <div style="max-height:210px;overflow:auto"><table id="sigTbl"><thead><tr><th>&sigma; (signs)</th><th>best h</th><th>(1/m)&middot;&lang;&sigma;,h&rang;</th></tr></thead><tbody id="sigBody"></tbody></table></div>
+   <p class="small" style="margin-top:6px">Change the class or m &mdash; R is enumerated on the spot from every &sigma;, never looked up.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits R and its bounds &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — R and its bounds <span class="tag t-out">out &darr;</span></h2>
+   <p>What the machine proves, by exact counting: R for the current class (left), and the two anchors that pin the scale &mdash; a class that realizes <b>every</b> sign pattern (shatters the sample) hits the maximum <b class="k">R = 1</b>; a single constant hypothesis hits <b class="k">R = 0</b>. From R fall two guarantees:</p>
+   <table><thead><tr><th>quantity</th><th>value (current)</th></tr></thead><tbody id="outBody"></tbody></table>
+   <div id="litbadge"></div>
+   <p class="small">Massart's finite-class bound and the Rademacher generalization bound; the blue witness (left) confirms them live, the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Rademacher complexity is a number about <b>one sample from one distribution</b>, not a fixed property of the class. Change the data and it changes. For a rich or infinite H the inner <b>sup</b> is a hard optimization &mdash; exact enumeration only works because this sample and class are small.</div>
+   <p class="small" style="margin-top:8px">The <i>empirical</i> R here differs from the <i>expected</i> R over the distribution; the generalization theorem's tight constant is subtle (for 0&ndash;1 loss the loss-class Rademacher is half the classifier-class R, so the bound below is a valid but loose <b>2R</b>). "Data-dependent" cuts both ways: sharper when you can compute it, useless when you cannot.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Rademacher complexity is just VC dimension in disguise."</s> <b>Cut.</b> VC is a distribution-free integer; Rademacher is a real number on your actual sample &mdash; strictly finer, and it can be small where VC is large.</p>
+   <p class="grave"><s>"Take the average correlation over the whole class."</s> <b>Cut.</b> The definition is the <b>sup</b>, worst-case over h. Averaging (the planted tamper) under-estimates capacity and erodes the bound's safety margin.</p>
+   <p class="grave"><s>"Estimate R by sampling a few sign vectors."</s> <b>Kept, corrected.</b> Legitimate for large m &mdash; but then it is an <i>estimate</i>. Here m is small, so all 2<sup>m</sup> are enumerated and R is exact.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: swap the inner <b>sup</b><sub>h</sub> for a <b>mean</b><sub>h</sub> &mdash; an average-case correlation instead of worst-case. R is under-estimated, so <b>2R</b> shrinks and the generalization bound's safety margin erodes. The blue witness (window 7) is watching the exact anchor.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; sup &rarr; mean</button><button id="restore">&#8635; restore sup</button></div>
+   <p class="small" id="tampernote">Replace the worst-case sup with the average over h and a shattering class drops from R=1 to R=0 &mdash; the witness recomputes, the anchor breaks, the badge turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE RADEMACHER COMPLEXITY — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (sample + sign patterns <b style="color:var(--cy)">in</b> &rarr; sup-then-mean engine &rarr; R <b style="color:var(--gr)">out</b>). A runnable rendering of Bartlett &amp; Mendelson's JMLR 2002 paper &mdash; the engine is LIT (R enumerated exactly over all 2<sup>m</sup> signs, shatter&rarr;1 / constant&rarr;0 self-checked, Massart and the generalization gap verified over fixed-seed samples, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one sample cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* fixed-seed PRNG (mulberry32) — makes every empirical check deterministic */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* all 2^m sign vectors in {-1,+1}^m — enumerated, not sampled */
+function allSigns(m){ const out=[]; for(let b=0;b<(1<<m);b++){ const v=[]; for(let i=0;i<m;i++) v.push(((b>>i)&1)?1:-1); out.push(v); } return out; }
+
+/* hypothesis classes: each is a set of label vectors in {-1,+1}^m */
+function classConstant(m){ return [ new Array(m).fill(1) ]; }
+function classShatter(m){ return allSigns(m); }                       /* realizes every pattern */
+function classThreshold(m){ const H=[]; for(let k=0;k<=m;k++){ const v=[]; for(let i=0;i<m;i++) v.push(i<k?-1:1); H.push(v); } return H; }
+function classInterval(m){ const seen=new Set(),H=[]; for(let a=0;a<=m;a++) for(let b=a;b<=m;b++){ const v=[]; for(let i=0;i<m;i++) v.push((i>=a&&i<b)?1:-1); const k=v.join(","); if(!seen.has(k)){ seen.add(k); H.push(v);} } return H; }
+function makeClass(name,m){ return name==="constant"?classConstant(m):name==="shatter"?classShatter(m):name==="interval"?classInterval(m):classThreshold(m); }
+
+let TAMPER=false; /* when true: aggregate over h with MEAN instead of SUP — average-case, under-estimates capacity */
+
+function dot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
+
+/* per-sign-pattern winner: the hypothesis maximizing (1/m)<sigma,h> and its correlation */
+function bestFor(H,s,m){ let mx=-Infinity,arg=H[0]; for(const h of H){ const c=dot(s,h)/m; if(c>mx){ mx=c; arg=h; } } return {val:mx,h:arg}; }
+
+/* empirical Rademacher complexity R(H) = E_sigma[ agg_h (1/m)<sigma,h> ], exact over all 2^m signs */
+function rademacher(H,m){
+ const signs=allSigns(m); let total=0;
+ for(const s of signs){
+  let val;
+  if(!TAMPER){ let mx=-Infinity; for(const h of H){ const c=dot(s,h)/m; if(c>mx) mx=c; } val=mx; }        /* SUP — worst case (definition) */
+  else { let sum=0; for(const h of H) sum+=dot(s,h)/m; val=sum/H.length; }                                /* MEAN — average case (tamper) */
+  total+=val;
+ }
+ return total/signs.length;
+}
+
+/* Massart finite-class bound: R(H) <= sqrt(2 ln|H| / m) */
+function massart(H,m){ return Math.sqrt(2*Math.log(H.length)/m); }
+
+/* generalization-gap coverage on a fixed finite population: sup_h(trueErr-empErr) vs 2R + sqrt(ln(1/delta)/(2m)).
+   Over fixed-seed samples the empirical exceedance frequency must be <= delta. */
+function gapCoverage(){
+ const m=6, delta=0.1, T=6000, N=20;
+ const Y=[]; for(let i=0;i<N;i++) Y.push(i<10?-1:1);      /* population labels: a threshold at N/2 */
+ for(const j of [3,7,12,16]) Y[j]=-Y[j];                   /* fixed label noise -> nonzero, variable gap */
+ const trueErr=[]; for(let k=0;k<=N;k++){ let e=0; for(let i=0;i<N;i++){ const pred=(i>=k)?1:-1; if(pred!==Y[i]) e++; } trueErr.push(e/N); }
+ const R=rademacher(classThreshold(m),m);                  /* empirical Rademacher of thresholds on m points */
+ const B=2*R+Math.sqrt(Math.log(1/delta)/(2*m));
+ const rnd=mulberry32(20260811); let exceed=0;
+ for(let tr=0;tr<T;tr++){
+  const idx=[]; for(let s=0;s<m;s++) idx.push((rnd()*N)|0);
+  let gap=-Infinity;
+  for(let k=0;k<=N;k++){ let e=0; for(const i of idx){ const pred=(i>=k)?1:-1; if(pred!==Y[i]) e++; } const g=trueErr[k]-e/m; if(g>gap) gap=g; }
+  if(gap>B) exceed++;
+ }
+ return { exceed:exceed/T, delta:delta, B:B, R:R };
+}
+
+/* fail-loud self-check — throws on any violation; returns true on success */
+function selfcheck(){
+ const t=(c,msg)=>{ if(!c) throw new Error(msg); };
+ const save=TAMPER; TAMPER=false;
+ const m=5;
+ /* exact anchors: enumeration must match the closed-form values to 1e-12 */
+ const Rsh=rademacher(classShatter(m),m);
+ t(Math.abs(Rsh-1)<1e-12,"a class that shatters the sample must have R=1 (maximal)");
+ const Rc=rademacher(classConstant(m),m);
+ t(Math.abs(Rc-0)<1e-12,"a single constant hypothesis must have R=0");
+ /* capacity ordering: constant <= threshold <= shatter */
+ const Rth=rademacher(classThreshold(m),m);
+ t(Rc<=Rth+1e-12 && Rth<=Rsh+1e-12,"capacity must order constant <= threshold <= shatter");
+ t(Rth>1e-9,"the threshold class must have strictly positive capacity");
+ /* Massart's finite-class bound must hold exactly for finite classes */
+ for(const H of [classThreshold(m),classInterval(m),classConstant(m)]){
+  t(rademacher(H,m)<=massart(H,m)+1e-12,"Massart bound R<=sqrt(2 ln|H|/m) must hold, |H|="+H.length);
+ }
+ /* generalization gap: fixed-seed empirical exceedance must be <= delta */
+ const cov=gapCoverage();
+ t(cov.exceed<=cov.delta+1e-12,"gap coverage: exceedance freq "+cov.exceed+" must be <= delta "+cov.delta);
+ /* the TAMPER (mean-over-h instead of sup) must break the sup-definition and under-cover */
+ TAMPER=true;
+ const RshT=rademacher(classShatter(m),m);
+ t(Math.abs(RshT-Rsh)>1e-9,"TAMPER must change the value: mean-over-h no longer matches the sup-definition");
+ t(RshT<Rsh,"TAMPER must UNDER-estimate capacity (mean < sup): shatter drops below 1");
+ t(Math.abs(RshT-0)<1e-12,"under the tamper a shattering class collapses to R=0 (mean of all patterns is 0)");
+ t(rademacher(classThreshold(m),m)<Rth-1e-12,"TAMPER must under-estimate the threshold class too");
+ /* a shrunken R shrinks the 2R term of the gap bound — the safety margin erodes */
+ const slack=Math.sqrt(Math.log(1/gapCoverage().delta)/(2*5));
+ t(2*RshT+slack < 2*Rsh+slack-1e-9,"TAMPER must shrink the 2R+slack generalization bound");
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const sigStr=s=>'<span class="sig mono">'+s.map(x=>x>0?'<span class="p">+</span>':'<span class="m">&minus;</span>').join('')+'</span>';
+const hStr=h=>'<span class="sig mono">'+h.map(x=>x>0?'<span class="p">+</span>':'<span class="m">&minus;</span>').join('')+'</span>';
+function cur(){ return { cls:$("cls").value, m:+$("mm").value }; }
+
+function render(){
+ const {cls,m}=cur(); const H=makeClass(cls,m);
+ const R=rademacher(H,m), Bm=massart(H,m);
+ $("classbox").innerHTML='|H| = <b class="k">'+H.length+'</b> hypotheses on '+m+' points:<br>'+H.map(hStr).join('&nbsp; ')+
+  (cls==="shatter"?'<br><span class="mut">= every one of 2<sup>'+m+'</sup> labelings</span>':'');
+ $("rval").textContent=R.toFixed(6);
+ const shatters=(H.length===(1<<m));
+ $("shatv").textContent=shatters?"SHATTERS — R = 1 (maximal)":(H.length===1?"CONSTANT — R = 0":"partial capacity");
+ $("shatv").className="verdict "+((shatters||H.length===1)?"ok":"no");
+ $("reason").textContent = TAMPER
+  ? "TAMPER ON — inner sup replaced by mean over h; R is under-estimated (average-case correlation, not worst-case)."
+  : (shatters?"the class realizes every sign pattern, so it correlates perfectly with any noise":"sup over h picks the single best-aligned hypothesis for each sign pattern");
+ /* per-pattern table */
+ const signs=allSigns(m);
+ $("sigBody").innerHTML=signs.map(s=>{ const b=bestFor(H,s,m); return '<tr><td>'+sigStr(s)+'</td><td>'+hStr(b.h)+'</td><td class="k">'+b.val.toFixed(4)+'</td></tr>'; }).join("");
+ /* out table */
+ const delta=0.1, slack=Math.sqrt(Math.log(1/delta)/(2*m));
+ $("outBody").innerHTML=
+  '<tr><td>R(H) — enumerated over 2<sup>'+m+'</sup> signs</td><td class="k">'+R.toFixed(6)+'</td></tr>'+
+  '<tr><td>Massart bound &radic;(2 ln|H| / m)</td><td>'+(H.length>1?Bm.toFixed(6):'0.000000')+'</td></tr>'+
+  '<tr><td>gap bound 2R + &radic;(ln(1/&delta;)/2m), &delta;=0.1</td><td>'+(2*R+slack).toFixed(6)+'</td></tr>'+
+  '<tr><td>Massart holds (R &le; bound)</td><td class="'+(R<=Bm+1e-12?'':'')+'"><b style="color:'+(R<=Bm+1e-12?'var(--gr)':'var(--wall)')+'">'+(R<=Bm+1e-12?'true':'false')+'</b></td></tr>';
+ $("aggnote").innerHTML="Aggregation over h: "+(TAMPER?'<b style="color:var(--wall)">MEAN</b> &mdash; tampered, under-estimates.':'<b style="color:var(--gr)">SUP</b> &mdash; worst-case, the definition.');
+}
+
+function audit(){
+ const el=$("auditout"); const m=5;
+ const Rsh=rademacher(classShatter(m),m), Rc=rademacher(classConstant(m),m);
+ const th=classThreshold(m), Rth=rademacher(th,m), Bm=massart(th,m);
+ const cov=gapCoverage();
+ const ok = Math.abs(Rsh-1)<1e-9 && Math.abs(Rc)<1e-9 && Rth<=Bm+1e-9 && cov.exceed<=cov.delta+1e-12;
+ el.innerHTML='<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'&#10003; WITNESS — holds':'&#10007; WITNESS — broken')+'</span>'
+  +'<div class="small" style="margin-top:6px">shatter R = <b style="color:'+(Math.abs(Rsh-1)<1e-9?'var(--gr)':'var(--wall)')+'">'+Rsh.toFixed(4)+'</b>/1 &nbsp;·&nbsp; constant R = <b style="color:'+(Math.abs(Rc)<1e-9?'var(--gr)':'var(--wall)')+'">'+Rc.toFixed(4)+'</b>/0 &nbsp;·&nbsp; Massart ✓ '+(Rth<=Bm+1e-9)+' &nbsp;·&nbsp; gap exceedance <b style="color:'+(cov.exceed<=cov.delta+1e-12?'var(--gr)':'var(--wall)')+'">'+cov.exceed.toFixed(3)+'</b> &le; '+cov.delta+(TAMPER?' &nbsp; — <span style="color:var(--wall)">red swapped sup&rarr;mean</span>':'')+'</div>';
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">&#10003; LIT · self-check passed on load</span>';
+ ["cls","mm"].forEach(id=>$(id).addEventListener("change",()=>{ render(); audit(); }));
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>sup &rarr; mean.</b> A shattering class now reads R=0 instead of 1 &mdash; the witness (window 7) recomputed and went red, and the shrunken 2R erodes the gap bound. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Replace the worst-case sup with the average over h and a shattering class drops from R=1 to R=0 — the witness recomputes, the anchor breaks, the badge turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Rademacher engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

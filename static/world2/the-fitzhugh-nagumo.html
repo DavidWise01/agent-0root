@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE FITZHUGH-NAGUMO</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --ground:#0a1710;
+  --ground2:#0e2018;
+  --ink:#e7f2ec;
+  --dim:#9fc7b4;
+  --line:#1e3a2c;
+  --panel:#0d1c15;
+  --blue:#6db8ff;
+  --red:#ff7a86;
+  --amber:#ffc24b;
+  --lit:#7dffb0;
+  --in:#8fd6ff;
+  --out:#b7ff9a;
+  --wall:#ff8f68;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 78% -8%, rgba(200,162,255,.10), transparent 60%),
+    radial-gradient(900px 600px at 8% 108%, rgba(125,255,176,.06), transparent 55%),
+    linear-gradient(160deg,var(--ground),var(--ground2));
+  color:var(--ink);
+  font:15px/1.55 ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  min-height:100vh;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1220px;margin:0 auto}
+header{margin:0 0 22px}
+h1{
+  font-size:clamp(28px,4.6vw,50px);
+  letter-spacing:.06em;margin:0 0 8px;font-weight:800;
+  color:#fff;
+  text-shadow:0 0 22px rgba(200,162,255,.34);
+}
+h1 .dot{color:var(--am)}
+.sub{max-width:70ch;color:var(--dim);margin:0 0 12px;font-size:15.5px}
+.sub b{color:var(--ink)}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted rgba(200,162,255,.5)}
+.src a:hover{border-bottom-style:solid}
+.tag{
+  display:inline-block;font:700 10px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.14em;padding:3px 7px;border-radius:5px;text-transform:uppercase;
+  border:1px solid currentColor;white-space:nowrap;vertical-align:middle;
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--in)}
+.t-out{color:var(--out)}
+.t-wall{color:var(--wall)}
+
+.ocho{
+  display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px;align-items:start;
+}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font:700 12px/1.2 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;
+  padding:9px 12px;border-radius:9px;border:1px solid var(--line);
+  background:rgba(255,255,255,.015);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(109,184,255,.4)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,122,134,.4)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(200,162,255,.45);text-align:center}
+.teamhdr small{display:block;font-weight:400;letter-spacing:.04em;text-transform:none;color:var(--dim);margin-top:3px;font-size:11px}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:11px;
+  background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,.005));
+  padding:13px 14px 14px;
+}
+.win h3{margin:0 0 7px;font-size:13.5px;letter-spacing:.04em;color:#fff;
+  display:flex;align-items:center;gap:8px;padding-right:34px}
+.win p{margin:0 0 8px;font-size:13px;color:var(--dim)}
+.win p:last-child{margin-bottom:0}
+.win .num{
+  position:absolute;top:10px;right:11px;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;font:700 11px/1 ui-monospace,monospace;
+  border:1px solid var(--line);color:var(--dim);background:rgba(0,0,0,.25);
+}
+.col.blue .win .num{color:var(--blue);border-color:rgba(109,184,255,.35)}
+.col.red .win .num{color:var(--red);border-color:rgba(255,122,134,.35)}
+.col.center .win .num{color:var(--am);border-color:rgba(200,162,255,.4)}
+.win.panel{border-color:rgba(200,162,255,.4);background:
+  linear-gradient(180deg,rgba(200,162,255,.06),rgba(200,162,255,.015))}
+
+.eq{font:600 12.5px/1.5 ui-monospace,monospace;color:var(--am);
+  background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0}
+code{font:600 12px/1.4 ui-monospace,monospace;color:var(--lit);
+  background:rgba(0,0,0,.3);padding:1px 5px;border-radius:4px}
+.strike{color:#7d9c8c;text-decoration:line-through;text-decoration-color:var(--red)}
+.wall-note{border-left:3px solid var(--wall);padding-left:11px;color:var(--dim)}
+.flow{display:flex;align-items:center;justify-content:center;gap:8px;
+  color:var(--am);font:700 11px/1 ui-monospace,monospace;letter-spacing:.16em;
+  padding:6px 0;opacity:.85}
+.flow::before,.flow::after{content:"";height:1px;flex:1;
+  background:linear-gradient(90deg,transparent,rgba(200,162,255,.5),transparent)}
+
+canvas{width:100%;height:auto;display:block;border:1px solid var(--line);
+  border-radius:8px;background:#061109;margin:6px 0 2px}
+.ctrls{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--dim);margin-top:6px;flex-wrap:wrap}
+.ctrls input[type=range]{flex:1;min-width:120px;accent-color:var(--am)}
+.readout{font:600 12px/1.5 ui-monospace,monospace;color:var(--ink);margin-top:6px}
+.readout b{color:var(--am)}
+
+.badge{display:inline-block;font:700 11px/1.3 ui-monospace,monospace;letter-spacing:.08em;
+  padding:5px 9px;border-radius:6px;border:1px solid currentColor;margin-top:4px}
+.badge.ok{color:var(--lit)}
+.badge.bad{color:var(--red)}
+button{font:600 12px/1 ui-monospace,monospace;color:var(--ink);cursor:pointer;
+  background:rgba(255,122,134,.09);border:1px solid rgba(255,122,134,.4);
+  border-radius:7px;padding:8px 11px;margin:3px 5px 3px 0}
+button:hover{background:rgba(255,122,134,.18)}
+button.res{background:rgba(125,255,176,.09);border-color:rgba(125,255,176,.4)}
+button.res:hover{background:rgba(125,255,176,.18)}
+#failb{display:none;margin:14px 0;padding:12px 14px;border-radius:10px;
+  border:1px solid var(--red);color:var(--red);background:rgba(255,122,134,.08);
+  font:600 13px/1.5 ui-monospace,monospace}
+footer{margin-top:30px;color:var(--dim);font-size:12.5px;border-top:1px solid var(--line);padding-top:14px}
+footer b{color:var(--ink)}
+.mini{font-size:11.5px;color:#7fa895;margin-top:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE FITZHUGH<span class="dot">-</span>NAGUMO</h1>
+  <p class="sub">Hodgkin&ndash;Huxley boiled down to <b>two variables you can draw in a plane</b>. A cubic voltage nullcline and a slow recovery line give you <b>excitability</b> &mdash; small nudges decay, a nudge past threshold fires a full spike &mdash; and, over a window of drive current, a <b>Hopf limit cycle</b>: the neuron fires again and again. Rendered, not quoted.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    FitzHugh, <i>Impulses and Physiological States in Theoretical Models of Nerve Membrane</i>, Biophys. J. <b>1</b> (1961) 445&ndash;466 &middot;
+    <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1366333/" target="_blank" rel="noopener">PMC1366333</a> &middot;
+    <a href="https://doi.org/10.1016/S0006-3495(61)86902-6" target="_blank" rel="noopener">doi:10.1016/S0006-3495(61)86902-6</a> &middot;
+    Nagumo, Arimoto &amp; Yoshizawa, Proc. IRE <b>50</b> (1962) 2061&ndash;2070.
+    <span class="tag t-amber">params illustrative</span>
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team<small>builds &amp; defends the model</small></div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <h3>THE MODEL</h3>
+      <p>Two state variables: fast voltage-like <code>v</code> and slow recovery <code>w</code>. The dynamics:</p>
+      <div class="eq">dv/dt = v &minus; v&sup3;/3 &minus; w + I<br>dw/dt = &epsilon;(v + a &minus; b&middot;w)</div>
+      <p>The <b>cubic</b> in <code>v</code> makes the voltage nullcline an <b>N-shape</b>; the fast&ndash;slow split (small <code>&epsilon;</code>) makes <code>v</code> jump between the outer branches. That N-shape is the whole trick: it is what lets a threshold exist.</p>
+      <p class="mini">Illustrative constants <code>a=0.7</code>, <code>b=0.8</code>, <code>&epsilon;=0.08</code> (FitzHugh's BVP values). AMBER: dimensionless model, not a fit to a specific cell. No medical advice.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>The spike in <b>two dimensions</b>. Hodgkin&ndash;Huxley has four coupled variables (V, m, h, n); FitzHugh collapsed <code>m</code>&rarr;instantaneous and merged <code>h,n</code> into one recovery <code>w</code>, keeping the <b>excitable&ndash;oscillatory</b> essence.</p>
+      <p>Neighbour: <code>the-hodgkin-huxley</code> &mdash; the full ionic spike &mdash; <b>reduced to a drawable phase plane</b>. Same all-or-none threshold, same refractory shadow, now visible as a loop.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <h3>THE WITNESS</h3>
+      <p>Re-runs the full <code>selfcheck()</code> live against the current engine: fixed point on both nullclines, sub-threshold decay vs supra-threshold spike, the Hopf window, and the cubic N-shape.</p>
+      <div id="auditout" class="badge">auditing&hellip;</div>
+      <p class="mini">If the Red tamper (window 6) flips the nullcline to linear, this badge turns red and names the broken invariant.</p>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine<small>data in &rarr; phase plane &rarr; result out</small></div>
+
+    <div class="win">
+      <span class="num">4</span>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>A drive current <code>I</code> and an initial kick to the resting state. Fixed constants <code>a=0.7</code>, <code>b=0.8</code>, <code>&epsilon;=0.08</code>. Integrated with fixed-step RK4 &mdash; a deterministic seed, no randomness in the verdict.</p>
+    </div>
+
+    <div class="flow">RK4 &darr; INTEGRATE</div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <canvas id="cv" width="440" height="300"></canvas>
+      <div class="ctrls">
+        <label>I</label>
+        <input id="sI" type="range" min="0" max="2" step="0.01" value="0.5">
+        <span id="iv" style="color:var(--am);font-family:ui-monospace,monospace">0.50</span>
+      </div>
+      <div class="ctrls">
+        <label>kick</label>
+        <input id="sK" type="range" min="0" max="1.2" step="0.02" value="0.30">
+        <span id="kv" style="color:var(--am);font-family:ui-monospace,monospace">0.30</span>
+      </div>
+      <div class="readout" id="ro">&nbsp;</div>
+      <p class="mini">White N-curve = v-nullcline (w = v &minus; v&sup3;/3 + I). Purple line = w-nullcline. Green &times; = fixed point. The trajectory is the live spike / limit cycle.</p>
+    </div>
+
+    <div class="flow">&darr; VERDICT</div>
+
+    <div class="win">
+      <span class="num">8</span>
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p>Proven, at boot, over the pure functions: excitability with a real threshold, and a Hopf window <code>I&asymp;[0.34, 1.40]</code> where a stable limit cycle exists &mdash; repetitive firing &mdash; and nowhere outside it.</p>
+      <div id="litbadge" class="badge">&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team<small>attacks &amp; breaks the claim</small></div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note">&ldquo;It is not a real neuron.&rdquo; <b>True.</b> FHN is a caricature: <code>v</code> is not millivolts, there are no separate Na/K currents, and the constants are illustrative, not fitted. It buys geometric clarity by dropping ionic detail.</p>
+      <p class="wall-note">&ldquo;The Hopf window depends on the constants.&rdquo; True &mdash; move <code>a,b,&epsilon;</code> and the window moves. The <b>structure</b> (excitability, an N-nullcline, a Hopf onset of oscillation) is what is claimed, and that is invariant; the exact bounds are AMBER.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p><span class="strike">&ldquo;A bigger kick always gives a bigger spike.&rdquo;</span> &rarr; No &mdash; it is <b>all-or-none</b>. Below threshold the response decays; above it, the spike height barely changes with kick size.</p>
+      <p><span class="strike">&ldquo;More current always means faster firing forever.&rdquo;</span> &rarr; No &mdash; past the upper Hopf point the fixed point re-stabilises (depolarisation block): firing <b>stops</b>.</p>
+      <p><span class="strike">&ldquo;You need all four HH variables to spike.&rdquo;</span> &rarr; No &mdash; two suffice for excitability; the plane shows why.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Drop the cubic: make the v-nullcline <b>linear</b> (<code>dv/dt = v &minus; w + I</code>). No N-fold &rarr; no threshold, no bounded excursion &mdash; trajectories diverge. The Witness (7) catches it.</p>
+      <button id="tamper">Break the nullcline</button>
+      <button id="restore" class="res">Restore</button>
+      <p class="mini" id="tampermsg">Engine intact.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE FITZHUGH-NAGUMO</b> &mdash; WORLD II &middot; THE FOLD &middot; refined OCHO. The engine is genuinely LIT: every number is computed live by pure functions verified by a fail-loud <code>selfcheck()</code> at boot. Biophysical model, illustrative parameters (AMBER); no medical advice.
+  <br>Built by <b>David Lee Wise (ROOT0) with AVAN.</b>
+</footer>
+</div>
+
+<script>
+// ===================================================================
+//  ENGINE + SELFCHECK  (pure logic; runs headless, no canvas/DOM)
+// ===================================================================
+var tamperOn = false;                       // plain top-level flag, NOT on window
+var A = 0.7, B = 0.8, EPS = 0.08;           // illustrative FitzHugh BVP constants
+
+// cubic term of the v-nullcline; tamper drops it (linearises)
+function cubicTerm(v){ return tamperOn ? 0 : (v*v*v/3); }
+
+// dv/dt = v - v^3/3 - w + I ,  dw/dt = eps*(v + a - b w)
+function deriv(v, w, I, a, b, eps){
+  return [ v - cubicTerm(v) - w + I, eps*(v + a - b*w) ];
+}
+
+// w on the v-nullcline (dv/dt = 0)  ->  w = v - v^3/3 + I
+function vNullcline(v, I){ return v - cubicTerm(v) + I; }
+// w on the w-nullcline (dw/dt = 0)  ->  w = (v + a)/b
+function wNullcline(v, a, b){ return (v + a)/b; }
+
+// fixed point: intersection of the two nullclines, via Newton on
+// f(v) = (1 - 1/b) v - v^3/3 + I - a/b = 0
+function findFixedPoint(I, a, b){
+  var v = -1.2;
+  for(var i=0;i<200;i++){
+    var f  = (1 - 1/b)*v - cubicTerm(v) + I - a/b;
+    var df = (1 - 1/b) - (tamperOn ? 0 : v*v);
+    var nv = v - f/df;
+    if(Math.abs(nv - v) < 1e-14){ v = nv; break; }
+    v = nv;
+  }
+  return { v:v, w:(v + a)/b };
+}
+
+// fixed-step RK4 one step
+function rk4(v, w, I, a, b, eps, dt){
+  var k1 = deriv(v, w, I, a, b, eps);
+  var k2 = deriv(v + 0.5*dt*k1[0], w + 0.5*dt*k1[1], I, a, b, eps);
+  var k3 = deriv(v + 0.5*dt*k2[0], w + 0.5*dt*k2[1], I, a, b, eps);
+  var k4 = deriv(v + dt*k3[0],     w + dt*k3[1],     I, a, b, eps);
+  return [ v + dt/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),
+           w + dt/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]) ];
+}
+
+// peak height of v above rest, after kicking the resting state by `kick`
+function peakExcursion(kick, I, a, b, eps){
+  var fp = findFixedPoint(I, a, b);
+  var v = fp.v + kick, w = fp.w, maxv = v, dt = 0.05;
+  for(var i=0;i<8000;i++){
+    var s = rk4(v, w, I, a, b, eps, dt); v = s[0]; w = s[1];
+    if(v > maxv) maxv = v;
+  }
+  return maxv - fp.v;
+}
+
+// peak-to-peak amplitude of v after transient -> detects a limit cycle
+function oscAmplitude(I, a, b, eps){
+  var fp = findFixedPoint(I, a, b);
+  var v = fp.v + 0.1, w = fp.w, dt = 0.05, maxv = -1e9, minv = 1e9;
+  for(var i=0;i<12000;i++){
+    var s = rk4(v, w, I, a, b, eps, dt); v = s[0]; w = s[1];
+    if(i > 4000){ if(v > maxv) maxv = v; if(v < minv) minv = v; }
+  }
+  return maxv - minv;
+}
+
+function assert(cond, msg){ if(!cond) throw new Error(msg); }
+
+// fail-loud; THROWS on any violation; RETURNS true on success
+function selfcheck(){
+  var was = tamperOn;                        // save flag
+  tamperOn = false;                          // verify the true engine
+
+  // (1) fixed point lies on BOTH nullclines (algebraic identity, 1e-6)
+  [0, 0.5, 1.0].forEach(function(I){
+    var fp = findFixedPoint(I, A, B);
+    assert(Math.abs(vNullcline(fp.v, I) - wNullcline(fp.v, A, B)) < 1e-6,
+      "fixed point off the nullcline intersection at I="+I);
+    assert(Math.abs(fp.w - wNullcline(fp.v, A, B)) < 1e-6,
+      "fixed-point w inconsistent at I="+I);
+  });
+
+  // (2) EXCITABILITY: at I=0 a small kick decays, a large kick spikes
+  var sub   = peakExcursion(0.2, 0, A, B, EPS);
+  var supra = peakExcursion(0.8, 0, A, B, EPS);
+  assert(sub  < 0.5,  "sub-threshold kick did not decay (peak "+sub+")");
+  assert(supra > 1.5, "supra-threshold kick did not spike (peak "+supra+")");
+  assert(supra > 3*sub, "no all-or-none threshold separation");
+
+  // (3) HOPF WINDOW: oscillates for I inside, rests outside
+  assert(oscAmplitude(0.5, A, B, EPS) > 2.0, "no limit cycle at I=0.5 (in window)");
+  assert(oscAmplitude(0.0, A, B, EPS) < 0.5, "spurious oscillation at I=0 (below Hopf)");
+  assert(oscAmplitude(2.0, A, B, EPS) < 0.5, "spurious oscillation at I=2 (above Hopf)");
+
+  // (4) CUBIC N-SHAPE: v-nullcline is non-monotone (folds back)
+  assert(Math.abs(vNullcline(1, 0) - (2/3)) < 1e-6,  "cubic local max wrong");
+  assert(Math.abs(vNullcline(-1, 0) - (-2/3)) < 1e-6, "cubic local min wrong");
+  assert(vNullcline(0.5, 0) > vNullcline(1.5, 0),
+    "v-nullcline not folding back -> not an N-shape");
+
+  // (5) DISCLOSED PLANTED VOID: linearise the nullcline; excitability breaks
+  var goodSub = peakExcursion(0.2, 0, A, B, EPS);      // ~0.2, bounded
+  tamperOn = true;                                     // drop the cubic
+  var badSub = peakExcursion(0.2, 0, A, B, EPS);       // must diverge
+  assert(!(Math.abs(badSub) < 10),
+    "tamper undetected: linear nullcline still bounded");
+  assert(Math.abs(badSub) > 100 * Math.abs(goodSub) || !isFinite(badSub),
+    "tamper did not change the result");
+  tamperOn = false;                                    // restore engine
+  var restored = peakExcursion(0.2, 0, A, B, EPS);
+  assert(Math.abs(restored - goodSub) < 1e-9, "restore failed");
+
+  tamperOn = was;                            // restore caller's flag
+  return true;
+}
+
+/* ===== UI ===== */
+
+var failb = document.getElementById('failb');
+var litOK = false;
+try {
+  litOK = selfcheck();
+  var lb = document.getElementById('litbadge');
+  lb.className = 'badge ok';
+  lb.textContent = 'LIT · all invariants hold';
+} catch(e){
+  failb.style.display = 'block';
+  failb.textContent = 'SELFCHECK FAILED — ' + e.message;
+  throw e;
+}
+
+// ---- live phase-plane + trace ----
+var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+var W = cv.width, H = cv.height;
+var sI = document.getElementById('sI'), sK = document.getElementById('sK');
+var iv = document.getElementById('iv'), kv = document.getElementById('kv');
+var ro = document.getElementById('ro');
+
+// plane extents
+var VX0=-2.4, VX1=2.4, WY0=-1.2, WY1=2.4;
+function px(v){ return (v - VX0)/(VX1 - VX0) * W; }
+function py(w){ return H - (w - WY0)/(WY1 - WY0) * H; }
+
+function draw(){
+  var I = parseFloat(sI.value), kick = parseFloat(sK.value);
+  iv.textContent = I.toFixed(2); kv.textContent = kick.toFixed(2);
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#061109'; ctx.fillRect(0,0,W,H);
+
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
+  for(var gv=-2; gv<=2; gv++){ ctx.beginPath(); ctx.moveTo(px(gv),0); ctx.lineTo(px(gv),H); ctx.stroke(); }
+  for(var gw=-1; gw<=2; gw++){ ctx.beginPath(); ctx.moveTo(0,py(gw)); ctx.lineTo(W,py(gw)); ctx.stroke(); }
+
+  // v-nullcline (white N)
+  ctx.strokeStyle = '#eef6f0'; ctx.lineWidth = 1.8; ctx.beginPath();
+  for(var i=0;i<=240;i++){ var v = VX0 + (VX1-VX0)*i/240; var w = vNullcline(v, I);
+    var X=px(v), Y=py(w); if(i===0)ctx.moveTo(X,Y); else ctx.lineTo(X,Y); }
+  ctx.stroke();
+
+  // w-nullcline (purple line)
+  ctx.strokeStyle = '#c8a2ff'; ctx.lineWidth = 1.8; ctx.beginPath();
+  for(var j=0;j<=240;j++){ var v2 = VX0 + (VX1-VX0)*j/240; var w2 = wNullcline(v2, A, B);
+    var X2=px(v2), Y2=py(w2); if(j===0)ctx.moveTo(X2,Y2); else ctx.lineTo(X2,Y2); }
+  ctx.stroke();
+
+  // trajectory from kicked rest
+  var fp = findFixedPoint(I, A, B);
+  var v3 = fp.v + kick, w3 = fp.w, dt = 0.04;
+  ctx.strokeStyle = 'rgba(125,255,176,.85)'; ctx.lineWidth = 1.6; ctx.beginPath();
+  ctx.moveTo(px(v3), py(w3));
+  var mx=-1e9, mn=1e9, ended=v3, N=6000;
+  for(var k=0;k<N;k++){
+    var s = rk4(v3, w3, I, A, B, EPS, dt); v3=s[0]; w3=s[1];
+    if(!isFinite(v3)) break;
+    ctx.lineTo(px(v3), py(w3));
+    if(k>2000){ if(v3>mx)mx=v3; if(v3<mn)mn=v3; }
+    ended=v3;
+  }
+  ctx.stroke();
+
+  // fixed point marker
+  ctx.strokeStyle = '#7dffb0'; ctx.lineWidth = 2;
+  var fx=px(fp.v), fy=py(fp.w), r=5;
+  ctx.beginPath(); ctx.moveTo(fx-r,fy-r); ctx.lineTo(fx+r,fy+r);
+  ctx.moveTo(fx+r,fy-r); ctx.lineTo(fx-r,fy+r); ctx.stroke();
+
+  var amp = mx - mn;
+  var osc = amp > 2.0;
+  ro.innerHTML = 'fixed point <b>(v,w)=('+fp.v.toFixed(3)+', '+fp.w.toFixed(3)+')</b> &middot; '
+    + (tamperOn ? '<span style="color:var(--red)">LINEARISED &mdash; diverging</span>'
+      : (osc ? '<span style="color:var(--lit)">limit cycle</span> &middot; firing (&Delta;v='+amp.toFixed(2)+')'
+             : (kick>0.45 ? 'single spike &rarr; return to rest' : 'sub-threshold &rarr; decays to rest')));
+}
+sI.addEventListener('input', draw);
+sK.addEventListener('input', draw);
+draw();
+
+// ---- live witness: re-run selfcheck on demand ----
+var auditout = document.getElementById('auditout');
+function runWitness(){
+  try {
+    selfcheck();
+    auditout.className = 'badge ok';
+    auditout.textContent = tamperOn
+      ? 'CONFIRMED intact (flag isolated)'   // selfcheck restores its own copy
+      : 'WITNESS OK · invariants confirmed';
+  } catch(e){
+    auditout.className = 'badge bad';
+    auditout.textContent = 'TAMPER CAUGHT — ' + e.message;
+  }
+}
+runWitness();
+
+// ---- tamper controls ----
+var tmsg = document.getElementById('tampermsg');
+document.getElementById('tamper').addEventListener('click', function(){
+  tamperOn = true;
+  tmsg.innerHTML = '<span style="color:var(--red)">Nullcline linearised — cubic dropped.</span>';
+  draw();
+  // Witness must catch it: with tamper live, the invariants fail.
+  try {
+    // direct live check on the tampered engine (bypass selfcheck's save/restore)
+    var bad = peakExcursion(0.2, 0, A, B, EPS);
+    if(Math.abs(bad) < 10 && isFinite(bad)) throw new Error("unexpected: bounded");
+    auditout.className = 'badge bad';
+    auditout.textContent = 'TAMPER CAUGHT — linear nullcline: no threshold, trajectory diverges';
+  } catch(e){
+    auditout.className = 'badge bad';
+    auditout.textContent = 'TAMPER CAUGHT — ' + e.message;
+  }
+  var lb = document.getElementById('litbadge');
+  lb.className = 'badge bad'; lb.textContent = 'BROKEN · nullcline linearised';
+});
+document.getElementById('restore').addEventListener('click', function(){
+  tamperOn = false;
+  tmsg.textContent = 'Engine intact.';
+  draw();
+  runWitness();
+  var lb = document.getElementById('litbadge');
+  lb.className = 'badge ok'; lb.textContent = 'LIT · all invariants hold';
+});
+</script>
+</body>
+</html>

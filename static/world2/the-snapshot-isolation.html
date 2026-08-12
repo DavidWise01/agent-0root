@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE SNAPSHOT ISOLATION</title>
+<style>
+  :root{
+    --am:#9ee0d0;
+    --bg:#08150e;
+    --bg2:#0b1e14;
+    --panel:#0d2318;
+    --panel2:#0f2a1c;
+    --ink:#e2f6ed;
+    --mut:#8db8a6;
+    --line:#1c3d2b;
+    --blue:#77b8f0;
+    --blue2:#0e2233;
+    --red:#f2867e;
+    --red2:#301418;
+    --amber:#e8bd57;
+    --lit:#84e2ac;
+    --wall:#f2867e;
+    --in:#9ee0d0;
+    --out:#84e2ac;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 20% -5%, #0e2b1c 0%, rgba(14,43,28,0) 60%),
+      radial-gradient(900px 500px at 100% 0%, #0c2519 0%, rgba(12,37,25,0) 55%),
+      var(--bg);
+    color:var(--ink);
+    font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    padding:26px 20px 60px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+  header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+  h1{
+    font-size:30px;line-height:1.1;margin:0 0 8px;letter-spacing:.06em;
+    color:var(--am);
+    text-shadow:0 0 22px rgba(158,224,208,.28);
+  }
+  .sub{margin:0 0 12px;color:var(--ink);max-width:74ch;font-size:14px}
+  .sub b{color:var(--am)}
+  .src{font-size:12px;color:var(--mut);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+  .src .q{color:var(--mut);font-style:italic}
+  .tag{
+    display:inline-block;font-size:10px;letter-spacing:.14em;font-weight:700;
+    padding:2px 7px;border-radius:3px;vertical-align:middle;text-transform:uppercase;
+    border:1px solid transparent;
+  }
+  .t-amber{background:rgba(232,189,87,.12);color:var(--amber);border-color:rgba(232,189,87,.4)}
+  .t-lit{background:rgba(132,226,172,.14);color:var(--lit);border-color:rgba(132,226,172,.45)}
+  .t-in{background:rgba(158,224,208,.12);color:var(--in);border-color:rgba(158,224,208,.4)}
+  .t-out{background:rgba(132,226,172,.12);color:var(--out);border-color:rgba(132,226,172,.4)}
+  .t-wall{background:rgba(242,134,126,.12);color:var(--wall);border-color:rgba(242,134,126,.45)}
+
+  .ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:14px;align-items:start}
+  .col{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .teamhdr{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
+    padding:7px 10px;border-radius:5px;border:1px solid var(--line);
+  }
+  .col.blue .teamhdr{color:var(--blue);border-color:rgba(119,184,240,.35);background:rgba(14,34,51,.5)}
+  .col.red .teamhdr{color:var(--red);border-color:rgba(242,134,126,.35);background:rgba(48,20,24,.5)}
+  .col.center .teamhdr{color:var(--am);border-color:rgba(158,224,208,.35);background:rgba(13,42,28,.6);text-align:center}
+
+  .win{
+    position:relative;background:var(--panel);border:1px solid var(--line);
+    border-radius:7px;padding:13px 13px 12px;min-width:0;
+  }
+  .col.blue .win{border-left:2px solid rgba(119,184,240,.5)}
+  .col.red .win{border-left:2px solid rgba(242,134,126,.5)}
+  .win.panel{border:1px solid rgba(158,224,208,.4);background:linear-gradient(180deg,var(--panel2),var(--panel))}
+  .wn{
+    position:absolute;top:9px;right:10px;font-size:10px;font-weight:700;
+    width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;
+    color:var(--mut);border:1px solid var(--line);background:var(--bg2);
+  }
+  .col.blue .wn{color:var(--blue);border-color:rgba(119,184,240,.4)}
+  .col.red .wn{color:var(--red);border-color:rgba(242,134,126,.4)}
+  .win.panel .wn{color:var(--am);border-color:rgba(158,224,208,.5)}
+  .win h3{
+    margin:0 0 8px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink);padding-right:26px;
+  }
+  .win p{margin:0 0 8px;font-size:12.5px;color:var(--mut)}
+  .win p:last-child{margin-bottom:0}
+  .win b{color:var(--ink)}
+  .win .em{color:var(--am)}
+  code{color:var(--am);background:rgba(158,224,208,.08);padding:1px 4px;border-radius:3px;font-size:12px}
+
+  .flow{display:flex;justify-content:center;align-items:center;color:var(--am);font-size:16px;margin:-2px 0;opacity:.7}
+
+  table.sched{width:100%;border-collapse:collapse;font-size:11.5px;margin:6px 0}
+  table.sched th,table.sched td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+  table.sched th{color:var(--mut);font-weight:600;background:rgba(255,255,255,.02)}
+  .t1c{color:var(--blue)}
+  .t2c{color:var(--red)}
+  .ok{color:var(--lit);font-weight:700}
+  .bad{color:var(--wall);font-weight:700}
+
+  .badge{
+    display:block;margin-top:8px;padding:9px 11px;border-radius:6px;font-size:12px;
+    border:1px solid var(--line);background:var(--bg2);color:var(--mut);
+  }
+  #litbadge{border-color:rgba(132,226,172,.45);background:rgba(132,226,172,.08);color:var(--lit)}
+  #auditout.good{border-color:rgba(132,226,172,.5);background:rgba(132,226,172,.1);color:var(--lit)}
+  #auditout.bad{border-color:rgba(242,134,126,.6);background:rgba(242,134,126,.14);color:var(--wall);font-weight:700}
+
+  .wall-note{border-left:3px solid var(--wall);padding-left:10px}
+  .dead{color:var(--mut)}
+  .dead s{color:var(--wall);text-decoration-color:rgba(242,134,126,.7)}
+  .fix{color:var(--lit)}
+
+  button{
+    font:inherit;font-size:12px;cursor:pointer;border-radius:5px;padding:7px 12px;margin:4px 6px 2px 0;
+    border:1px solid var(--line);background:var(--bg2);color:var(--ink);
+  }
+  #tamper{border-color:rgba(242,134,126,.5);color:var(--red)}
+  #tamper:hover{background:rgba(242,134,126,.12)}
+  #restore{border-color:rgba(132,226,172,.5);color:var(--lit)}
+  #restore:hover{background:rgba(132,226,172,.1)}
+
+  #failb{display:none;margin:14px 0;padding:12px 14px;border-radius:6px;
+    border:1px solid var(--wall);background:rgba(242,134,126,.14);color:var(--wall);font-weight:700}
+
+  footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);
+    color:var(--mut);font-size:11.5px;text-align:center;letter-spacing:.04em}
+
+  @media (max-width:880px){
+    .ocho{grid-template-columns:1fr}
+    h1{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>THE SNAPSHOT ISOLATION</h1>
+    <p class="sub">Read your own snapshot; commit only if no one wrote what you wrote. Snapshot isolation is <b>strong</b> &mdash; it kills dirty reads, non-repeatable reads, and lost updates &mdash; yet it is <b>not serializable</b>. The hole has a name: <b>write skew</b>. Rendered, not quoted.</p>
+    <p class="src">
+      <span class="tag t-amber">source</span>
+      Berenson, Bernstein, Gray, Melton, O&rsquo;Neil &amp; O&rsquo;Neil, <em>A Critique of ANSI SQL Isolation Levels</em>, ACM SIGMOD 1995, pp. 1&ndash;10 &middot;
+      <a href="https://doi.org/10.1145/223784.223785" target="_blank" rel="noopener">doi:10.1145/223784.223785</a>
+      <span class="q">&mdash; SI defined here as the level that first-committer-wins protects, minus serializability.</span>
+    </p>
+  </header>
+
+  <div id="failb"></div>
+
+  <div class="ocho">
+
+    <!-- ================= BLUE TEAM ================= -->
+    <div class="col blue">
+      <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+      <div class="win">
+        <span class="wn">3</span>
+        <h3>The Model</h3>
+        <p>A multi-version store. Every transaction <code>T</code> takes a <b>start snapshot</b> and reads the newest version committed <b>at or before</b> its start &mdash; never anyone&rsquo;s uncommitted or later write.</p>
+        <p><b>Commit rule (first-committer-wins):</b> <code>T</code> aborts if any item in its write-set already has a version committed <em>after</em> <code>T</code> started. Two concurrent writers of the <b>same</b> item &mdash; one dies.</p>
+        <p>That single rule blocks dirty reads, non-repeatable reads, and lost updates by construction. It says nothing about two writers of <em>different</em> items.</p>
+      </div>
+
+      <div class="win">
+        <span class="wn">5</span>
+        <h3>The Lineage</h3>
+        <p>A snapshot <em>per transaction</em> is <span class="em">the-mvcc</span> promoted into an isolation level. Multi-version concurrency gives every reader a stable past; SI just adds the write-conflict abort on top.</p>
+        <p>Strong isolation with exactly one hole &mdash; write skew &mdash; is the reason <b>Serializable Snapshot Isolation</b> (SSI, Cahill 2008) was later invented: it watches for the dangerous rw-antidependency cycle this sphere exhibits and aborts a transaction to break it.</p>
+      </div>
+
+      <div class="win">
+        <span class="wn">7</span>
+        <h3>The Witness</h3>
+        <p>Re-checks the claim live: is the committed write-skew schedule&rsquo;s serialization graph acyclic (SI = serializable) or cyclic (SI &ne; serializable)? Flips red the instant window 6 tampers with that claim.</p>
+        <div id="auditout" class="badge">witness idle</div>
+      </div>
+    </div>
+
+    <!-- ================= CENTER ================= -->
+    <div class="col center">
+      <div class="teamhdr">The Machine</div>
+
+      <div class="win">
+        <span class="wn">4</span>
+        <h3>Data In <span class="tag t-in">in &darr;</span></h3>
+        <p>Two doctors on call. <code>x=1</code> means Dr A on call, <code>y=1</code> Dr B on call. <b>Invariant:</b> at least one stays on call &mdash; <code>x + y &ge; 1</code>.</p>
+        <p>Both begin concurrently and each asks: &ldquo;may I go off?&rdquo; The rule each obeys: go off only if the <em>other</em> is still on call. Both read the same snapshot: <b>x=1, y=1</b>.</p>
+      </div>
+
+      <div class="flow">&darr;</div>
+
+      <div class="win panel">
+        <span class="wn">0</span>
+        <h3>The Panel <span class="tag t-lit">lit</span></h3>
+        <div id="engine">computing&hellip;</div>
+      </div>
+
+      <div class="flow">&darr;</div>
+
+      <div class="win">
+        <span class="wn">8</span>
+        <h3>Data Out <span class="tag t-out">out &darr;</span></h3>
+        <div id="litbadge" class="badge">proving&hellip;</div>
+      </div>
+    </div>
+
+    <!-- ================= RED TEAM ================= -->
+    <div class="col red">
+      <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+      <div class="win">
+        <span class="wn">1</span>
+        <h3>The Adversary <span class="tag t-wall">wall</span></h3>
+        <div class="wall-note">
+          <p>&ldquo;Each transaction was individually correct &mdash; each doctor confirmed a colleague was on call before signing off. So the outcome must be correct.&rdquo;</p>
+          <p>The wall: correctness composes under <b>serial</b> execution, not under SI. Both read a snapshot taken before either wrote. Each decision was true <em>when read</em> and false <em>when committed</em>. No serial order ever empties the roster; SI does.</p>
+        </div>
+      </div>
+
+      <div class="win">
+        <span class="wn">2</span>
+        <h3>The Graveyard</h3>
+        <p class="dead"><s>SI prevents all anomalies of Serializable.</s><br><span class="fix">&rarr; It prevents dirty/non-repeatable reads and lost updates, but admits <b>write skew</b> and read-only anomalies.</span></p>
+        <p class="dead"><s>First-committer-wins catches every write conflict.</s><br><span class="fix">&rarr; Only <b>write-write</b> on the <em>same</em> item. Disjoint write-sets slip through.</span></p>
+        <p class="dead"><s>SNAPSHOT ISOLATION = ANSI SERIALIZABLE.</s><br><span class="fix">&rarr; <span class="tag t-amber">amber</span> Many engines mislabel it. The write-skew graph carries a <b>cycle</b> &mdash; falsifying the label live in window 0.</span></p>
+      </div>
+
+      <div class="win">
+        <span class="wn">6</span>
+        <h3>The Tamper</h3>
+        <p>Plant the disclosed void: assert <b>&ldquo;SI is serializable&rdquo;</b> (deny write skew). The schedule still commits, its graph is still cyclic &mdash; so the witness in 7 must catch the contradiction.</p>
+        <button id="tamper">Claim SI = serializable</button>
+        <button id="restore">Restore truth</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    THE FOLD &middot; WORLD II &middot; THE OCHO &mdash; the-snapshot-isolation &middot; engine LIT, one void disclosed &middot; David Lee Wise (ROOT0) with AVAN.
+  </footer>
+</div>
+
+<script>
+// ============================================================
+//  ENGINE  (pure logic; node-extractable; runs before the UI)
+//  A minimal MVCC store with snapshot reads + first-committer-wins.
+//  All results are discrete/exact: integers, booleans, set membership.
+// ============================================================
+
+function Store(init){
+  this.hist = {};      // key -> [ {val, t} ] committed versions, t = commit clock
+  this.time = 0;       // monotone logical clock
+  for(var k in init){ this.hist[k] = [{val:init[k], t:0}]; }
+}
+Store.prototype.begin = function(){
+  this.time += 1;
+  return { start:this.time, reads:{}, writes:{}, status:"active", commitTime:null };
+};
+Store.prototype.snap = function(tx, key){
+  // newest committed version with t <= tx.start
+  var vers = this.hist[key], chosen = null;
+  for(var i=0;i<vers.length;i++){
+    if(vers[i].t <= tx.start && (chosen===null || vers[i].t > chosen.t)) chosen = vers[i];
+  }
+  return chosen.val;
+};
+Store.prototype.read = function(tx, key){
+  var v = (key in tx.writes) ? tx.writes[key] : this.snap(tx, key);
+  tx.reads[key] = v;
+  return v;
+};
+Store.prototype.write = function(tx, key, val){ tx.writes[key] = val; };
+Store.prototype.commit = function(tx){
+  // first-committer-wins: abort if any written item got a newer committed version
+  for(var key in tx.writes){
+    var vers = this.hist[key];
+    for(var i=0;i<vers.length;i++){
+      if(vers[i].t > tx.start){ tx.status = "aborted"; return false; }
+    }
+  }
+  this.time += 1;
+  var ct = this.time;
+  for(var key in tx.writes){ this.hist[key].push({val:tx.writes[key], t:ct}); }
+  tx.status = "committed"; tx.commitTime = ct;
+  return true;
+};
+Store.prototype.current = function(key){
+  var vers = this.hist[key], chosen = vers[0];
+  for(var i=0;i<vers.length;i++){ if(vers[i].t >= chosen.t) chosen = vers[i]; }
+  return chosen.val;
+};
+
+// ---- anomaly probes (each returns discrete truth) ----
+
+function testDirtyRead(){
+  var s = new Store({x:5});
+  var t1 = s.begin();
+  s.write(t1, "x", 99);            // uncommitted "dirty" value
+  var t2 = s.begin();
+  var seen = s.read(t2, "x");      // SI must return the snapshot, 5, never 99
+  return { seen:seen, prevented:(seen===5) };
+}
+
+function testNonRepeatable(){
+  var s = new Store({x:5});
+  var t1 = s.begin();
+  var r1 = s.read(t1, "x");        // 5
+  var t2 = s.begin();
+  s.write(t2, "x", 7); s.commit(t2);
+  var r2 = s.read(t1, "x");        // still 5 from snapshot
+  return { r1:r1, r2:r2, prevented:(r1===r2 && r1===5) };
+}
+
+function testLostUpdate(){
+  var s = new Store({x:5});
+  var t1 = s.begin(), t2 = s.begin();
+  s.read(t1,"x"); s.read(t2,"x");
+  s.write(t1,"x",6); s.write(t2,"x",8);
+  var c1 = s.commit(t1);           // true
+  var c2 = s.commit(t2);           // false: first-committer-wins aborts t2
+  return { c1:c1, c2:c2, prevented:(c1===true && c2===false) };
+}
+
+function testWriteWrite(){
+  // two concurrent writers of the SAME item -> exactly one survives
+  var s = new Store({x:0});
+  var t1 = s.begin(), t2 = s.begin();
+  s.read(t1,"x"); s.read(t2,"x");
+  s.write(t1,"x",1); s.write(t2,"x",2);
+  var c1 = s.commit(t1), c2 = s.commit(t2);
+  var committed = (c1?1:0)+(c2?1:0);
+  return { c1:c1, c2:c2, committed:committed, exactlyOne:(committed===1) };
+}
+
+// ---- write skew: the doctors-on-call schedule ----
+function docA(s, t){ var y=s.read(t,"y"); s.read(t,"x"); if(y===1) s.write(t,"x",0); }
+function docB(s, t){ var x=s.read(t,"x"); s.read(t,"y"); if(x===1) s.write(t,"y",0); }
+
+function runDoctors(mode){
+  var s = new Store({x:1, y:1}), t1, t2, c1, c2;
+  if(mode==="si"){
+    t1 = s.begin(); t2 = s.begin();     // both snapshot x=1,y=1
+    docA(s,t1); docB(s,t2);             // each writes a DIFFERENT item
+    c1 = s.commit(t1); c2 = s.commit(t2);
+    return { x:s.current("x"), y:s.current("y"), c1:c1, c2:c2, t1:t1, t2:t2 };
+  }
+  if(mode==="serial12"){
+    t1 = s.begin(); docA(s,t1); c1 = s.commit(t1);
+    t2 = s.begin(); docB(s,t2); c2 = s.commit(t2);
+    return { x:s.current("x"), y:s.current("y"), c1:c1, c2:c2 };
+  }
+  // serial21
+  t2 = s.begin(); docB(s,t2); c2 = s.commit(t2);
+  t1 = s.begin(); docA(s,t1); c1 = s.commit(t1);
+  return { x:s.current("x"), y:s.current("y"), c1:c1, c2:c2 };
+}
+
+// rw-antidependency serialization graph + cycle detection
+function serializationGraph(txs){
+  var n = txs.length, edges = [];
+  for(var i=0;i<n;i++) edges.push([]);
+  for(var i=0;i<n;i++){
+    for(var j=0;j<n;j++){
+      if(i===j) continue;
+      // Ti -> Tj when Ti read an item Tj wrote a later version of (rw-antidependency)
+      for(var k in txs[i].reads){
+        if(k in txs[j].writes){ edges[i].push(j); break; }
+      }
+    }
+  }
+  var color = [], cyclic = false;
+  for(var i=0;i<n;i++) color.push(0);
+  function dfs(u){
+    color[u]=1;
+    for(var vi=0; vi<edges[u].length; vi++){
+      var v = edges[u][vi];
+      if(color[v]===1) cyclic = true;
+      else if(color[v]===0) dfs(v);
+    }
+    color[u]=2;
+  }
+  for(var i=0;i<n;i++) if(color[i]===0) dfs(i);
+  return { edges:edges, cyclic:cyclic };
+}
+
+// honest computed truth: is SI serializable?
+function siIsSerializable(){
+  var r = runDoctors("si");
+  var g = serializationGraph([r.t1, r.t2]);
+  var nonSerializable = (r.c1 && r.c2) && g.cyclic;   // committed under SI, yet cyclic graph
+  return !nonSerializable;                            // -> false
+}
+
+// the tamperable CLAIM (window 6 flips it); witness compares claim vs truth
+var CLAIM_SERIALIZABLE = false;
+function witnessOK(){ return CLAIM_SERIALIZABLE === siIsSerializable(); }
+
+// ---- fail-loud selfcheck: THROWS on any violation, RETURNS true on success ----
+function selfcheck(){
+  var d = testDirtyRead();
+  if(!d.prevented) throw new Error("SI failed to prevent a dirty read");
+
+  var nr = testNonRepeatable();
+  if(!nr.prevented) throw new Error("SI failed to prevent a non-repeatable read");
+
+  var lu = testLostUpdate();
+  if(!lu.prevented) throw new Error("SI failed to prevent a lost update");
+
+  var ww = testWriteWrite();
+  if(!ww.exactlyOne) throw new Error("first-committer-wins did not abort a same-item writer");
+
+  var si = runDoctors("si");
+  if(!(si.c1===true && si.c2===true)) throw new Error("write-skew schedule did not commit under SI");
+  if(!(si.x===0 && si.y===0)) throw new Error("write-skew final state incorrect");
+  if(si.x + si.y >= 1) throw new Error("write-skew did not actually break the invariant");
+
+  var g = serializationGraph([si.t1, si.t2]);
+  if(!g.cyclic) throw new Error("write-skew serialization graph is not cyclic");
+
+  // exhaustive: BOTH serial orders keep the invariant and never reach (0,0)
+  var s12 = runDoctors("serial12"), s21 = runDoctors("serial21");
+  if(s12.x + s12.y < 1) throw new Error("serial order T1;T2 broke the invariant");
+  if(s21.x + s21.y < 1) throw new Error("serial order T2;T1 broke the invariant");
+  if(s12.x===0 && s12.y===0) throw new Error("serial T1;T2 matched the skew state");
+  if(s21.x===0 && s21.y===0) throw new Error("serial T2;T1 matched the skew state");
+
+  if(siIsSerializable() !== false) throw new Error("SI was wrongly computed serializable");
+  if(witnessOK() !== true) throw new Error("witness not green at rest");
+
+  // disclosed planted void: claim SI is serializable, prove the witness catches it, restore
+  var saved = CLAIM_SERIALIZABLE;
+  CLAIM_SERIALIZABLE = true;
+  if(witnessOK() !== false) throw new Error("tamper (SI=serializable) not detected by witness");
+  CLAIM_SERIALIZABLE = saved;
+  if(witnessOK() !== true) throw new Error("restore after tamper failed");
+  if(CLAIM_SERIALIZABLE !== false) throw new Error("tamper flag not restored");
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+function renderEngine(){
+  var si = runDoctors("si");
+  var g = serializationGraph([si.t1, si.t2]);
+  var ww = testWriteWrite();
+  var s12 = runDoctors("serial12"), s21 = runDoctors("serial21");
+
+  var h = "";
+  h += '<table class="sched"><tr><th>step</th><th class="t1c">T1 &mdash; Dr A off?</th><th class="t2c">T2 &mdash; Dr B off?</th></tr>';
+  h += '<tr><td>begin (snapshot)</td><td class="t1c">read x=1, y=1</td><td class="t2c">read x=1, y=1</td></tr>';
+  h += '<tr><td>decision</td><td class="t1c">y=1 &rarr; write x=0</td><td class="t2c">x=1 &rarr; write y=0</td></tr>';
+  h += '<tr><td>commit</td><td class="'+(si.c1?"ok":"bad")+'">'+(si.c1?"COMMIT":"ABORT")+'</td><td class="'+(si.c2?"ok":"bad")+'">'+(si.c2?"COMMIT":"ABORT")+'</td></tr>';
+  h += '</table>';
+
+  h += '<p><b>Final:</b> x='+si.x+', y='+si.y+' &nbsp;&rarr;&nbsp; x+y='+(si.x+si.y)+
+       ' &nbsp;<span class="'+((si.x+si.y>=1)?"ok":"bad")+'">invariant x+y &ge; 1 '+((si.x+si.y>=1)?"held":"BROKEN")+'</span></p>';
+
+  h += '<p><b>Serialization graph:</b> T1 &rarr; T2 (read y, T2 overwrote y) and T2 &rarr; T1 (read x, T1 overwrote x) &nbsp;&rarr;&nbsp; <span class="bad">CYCLE '+(g.cyclic?"present":"absent")+'</span>. A cyclic graph means <b>no</b> serial order equals this run.</p>';
+
+  h += '<p><b>Every serial order stays safe:</b> T1;T2 &rarr; (x='+s12.x+', y='+s12.y+'), T2;T1 &rarr; (x='+s21.x+', y='+s21.y+') &mdash; both keep x+y &ge; 1. SI reached a state no serial run can.</p>';
+
+  h += '<p><b>Contrast &mdash; first-committer-wins fires on same item:</b> two writers of x, exactly <span class="ok">'+ww.committed+'</span> commits (the other aborts). Different items above: <span class="bad">both</span> commit. That gap is write skew.</p>';
+
+  document.getElementById("engine").innerHTML = h;
+}
+
+function renderWitness(){
+  var el = document.getElementById("auditout");
+  if(witnessOK()){
+    el.className = "badge good";
+    el.innerHTML = "WITNESS ✓ &nbsp; claim matches truth: SI &ne; serializable &mdash; the committed write-skew schedule carries a cyclic serialization graph (re-verified live).";
+  }else{
+    el.className = "badge bad";
+    el.innerHTML = "TAMPER CAUGHT ✗ &nbsp; claim &ldquo;SI = serializable&rdquo; is falsified: the write-skew schedule still commits under SI and its serialization graph is still cyclic. Restore truth in window 7&rarr;6.";
+  }
+}
+
+(function boot(){
+  try{
+    var ok = selfcheck();
+    if(ok !== true) throw new Error("selfcheck did not return true");
+    document.getElementById("litbadge").innerHTML =
+      "PROVEN LIVE &mdash; both transactions COMMIT &rarr; x=0, y=0 &rarr; invariant x+y &ge; 1 <b>broken</b>, " +
+      "yet each transaction read a valid snapshot. First-committer-wins never fired: the writes were disjoint. " +
+      "The serialization graph is cyclic &mdash; SI is <b>not</b> serializable.";
+    renderEngine();
+    renderWitness();
+    document.getElementById("tamper").onclick  = function(){ CLAIM_SERIALIZABLE = true;  renderWitness(); };
+    document.getElementById("restore").onclick = function(){ CLAIM_SERIALIZABLE = false; renderWitness(); };
+  }catch(e){
+    var fb = document.getElementById("failb");
+    if(fb){ fb.style.display = "block"; fb.textContent = "SELFCHECK FAILED: " + e.message; }
+    throw e;
+  }
+})();
+</script>
+</body>
+</html>

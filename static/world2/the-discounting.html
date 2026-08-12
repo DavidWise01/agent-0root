@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE DISCOUNTING</title>
+<style>
+:root{
+  --am:#ffcf5a;
+  --bg:#0c1a12; --bg2:#0f2018; --ink:#e8f2ea; --mut:#9fb4a6;
+  --blue:#5aa9ff; --red:#ff6a6a; --line:#1c3427;
+  --lit:#7CFC9A; --amber:#ffcf5a; --dead:#7a8c80;
+  --panel:#0e1d15; --win:#102319;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 82% -8%, rgba(255,207,90,.10), transparent 60%),
+    linear-gradient(180deg,#0c1a12,#08130d 70%);
+  color:var(--ink);
+  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  min-height:100vh;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 18px 60px}
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+h1{
+  font-size:32px;letter-spacing:.14em;margin:0 0 8px;
+  font-weight:800;
+  background:linear-gradient(90deg,var(--am),#fff6df 55%,var(--am));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sub{color:var(--ink);max-width:70ch;margin:0 0 10px;font-size:14.5px}
+.sub b{color:var(--am)}
+.src{font-size:12.5px;color:var(--mut);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.11em;
+  padding:2px 7px;border-radius:5px;border:1px solid currentColor;text-transform:uppercase;
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--red)}
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px}
+@media (max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#173049}
+.col.red .teamhdr{color:var(--red);border-color:#4a1c1c}
+.col.center .teamhdr{color:var(--am);border-color:#4a3c17;text-align:center}
+.win{
+  position:relative;border:1px solid var(--line);border-radius:11px;
+  background:var(--win);padding:13px 14px 14px;
+}
+.col.center .win.panel{background:var(--panel);border-color:#38300f}
+.win h3{margin:0 0 7px;font-size:13.5px;letter-spacing:.05em;display:flex;align-items:center;gap:8px}
+.win p{margin:6px 0;font-size:13px;color:var(--ink)}
+.win .mut{color:var(--mut);font-size:12px}
+.num{
+  position:absolute;top:-10px;right:-9px;width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;
+  border:1px solid var(--line);background:#0a160f;
+}
+.col.blue .num{color:var(--blue);border-color:#173049}
+.col.red .num{color:var(--red);border-color:#4a1c1c}
+.col.center .num{color:var(--am);border-color:#4a3c17}
+.flow{
+  text-align:center;color:var(--mut);font-size:11px;letter-spacing:.3em;
+  padding:2px 0;
+}
+.flow::before{content:"▼"}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.eq{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+  background:#0a160f;border:1px solid var(--line);border-radius:7px;padding:8px 10px;color:#cfe6d6;
+  overflow-x:auto;white-space:pre;
+}
+table.grid{width:100%;border-collapse:collapse;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;margin-top:6px}
+table.grid th,table.grid td{border:1px solid var(--line);padding:3px 6px;text-align:right}
+table.grid th{color:var(--mut);font-weight:700;text-align:right}
+table.grid td:first-child,table.grid th:first-child{text-align:left;color:var(--am)}
+canvas{width:100%;height:130px;display:block;border:1px solid var(--line);border-radius:8px;background:#0a160f;margin-top:8px}
+.badge{
+  display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;
+  padding:4px 8px;border-radius:6px;border:1px solid currentColor;margin-top:6px;
+}
+.badge.ok{color:var(--lit)}
+.badge.bad{color:var(--red)}
+.wall-note{border-left:3px solid var(--red);padding-left:10px;color:#ffd7d7;font-size:12.5px}
+.strike{text-decoration:line-through;color:var(--dead)}
+.fix{color:var(--lit)}
+button{
+  font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+  background:#1a1108;color:var(--am);border:1px solid #4a3c17;border-radius:7px;padding:6px 11px;margin:4px 6px 0 0;
+}
+button:hover{background:#241708}
+button.restore{color:var(--lit);border-color:#1d3a26;background:#0a1a10}
+#failb{display:none;margin:14px 0;padding:12px 14px;border:1px solid var(--red);border-radius:9px;background:#1c0e0e;color:#ffd7d7;font-family:ui-monospace,monospace;font-size:12.5px}
+footer{margin-top:34px;border-top:1px solid var(--line);padding-top:16px;color:var(--mut);font-size:12px}
+footer b{color:var(--am)}
+.lit-line{color:var(--lit);font-family:ui-monospace,monospace;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE DISCOUNTING</h1>
+  <p class="sub">A dollar tomorrow is worth less than a dollar today &mdash; and there is an <b>exact rule</b> that prices every future stream. Present value <span class="mono">PV = &Sigma; CF&#8348;/(1+r)&#8348;</span>: discount every cash flow by the horizon it lands on, sum, and you have its price now. The <b>perpetuity</b> C/r, the <b>annuity</b>, the <b>discount rate</b> &mdash; all one identity. Rendered, not quoted.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Irving Fisher, <a href="https://oll.libertyfund.org/titles/fisher-the-theory-of-interest" target="_blank" rel="noopener">The Theory of Interest</a> (New York: Macmillan, 1930) &mdash; present value &amp; discounting. <span class="mut">Book-era print source; link AMBER (no versioned DOI). These are MODELS, not investment advice.</span>
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ===================== BLUE TEAM ===================== -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <h3>THE MODEL</h3>
+      <p>The price today of a cash flow <span class="mono">CF</span> that arrives <span class="mono">t</span> periods out, at rate <span class="mono">r</span>:</p>
+      <div class="eq">PV(CF,r,t) = CF &middot; (1+r)^(&minus;t)
+
+&Sigma;: PV = CF&#8320; + CF&#8321;/(1+r) + CF&#8322;/(1+r)&sup2; + &hellip;</div>
+      <p class="mut">Discount factor <span class="mono">(1+r)^(&minus;t)</span> falls monotonically in both <span class="mono">t</span> and <span class="mono">r</span>; at <span class="mono">t=0</span> it is 1, so <span class="mono">PV = CF</span>. A level stream forever &mdash; the perpetuity &mdash; collapses to <span class="mono">C/r</span>. A T-period annuity is <span class="mono">C&middot;(1&minus;(1+r)^(&minus;T))/r</span>, which &rarr; C/r as T&rarr;&infin;.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <h3>THE LINEAGE</h3>
+      <p><i>Tomorrow's dollar, today.</i> Fisher (1930) made time-preference the price of the future: <span class="mono">PV = &Sigma; CF/(1+r)&#8348;</span>, with a level perpetuity worth exactly <span class="mono">C/r</span>.</p>
+      <p class="mut">This is the time-value core sitting beneath <b>the-is-lm</b>'s investment schedule &mdash; the <span class="mono">I(r)</span> curve is nothing but discounted future returns re-priced as <span class="mono">r</span> moves. Discounting is the arithmetic; IS-LM is one place it is spent.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <h3>THE WITNESS</h3>
+      <p class="mut">Live re-check. Re-runs the full <span class="mono">selfcheck()</span> against the engine right now &mdash; including the planted linear-discount void from window 6. Green confirms; it flips red the instant the tamper is live.</p>
+      <div id="auditout" class="badge ok">witness idle</div>
+    </div>
+  </div>
+
+  <!-- ===================== CENTER ===================== -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win panel">
+      <span class="num">4</span>
+      <h3><span class="tag t-in">in &darr;</span> DATA IN</h3>
+      <p class="mut">A cash flow, a rate, a horizon &mdash; and a level stream C forever.</p>
+      <div class="eq">CF = 100    r = 5.00%/period
+horizons t = 0,1,2,5,10,30
+perpetuity C = 100  &rarr;  C/r
+project: cost 100, flows [60, 60]</div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <h3><span class="tag t-lit">LIT</span> THE PANEL</h3>
+      <p class="mut">Live engine. Discount factors, the summed value, the perpetuity, and the project's IRR &mdash; all computed from the pure functions above, no stored numbers.</p>
+      <table class="grid" id="dfTable">
+        <thead><tr><th>t</th><th>(1+r)^&minus;t</th><th>PV of 100</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <canvas id="cv" width="520" height="260" aria-label="discount factor decay"></canvas>
+      <div id="engineOut" class="lit-line"></div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <span class="num">8</span>
+      <h3><span class="tag t-out">out &darr;</span> DATA OUT</h3>
+      <p class="mut">Proven results, set at boot from the live engine:</p>
+      <div id="litbadge" class="badge ok">proving&hellip;</div>
+      <p class="mut" style="margin-top:8px">Perpetuity <span class="mono">C/r</span> is exact; the IRR is a numeric root to 1e&minus;6. <span style="color:var(--amber)">Any forward projection of an actual rate is AMBER &mdash; a model, not advice.</span></p>
+    </div>
+  </div>
+
+  <!-- ===================== RED TEAM ===================== -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <h3>THE ADVERSARY</h3>
+      <p class="wall-note"><span class="tag t-wall">wall</span> "There is no single <i>true</i> discount rate. Change <span class="mono">r</span> and you change every price &mdash; NPV rankings flip, IRR can be multiple or undefined, and the whole result is an assumption wearing arithmetic."</p>
+      <p class="mut">True, and load-bearing. Discounting is <b>exact given r</b>; it is silent on <i>which r</i>. Term structure, risk premia and inflation all live inside that one number. IRR is unique only for a conventional sign pattern (one sign change); mixed-sign projects can have several roots or none.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p class="strike">"Money later is worth the same as money now &mdash; a dollar is a dollar."</p>
+      <p class="fix">&rarr; Only at <span class="mono">r=0</span>. For any <span class="mono">r&gt;0</span>, PV strictly falls with the horizon.</p>
+      <p class="strike">"Discounting is linear &mdash; twice as far means half as much."</p>
+      <p class="fix">&rarr; It is <b>geometric</b>: <span class="mono">(1+r)^(&minus;t)</span>, not <span class="mono">1&minus;rt</span>. The linear form goes negative and breaks the perpetuity (see window 6).</p>
+      <p class="strike">"A positive IRR means the project is good."</p>
+      <p class="fix">&rarr; Only if the cost of capital <span class="mono">&lt; IRR</span>. IRR is the break-even <span class="mono">r</span> where NPV = 0, not a verdict.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <h3>THE TAMPER</h3>
+      <p class="mut">Disclosed planted void. Swaps the geometric factor <span class="mono">(1+r)^(&minus;t)</span> for the linear <span class="mono">(1&minus;r&middot;t)</span>. The perpetuity no longer sums to <span class="mono">C/r</span> and far-future values go negative. The Witness (7) catches it live.</p>
+      <button id="tamper">Inject linear discount</button>
+      <button id="restore" class="restore">Restore geometric</button>
+      <div id="tamperState" class="mut" style="margin-top:6px">state: geometric (clean)</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p><b>THE DISCOUNTING</b> &mdash; window 0 is genuinely LIT: present value, perpetuity, annuity, NPV and IRR are computed live from pure functions and gated by a fail-loud <span class="mono">selfcheck()</span> that runs headless. The tamper is a disclosed, self-detected void. These are <b>models</b> of the time-value of money, <b>not</b> financial or investment advice; any projection of a real rate is AMBER.</p>
+  <p class="mut">WORLD II &middot; THE FOLD &middot; ud0 corpus &middot; the-discounting. Built by David Lee Wise (ROOT0) with AVAN.</p>
+</footer>
+</div>
+
+<script>
+// ===== ENGINE (pure logic; selfcheck runs with NO canvas/DOM) =====
+var TAMPER = false;
+
+function approx(a,b,tol){ return Math.abs(a-b) <= tol; }
+
+// discount factor: geometric (1+r)^-t, or the planted linear void (1 - r*t)
+function discountFactor(r,t){
+  if(TAMPER) return 1 - r*t;
+  return Math.pow(1+r, -t);
+}
+
+// present value of a single cash flow CF at horizon t
+function pv(CF,r,t){ return CF * discountFactor(r,t); }
+
+// truncated geometric sum of a level stream C, using the live discount factor
+function geomStreamSum(C,r,N){
+  var s=0;
+  for(var t=1;t<=N;t++){ s += C * discountFactor(r,t); }
+  return s;
+}
+
+// closed-form perpetuity (exact, factor-independent)
+function perpetuity(C,r){ return C / r; }
+
+// closed-form T-period annuity
+function annuity(C,r,T){ return C * (1 - Math.pow(1+r,-T)) / r; }
+
+// direct summed annuity (clean geometric, for cross-checking the closed form)
+function annuityDirect(C,r,T){
+  var s=0;
+  for(var t=1;t<=T;t++){ s += C * Math.pow(1+r,-t); }
+  return s;
+}
+
+// net present value of a project: -cost at t=0, flows[] at t=1..n (clean geometric)
+function npvProject(cost,flows,r){
+  var s = -cost;
+  for(var t=1;t<=flows.length;t++){ s += flows[t-1] * Math.pow(1+r,-t); }
+  return s;
+}
+
+// internal rate of return: the r that zeroes NPV (bisection; NPV falls in r)
+function irr(cost,flows){
+  var lo=-0.9, hi=10, mid=0;
+  for(var i=0;i<300;i++){
+    mid=(lo+hi)/2;
+    var v=npvProject(cost,flows,mid);
+    if(v>0) lo=mid; else hi=mid;
+  }
+  return mid;
+}
+
+function selfcheck(){
+  var saved = TAMPER;
+  TAMPER = false;
+  var tol = 1e-6, tol9 = 1e-9;
+
+  // PV = CF at t = 0
+  if(!approx(pv(100,0.05,0), 100, tol9)) throw new Error('PV at t=0 must equal CF');
+
+  // PV falls monotonically as the horizon t rises
+  if(!(pv(100,0.05,1) > pv(100,0.05,2) && pv(100,0.05,2) > pv(100,0.05,5) && pv(100,0.05,5) > pv(100,0.05,10)))
+    throw new Error('PV must fall as horizon t rises');
+
+  // PV falls monotonically as the rate r rises
+  if(!(pv(100,0.03,3) > pv(100,0.06,3) && pv(100,0.06,3) > pv(100,0.10,3)))
+    throw new Error('PV must fall as rate r rises');
+
+  // Perpetuity: infinite geometric sum of C/(1+r)^t equals C/r  (to 1e-9)
+  var C=100, r=0.05;
+  if(!approx(geomStreamSum(C,r,4000), C/r, tol9)) throw new Error('perpetuity geometric sum must equal C/r');
+  if(!approx(perpetuity(C,r), 2000, tol9)) throw new Error('C/r must be 2000 for C=100, r=0.05');
+
+  // Annuity: closed form matches the direct sum (to 1e-9)
+  if(!approx(annuity(C,r,30), annuityDirect(C,r,30), tol9)) throw new Error('annuity closed form must match direct sum');
+
+  // Annuity -> perpetuity as T -> infinity
+  if(!approx(annuity(C,r,200000), C/r, tol)) throw new Error('annuity must approach C/r as T grows');
+
+  // NPV & IRR: IRR zeroes NPV to 1e-6; positive NPV iff r < IRR
+  var cost=100, flows=[60,60];
+  var rr = irr(cost, flows);
+  if(!approx(npvProject(cost,flows,rr), 0, tol)) throw new Error('NPV at the IRR must be zero');
+  if(!(npvProject(cost,flows,rr-0.02) > 0)) throw new Error('project must be worthwhile (NPV>0) below the IRR');
+  if(!(npvProject(cost,flows,rr+0.02) < 0)) throw new Error('project must fail (NPV<0) above the IRR');
+
+  // TAMPER detection: linear discount breaks the perpetuity identity
+  TAMPER = true;
+  var tampered = geomStreamSum(C,r,4000);
+  if(approx(tampered, C/r, 1e-3)) throw new Error('TAMPER not detected: linear discount still sums to C/r');
+  if(tampered >= 0) throw new Error('TAMPER not detected: linear far-future values did not go negative');
+
+  TAMPER = saved;
+  return true;
+}
+/* ===== UI ===== */
+(function(){
+  function fail(msg){
+    var f=document.getElementById('failb');
+    f.style.display='block';
+    f.textContent='SELFCHECK FAILED: '+msg;
+  }
+
+  // boot gate: fail-loud
+  try{
+    var ok = selfcheck();
+    if(ok !== true) throw new Error('selfcheck did not return true');
+  }catch(e){
+    fail(e.message);
+    throw e;
+  }
+
+  var C=100, r=0.05;
+
+  // DATA OUT badge
+  var pvC = perpetuity(C,r);
+  var rr = irr(100,[60,60]);
+  var ann30 = annuity(C,r,30);
+  document.getElementById('litbadge').textContent =
+    'perpetuity C/r = '+pvC.toFixed(2)+'   annuity(30) = '+ann30.toFixed(2)+'   IRR = '+(rr*100).toFixed(2)+'%   ✓ LIT';
+
+  // discount-factor table
+  var rows=[0,1,2,5,10,30];
+  var tb=document.querySelector('#dfTable tbody');
+  rows.forEach(function(t){
+    var df=Math.pow(1+r,-t);
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+t+'</td><td>'+df.toFixed(6)+'</td><td>'+(100*df).toFixed(4)+'</td>';
+    tb.appendChild(tr);
+  });
+
+  document.getElementById('engineOut').textContent =
+    'Σ discounted [100@1..∞] = '+geomStreamSum(C,r,4000).toFixed(4)+'  ≡  C/r = '+pvC.toFixed(4);
+
+  // canvas: discount-factor decay (geometric vs the linear void)
+  var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  function draw(){
+    var W=cv.width, H=cv.height, pad=28;
+    ctx.clearRect(0,0,W,H);
+    // axes
+    ctx.strokeStyle='#1c3427'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad,8); ctx.lineTo(pad,H-pad); ctx.lineTo(W-8,H-pad); ctx.stroke();
+    // zero line
+    var Tmax=40;
+    function X(t){ return pad + (W-pad-12)*(t/Tmax); }
+    function Y(v){ return (H-pad) - (H-pad-14)*( (v+0.5)/1.5 ); } // map [-0.5,1] region
+    ctx.strokeStyle='#2a4636'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(pad,Y(0)); ctx.lineTo(W-8,Y(0)); ctx.stroke();
+    ctx.setLineDash([]);
+    // geometric curve
+    ctx.strokeStyle='#ffcf5a'; ctx.lineWidth=2; ctx.beginPath();
+    for(var t=0;t<=Tmax;t++){ var v=Math.pow(1+r,-t); (t===0?ctx.moveTo:ctx.lineTo).call(ctx,X(t),Y(v)); }
+    ctx.stroke();
+    // linear void (shown faint, for contrast) only while tampered
+    if(TAMPER){
+      ctx.strokeStyle='#ff6a6a'; ctx.lineWidth=2; ctx.beginPath();
+      for(var s=0;s<=Tmax;s++){ var lv=1 - r*s; (s===0?ctx.moveTo:ctx.lineTo).call(ctx,X(s),Y(Math.max(lv,-0.5))); }
+      ctx.stroke();
+    }
+    ctx.fillStyle='#9fb4a6'; ctx.font='10px monospace';
+    ctx.fillText('discount factor', pad+4, 14);
+    ctx.fillText('t →', W-30, H-pad+16);
+  }
+  draw();
+
+  // witness: re-run selfcheck live
+  var auditout=document.getElementById('auditout');
+  function witness(){
+    try{
+      selfcheck();
+      if(TAMPER){
+        // engine currently tampered: the identity is broken right now
+        auditout.className='badge bad';
+        auditout.textContent='WITNESS: tamper live — perpetuity ≠ C/r';
+      }else{
+        auditout.className='badge ok';
+        auditout.textContent='WITNESS ✓ all checks pass — geometric discount intact';
+      }
+    }catch(e){
+      auditout.className='badge bad';
+      auditout.textContent='WITNESS ✗ '+e.message;
+    }
+  }
+  witness();
+
+  // tamper controls
+  var tstate=document.getElementById('tamperState');
+  function refresh(){
+    document.getElementById('engineOut').textContent =
+      'Σ discounted [100@1..N] = '+geomStreamSum(C,r,4000).toFixed(4)+'  vs  C/r = '+perpetuity(C,r).toFixed(4);
+    draw();
+    witness();
+  }
+  document.getElementById('tamper').addEventListener('click',function(){
+    TAMPER=true;
+    tstate.textContent='state: LINEAR (1 − r·t) — planted void live';
+    tstate.style.color='#ff6a6a';
+    refresh();
+  });
+  document.getElementById('restore').addEventListener('click',function(){
+    TAMPER=false;
+    tstate.textContent='state: geometric (clean)';
+    tstate.style.color='';
+    refresh();
+  });
+})();
+</script>
+</body>
+</html>

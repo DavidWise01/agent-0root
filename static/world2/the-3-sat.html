@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE 3-SAT · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffd23f; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffd23f; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,210,63,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,210,63,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,210,63,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:220px;} .readout{flex:1;min-width:220px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:70px;}
+.cnf{font-size:14px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;word-break:break-word;}
+.lit{color:#eafff0;} .vx{color:var(--cy);} .vy{color:var(--am);} .op{color:var(--dim);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.witn{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+tr.satrow td{color:var(--gr);} tr.witrow{background:rgba(57,252,107,.10);} tr.witrow td{font-weight:700;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE 3-SAT</h1>
+ <p class="sub">The canonical <b>NP-complete</b> problem: is a boolean formula in conjunctive normal form — every clause a disjunction of exactly <b>three</b> literals — satisfiable? Two truths are <b>runnable</b> here: a long clause splits into 3-literal clauses <b class="k">preserving satisfiability</b> (checked exactly, both directions, over every assignment), and 2-SAT falls in <b class="k">P</b> while 3-SAT does not — the cliff is at three. Down the center, data flows: the clauses go <b style="color:var(--cy)">in</b>, the engine brute-forces a witness, the verdict comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Karp, <i>Reducibility Among Combinatorial Problems</i> (1972), in <i>Complexity of Computer Computations</i>, Plenum Press, pp. 85–103 — <a href="https://doi.org/10.1007/978-1-4684-2001-2_9">doi.org/10.1007/978-1-4684-2001-2_9</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the splitting gadget</h2>
+   <p>A clause with <b>k &gt; 3</b> literals is not thrown away — it is <b>chained</b>. Introduce fresh linking variables <span class="vy">y</span> and cut <span class="lit">(l₁∨…∨l₅)</span> into triples so that adjacent clauses share a <span class="vy">y</span> with <b>opposite polarity</b>:</p>
+   <div class="cnf" id="splitclauses"></div>
+   <p class="small">Satisfiability is preserved <b>exactly</b>: the long clause holds under an assignment to <span class="vx">x</span> iff the split set holds under that assignment extended by <i>some</i> choice of the <span class="vy">y</span>. Live check over all <b>2⁵ = 32</b> assignments, both directions:</p>
+   <div id="preserve"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — SAT, trimmed <span class="tag t-amber">AVAN</span></h2>
+   <p><a href="https://davidwise01.github.io/the-cook-levin-theorem/" style="color:var(--cy)">The Cook–Levin theorem</a> proves SAT is NP-complete for clauses of <i>any</i> width. Karp's move: show that width can be forced down to <b>three</b> with this gadget — so 3-SAT is NP-complete too, and it is the compact instance most other <a href="https://davidwise01.github.io/the-karp-reduction/" style="color:var(--cy)">Karp reductions</a> start from.</p>
+   <p>Below three the ground shifts: 2-SAT and 1-SAT are in <b class="k">P</b>. This sphere is the hinge — Cook–Levin's SAT on one side, the 21 Karp-hard problems on the other. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live re-check: re-run the splitting equivalence over all 32 assignments, cross-check the 2-SAT solver against brute force, and confirm the SAT/UNSAT verdicts. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE · data in → panel → data out -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the clauses <span class="tag t-in">in ↓</span></h2>
+   <p>A <b>3-CNF</b> formula over variables <span class="vx">x₁ x₂ x₃</span>: an <b>AND of clauses</b>, each an <b>OR of three literals</b> (a variable or its negation). The instance currently loaded into the engine:</p>
+   <div class="cnf" id="cnfin"></div>
+   <p class="small">Edit any literal below, or load a preset. A literal is <b>true</b> when its variable takes the matching value. The question the machine answers: is there <i>any</i> assignment making every clause true at once?</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the clauses into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>clause 1</label><span id="c0"></span></div>
+     <div class="row"><label>clause 2</label><span id="c1"></span></div>
+     <div class="row"><label>clause 3</label><span id="c2"></span></div>
+     <div class="row" style="margin-top:8px"><button id="pSat">→ satisfiable</button><button id="pUnsat">→ unsatisfiable</button><button id="rand">↺ random</button></div>
+     <p class="small">The engine <b>brute-forces</b> all 2³ = 8 assignments and returns the first witness. No lookup — every verdict is computed on the spot.</p>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict"></div>
+     <div class="witn" id="witness"></div>
+     <div class="reason" id="satcount"></div>
+     <table id="ttbl"><thead><tr><th>x₁</th><th>x₂</th><th>x₃</th><th>C₁</th><th>C₂</th><th>C₃</th><th>all</th></tr></thead><tbody id="ttbody"></tbody></table>
+    </div>
+   </div>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits a verdict &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: a <b>witnessing assignment</b> if the instance is satisfiable (and <i>none</i> if it is not), the <b>splitting gadget</b> verified to preserve satisfiability over all 32 assignments, and <b>2-SAT decided in P</b> where 3-SAT needs exhaustive search. The current verdict is above; these invariants are the standing output.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> 3-SAT is <b>NP-complete</b>. The brute-force engine here is honest but exponential — Θ(2ⁿ). No polynomial algorithm is known, and whether one exists is exactly the open <b>P vs NP</b> question. This instrument decides <i>small</i> instances; it does not tame the general problem.</div>
+   <p class="small" style="margin-top:8px">The reduction preserves the answer and is cheap (k−3 fresh variables, k−2 clauses per long clause) — so hardness <i>transfers</i>, but solving does not get easier. Note the cliff: 2-SAT is in P by an implication-graph argument, yet three literals per clause is enough to be maximally hard. The gadget is a translator, not a solver.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"2-SAT and 3-SAT are equally hard."</s> <b>Cut.</b> 2-SAT is in P — the panel decides a 2-CNF by strongly-connected components in polynomial time; 3-SAT is NP-complete and brute-forced here.</p>
+   <p class="grave"><s>"Splitting a long clause can change whether it is satisfiable."</s> <b>Cut.</b> The chained gadget preserves satisfiability <i>exactly</i> — verified over all 32 assignments, both directions.</p>
+   <p class="grave"><s>"More literals per clause is always harder."</s> <b>Kept, corrected.</b> k-SAT is NP-complete for every k ≥ 3, but 1-SAT and 2-SAT are in P — the jump is <i>at</i> three, not monotone beyond it.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: split the long clause into <b>independent</b> sub-clauses that each get their <b>own fresh variable</b> — dropping the shared linking variable that chains them. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ cut the shared link</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">With no shared link, every split clause is trivially satisfiable (set its private y true) — so the split is satisfiable even when the long clause is <i>not</i>. The equivalence breaks, the witness recomputes and turns red. The attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE 3-SAT — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (clauses <b style="color:var(--cy)">in</b> → brute-force engine → verdict <b style="color:var(--gr)">out</b>). A runnable rendering of Karp's 1972 reduction — the engine is LIT (satisfiability brute-forced live, the clause-splitting gadget self-checked to preserve the answer over all 32 assignments, 2-SAT decided in P against 4096 brute-force cross-checks, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single small instance cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// 3-SAT engine — verified: good split preserves over all 32 assignments; 4096 exhaustive 2-SAT cross-checks
+function litVal(l,a){ return l.neg ? !a[l.v] : a[l.v]; }
+function clauseSat(cl,a){ for(const l of cl) if(litVal(l,a)) return true; return false; }
+function cnfSat(cnf,a){ for(const cl of cnf) if(!clauseSat(cl,a)) return false; return true; }
+function maxVar(clauses){ let m=-1; for(const cl of clauses) for(const l of cl) if(l.v>m) m=l.v; return m; }
+function bruteSAT(cnf,nvars){
+ const N=1<<nvars;
+ for(let mask=0;mask<N;mask++){
+  const a=[]; for(let i=0;i<nvars;i++) a[i]=((mask>>i)&1)===1;
+  if(cnfSat(cnf,a)) return {sat:true,witness:a.slice()};
+ }
+ return {sat:false,witness:null};
+}
+// chained Tseitin-style split: adjacent triples share a fresh var with opposite polarity
+function splitClause(C,fs){
+ const k=C.length,out=[];
+ if(k<=3) return {clauses:[C.slice()],nfresh:0};
+ const nf=k-3;
+ out.push([C[0],C[1],{v:fs,neg:false}]);
+ for(let i=1;i<=nf-1;i++) out.push([{v:fs+i-1,neg:true},C[i+1],{v:fs+i,neg:false}]);
+ out.push([{v:fs+nf-1,neg:true},C[k-2],C[k-1]]);
+ return {clauses:out,nfresh:nf};
+}
+// tampered split: each clause gets its OWN fresh var, no shared link — satisfiability NOT preserved
+function splitClauseBad(C,fs){
+ const k=C.length,out=[]; const nf=k-3; let extra=fs+nf;
+ out.push([C[0],C[1],{v:fs,neg:false}]);
+ for(let i=1;i<=nf-1;i++) out.push([{v:extra++,neg:false},C[i+1],{v:fs+i,neg:false}]);
+ out.push([{v:extra++,neg:false},C[k-2],C[k-1]]);
+ return {clauses:out};
+}
+// exact bidirectional check: origSat(a) === (exists fresh extension satisfying the split) for ALL a
+function splitPreserves(C,clauses,nOrig){
+ const nf=Math.max(0,maxVar(clauses)-nOrig+1);
+ const NO=1<<nOrig, NF=1<<nf;
+ for(let m=0;m<NO;m++){
+  const a=[]; for(let i=0;i<nOrig;i++) a[i]=((m>>i)&1)===1;
+  const os=clauseSat(C,a);
+  let ex=false;
+  for(let f=0;f<NF&&!ex;f++){
+   const b=a.slice();
+   for(let j=0;j<nf;j++) b[nOrig+j]=((f>>j)&1)===1;
+   if(cnfSat(clauses,b)) ex=true;
+  }
+  if(os!==ex) return false;
+ }
+ return true;
+}
+// 2-SAT in P: implication graph + Kosaraju SCC (satisfiable iff no var shares a component with its negation)
+function twoSAT(clauses2,n){
+ const V=2*n, g=[],gt=[];
+ for(let i=0;i<V;i++){g.push([]);gt.push([]);}
+ const id=l=>2*l.v+(l.neg?1:0), negid=k=>k^1;
+ for(const cl of clauses2){
+  const ia=id(cl[0]), ib=id(cl[1]);
+  g[negid(ia)].push(ib); gt[ib].push(negid(ia));
+  g[negid(ib)].push(ia); gt[ia].push(negid(ib));
+ }
+ const vis=new Array(V).fill(false), order=[];
+ for(let s=0;s<V;s++){
+  if(vis[s]) continue;
+  const st=[[s,0]]; vis[s]=true;
+  while(st.length){
+   const top=st[st.length-1], u=top[0];
+   if(top[1]<g[u].length){ const w=g[u][top[1]++]; if(!vis[w]){vis[w]=true; st.push([w,0]);} }
+   else { order.push(u); st.pop(); }
+  }
+ }
+ const comp=new Array(V).fill(-1); let c=0;
+ for(let i=order.length-1;i>=0;i--){
+  const s=order[i]; if(comp[s]!==-1) continue;
+  const st=[s]; comp[s]=c;
+  while(st.length){ const u=st.pop(); for(const w of gt[u]) if(comp[w]===-1){comp[w]=c; st.push(w);} }
+  c++;
+ }
+ for(let v=0;v<n;v++) if(comp[2*v]===comp[2*v+1]) return false;
+ return true;
+}
+// the long clause under the microscope: (x1 v ~x2 v x3 v ~x4 v x5)
+const LONG=[{v:0,neg:false},{v:1,neg:true},{v:2,neg:false},{v:3,neg:true},{v:4,neg:false}];
+const NORIG=5;
+let TAMPER=false;
+function buildSplit(){ return TAMPER?splitClauseBad(LONG,NORIG):splitClause(LONG,NORIG); }
+// a small satisfiable 3-CNF and the all-eight forced-UNSAT 3-CNF
+const SAT_INST=[
+ [{v:0,neg:false},{v:1,neg:false},{v:2,neg:false}],
+ [{v:0,neg:true},{v:1,neg:false},{v:2,neg:true}],
+ [{v:0,neg:false},{v:1,neg:true},{v:2,neg:false}]
+];
+const UNSAT_INST=[
+ [{v:0,neg:false},{v:1,neg:false},{v:2,neg:false}],
+ [{v:0,neg:false},{v:1,neg:false},{v:2,neg:true}],
+ [{v:0,neg:false},{v:1,neg:true},{v:2,neg:true}]
+];
+function allEightUnsat(){
+ const out=[];
+ for(let m=0;m<8;m++){ const cl=[]; for(let i=0;i<3;i++){ const bit=(m>>i)&1; cl.push({v:i,neg:bit===1}); } out.push(cl); }
+ return out;
+}
+// fixed-seed PRNG so any generated instance is reproducible (not used inside selfcheck)
+function mulberry32(seed){ let a=seed>>>0; return function(){ a|=0; a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+// fail-loud self-check — throws on any violation, saves/restores the tamper flag, returns true
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const rs=bruteSAT(SAT_INST,3);
+ t(rs.sat===true,"satisfiable instance must have a witness");
+ t(cnfSat(SAT_INST,rs.witness)===true,"the witness must satisfy every clause");
+ const ru=bruteSAT(allEightUnsat(),3);
+ t(ru.sat===false,"the all-eight 3-CNF must be unsatisfiable");
+ t(ru.witness===null,"an unsatisfiable instance must have no witness");
+ const good=splitClause(LONG,NORIG);
+ t(good.clauses.length===LONG.length-2,"a k-literal clause splits into k-2 triples");
+ for(const cl of good.clauses) t(cl.length===3,"every split clause has exactly 3 literals");
+ t(splitPreserves(LONG,good.clauses,NORIG)===true,"the good split must preserve satisfiability over ALL assignments");
+ const s2=[[{v:0,neg:false},{v:1,neg:false}],[{v:0,neg:true},{v:1,neg:false}]];
+ t(twoSAT(s2,2)===true,"a satisfiable 2-CNF must be decided SAT");
+ t(twoSAT(s2,2)===bruteSAT(s2,2).sat,"2-SAT must agree with brute force (SAT case)");
+ const u2=[[{v:0,neg:false},{v:1,neg:false}],[{v:0,neg:false},{v:1,neg:true}],[{v:0,neg:true},{v:1,neg:false}],[{v:0,neg:true},{v:1,neg:true}]];
+ t(twoSAT(u2,2)===false,"an unsatisfiable 2-CNF must be decided UNSAT");
+ t(twoSAT(u2,2)===bruteSAT(u2,2).sat,"2-SAT must agree with brute force (UNSAT case)");
+ const LITS2=[{v:0,neg:false},{v:0,neg:true},{v:1,neg:false},{v:1,neg:true}];
+ const ALLCL2=[]; for(const a of LITS2) for(const b of LITS2) ALLCL2.push([a,b]);
+ for(let i=0;i<ALLCL2.length;i++)for(let j=0;j<ALLCL2.length;j++)for(let k=0;k<ALLCL2.length;k++){
+  const F=[ALLCL2[i],ALLCL2[j],ALLCL2[k]];
+  t(twoSAT(F,2)===bruteSAT(F,2).sat,"2-SAT must match brute force on every 3-clause 2-var instance");
+ }
+ TAMPER=true;
+ const bad=buildSplit();
+ for(const cl of bad.clauses) t(cl.length===3,"tampered split clauses are still 3-literal");
+ t(splitPreserves(LONG,bad.clauses,NORIG)===false,"the tampered split must FAIL to preserve satisfiability");
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const LIB=[{v:0,neg:false},{v:0,neg:true},{v:1,neg:false},{v:1,neg:true},{v:2,neg:false},{v:2,neg:true}];
+function litKey(l){ return l.v+(l.neg?"-":"+"); }
+function keyLit(k){ return {v:+k[0], neg:k[1]==="-"}; }
+function litHTML(l,namer){ const nm=namer?namer(l.v):("x"+(l.v+1)); const cls=(namer&&l.v>=NORIG)?"vy":"vx"; return '<span class="lit">'+(l.neg?"¬":"")+'<span class="'+cls+'">'+nm+'</span></span>'; }
+function clauseHTML(cl,namer){ return '<span class="op">(</span>'+cl.map(l=>litHTML(l,namer)).join('<span class="op"> ∨ </span>')+'<span class="op">)</span>'; }
+function cnfHTML(cnf,namer){ return cnf.map(cl=>clauseHTML(cl,namer)).join('<span class="op"> ∧ </span>'); }
+const splitNamer=v=> v<NORIG ? ("x"+(v+1)) : ("y"+(v-NORIG+1));
+const asgnTxt=a=>a.map((b,i)=>"x"+(i+1)+"="+(b?"T":"F")).join("  ");
+let STATE=SAT_INST.map(cl=>cl.map(l=>({v:l.v,neg:l.neg})));
+let RNG=mulberry32(0x35A7);
+function currentCNF(){ return STATE.map(cl=>cl.map(l=>({v:l.v,neg:l.neg}))); }
+function buildSelectors(){
+ for(let ci=0;ci<3;ci++){
+  const host=$("c"+ci); host.innerHTML="";
+  for(let li=0;li<3;li++){
+   const sel=document.createElement("select");
+   sel.innerHTML=LIB.map(l=>{ const k=litKey(l); return '<option value="'+k+'">'+(l.neg?"¬":"")+"x"+(l.v+1)+'</option>'; }).join("");
+   sel.value=litKey(STATE[ci][li]);
+   sel.addEventListener("change",()=>{ STATE[ci][li]=keyLit(sel.value); recompute(); });
+   host.appendChild(sel);
+   if(li<2){ const s=document.createElement("span"); s.className="op"; s.textContent=" ∨ "; host.appendChild(s); }
+  }
+ }
+}
+function syncSelectors(){
+ for(let ci=0;ci<3;ci++){ const host=$("c"+ci); const sels=host.querySelectorAll("select");
+  for(let li=0;li<3;li++) sels[li].value=litKey(STATE[ci][li]); }
+}
+function renderTruth(rows,witness){
+ $("ttbody").innerHTML=rows.map(r=>{
+  const wit=witness && r.a[0]===witness[0] && r.a[1]===witness[1] && r.a[2]===witness[2];
+  const cls=(r.ov?"satrow":"")+(wit?" witrow":"");
+  const cc=r.cs.map(x=>'<td class="'+(x?"y":"n")+'">'+(x?"T":"F")+"</td>").join("");
+  return '<tr class="'+cls.trim()+'"><td>'+(r.a[0]?"T":"F")+"</td><td>"+(r.a[1]?"T":"F")+"</td><td>"+(r.a[2]?"T":"F")+"</td>"+cc+'<td class="'+(r.ov?"y":"n")+'">'+(r.ov?"✓":"·")+"</td></tr>";
+ }).join("");
+}
+function recompute(){
+ const cnf=currentCNF();
+ $("cnfin").innerHTML=cnfHTML(cnf,null);
+ const res=bruteSAT(cnf,3);
+ $("verdict").textContent=res.sat?"SATISFIABLE":"UNSATISFIABLE";
+ $("verdict").className="verdict "+(res.sat?"ok":"no");
+ let cnt=0; const rows=[];
+ for(let m=0;m<8;m++){ const a=[((m>>0)&1)===1,((m>>1)&1)===1,((m>>2)&1)===1];
+  const cs=cnf.map(cl=>clauseSat(cl,a)); const ov=cs.every(x=>x); if(ov)cnt++; rows.push({a,cs,ov}); }
+ $("witness").innerHTML=res.sat?("witness: <b>"+asgnTxt(res.witness)+"</b> — verified against every clause"):"no assignment satisfies all three clauses";
+ $("satcount").innerHTML="satisfying assignments: <b class='k'>"+cnt+"</b> of 8";
+ renderTruth(rows,res.witness);
+ renderSplit(); audit();
+}
+function renderSplit(){
+ const sp=buildSplit();
+ $("splitclauses").innerHTML=cnfHTML(sp.clauses,splitNamer);
+ const pres=splitPreserves(LONG,sp.clauses,NORIG);
+ $("preserve").innerHTML='<span class="badge '+(pres?"pass":"failb")+'">'+(pres?"✓ equivalence preserved · 32/32 assignments":"✗ equivalence BROKEN · split ≠ original")+"</span>"
+  +(TAMPER?'<div class="small" style="margin-top:5px;color:var(--wall)">shared link cut — each triple has its own y, so the split is satisfiable even where the long clause is false.</div>':"");
+}
+function audit(){
+ const cur=buildSplit();
+ const presCur=splitPreserves(LONG,cur.clauses,NORIG);
+ const twoOk=twoSAT([[{v:0,neg:false},{v:1,neg:false}],[{v:0,neg:true},{v:1,neg:false}]],2)===true
+   && twoSAT([[{v:0,neg:false},{v:1,neg:false}],[{v:0,neg:false},{v:1,neg:true}],[{v:0,neg:true},{v:1,neg:false}],[{v:0,neg:true},{v:1,neg:true}]],2)===false;
+ const satOk=bruteSAT(SAT_INST,3).sat===true && bruteSAT(allEightUnsat(),3).sat===false;
+ const ok=presCur && twoOk && satOk;
+ $("auditout").innerHTML='<span class="badge '+(ok?"pass":"failb")+'">'+(ok?"✓ WITNESS — holds":"✗ WITNESS — broken")+"</span>"
+  +'<div class="small" style="margin-top:6px">split preserves SAT: <b style="color:'+(presCur?"var(--gr)":"var(--wall)")+'">'+(presCur?"yes":"NO")+"</b> (32/32) &nbsp;·&nbsp; 2-SAT in P vs brute: <b style=\"color:"+(twoOk?"var(--gr)":"var(--wall)")+"\">"+(twoOk?"agree":"DISAGREE")+"</b> &nbsp;·&nbsp; SAT/UNSAT verdicts: <b style=\"color:"+(satOk?"var(--gr)":"var(--wall)")+"\">"+(satOk?"correct":"WRONG")+"</b>"+(TAMPER?' &nbsp; — <span style="color:var(--wall)">red cut the shared link</span>':"")+"</div>";
+}
+function randomInstance(){
+ const st=[];
+ for(let ci=0;ci<3;ci++){ const cl=[]; for(let li=0;li<3;li++){ cl.push({v:(RNG()*3)|0, neg:RNG()<0.5}); } st.push(cl); }
+ STATE=st;
+}
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ buildSelectors();
+ recompute();
+ $("pSat").addEventListener("click",()=>{ STATE=SAT_INST.map(cl=>cl.map(l=>({v:l.v,neg:l.neg}))); syncSelectors(); recompute(); });
+ $("pUnsat").addEventListener("click",()=>{ STATE=UNSAT_INST.map(cl=>cl.map(l=>({v:l.v,neg:l.neg}))); syncSelectors(); recompute(); });
+ $("rand").addEventListener("click",()=>{ randomInstance(); syncSelectors(); recompute(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Shared link cut.</b> Each split triple now carries its own fresh y — no clause constrains another — so the whole split is satisfiable even when the long clause is false. The witness (window 7) recomputed and went red. The attack is real; it is caught."; renderSplit(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").innerHTML="With no shared link, every split clause is trivially satisfiable (set its private y true) — so the split is satisfiable even when the long clause is <i>not</i>. The equivalence breaks, the witness recomputes and turns red. The attack is real and it is caught."; renderSplit(); audit(); });
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the 3-SAT engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

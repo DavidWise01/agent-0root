@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE AUTOREGRESSIVE MODEL</title>
+<style>
+:root{
+  --am:#9ee06a;
+  --blue:#6aa8e0;
+  --red:#e0796a;
+  --ground:#07130c;
+  --ground2:#0c2016;
+  --panel:#0f2418;
+  --panel2:#12301f;
+  --ink:#dcf3d2;
+  --dim:#8fb89a;
+  --line:#20402c;
+  --amber:#e8b74a;
+  --lit:#9ee06a;
+  --wall:#c66;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 50% -10%, #0e2417 0%, rgba(14,36,23,0) 60%),
+    linear-gradient(180deg,var(--ground) 0%,var(--ground2) 100%);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  min-height:100vh;
+  padding:26px 18px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{
+  font-size:clamp(24px,4vw,40px);
+  letter-spacing:.04em;
+  margin:0 0 8px;
+  color:var(--am);
+  text-shadow:0 0 24px rgba(158,224,106,.25);
+}
+.sub{color:var(--ink);max-width:80ch;margin:0 0 12px;font-size:14px}
+.sub b{color:var(--am)}
+.src{font-size:12px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue)}
+.src .rq{color:var(--dim);font-style:italic}
+.tag{
+  display:inline-block;font-size:10px;font-weight:700;letter-spacing:.12em;
+  padding:2px 7px;border-radius:3px;border:1px solid currentColor;text-transform:uppercase;
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;
+  padding:6px 10px;border-radius:4px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#274a6b;background:rgba(106,168,224,.06)}
+.col.red .teamhdr{color:var(--red);border-color:#6b3128;background:rgba(224,121,106,.06)}
+.col.center .teamhdr{color:var(--am);border-color:#2c5a3a;background:rgba(158,224,106,.06);text-align:center}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:6px;
+  background:linear-gradient(180deg,var(--panel) 0%,rgba(10,26,16,.6) 100%);
+  padding:14px 14px 13px;
+}
+.win .n{
+  position:absolute;top:-10px;right:10px;
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;border:1px solid var(--line);
+  background:var(--ground2);color:var(--dim);
+}
+.col.blue .win .n{color:var(--blue);border-color:#274a6b}
+.col.red .win .n{color:var(--red);border-color:#6b3128}
+.col.center .win .n{color:var(--am);border-color:#2c5a3a}
+.win h3{margin:0 0 8px;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink)}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.win.panel{background:linear-gradient(180deg,var(--panel2) 0%,rgba(10,26,16,.7) 100%);border-color:#2c5a3a}
+
+.flow{text-align:center;color:var(--am);font-size:16px;letter-spacing:.4em;opacity:.6;margin:2px 0}
+
+code,.mono{font-family:inherit}
+.eq{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:12px;color:var(--am);overflow-x:auto;white-space:nowrap}
+table.tbl{border-collapse:collapse;width:100%;font-size:11.5px;margin:4px 0}
+table.tbl th,table.tbl td{border:1px solid var(--line);padding:3px 6px;text-align:right}
+table.tbl th{color:var(--dim);font-weight:600;letter-spacing:.05em}
+table.tbl td.x{color:var(--blue);text-align:center;font-weight:700}
+.ok{color:var(--lit)}
+.bad{color:var(--wall)}
+.gy{color:var(--dim);text-decoration:line-through}
+.corr{color:var(--am)}
+.wall-note{border-left:3px solid var(--wall);padding-left:10px;color:#e6b3ab;font-size:12px}
+
+button{
+  font:inherit;font-size:11.5px;cursor:pointer;
+  background:rgba(158,224,106,.09);color:var(--am);
+  border:1px solid #2c5a3a;border-radius:4px;padding:6px 11px;letter-spacing:.06em;
+}
+button:hover{background:rgba(158,224,106,.18)}
+button.warn{color:var(--red);border-color:#6b3128;background:rgba(224,121,106,.08)}
+button.warn:hover{background:rgba(224,121,106,.16)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+select{font:inherit;font-size:11.5px;background:var(--ground2);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:4px 6px}
+
+.badge{
+  display:block;border-radius:5px;padding:9px 11px;font-size:12px;
+  border:1px solid var(--line);background:rgba(0,0,0,.25);
+}
+#litbadge{color:var(--lit);border-color:#2c5a3a}
+#auditout{color:var(--lit);border-color:#2c5a3a}
+#auditout.tampered{color:var(--wall);border-color:#6b3128;background:rgba(224,121,106,.1)}
+#failb{display:none;margin:14px 0;padding:12px;border:1px solid var(--wall);border-radius:6px;color:#ffb3aa;background:rgba(224,121,106,.1);font-size:12.5px}
+
+.sample{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:12px;min-height:64px}
+.step{margin:2px 0;color:var(--dim)}
+.step b{color:var(--am)}
+.draw{color:var(--blue);font-weight:700}
+.empir{font-size:11px;color:var(--dim);margin-top:6px}
+footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE AUTOREGRESSIVE MODEL</h1>
+  <p class="sub">Factor the joint into a chain of next-step predictions and the likelihood becomes <b>exact</b>. Every conditional is a classifier; the product of them is the whole distribution. No bound, no implicit density &mdash; the number it reports is the true <b>p(x)</b>.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    <span>Larochelle &amp; Murray, <i>The Neural Autoregressive Distribution Estimator</i> (AISTATS 2011); journal ext. <a href="https://arxiv.org/abs/1605.02226" target="_blank" rel="noopener">arxiv.org/abs/1605.02226</a> &middot; van den Oord et&nbsp;al., <i>Pixel RNN</i> (2016) <a href="https://arxiv.org/abs/1601.06759" target="_blank" rel="noopener">arxiv.org/abs/1601.06759</a></span>
+    <span class="rq">Rendered, not quoted.</span>
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="n">3</span>
+      <h3>The Model</h3>
+      <p>Pick any ordering of the variables. The chain rule of probability is an <b>identity</b>, exact for every distribution:</p>
+      <div class="eq">p(x&#8321;..x&#8345;) = &prod;&#8339; p(x&#8339; | x&#8321;..x&#8339;&#8331;&#8321;)</div>
+      <p>Each factor <b>p(x&#8339; | x&#8342;&#8342;)</b> is a small predictor over the next variable given everything before it. String them together and you have a generator whose likelihood is computed by <b>multiplication</b> &mdash; no marginalisation, no partition function to estimate.</p>
+      <p>Here the ground truth is a constructed 3-bit joint (a first-order Markov table). The model reads its conditionals straight off that table, so the factorisation is checkable to machine precision.</p>
+    </div>
+
+    <div class="win">
+      <span class="n">5</span>
+      <h3>The Lineage</h3>
+      <p><b>the-causal-mask</b> is what makes this trainable at scale: mask the attention so token <b>i</b> can only see tokens <b>&lt; i</b>, and a transformer computes every conditional <b>p(x&#8339; | x&#8342;&#8342;)</b> in one parallel pass.</p>
+      <p>The chain rule <i>is</i> the language-model training objective &mdash; next-token prediction is exactly this product, and its log is the cross-entropy loss. This sphere is the density backbone that the causal mask industrialised.</p>
+    </div>
+
+    <div class="win">
+      <span class="n">7</span>
+      <h3>The Witness</h3>
+      <p>Live re-check: recompute the chain-rule product for all 8 outcomes against the joint table, right now, in the current state.</p>
+      <div id="auditout" class="badge">&hellip;</div>
+      <div class="row"><button id="recheck">re-run witness</button></div>
+      <p>Green only while <b>&prod; p(x&#8339;|x&#8342;&#8342;) = p(x)</b> exactly. If window 6 drops the conditioning, this flips red on the next tick.</p>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="n">4</span>
+      <h3>Data In <span class="tag t-in">in &darr;</span></h3>
+      <p>A constructed, <b>correlated</b> joint over three bits (x&#8321;,x&#8322;,x&#8323;), built as a Markov chain with known transitions. It is <i>not</i> a product of marginals &mdash; KL(joint &#8214; independent) &gt; 0.</p>
+      <table class="tbl" id="jointtbl"><thead><tr><th>x&#8321;x&#8322;x&#8323;</th><th>p(x)</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win panel">
+      <span class="n">0</span>
+      <h3>The Panel <span class="tag t-lit">lit</span></h3>
+      <p>Factorise under a chosen ordering, then sample one variable at a time (ancestral sampling) with a fixed-seed PRNG.</p>
+      <div class="row">
+        <label>order:
+          <select id="order">
+            <option value="0,1,2">x&#8321; &rarr; x&#8322; &rarr; x&#8323;</option>
+            <option value="2,1,0">x&#8323; &rarr; x&#8322; &rarr; x&#8321;</option>
+            <option value="1,2,0">x&#8322; &rarr; x&#8323; &rarr; x&#8321;</option>
+          </select>
+        </label>
+        <button id="draw">draw a sample</button>
+        <button id="resetmc">reset counts</button>
+      </div>
+      <table class="tbl" id="factbl"><thead><tr><th>x&#8321;x&#8322;x&#8323;</th><th>&prod; conditionals</th><th>p(x)</th></tr></thead><tbody></tbody></table>
+      <div class="sample" id="sampleout">press <b>draw a sample</b>&hellip;</div>
+      <div class="empir" id="empir"></div>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win">
+      <span class="n">8</span>
+      <h3>Data Out <span class="tag t-out">out &darr;</span></h3>
+      <div id="litbadge" class="badge">&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="n">1</span>
+      <h3>The Adversary <span class="tag t-wall">wall</span></h3>
+      <p class="wall-note">Exact likelihood is not free. The chain rule is exact <i>only for the conditionals you actually have</i>. In the real setting each p(x&#8339;|x&#8342;&#8342;) is a learned approximation, and errors compound multiplicatively along the sequence.</p>
+      <p class="wall-note">Sampling is inherently <b>sequential</b> &mdash; O(n) passes, one variable at a time. PixelRNN pays this cost per pixel; it is why autoregressive generation is slow next to a one-shot flow or a parallel decoder.</p>
+      <p class="wall-note">The ordering is a modelling choice: every ordering is a <i>valid</i> factorisation of the same joint, but with imperfect conditionals different orderings give different approximations.</p>
+    </div>
+
+    <div class="win">
+      <span class="n">2</span>
+      <h3>The Graveyard</h3>
+      <p><span class="gy">&ldquo;A generative model must marginalise over a latent to score a point.&rdquo;</span><br><span class="corr">&rarr; Autoregressive models have a <b>tractable exact</b> likelihood; the score is a product of conditionals, no latent integral.</span></p>
+      <p><span class="gy">&ldquo;You need the &lsquo;right&rsquo; variable ordering.&rdquo;</span><br><span class="corr">&rarr; <b>Any</b> ordering factorises the joint exactly (window 0 verifies two orderings reconstruct it). Ordering only matters once conditionals are approximate.</span></p>
+      <p><span class="gy">&ldquo;Conditioning is just an optional refinement.&rdquo;</span><br><span class="corr">&rarr; Drop it and you assert independence. For a correlated joint the product then <b>no longer equals</b> p(x) &mdash; see window 6.</span></p>
+    </div>
+
+    <div class="win">
+      <span class="n">6</span>
+      <h3>The Tamper</h3>
+      <p>Planted void (disclosed): replace each conditional <b>p(x&#8339;|x&#8342;&#8342;)</b> with the bare marginal <b>p(x&#8339;)</b> &mdash; i.e. assert the bits are independent.</p>
+      <div class="row">
+        <button id="tamper" class="warn">drop the conditioning</button>
+        <button id="restore">restore</button>
+      </div>
+      <p>For this correlated joint the product of marginals is <i>not</i> the joint, so window 0's reconstruction breaks and the Witness (7) catches it live.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE AUTOREGRESSIVE MODEL &middot; the chain rule of probability as a generator &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus.<br>
+  Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===== ENGINE (pure logic; extractable for node verification) =====
+
+// Constructed correlated joint over three bits, built as a first-order Markov chain:
+//   p(x1=1)=0.6 ; p(x2=1|x1)=[0.2,0.7] ; p(x3=1|x2)=[0.3,0.8]
+// Stored as the ground-truth joint table over the 8 outcomes.
+var JOINT = [0.224, 0.096, 0.016, 0.064, 0.126, 0.054, 0.084, 0.336];
+function jidx(a,b,c){ return a*4 + b*2 + c; }
+var OUTS = [];
+(function(){ for(var a=0;a<2;a++) for(var b=0;b<2;b++) for(var c=0;c<2;c++) OUTS.push([a,b,c]); })();
+function jointP(x){ return JOINT[jidx(x[0],x[1],x[2])]; }
+
+// TAMPER flag: when true, factor() ignores conditioning and returns the bare marginal.
+var TAMPERED = false;
+
+// Marginal P(x_i = v)
+function marg1(i,v){ var s=0; for(var k=0;k<OUTS.length;k++){ if(OUTS[k][i]===v) s+=jointP(OUTS[k]); } return s; }
+
+// Conditional P(x_i = v | given), given is {index:value} for the already-assigned prefix
+function condProb(i,v,given){
+  var num=0, den=0;
+  for(var k=0;k<OUTS.length;k++){
+    var x=OUTS[k], ok=true;
+    for(var g in given){ if(given.hasOwnProperty(g) && x[g]!=given[g]){ ok=false; break; } }
+    if(!ok) continue;
+    den+=jointP(x);
+    if(x[i]===v) num+=jointP(x);
+  }
+  return num/den;
+}
+
+// One factor of the chain-rule product. Honest under TAMPERED=false; drops conditioning otherwise.
+function factor(i,v,given){ return TAMPERED ? marg1(i,v) : condProb(i,v,given); }
+
+// Product of conditionals for outcome x under an ordering perm (array of variable indices)
+function chainProduct(x,perm){
+  var p=1, given={};
+  for(var t=0;t<perm.length;t++){
+    var i=perm[t];
+    p *= factor(i, x[i], given);
+    if(!TAMPERED) given[i]=x[i];
+  }
+  return p;
+}
+
+// Max abs error between chain-rule product and the true joint, over all outcomes
+function maxJointErr(perm){
+  var m=0;
+  for(var k=0;k<OUTS.length;k++){ var e=Math.abs(chainProduct(OUTS[k],perm)-jointP(OUTS[k])); if(e>m) m=e; }
+  return m;
+}
+
+// Marginal of variable i as induced by ancestral sampling under ordering perm (analytic).
+// Equals the direct marginal iff the factorisation reproduces the joint.
+function ancestralMarginal(i,v,perm){
+  var s=0;
+  for(var k=0;k<OUTS.length;k++){ var x=OUTS[k]; if(x[i]===v) s+=chainProduct(x,perm); }
+  return s;
+}
+
+// Closed-form KL( joint || independent product of marginals ) -- proves the joint is correlated.
+function klIndependent(){
+  var kl=0;
+  for(var k=0;k<OUTS.length;k++){
+    var x=OUTS[k], p=jointP(x);
+    var q=marg1(0,x[0])*marg1(1,x[1])*marg1(2,x[2]);
+    kl += p*Math.log(p/q);
+  }
+  return kl;
+}
+
+// Fixed-seed PRNG (mulberry32) for reproducible ancestral sampling.
+function mkRng(seed){
+  var s = seed>>>0;
+  return function(){
+    s |= 0; s = (s + 0x6D2B79F5) | 0;
+    var t = Math.imul(s ^ (s>>>15), 1 | s);
+    t = (t + Math.imul(t ^ (t>>>7), 61 | t)) ^ t;
+    return ((t ^ (t>>>14)) >>> 0) / 4294967296;
+  };
+}
+
+// Fail-loud self-check. Throws on any violation; returns true on success.
+function selfcheck(){
+  var EPS=1e-12, savedTamper=TAMPERED;
+  TAMPERED=false;
+
+  // 1. The joint is a valid distribution: sums to 1, all entries positive.
+  var tot=0; for(var k=0;k<JOINT.length;k++){ if(!(JOINT[k]>0)) throw "joint has a non-positive entry"; tot+=JOINT[k]; }
+  if(Math.abs(tot-1)>EPS) throw "joint does not sum to 1 (tractable-likelihood violation): "+tot;
+
+  // 2. Chain rule reconstructs the joint EXACTLY, and for ANY ordering (three tested).
+  var orders=[[0,1,2],[2,1,0],[1,2,0]];
+  for(var o=0;o<orders.length;o++){
+    var err=maxJointErr(orders[o]);
+    if(err>EPS) throw "chain-rule product != joint for order "+orders[o]+" (err "+err+")";
+  }
+
+  // 3. Ancestral sampling reproduces the joint's marginals exactly (under each ordering).
+  for(var o2=0;o2<orders.length;o2++){
+    for(var i=0;i<3;i++){
+      for(var v=0;v<2;v++){
+        var d=Math.abs(ancestralMarginal(i,v,orders[o2]) - marg1(i,v));
+        if(d>EPS) throw "ancestral marginal != joint marginal (var "+i+", err "+d+")";
+      }
+    }
+  }
+
+  // 4. The joint is genuinely correlated: KL(joint||independent) > 0.
+  var kl=klIndependent();
+  if(!(kl>1e-6)) throw "constructed joint is not correlated (KL "+kl+")";
+
+  // 5. TAMPER: drop the conditioning -> product of marginals must BREAK the factorisation.
+  TAMPERED=true;
+  var terr=maxJointErr([0,1,2]);
+  if(!(terr>1e-6)) throw "tamper not detected: dropping conditioning left the joint intact";
+  TAMPERED=savedTamper;
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+var $ = function(s){ return document.querySelector(s); };
+var RNG = mkRng(0x0804);           // fixed seed
+var counts = [ [0,0],[0,0],[0,0] ]; // empirical marginal counts, per variable
+var nDraws = 0;
+
+function fmtx(x){ return x[0]+""+x[1]+""+x[2]; }
+
+function renderJointTable(){
+  var tb=$("#jointtbl tbody"), h="";
+  for(var k=0;k<OUTS.length;k++){ var x=OUTS[k]; h+="<tr><td class='x'>"+fmtx(x)+"</td><td>"+jointP(x).toFixed(3)+"</td></tr>"; }
+  tb.innerHTML=h;
+}
+
+function renderFactTable(){
+  var perm=$("#order").value.split(",").map(Number);
+  var tb=$("#factbl tbody"), h="";
+  for(var k=0;k<OUTS.length;k++){
+    var x=OUTS[k], prod=chainProduct(x,perm), jp=jointP(x);
+    var match=Math.abs(prod-jp)<1e-9;
+    h+="<tr><td class='x'>"+fmtx(x)+"</td><td class='"+(match?"ok":"bad")+"'>"+prod.toFixed(3)+"</td><td>"+jp.toFixed(3)+"</td></tr>";
+  }
+  tb.innerHTML=h;
+}
+
+function drawSample(){
+  var perm=$("#order").value.split(",").map(Number);
+  var x=[0,0,0], given={}, lines=[], usedT=TAMPERED;
+  for(var t=0;t<perm.length;t++){
+    var i=perm[t];
+    var p1=factor(i,1,given);
+    var u=RNG();
+    var v=(u<p1)?1:0;
+    x[i]=v;
+    var cond = usedT ? ("p(x"+(i+1)+")") : ("p(x"+(i+1)+"|prefix)");
+    lines.push("<div class='step'>"+cond+"=1 &rarr; <b>"+p1.toFixed(3)+"</b> &middot; u="+u.toFixed(3)+" &rArr; x"+(i+1)+"=<span class='draw'>"+v+"</span></div>");
+    if(!usedT) given[i]=v;
+  }
+  for(var j=0;j<3;j++){ counts[j][x[j]]++; }
+  nDraws++;
+  lines.push("<div class='step'>sample = <span class='draw'>"+fmtx(x)+"</span></div>");
+  $("#sampleout").innerHTML=lines.join("");
+  renderEmpir();
+}
+
+function renderEmpir(){
+  if(nDraws===0){ $("#empir").innerHTML=""; return; }
+  var parts=[];
+  for(var i=0;i<3;i++){
+    var emp=(counts[i][1]/nDraws);
+    parts.push("x"+(i+1)+"=1: emp "+emp.toFixed(3)+" / true "+marg1(i,1).toFixed(3));
+  }
+  $("#empir").innerHTML="n="+nDraws+" &middot; "+parts.join(" &middot; ");
+}
+
+function audit(){
+  var el=$("#auditout");
+  var err=maxJointErr([0,1,2]);
+  if(err<1e-9){
+    el.className="badge";
+    el.innerHTML="&#10003; WITNESS OK &middot; &prod; p(x&#8339;|x&#8342;&#8342;) = p(x) &middot; max err "+err.toExponential(1);
+  } else {
+    el.className="badge tampered";
+    el.innerHTML="&#10007; TAMPER DETECTED &middot; conditioning dropped &rarr; product &ne; joint &middot; max err "+err.toFixed(3);
+  }
+}
+
+function renderAll(){ renderFactTable(); audit(); }
+
+// ---- boot: fail-loud self-check, then wire the UI ----
+try{
+  var ok=selfcheck();
+  if(ok!==true) throw "selfcheck did not return true";
+  $("#litbadge").innerHTML="&#10003; LIT &middot; joint reconstructed exactly (err &lt;1e-12) &middot; &Sigma;p=1 &middot; any ordering valid &middot; KL(joint&#8214;indep)="+klIndependent().toFixed(3)+" &gt; 0 &middot; tractable exact likelihood";
+}catch(e){
+  var fb=$("#failb");
+  fb.style.display="block";
+  fb.innerHTML="<b>SELF-CHECK FAILED &mdash; instrument is NOT lit:</b> "+e;
+  var lb=$("#litbadge"); if(lb){ lb.className="badge tampered"; lb.textContent="NOT LIT"; }
+  throw e;
+}
+
+renderJointTable();
+renderAll();
+renderEmpir();
+
+$("#order").addEventListener("change", renderAll);
+$("#draw").addEventListener("click", drawSample);
+$("#resetmc").addEventListener("click", function(){ counts=[[0,0],[0,0],[0,0]]; nDraws=0; RNG=mkRng(0x0804); $("#sampleout").innerHTML="press <b>draw a sample</b>&hellip;"; renderEmpir(); });
+$("#recheck").addEventListener("click", audit);
+$("#tamper").addEventListener("click", function(){ TAMPERED=true; renderAll(); });
+$("#restore").addEventListener("click", function(){ TAMPERED=false; renderAll(); });
+</script>
+</body>
+</html>

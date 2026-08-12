@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LIMIT CYCLE</title>
+<style>
+:root{
+  --am:#9ee06a;
+  --ground:#06120b;
+  --ground2:#0a1c11;
+  --ink:#e8f6df;
+  --dim:#93b58e;
+  --line:#1c3a26;
+  --blue:#5fb0ff;
+  --red:#ff6d6d;
+  --amber:#ffcf5a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 20% -10%, #0e2417 0%, transparent 60%),
+    radial-gradient(1000px 600px at 100% 0%, #0c1f13 0%, transparent 55%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px solid rgba(158,224,106,.35)}
+a:hover{border-bottom-color:var(--am)}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin:0 0 22px}
+h1{
+  font-size:30px;letter-spacing:.14em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 22px rgba(158,224,106,.28)
+}
+.sub{color:var(--ink);max-width:860px;margin:0 0 10px;font-size:14px}
+.src{color:var(--dim);font-size:12.5px}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.12em;
+  padding:2px 7px;border-radius:5px;border:1px solid var(--line);
+  vertical-align:middle;margin-right:6px;text-transform:uppercase
+}
+.t-amber{color:var(--amber);border-color:rgba(255,207,90,.4);background:rgba(255,207,90,.07)}
+.t-lit{color:var(--am);border-color:rgba(158,224,106,.5);background:rgba(158,224,106,.09)}
+.t-in{color:var(--blue);border-color:rgba(95,176,255,.45);background:rgba(95,176,255,.08)}
+.t-out{color:var(--am);border-color:rgba(158,224,106,.45);background:rgba(158,224,106,.08)}
+.t-wall{color:var(--red);border-color:rgba(255,109,109,.45);background:rgba(255,109,109,.08)}
+
+.ocho{
+  display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:16px;align-items:start
+}
+@media(max-width:880px){ .ocho{grid-template-columns:1fr} }
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  padding:7px 10px;border-radius:7px;border:1px solid var(--line);
+  background:rgba(255,255,255,.015)
+}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(95,176,255,.32)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,109,109,.32)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(158,224,106,.32)}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:10px;
+  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.12));
+  padding:13px 13px 14px
+}
+.win.panel{
+  border-color:rgba(158,224,106,.4);
+  background:linear-gradient(180deg,rgba(158,224,106,.05),rgba(0,0,0,.2));
+  box-shadow:0 0 34px rgba(158,224,106,.06) inset
+}
+.wnum{
+  position:absolute;top:-9px;right:10px;width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+  background:var(--ground2);border:1px solid var(--line);color:var(--dim)
+}
+.col.blue .wnum{color:var(--blue);border-color:rgba(95,176,255,.4)}
+.col.red .wnum{color:var(--red);border-color:rgba(255,109,109,.4)}
+.col.center .wnum{color:var(--am);border-color:rgba(158,224,106,.45)}
+.wtitle{font-size:12px;letter-spacing:.09em;color:var(--ink);margin:2px 0 8px;text-transform:uppercase}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+.win p b{color:var(--ink);font-weight:600}
+.win code{color:var(--am);font-size:12px}
+
+.flow{
+  text-align:center;color:var(--dim);font-size:16px;line-height:1;margin:2px 0;
+  opacity:.7
+}
+canvas{
+  width:100%;height:auto;display:block;border-radius:8px;
+  background:radial-gradient(600px 400px at 50% 40%,#08160d,#050d08);
+  border:1px solid var(--line)
+}
+.ctrls{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.ctrls label{font-size:11.5px;color:var(--dim);letter-spacing:.05em}
+input[type=range]{accent-color:var(--am);width:150px}
+.badge{
+  font-size:11.5px;padding:6px 9px;border-radius:7px;border:1px solid var(--line);
+  display:inline-block;margin-top:6px
+}
+#litbadge{color:var(--am);border-color:rgba(158,224,106,.45);background:rgba(158,224,106,.07)}
+#auditout{color:var(--am);border-color:rgba(158,224,106,.45);background:rgba(158,224,106,.07);cursor:default}
+#auditout.bad{color:var(--red);border-color:rgba(255,109,109,.55);background:rgba(255,109,109,.1)}
+.strike{text-decoration:line-through;color:var(--red);opacity:.8}
+.fix{color:var(--am)}
+.wall-note{
+  border-left:3px solid var(--red);padding-left:10px;color:var(--dim);
+  background:rgba(255,109,109,.04)
+}
+button{
+  font:inherit;font-size:12px;color:var(--ink);background:rgba(255,255,255,.04);
+  border:1px solid var(--line);border-radius:7px;padding:6px 11px;cursor:pointer;margin:4px 6px 0 0
+}
+button:hover{border-color:var(--am)}
+#tamper:hover{border-color:var(--red)}
+#failb{
+  display:none;margin-top:10px;color:var(--red);border:1px solid rgba(255,109,109,.5);
+  background:rgba(255,109,109,.09);padding:8px 10px;border-radius:8px;font-size:12px
+}
+.mono{color:var(--am)}
+footer{margin-top:30px;color:var(--dim);font-size:12px;text-align:center;letter-spacing:.04em}
+.assume{color:var(--amber);font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE LIMIT CYCLE</h1>
+  <p class="sub">A self-winding oscillation the system returns to from every direction. The van der Pol
+  oscillator <code>x&Prime; &minus; &mu;(1&minus;x&sup2;)x&prime; + x = 0</code> has nonlinear damping that
+  <b>pumps energy in at small amplitude and drains it at large amplitude</b> &mdash; carving one isolated
+  closed orbit that every nearby trajectory, inside or out, spirals onto. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span>
+  van der Pol, B. &mdash; <i>On Relaxation-Oscillations</i>, London, Edinburgh &amp; Dublin
+  Phil. Mag. (Ser.&nbsp;7) <b>2</b>, 978&ndash;992 (1926).
+  <a href="https://doi.org/10.1080/14786442608564127" target="_blank" rel="noopener">doi:10.1080/14786442608564127</a></p>
+</header>
+
+<div class="ocho">
+
+  <!-- LEFT : BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wnum">3</div>
+      <div class="wtitle">The Model</div>
+      <p>Write it as a plane flow with <code>y = x&prime;</code>:</p>
+      <p class="mono">x&prime; = y<br>y&prime; = &mu;(1&minus;x&sup2;)&middot;y &minus; x</p>
+      <p>The factor <code>(1&minus;x&sup2;)</code> is the whole trick. Where <b>|x|&lt;1</b> the damping is
+      <b>negative</b> (energy pumped in); where <b>|x|&gt;1</b> it is <b>positive</b> (energy removed).
+      Amplitude cannot sit at zero and cannot run away &mdash; it settles on the one orbit where pumped
+      and drained energy cancel over a cycle.</p>
+      <p class="assume">Assumed: an ideal isolated system, exact quadratic damping, no forcing or noise. A
+      real relaxation oscillator only approximates this.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">5</div>
+      <div class="wtitle">The Lineage</div>
+      <p>A <b>self-sustaining clock</b>. Van der Pol&rsquo;s isolated attracting oscillation (1926) is the
+      object that <b>the-hopf-bifurcation</b> gives birth to when a stable focus turns unstable, and the
+      shape a <b>heartbeat</b> resembles &mdash; an amplitude the system defends against a push either way.</p>
+      <p>Unlike a conservative <i>center</i> (a nested family of orbits, one per energy), this cycle is
+      <b>isolated</b>: perturb the amplitude and it comes back.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">7</div>
+      <div class="wtitle">The Witness</div>
+      <p>Re-runs the live check that both a tiny-start and a large-start trajectory land on the <b>same</b>
+      orbit. It confirms green, and flips <b>red</b> the instant the tamper (window 6) removes the
+      nonlinear damping.</p>
+      <span id="auditout" class="badge">witness: booting&hellip;</span>
+    </div>
+  </div>
+
+  <!-- CENTER : THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="wnum">4</div>
+      <div class="wtitle">Data In &nbsp;<span class="tag t-in">in &darr;</span></div>
+      <p>Two very different initial conditions on the same plane:
+      <b>inside</b> <code>(0.5, 0)</code> and <b>outside</b> <code>(3.0, 0)</code>, plus the damping
+      strength <code>&mu;</code>. RK4, fixed step <code>h=0.005</code>.</p>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <div class="wnum">0</div>
+      <div class="wtitle">The Panel &nbsp;<span class="tag t-lit">lit</span></div>
+      <canvas id="cv" width="520" height="420"></canvas>
+      <div class="ctrls">
+        <label>&mu; <span id="muval" class="mono">1.00</span></label>
+        <input id="mu" type="range" min="0.4" max="3" step="0.05" value="1">
+        <button id="reseed">re-seed spirals</button>
+      </div>
+      <p style="font-size:11.5px">Blue tracers start <b>inside</b> and spiral <b>out</b>; red tracers start
+      <b>outside</b> and spiral <b>in</b>. Both wind onto the bright green orbit &mdash; the isolated
+      attracting limit cycle, computed live.</p>
+      <div id="failb"></div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win">
+      <div class="wnum">8</div>
+      <div class="wtitle">Data Out &nbsp;<span class="tag t-out">out &darr;</span></div>
+      <span id="litbadge" class="badge">proving&hellip;</span>
+      <p style="margin-top:8px">One isolated orbit; inside and outside converge to it; period set by the
+      dynamics, not the start. Trapped in an annulus &mdash; Poincar&eacute;&ndash;Bendixson guarantees a
+      cycle there.</p>
+    </div>
+  </div>
+
+  <!-- RIGHT : RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wnum">1</div>
+      <div class="wtitle">The Adversary</div>
+      <p class="wall-note"><span class="tag t-wall">wall</span>&ldquo;An oscillation just needs a spring
+      and small friction &mdash; a plain <code>x&Prime;+cx&prime;+x=0</code> rings and settles. Your extra
+      term is decoration.&rdquo;</p>
+      <p><b>Rebuttal.</b> Linear damping has <b>no</b> preferred amplitude: <code>c&gt;0</code> decays to
+      rest, <code>c&lt;0</code> blows up, <code>c=0</code> gives a whole family of neutral circles that
+      depend on the start. Only the <b>sign-changing</b> damping <code>&mu;(1&minus;x&sup2;)</code> pins a
+      single amplitude the flow returns to. That is exactly what window&nbsp;6 destroys.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">2</div>
+      <div class="wtitle">The Graveyard</div>
+      <p class="strike">&ldquo;Bigger start &rArr; bigger final swing.&rdquo;</p>
+      <p class="fix">&rarr; False. Every start converges to the <b>same</b> amplitude &asymp;
+      <span id="gvamp" class="mono">2.01</span>; the cycle is isolated, not a nested center.</p>
+      <p class="strike" style="margin-top:10px">&ldquo;The origin is a fine resting point.&rdquo;</p>
+      <p class="fix">&rarr; False. At small amplitude the damping is <b>negative</b>; the origin is an
+      <b>unstable</b> spiral (Jacobian trace <code>&mu;&gt;0</code>), so rest is never reached.</p>
+      <p class="strike" style="margin-top:10px">&ldquo;Period grows with amplitude.&rdquo;</p>
+      <p class="fix">&rarr; False here. Both starts give the same period &asymp;
+      <span id="gvper" class="mono">6.66</span> &mdash; set by the dynamics, not the launch.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">6</div>
+      <div class="wtitle">The Tamper</div>
+      <p>Replace the nonlinear damping with a <b>constant positive</b> one
+      (<code>x&Prime;+0.5x&prime;+x=0</code>). The origin becomes a <b>stable</b> spiral and the limit cycle
+      <b>vanishes</b> &mdash; everything decays to 0. Window&nbsp;7 catches it live.</p>
+      <button id="tamper">inject linear damping</button>
+      <button id="restore">restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE LIMIT CYCLE &middot; the-limit-cycle &middot; WORLD&nbsp;II &middot; THE FOLD &mdash;
+  a model with named assumptions, not medical advice. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- engine: van der Pol oscillator (pure logic, extractable) ----
+// x'' - mu*(1-x^2)*x' + x = 0  ->  state s=[x,y], y=x'
+var TAMPER = false;
+var TAMPER_C = 0.5;
+
+function deriv(x, y, mu){
+  if(TAMPER){
+    // planted void: constant positive linear damping, sign-changing term removed
+    return [y, -TAMPER_C*y - x];
+  }
+  return [y, mu*(1 - x*x)*y - x];
+}
+
+function rk4(s, h, mu){
+  var x=s[0], y=s[1];
+  var k1=deriv(x, y, mu);
+  var k2=deriv(x+0.5*h*k1[0], y+0.5*h*k1[1], mu);
+  var k3=deriv(x+0.5*h*k2[0], y+0.5*h*k2[1], mu);
+  var k4=deriv(x+h*k3[0], y+h*k3[1], mu);
+  return [ x + h/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),
+           y + h/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]) ];
+}
+
+// max |x| over a measurement window after discarding a transient
+function amplitude(x0, y0, mu, h, Ttr, Tmeas){
+  var s=[x0,y0], i, ntr=Math.round(Ttr/h), nm=Math.round(Tmeas/h), mx=0;
+  for(i=0;i<ntr;i++) s=rk4(s,h,mu);
+  for(i=0;i<nm;i++){ s=rk4(s,h,mu); if(Math.abs(s[0])>mx) mx=Math.abs(s[0]); }
+  return mx;
+}
+
+// period from successive upward zero-crossings of x, linearly interpolated
+function period(x0, y0, mu, h, Ttr, Tmeas){
+  var s=[x0,y0], i, ntr=Math.round(Ttr/h), nm=Math.round(Tmeas/h), t=0, cr=[];
+  for(i=0;i<ntr;i++) s=rk4(s,h,mu);
+  for(i=0;i<nm;i++){
+    var nx=rk4(s,h,mu); t+=h;
+    if(s[0]<0 && nx[0]>=0){ var f=(0-s[0])/(nx[0]-s[0]); cr.push(t-h+f*h); }
+    s=nx;
+  }
+  if(cr.length<2) return NaN;
+  var sum=0; for(i=1;i<cr.length;i++) sum+=cr[i]-cr[i-1];
+  return sum/(cr.length-1);
+}
+
+// trapped-in-annulus test: over a cycle, steady r stays between rmin>0 and rmax<big
+function annulus(mu, h, Ttr, Tmeas){
+  var s=[0.5,0], i, ntr=Math.round(Ttr/h), nm=Math.round(Tmeas/h);
+  var rmin=Infinity, rmax=0;
+  for(i=0;i<ntr;i++) s=rk4(s,h,mu);
+  for(i=0;i<nm;i++){ s=rk4(s,h,mu); var r=Math.sqrt(s[0]*s[0]+s[1]*s[1]);
+    if(r<rmin) rmin=r; if(r>rmax) rmax=r; }
+  return [rmin, rmax];
+}
+
+// exact 2x2 fixed-point classification at the origin via trace / determinant
+// J(0) = [[0,1],[-1,mu]] : tau=mu, det=1
+function originJacobian(mu){
+  var tau=mu, det=1, disc=tau*tau-4*det;
+  var re, cls;
+  if(disc<0){ re=tau/2; cls = re>0 ? "unstable-spiral" : (re<0 ? "stable-spiral":"center"); }
+  else { var l1=(tau+Math.sqrt(disc))/2, l2=(tau-Math.sqrt(disc))/2; re=Math.max(l1,l2); cls="node"; }
+  return { tau:tau, det:det, disc:disc, re:re, cls:cls };
+}
+
+// ---- fail-loud selfcheck: THROWS on any violation, RETURNS true on success ----
+function selfcheck(){
+  var mu=1.0, h=0.005;
+  var save = TAMPER;              // save tamper flag
+  TAMPER = false;                 // untampered checks first
+
+  // 1. ISOLATED ATTRACTING CYCLE: two very different starts -> same amplitude
+  var aIn  = amplitude(0.5, 0.0, mu, h, 60, 20);
+  var aOut = amplitude(3.0, 0.0, mu, h, 60, 20);
+  if(!(aIn>1.5) || !(aOut>1.5)) throw "no finite oscillation";
+  if(Math.abs(aIn-aOut) > 1e-3) throw "starts converge to DIFFERENT orbits (not isolated): "+aIn+" vs "+aOut;
+
+  // 2. ORIGIN IS UNSTABLE: negative damping at small amplitude, Jacobian re>0
+  var J = originJacobian(mu);
+  if(J.cls !== "unstable-spiral") throw "origin not an unstable spiral: "+J.cls;
+  if(!(J.re > 0)) throw "origin real part not positive: "+J.re;
+  if(!(J.tau > 0 && J.det > 0 && J.disc < 0)) throw "trace-determinant classification failed";
+
+  // 3. TRAPPED IN AN ANNULUS: Poincare-Bendixson -> a cycle lives there
+  var ann = annulus(mu, h, 60, 20);
+  if(!(ann[0] > 0.05)) throw "orbit collapses to origin, no annulus: rmin="+ann[0];
+  if(!(ann[1] < 20))   throw "orbit unbounded, no annulus: rmax="+ann[1];
+
+  // 4. PERIOD INDEPENDENT OF START AMPLITUDE
+  var pIn  = period(0.5, 0.0, mu, h, 60, 40);
+  var pOut = period(3.0, 0.0, mu, h, 60, 40);
+  if(!(pIn>0) || !(pOut>0)) throw "no measurable period";
+  if(Math.abs(pIn-pOut) > 1e-2) throw "period depends on start: "+pIn+" vs "+pOut;
+
+  // -- planted void: linear positive damping -> stable spiral, cycle DISAPPEARS --
+  TAMPER = true;
+  var aTam = amplitude(3.0, 0.0, mu, h, 60, 20);
+  if(!(aTam < 0.05)) throw "TAMPER did not kill the cycle (amp still "+aTam+")";
+  var Jt = originJacobian(-TAMPER_C);   // tampered origin: tau=-c<0 -> stable
+  if(Jt.re >= 0) throw "TAMPER origin should be stable";
+
+  TAMPER = save;                 // restore tamper flag
+  return true;                   // returns true
+}
+
+/* ===== UI ===== */
+
+var RESULTS = {};
+function boot(){
+  var lit = document.getElementById("litbadge");
+  var wit = document.getElementById("auditout");
+  var fail = document.getElementById("failb");
+  try{
+    var ok = selfcheck();
+    if(ok!==true) throw "selfcheck did not return true";
+    // recompute display numbers live (untampered)
+    var h=0.005, mu=1.0;
+    var aIn=amplitude(0.5,0,mu,h,60,20);
+    var pIn=period(0.5,0,mu,h,60,40);
+    RESULTS.amp=aIn; RESULTS.per=pIn;
+    lit.textContent = "LIT ✓  amplitude ≈ "+aIn.toFixed(3)+" · period ≈ "+pIn.toFixed(3)+" (μ=1)";
+    document.getElementById("gvamp").textContent = aIn.toFixed(2);
+    document.getElementById("gvper").textContent = pIn.toFixed(2);
+    runWitness();
+  }catch(e){
+    fail.style.display="block";
+    fail.textContent = "SELFCHECK FAILED — "+e;
+    lit.textContent = "engine NOT lit";
+    throw e;   // rethrow
+  }
+}
+
+function runWitness(){
+  var wit = document.getElementById("auditout");
+  try{
+    var h=0.005, mu=1.0;
+    var aIn=amplitude(0.5,0,mu,h,50,15);
+    var aOut=amplitude(3.0,0,mu,h,50,15);
+    var same = Math.abs(aIn-aOut) < 1e-3 && aIn > 1.5;
+    if(TAMPER || !same){
+      wit.className="badge bad";
+      wit.textContent = "witness: TAMPER DETECTED ✗  cycle gone (in="+aIn.toFixed(3)+", out="+aOut.toFixed(3)+")";
+    }else{
+      wit.className="badge";
+      wit.textContent = "witness: ✓ both starts → one orbit ("+aIn.toFixed(3)+" = "+aOut.toFixed(3)+")";
+    }
+  }catch(err){
+    wit.className="badge bad";
+    wit.textContent = "witness: ✗ "+err;
+  }
+}
+
+// ---- phase-portrait render (live integration, spiralling tracers) ----
+var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+var W=cv.width, H=cv.height;
+var HALF_X=4.2, HALF_Y=4.6;
+var curMu=1.0;
+var tracers=[];
+var cyclePts=[];
+
+function toPix(x,y){ return [ W*(0.5 + x/(2*HALF_X)), H*(0.5 - y/(2*HALF_Y)) ]; }
+
+function computeCycle(mu){
+  var s=[0.5,0], h=0.01, i;
+  for(i=0;i<8000;i++) s=rk4(s,h,mu);   // land on the cycle
+  var pts=[]; var n=Math.round((period(0.5,0,mu,0.01,50,30)||6.6)/h)+2;
+  for(i=0;i<n;i++){ pts.push([s[0],s[1]]); s=rk4(s,h,mu); }
+  return pts;
+}
+
+function seed(mu){
+  tracers=[
+    {s:[0.15,0.05], col:"rgba(95,176,255,0.9)"},   // inside -> out
+    {s:[0.05,0.20], col:"rgba(120,190,255,0.8)"},  // inside -> out
+    {s:[3.6,0.0],   col:"rgba(255,109,109,0.9)"},  // outside -> in
+    {s:[-3.4,1.2],  col:"rgba(255,140,140,0.8)"}   // outside -> in
+  ];
+  cyclePts=computeCycle(mu);
+  // fresh dark ground
+  ctx.fillStyle="#050d08"; ctx.fillRect(0,0,W,H);
+  drawAxes();
+}
+
+function drawAxes(){
+  ctx.strokeStyle="rgba(158,224,106,0.14)"; ctx.lineWidth=1;
+  var o=toPix(0,0);
+  ctx.beginPath(); ctx.moveTo(0,o[1]); ctx.lineTo(W,o[1]); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(o[0],0); ctx.lineTo(o[0],H); ctx.stroke();
+}
+
+function drawCycle(){
+  if(TAMPER) return;
+  ctx.strokeStyle="rgba(158,224,106,0.85)"; ctx.lineWidth=2;
+  ctx.beginPath();
+  for(var i=0;i<cyclePts.length;i++){
+    var p=toPix(cyclePts[i][0],cyclePts[i][1]);
+    if(i===0) ctx.moveTo(p[0],p[1]); else ctx.lineTo(p[0],p[1]);
+  }
+  ctx.stroke();
+}
+
+function frame(){
+  // fade previous ink
+  ctx.fillStyle="rgba(5,13,8,0.10)"; ctx.fillRect(0,0,W,H);
+  drawAxes();
+  drawCycle();
+  var h=0.012, sub=4, i,k;
+  for(k=0;k<tracers.length;k++){
+    var tr=tracers[k];
+    ctx.strokeStyle=tr.col; ctx.lineWidth=1.6; ctx.beginPath();
+    var p0=toPix(tr.s[0],tr.s[1]); ctx.moveTo(p0[0],p0[1]);
+    for(i=0;i<sub;i++){ tr.s=rk4(tr.s,h,curMu); var p=toPix(tr.s[0],tr.s[1]); ctx.lineTo(p[0],p[1]); }
+    ctx.stroke();
+    // head
+    var hp=toPix(tr.s[0],tr.s[1]);
+    ctx.fillStyle=tr.col; ctx.beginPath(); ctx.arc(hp[0],hp[1],2.4,0,7); ctx.fill();
+    // recycle a tracer that has effectively converged / decayed, to keep motion visible
+    var r=Math.sqrt(tr.s[0]*tr.s[0]+tr.s[1]*tr.s[1]);
+    if(TAMPER && r<0.05){ tr.s=[3.6*(k%2?-1:1),0.0]; }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* wire controls */
+document.getElementById("mu").addEventListener("input", function(e){
+  curMu=parseFloat(e.target.value);
+  document.getElementById("muval").textContent=curMu.toFixed(2);
+  seed(curMu);
+});
+document.getElementById("reseed").addEventListener("click", function(){ seed(curMu); });
+document.getElementById("tamper").addEventListener("click", function(){
+  TAMPER=true; seed(curMu); runWitness();
+});
+document.getElementById("restore").addEventListener("click", function(){
+  TAMPER=false; seed(curMu); runWitness();
+});
+
+boot();
+seed(curMu);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

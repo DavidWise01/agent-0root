@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE NP COMPLETENESS · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff7a7a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,122,122,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,122,122,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,122,122,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;flex-wrap:wrap;}
+.toggle button{border:none;border-radius:0;padding:5px 10px;} .toggle button.on{background:var(--am);color:#1a1204;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+svg{display:block;margin:6px auto;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.vlabel{font-family:ui-monospace,monospace;font-size:11px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE NP COMPLETENESS</h1>
+ <p class="sub">The hardest problems in NP — and they are all secretly the <b>same problem</b>. CLIQUE, INDEPENDENT-SET and VERTEX-COVER wear three faces but a graph and its <b>complement</b> convert any one into the others in polynomial time. So a fast algorithm for <i>one</i> would be a fast algorithm for <i>all of them at once</i>. Down the center, data flows: a graph goes <b style="color:var(--cy)">in</b>, the engine brute-forces the certificates, the equivalence comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> R. M. Karp, <i>Reducibility Among Combinatorial Problems</i> (1972), pp. 85–103 — <a href="https://doi.org/10.1007/978-1-4684-2001-2_9">doi.org/10.1007/978-1-4684-2001-2_9</a>; built on S. A. Cook, <i>The Complexity of Theorem-Proving Procedures</i> (1971), <a href="https://doi.org/10.1145/800157.805047">doi:10.1145/800157.805047</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — three faces, one set</h2>
+   <p>NP-complete = <b>in NP</b> <span class="mut">(a witness is poly-checkable)</span> <b>AND NP-hard</b> <span class="mut">(everything in NP reduces to it)</span>. The reductions here are pure graph surgery — take the <b>complement</b> Ḡ (flip every edge to a non-edge):</p>
+   <p><b class="k">C→I</b> a <i>k</i>-clique in G is exactly a <i>k</i>-independent-set in Ḡ. <b class="k">I→V</b> an independent set S is exactly the complement V∖S being a vertex cover. Same vertices, re-read.</p>
+   <p class="small">For the current graph and target <i>k</i>, the three certificates live:</p>
+   <table id="distTbl"><thead><tr><th>problem</th><th>certificate</th><th>size</th><th>verifies?</th></tr></thead><tbody id="distBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the-karp-reduction <span class="tag t-amber">AVAN</span></h2>
+   <p>These three are one <b>equivalence class</b> under <a href="https://davidwise01.github.io/the-karp-reduction/" style="color:var(--cy)">the-karp-reduction</a> — Karp's 1972 list of <b>21</b> problems, each poly-reducible to the next, all crowned NP-complete by Cook's theorem that SAT is.</p>
+   <p>If any <i>single one</i> is easy, the reductions carry that ease to all of them, and <a href="https://davidwise01.github.io/the-p-vs-np/" style="color:var(--cy)">the-p-vs-np</a> collapses to <b>P&nbsp;=&nbsp;NP</b>. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run every reduction over <b>all 64 graphs on 4 vertices</b> and all <i>k</i>, confirming the biconditionals hold exactly. If red slips in a false reduction, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the certificates <span class="tag t-in">in ↓</span></h2>
+   <p>A <b>certificate</b> is a short proof you can check fast — that is what puts a problem <i>in NP</i>. Each of these asks "does a subset of size k exist with a property":</p>
+   <table><thead><tr><th>problem</th><th>ask</th><th>certificate</th><th>check</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>CLIQUE</td><td>k mutually adjacent</td><td class="y">a k-subset</td><td>O(k²)</td></tr>
+     <tr><td>IND-SET</td><td>k mutually non-adjacent</td><td class="y">a k-subset</td><td>O(k²)</td></tr>
+     <tr><td>VTX-COVER</td><td>s vertices touch every edge</td><td class="y">an s-subset</td><td>O(m)</td></tr>
+    </tbody></table>
+   <p class="small">Checking is trivial; <i>finding</i> is the mountain. Feed a graph into the panel and watch one certificate become the other two by complementation.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed a graph into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>graph G</label><select id="gsel"></select></div>
+     <div class="row"><label>target k</label><select id="ksel"></select></div>
+     <div class="row"><label>read as</label>
+      <span class="toggle"><button id="vC" class="on">CLIQUE · G</button><button id="vI">IND-SET · Ḡ</button><button id="vV">VTX-COVER · Ḡ</button></span></div>
+     <div class="row"><button id="rand">↺ random graph</button><button id="omega">→ max clique</button></div>
+     <p class="small" id="hint">Brute force over all 2ⁿ subsets — every number below is computed on the spot, never looked up.</p>
+    </div>
+    <div class="readout">
+     <svg id="gview" viewBox="0 0 220 190" width="220" height="190" role="img" aria-label="graph"></svg>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+     <div class="sent" id="sent"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Switch the reading — the highlighted set does not move; only the graph flips to Ḡ and the <i>name</i> of what it proves changes. One object, three problems.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits the equivalence &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, exhaustively: over <b>all 64 graphs</b> on 4 vertices and every <i>k</i>, a <i>k</i>-CLIQUE in G ⟺ a <i>k</i>-IND-SET in Ḡ ⟺ an <i>(n−k)</i>-VERTEX-COVER in Ḡ — <b>zero</b> mismatches. Each is in NP; each is NP-hard; a poly solver for one is a poly solver for all. NP-complete needs <b>both</b> halves — drop either and it is not complete.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms every reduction live; the red team (right) tries to smuggle a false one past it.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> NP-complete does <b>not</b> mean unsolvable or even hard <i>in practice</i>. It is a <b>worst-case, asymptotic</b> label. Modern SAT and CLIQUE solvers crush instances with millions of variables daily; the hardness lives in rare, adversarial inputs, not the ones you meet.</div>
+   <p class="small" style="margin-top:8px">And the three faces are <b>not</b> equally approximable: VERTEX-COVER has a simple 2-approximation, yet CLIQUE and IND-SET admit <i>no</i> constant-factor approximation unless P=NP (Håstad). Poly-time inter-reducibility of the <i>exact</i> problem says nothing about approximating it — the reductions do not preserve approximation ratios.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"NP means non-polynomial."</s> <b>Cut.</b> NP = <i>nondeterministic</i> polynomial: solutions are <b>verifiable</b> in poly time. Whether they are <i>findable</i> in poly time is the open question.</p>
+   <p class="grave"><s>"NP-complete means no algorithm exists."</s> <b>Cut.</b> Brute force always works — the engine here does exactly that. "Hard" means no <i>known</i> polynomial one, worst case.</p>
+   <p class="grave"><s>"NP-hard implies in NP."</s> <b>Cut.</b> NP-hard ⊇ NP-complete but is wider: the halting problem is NP-hard and not even decidable, let alone in NP.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: claim <b>EDGE</b> (does G contain an edge? — i.e. 2-CLIQUE, which is trivially in <b>P</b>) is NP-complete, via a bogus reduction asserting "3-CLIQUE ⟺ EDGE". The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ inject bogus reduction</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">The biconditional fails: a single edge with no triangle has EDGE=true but 3-CLIQUE=false. The witness recomputes, finds the counterexample, disagrees with the known truth, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE NP COMPLETENESS — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (a graph <b style="color:var(--cy)">in</b> → brute-force engine → equivalence <b style="color:var(--gr)">out</b>). A runnable rendering of Karp's 1972 reductions — the engine is LIT (all 64 four-vertex graphs decided live, clique/ind-set/vertex-cover proven identical, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- the engine: graphs, certificates, and Karp-style reductions, brute-forced ----
+function mkGraph(n,edges){ const adj=Array.from({length:n},()=>new Array(n).fill(false));
+ for(const e of edges){ adj[e[0]][e[1]]=true; adj[e[1]][e[0]]=true; } return {n:n,adj:adj}; }
+function edgesOf(g){ const e=[]; for(let i=0;i<g.n;i++)for(let j=i+1;j<g.n;j++) if(g.adj[i][j]) e.push([i,j]); return e; }
+function complement(g){ const e=[]; for(let i=0;i<g.n;i++)for(let j=i+1;j<g.n;j++) if(!g.adj[i][j]) e.push([i,j]); return mkGraph(g.n,e); }
+function subsetsOf(n){ const out=[]; for(let m=0;m<(1<<n);m++){ const s=[]; for(let i=0;i<n;i++) if((m>>i)&1) s.push(i); out.push(s); } return out; }
+function isClique(g,S){ for(let a=0;a<S.length;a++)for(let b=a+1;b<S.length;b++) if(!g.adj[S[a]][S[b]]) return false; return true; }
+function isIndep(g,S){ for(let a=0;a<S.length;a++)for(let b=a+1;b<S.length;b++) if(g.adj[S[a]][S[b]]) return false; return true; }
+function isVC(g,S){ const inS=new Array(g.n).fill(false); for(const v of S) inS[v]=true;
+ for(const e of edgesOf(g)) if(!inS[e[0]]&&!inS[e[1]]) return false; return true; }
+function vlist(n){ const a=[]; for(let i=0;i<n;i++)a.push(i); return a; }
+function invert(g,S){ const inS=new Array(g.n).fill(false); for(const v of S) inS[v]=true; return vlist(g.n).filter(v=>!inS[v]); }
+// decision problems (the certificate-existence questions)
+function hasCliqueK(g,k){ for(const S of subsetsOf(g.n)) if(S.length===k && isClique(g,S)) return true; return false; }
+function hasIndepK(g,k){ for(const S of subsetsOf(g.n)) if(S.length===k && isIndep(g,S)) return true; return false; }
+function hasVCsize(g,s){ for(const S of subsetsOf(g.n)) if(S.length===s && isVC(g,S)) return true; return false; }
+function maxClique(g){ let b=0; for(const S of subsetsOf(g.n)) if(isClique(g,S)&&S.length>b) b=S.length; return b; }
+function maxIndep(g){ let b=0; for(const S of subsetsOf(g.n)) if(isIndep(g,S)&&S.length>b) b=S.length; return b; }
+function minVC(g){ let b=g.n; for(const S of subsetsOf(g.n)) if(isVC(g,S)&&S.length<b) b=S.length; return b; }
+function firstCliqueOfSize(g,k){ for(const S of subsetsOf(g.n)) if(S.length===k && isClique(g,S)) return S; return null; }
+function edgeExists(g){ return edgesOf(g).length>0; } // the EDGE / 2-CLIQUE problem — trivially in P
+function certVerifyClique(g,S,k){ return S.length===k && isClique(g,S); } // the poly certificate-checker
+// enumerate ALL 64 undirected graphs on 4 vertices (6 possible edges)
+function allGraphs4(){ const pairs=[]; for(let i=0;i<4;i++)for(let j=i+1;j<4;j++) pairs.push([i,j]);
+ const gs=[]; for(let m=0;m<(1<<pairs.length);m++){ const e=[]; for(let p=0;p<pairs.length;p++) if((m>>p)&1) e.push(pairs[p]); gs.push(mkGraph(4,e)); } return gs; }
+// reductions, verified as exact biconditionals over the whole family
+function cliqueIndepAll(){ for(const g of allGraphs4()){ const c=complement(g);
+ for(let k=0;k<=g.n;k++) if(hasCliqueK(g,k)!==hasIndepK(c,k)) return false; } return true; }
+function indepVCAll(){ for(const g of allGraphs4()){
+ for(let k=0;k<=g.n;k++) if(hasIndepK(g,k)!==hasVCsize(g,g.n-k)) return false; } return true; }
+// an IND-SET oracle solves CLIQUE via one poly transform (complement): same answer on every instance
+function solverTransferAll(){ for(const g of allGraphs4()){ const c=complement(g);
+ for(let k=0;k<=g.n;k++) if(hasCliqueK(g,k)!==hasIndepK(c,k)) return false; } return true; }
+// subset-level bijection on a concrete graph, checked BOTH ways over every subset
+function bijectionExact(g){ const c=complement(g); for(const S of subsetsOf(g.n)) if(isClique(g,S)!==isIndep(c,S)) return false; return true; }
+function vcDualityExact(g){ for(const S of subsetsOf(g.n)) if(isIndep(g,S)!==isVC(g,invert(g,S))) return false; return true; }
+// the red team's FALSE claim: 3-CLIQUE reduces to EDGE. Returns false — the biconditional does not hold.
+function bogusEdgeReductionHolds(){ for(const g of allGraphs4()) if(hasCliqueK(g,3)!==edgeExists(g)) return false; return true; }
+function npComplete(inNP,npHard){ return inNP===true && npHard===true; } // completeness needs BOTH
+let TAMPER=false; // when true, red injects the bogus EDGE reduction into the verified set
+function reductionWitness(){ const ci=cliqueIndepAll(), iv=indepVCAll(), st=solverTransferAll();
+ const bog = TAMPER ? bogusEdgeReductionHolds() : true; return {ok:ci&&iv&&st&&bog, ci:ci, iv:iv, st:st, bog:bog}; }
+// preset graphs (n=6) for the interactive panel
+const PRESETS=[
+ {name:"DEMO · two triangles", edges:[[0,1],[0,2],[1,2],[0,3],[1,3],[4,5],[2,4],[3,5]]},
+ {name:"6-CYCLE · triangle-free", edges:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]]},
+ {name:"K4 + 2 · one 4-clique", edges:[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3],[4,0],[5,1]]},
+ {name:"STAR · hub 0", edges:[[0,1],[0,2],[0,3],[0,4],[0,5]]}];
+function buildGraph(i){ return mkGraph(6,PRESETS[i].edges); }
+const G6=buildGraph(0);
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+// fail-loud self-check — throws on any violation, runs untampered, then proves the tamper is caught
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ // in NP: the certificate-checker accepts a true clique and rejects a non-clique
+ t(certVerifyClique(G6,[0,1,2],3)===true,"a valid 3-clique certificate must verify");
+ t(certVerifyClique(G6,[0,1,4],3)===false,"a non-clique certificate must be rejected");
+ // reduction C->I exact, both directions, over every subset of the demo graph
+ t(bijectionExact(G6),"k-clique in G must equal k-independent-set in complement, all subsets both ways");
+ // reduction I->V exact: an IS of size k is a VC of size n-k
+ t(vcDualityExact(G6),"an independent set must equal the complement being a vertex cover, all subsets");
+ // the same reductions across ALL 64 four-vertex graphs and all k
+ t(cliqueIndepAll(),"C->I biconditional must hold on all 64 graphs, all k");
+ t(indepVCAll(),"I->V biconditional must hold on all 64 graphs, all k");
+ // a solver for ONE (IND-SET oracle) solves CLIQUE on every instance via complement — the collapse
+ t(solverTransferAll(),"an IND-SET solver must decide CLIQUE on every instance via complement");
+ // known exact values for the demo graph
+ t(maxClique(G6)===3,"demo max clique must be 3");
+ t(maxIndep(complement(G6))===3,"max IS of complement must equal max clique of G");
+ t(minVC(complement(G6))===G6.n-3,"min VC of complement must equal n minus max clique");
+ // completeness requires BOTH membership and hardness
+ t(npComplete(true,true)===true,"in NP and NP-hard is NP-complete");
+ t(npComplete(true,false)===false,"in NP without hardness is NOT complete");
+ t(npComplete(false,true)===false,"NP-hard without membership is NOT complete");
+ // honest witness is green when untampered
+ t(reductionWitness().ok===true,"witness must pass when honest");
+ // TAMPER: the planted void — the bogus 3-CLIQUE<->EDGE reduction, caught live
+ TAMPER=true;
+ t(bogusEdgeReductionHolds()===false,"the bogus 3-CLIQUE<->EDGE reduction must FAIL");
+ const bad=mkGraph(4,[[0,1]]); // one edge, no triangle: EDGE yes, 3-CLIQUE no
+ t(edgeExists(bad)===true && hasCliqueK(bad,3)===false,"counterexample: an edge with no triangle");
+ t(reductionWitness().ok===false,"witness must catch the false reduction under tamper");
+ TAMPER=false;
+ t(reductionWitness().ok===true,"witness must recover when restored");
+ TAMPER=save; return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let gi=0, view="C"; // C=clique/G, I=indset/complement, V=vc/complement
+function curGraph(){ return buildGraph(gi); }
+function nodePos(i,n){ const cx=110,cy=95,r=72,a=-Math.PI/2+2*Math.PI*i/n; return [cx+r*Math.cos(a),cy+r*Math.sin(a)]; }
+function drawGraph(gd,hi){
+ const hiS=new Array(gd.n).fill(false); for(const v of hi) hiS[v]=true;
+ let s="";
+ for(const e of edgesOf(gd)){ const a=nodePos(e[0],gd.n),b=nodePos(e[1],gd.n);
+  const on=hiS[e[0]]&&hiS[e[1]];
+  s+=`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${on?'var(--am)':'#2b4a34'}" stroke-width="${on?2.4:1.2}"/>`; }
+ for(let i=0;i<gd.n;i++){ const p=nodePos(i,gd.n);
+  s+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="11" fill="${hiS[i]?'var(--am)':'#0a130c'}" stroke="${hiS[i]?'var(--am)':'#3a5a42'}" stroke-width="1.6"/>`;
+  s+=`<text class="vlabel" x="${p[0].toFixed(1)}" y="${(p[1]+3.5).toFixed(1)}" text-anchor="middle" fill="${hiS[i]?'#1a1204':'var(--dim)'}">${i}</text>`; }
+ $("gview").innerHTML=s;
+}
+function ksel(){ const g=curGraph(); const s=$("ksel"); const prev=+s.value||maxClique(g);
+ let o=""; for(let k=1;k<=g.n;k++) o+=`<option value="${k}">${k}</option>`; s.innerHTML=o;
+ s.value=Math.min(Math.max(prev,1),g.n); }
+function setView(v){ view=v; $("vC").classList.toggle("on",v==="C"); $("vI").classList.toggle("on",v==="I"); $("vV").classList.toggle("on",v==="V"); render(); }
+function render(){
+ const g=curGraph(), c=complement(g), k=+$("ksel").value;
+ const S=firstCliqueOfSize(g,k); // the shared certificate set (a k-clique of G)
+ const exists=!!S;
+ // the panel view
+ let gd,hi,label,vname,proves;
+ if(view==="C"){ gd=g; hi=exists?S:[]; label="G"; vname="CLIQUE"; proves=`a ${k}-clique`; }
+ else if(view==="I"){ gd=c; hi=exists?S:[]; label="Ḡ (complement)"; vname="IND-SET"; proves=`a ${k}-independent-set`; }
+ else { gd=c; hi=exists?invert(g,S):[]; label="Ḡ (complement)"; vname="VERTEX-COVER"; proves=`a ${g.n-k}-vertex-cover`; }
+ drawGraph(gd,hi);
+ $("verdict").textContent = exists?("VALID — "+proves+" exists"):("INVALID — no "+proves);
+ $("verdict").className="verdict "+(exists?"ok":"no");
+ $("moodname").innerHTML = `viewing <b>${label}</b> as <b>${vname}</b> &nbsp;·&nbsp; ω(G)=${maxClique(g)} · α(Ḡ)=${maxIndep(c)} · τ(Ḡ)=${minVC(c)}`;
+ $("reason").textContent = exists
+  ? `The same vertices {${(view==="V"?invert(g,S):S).join(", ")}} are a ${k}-clique in G, a ${k}-independent-set in Ḡ, and their complement V∖S is an ${g.n-k}-vertex-cover of Ḡ. One object, three names.`
+  : `No ${k}-subset has the property in this graph. Raise or lower k — the equivalence still holds for whatever k does work.`;
+ $("sent").innerHTML = exists
+  ? `<b style="color:var(--am)">${k}</b>-CLIQUE(G) &nbsp;⟺&nbsp; <b style="color:var(--am)">${k}</b>-IND-SET(Ḡ) &nbsp;⟺&nbsp; <b style="color:var(--am)">${g.n-k}</b>-VTX-COVER(Ḡ) &nbsp;→&nbsp; <b class="k">all true</b>`
+  : `<b>${k}</b>-CLIQUE(G) &nbsp;⟺&nbsp; <b>${k}</b>-IND-SET(Ḡ) &nbsp;⟺&nbsp; <b>${g.n-k}</b>-VTX-COVER(Ḡ) &nbsp;→&nbsp; <span class="mut">all false</span>`;
+ // window 3 model table — the three live certificates
+ const rows=[
+  ["CLIQUE · G", exists?"{"+S.join(",")+"}":"—", exists?k:"—", exists&&isClique(g,S)],
+  ["IND-SET · Ḡ", exists?"{"+S.join(",")+"}":"—", exists?k:"—", exists&&isIndep(c,S)],
+  ["VTX-COVER · Ḡ", exists?"{"+invert(g,S).join(",")+"}":"—", exists?(g.n-k):"—", exists&&isVC(c,invert(g,S))]];
+ $("distBody").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="${r[3]===true?'y':(exists?'n':'')}">${exists?(r[3]?'✓':'✗'):'—'}</td></tr>`).join("");
+}
+function audit(){
+ const w=reductionWitness();
+ const el=$("auditout");
+ el.innerHTML = `<span class="badge ${w.ok?'pass':'failb'}">${w.ok?'✓ WITNESS — every reduction holds':'✗ WITNESS — false reduction found'}</span>`
+  + `<div class="small" style="margin-top:6px">C→I over 64 graphs: <b style="color:${w.ci?'var(--gr)':'var(--wall)'}">${w.ci?'exact':'BROKEN'}</b> &nbsp;·&nbsp; I→V: <b style="color:${w.iv?'var(--gr)':'var(--wall)'}">${w.iv?'exact':'BROKEN'}</b> &nbsp;·&nbsp; solver-transfer: <b style="color:${w.st?'var(--gr)':'var(--wall)'}">${w.st?'exact':'BROKEN'}</b>`
+  + (TAMPER?`<div class="small" style="margin-top:5px;color:var(--wall)">red injected "3-CLIQUE ⟺ EDGE": <b>${w.bog?'holds':'FAILS'}</b> — counterexample G={0-1}: EDGE=true, 3-CLIQUE=false.</div>`:``)
+  + `</div>`;
+}
+let rngSeed=1337;
+function randomGraph(){ const rng=mulberry32(rngSeed); rngSeed=(rngSeed*1664525+1013904223)>>>0;
+ const e=[]; for(let i=0;i<6;i++)for(let j=i+1;j<6;j++) if(rng()<0.5) e.push([i,j]);
+ PRESETS[0]={name:PRESETS[0].name, edges:e}; gi=0; $("gsel").value="0"; ksel(); $("ksel").value=Math.max(1,maxClique(buildGraph(0))); render(); audit(); }
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load — 64 graphs, all reductions exact</span>';
+ $("gsel").innerHTML=PRESETS.map((p,i)=>`<option value="${i}">${p.name}</option>`).join("");
+ gi=0; $("gsel").value="0"; ksel(); $("ksel").value=String(maxClique(curGraph()));
+ $("gsel").addEventListener("change",()=>{ gi=+$("gsel").value; ksel(); $("ksel").value=String(maxClique(curGraph())); render(); });
+ $("ksel").addEventListener("change",render);
+ $("vC").addEventListener("click",()=>setView("C"));
+ $("vI").addEventListener("click",()=>setView("I"));
+ $("vV").addEventListener("click",()=>setView("V"));
+ $("rand").addEventListener("click",randomGraph);
+ $("omega").addEventListener("click",()=>{ $("ksel").value=String(maxClique(curGraph())); render(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Bogus reduction injected.</b> The witness (window 7) recomputed, found G={0-1} where EDGE=true but 3-CLIQUE=false, and went red. EDGE (2-CLIQUE) is in P — it is not NP-complete. The attack is real; it is caught."; audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="The biconditional fails: a single edge with no triangle has EDGE=true but 3-CLIQUE=false. The witness recomputes, finds the counterexample, disagrees with the known truth, and turns red. Nothing is faked; the attack is real and it is caught."; audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the NP-completeness engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

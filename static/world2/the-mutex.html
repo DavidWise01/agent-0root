@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE MUTEX · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fe0c0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,224,192,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO — refined: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,224,192,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,224,192,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#08211a;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.verdict{font-size:16px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;display:block;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+.threads{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0;}
+.thread{flex:1;min-width:180px;background:#0a130c;border:1px solid var(--line);border-radius:6px;padding:8px;}
+.thlbl{font-size:10px;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;margin-bottom:5px;}
+.pcline{font-size:12px;padding:2px 4px;border-radius:3px;color:#9fc8a8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pcline.here{color:var(--am);font-weight:700;background:rgba(127,224,192,.08);}
+.pcline.cs.here{color:var(--wall);background:rgba(255,107,107,.12);}
+.pcline.cs{color:#c98;}
+.stepbtn{margin-top:2px;}
+.log{font-size:11.5px;background:#0a130c;border:1px solid var(--line);border-radius:6px;padding:8px;margin-top:8px;color:#9fc8a8;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE MUTEX</h1>
+ <p class="sub">A lock that lets <b>exactly one</b> thread into the critical section at a time. Two threads, one shared flag — and the whole question is: over <b>every</b> way their steps can interleave, can both ever be inside at once? The engine <b>enumerates the entire interleaving space</b> exhaustively: an <b class="k">atomic</b> acquire is safe over all <b class="k">8</b> reachable states; make the acquire non-atomic and a <b style="color:var(--wall)">race</b> appears in <b class="k">4</b> steps. Down the center, data flows: two threads go <b style="color:var(--cy)">in</b>, the model checker runs, the verdict comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds the lock; the <b style="color:var(--red)">red team</b> breaks its atomicity.</p>
+ <p class="src"><span class="tag t-amber">source</span> Dijkstra, <i>Cooperating Sequential Processes</i> (EWD123, 1965) — the paper that named the <i>critical section</i> and the mutual-exclusion problem — <a href="https://www.cs.utexas.edu/~EWD/transcriptions/EWD01xx/EWD123.html">cs.utexas.edu/~EWD/…/EWD123.html</a>. Manuscript, AMBER. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the state machine</h2>
+   <p>Each thread is a tiny program over one shared flag <b>locked</b>. The correct lock makes <b>acquire atomic</b>: a single indivisible step that reads-and-sets in one shot (hardware <i>test-and-set</i> / compare-and-swap).</p>
+   <table><thead><tr><th>at</th><th>step</th><th>enabled when</th><th>effect</th></tr></thead>
+    <tbody>
+     <tr><td>0</td><td>acquire</td><td>locked = 0</td><td>locked ← 1, enter</td></tr>
+     <tr><td>1</td><td>▓ in CS</td><td>always</td><td>locked ← 0, leave</td></tr>
+     <tr><td>2</td><td>done</td><td>—</td><td>terminal</td></tr>
+    </tbody></table>
+   <p class="small" style="margin-top:7px">The checker explores every reachable global state <b>(pc0, pc1, locked)</b>. Live:</p>
+   <div id="modelout"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — only one at a time <span class="tag t-amber">AVAN</span></h2>
+   <p>The mutex is the lock that <b>serializes</b> the critical section — correct <i>only</i> when the acquire is truly atomic. Hardware gives that atom directly (test-and-set); in pure software you build it from ordinary reads and writes.</p>
+   <p>That software construction is the neighbouring sphere: <a href="https://davidwise01.github.io/the-peterson/" style="color:var(--cy)">the-peterson</a>'s algorithm wins mutual exclusion for two threads with only loads and stores plus a <b>turn</b> variable — no atomic instruction. Same guarantee, one layer down. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run the exhaustive explorer over the <b>active</b> lock and over both reference locks, and confirm mutual exclusion. If red makes the acquire non-atomic, this badge is where it goes red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE · data in → panel → data out -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — two threads + one flag <span class="tag t-in">in ↓</span></h2>
+   <p>The inputs are two identical <b>threads</b> — <b class="S" style="color:var(--cy)">T0</b> and <b class="P" style="color:var(--gr)">T1</b> — each wanting the same <b>critical section</b>, and one shared bit <b class="M" style="color:var(--am)">locked</b> (0 = free, 1 = held). A <b>schedule</b> is any interleaving of their atomic steps; there is no global clock, so <i>every</i> merge of the two step-sequences is a legal run.</p>
+   <p class="small">The invariant we demand of the whole space: <b>at most one</b> thread in the critical section in every reachable state. That is what you feed the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the threads into the checker &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the model checker <span class="tag t-lit">LIT</span></h2>
+   <div class="row"><label>the lock</label>
+    <span class="toggle"><button id="tAtomic" class="on">ATOMIC test-and-set</button><button id="tNon">NON-ATOMIC</button></span></div>
+   <p class="small" id="lockmode"></p>
+   <div id="lockflag" style="margin:6px 0;font-size:13px"></div>
+   <div class="threads" id="threads"></div>
+   <div class="row"><button id="run">▶ auto-run</button><button id="reset">↺ reset</button></div>
+   <div id="liveverdict"></div>
+   <div class="log" id="pathlog"></div>
+   <div class="small" style="margin-top:8px" id="exhaust"></div>
+   <p class="small" style="margin-top:6px">Step either thread by hand, or auto-run. Every verdict is computed live from the transition rules over the real reachable-state graph — never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the checker emits a verdict &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the proof <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, exhaustively: an <b>atomic</b> lock enforces mutual exclusion across all <b class="k">8</b> reachable states — both-in-CS is unreachable, and it is <b>deadlock-free</b>. Drop atomicity (read-then-set as two steps) and a <b style="color:var(--wall)">4-step race</b> puts both threads inside. The lock also gives <b>progress</b>: a waiter is blocked only while the holder is inside, and is enabled the instant it releases.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) confirms this live; the red team (right) attacks the one thing that makes it work — the atom.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> A mutex is <b>not free</b>. It serializes — the critical section runs one-at-a-time, so it caps parallel speed-up (Amdahl). Take two locks in opposite orders on two threads and you get <b>deadlock</b>; a low-priority holder can stall a high-priority waiter (<b>priority inversion</b>); and locks <b>do not compose</b>.</div>
+   <p class="small" style="margin-top:8px">Worse, the atom itself is an assumption: pure-software locks (Peterson, Dekker) are correct only under <b>sequential consistency</b>. Real CPUs and compilers <b>reorder</b> memory, so without fences/barriers the store-then-load ordering the proof relies on can be observed out of order — and the lock silently breaks. <span class="mut">assumed:</span> the model here is sequentially consistent.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"A boolean flag is enough to lock."</s> <b>Cut.</b> A plain <i>read the flag, then set it</i> races — two threads both read 0 and both enter. Mutual exclusion needs the read-and-set to be <b>one atomic step</b>. (That is exactly the tamper below.)</p>
+   <p class="grave"><s>"Disabling interrupts makes any code a critical section."</s> <b>Cut, corrected.</b> True on a <i>uniprocessor</i> only; on SMP the other cores keep running. You still need a real lock across cores.</p>
+   <p class="grave"><s>"Peterson's algorithm works on modern hardware as written."</s> <b>Cut.</b> It assumes sequential consistency; without memory fences, store/load reordering breaks mutual exclusion.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break the atom</h2>
+   <p>The red team's move: make the acquire <b>non-atomic</b> — split it into <i>read the flag</i> then, separately, <i>set the flag</i>. Now an interleaving lets both threads read "free" before either sets it. The blue witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ make acquire non-atomic</button><button id="restore">↺ restore atomic</button></div>
+   <p class="small" id="tampernote"></p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE MUTEX — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (two threads <b style="color:var(--cy)">in</b> → model checker → verdict <b style="color:var(--gr)">out</b>). A runnable rendering of Dijkstra's critical-section problem (EWD123) — the engine is LIT (the full interleaving space enumerated live, mutual exclusion proven exhaustively, the race exhibited and the atom tamper-provable), the blue team witnesses, the red team breaks atomicity, and the graveyard + adversary carry the costs a single lock cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+
+// fixed-seed PRNG (mulberry32) — pure, deterministic; used only for the auto-run demo schedule
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+let TAMPER=false;   // red team flips this: true = non-atomic acquire (the planted void)
+
+// the correct lock: acquire is ONE atomic test-and-set step. inCS at pc 1.
+function makeAtomic(){
+ return {
+  inCS: pc=>pc===1,
+  done: pc=>pc===2,
+  trans:(pc,locked)=>{
+   if(pc===0) return {enabled:!locked, npc:1, nlocked:true, label:"acquire (test-and-set)"};
+   if(pc===1) return {enabled:true, npc:2, nlocked:false, label:"release"};
+   return {enabled:false};
+  }
+ };
+}
+// the broken lock: acquire split into read-then-set (two steps). inCS at pc 2.
+function makeNonAtomic(){
+ return {
+  inCS: pc=>pc===2,
+  done: pc=>pc===3,
+  trans:(pc,locked)=>{
+   if(pc===0) return {enabled:!locked, npc:1, nlocked:locked, label:"read flag (free)"};
+   if(pc===1) return {enabled:true, npc:2, nlocked:true, label:"set flag + enter"};
+   if(pc===2) return {enabled:true, npc:3, nlocked:false, label:"release"};
+   return {enabled:false};
+  }
+ };
+}
+function activeModel(){ return TAMPER? makeNonAtomic() : makeAtomic(); }
+
+// exhaustive explorer: BFS over ALL reachable global states (pc0,pc1,locked) = ALL interleavings.
+// returns reachable count, whether both-in-CS is reachable, a shortest witness path, and deadlock-freedom.
+function explore(model){
+ const key=s=>s.a+"|"+s.b+"|"+(s.l?1:0);
+ const start={a:0,b:0,l:false};
+ const seen=new Map(); seen.set(key(start),{s:start,parent:null,edge:null});
+ const q=[start];
+ let both=null, hasDeadlock=false;
+ while(q.length){
+  const s=q.shift();
+  if(model.inCS(s.a)&&model.inCS(s.b)&&!both) both=s;
+  const ta=model.trans(s.a,s.l), tb=model.trans(s.b,s.l);
+  if(!(model.done(s.a)&&model.done(s.b)) && !ta.enabled && !tb.enabled) hasDeadlock=true;
+  if(ta.enabled){ const ns={a:ta.npc,b:s.b,l:ta.nlocked},k=key(ns); if(!seen.has(k)){seen.set(k,{s:ns,parent:key(s),edge:"T0 "+ta.label}); q.push(ns);} }
+  if(tb.enabled){ const ns={a:s.a,b:tb.npc,l:tb.nlocked},k=key(ns); if(!seen.has(k)){seen.set(k,{s:ns,parent:key(s),edge:"T1 "+tb.label}); q.push(ns);} }
+ }
+ let path=[];
+ if(both){ let k=key(both); while(k){ const n=seen.get(k); if(n.edge) path.unshift(n.edge); k=n.parent; } }
+ return {count:seen.size, bothReachable:!!both, bothState:both, path, hasDeadlock};
+}
+
+// fail-loud self-check — runs untampered, throws on any violation, RETURNS true
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+
+ // SAFETY — the atomic lock: exhaustively, both-in-CS is NEVER reachable; exactly 8 states; deadlock-free
+ const A=explore(makeAtomic());
+ t(A.count===8,"atomic reachable-state count must be 8, got "+A.count);
+ t(A.bothReachable===false,"atomic lock must NEVER allow both threads in the critical section over ANY interleaving");
+ t(A.hasDeadlock===false,"atomic lock must be deadlock-free");
+
+ // RACE — the non-atomic lock: an interleaving DOES put both inside; shortest witness is 4 steps, both in CS
+ const N=explore(makeNonAtomic());
+ t(N.bothReachable===true,"non-atomic check-then-set MUST admit an interleaving with both threads in the CS (the race)");
+ t(N.path.length===4,"the shortest race interleaving must be 4 steps, got "+N.path.length);
+ const nm=makeNonAtomic();
+ t(nm.inCS(N.bothState.a)&&nm.inCS(N.bothState.b),"the race state must have BOTH threads in the critical section");
+
+ // PROGRESS — the atomic lock: a waiter is blocked only while the lock is held, and enabled the instant it frees
+ const am=makeAtomic();
+ t(am.trans(0,true).enabled===false,"a thread must wait while the lock is held");
+ t(am.trans(1,true).enabled===true,"the holder can always release");
+ t(am.trans(0,false).enabled===true,"once released, the waiting thread may enter");
+
+ // TAMPER — the disclosed planted void: flip the active model to non-atomic and assert the
+ // mutual-exclusion result now DIFFERS (SAFE -> BROKEN), then restore.
+ const safe=explore(activeModel()).bothReachable;    // TAMPER=false -> atomic -> false
+ TAMPER=true;
+ const broken=explore(activeModel()).bothReachable;  // TAMPER=true  -> non-atomic -> true
+ t(safe===false && broken===true && safe!==broken,"tamper must flip mutual exclusion from SAFE to BROKEN");
+
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let cur={a:0,b:0,l:false,path:[]};
+
+function labelsFor(){
+ return TAMPER
+  ? {labs:["read flag: see it free","set flag = 1 · ENTER CS","▓ CRITICAL SECTION","released ✓"], cs:2}
+  : {labs:["ACQUIRE (atomic test-and-set)","▓ CRITICAL SECTION","released ✓"], cs:1};
+}
+function stepThread(i){
+ const m=activeModel();
+ const pc=i===0?cur.a:cur.b;
+ const tr=m.trans(pc,cur.l);
+ if(!tr.enabled) return false;
+ if(i===0) cur.a=tr.npc; else cur.b=tr.npc;
+ cur.l=tr.nlocked;
+ cur.path.push("T"+i+" "+tr.label);
+ return true;
+}
+function reset(){ cur={a:0,b:0,l:false,path:[]}; }
+function autorun(){
+ reset();
+ const m=activeModel(), ex=explore(m);
+ if(ex.bothReachable){
+  // replay the race witness order: T0 read, T1 read, T0 set, T1 set
+  const order=[0,1,0,1]; for(const i of order){ if(!stepThread(i)) break; }
+ } else {
+  // a full seeded-random legal schedule of the atomic lock, run to completion — stays safe
+  const rnd=mulberry32(0x51ee5eed); let guard=0;
+  while(guard++<64){
+   const ta=m.trans(cur.a,cur.l), tb=m.trans(cur.b,cur.l);
+   const opts=[]; if(ta.enabled)opts.push(0); if(tb.enabled)opts.push(1);
+   if(!opts.length) break;
+   stepThread(opts[(rnd()*opts.length)|0]);
+  }
+ }
+ render(); audit();
+}
+function threadHtml(i){
+ const m=activeModel(), {labs,cs}=labelsFor();
+ const pc=i===0?cur.a:cur.b;
+ const rows=labs.map((L,idx)=>{
+  const here=idx===pc, isCS=idx===cs;
+  return `<div class="pcline ${here?'here':''} ${isCS?'cs':''}">${here?'▶ ':'&nbsp;&nbsp;'}${L}</div>`;
+ }).join("");
+ const tr=m.trans(pc,cur.l);
+ const btn=tr.enabled
+  ? `<button class="stepbtn" data-th="${i}">T${i} ▸ ${tr.label}</button>`
+  : `<span class="small mut">${m.done(pc)?'— finished —':'— blocked: lock held —'}</span>`;
+ return `<div class="thread"><div class="thlbl">Thread ${i}</div>${rows}<div style="margin-top:6px">${btn}</div></div>`;
+}
+function render(){
+ const m=activeModel(), {cs}=labelsFor();
+ $("lockmode").innerHTML = TAMPER
+  ? "<b style='color:var(--wall)'>Non-atomic:</b> acquire is <i>read the flag</i> then, separately, <i>set it</i> — two steps. An interleaving slips both threads past the read."
+  : "<b style='color:var(--am)'>Atomic:</b> acquire reads-and-sets in one indivisible step (hardware test-and-set). No interleaving can split it.";
+ $("lockflag").innerHTML = `shared <b>locked</b> = <b style="color:${cur.l?'var(--wall)':'var(--gr)'}">${cur.l?'1 (held)':'0 (free)'}</b>`;
+ $("threads").innerHTML = threadHtml(0)+threadHtml(1);
+ const bothCS=(cur.a===cs)&&(cur.b===cs), anyCS=(cur.a===cs)||(cur.b===cs);
+ $("liveverdict").innerHTML = bothCS
+  ? '<span class="verdict no">✗ BOTH IN CRITICAL SECTION — mutual exclusion VIOLATED</span>'
+  : anyCS ? '<span class="verdict ok">✓ one thread in the critical section</span>'
+          : '<span class="small">no thread in the critical section</span>';
+ $("pathlog").innerHTML = cur.path.length
+  ? '<b style="color:#eafff0">interleaving:</b> '+cur.path.map((p,i)=>`${i+1}. ${p}`).join('  →  ')
+  : '<span class="small mut">no steps yet — advance a thread, or ▶ auto-run</span>';
+ const ex=explore(m);
+ $("exhaust").innerHTML = `<b style="color:#eafff0">Exhaustive</b> over <b>all</b> interleavings: explored <b>${ex.count}</b> reachable states · both-in-CS reachable: <b style="color:${ex.bothReachable?'var(--wall)':'var(--gr)'}">${ex.bothReachable?'YES':'NO'}</b> · deadlock-free: <b style="color:${ex.hasDeadlock?'var(--wall)':'var(--gr)'}">${ex.hasDeadlock?'NO':'YES'}</b>`
+  + (ex.bothReachable?`<div class="small" style="margin-top:4px;color:var(--wall)">race witness (${ex.path.length} steps): ${ex.path.join(' → ')}</div>`:'');
+ $("tAtomic").classList.toggle("on",!TAMPER);
+ $("tNon").classList.toggle("on",TAMPER);
+ document.querySelectorAll(".stepbtn").forEach(b=>b.addEventListener("click",()=>{ stepThread(+b.dataset.th); render(); audit(); }));
+}
+function audit(){
+ const m=activeModel(), ex=explore(m), safe=!ex.bothReachable;
+ const A=explore(makeAtomic()), N=explore(makeNonAtomic());
+ $("auditout").innerHTML =
+  `<span class="badge ${safe?'pass':'failb'}">${safe?'✓ WITNESS — mutual exclusion holds':'✗ WITNESS — exclusion BROKEN'}</span>`
+  + `<div class="small" style="margin-top:6px">active lock: <b style="color:${TAMPER?'var(--wall)':'var(--am)'}">${TAMPER?'non-atomic check-then-set':'atomic test-and-set'}</b> · states explored <b>${ex.count}</b> · both-in-CS: <b style="color:${ex.bothReachable?'var(--wall)':'var(--gr)'}">${ex.bothReachable?'YES — race':'NO'}</b><br>reference — atomic: <b style="color:var(--gr)">${A.count} states, 0 violations</b> · non-atomic: <b style="color:var(--wall)">race reachable in ${N.path.length} steps</b>${TAMPER?' &nbsp;— <span style="color:var(--wall)">red broke the atom</span>':''}</div>`;
+}
+function updateModelOut(){
+ const A=explore(makeAtomic());
+ $("modelout").innerHTML = `<div class="small" style="margin-top:4px">atomic lock: <b style="color:var(--gr)">${A.count}</b> reachable states · both-in-CS: <b style="color:var(--gr)">unreachable</b> · deadlock-free: <b style="color:var(--gr)">yes</b></div>`;
+}
+function updateTamperNote(){
+ $("tampernote").innerHTML = TAMPER
+  ? "<b style='color:var(--wall)'>Atom broken.</b> Acquire is now read-then-set. The witness (window 7) recomputed over the full interleaving space, found a 4-step run where both enter, and went red. Nothing is faked — the race is real and it is caught."
+  : "Split the acquire into read-then-set and both threads read \"free\" before either writes 1 — both enter. The witness recomputes, finds the race, and turns red. Restore to make the acquire atomic again.";
+}
+function setLock(atomic){ TAMPER=!atomic; reset(); updateTamperNote(); render(); audit(); }
+
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load — mutual exclusion proven exhaustively, race exhibited, atom tamper-provable</span>';
+ updateModelOut(); updateTamperNote();
+ $("tAtomic").addEventListener("click",()=>setLock(true));
+ $("tNon").addEventListener("click",()=>setLock(false));
+ $("run").addEventListener("click",autorun);
+ $("reset").addEventListener("click",()=>{ reset(); render(); audit(); });
+ $("tamper").addEventListener("click",()=>setLock(false));
+ $("restore").addEventListener("click",()=>setLock(true));
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the mutex engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

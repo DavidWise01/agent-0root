@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PHASE PORTRAIT · WORLD II — THE FOLD</title>
+<style>
+:root{
+  --am:#ffb0d0;
+  --ground:#0e1c15;
+  --ground2:#0b1712;
+  --ink:#eafff2;
+  --dim:#9fc7b2;
+  --line:#1f3a2c;
+  --blue:#7fb0ff;
+  --blue-bg:#0d1826;
+  --blue-ln:#1d3050;
+  --red:#ff8f9c;
+  --red-bg:#25121a;
+  --red-ln:#4a2230;
+  --amber:#ffcf5c;
+  --lit:#57f2a6;
+  --wall:#ff8f9c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 15% -10%, #16301f 0%, rgba(22,48,31,0) 60%),
+    radial-gradient(1000px 600px at 100% 0%, #241033 0%, rgba(36,16,51,0) 55%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin-bottom:22px}
+h1{
+  font-size:29px;letter-spacing:.06em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 24px rgba(255,176,208,.35);font-weight:800;
+}
+.sub{color:var(--dim);max-width:820px;margin:0 0 12px;font-size:14.5px}
+.sub b{color:var(--ink)}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.09em;font-weight:800;
+  padding:2px 7px;border-radius:999px;text-transform:uppercase;white-space:nowrap;
+  border:1px solid transparent;vertical-align:middle;
+}
+.t-amber{background:rgba(255,207,92,.12);color:var(--amber);border-color:rgba(255,207,92,.4)}
+.t-lit{background:rgba(87,242,166,.12);color:var(--lit);border-color:rgba(87,242,166,.45)}
+.t-in{background:rgba(127,176,255,.12);color:var(--blue);border-color:rgba(127,176,255,.4)}
+.t-out{background:rgba(255,176,208,.12);color:var(--am);border-color:rgba(255,176,208,.4)}
+.t-wall{background:rgba(255,143,156,.12);color:var(--wall);border-color:rgba(255,143,156,.45)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;
+  padding:7px 11px;border-radius:9px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);background:var(--blue-bg);border-color:var(--blue-ln)}
+.col.red .teamhdr{color:var(--red);background:var(--red-bg);border-color:var(--red-ln)}
+.col.center .teamhdr{color:var(--am);background:rgba(255,176,208,.06);border-color:rgba(255,176,208,.28);text-align:center}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.12));
+  padding:14px 14px 13px;
+}
+.col.blue .win{border-color:var(--blue-ln);background:linear-gradient(180deg,rgba(127,176,255,.05),rgba(0,0,0,.14))}
+.col.red .win{border-color:var(--red-ln);background:linear-gradient(180deg,rgba(255,143,156,.05),rgba(0,0,0,.14))}
+.win.panel{border-color:rgba(255,176,208,.35);background:linear-gradient(180deg,rgba(255,176,208,.05),rgba(0,0,0,.2));box-shadow:0 0 30px rgba(255,176,208,.08) inset}
+.num{
+  position:absolute;top:-11px;left:12px;width:23px;height:23px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;
+  background:var(--ground2);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .num{border-color:var(--blue-ln);color:var(--blue)}
+.col.red .num{border-color:var(--red-ln);color:var(--red)}
+.win.panel .num{border-color:var(--am);color:var(--am)}
+.win h3{margin:2px 0 8px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+.win p{margin:6px 0;font-size:13px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.win small{color:var(--dim);font-size:11.5px}
+code,.mono{font-family:"SF Mono",ui-monospace,"Cascadia Code",Consolas,monospace;font-size:12px}
+.k{color:var(--am)}
+
+.flow{
+  text-align:center;color:var(--dim);font-size:18px;line-height:1;margin:2px 0;
+  opacity:.7;letter-spacing:.3em;
+}
+.gy{color:var(--dim)}
+.gy s{color:var(--red);text-decoration-color:rgba(255,143,156,.7)}
+.gy b{color:var(--ink)}
+.wall-note{border-left:3px solid var(--wall);padding:6px 0 6px 11px;margin:8px 0;color:var(--dim);font-size:12.5px}
+
+.badge{
+  display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
+  padding:5px 10px;border-radius:8px;border:1px solid var(--line);margin-top:4px;
+}
+.badge.ok{color:var(--lit);border-color:rgba(87,242,166,.4);background:rgba(87,242,166,.08)}
+.badge.bad{color:var(--wall);border-color:rgba(255,143,156,.5);background:rgba(255,143,156,.1)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor}
+
+.ctrls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.ctrls label{font-size:11px;color:var(--dim);display:flex;flex-direction:column;gap:3px}
+.ctrls input[type=number]{
+  background:var(--ground2);border:1px solid var(--line);color:var(--ink);
+  border-radius:7px;padding:6px 8px;font-family:ui-monospace,monospace;font-size:13px;width:100%;
+}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.presets button,.tbtn{
+  cursor:pointer;background:var(--ground2);border:1px solid var(--line);color:var(--ink);
+  border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:600;
+}
+.presets button:hover,.tbtn:hover{border-color:var(--am);color:var(--am)}
+canvas{width:100%;height:auto;display:block;border-radius:10px;border:1px solid var(--line);background:#081410;margin-top:8px}
+.readout{font-family:ui-monospace,monospace;font-size:12.5px;margin-top:8px;line-height:1.7}
+.readout .lab{color:var(--dim)}
+.readout .val{color:var(--am)}
+.cls{font-weight:800;letter-spacing:.03em}
+.tbtn.warn{border-color:var(--red-ln);color:var(--red)}
+.tbtn.warn:hover{border-color:var(--wall);background:rgba(255,143,156,.08)}
+#failb{display:none;margin-top:10px}
+footer{margin-top:30px;text-align:center;color:var(--dim);font-size:12px;letter-spacing:.03em}
+footer b{color:var(--am)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:16px;height:3px;border-radius:2px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE PHASE PORTRAIT</h1>
+  <p class="sub">Read a system's entire fate from the eigenvalues of one matrix. Give me a 2&times;2 Jacobian and I place its fixed point in the <b>trace&ndash;determinant plane</b> &mdash; node, saddle, spiral, or center &mdash; and prove the label against the actual eigenvalues, then draw the flow. <b>Rendered, not quoted.</b></p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Strogatz, S.H. (1994), <i>Nonlinear Dynamics and Chaos</i>, Perseus Books &mdash; Ch. 5, the trace&ndash;determinant classification (after Poincar&eacute;'s phase-plane analysis). No stable open link; cited author/title/year. <a href="https://www.goodreads.com/book/show/116164" target="_blank" rel="noopener">catalog</a>
+  </p>
+</header>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="num">3</div>
+      <h3>The Model</h3>
+      <p>Linearize any planar flow at a fixed point and you get <code class="mono">x&#775; = A x</code> with the Jacobian <code class="mono">A = [[a,b],[c,d]]</code>. Two numbers decide everything:</p>
+      <p><code class="mono">T = tr A = a+d</code> &nbsp; <code class="mono">D = det A = ad&minus;bc</code></p>
+      <p>Eigenvalues solve <code class="mono">&lambda;&sup2; &minus; T&lambda; + D = 0</code>, so <code class="mono">&lambda; = (T &plusmn; &radic;(T&sup2;&minus;4D))/2</code>. The discriminant <code class="mono">&Delta; = T&sup2;&minus;4D</code> splits real from complex.</p>
+      <p class="gy" style="margin-top:9px"><b>Rules (exact):</b> <code class="mono">D&lt;0</code> &rarr; <b>saddle</b>. <code class="mono">D&gt;0, &Delta;&gt;0</code> &rarr; <b>node</b>. <code class="mono">D&gt;0, &Delta;&lt;0</code> &rarr; <b>spiral</b>. <code class="mono">T=0, D&gt;0</code> &rarr; <b>center</b>. Sign of <code class="mono">T</code> gives stability (T&lt;0 stable).</p>
+      <p><small>An <b>assumption</b>, marked plainly: linearization reads only the <i>hyperbolic</i> cases faithfully. On the borders (T=0, &Delta;=0, D=0) the nonlinear terms can decide &mdash; the center especially is non-generic. <span class="tag t-amber">amber</span></small></p>
+    </div>
+
+    <div class="win">
+      <div class="num">5</div>
+      <h3>The Lineage</h3>
+      <p>A system's fate in two numbers &mdash; Poincar&eacute;'s phase plane. This is the geometry that lives <i>beneath</i> its neighbours: when a parameter drags <code class="mono">(T,D)</code> across a boundary of this plane, the portrait changes qualitatively.</p>
+      <p>Cross into <code class="mono">D&lt;0</code> and a node becomes a saddle &mdash; that is <b>the&#8209;bifurcation</b>. Cross the <code class="mono">T=0</code> axis with <code class="mono">D&gt;0</code> and a stable spiral loses stability, birthing a limit cycle &mdash; that is <b>the&#8209;hopf&#8209;bifurcation</b>. This sphere is the map they both move on.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">7</div>
+      <h3>The Witness</h3>
+      <p>Live re-check: does the engine's label still agree with the true eigenvalues of the tampered test case?</p>
+      <div id="auditout" class="badge ok"><span class="dot"></span>&hellip;</div>
+      <p><small>Confirms on load. If window&nbsp;6 swaps in the determinant-only rule, the label stops matching the eigenvalues and this badge flips red.</small></p>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="num">4</div>
+      <h3>Data In <span class="tag t-in">in &darr;</span></h3>
+      <p>The four entries of a Jacobian <code class="mono">A</code>. Pick a preset fixed point or type your own.</p>
+      <div class="presets" id="presets"></div>
+      <div class="ctrls">
+        <label>a<input type="number" id="ia" step="0.1" value="-1"></label>
+        <label>b<input type="number" id="ib" step="0.1" value="-2"></label>
+        <label>c<input type="number" id="ic" step="0.1" value="2"></label>
+        <label>d<input type="number" id="id" step="0.1" value="-1"></label>
+      </div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <div class="num">0</div>
+      <h3>The Panel <span class="tag t-lit" id="litbadge">&hellip;</span></h3>
+      <p><small>Vector field <code class="mono">x&#775;=Ax</code>, integrated trajectories (RK4), and &mdash; when real &mdash; the invariant eigen-directions.</small></p>
+      <canvas id="cv" width="440" height="440"></canvas>
+      <div class="legend">
+        <span><i class="sw" style="background:#7fb0ff"></i>trajectory</span>
+        <span><i class="sw" style="background:#57f2a6"></i>stable eigvec (inflow)</span>
+        <span><i class="sw" style="background:#ffb0d0"></i>unstable eigvec (outflow)</span>
+      </div>
+      <div class="readout" id="readout"></div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win">
+      <div class="num">8</div>
+      <h3>Data Out <span class="tag t-out">out &darr;</span></h3>
+      <p><b>Proven:</b> the classification is <b>exact</b> from <code class="mono">(T,D)</code> and matches the eigenvalue signs on all six canonical systems &mdash; stable/unstable node, saddle, stable/unstable spiral, center. Eigenvectors verified invariant (<code class="mono">Av=&lambda;v</code>); a stable node/spiral has <b>both</b> eigenvalues with negative real part, so every trajectory flows in.</p>
+      <div id="verdict" class="badge ok"><span class="dot"></span>&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="num">1</div>
+      <h3>The Adversary <span class="tag t-wall">wall</span></h3>
+      <div class="wall-note">
+        "The trace&ndash;determinant plane classifies <i>everything</i>." &mdash; No. It classifies <b>hyperbolic linear</b> fixed points. The wall is the border set: on <code class="mono">&Delta;=0</code> (repeated eigenvalue) you get degenerate/star nodes; on <code class="mono">D=0</code> a whole line of fixed points; and the <b>center</b> (<code class="mono">T=0</code>) is structurally unstable &mdash; the linearization's closed orbits can be an artifact, with the true nonlinear flow spiralling in or out (Hartman&ndash;Grobman is silent here).
+      </div>
+      <p><small>So the honest engine flags <code class="mono">line</code> and <code class="mono">center</code> as the fragile cases rather than pretending they are robust.</small></p>
+    </div>
+
+    <div class="win">
+      <div class="num">2</div>
+      <h3>The Graveyard</h3>
+      <p class="gy"><s>"Negative determinant just means unstable."</s> &rarr; <b>D&lt;0 is a saddle</b> &mdash; it has one stable and one unstable direction; some trajectories approach before leaving.</p>
+      <p class="gy"><s>"A spiral and a node are the same if both decay."</s> &rarr; They differ by <b>&Delta;</b>: a node has real eigenvalues (straight-in), a spiral has complex ones (rotating-in). Same stability, different geometry.</p>
+      <p class="gy"><s>"The trace alone tells you the type."</s> &rarr; <b>T fixes only stability</b>; the <i>type</i> needs D and &Delta;. Dropping them is exactly the planted void in window&nbsp;6.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">6</div>
+      <h3>The Tamper</h3>
+      <p>Planted void (disclosed): classify by the <b>determinant alone</b> &mdash; ignore <code class="mono">T</code> and <code class="mono">&Delta;</code>. Then a stable and an unstable node look identical, and a spiral is mislabelled a "node." The Witness (7) catches it live.</p>
+      <button class="tbtn warn" id="tamper">Inject determinant-only rule</button>
+      <button class="tbtn" id="restore">Restore exact rule</button>
+      <div id="failb" class="badge bad"><span class="dot"></span><span id="failmsg"></span></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  WORLD II &middot; THE FOLD &nbsp;&bull;&nbsp; the-phase-portrait &nbsp;&bull;&nbsp; a model with named assumptions (linear, hyperbolic), not physical or medical advice &nbsp;&bull;&nbsp; built by <b>David Lee Wise (ROOT0) with AVAN.</b>
+</footer>
+</div>
+
+<script>
+// ---- engine + selfcheck: pure logic, extractable for node verification ----
+var EPS = 1e-9, TOL = 1e-6;
+var TAMPER = false;
+
+// fixed-seed PRNG (deterministic seeds for trajectory scatter)
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// eigenvalues of [[a,b],[c,d]]
+function eigen(a,b,c,d){
+  var T=a+d, D=a*d-b*c, disc=T*T-4*D;
+  if(disc>=0){ var s=Math.sqrt(disc); return {re1:(T+s)/2,im1:0,re2:(T-s)/2,im2:0,disc:disc}; }
+  var q=Math.sqrt(-disc); return {re1:T/2,im1:q/2,re2:T/2,im2:-q/2,disc:disc};
+}
+
+// ground truth label read straight off the eigenvalues
+function truthClass(a,b,c,d){
+  var e=eigen(a,b,c,d);
+  var real = Math.abs(e.im1) < EPS;
+  if(real){
+    if(e.re1*e.re2 < -EPS) return 'saddle';
+    if(e.re1 < 0 && e.re2 < 0) return 'stable node';
+    if(e.re1 > 0 && e.re2 > 0) return 'unstable node';
+    return 'line';
+  } else {
+    if(Math.abs(e.re1) < EPS) return 'center';
+    return e.re1 < 0 ? 'stable spiral' : 'unstable spiral';
+  }
+}
+
+// the ENGINE: classify from T and D (and discriminant) only
+function classify(a,b,c,d){
+  var T=a+d, D=a*d-b*c, disc=T*T-4*D;
+  if(TAMPER){                 // planted void: determinant alone
+    if(D < -EPS) return 'saddle';
+    if(D > EPS)  return 'node';
+    return 'line';
+  }
+  if(Math.abs(D) < EPS) return 'line';
+  if(D < 0) return 'saddle';
+  if(Math.abs(T) < EPS) return 'center';
+  if(disc < -EPS) return T < 0 ? 'stable spiral' : 'unstable spiral';
+  return T < 0 ? 'stable node' : 'unstable node';
+}
+
+// real eigenvectors (invariant directions); [] when eigenvalues are complex
+function eigenvectors(a,b,c,d){
+  var T=a+d, D=a*d-b*c, disc=T*T-4*D;
+  if(disc < 0) return [];
+  var s=Math.sqrt(disc), lams=[(T+s)/2,(T-s)/2], out=[];
+  for(var i=0;i<lams.length;i++){
+    var lam=lams[i], v;
+    if(Math.abs(b) > EPS) v=[b, lam-a];
+    else if(Math.abs(c) > EPS) v=[lam-d, c];
+    else v = Math.abs(lam-a) < EPS ? [1,0] : [0,1];
+    var n=Math.hypot(v[0],v[1])||1;
+    out.push({lam:lam, v:[v[0]/n, v[1]/n]});
+  }
+  return out;
+}
+
+// RK4 fixed step of x' = A x
+function step(a,b,c,d,x,y,h){
+  function f(px,py){ return [a*px+b*py, c*px+d*py]; }
+  var k1=f(x,y),
+      k2=f(x+h/2*k1[0], y+h/2*k1[1]),
+      k3=f(x+h/2*k2[0], y+h/2*k2[1]),
+      k4=f(x+h*k3[0], y+h*k3[1]);
+  return [ x + h/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),
+           y + h/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]) ];
+}
+
+// fail-loud selfcheck: THROWS on any violation; saves/restores TAMPER; RETURNS true
+function selfcheck(){
+  var cases=[
+    {m:[-2,0,0,-3], want:'stable node'},
+    {m:[ 2,0,0, 3], want:'unstable node'},
+    {m:[ 1,0,0,-1], want:'saddle'},
+    {m:[-1,-2,2,-1], want:'stable spiral'},
+    {m:[ 1,-2,2, 1], want:'unstable spiral'},
+    {m:[ 0,-2,2, 0], want:'center'}
+  ];
+  var i, c, a, b, cc, d, cl, tr;
+  for(i=0;i<cases.length;i++){
+    c=cases[i]; a=c.m[0]; b=c.m[1]; cc=c.m[2]; d=c.m[3];
+    cl=classify(a,b,cc,d); tr=truthClass(a,b,cc,d);
+    if(cl !== c.want) throw new Error('classify wrong: expected '+c.want+' got '+cl);
+    if(cl !== tr) throw new Error('classify disagrees with eigenvalues: '+cl+' vs '+tr);
+  }
+
+  // EIGENVECTORS are the invariant directions of a saddle (stable+unstable manifolds)
+  var S=[0,1,1,0], vs=eigenvectors(S[0],S[1],S[2],S[3]);
+  if(vs.length!==2) throw new Error('saddle must have two real eigenvectors');
+  for(i=0;i<vs.length;i++){
+    var lam=vs[i].lam, v=vs[i].v;
+    var Av=[S[0]*v[0]+S[1]*v[1], S[2]*v[0]+S[3]*v[1]];
+    if(Math.abs(Av[0]-lam*v[0])>TOL || Math.abs(Av[1]-lam*v[1])>TOL)
+      throw new Error('eigenvector not invariant: A v != lambda v');
+  }
+
+  // a STABLE node has BOTH eigenvalues with negative real part (all trajectories inflow)
+  var sn=eigen(-2,0,0,-3);
+  if(!(sn.re1<0 && sn.re2<0)) throw new Error('stable node must have both Re(lambda) < 0');
+  // and an UNSTABLE node: both positive
+  var un=eigen(2,0,0,3);
+  if(!(un.re1>0 && un.re2>0)) throw new Error('unstable node must have both Re(lambda) > 0');
+
+  // CONSERVATION: a center orbit conserves radius (d/dt(x^2+y^2)=0 for [[0,-2],[2,0]])
+  var x=1,y=0,h=0.001,r0=x*x+y*y,k;
+  for(k=0;k<3000;k++){ var p=step(0,-2,2,0,x,y,h); x=p[0]; y=p[1]; }
+  if(Math.abs((x*x+y*y)-r0) > 1e-3) throw new Error('center not conserved: radius drifted');
+
+  // TAMPER: the disclosed planted void must DIVERGE from the eigenvalue truth,
+  // then be restored. Save/restore the flag so selfcheck stays deterministic.
+  var save=TAMPER;
+  TAMPER=true;
+  var spTam=classify(1,-2,2,1);              // truth = 'unstable spiral'
+  if(spTam === truthClass(1,-2,2,1)) throw new Error('tamper failed to diverge');
+  var t1=classify(-2,0,0,-3), t2=classify(2,0,0,3);
+  if(t1 !== t2) throw new Error('tamper should make stable and unstable node indistinguishable');
+  TAMPER=save;
+  if(classify(1,-2,2,1) !== truthClass(1,-2,2,1)) throw new Error('restore failed');
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+var PRESETS=[
+  {n:'stable node',   m:[-2,0.4,0.4,-3]},
+  {n:'unstable node', m:[2,0.4,0.4,3]},
+  {n:'saddle',        m:[1,1.2,1.2,-1]},
+  {n:'stable spiral', m:[-1,-2,2,-1]},
+  {n:'unstable spiral',m:[1,-2,2,1]},
+  {n:'center',        m:[0,-2,2,0]}
+];
+
+var $ = function(id){ return document.getElementById(id); };
+var cv=$('cv'), ctx=cv.getContext('2d');
+var W=cv.width, H=cv.height, R=4.0; // world half-range
+function wx(x){ return W/2 + x/R*(W/2); }
+function wy(y){ return H/2 - y/R*(H/2); }
+
+function drawArrow(x1,y1,x2,y2,col,head){
+  ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  if(head){
+    var ang=Math.atan2(y2-y1,x2-x1), hl=4.5;
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-hl*Math.cos(ang-0.5), y2-hl*Math.sin(ang-0.5));
+    ctx.lineTo(x2-hl*Math.cos(ang+0.5), y2-hl*Math.sin(ang+0.5));
+    ctx.closePath(); ctx.fill();
+  }
+}
+
+function render(){
+  var a=+$('ia').value, b=+$('ib').value, c=+$('ic').value, d=+$('id').value;
+  ctx.clearRect(0,0,W,H);
+
+  // axes
+  ctx.strokeStyle='#12281d'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(wx(-R),wy(0)); ctx.lineTo(wx(R),wy(0));
+  ctx.moveTo(wx(0),wy(-R)); ctx.lineTo(wx(0),wy(R)); ctx.stroke();
+
+  // vector field (normalized arrows)
+  var g=13, i,j;
+  for(i=0;i<g;i++) for(j=0;j<g;j++){
+    var x=-R + (i+0.5)*(2*R/g), y=-R + (j+0.5)*(2*R/g);
+    var vx=a*x+b*y, vy=c*x+d*y, m=Math.hypot(vx,vy);
+    if(m<1e-6) continue;
+    var L=9, ux=vx/m*L, uy=vy/m*L;
+    drawArrow(wx(x)-ux/2, wy(y)+uy/2, wx(x)+ux/2, wy(y)-uy/2, 'rgba(120,150,175,.42)', true);
+  }
+
+  // eigen-directions (real only)
+  var vs=eigenvectors(a,b,c,d);
+  for(i=0;i<vs.length;i++){
+    var lam=vs[i].lam, v=vs[i].v;
+    var col = lam<0 ? '#57f2a6' : (lam>0 ? '#ffb0d0' : '#ffcf5c');
+    ctx.strokeStyle=col; ctx.lineWidth=2; ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(wx(-v[0]*R), wy(-v[1]*R));
+    ctx.lineTo(wx( v[0]*R), wy( v[1]*R));
+    ctx.stroke();
+  }
+
+  // trajectories (deterministic seeds via fixed PRNG)
+  var rnd=mulberry32(1927), NS=22, h=0.02, steps=900;
+  for(i=0;i<NS;i++){
+    var ang=(i/NS)*Math.PI*2 + rnd()*0.12, rad=R*(0.55+0.4*rnd());
+    var px=rad*Math.cos(ang), py=rad*Math.sin(ang);
+    ctx.strokeStyle='rgba(127,176,255,.55)'; ctx.lineWidth=1.1;
+    ctx.beginPath(); ctx.moveTo(wx(px),wy(py));
+    for(j=0;j<steps;j++){
+      var p=step(a,b,c,d,px,py,-h); px=p[0]; py=p[1];    // integrate backward for inflow visibility
+      if(Math.abs(px)>R*1.6||Math.abs(py)>R*1.6) break;
+      ctx.lineTo(wx(px),wy(py));
+    }
+    ctx.stroke();
+  }
+
+  // fixed point
+  ctx.fillStyle='#ffb0d0';
+  ctx.beginPath(); ctx.arc(wx(0),wy(0),3.6,0,7); ctx.fill();
+
+  // readout
+  var T=a+d, D=a*d-b*c, disc=T*T-4*D, e=eigen(a,b,c,d), cl=classify(a,b,c,d), tr=truthClass(a,b,c,d);
+  var evs;
+  if(Math.abs(e.im1)<EPS) evs='&lambda;&#8321;='+e.re1.toFixed(2)+', &lambda;&#8322;='+e.re2.toFixed(2);
+  else evs='&lambda;='+e.re1.toFixed(2)+' &plusmn; '+Math.abs(e.im1).toFixed(2)+'i';
+  var agree = (cl===tr);
+  $('readout').innerHTML =
+    '<span class="lab">T = tr A =</span> <span class="val">'+T.toFixed(3)+'</span> &nbsp; '+
+    '<span class="lab">D = det A =</span> <span class="val">'+D.toFixed(3)+'</span> &nbsp; '+
+    '<span class="lab">&Delta; =</span> <span class="val">'+disc.toFixed(3)+'</span><br>'+
+    '<span class="lab">eigenvalues:</span> <span class="val">'+evs+'</span><br>'+
+    '<span class="lab">engine says:</span> <span class="cls" style="color:'+(agree?'#57f2a6':'#ff8f9c')+'">'+cl.toUpperCase()+'</span> '+
+    '<span class="lab">&nbsp;(eigenvalue truth: '+tr+')</span>';
+
+  audit();
+}
+
+// live witness: does the engine label still match the eigenvalue truth?
+function audit(){
+  var live=classify(1,-2,2,1), truth=truthClass(1,-2,2,1), ok=(live===truth);
+  var el=$('auditout');
+  if(ok){
+    el.className='badge ok';
+    el.innerHTML='<span class="dot"></span>PASS &mdash; label matches eigenvalues ('+truth+')';
+  } else {
+    el.className='badge bad';
+    el.innerHTML='<span class="dot"></span>TAMPER DETECTED &mdash; engine says "'+live+'", eigenvalues say "'+truth+'"';
+  }
+}
+
+// wire presets + inputs + tamper
+(function(){
+  var host=$('presets'), i;
+  for(i=0;i<PRESETS.length;i++){
+    (function(p){
+      var btn=document.createElement('button');
+      btn.textContent=p.n;
+      btn.onclick=function(){
+        $('ia').value=p.m[0]; $('ib').value=p.m[1]; $('ic').value=p.m[2]; $('id').value=p.m[3];
+        render();
+      };
+      host.appendChild(btn);
+    })(PRESETS[i]);
+  }
+  var ids=['ia','ib','ic','id'];
+  for(i=0;i<ids.length;i++) $(ids[i]).addEventListener('input', render);
+
+  $('tamper').onclick=function(){ TAMPER=true; render(); };
+  $('restore').onclick=function(){ TAMPER=false; render(); };
+})();
+
+// boot: run fail-loud selfcheck, then light the panel
+(function(){
+  try{
+    var ok=selfcheck();
+    if(ok!==true) throw new Error('selfcheck did not return true');
+    $('litbadge').textContent='LIT';
+    $('litbadge').className='tag t-lit';
+    $('verdict').className='badge ok';
+    $('verdict').innerHTML='<span class="dot"></span>6/6 canonical systems classified exactly &mdash; engine agrees with the eigenvalues on every case';
+    render();
+  }catch(err){
+    $('litbadge').textContent='FAILED';
+    $('litbadge').className='tag t-wall';
+    var fb=$('failb'); fb.style.display='inline-flex';
+    $('failmsg').textContent='SELFCHECK FAILED: '+err.message;
+    var v=$('verdict'); v.className='badge bad';
+    v.innerHTML='<span class="dot"></span>engine not LIT &mdash; '+err.message;
+    throw err;
+  }
+})();
+</script>
+</body>
+</html>

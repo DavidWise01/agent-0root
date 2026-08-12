@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE REFRIGERATOR</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --bg:#0b1a12;
+  --bg2:#0f2418;
+  --ink:#dff7ec;
+  --dim:#8fbfa8;
+  --line:#1d3a29;
+  --blue:#6fb7ff;
+  --red:#ff7a6f;
+  --amber:#ffbf4d;
+  --lit:#7fe0c0;
+  --panel:#0e2016;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 15% -10%, #12331f 0%, transparent 60%),
+    radial-gradient(900px 600px at 110% 10%, #0d2a1c 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:26px 18px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+a:hover{color:#bff5e4}
+header{max-width:1240px;margin:0 auto 22px}
+h1{
+  font-size:clamp(26px,4.4vw,44px);
+  letter-spacing:.14em;
+  margin:0 0 8px;
+  color:var(--am);
+  text-shadow:0 0 22px rgba(127,224,192,.28);
+}
+.sub{max-width:900px;color:var(--ink);font-size:15px;margin:0 0 10px}
+.src{font-size:12.5px;color:var(--dim)}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.16em;
+  padding:2px 7px;border-radius:4px;border:1px solid var(--line);
+  text-transform:uppercase;vertical-align:middle;
+}
+.t-amber{background:rgba(255,191,77,.12);color:var(--amber);border-color:rgba(255,191,77,.4)}
+.t-in{background:rgba(111,183,255,.12);color:var(--blue);border-color:rgba(111,183,255,.4)}
+.t-out{background:rgba(127,224,192,.12);color:var(--am);border-color:rgba(127,224,192,.45)}
+.t-lit{background:rgba(127,224,192,.18);color:#0b1a12;background-color:var(--lit);border-color:var(--lit);font-weight:700}
+.t-wall{background:rgba(255,122,111,.12);color:var(--red);border-color:rgba(255,122,111,.42)}
+
+.ocho{
+  max-width:1240px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;align-items:start;
+}
+@media (max-width:880px){ .ocho{grid-template-columns:1fr} }
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  padding:7px 11px;border-radius:6px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--dim);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(111,183,255,.35)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,122,111,.35)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(127,224,192,.35);text-align:center}
+
+.win{
+  position:relative;background:linear-gradient(180deg,var(--bg2),var(--panel));
+  border:1px solid var(--line);border-radius:10px;padding:14px 14px 13px;
+}
+.win h3{margin:0 0 8px;font-size:13px;letter-spacing:.09em;color:var(--ink)}
+.win p{margin:0 0 8px;font-size:12.8px;color:var(--dim)}
+.win p:last-child{margin-bottom:0}
+.win .k{color:var(--ink)}
+.num{
+  position:absolute;top:-9px;right:-9px;width:24px;height:24px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:700;
+  background:var(--bg);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .num{color:var(--blue);border-color:rgba(111,183,255,.5)}
+.col.red .num{color:var(--red);border-color:rgba(255,122,111,.5)}
+.col.center .num{color:var(--am);border-color:rgba(127,224,192,.5)}
+.win.panel{
+  border-color:rgba(127,224,192,.5);
+  box-shadow:0 0 0 1px rgba(127,224,192,.12),0 0 34px rgba(127,224,192,.1);
+  background:linear-gradient(180deg,#0f2a1d,#0c2015);
+}
+.flow{
+  text-align:center;color:var(--am);font-size:18px;line-height:1;
+  margin:2px 0;opacity:.8;
+}
+canvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:#08150e}
+.readout{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;
+  font-size:12.5px;margin:10px 0 4px;
+}
+.readout div{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line);padding:2px 0}
+.readout b{color:var(--am);font-weight:700}
+.ctl{margin:10px 0 2px}
+.ctl label{display:block;font-size:11px;color:var(--dim);letter-spacing:.08em;margin:8px 0 3px}
+.ctl input[type=range]{width:100%;accent-color:var(--am)}
+.val{color:var(--am)}
+button{
+  font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+  background:var(--bg2);border:1px solid var(--line);border-radius:7px;
+  padding:7px 12px;letter-spacing:.06em;
+}
+button:hover{border-color:var(--am)}
+#tamper{border-color:rgba(255,122,111,.5);color:var(--red)}
+#tamper:hover{background:rgba(255,122,111,.12)}
+#restore{border-color:rgba(111,183,255,.5);color:var(--blue)}
+.badge{
+  display:block;margin-top:9px;font-size:12px;padding:8px 10px;border-radius:7px;
+  border:1px solid var(--line);background:var(--bg);letter-spacing:.03em;
+}
+#litbadge{border-color:rgba(127,224,192,.5);color:var(--am)}
+#auditout.ok{border-color:rgba(127,224,192,.5);color:var(--am)}
+#auditout.bad{border-color:rgba(255,122,111,.7);color:var(--red);background:rgba(255,122,111,.08);font-weight:700}
+#failb{
+  display:none;max-width:1240px;margin:0 auto 16px;padding:12px 14px;border-radius:8px;
+  background:rgba(255,122,111,.1);border:1px solid var(--red);color:var(--red);
+}
+.strike{text-decoration:line-through;color:#c98c86}
+.wall-note{
+  border-left:3px solid var(--red);padding-left:10px;color:var(--ink);
+  font-size:12.6px;background:rgba(255,122,111,.05);border-radius:0 6px 6px 0;
+  padding-top:6px;padding-bottom:6px;
+}
+.fine{font-size:11.5px;color:var(--dim);margin-top:6px}
+footer{
+  max-width:1240px;margin:34px auto 0;padding-top:16px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--dim);letter-spacing:.04em;
+}
+code{color:var(--am);font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>THE REFRIGERATOR</h1>
+  <p class="sub">A heat engine run backwards. Spend work <span class="k">W</span>, and heat is pumped from the cold side to the hot side &mdash; uphill, against its own gradient. The measure of merit is not efficiency but the <span class="k">coefficient of performance</span>: <code>COP = Qc / W</code>, the cold heat moved per joule spent. For a reversible machine it collapses to a ratio of two temperatures, and it can be far greater than one.</p>
+  <p class="src"><span class="tag t-amber">source</span> &nbsp;S. Carnot, <em>R&eacute;flexions sur la puissance motrice du feu</em> (Bachelier, Paris, <b>1824</b>) &mdash; the reversed cycle stated in the original; formalized by R. Clausius (1865). Rendered, not quoted. <a href="https://archive.org/details/reflectionsonmot00carnrich" target="_blank" rel="noopener">archive.org/reflectionsonmot00carnrich</a></p>
+</header>
+
+<div id="failb"></div>
+
+<main class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <section class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <h3>THE MODEL</h3>
+      <p>Two reservoirs: cold at <span class="k">Tc</span>, hot at <span class="k">Th</span>, with <code>Th &gt; Tc</code>. A reversible cycle draws <code>Qc</code> from the cold side, receives work <code>W</code>, and rejects <code>Qh</code> to the hot side.</p>
+      <p>Reversibility fixes the heats to the temperatures (Clausius): <code>Qc/Qh = Tc/Th</code>. Eliminate the heats and the merit becomes pure temperature:</p>
+      <p><b class="k">COP<sub>cool</sub> = Qc / W = Tc / (Th &minus; Tc)</b>.</p>
+      <p>On a temperature&ndash;entropy chart the cycle is a rectangle traversed <em>counter&#8209;clockwise</em>: the enclosed area is the work <code>W</code>, the cold isotherm carries <code>Qc = Tc&middot;&Delta;S</code> in, the hot isotherm carries <code>Qh = Th&middot;&Delta;S</code> out.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>This is <b>the-carnot-cycle</b> run in reverse. Forward, it turns a heat drop into work at efficiency <code>1 &minus; Tc/Th</code>; backwards, it spends work to lift heat at <code>Tc/(Th&minus;Tc)</code>. The same rectangle, the same reservoirs &mdash; only the direction of travel flips.</p>
+      <p>It is the cooling twin of <b>the-heat-pump</b>: identical hardware, identical cycle, but the payoff is counted at the cold end. Their measures differ by exactly one: <code>COP<sub>heat</sub> = COP<sub>cool</sub> + 1 = Th/(Th&minus;Tc)</code>, because the hot side receives both the cold heat and the work, <code>Qh = Qc + W</code>.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <h3>THE WITNESS</h3>
+      <p>A live re&#8209;check, independent of the panel. It recomputes the reversible COP from <code>Tc/(Th&minus;Tc)</code> and compares it to what the engine reports. Green while they agree; it flips red the instant the RED TEAM tampers.</p>
+      <span id="auditout" class="badge">witness idle</span>
+    </div>
+  </section>
+
+  <!-- ================= CENTER ================= -->
+  <section class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="num">4</span>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>Two reservoir temperatures and the cold heat to move. Everything downstream is derived &mdash; no stored answers.</p>
+      <div class="ctl">
+        <label>cold reservoir Tc = <span id="tcv" class="val">250</span> K</label>
+        <input id="tc" type="range" min="120" max="299" step="1" value="250">
+        <label>hot reservoir Th = <span id="thv" class="val">300</span> K</label>
+        <input id="th" type="range" min="220" max="360" step="1" value="300">
+        <label>cold heat pulled Qc = <span id="qcv" class="val">1000</span> J</label>
+        <input id="qc" type="range" min="100" max="3000" step="10" value="1000">
+      </div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <canvas id="cv" width="520" height="300" aria-label="reversed Carnot cycle on a temperature-entropy chart"></canvas>
+      <div class="readout">
+        <div><span>COP<sub>cool</sub></span><b id="oCop">&mdash;</b></div>
+        <div><span>COP<sub>heat</sub></span><b id="oCoph">&mdash;</b></div>
+        <div><span>work W</span><b id="oW">&mdash;</b></div>
+        <div><span>heat out Qh</span><b id="oQh">&mdash;</b></div>
+        <div><span>Qc / Qh</span><b id="oRatio">&mdash;</b></div>
+        <div><span>Tc / Th</span><b id="oTt">&mdash;</b></div>
+      </div>
+      <p class="fine">The reversed loop moves <code>Qc</code> uphill for a work cost <code>W = Qc/COP</code>. Enclosed rectangle area = <code>W</code>. As <code>Th &rarr; Tc</code> the loop flattens, the cost vanishes, and <code>COP &rarr; &infin;</code>.</p>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win">
+      <span class="num">8</span>
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p>The proven result, set once the boot self&#8209;check passes:</p>
+      <span id="litbadge" class="badge">booting&hellip;</span>
+    </div>
+  </section>
+
+  <!-- ================= RED TEAM ================= -->
+  <section class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <div class="wall-note">
+        <p>&ldquo;A COP above one is free energy &mdash; you get out more than you put in. Second law violated.&rdquo;</p>
+        <p><b>The wall:</b> COP counts <em>heat moved</em>, not energy created. <code>Qc &gt; W</code> is allowed because the hot side pays the balance: <code>Qh = Qc + W &gt; W</code>. No joule is manufactured; heat is only <em>relocated</em>. The second law forbids <code>W = 0</code>, not <code>COP &gt; 1</code>.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p><span class="strike">&ldquo;Efficiency of a fridge is 1 &minus; Tc/Th, like the engine.&rdquo;</span><br>&rarr; That is the forward Carnot <em>efficiency</em>. A fridge is rated by COP, and its reversible value is <code>Tc/(Th&minus;Tc)</code> &mdash; a different, unbounded quantity.</p>
+      <p><span class="strike">&ldquo;COP can be pushed to infinity by better engineering.&rdquo;</span><br>&rarr; Only as <code>Th&minus;Tc &rarr; 0</code>. At any fixed finite gap the COP is finite; pumping heat always costs work.</p>
+      <p><span class="strike">&ldquo;A real fridge reaches the Carnot COP.&rdquo;</span><br>&rarr; Irreversibility (friction, finite&#8209;rate heat flow) always leaves the real COP <em>below</em> <code>Tc/(Th&minus;Tc)</code>. <span class="tag t-amber">amber</span> the second&#8209;law efficiency <code>&eta;&#8322;&lt;1</code> is device&#8209;specific.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Swap the cooling formula for the heat&#8209;pump one, <code>Th/(Th&minus;Tc)</code> &mdash; one unit too high. The fridge would appear to move more cold heat than it pays for, and the ratio <code>Qc/Qh</code> stops matching <code>Tc/Th</code>. THE WITNESS (7) catches it live.</p>
+      <button id="tamper">inject bad COP</button>
+      <button id="restore">restore</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  WORLD II &middot; THE FOLD &nbsp;/&nbsp; the-refrigerator &nbsp;/&nbsp; reversed Carnot cycle, COP = Qc/W = Tc/(Th&minus;Tc) &mdash; rendered from first law + Clausius, verified at boot.
+  <br>Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+// ===================================================================
+// THE REFRIGERATOR — engine. Pure logic; selfcheck() runs headless,
+// with NO canvas and NO DOM. All correctness lives above the marker.
+// ===================================================================
+
+var TAMPER = false;   // disclosed planted void (window 6). selfcheck saves/restores it.
+var GAMMA = 7/5;      // diatomic ideal gas (declared for the house form; laws below are exact)
+
+// fixed-seed PRNG so any randomness is deterministic
+function makePRNG(seed){
+  var s = seed >>> 0;
+  return function(){
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;   // [0,1)
+  };
+}
+
+// Coefficient of performance, cooling. When TAMPER is set, the WRONG
+// heat-pump formula Th/(Th-Tc) is returned (one unit too high), so the
+// fridge appears to move more cold heat than physics allows.
+function copCool(Tc, Th){
+  if(Th <= Tc) return Infinity;              // gap closed: divergence
+  if(TAMPER) return Th / (Th - Tc);          // planted void: heat-pump COP
+  return Tc / (Th - Tc);                      // reversible Carnot fridge
+}
+
+// heat-pump twin (always the honest formula)
+function copHeat(Tc, Th){ return Th / (Th - Tc); }   // = copCool + 1
+
+// A real, irreversible fridge: second-law efficiency eta2 in (0,1).
+function copCoolReal(Tc, Th, eta2){ return eta2 * Tc / (Th - Tc); }
+
+// Full energy accounting for a reversible fridge extracting Qc from cold.
+// Returns Qc, W, Qh, cop. First law: Qh = Qc + W.
+function fridge(Tc, Th, Qc){
+  var cop = copCool(Tc, Th);
+  var W   = Qc / cop;      // work spent
+  var Qh  = Qc + W;        // heat dumped to the hot side
+  return { Tc:Tc, Th:Th, Qc:Qc, W:W, Qh:Qh, cop:cop };
+}
+
+function assert(cond, msg){ if(!cond) throw new Error("selfcheck: " + msg); }
+function near(a, b, tol){ return Math.abs(a - b) <= (tol || 1e-9); }
+
+// Fail-loud self-check. THROWS on any violation. Returns true on success.
+function selfcheck(){
+  var savedTamper = TAMPER;
+  TAMPER = false;
+
+  var Tc = 250, Th = 300, Qc = 1000;   // K, K, J
+  var f = fridge(Tc, Th, Qc);
+
+  // 1 — definition: COP = Qc / W
+  assert(near(f.cop, f.Qc / f.W), "COP must equal Qc/W");
+
+  // 2 — reversible Carnot fridge: COP = Tc/(Th-Tc)
+  assert(near(f.cop, Tc / (Th - Tc)), "reversible COP must be Tc/(Th-Tc)");
+  assert(near(f.cop, 5), "250/(300-250) must be exactly 5");
+
+  // 3 — COP can EXCEED 1: move more heat than the work spent
+  var small = fridge(290, 300, Qc);
+  assert(small.cop > 1, "small gap: COP must exceed 1");
+  assert(near(small.cop, 29), "290/(300-290) must be 29");
+  assert(small.Qc > small.W, "more cold heat moved than work spent");
+
+  // 4 — DIVERGES as Th -> Tc (gap shrinks => COP grows without bound)
+  var d1 = copCool(299, 300), d2 = copCool(299.9, 300), d3 = copCool(299.99, 300);
+  assert(d1 < d2 && d2 < d3, "COP must grow as Th->Tc");
+  assert(copCool(299.99, 300) > 1000, "COP must diverge near Th=Tc");
+
+  // 5 — energy conserved: Qh = Qc + W, and reversible ratio Qc/Qh = Tc/Th
+  assert(near(f.Qh, f.Qc + f.W), "first law: Qh = Qc + W");
+  assert(near(f.Qc / f.Qh, Tc / Th, 1e-9), "reversible: Qc/Qh = Tc/Th");
+
+  // 6 — second law: finite Th>Tc forbids COP = infinity (work is strictly > 0)
+  assert(isFinite(f.cop), "COP must be finite for finite Th>Tc");
+  assert(f.W > 0, "cannot pump heat with zero work");
+
+  // 7 — a real fridge sits BELOW the Carnot value
+  var real = copCoolReal(Tc, Th, 0.45);
+  assert(real < f.cop, "real (irreversible) COP must be below Carnot");
+  assert(near(real, 2.25), "0.45 * 5 must be 2.25");
+
+  // 8 — heat-pump twin: COP_heat = COP_cool + 1 = Th/(Th-Tc)
+  assert(near(copHeat(Tc, Th), f.cop + 1), "COP_heat = COP_cool + 1");
+  assert(near(copHeat(Tc, Th), Th / (Th - Tc)), "COP_heat = Th/(Th-Tc)");
+
+  // sanity: the fixed-seed PRNG is deterministic
+  var ra = makePRNG(7)(), rb = makePRNG(7)();
+  assert(near(ra, rb), "PRNG must be deterministic for a fixed seed");
+
+  // --- planted void (window 6): the TAMPER swaps in the heat-pump COP ---
+  var honest = copCool(Tc, Th);
+  TAMPER = true;
+  var tampered = copCool(Tc, Th);
+  assert(!near(tampered, honest), "tamper must change the COP");
+  assert(near(tampered, honest + 1), "tamper = heat-pump formula, one too high");
+  var ft = fridge(Tc, Th, Qc);
+  assert(!near(ft.Qc / ft.Qh, Tc / Th, 1e-6), "tamper breaks the Clausius ratio Qc/Qh = Tc/Th");
+  TAMPER = false;
+
+  TAMPER = savedTamper;   // restore exactly what we found
+  return true;
+}
+
+/* ===== UI ===== */
+
+(function(){
+  var boot;
+  try{
+    boot = selfcheck();
+    document.getElementById('litbadge').textContent =
+      'PROVEN  COP_cool = Tc/(Th-Tc) = 5.00 at 250/300 K  |  Qh = Qc + W  |  self-check PASS';
+  }catch(e){
+    var fb = document.getElementById('failb');
+    fb.style.display = 'block';
+    fb.textContent = 'SELF-CHECK FAILED — ' + e.message;
+    throw e;   // rethrow: a broken engine must not render as LIT
+  }
+
+  var tc = document.getElementById('tc'),
+      th = document.getElementById('th'),
+      qc = document.getElementById('qc');
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var rnd = makePRNG(1337);
+
+  function fmt(x){ return (isFinite(x) ? x.toFixed(3) : '∞'); }
+
+  function draw(f){
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    // frame / axes
+    var L=52, R=W-24, T=22, B=H-40;
+    ctx.strokeStyle='#1d3a29'; ctx.lineWidth=1;
+    ctx.strokeRect(L,T,R-L,B-T);
+    ctx.fillStyle='#8fbfa8'; ctx.font='11px monospace';
+    ctx.fillText('T (K)', 8, T+6);
+    ctx.fillText('S (entropy)', R-78, B+26);
+
+    // temperature -> y  (map [Tcmin..Thmax] to plot)
+    var tlo = 100, thi = 380;
+    function y(Tk){ return B - (Tk - tlo)/(thi - tlo) * (B - T); }
+    // entropy band (fixed width rectangle)
+    var s0 = L + (R-L)*0.30, s1 = L + (R-L)*0.74;
+    var yH = y(f.Th), yC = y(f.Tc);
+
+    // enclosed work rectangle (W)
+    ctx.fillStyle='rgba(127,224,192,0.14)';
+    ctx.fillRect(s0, yH, s1-s0, yC-yH);
+
+    // hot isotherm (Qh rejected)
+    ctx.strokeStyle='#ff7a6f'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(s0,yH); ctx.lineTo(s1,yH); ctx.stroke();
+    // cold isotherm (Qc absorbed)
+    ctx.strokeStyle='#6fb7ff';
+    ctx.beginPath(); ctx.moveTo(s0,yC); ctx.lineTo(s1,yC); ctx.stroke();
+    // adiabats (vertical)
+    ctx.strokeStyle='#7fe0c0'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(s0,yC); ctx.lineTo(s0,yH);
+    ctx.moveTo(s1,yH); ctx.lineTo(s1,yC); ctx.stroke();
+
+    // counter-clockwise arrows (fridge direction)
+    function arrow(x,yv,dx,dy,col){
+      ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=1.6;
+      var a=Math.atan2(dy,dx);
+      ctx.beginPath(); ctx.moveTo(x,yv);
+      ctx.lineTo(x-8*Math.cos(a-0.4), yv-8*Math.sin(a-0.4));
+      ctx.lineTo(x-8*Math.cos(a+0.4), yv-8*Math.sin(a+0.4));
+      ctx.closePath(); ctx.fill();
+    }
+    var mid=(s0+s1)/2;
+    arrow(s0+8, (yC+yH)/2, 0,-1,'#7fe0c0');   // up left adiabat
+    arrow(mid, yH, -1,0,'#ff7a6f');            // hot leftward
+    arrow(s1-8, (yC+yH)/2, 0,1,'#7fe0c0');     // down right adiabat
+    arrow(mid, yC, 1,0,'#6fb7ff');             // cold rightward
+
+    // labels
+    ctx.fillStyle='#ff7a6f'; ctx.fillText('Qh out  Th='+f.Th.toFixed(0)+'K', s0, yH-6);
+    ctx.fillStyle='#6fb7ff'; ctx.fillText('Qc in  Tc='+f.Tc.toFixed(0)+'K', s0, yC+14);
+    ctx.fillStyle='#7fe0c0'; ctx.font='12px monospace';
+    ctx.fillText('area = W (work in)', mid-52, (yC+yH)/2+4);
+
+    // uphill heat spark (deterministic drift)
+    for(var i=0;i<5;i++){
+      var t=(i+ (rnd()*0.6))/5;
+      var px=s0+8+ t*0, py=yC - t*(yC-yH);
+      ctx.fillStyle='rgba(127,224,192,'+(0.35+0.4*(1-t))+')';
+      ctx.fillRect(mid-2, yC - t*(yC-yH) -1, 4, 3);
+    }
+  }
+
+  function runWitness(f){
+    var el = document.getElementById('auditout');
+    var expect = f.Tc / (f.Th - f.Tc);   // independent recompute (honest)
+    var got = copCool(f.Tc, f.Th);        // whatever the engine currently yields
+    var ratioOK = Math.abs(f.Qc/f.Qh - f.Tc/f.Th) <= 1e-6;
+    if(Math.abs(got - expect) <= 1e-9 && ratioOK){
+      el.className = 'badge ok';
+      el.textContent = 'WITNESS OK — COP ' + got.toFixed(3) +
+        ' = Tc/(Th-Tc), and Qc/Qh = Tc/Th';
+    }else{
+      el.className = 'badge bad';
+      el.textContent = 'WITNESS TRIPPED — engine COP ' + got.toFixed(3) +
+        ' != Tc/(Th-Tc) ' + expect.toFixed(3) + '  (Clausius ratio broken)';
+    }
+  }
+
+  function render(){
+    var Tc = +tc.value, Th = +th.value, Qc = +qc.value;
+    if(Th <= Tc){ Th = Tc + 1; th.value = Th; }   // keep a positive gap
+    document.getElementById('tcv').textContent = Tc;
+    document.getElementById('thv').textContent = Th;
+    document.getElementById('qcv').textContent = Qc;
+
+    var f = fridge(Tc, Th, Qc);
+    document.getElementById('oCop').textContent  = fmt(f.cop);
+    document.getElementById('oCoph').textContent = fmt(copHeat(Tc, Th));
+    document.getElementById('oW').textContent    = fmt(f.W) + ' J';
+    document.getElementById('oQh').textContent   = fmt(f.Qh) + ' J';
+    document.getElementById('oRatio').textContent= fmt(f.Qc / f.Qh);
+    document.getElementById('oTt').textContent   = fmt(Tc / Th);
+
+    draw(f);
+    runWitness(f);
+  }
+
+  tc.addEventListener('input', render);
+  th.addEventListener('input', render);
+  qc.addEventListener('input', render);
+
+  document.getElementById('tamper').addEventListener('click', function(){
+    TAMPER = true; render();
+  });
+  document.getElementById('restore').addEventListener('click', function(){
+    TAMPER = false; render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

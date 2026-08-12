@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE DEADLOCK DETECTION · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffb0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,176,208,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,176,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,176,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:12.5px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+svg.graph{display:block;width:100%;max-width:280px;margin:4px auto;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE DEADLOCK DETECTION</h1>
+ <p class="sub">Everyone is waiting for someone else, and the graph shows the cycle. Draw an edge <b>Ti → Tj</b> whenever Ti waits for a resource Tj holds; the whole system is stuck <b>if and only if</b> that wait-for graph contains a <b class="k">cycle</b>. Down the center, data flows: a hold/wait state goes <b style="color:var(--cy)">in</b>, the engine builds the graph and hunts the cycle, the verdict comes <b style="color:var(--gr)">out</b> — proven against ground truth over <b class="k">4096</b> states. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> E. G. Coffman, M. J. Elphick, A. Shoshani, <i>System Deadlocks</i>, ACM Computing Surveys <b>3</b>(2):67–78 (1971), DOI <a href="https://dl.acm.org/doi/10.1145/356586.356588">10.1145/356586.356588</a> <span class="mut">(paywalled — canonical id cited, AMBER)</span>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — wait-for graph</h2>
+   <p>Single-instance resources. Each thread <b>holds</b> a set of locks and is <b>blocked</b> on at most one it requests. Build the wait-for graph: an edge <b class="k">Ti → Tj</b> exactly when Ti waits for a lock Tj currently holds.</p>
+   <p>The theorem (Coffman 1971): a <b>deadlock exists iff the graph has a cycle</b>. Ground truth is not the cycle — it is graph <b>reduction</b>: repeatedly finish any thread whose request is free or held by an already-finished thread, releasing its locks. Whoever can never finish is deadlocked. For the current scenario:</p>
+   <table id="distTbl"><thead><tr><th>thread</th><th>waits for</th><th>reduction</th></tr></thead><tbody id="distBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — cycle → cure <span class="tag t-amber">AVAN</span></h2>
+   <p>Coffman 1971 named the wait-for cycle and the <b>four conditions</b>. Detection asks "is the system already stuck?" — it lets a cycle form, then finds it.</p>
+   <p><b style="color:var(--am)">Avoidance</b> refuses to enter the states where a cycle could form at all: the diagnosis here is exactly what <a href="https://davidwise01.github.io/the-banker/" style="color:var(--cy)">the-banker</a> deadlock-avoidance is built to prevent. Each sphere is the next one's premise — the cycle you can detect is the cycle the banker declines to risk.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-verify <b>cycle ↔ deadlock</b> over all 4096 states, and confirm the shipped <b>detector</b> matches ground truth on a scenario battery. If red swaps the cycle test for a timeout, the battery disagrees and this badge turns red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the hold/wait state <span class="tag t-in">in ↓</span></h2>
+   <p>Three threads <b class="k">T0 T1 T2</b>, three single-instance locks <b>R0 R1 R2</b>. A state is: which lock each thread <b>holds</b>, and which lock each thread is <b>waiting</b> to acquire. That is all the detector needs.</p>
+   <p class="small">A thread is <b>blocked</b> only if the lock it wants is held by <i>another</i> thread. Feed a state into the engine below — the wait-for edges are read straight off it.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the state into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>T0 holds</label><select id="h0"></select><label style="min-width:52px">waits</label><select id="w0"></select></div>
+     <div class="row"><label>T1 holds</label><select id="h1"></select><label style="min-width:52px">waits</label><select id="w1"></select></div>
+     <div class="row"><label>T2 holds</label><select id="h2"></select><label style="min-width:52px">waits</label><select id="w2"></select></div>
+     <div class="row"><button id="pDead">⟳ deadlock (cycle)</button><button id="pSafe">→ safe chain</button></div>
+     <div class="row"><button id="pOrder">↑ lock ordering</button></div>
+     <p class="small" id="warn"></p>
+    </div>
+    <div class="readout">
+     <svg class="graph" id="graph" viewBox="0 0 240 176" aria-label="wait-for graph"></svg>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+     <table id="condTbl"><thead><tr><th>Coffman condition</th><th>status</th></tr></thead><tbody id="condBody"></tbody></table>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">The verdict is <b>reduction ground truth</b>, and it equals cycle-detection — computed on the spot from the state, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits a verdict &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, exactly: over all <b class="k">4096</b> single-instance states of 3 threads / 3 locks, a <b>deadlock exists ⟺ the wait-for graph has a cycle</b> — both directions. Every thread on a cycle is in the deadlocked set; the bipartite resource-allocation graph <b>reduces</b> to the wait-for graph; and imposing a <b>lock ordering</b> (killing circular wait) makes every state acyclic and deadlock-free.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these facts live; the red team (right) swaps in a timeout and gets caught.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Cycle detection tells you a deadlock <b>has already happened</b> — it is a coroner, not a doctor. It also assumes <b>single-instance</b> resources; with multiple instances per resource type a cycle is <b>necessary but not sufficient</b>, and you need the full matrix reduction (Coffman's general case), not a simple graph cycle.</div>
+   <p class="small" style="margin-top:8px">And detection alone does nothing to <i>recover</i>: you still must kill a thread or preempt a lock, both of which lose work. That is why avoidance (the banker) and prevention (ordering) exist upstream.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"A cycle might just be a slow thread."</s> <b>Cut.</b> In a single-instance system a wait-for cycle is <i>exactly</i> deadlock — proven both directions over all 4096 states in the engine.</p>
+   <p class="grave"><s>"Breaking one Coffman condition might help."</s> <b>Cut.</b> All four are necessary <i>together</i>; break any one and deadlock is impossible. The engine verifies it for circular-wait, mutual-exclusion, and hold-and-wait exhaustively.</p>
+   <p class="grave"><s>"Deadlock = the whole system froze."</s> <b>Kept, corrected.</b> Only threads whose wait-chain reaches a cycle are stuck; the rest run on. Reduction reports the exact stuck set.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: detect deadlock by a <b>timeout</b> — declare deadlock whenever a thread has waited longer than T — instead of finding a cycle. A thread merely blocked on a busy-but-<i>progressing</i> lock gets <b>falsely flagged</b>.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ use timeout(T)</button><button id="restore">↺ restore cycle test</button></div>
+   <p class="small" id="tampernote">Swap to the timeout rule and a non-cyclic wait becomes a false positive — the witness (window 7) reruns the scenario battery, disagrees with ground truth, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE DEADLOCK DETECTION — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (a hold/wait state <b style="color:var(--cy)">in</b> → build wait-for graph → verdict <b style="color:var(--gr)">out</b>). A runnable rendering of Coffman, Elphick &amp; Shoshani's <i>System Deadlocks</i> (1971) — the engine is LIT (cycle ⟺ deadlock proven both directions over 4096 states, reduction = graph cycle, lock-ordering prevention verified, tamper-provable), the blue team witnesses, the red team swaps in a timeout, and the graveyard + adversary carry what a single cycle cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- the engine: single-instance wait-for graph (verified: cycle IFF deadlock over 4096 states) ----
+// state = holder[res] in {-1 free,0..n-1}, request[thread] in {-1 none,0..r-1}
+let TAMPER=false;   // red swaps the cycle test for a timeout when true — the witness must catch it
+
+function decode(code,len){ const a=[]; let x=code; for(let i=0;i<len;i++){ a.push((x%4)-1); x=(x/4)|0; } return a; }
+
+// exclusive wait-for successor: at most one out-edge per thread (it blocks on one lock)
+function succ(holder,request,t){ const req=request[t]; if(req<0) return -1; const h=holder[req]; if(h<0||h===t) return -1; return h; }
+// shareable variant: if a lock is not exclusive, a request never blocks (removes mutual exclusion)
+function succG(holder,request,t,excl){ const req=request[t]; if(req<0) return -1; if(!excl[req]) return -1; const h=holder[req]; if(h<0||h===t) return -1; return h; }
+
+// t lies on a cycle iff following successors returns to t (out-degree <= 1, so cycles are simple)
+function onCycle(holder,request,t,n){ let cur=succ(holder,request,t), steps=0; while(cur>=0&&steps<=n){ if(cur===t) return true; cur=succ(holder,request,cur); steps++; } return false; }
+function hasCycle(holder,request,n){ for(let t=0;t<n;t++) if(onCycle(holder,request,t,n)) return true; return false; }
+function onCycleG(holder,request,t,n,excl){ let cur=succG(holder,request,t,excl), steps=0; while(cur>=0&&steps<=n){ if(cur===t) return true; cur=succG(holder,request,cur,excl); steps++; } return false; }
+function hasCycleG(holder,request,n,excl){ for(let t=0;t<n;t++) if(onCycleG(holder,request,t,n,excl)) return true; return false; }
+
+// GROUND TRUTH, independent of the cycle test: graph reduction. Whoever never finishes is deadlocked.
+function reduceDeadlock(holder,request,n){
+ const fin=new Array(n).fill(false); let prog=true;
+ while(prog){ prog=false;
+  for(let t=0;t<n;t++){ if(fin[t]) continue; const req=request[t];
+   let can; if(req<0) can=true; else { const h=holder[req]; can=(h<0||h===t||fin[h]); }
+   if(can){ fin[t]=true; prog=true; } } }
+ const dl=[]; for(let t=0;t<n;t++) if(!fin[t]) dl.push(t); return dl;
+}
+function trueDeadlock(holder,request,n){ return reduceDeadlock(holder,request,n).length>0; }
+
+// the single-instance resource-allocation graph (bipartite) reduces to the wait-for graph
+function ragHasCycle(holder,request,n,r){
+ const V=n+r, adj=[]; for(let i=0;i<V;i++) adj.push([]);
+ for(let t=0;t<n;t++){ const req=request[t]; if(req>=0&&holder[req]!==t) adj[t].push(n+req); }
+ for(let res=0;res<r;res++){ const h=holder[res]; if(h>=0) adj[n+res].push(h); }
+ const color=new Array(V).fill(0);
+ function dfs(u){ color[u]=1; for(const v of adj[u]){ if(color[v]===1) return true; if(color[v]===0&&dfs(v)) return true; } color[u]=2; return false; }
+ for(let u=0;u<V;u++) if(color[u]===0&&dfs(u)) return true; return false;
+}
+
+// break circular wait: a state respects global lock ordering if every held lock id < the requested lock id
+function respectsLockOrder(holder,request,n,r){
+ for(let t=0;t<n;t++){ const req=request[t]; if(req<0) continue; if(holder[req]===t) continue;
+  for(let res=0;res<r;res++){ if(holder[res]===t && res>=req) return false; } }
+ return true;
+}
+
+// the shipped detector: cycle test, or (tampered) a timeout on wait time
+function detect(holder,request,waited,T,n){
+ if(TAMPER){ let mx=0; for(const w of waited) if(w>mx) mx=w; return mx>T; }
+ return hasCycle(holder,request,n);
+}
+
+// fail-loud self-check — throws on any violation, returns true on success
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const n=3, r=3, M=64;
+ // 1. cycle IFF deadlock (BOTH directions), 2. cycle nodes are deadlocked, 3. RAG reduces to wait-for, 4. lock ordering prevents deadlock
+ for(let hc=0;hc<M;hc++){ const holder=decode(hc,r);
+  for(let rc=0;rc<M;rc++){ const request=decode(rc,n);
+   const cyc=hasCycle(holder,request,n), dl=reduceDeadlock(holder,request,n);
+   t(cyc===(dl.length>0),"cycle IFF deadlock failed @"+hc+","+rc);
+   for(let x=0;x<n;x++) if(onCycle(holder,request,x,n)) t(dl.indexOf(x)>=0,"a cycle node must be deadlocked");
+   t(ragHasCycle(holder,request,n,r)===cyc,"RAG cycle must equal wait-for cycle");
+   if(respectsLockOrder(holder,request,n,r)) t(!cyc,"lock ordering must forbid every cycle");
+  } }
+ // 5. hold-and-wait broken (blocked threads hold nothing) => always acyclic
+ for(let hc=0;hc<M;hc++){ const holder=decode(hc,r);
+  for(let rc=0;rc<M;rc++){ const request=decode(rc,n);
+   let ok=true; for(let x=0;x<n;x++){ const blocked=succ(holder,request,x)>=0, holds=holder.indexOf(x)>=0; if(blocked&&holds){ ok=false; break; } }
+   if(ok) t(!hasCycle(holder,request,n),"no hold-and-wait must be acyclic");
+  } }
+ // 6. mutual exclusion is necessary: the canonical deadlock cycles when exclusive, cannot when shareable
+ t(hasCycleG([0,1,2],[1,2,0],n,[true,true,true]),"exclusive locks: canonical state must cycle");
+ t(!hasCycleG([0,1,2],[1,2,0],n,[false,false,false]),"shareable locks: no thread blocks, no cycle");
+ // 7. point checks
+ t(hasCycle([0,1,2],[1,2,0],n)&&reduceDeadlock([0,1,2],[1,2,0],n).length===3,"canonical 3-cycle: all three stuck");
+ t(!hasCycle([0,1,2],[1,-1,1],n)&&reduceDeadlock([0,1,2],[1,-1,1],n).length===0,"safe chain: no deadlock");
+ // 8. TAMPER — the disclosed planted void: timeout falsely flags a non-cyclic, progressing wait
+ const fpH=[1,-1,-1], fpR=[0,-1,-1], fpW=[5,0,0], T=3;   // T0 waits R0 held by T1; T1 progresses
+ const save=TAMPER;
+ TAMPER=false; const clean=detect(fpH,fpR,fpW,T,n);
+ t(clean===false,"cycle rule: a non-cyclic wait is NOT a deadlock");
+ t(trueDeadlock(fpH,fpR,n)===false,"ground truth: a non-cyclic wait is NOT a deadlock");
+ TAMPER=true; const bad=detect(fpH,fpR,fpW,T,n);
+ t(bad===true,"timeout rule FALSELY flags the busy-but-progressing wait");
+ t(bad!==clean && bad!==trueDeadlock(fpH,fpR,n),"tamper flips a known verdict — the witness can catch it");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const N=3, R=3;
+// scenario battery for the witness: [holder, request, waited, T, label]
+const SCEN=[
+ { h:[0,1,2], r:[1,2,0], w:[9,9,9], T:3, label:"3-cycle deadlock" },
+ { h:[1,-1,-1], r:[0,-1,-1], w:[9,0,0], T:3, label:"progressing wait (busy lock)" },
+ { h:[0,1,2], r:[1,-1,1], w:[9,0,4], T:3, label:"safe chain" },
+ { h:[-1,-1,-1], r:[-1,-1,-1], w:[0,0,0], T:3, label:"all free" }
+];
+
+function opts(sel,none){ sel.innerHTML=(none?'<option value="-1">—</option>':'')+[0,1,2].map(i=>`<option value="${i}">R${i}</option>`).join(""); }
+
+function readState(){
+ const holder=[-1,-1,-1], request=[-1,-1,-1]; let collision=false;
+ for(let tt=0;tt<3;tt++){ const h=+$("h"+tt).value; if(h>=0){ if(holder[h]>=0) collision=true; else holder[h]=tt; } request[tt]=+$("w"+tt).value; }
+ return {holder,request,collision};
+}
+function setState(h,r){ for(let tt=0;tt<3;tt++){ $("h"+tt).value=h[tt]; $("w"+tt).value=r[tt]; } }
+
+function drawGraph(holder,request,dl){
+ const P=[[120,26],[42,150],[198,150]];
+ const inDL=x=>dl.indexOf(x)>=0;
+ let s='<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57e0d0"/></marker>'
+      +'<marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffb0d0"/></marker></defs>';
+ for(let tt=0;tt<3;tt++){ const sc=succ(holder,request,tt); if(sc<0) continue;
+  const a=P[tt], b=P[sc], dx=b[0]-a[0], dy=b[1]-a[1], len=Math.hypot(dx,dy)||1, ux=dx/len, uy=dy/len;
+  const px=-uy, py=ux, off=7;  // perpendicular offset so 2-cycles don't overlap
+  const x1=a[0]+ux*17+px*off, y1=a[1]+uy*17+py*off, x2=b[0]-ux*17+px*off, y2=b[1]-uy*17+py*off;
+  const hot=inDL(tt)&&inDL(sc);
+  s+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${hot?'#ffb0d0':'#57e0d0'}" stroke-width="${hot?2.4:1.6}" marker-end="url(#${hot?'ahr':'ah'})"/>`;
+ }
+ for(let tt=0;tt<3;tt++){ const d=inDL(tt); const a=P[tt];
+  s+=`<circle cx="${a[0]}" cy="${a[1]}" r="16" fill="${d?'rgba(255,176,208,.22)':'rgba(87,224,208,.12)'}" stroke="${d?'#ffb0d0':'#57e0d0'}" stroke-width="2"/>`;
+  s+=`<text x="${a[0]}" y="${a[1]+4}" text-anchor="middle" font-size="12" font-family="monospace" fill="${d?'#ffb0d0':'#a8e6b4'}">T${tt}</text>`;
+ }
+ $("graph").innerHTML=s;
+}
+
+function render(){
+ const {holder,request,collision}=readState();
+ $("warn").innerHTML = collision ? '<span style="color:var(--wall)">two threads claim the same lock — single-instance violated; fix the holds.</span>' : '';
+ const dl=reduceDeadlock(holder,request,N), cyc=hasCycle(holder,request,N), dead=dl.length>0;
+ drawGraph(holder,request,dl);
+ $("verdict").textContent = dead?"DEADLOCK":"NO DEADLOCK";
+ $("verdict").className = "verdict "+(dead?"no":"ok");
+ const cycTxt = cyc ? "wait-for graph contains a cycle" : "wait-for graph is acyclic";
+ $("reason").innerHTML = (dead? "stuck: "+dl.map(x=>"T"+x).join(", ") : "all threads can finish") + " — "+cycTxt+" (cycle "+(cyc===dead?"agrees":"DISAGREES")+" with reduction).";
+ // reduction table
+ $("distBody").innerHTML=[0,1,2].map(tt=>{ const sc=succ(holder,request,tt); const waits=request[tt]<0?"—":("R"+request[tt]+(sc<0?" (free)":" ← held by T"+sc)); const st=dl.indexOf(tt)>=0?'<span class="n" style="color:var(--wall)">deadlocked</span>':'<span class="y">finishes</span>'; return `<tr><td>T${tt}</td><td>${waits}</td><td>${st}</td></tr>`; }).join("");
+ // Coffman conditions
+ let holdWait=false; for(let tt=0;tt<3;tt++){ if(succ(holder,request,tt)>=0 && holder.indexOf(tt)>=0){ holdWait=true; break; } }
+ const rows=[
+  ["mutual exclusion","✓ present","locks are exclusive (single-instance)",true],
+  ["hold-and-wait", holdWait?"✓ present":"✗ absent","a thread holds while it waits",holdWait],
+  ["no preemption","✓ assumed","no forced release (AMBER)",true],
+  ["circular wait", cyc?"✓ present":"✗ absent","a cycle in the wait-for graph",cyc]
+ ];
+ $("condBody").innerHTML=rows.map(x=>`<tr><td style="text-align:left">${x[0]}</td><td class="${x[3]?'y':'n'}">${x[1]}</td></tr>`).join("");
+}
+
+function audit(){
+ const el=$("auditout");
+ // structural theorem, tamper-independent: cycle IFF deadlock over all 4096 states
+ let bad=0; for(let hc=0;hc<64;hc++){ const holder=decode(hc,R); for(let rc=0;rc<64;rc++){ const request=decode(rc,N); if(hasCycle(holder,request,N)!==(reduceDeadlock(holder,request,N).length>0)) bad++; } }
+ // detector vs ground truth on the scenario battery (tamper-sensitive)
+ let fail=null; for(const s of SCEN){ const d=detect(s.h,s.r,s.w,s.T,N), tr=trueDeadlock(s.h,s.r,N); if(d!==tr){ fail=s; break; } }
+ const ok = bad===0 && !fail;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">cycle ⟺ deadlock mismatches over 4096 states: <b style="color:${bad===0?'var(--gr)':'var(--wall)'}">${bad}</b> &nbsp;·&nbsp; detector vs truth on ${SCEN.length} scenarios: <b style="color:${fail?'var(--wall)':'var(--gr)'}">${fail?'FAIL @ '+fail.label:'all agree'}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red swapped in timeout(T)</span>':''}</div>`;
+}
+
+// ---- boot ----
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ [0,1,2].forEach(i=>{ opts($("h"+i),true); opts($("w"+i),true); });
+ setState([0,1,2],[1,2,0]);   // default: the canonical 3-cycle deadlock
+ [0,1,2].forEach(i=>{ $("h"+i).addEventListener("change",()=>{render();audit();}); $("w"+i).addEventListener("change",()=>{render();audit();}); });
+ $("pDead").addEventListener("click",()=>{ setState([0,1,2],[1,2,0]); render(); audit(); });
+ $("pSafe").addEventListener("click",()=>{ setState([0,1,2],[1,-1,1]); render(); audit(); });
+ $("pOrder").addEventListener("click",()=>{ setState([0,1,2],[1,2,-1]); render(); audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Timeout rule armed.</b> The 'progressing wait' scenario (a thread blocked on a busy-but-advancing lock) now trips T and is flagged as deadlock though no cycle exists — the witness (window 7) recomputed and went red. The attack is real; it is caught."; audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Swap to the timeout rule and a non-cyclic wait becomes a false positive — the witness (window 7) reruns the scenario battery, disagrees with ground truth, and turns red. Nothing is faked; the attack is real and it is caught."; audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the deadlock engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

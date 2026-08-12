@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE COMB FILTER · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee06a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* refined OCHO layout: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;height:22px;accent-color:var(--am);vertical-align:middle;}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#12200a;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:220px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);margin-top:3px;}
+canvas{width:100%;height:auto;background:#08110a;border:1px solid var(--line);border-radius:6px;display:block;margin-top:8px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE COMB FILTER</h1>
+ <p class="sub">Add a signal to a delayed copy of itself and the spectrum grows teeth — a <b>comb</b> of evenly spaced notches or peaks, one for every <b class="k">f<sub>s</sub>/D</b> hertz. Down the center, data flows: a signal goes <b style="color:var(--cy)">in</b>, the delay line combs it, the response comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends the transfer function; the <b style="color:var(--red)">red team</b> pushes the feedback gain until it rings forever.</p>
+ <p class="src"><span class="tag t-amber">source</span> M. R. Schroeder, "Natural Sounding Artificial Reverberation," <i>J. Audio Eng. Soc.</i> <b>10</b>(3):219–223, 1962 (Bell Labs) — AES e-library, paywalled; <a href="https://www.semanticscholar.org/paper/f1f1333eea0caed12906b19e73a4718a469cec26">semanticscholar record</a>. <b>AMBER</b> — no stable open link. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — two transfer functions</h2>
+   <p>One delay line, two ways to wire it. <b>Feedforward</b>: <b class="k">y[n] = x[n] + g·x[n−D]</b>, so <b class="k">H(z)=1+g·z<sup>−D</sup></b> — an all-zero (FIR) filter. <b>Feedback</b>: <b class="k">y[n] = x[n] + g·y[n−D]</b>, so <b class="k">H(z)=1/(1−g·z<sup>−D</sup>)</b> — an all-pole filter.</p>
+   <p>Squared magnitude is exact: feedforward <b class="k">|H|²=1+2g·cos(ωD)+g²</b>, feedback <b class="k">|H|²=1/(1−2g·cos(ωD)+g²)</b>. For the current panel form:</p>
+   <table><thead><tr><th>quantity</th><th>value</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — a signal plus its echo <span class="tag t-amber">AVAN</span></h2>
+   <p>The comb is the <b>atom of delay effects</b>. A short delay (D≈a few ms) sweeping in time is a <b>flanger</b>; a slightly detuned bank is a <b>chorus</b>; a long delay is an <b>echo</b>.</p>
+   <p>Wire several feedback combs in parallel and follow them with allpasses and you have Schroeder's <a href="https://davidwise01.github.io/the-reverb/" style="color:var(--cy)">the-reverb</a>. A comb is just a sparse <a href="https://davidwise01.github.io/the-biquad-filter/" style="color:var(--cy)">the-biquad-filter</a> whose one pole/zero pair is spread across D samples. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive the notch spacing (<b class="k">f<sub>s</sub>/D</b>), confirm the feedforward comb is FIR-stable, and test the feedback pole radius against the unit circle. If red pushes the gain out, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — signal &amp; delay line <span class="tag t-in">in ↓</span></h2>
+   <p>Feed a signal <b class="S" style="color:var(--cy)">x[n]</b> and hold it in a <b>delay line</b> of length <b class="M" style="color:var(--am)">D</b> samples. The only knobs are the delay <b>D</b> (how far back the echo sits) and the mix/feedback gain <b>g</b> (how loud the copy returns). At sample rate <b class="k" id="fsLbl">f<sub>s</sub>=48000 Hz</b>, a delay of D samples corresponds to a physical time of <b class="k">D/f<sub>s</sub></b> seconds.</p>
+   <table><thead><tr><th>D (samples)</th><th>= time</th><th>character</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>1–20</td><td>&lt;0.4 ms</td><td class="y">flange (tight comb)</td></tr>
+     <tr><td>50–1000</td><td>1–20 ms</td><td class="y">colour / chorus</td></tr>
+     <tr><td>&gt;2000</td><td>&gt;40 ms</td><td class="y">discrete echo</td></tr>
+    </tbody></table>
+   <p class="small">Short delay ⇒ few, wide teeth (flange). Long delay ⇒ many, dense teeth (echo). That is what you feed the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the signal into the delay line &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>wiring</label>
+      <span class="toggle"><button id="tFF" class="on">FEEDFORWARD</button><button id="tFB">FEEDBACK</button></span></div>
+     <div class="row"><label>delay D</label><input type="range" id="dly" min="2" max="64" value="8" style="flex:1"><span id="dLbl" class="k">8</span></div>
+     <div class="row"><label>gain g</label><input type="range" id="gn" min="-95" max="95" value="70" style="flex:1"><span id="gLbl" class="k">0.70</span></div>
+     <div class="row"><button id="flng">flange (D=4)</button><button id="echo">echo (D=48)</button><button id="play">▶ hear it</button></div>
+     <p class="small" id="readmode">Feedforward: a copy is <b>added</b>. Zeros land on the comb — the spectrum gets notches. Always stable (FIR).</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <canvas id="resp" width="720" height="150"></canvas>
+   <div class="small" style="margin-top:2px">magnitude response |H| across 0 → f<sub>s</sub>/2 &nbsp;·&nbsp; teeth at multiples of f<sub>s</sub>/D</div>
+   <canvas id="imp" width="720" height="90"></canvas>
+   <div class="small" style="margin-top:2px">impulse response — the echo train (feedback: g<sup>k</sup> at n=kD)</div>
+   <p class="small" style="margin-top:6px">Move any control — |H|, the teeth spacing and the stability verdict are computed from the transfer function on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the delay line emits a comb &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the comb <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: a <b>comb</b> of evenly spaced teeth at <b class="k">f<sub>s</sub>/D</b> Hz — feedforward gives <b>notches</b> (depth |1−g|, a true zero when g=1), feedback gives <b>peaks</b> (height 1/(1−g)). The feedforward comb is <b>always stable</b>; the feedback comb is stable <b>iff |g|&lt;1</b>, and blows up otherwise.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-derives these live; the red team (right) drives the gain past 1 to break them.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> A single comb is <b>not</b> a room. Its teeth are perfectly periodic and its decay is frequency-flat, so it colours the sound with an audible metallic ring — "flutter." Real reverberation needs echo density &gt;1000/s and frequency-dependent decay; Schroeder's 1962 answer was <b>several combs in parallel plus allpasses</b>, precisely because one comb sounds artificial.</div>
+   <p class="small" style="margin-top:8px">A feedback comb also has infinite gain at DC as g→1 (the pole reaches z=1), and any DC offset in x integrates and drifts. "Comb filter" is the atom, not the instrument.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"A comb filter is stable for any gain."</s> <b>Cut.</b> Only the feedforward (FIR) form is. The feedback comb has poles at |g|<sup>1/D</sup>; at |g|≥1 they leave the unit circle and the output grows without bound.</p>
+   <p class="grave"><s>"Notches and peaks are the same comb."</s> <b>Cut.</b> Feedforward zeros ⇒ notches at (2k+1)·f<sub>s</sub>/2D; feedback poles ⇒ peaks at k·f<sub>s</sub>/D. Same spacing, opposite teeth.</p>
+   <p class="grave"><s>"One comb makes reverb."</s> <b>Kept, corrected.</b> One comb makes flutter/coloration. Reverb is a bank of them plus allpass diffusers — the machine shows the atom.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: switch to feedback and shove the gain to <b>g = 1.05</b> (|g|≥1). Now the echo returns louder every pass — the comb rings forever and the output diverges. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ set feedback g = 1.05</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Push |g| to or past 1 and the feedback pole escapes the unit circle: the impulse response g<sup>k</sup> grows without limit. The witness recomputes the pole radius, finds it &gt;1, and turns red. Nothing is faked; the instability is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE COMB FILTER — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (signal <b style="color:var(--cy)">in</b> → delay line → comb <b style="color:var(--gr)">out</b>). A runnable rendering of Schroeder's 1962 delay-line reverberator — the engine is LIT (both transfer functions, notch/peak spacing f<sub>s</sub>/D, FIR-vs-IIR stability all computed and self-checked live, tamper-provable), the blue team witnesses, the red team drives the gain past 1, and the graveyard + adversary carry what a single comb cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* engine: the comb filter — feedforward notches / feedback peaks, teeth spacing fs/D */
+const FS = 48000;                         // sample rate (Hz)
+
+// feedforward comb  H(z)=1 + g z^-D    |H(e^jw)|^2 = 1 + 2 g cos(wD) + g^2
+function ffMag2(g,D,w){ return 1 + 2*g*Math.cos(w*D) + g*g; }
+function ffMag(g,D,w){ return Math.sqrt(ffMag2(g,D,w)); }
+
+// feedback comb  H(z)=1/(1 - g z^-D)   |H|^2 = 1/(1 - 2 g cos(wD) + g^2)
+function fbMag2(g,D,w){ return 1/(1 - 2*g*Math.cos(w*D) + g*g); }
+function fbMag(g,D,w){ return Math.sqrt(fbMag2(g,D,w)); }
+
+// teeth spacing (Hz) is the same for both combs: fs / D
+function combSpacingHz(D){ return FS/D; }
+// feedforward notch centres: wD=(2k+1)pi  ->  f=(2k+1)*fs/(2D)
+function ffNotchHz(k,D){ return (2*k+1)*FS/(2*D); }
+// feedback peak centres:  wD=2k*pi        ->  f = k*fs/D
+function fbPeakHz(k,D){ return k*FS/D; }
+
+// feedforward is FIR: all poles sit at z=0  ->  ALWAYS stable
+function ffStable(){ return true; }
+// feedback poles solve z^D = g  ->  radius |g|^(1/D); stable iff inside unit circle
+function fbPoleRadius(g,D){ return Math.pow(Math.abs(g), 1/D); }
+function fbStable(g){ return Math.abs(g) < 1; }
+
+// run an impulse through each comb (headless, deterministic)
+function ffImpulse(g,D,N){ const x=new Array(N).fill(0); x[0]=1; const y=new Array(N).fill(0);
+  for(let n=0;n<N;n++){ y[n]=x[n]+(n>=D? g*x[n-D]:0); } return y; }
+function fbImpulse(g,D,N){ const y=new Array(N).fill(0);
+  for(let n=0;n<N;n++){ y[n]=(n===0?1:0)+(n>=D? g*y[n-D]:0); } return y; }
+
+// the honest feedback gain and the red team's ringing gain
+const G_OK = 0.7, G_RING = 1.05, D_REF = 8;
+var TAMPER = false;                       // plain var so selfcheck runs headless
+function effGain(){ return TAMPER ? G_RING : G_OK; }
+
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const near=(a,b,eps)=>Math.abs(a-b)<=(eps||1e-9);
+ const save=TAMPER; TAMPER=false;
+
+ // 1. feedforward is a comb of NOTCHES: depth |1-g|, peaks 1+g, spacing fs/D
+ t(near(ffMag(0.7,8,Math.PI/8), 0.3), "ff notch depth must be |1-g|=0.3");
+ t(near(ffMag(0.7,8,0), 1.7), "ff peak must be 1+g=1.7");
+ t(near(ffNotchHz(1,8)-ffNotchHz(0,8), FS/8), "ff notch spacing must be fs/D");
+ t(near(combSpacingHz(8), 6000), "spacing fs/D must be 6000 Hz at D=8");
+ t(near(ffNotchHz(0,8), 3000), "first ff notch must be at 3000 Hz");
+ // at g=1 the notch is a true zero ON the unit circle (perfect cancellation)
+ t(near(ffMag(1,8,Math.PI/8), 0, 1e-12), "g=1 gives a true zero on the unit circle");
+
+ // 2. feedforward is FIR -> ALWAYS stable, even for |g|>1; impulse = {1 at 0, g at D}
+ t(ffStable()===true, "feedforward comb is FIR and always stable");
+ const fi=ffImpulse(0.7,8,20);
+ t(fi[0]===1 && near(fi[8],0.7) && fi[1]===0 && fi[16]===0, "ff impulse must be 1 at 0 and g at D only");
+
+ // 3. feedback is a comb of PEAKS: height 1/(1-g), spacing fs/D; stable iff |g|<1
+ t(near(fbMag(0.7,8,0), 1/0.3), "fb peak must be 1/(1-g)");
+ t(near(fbMag(0.7,8,Math.PI/8), 1/1.7), "fb notch (between peaks) must be 1/(1+g)");
+ t(near(fbPeakHz(1,8)-fbPeakHz(0,8), FS/8), "fb peak spacing must be fs/D");
+ t(fbStable(0.7)===true, "fb stable for |g|<1");
+ t(fbStable(0.999)===true, "fb stable just under 1");
+ t(fbStable(1)===false, "fb NOT stable at |g|=1");
+ t(fbStable(1.2)===false, "fb NOT stable for |g|>1");
+ t(fbPoleRadius(0.7,8) < 1, "fb pole radius < 1 when |g|<1");
+ t(fbPoleRadius(1.2,8) > 1, "fb pole radius > 1 when |g|>1");
+ // feedback impulse = echo train g^k at n=kD; energy sum = 1/(1-g); stays bounded
+ const bi=fbImpulse(0.7,8,8*60);
+ t(bi[0]===1 && near(bi[8],0.7) && near(bi[16],0.49) && near(bi[24],0.343), "fb echo train must be g^k at n=kD");
+ t(bi[7]===0 && bi[9]===0, "fb echoes land only on multiples of D");
+ let s=0; for(let n=0;n<bi.length;n++) s+=bi[n];
+ t(near(s, 1/(1-0.7), 1e-6), "fb echo energy sum must be 1/(1-g)");
+ let mx=0; for(let n=0;n<bi.length;n++) mx=Math.max(mx,Math.abs(bi[n]));
+ t(mx<=1, "stable feedback comb impulse must stay bounded by 1");
+
+ // 4. TAMPER — red sets |g|>=1: the feedback comb rings forever / grows without bound
+ TAMPER=true;
+ t(effGain()>=1, "tamper must raise feedback gain to |g|>=1");
+ t(fbStable(effGain())===false, "witness: tampered feedback comb must be UNSTABLE");
+ t(fbPoleRadius(effGain(),8) > 1, "tampered pole must escape the unit circle");
+ const tb=fbImpulse(effGain(),8,8*200);
+ t(Math.abs(tb[tb.length-8]) > 1, "tampered comb must grow without bound (ring forever)");
+ t(Math.abs(tb[tb.length-8]) > Math.abs(tb[8]), "tampered echoes must grow, not decay");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const AC='#9ee06a';
+let MODE='ff';                            // 'ff' feedforward | 'fb' feedback
+
+function panelD(){ return +$('dly').value; }
+function panelG(){ if(MODE==='fb' && TAMPER) return G_RING; return (+$('gn').value)/100; }
+function isFB(){ return MODE==='fb'; }
+
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let x=Math.imul(a^a>>>15,1|a); x=x+Math.imul(x^x>>>7,61|x)^x; return ((x^x>>>14)>>>0)/4294967296; }; }
+
+function fmt(x){ return (Math.round(x*100)/100).toString(); }
+
+function drawResp(){
+ const cv=$('resp'); if(!cv) return; const ctx=cv.getContext('2d');
+ const W=cv.width,H=cv.height; ctx.clearRect(0,0,W,H);
+ const D=panelD(), g=panelG(), fb=isFB(), rung=(fb && Math.abs(g)>=1);
+ // grid
+ ctx.strokeStyle='#153019'; ctx.lineWidth=1;
+ for(let i=1;i<8;i++){ const x=W*i/8; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+ // teeth markers
+ const spac=combSpacingHz(D);
+ ctx.strokeStyle='rgba(87,224,208,.35)';
+ if(fb){ for(let k=0;;k++){ const f=fbPeakHz(k,D); if(f>FS/2) break; const x=W*f/(FS/2); ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); } }
+ else  { for(let k=0;;k++){ const f=ffNotchHz(k,D); if(f>FS/2) break; const x=W*f/(FS/2); ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); } }
+ // response curve
+ const norm = fb ? Math.max(1/Math.max(1-Math.abs(g),0.03), 3) : (1+Math.abs(g)+0.02);
+ ctx.beginPath();
+ for(let px=0;px<=W;px++){ const w=Math.PI*px/W; const mag=fb?fbMag(g,D,w):ffMag(g,D,w);
+  const y=H-3 - Math.min(mag/norm,1)*(H-6); if(px===0)ctx.moveTo(px,y); else ctx.lineTo(px,y); }
+ ctx.strokeStyle=rung?'#ff6b6b':AC; ctx.lineWidth=2; ctx.stroke();
+ if(rung){ ctx.fillStyle='#ff6b6b'; ctx.font='11px monospace'; ctx.fillText('UNBOUNDED — |g|≥1', 10, 16); }
+}
+
+function drawImp(){
+ const cv=$('imp'); if(!cv) return; const ctx=cv.getContext('2d');
+ const W=cv.width,H=cv.height; ctx.clearRect(0,0,W,H);
+ const D=panelD(), g=panelG(), fb=isFB(); const N=Math.min(D*24+4, 400);
+ const y = fb? fbImpulse(g,D,N) : ffImpulse(g,D,N);
+ let mx=0; for(let n=0;n<N;n++) mx=Math.max(mx,Math.abs(y[n])); if(mx<1e-9)mx=1;
+ mx=Math.max(mx,1);
+ ctx.strokeStyle='#153019'; ctx.beginPath(); ctx.moveTo(0,H-6); ctx.lineTo(W,H-6); ctx.stroke();
+ for(let n=0;n<N;n++){ if(Math.abs(y[n])<1e-9) continue; const x=W*n/N; const h=(y[n]/mx)*(H-14);
+  ctx.strokeStyle = y[n]>=0?AC:'#ff7a7a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x,H-6); ctx.lineTo(x,H-6-h); ctx.stroke(); }
+}
+
+function render(){
+ const D=panelD(), g=panelG(), fb=isFB();
+ $('dLbl').textContent=D; $('gLbl').textContent=fb?fmt(g):fmt(g);
+ const spac=combSpacingHz(D), first= fb? fbPeakHz(1,D) : ffNotchHz(0,D);
+ // model table (window 3)
+ const rows = fb
+  ? [["wiring","feedback  y[n]=x[n]+g·y[n−D]"],["teeth","peaks at k·f<sub>s</sub>/D"],["peak height","1/(1−g) = "+fmt(1/(1-g))],["spacing","f<sub>s</sub>/D = "+Math.round(spac)+" Hz"],["pole radius","|g|<sup>1/D</sup> = "+fmt(fbPoleRadius(g,D))],["stable?", (fbStable(g)?"YES (|g|<1)":"NO (|g|≥1)")]]
+  : [["wiring","feedforward  y[n]=x[n]+g·x[n−D]"],["teeth","notches at (2k+1)·f<sub>s</sub>/2D"],["notch depth","|1−g| = "+fmt(Math.abs(1-g))],["spacing","f<sub>s</sub>/D = "+Math.round(spac)+" Hz"],["first notch",Math.round(ffNotchHz(0,D))+" Hz"],["stable?","ALWAYS (FIR)"]];
+ $('modelBody').innerHTML=rows.map(r=>`<tr><td class="mut">${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join("");
+ // panel sentence + verdict
+ const timeMs = (D/FS*1000);
+ $('sent').innerHTML = (fb
+   ? `<b style="color:var(--am)">y[n] = x[n] + ${fmt(g)}·y[n−${D}]</b>`
+   : `<b style="color:var(--am)">y[n] = x[n] + ${fmt(g)}·x[n−${D}]</b>`)
+  + `<br>D = ${D} samples = <b style="color:var(--cy)">${timeMs.toFixed(3)} ms</b> &nbsp;·&nbsp; teeth every <b style="color:var(--gr)">${Math.round(spac)} Hz</b>`;
+ const stable = fb? fbStable(g) : true;
+ $('verdict').textContent = stable? "STABLE" : "UNSTABLE — RINGS";
+ $('verdict').className = "verdict "+(stable?"ok":"no");
+ $('moodname').innerHTML = fb
+   ? `${fmt(Math.abs(g))} feedback · pole at radius <b>${fmt(fbPoleRadius(g,D))}</b> ${fbStable(g)?'(inside)':'(outside)'} the unit circle`
+   : `FIR · ${D+1}-tap · zeros at radius ${fmt(Math.pow(Math.abs(g),1/D))} — a comb of notches`;
+ $('reason').innerHTML = fb
+   ? (fbStable(g)? "poles inside the unit circle — the echo train g<sup>k</sup> decays" : "pole escaped the unit circle — g<sup>k</sup> grows without bound")
+   : "no poles off the origin — a finite echo, unconditionally stable";
+ drawResp(); drawImp();
+}
+
+function setMode(fb){ MODE=fb?'fb':'ff'; $('tFF').classList.toggle('on',!fb); $('tFB').classList.toggle('on',fb);
+ $('readmode').innerHTML = fb
+   ? "Feedback: the output is fed back through the delay. Poles land on the comb — the spectrum gets <b>peaks</b>. Stable <b>only if |g|&lt;1</b>."
+   : "Feedforward: a copy is <b>added</b>. Zeros land on the comb — the spectrum gets <b>notches</b>. Always stable (FIR).";
+ render(); audit(); }
+
+function audit(){
+ const el=$('auditout');
+ const D=panelD();
+ const spacOk = Math.abs(combSpacingHz(D) - FS/D) < 1e-9;
+ const ffOk = ffStable()===true;
+ const gRef = effGain();
+ const fbOk = fbStable(gRef);                 // reference feedback config (0.7 ok / 1.05 tampered)
+ const rad = fbPoleRadius(gRef, D_REF);
+ const ok = spacOk && ffOk && fbOk;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">spacing = f<sub>s</sub>/D ${spacOk?'✓':'✗'} &nbsp;·&nbsp; feedforward FIR-stable ${ffOk?'✓':'✗'} &nbsp;·&nbsp; feedback pole radius <b style="color:${fbOk?'var(--gr)':'var(--wall)'}">${fmt(rad)}</b> ${fbOk?'&lt; 1 (inside)':'≥ 1 (ESCAPED)'}${TAMPER?' &nbsp; — <span style="color:var(--wall)">red drove g to 1.05</span>':''}</div>`;
+}
+
+let actx=null;
+function play(){
+ const D=panelD(), g=panelG(), fb=isFB();
+ if(fb && Math.abs(g)>=1) return;             // never play the divergent case
+ try{
+  actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+  const sr=actx.sampleRate, N=Math.floor(sr*1.4), Dr=Math.max(1,Math.round(D*sr/FS));
+  const buf=actx.createBuffer(1,N,sr), ch=buf.getChannelData(0);
+  const rnd=mulberry32(1234567), burst=Math.floor(sr*0.05), x=new Float32Array(N);
+  for(let n=0;n<N;n++) x[n]= n<burst ? (rnd()*2-1)*0.5 : 0;
+  for(let n=0;n<N;n++){ let y=x[n]; if(n>=Dr) y += g*(fb?ch[n-Dr]:x[n-Dr]); ch[n]=y; }
+  const src=actx.createBufferSource(); src.buffer=buf; src.connect(actx.destination); src.start();
+ }catch(e){/* audio unavailable — engine is unaffected */}
+}
+
+/* boot */
+try{
+ selfcheck();
+ $('litbadge').innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $('tFF').addEventListener('click',()=>setMode(false));
+ $('tFB').addEventListener('click',()=>setMode(true));
+ $('dly').addEventListener('input',()=>{render();audit();});
+ $('gn').addEventListener('input',()=>{ if(TAMPER){TAMPER=false;$('tampernote').textContent="Restored. Feedback gain back under the slider's control.";} render();audit(); });
+ $('flng').addEventListener('click',()=>{ setMode(false); $('dly').value=4; $('gn').value=90; render();audit(); });
+ $('echo').addEventListener('click',()=>{ setMode(true); $('dly').value=48; $('gn').value=75; render();audit(); });
+ $('play').addEventListener('click',play);
+ $('tamper').addEventListener('click',()=>{ MODE='fb'; TAMPER=true; $('tFF').classList.remove('on'); $('tFB').classList.add('on');
+   $('tampernote').innerHTML="<b style='color:var(--wall)'>g = 1.05.</b> The feedback pole left the unit circle; g<sup>k</sup> grows every pass and the impulse train diverges — the witness (window 7) recomputed the radius (&gt;1) and went red. The instability is real; it is caught."; render(); audit(); });
+ $('restore').addEventListener('click',()=>{ TAMPER=false; $('gn').value=70;
+   $('tampernote').innerHTML="Push |g| to or past 1 and the feedback pole escapes the unit circle: the impulse response g<sup>k</sup> grows without limit. The witness recomputes the pole radius, finds it &gt;1, and turns red. Nothing is faked; the instability is real and it is caught."; render(); audit(); });
+ setMode(false);
+}catch(e){
+ const fb=$('failb'); fb.style.display="block"; fb.textContent="FAIL-LOUD — the comb-filter engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

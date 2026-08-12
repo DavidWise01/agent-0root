@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE SYMPLECTIC INTEGRATOR · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#0d0a07; --bg2:#150f0c; --ink:#f0d2be; --dim:#9a7a63; --line:#40301f;
+ --am:#ff9e6a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,158,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO layout — blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,158,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#f3ddce;} .win b{color:#fff4ea;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,158,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#130d09;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{accent-color:var(--am);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+canvas{background:#0a0704;border:1px solid var(--line);border-radius:6px;display:block;max-width:100%;margin:4px 0;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.y{color:var(--gr);font-weight:700;} .n{color:var(--wall);font-weight:700;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#caa;font-size:12px;} .grave s{color:#8a7d6f;} .grave b{color:#e6cdbd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE SYMPLECTIC INTEGRATOR</h1>
+ <p class="sub">Step a physical system so energy cannot drift away. A naive step (forward Euler) leaks or pumps energy every tick until the orbit spirals into nonsense. A <b>symplectic</b> step preserves the <i>area</i> of phase space — its update map has Jacobian determinant exactly <b class="k">1</b> — so total energy stays trapped in a narrow band forever, with <b>no secular drift</b>. The center runs both maps live; the <b style="color:var(--blue)">blue team</b> proves the geometry; the <b style="color:var(--red)">red team</b> swaps in the leaky step and gets caught.</p>
+ <p class="src"><span class="tag t-amber">source</span> R. D. Ruth, <i>A Canonical Integration Technique</i>, IEEE Trans. Nucl. Sci. <b>NS-30</b>(4), 2669–2671 (1983), doi:10.1109/TNS.1983.4332919 — <a href="https://ui.adsabs.harvard.edu/abs/1983ITNS...30.2669R/abstract">ADS 1983ITNS...30.2669R</a>. AMBER: full text is paywalled. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the symplectic map</h2>
+   <p>One degree of freedom, Hamiltonian <b>H = p²/2m + ½kq²</b> (a mass on a spring). The <b>symplectic Euler</b> step updates momentum first, then uses the <i>new</i> momentum to move position:</p>
+   <p><b class="k">p′ = p − h·k·q</b> &nbsp;then&nbsp; <b class="k">q′ = q + h·p′/m</b>.</p>
+   <p>That single reordering is the whole trick. Its Jacobian is <b>[[1, −hk],[h/m, 1−h²k/m]]</b>, whose determinant is <b class="k">1 − h²k/m + h²k/m = 1</b> — exactly. Area in the (q,p) plane is conserved; energy can only wobble, never walk.</p>
+   <p class="small">Forward Euler moves position with the <i>old</i> momentum instead → determinant <b>1 + h²k/m &gt; 1</b>, so area (and energy) inflate every step.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — respect the geometry <span class="tag t-amber">AVAN</span></h2>
+   <p>Integration that respects the geometry of physics. Ruth's canonical step, <a href="https://davidwise01.github.io/the-verlet/" style="color:var(--cy)">the Verlet</a> algorithm and leapfrog all share one property: they are <b>symplectic</b> — they preserve phase-space area, so a bounded orbit stays bounded for millions of steps.</p>
+   <p>This is why they beat <a href="https://davidwise01.github.io/the-forward-euler/" style="color:var(--cy)">the forward Euler</a> for orbits and molecular dynamics: not higher order, but <b>honest energy</b>. The previous sphere integrates; this one asks whether the integration <i>lies</i>.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute the canonical map's Jacobian determinant and run 4000 steps, confirming the energy band stays narrow with no drift. If red swaps in forward Euler, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the system <span class="tag t-in">in ↓</span></h2>
+   <p>A state is a point <b class="k">(q, p)</b> — position and momentum. The force is <b>−kq</b>, the exact angular frequency is the closed form <b class="k">ω = √(k/m)</b>, and the true energy of the starting point is fixed. We feed one initial condition and a step size <b>h</b> into three candidate integrators.</p>
+   <table><thead><tr><th>integrator</th><th>det(J)</th><th>energy</th></tr></thead>
+    <tbody>
+     <tr><td>symplectic Euler</td><td class="y">= 1</td><td class="y">bounded</td></tr>
+     <tr><td>leapfrog / Verlet</td><td class="y">= 1</td><td class="y">bounded, reversible</td></tr>
+     <tr><td>forward Euler</td><td class="n">= 1+h²k/m</td><td class="n">drifts up</td></tr>
+    </tbody></table>
+   <p class="small">"Symplectic" = the update preserves oriented area in the (q,p) plane. That one property is what keeps energy honest — everything below is computed from it.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the state into the integrator &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>integrator</label>
+      <select id="method"><option value="sympl">symplectic Euler</option><option value="leap">leapfrog (Verlet)</option><option value="euler">forward Euler</option></select></div>
+     <div class="row"><label>step h</label><input type="range" id="hstep" min="0.01" max="0.30" step="0.01" value="0.05"><span id="hval" class="k">0.05</span></div>
+     <div class="row"><button id="ic0">↺ (q,p)=(1,0)</button><button id="icr">↺ random IC</button></div>
+     <canvas id="phase" width="320" height="200"></canvas>
+     <p class="small">phase portrait (q,p) — symplectic maps close the loop; forward Euler spirals out.</p>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+     <canvas id="etrace" width="320" height="90"></canvas>
+     <p class="small" id="enums"></p>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every number is computed live from the pure step functions over 4000 iterations — nothing is looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the integrator emits an energy trace &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves: the symplectic map's Jacobian determinant is <b class="k">1</b> to 1e-9; over 4000 steps its energy stays within a <b>±2.5%</b> band with drift under <b class="k">0.01%</b>; leapfrog is time-reversible to <b class="k">~1e-15</b>; forward Euler's energy blows up by <b>~10⁴×</b>. The panel above lets you watch it; the totals are the output.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-derives these live; the red team (right) tries to make the integrator drift.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Symplectic does <b>not</b> mean accurate. Symplectic Euler is only <b>first order</b>: its <i>phase</i> is wrong from step one, and the conserved quantity is a <i>shadow</i> Hamiltonian slightly off the true H. For a target error you may still need a smaller h or a higher-order scheme.</div>
+   <p class="small" style="margin-top:8px">And it is not free everywhere: symplectic integrators assume a Hamiltonian (canonical) system. Add friction or a non-conservative force and the phase-space-area argument no longer holds — there is nothing to preserve. "Energy bounded" is a promise about geometry, not about being close to the truth.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Symplectic integrators conserve energy."</s> <b>Cut.</b> They conserve <i>phase-space area</i> and bound the energy in a band; the true energy still oscillates. What is conserved exactly is a nearby shadow Hamiltonian.</p>
+   <p class="grave"><s>"Higher order always means better long-term behavior."</s> <b>Cut.</b> A 4th-order non-symplectic scheme still drifts secularly; a 1st-order symplectic one does not. Geometry beats order for long runs.</p>
+   <p class="grave"><s>"Leapfrog and symplectic Euler are the same thing."</s> <b>Kept, corrected.</b> Both are symplectic, but leapfrog is time-<i>reversible</i> and 2nd order; symplectic Euler is neither — verified in the witness.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: replace the symplectic update with a non-symplectic <b>forward Euler</b> step. Now the Jacobian determinant is 1+h²k/m ≠ 1, area is not preserved, and energy drifts without bound. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ swap in forward Euler</button><button id="restore">↺ restore symplectic</button></div>
+   <p class="small" id="tampernote">Swap the canonical map for forward Euler and the determinant leaves 1, the energy band explodes, and the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE SYMPLECTIC INTEGRATOR — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (state <b style="color:var(--cy)">in</b> → integrator → energy trace <b style="color:var(--gr)">out</b>). A runnable rendering of Ruth's canonical integration technique — the engine is LIT (three integrators stepped live, Jacobian determinant / energy band / reversibility self-checked, tamper-provable), the blue team witnesses, the red team swaps in the leaky step, and the graveyard + adversary carry what "energy bounded" does and does not promise. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* physics engine (verified: symplectic det=1, energy bounded; forward Euler drifts) */
+const P0={m:1,k:1,h:0.05};
+let TAMPER=false;                 // swaps canonical map to forward Euler when true — witness must catch it
+
+function omega(P){ return Math.sqrt(P.k/P.m); }
+function energy(q,p,P){ return 0.5*p*p/P.m + 0.5*P.k*q*q; }
+
+// pure one-step maps on {q,p}
+function symplecticEulerStep(s,P){ const p1=s.p - P.h*P.k*s.q; const q1=s.q + P.h*p1/P.m; return {q:q1,p:p1}; }
+function forwardEulerStep(s,P){ const p1=s.p - P.h*P.k*s.q; const q1=s.q + P.h*s.p/P.m; return {q:q1,p:p1}; }
+// leapfrog / velocity-Verlet, expressed on {q,p} with v=p/m; hh may be negative (time reversal)
+function verletStep(s,P,hh){ const a0=-P.k*s.q/P.m; const q1=s.q + hh*(s.p/P.m) + 0.5*hh*hh*a0;
+ const a1=-P.k*q1/P.m; const v1=(s.p/P.m) + 0.5*hh*(a0+a1); return {q:q1,p:v1*P.m}; }
+
+// the canonical (blue-team) map: symplectic normally, forward Euler when tampered
+function canonStep(s,P){ return TAMPER ? forwardEulerStep(s,P) : symplecticEulerStep(s,P); }
+
+// determinant of a one-step map's Jacobian by central differences (exact for these linear maps)
+function jacDet(stepFn,P,q,p){ const e=1e-6;
+ const a=stepFn({q:q+e,p:p},P), b=stepFn({q:q-e,p:p},P);
+ const c=stepFn({q:q,p:p+e},P), d=stepFn({q:q,p:p-e},P);
+ const dqdq=(a.q-b.q)/(2*e), dpdq=(a.p-b.p)/(2*e), dqdp=(c.q-d.q)/(2*e), dpdp=(c.p-d.p)/(2*e);
+ return dqdq*dpdp - dqdp*dpdq; }
+
+// step a map N times; report energy band, secular drift, and orbit radius bounds
+function runMap(stepFn,P,N,ic){ let s={q:ic.q,p:ic.p}; const E0=energy(s.q,s.p,P);
+ let emin=Infinity,emax=-Infinity,rmin=Infinity,rmax=0,sum1=0,sum2=0; const h=N>>1;
+ for(let i=0;i<N;i++){ s=stepFn(s,P); const E=energy(s.q,s.p,P); const r=Math.hypot(s.q,s.p);
+  if(E<emin)emin=E; if(E>emax)emax=E; if(r<rmin)rmin=r; if(r>rmax)rmax=r;
+  if(i<h)sum1+=E; else sum2+=E; }
+ const mf=sum1/h, ms=sum2/(N-h);
+ return {E0:E0, band:(emax-emin)/E0, drift:Math.abs(ms-mf)/E0, rmin:rmin, rmax:rmax, Eend:energy(s.q,s.p,P)}; }
+
+// leapfrog time-reversibility: forward N then backward N should return to start
+function reversibleError(P,N,ic){ let s={q:ic.q,p:ic.p};
+ for(let i=0;i<N;i++) s=verletStep(s,P,P.h);
+ for(let i=0;i<N;i++) s=verletStep(s,P,-P.h);
+ return Math.hypot(s.q-ic.q, s.p-ic.p); }
+
+// fixed-seed PRNG (mulberry32) so any randomness stays deterministic
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+// fail-loud self-check — runs untampered checks, then plants the tamper, catches it, and restores
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false; const P=P0, ic={q:1,p:0};
+ // closed form: omega = sqrt(k/m)
+ t(Math.abs(omega(P)-1)<1e-12,"omega must equal sqrt(k/m)=1");
+ // symplectic condition: Jacobian determinant is exactly 1
+ t(Math.abs(jacDet(symplecticEulerStep,P,0.4,0.3)-1)<1e-9,"symplectic Jacobian determinant must be 1 to 1e-9");
+ t(Math.abs(jacDet(verletStep2(P),P,0.4,0.3)-1)<1e-9,"leapfrog Jacobian determinant must be 1 to 1e-9");
+ // energy bounded with no secular drift over 4000 steps
+ const rS=runMap(symplecticEulerStep,P,4000,ic);
+ t(rS.band<0.10,"symplectic energy band must stay narrow (<10%)");
+ t(rS.drift<1e-3,"symplectic energy must not drift secularly");
+ t(rS.rmax/rS.rmin<1.05,"orbit must stay a closed bounded loop");
+ // leapfrog is time-reversible
+ t(reversibleError(P,300,ic)<1e-10,"leapfrog must be time-reversible to 1e-10");
+ // forward Euler (the leaky map) must FAIL both: det!=1 and energy unbounded
+ t(jacDet(forwardEulerStep,P,0.4,0.3)-1>1e-6,"forward Euler determinant must exceed 1");
+ const rE=runMap(forwardEulerStep,P,4000,ic);
+ t(rE.Eend>10*rS.E0,"forward Euler energy must blow up (secular drift)");
+ // --- the planted void: swap canonical map to forward Euler; the checks must now break ---
+ TAMPER=true;
+ t(Math.abs(jacDet(canonStep,P,0.4,0.3)-1)>1e-6,"TAMPER: canonical determinant must leave 1");
+ t(runMap(canonStep,P,4000,ic).drift>1,"TAMPER: canonical energy must drift without bound");
+ TAMPER=save;                     // restore
+ return true;
+}
+// helper: leapfrog as a plain {q,p}->{q,p} map at the configured step (for the determinant check)
+function verletStep2(P){ return (s)=>verletStep(s,P,P.h); }
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const rng=mulberry32(0x5EED1967);
+let IC={q:1,p:0};
+
+function methodFn(){ const m=TAMPER?"euler":$("method").value;
+ if(m==="euler") return {fn:forwardEulerStep,label:"forward Euler"};
+ if(m==="leap") return {fn:(s,P)=>verletStep(s,P,P.h),label:"leapfrog (Verlet)"};
+ return {fn:symplecticEulerStep,label:"symplectic Euler"}; }
+
+function draw(){
+ const P={m:P0.m,k:P0.k,h:parseFloat($("hstep").value)};
+ $("hval").textContent=P.h.toFixed(2);
+ const M=methodFn(); const N=4000;
+ // collect trajectory
+ let s={q:IC.q,p:IC.p}; const qs=[],ps=[],Es=[]; const E0=energy(s.q,s.p,P);
+ let emin=Infinity,emax=-Infinity,rmax=0,rmin=Infinity;
+ for(let i=0;i<N;i++){ s=M.fn(s,P); qs.push(s.q); ps.push(s.p); const E=energy(s.q,s.p,P); Es.push(E);
+  if(E<emin)emin=E; if(E>emax)emax=E; const r=Math.hypot(s.q,s.p); if(r>rmax)rmax=r; if(r<rmin)rmin=r; }
+ const half=N>>1; let s1=0,s2=0; for(let i=0;i<N;i++){ if(i<half)s1+=Es[i]; else s2+=Es[i]; }
+ const drift=Math.abs(s2/(N-half)-s1/half)/E0, band=(emax-emin)/E0;
+ const det=jacDet(M.fn,P,0.4,0.3);
+ const bounded = band<0.5 && drift<0.05;
+ $("verdict").textContent = bounded?"ENERGY BOUNDED":"ENERGY DRIFTS";
+ $("verdict").className="verdict "+(bounded?"ok":"no");
+ $("reason").textContent = bounded
+   ? M.label+": det(J)="+det.toFixed(6)+" → phase-space area preserved, orbit closed."
+   : M.label+": det(J)="+det.toFixed(4)+" ≠ 1 → area inflates, energy walks away.";
+ $("enums").innerHTML = "det(J) = <b class='"+(Math.abs(det-1)<1e-6?"y":"n")+"'>"+det.toFixed(6)+"</b>"
+   + " &nbsp;·&nbsp; band = <b class='"+(band<0.5?"y":"n")+"'>"+(band*100).toFixed(band<10?2:0)+"%</b>"
+   + " &nbsp;·&nbsp; drift = <b class='"+(drift<0.05?"y":"n")+"'>"+(drift*100).toFixed(drift<1?3:0)+"%</b>"
+   + (TAMPER?" &nbsp; <span style='color:var(--wall)'>— red swapped in forward Euler</span>":"");
+ drawPhase(qs,ps,rmax,bounded); drawE(Es,E0,bounded);
+}
+
+function drawPhase(qs,ps,rmax,ok){ const c=$("phase"),x=c.getContext("2d"),W=c.width,H=c.height;
+ x.clearRect(0,0,W,H); const R=Math.max(1.4,rmax*1.08), sx=W/(2*R), sy=H/(2*R), cx=W/2, cy=H/2;
+ x.strokeStyle="#2a2013"; x.beginPath(); x.moveTo(0,cy); x.lineTo(W,cy); x.moveTo(cx,0); x.lineTo(cx,H); x.stroke();
+ x.strokeStyle=ok?"#ff9e6a":"#ff6b6b"; x.lineWidth=1.1; x.beginPath();
+ for(let i=0;i<qs.length;i+=2){ const px=cx+qs[i]*sx, py=cy-ps[i]*sy; if(i===0)x.moveTo(px,py); else x.lineTo(px,py); }
+ x.stroke();
+ x.fillStyle="#57e0d0"; const p0x=cx+IC.q*sx,p0y=cy-IC.p*sy; x.beginPath(); x.arc(p0x,p0y,3,0,7); x.fill(); }
+
+function drawE(Es,E0,ok){ const c=$("etrace"),x=c.getContext("2d"),W=c.width,H=c.height;
+ x.clearRect(0,0,W,H); let mx=0; for(const e of Es) if(e>mx)mx=e; mx=Math.max(mx,E0*1.4);
+ const y0=H-(E0/mx)*H; x.strokeStyle="#2a2013"; x.beginPath(); x.moveTo(0,y0); x.lineTo(W,y0); x.stroke();
+ x.fillStyle="#8a7d6f"; x.font="9px monospace"; x.fillText("true E",2,Math.max(9,y0-3));
+ x.strokeStyle=ok?"#39fc6b":"#ff6b6b"; x.lineWidth=1; x.beginPath();
+ for(let i=0;i<Es.length;i++){ const px=i/Es.length*W, py=H-(Es[i]/mx)*H; if(i===0)x.moveTo(px,py); else x.lineTo(px,py); }
+ x.stroke(); }
+
+function audit(){ const el=$("auditout"); const P=P0, ic={q:1,p:0};
+ const det=jacDet(canonStep,P,0.4,0.3); const r=runMap(canonStep,P,4000,ic);
+ const ok = Math.abs(det-1)<1e-9 && r.band<0.10 && r.drift<1e-3;
+ el.innerHTML = "<span class='badge "+(ok?"pass":"failb")+"'>"+(ok?"✓ WITNESS — holds":"✗ WITNESS — broken")+"</span>"
+  + "<div class='small' style='margin-top:6px'>canonical det(J) = <b style='color:"+(Math.abs(det-1)<1e-9?"var(--gr)":"var(--wall)")+"'>"+det.toFixed(6)+"</b> (want 1)"
+  + " &nbsp;·&nbsp; band = <b style='color:"+(r.band<0.10?"var(--gr)":"var(--wall)")+"'>"+(r.band*100).toFixed(r.band<10?2:0)+"%</b>"
+  + " &nbsp;·&nbsp; drift = <b style='color:"+(r.drift<1e-3?"var(--gr)":"var(--wall)")+"'>"+(r.drift*100).toFixed(r.drift<1?3:0)+"%</b>"
+  + (TAMPER?" &nbsp;— <span style='color:var(--wall)'>red swapped in forward Euler</span>":"")+"</div>"; }
+
+/* boot */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("method").addEventListener("change",()=>{ draw(); });
+ $("hstep").addEventListener("input",()=>{ draw(); });
+ $("ic0").addEventListener("click",()=>{ IC={q:1,p:0}; draw(); });
+ $("icr").addEventListener("click",()=>{ const th=rng()*6.283, a=0.6+rng()*0.8; IC={q:a*Math.cos(th),p:a*Math.sin(th)}; draw(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("method").disabled=true;
+   $("tampernote").innerHTML="<b style='color:var(--wall)'>Forward Euler swapped in.</b> det(J) left 1, the energy band exploded, and the witness (window 7) recomputed and went red. The attack is real; it is caught.";
+   draw(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("method").disabled=false;
+   $("tampernote").textContent="Swap the canonical map for forward Euler and the determinant leaves 1, the energy band explodes, and the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.";
+   draw(); audit(); });
+ draw(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the symplectic integrator did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

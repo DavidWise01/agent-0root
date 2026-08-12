@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE SEMI-EMPIRICAL MASS FORMULA</title>
+<style>
+:root{
+  --am:#9ee06a;
+  --bg:#0a1a0e;
+  --bg2:#0e2312;
+  --ink:#e8f6df;
+  --dim:#9db79a;
+  --line:#20401f;
+  --blue:#5fb0ff;
+  --red:#ff6b6b;
+  --amber:#ffb454;
+  --panel:#0c1f10;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 20% -10%,#12331a 0%,transparent 60%),
+    radial-gradient(1000px 700px at 110% 10%,#0e2b18 0%,transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  padding:22px 18px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted #4b7a3e}
+a:hover{border-bottom-style:solid}
+header{max-width:1180px;margin:0 auto 18px}
+h1{
+  font-size:clamp(22px,4.4vw,40px);
+  letter-spacing:.06em;margin:0 0 6px;
+  color:var(--am);
+  text-shadow:0 0 24px rgba(158,224,106,.28);
+}
+.sub{max-width:900px;color:var(--ink);opacity:.92;margin:0 0 10px}
+.src{font:12px/1.5 var(--mono);color:var(--dim)}
+.tag{display:inline-block;font:11px/1 var(--mono);padding:3px 6px;border-radius:4px;letter-spacing:.05em;vertical-align:middle}
+.t-amber{background:rgba(255,180,84,.14);color:var(--amber);border:1px solid rgba(255,180,84,.4)}
+.t-lit{background:rgba(158,224,106,.16);color:var(--am);border:1px solid rgba(158,224,106,.5)}
+.t-in{background:rgba(95,176,255,.14);color:var(--blue);border:1px solid rgba(95,176,255,.4)}
+.t-out{background:rgba(158,224,106,.12);color:var(--am);border:1px solid rgba(158,224,106,.4)}
+.t-wall{background:rgba(255,107,107,.14);color:var(--red);border:1px solid rgba(255,107,107,.4)}
+
+.ocho{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:14px}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font:12px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;border-radius:6px;border:1px solid var(--line)}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(95,176,255,.4);background:rgba(95,176,255,.06)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.06)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(158,224,106,.4);background:rgba(158,224,106,.06)}
+
+.win{background:linear-gradient(180deg,var(--bg2),var(--panel));border:1px solid var(--line);border-radius:10px;padding:12px 13px;position:relative}
+.win h3{margin:0 0 8px;font-size:14px;letter-spacing:.03em;display:flex;align-items:center;gap:8px}
+.num{font:11px/1 var(--mono);width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);color:var(--dim);flex:0 0 auto}
+.col.blue .num{border-color:rgba(95,176,255,.5);color:var(--blue)}
+.col.red .num{border-color:rgba(255,107,107,.5);color:var(--red)}
+.col.center .num{border-color:rgba(158,224,106,.5);color:var(--am)}
+.win p{margin:6px 0}
+.win.panel{border-color:rgba(158,224,106,.4);box-shadow:0 0 30px rgba(158,224,106,.06) inset}
+.small{font-size:12.5px;color:var(--dim)}
+.mono{font-family:var(--mono)}
+.kbd{font:12px/1 var(--mono);background:#08160b;border:1px solid var(--line);border-radius:5px;padding:3px 6px}
+.flow{height:20px;display:flex;align-items:center;justify-content:center;color:var(--am);opacity:.6;font:11px/1 var(--mono)}
+.strike{text-decoration:line-through;color:var(--red);opacity:.85}
+.fix{color:var(--am)}
+.wall-note{border-left:3px solid var(--red);padding-left:10px;color:#ffd0d0}
+.eq{font:12.5px/1.6 var(--mono);background:#08160b;border:1px solid var(--line);border-radius:8px;padding:9px 10px;overflow-x:auto;white-space:nowrap}
+.termrow{display:flex;justify-content:space-between;gap:10px;font:12.5px/1.5 var(--mono);border-bottom:1px dotted var(--line);padding:3px 0}
+.termrow b{color:var(--am);font-weight:600}
+.pos{color:var(--am)} .neg{color:var(--red)}
+.badge{display:inline-flex;align-items:center;gap:7px;font:12px/1 var(--mono);padding:7px 10px;border-radius:7px;border:1px solid var(--line)}
+.badge.ok{color:var(--am);border-color:rgba(158,224,106,.55);background:rgba(158,224,106,.08)}
+.badge.bad{color:var(--red);border-color:rgba(255,107,107,.6);background:rgba(255,107,107,.12)}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+button{font:12px/1 var(--mono);color:var(--ink);background:#12291a;border:1px solid var(--line);border-radius:7px;padding:8px 11px;cursor:pointer;letter-spacing:.03em}
+button:hover{border-color:var(--am)}
+button.warn{border-color:rgba(255,107,107,.5);color:#ffd0d0}
+button.warn:hover{border-color:var(--red)}
+canvas{width:100%;height:170px;display:block;background:#07130a;border:1px solid var(--line);border-radius:8px;margin-top:8px}
+#failb{display:none;margin:10px 0;padding:10px 12px;border-radius:8px;border:1px solid var(--red);background:rgba(255,107,107,.12);color:#ffd0d0;font:12.5px/1.5 var(--mono)}
+.lit{color:var(--am)}
+footer{max-width:1180px;margin:26px auto 0;color:var(--dim);font:12px/1.6 var(--mono);border-top:1px solid var(--line);padding-top:12px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>THE SEMI-EMPIRICAL MASS FORMULA</h1>
+  <p class="sub">The nucleus as a charged liquid drop. Five competing terms — bulk binding, a surface skin, proton repulsion, a symmetry preference, and a pairing bonus — add up to the binding energy, and their balance carves the valley of stability that beta decay slides toward. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> von Weizs&auml;cker, C. F. (1935), &ldquo;Zur Theorie der Kernmassen,&rdquo; <em>Z. Phys.</em> <b>96</b>, 431&ndash;458 &middot; Bethe&ndash;Weizs&auml;cker liquid-drop model &middot; <a href="https://doi.org/10.1007/BF01337700" target="_blank" rel="noopener">doi:10.1007/BF01337700</a> &middot; coefficients (a_V,a_S,a_C,a_A,a_P) are a fitted set, marked <span class="tag t-amber">AMBER</span></p>
+</header>
+
+<div id="failb"></div>
+
+<main class="ocho">
+
+  <!-- LEFT · BLUE TEAM -->
+  <section class="col blue">
+    <div class="teamhdr">Blue team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <h3><span class="num">3</span> THE MODEL</h3>
+      <p class="small">Treat A nucleons as an incompressible charged drop. Binding energy:</p>
+      <div class="eq">B(Z,A) = a<sub>V</sub>A &minus; a<sub>S</sub>A<sup>2/3</sup> &minus; a<sub>C</sub>Z&sup2;/A<sup>1/3</sup> &minus; a<sub>A</sub>(A&minus;2Z)&sup2;/A + &delta;</div>
+      <p class="small">VOLUME rewards every nucleon (+, &prop;A). SURFACE penalises the skin whose nucleons have fewer neighbours (&minus;, &prop;A<sup>2/3</sup>). COULOMB penalises proton&ndash;proton repulsion (&minus;, &prop;Z&sup2;/A<sup>1/3</sup>). ASYMMETRY penalises N&ne;Z (&minus;, &prop;(A&minus;2Z)&sup2;/A). PAIRING adds &delta;=&plusmn;a<sub>P</sub>/&radic;A (+ even&ndash;even, &minus; odd&ndash;odd, 0 odd&ndash;A).</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="num">5</span> THE LINEAGE</h3>
+      <p class="small">The drop is Gamow&rsquo;s picture; Weizs&auml;cker (1935) gave it the five terms. The Z&sup2;/A<sup>1/3</sup> Coulomb term forces heavy nuclei to hold <b>N&nbsp;&gt;&nbsp;Z</b> to stay in the valley &mdash; and it is that neutron excess that <b>the-beta-decay</b> unwinds, one isobar at a time, sliding down toward the <b>the-binding-energy</b> curve&rsquo;s floor near Fe-56.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="num">7</span> THE WITNESS</h3>
+      <p class="small">Live re-check of two invariants: the Coulomb term must <em>subtract</em> from binding, and B(Fe-56) must land within a few percent of the measured 492.25 MeV.</p>
+      <div id="auditout" class="badge ok"><span class="dot"></span><span>witness idle</span></div>
+    </div>
+  </section>
+
+  <!-- CENTER · THE MACHINE -->
+  <section class="col center">
+    <div class="teamhdr">The machine</div>
+
+    <div class="win">
+      <h3><span class="num">4</span> DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p class="small mono">Z = 26 &nbsp; A = 56 &nbsp;(iron-56)<br>coefficients / MeV: a_V 15.8 &middot; a_S 18.3 &middot; a_C 0.714 &middot; a_A 23.2 &middot; a_P 12.0<br>constants: c &middot; u = 931.5 MeV &middot; N_A = 6.022e23</p>
+    </div>
+
+    <div class="flow">&darr; &nbsp; five terms &nbsp; &darr;</div>
+
+    <div class="win panel">
+      <h3><span class="num">0</span> THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <div id="terms"></div>
+      <p class="small mono" id="bline" style="margin-top:8px"></p>
+      <canvas id="cv" width="520" height="170"></canvas>
+      <p class="small" id="curvenote">Binding energy per nucleon B/A along the valley of stability (Z = Z<sub>opt</sub>(A)) &mdash; peaks near iron.</p>
+    </div>
+
+    <div class="flow">&darr; &nbsp; proven result &nbsp; &darr;</div>
+
+    <div class="win">
+      <h3><span class="num">8</span> DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p class="small mono" id="outline"></p>
+      <div id="litbadge" class="badge ok"><span class="dot"></span><span>boot pending</span></div>
+    </div>
+  </section>
+
+  <!-- RIGHT · RED TEAM -->
+  <section class="col red">
+    <div class="teamhdr">Red team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <h3><span class="num">1</span> THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <div class="wall-note small">
+        <p>&ldquo;It is only <em>semi</em>-empirical &mdash; the coefficients are fitted, not derived. Change the fit and your Fe-56 number moves. So the formula proves nothing.&rdquo;</p>
+        <p>Answer: the <b>signs and A-scalings</b> are forced by physics, not by the fit; only the five magnitudes are tuned. The liquid drop also fails at <b>magic numbers</b> (shell closures 2,8,20,28,50,82,126) and for light nuclei &mdash; real, disclosed limits, not fatal ones.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <h3><span class="num">2</span> THE GRAVEYARD</h3>
+      <p class="small"><span class="strike">Adding nucleons always adds binding.</span><br><span class="fix">&rarr; surface + Coulomb terms curve B/A over: it peaks at Fe-56 (~8.8 MeV/A) then falls &mdash; that peak is why fusion below it and fission above it both release energy.</span></p>
+      <p class="small"><span class="strike">The most stable isobar at fixed A has Z = A/2.</span><br><span class="fix">&rarr; only for light nuclei. Coulomb repulsion shifts Z<sub>opt</sub> = A/(2 + a_C A<sup>2/3</sup>/(2a_A)); at A=238 that is Z&asymp;92, N&asymp;146.</span></p>
+    </div>
+
+    <div class="win">
+      <h3><span class="num">6</span> THE TAMPER</h3>
+      <p class="small">Planted void (disclosed): flip the Coulomb sign so proton repulsion <em>increases</em> binding. Heavy nuclei go absurdly overbound and the valley inverts. The WITNESS (7) catches it live.</p>
+      <p><button id="tamper" class="warn">flip Coulomb sign</button> <button id="restore">restore</button></p>
+      <p class="small mono" id="tampstate">state: intact</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span class="lit">THE FOLD &middot; WORLD II</span> &middot; the-semi-empirical-mass-formula &middot; engine LIT, coefficients AMBER, planted void disclosed &middot; built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+// ---------- constants (explicit) ----------
+var C_LIGHT = 299792458;          // m/s
+var U_MEV   = 931.494;            // MeV per atomic mass unit (mass-energy)
+var N_A     = 6.02214076e23;      // Avogadro
+
+// fitted Weizsaecker coefficients / MeV  (AMBER: one common textbook set)
+var aV = 15.8, aS = 18.3, aC = 0.714, aA = 23.2, aP = 12.0;
+
+// measured binding of iron-56 (empirical reference) / MeV
+var B_FE56_MEAS = 492.254;
+
+// ---------- fixed-seed PRNG (deterministic) ----------
+function mulberry32(seed){
+  var s = seed >>> 0;
+  return function(){
+    s |= 0; s = (s + 0x6D2B79F5) | 0;
+    var t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ---------- the planted void flag (plain top-level var, headless-safe) ----------
+var tamperCoulomb = false;
+
+// ---------- SEMF: the five terms (pure) ----------
+function volumeTerm(Z,A){ return  aV * A; }
+function surfaceTerm(Z,A){ return -aS * Math.pow(A, 2/3); }
+function coulombTerm(Z,A){
+  // magnitude of proton-repulsion energy
+  var mag = aC * Z*Z / Math.cbrt(A);
+  // untampered: SUBTRACT (repulsion reduces binding). tamper flips the sign.
+  return tamperCoulomb ? (+mag) : (-mag);
+}
+function asymmetryTerm(Z,A){
+  var d = A - 2*Z;
+  return -aA * d*d / A;
+}
+function pairingTerm(Z,A){
+  var N = A - Z;
+  var even = function(x){ return (x % 2) === 0; };
+  var delta = aP / Math.sqrt(A);
+  if(even(Z) && even(N)) return +delta;      // even-even
+  if(!even(Z) && !even(N)) return -delta;     // odd-odd
+  return 0;                                    // odd A
+}
+function bindingEnergy(Z,A){
+  return volumeTerm(Z,A) + surfaceTerm(Z,A) + coulombTerm(Z,A)
+       + asymmetryTerm(Z,A) + pairingTerm(Z,A);
+}
+function bindingPerNucleon(Z,A){ return bindingEnergy(Z,A) / A; }
+
+// most stable Z at fixed A: dB/dZ = 0 (pairing dropped, smooth valley)
+// s carries the Coulomb sign so the tamper also inverts the valley.
+function optimumZ(A){
+  var s = tamperCoulomb ? -1 : +1;
+  return A / (2 + s * aC * Math.pow(A, 2/3) / (2*aA));
+}
+
+// ---------- other exact laws (pure, defined explicitly) ----------
+function decayN(N0, lambda, t){ return N0 * Math.exp(-lambda*t); }
+function halfLife(lambda){ return Math.LN2 / lambda; }
+function attenuation(I0, n, sigma, x){ return I0 * Math.exp(-n*sigma*x); }
+function meanFreePath(n, sigma){ return 1/(n*sigma); }
+function neutrinoOscP(theta, dm2, L, E){
+  // P(nu_a -> nu_b) = sin^2(2 theta) sin^2(1.27 dm2 L / E)
+  return Math.pow(Math.sin(2*theta),2) * Math.pow(Math.sin(1.27*dm2*L/E),2);
+}
+// Simpson integral of decay curve, tolerance target 1e-6 vs analytic
+function simpsonDecayIntegral(lambda, T, n){
+  if(n % 2) n++;
+  var h = T/n, s = Math.exp(0) + Math.exp(-lambda*T);
+  for(var i=1;i<n;i++){
+    var t = i*h;
+    s += (i%2 ? 4 : 2) * Math.exp(-lambda*t);
+  }
+  return s*h/3;
+}
+function analyticDecayIntegral(lambda, T){ return (1 - Math.exp(-lambda*T))/lambda; }
+
+// empirical energy yields (AMBER: quoted, not SEMF-derived) / MeV
+var Q_FISSION_U235 = 200.0;   // ~200 MeV per fission
+var Q_FUSION_DT    = 17.59;   // D + T -> He4 + n
+
+// ---------- fail-loud self-check (throws on any violation, returns true) ----------
+function selfcheck(){
+  var A = function(cond,msg){ if(!cond) throw new Error("selfcheck: "+msg); };
+  var saved = tamperCoulomb;          // save the planted-void flag
+  tamperCoulomb = false;              // verify the INTACT machine first
+
+  // 1) term signs & scalings at iron-56
+  A(volumeTerm(26,56)  > 0, "volume term must be positive");
+  A(surfaceTerm(26,56) < 0, "surface term must be negative");
+  A(coulombTerm(26,56) < 0, "Coulomb term must SUBTRACT (intact)");
+  A(asymmetryTerm(26,56) < 0, "asymmetry term must be negative for N!=Z");
+  A(pairingTerm(26,56) > 0, "Fe-56 is even-even: pairing must be positive");
+
+  // scaling checks: surface ~ A^(2/3), volume ~ A
+  A(Math.abs(volumeTerm(1,100)/volumeTerm(1,50) - 2) < 1e-9, "volume must scale as A");
+  A(Math.abs(surfaceTerm(1,8)/surfaceTerm(1,1) - 4) < 1e-9, "surface must scale as A^(2/3)");
+
+  // 2) internal consistency: terms sum to bindingEnergy
+  var Bfe = bindingEnergy(26,56);
+  var sum = volumeTerm(26,56)+surfaceTerm(26,56)+coulombTerm(26,56)+asymmetryTerm(26,56)+pairingTerm(26,56);
+  A(Math.abs(Bfe - sum) < 1e-9, "terms must sum to B");
+
+  // 3) predicts a mid-mass nucleus: Fe-56 within a few percent of measured
+  A(Math.abs(Bfe - 485.758) < 0.01, "Fe-56 SEMF value drifted from expected 485.758 MeV");
+  var relErr = Math.abs(Bfe - B_FE56_MEAS)/B_FE56_MEAS;
+  A(relErr < 0.03, "Fe-56 prediction must be within 3% of measured (got "+(relErr*100).toFixed(2)+"%)");
+  A(bindingPerNucleon(26,56) > 8.4 && bindingPerNucleon(26,56) < 9.0, "B/A near iron must be ~8.7 MeV");
+
+  // 4) valley of stability: dB/dZ = 0 optimum
+  A(Math.abs(optimumZ(56) - 25.166) < 0.01, "Z_opt(56) must be ~25.17");
+  // and it beats its neighbours in binding at fixed A
+  var z0 = optimumZ(56);
+  A(bindingEnergy(Math.round(z0),56) >= bindingEnergy(Math.round(z0)-3,56), "Z_opt must not be under-bound vs a lower-Z isobar");
+
+  // 5) Coulomb forces heavy nuclei to N > Z
+  var z238 = optimumZ(238);
+  A(Math.abs(z238 - 91.86) < 0.05, "Z_opt(238) must be ~92 (uranium)");
+  A((238 - z238) > z238, "heavy nuclei must favour N > Z");
+
+  // 6) a numeric integral / ODE surrogate to the stated 1e-6 tolerance
+  var lam = 0.5, T = 5;
+  var num = simpsonDecayIntegral(lam, T, 1000);
+  var exact = analyticDecayIntegral(lam, T);
+  A(Math.abs(num - exact) < 1e-6, "Simpson decay integral must match analytic to 1e-6");
+  A(Math.abs(halfLife(Math.LN2) - 1) < 1e-12, "half-life = ln2/lambda");
+  A(Math.abs(meanFreePath(2,0.5) - 1) < 1e-12, "mean free path = 1/(n sigma)");
+  // neutrino oscillation bounds
+  var Posc = neutrinoOscP(Math.PI/4, 2.5e-3, 295, 0.6);
+  A(Posc >= -1e-12 && Posc <= 1+1e-12, "oscillation probability must be a probability");
+
+  // ---- the planted void: flip the Coulomb sign, prove it breaks, then restore ----
+  tamperCoulomb = true;
+  A(coulombTerm(26,56) > 0, "tamper must make Coulomb ADD to binding");
+  var Bfe_t = bindingEnergy(26,56);
+  A(Bfe_t > Bfe, "tampered Fe-56 must be overbound relative to intact");
+  var z238_t = optimumZ(238);
+  A((238 - z238_t) < z238_t, "tampered valley must (wrongly) favour Z > N for heavy nuclei");
+  tamperCoulomb = saved;              // restore the flag exactly as found
+
+  return true;
+}
+
+// run headless-safe checks immediately (before any DOM)
+var SELFCHECK_OK = false;
+try { SELFCHECK_OK = selfcheck(); }
+catch(e){ SELFCHECK_OK = e; }
+
+/* ===== UI ===== */
+(function(){
+  var failb = document.getElementById('failb');
+  var litb  = document.getElementById('litbadge');
+
+  if(SELFCHECK_OK !== true){
+    failb.style.display = 'block';
+    failb.textContent = 'SELFCHECK FAILED — engine not LIT: ' + (SELFCHECK_OK && SELFCHECK_OK.message ? SELFCHECK_OK.message : SELFCHECK_OK);
+    litb.className = 'badge bad';
+    litb.innerHTML = '<span class="dot"></span><span>NOT LIT</span>';
+    throw SELFCHECK_OK; // rethrow after showing
+  }
+
+  // ---- render the five terms for Fe-56 ----
+  function fmt(x){ return (x>=0?'+':'') + x.toFixed(3); }
+  function renderTerms(){
+    var rows = [
+      ['VOLUME',    volumeTerm(26,56),    'a_V·A'],
+      ['SURFACE',   surfaceTerm(26,56),   '−a_S·A^(2/3)'],
+      ['COULOMB',   coulombTerm(26,56),   (tamperCoulomb?'+':'−')+'a_C·Z²/A^(1/3)'],
+      ['ASYMMETRY', asymmetryTerm(26,56), '−a_A·(A−2Z)²/A'],
+      ['PAIRING',   pairingTerm(26,56),   '+δ (even−even)']
+    ];
+    var html = '';
+    rows.forEach(function(r){
+      var cls = r[1] >= 0 ? 'pos' : 'neg';
+      html += '<div class="termrow"><span><b>'+r[0]+'</b> <span class="small">'+r[2]+'</span></span>'
+            + '<span class="'+cls+'">'+fmt(r[1])+' MeV</span></div>';
+    });
+    document.getElementById('terms').innerHTML = html;
+
+    var B = bindingEnergy(26,56);
+    document.getElementById('bline').innerHTML =
+      'B(Fe-56) = <b class="lit">'+B.toFixed(3)+' MeV</b>  ·  B/A = '+(B/56).toFixed(3)+' MeV/nucleon';
+    document.getElementById('outline').innerHTML =
+      'measured 492.254 MeV · predicted '+B.toFixed(2)+' MeV · error '
+      + (Math.abs(B-B_FE56_MEAS)/B_FE56_MEAS*100).toFixed(2)
+      + '% · Z_opt(56)='+optimumZ(56).toFixed(2)+' · Z_opt(238)='+optimumZ(238).toFixed(2)+' (N='+(238-optimumZ(238)).toFixed(1)+')';
+  }
+
+  // ---- witness: live re-check of the two invariants ----
+  function runWitness(){
+    var el = document.getElementById('auditout');
+    var coulombOk = coulombTerm(26,56) < 0;
+    var B = bindingEnergy(26,56);
+    var fitOk = Math.abs(B - B_FE56_MEAS)/B_FE56_MEAS < 0.03;
+    if(coulombOk && fitOk){
+      el.className = 'badge ok';
+      el.innerHTML = '<span class="dot"></span><span>WITNESS: Coulomb subtracts · Fe-56 within '
+        + (Math.abs(B-B_FE56_MEAS)/B_FE56_MEAS*100).toFixed(2) + '% · PASS</span>';
+    } else {
+      el.className = 'badge bad';
+      el.innerHTML = '<span class="dot"></span><span>WITNESS: TAMPER DETECTED — Coulomb '
+        + (coulombOk?'ok':'ADDS') + ', Fe-56 ' + (fitOk?'ok':'overbound '+B.toFixed(1)+' MeV') + ' · FAIL</span>';
+    }
+  }
+
+  // ---- canvas: B/A along the valley of stability ----
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  function drawCurve(){
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    var padL=34, padB=22, padT=10, padR=8;
+    var Amin=2, Amax=250;
+    var yMax=10, yMin=0;
+    // axes
+    ctx.strokeStyle='#25451f'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
+    ctx.fillStyle='#7fae72'; ctx.font='10px monospace';
+    ctx.fillText('B/A', 4, padT+8);
+    ctx.fillText('9', padL-14, padT+ (H-padB-padT)*(1-9/yMax)+3);
+    ctx.fillText('A', W-padR-10, H-6);
+    // sample curve along Z_opt(A)
+    ctx.beginPath();
+    var first=true, feX=0,feY=0;
+    for(var A=Amin;A<=Amax;A++){
+      var z = Math.round(optimumZ(A)); if(z<1) z=1;
+      var ba = bindingPerNucleon(z,A);
+      var x = padL + (A-Amin)/(Amax-Amin)*(W-padL-padR);
+      var y = padT + (1 - (ba-yMin)/(yMax-yMin))*(H-padB-padT);
+      if(y<padT) y=padT; if(y>H-padB) y=H-padB;
+      if(first){ ctx.moveTo(x,y); first=false; } else ctx.lineTo(x,y);
+      if(A===56){ feX=x; feY=y; }
+    }
+    ctx.strokeStyle = tamperCoulomb ? '#ff6b6b' : '#9ee06a';
+    ctx.lineWidth=2; ctx.stroke();
+    // Fe-56 marker
+    ctx.fillStyle = tamperCoulomb ? '#ff6b6b' : '#9ee06a';
+    ctx.beginPath(); ctx.arc(feX,feY,3.5,0,Math.PI*2); ctx.fill();
+    ctx.fillText('Fe-56', feX-14, feY-8);
+    document.getElementById('curvenote').innerHTML = tamperCoulomb
+      ? '<span style="color:#ff6b6b">TAMPERED: Coulomb inverted — heavy nuclei absurdly overbound, valley wrong.</span>'
+      : 'Binding energy per nucleon B/A along the valley of stability (Z = Z<sub>opt</sub>(A)) — peaks near iron.';
+  }
+
+  function refresh(){ renderTerms(); drawCurve(); runWitness();
+    document.getElementById('tampstate').textContent = 'state: ' + (tamperCoulomb ? 'TAMPERED (Coulomb sign flipped)' : 'intact');
+  }
+
+  // ---- tamper / restore controls ----
+  document.getElementById('tamper').addEventListener('click', function(){ tamperCoulomb = true; refresh(); });
+  document.getElementById('restore').addEventListener('click', function(){ tamperCoulomb = false; refresh(); });
+
+  // ---- boot: light the badge, first render ----
+  litb.className = 'badge ok';
+  litb.innerHTML = '<span class="dot"></span><span>LIT — selfcheck passed, engine computing live</span>';
+  refresh();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE SOBEL OPERATOR · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff9e6a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,158,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO layout — refined: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,158,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,158,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.kern{display:inline-grid;grid-template-columns:repeat(3,1fr);gap:2px;margin:4px 8px 4px 0;vertical-align:middle;}
+.kern span{background:#0a130c;border:1px solid var(--line);border-radius:3px;padding:3px 7px;text-align:center;font-size:12px;min-width:26px;color:#eafff0;}
+.kernwrap{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+.kcap{font-size:11px;color:var(--dim);}
+canvas{image-rendering:pixelated;border:1px solid var(--line);border-radius:4px;background:#0a130c;}
+.cvs{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;}
+.cvs figcaption{font-size:10.5px;color:var(--dim);text-align:center;margin-top:3px;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+.big{font-size:15px;color:#eafff0;font-weight:700;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE SOBEL OPERATOR</h1>
+ <p class="sub">Where does an image <i>change</i>? Slide a 3&times;3 stencil over a picture and it answers with two numbers per pixel &mdash; a horizontal slope <b class="k">G<sub>x</sub></b> and a vertical slope <b class="k">G<sub>y</sub></b>. Their length is edge <b>strength</b>, their angle is edge <b>direction</b>. It is a smoothed finite difference, and it is <b>runnable</b>: on a constructed step edge the response is <b>exact</b>. Down the center, data flows: a small image goes <b style="color:var(--cy)">in</b>, the kernels convolve, the gradient comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> I. Sobel &amp; G. Feldman (1968), <i>A 3&times;3 Isotropic Gradient Operator for Image Processing</i> &mdash; a talk at the <b>Stanford Artificial Intelligence Project</b> (SAIL); no formally published paper, later recorded in Duda &amp; Hart, <i>Pattern Classification and Scene Analysis</i> (1973), pp. 271&ndash;272. No stable primary link &mdash; <span class="t-amber" style="border:none;padding:0">AMBER</span>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — smooth, then difference</h2>
+   <p>The gradient is not measured; it is <b>convolved</b>. Two 3&times;3 kernels, each the outer product of a smoothing vector and a difference vector:</p>
+   <div class="kernwrap">
+    <div><div class="kern"><span>-1</span><span>0</span><span>1</span><span>-2</span><span>0</span><span>2</span><span>-1</span><span>0</span><span>1</span></div><div class="kcap">G<sub>x</sub> = [1,2,1]<sup>&#8868;</sup> &otimes; [-1,0,1]</div></div>
+    <div><div class="kern"><span>-1</span><span>-2</span><span>-1</span><span>0</span><span>0</span><span>0</span><span>1</span><span>2</span><span>1</span></div><div class="kcap">G<sub>y</sub> = [-1,0,1]<sup>&#8868;</sup> &otimes; [1,2,1]</div></div>
+   </div>
+   <p class="small">[1,2,1] blurs across the edge (kills noise); [-1,0,1] is a centered difference (the slope). G<sub>y</sub> is exactly G<sub>x</sub> <b>transposed</b>. Strength = &radic;(G<sub>x</sub>&sup2;+G<sub>y</sub>&sup2;), direction = atan2(G<sub>y</sub>,G<sub>x</sub>).</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the discrete gradient <span class="tag t-amber">AVAN</span></h2>
+   <p>Sobel is one stone in a wall. Upstream: <a href="https://davidwise01.github.io/the-convolution/" style="color:var(--cy)">the-convolution</a> &mdash; the sliding-window sum every kernel here <i>is</i>. Sobel is just convolution with a chosen, separable stencil.</p>
+   <p>Downstream: <a href="https://davidwise01.github.io/the-canny-edge-detector/" style="color:var(--cy)">the-canny-edge-detector</a> takes this magnitude and orientation as its <b>first step</b> (then non-max suppression + hysteresis); <a href="https://davidwise01.github.io/the-harris-corner/" style="color:var(--cy)">the-harris-corner</a> squares these same G<sub>x</sub>,G<sub>y</sub> into a structure tensor. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-convolve the constructed vertical edge and confirm its gradient points <b>horizontally</b> (0&deg;), that flat regions read <b>0</b>, and a constant image is <b>blank</b>. If red transposes the kernels, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — a constructed image <span class="tag t-in">in &darr;</span></h2>
+   <p>Not a photo &mdash; a <b>known</b> 7&times;7 image with an exact intensity step, so every answer can be checked against arithmetic. Dark = 0, bright = 100. A <b>vertical edge</b> (dark left, bright right):</p>
+   <div id="inmap"></div>
+   <p class="small">The step sits between columns 3 and 4. Everything to its left is flat; everything to its right is flat. The only place the picture <i>changes</i> is that seam &mdash; and that is exactly what the panel below must find.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; convolve with G<sub>x</sub> and G<sub>y</sub> &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>test image</label>
+      <select id="img"><option value="vert">vertical edge</option><option value="horiz">horizontal edge</option><option value="diag">diagonal edge</option><option value="const">constant (flat)</option></select></div>
+     <div class="row"><label>probe pixel</label>
+      <select id="px"><option value="3,3">at the edge (3,3)</option><option value="3,1">flat region (3,1)</option><option value="1,1">corner (1,1)</option></select></div>
+     <p class="small">The kernels convolve the whole image; the readout below is the gradient at the probed pixel, computed on the spot &mdash; never looked up.</p>
+     <div class="cvs">
+      <figure><canvas id="cIn" width="112" height="112"></canvas><figcaption>image</figcaption></figure>
+      <figure><canvas id="cMag" width="112" height="112"></canvas><figcaption>&radic;(G<sub>x</sub>&sup2;+G<sub>y</sub>&sup2;)</figcaption></figure>
+     </div>
+    </div>
+    <div class="readout">
+     <div class="row" style="gap:12px"><span class="small">G<sub>x</sub></span> <b class="big" id="gxv">0</b> <span class="small">G<sub>y</sub></span> <b class="big" id="gyv">0</b></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="magv"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px" id="kmode">Kernels intact. Change the image or probe &mdash; the gradient is recomputed by convolution each time.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits a gradient &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the gradient <span class="tag t-out">out &darr;</span></h2>
+   <p>What the machine proves, exactly: the kernel is <b>separable</b> (outer product checks to 1e&#8722;9); on the vertical edge G<sub>x</sub>=<b class="k">400</b> at the step and <b class="k">0</b> in every flat cell, with G<sub>y</sub>=<b class="k">0</b> everywhere; the roles swap on a horizontal edge; magnitude <b>peaks at the step</b>; a constant image has <b>zero</b> gradient; and the edge's direction is <b>0&deg;</b> (the gradient crosses the edge). The current probe is above.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these numbers live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Sobel is a <b>first-derivative, single-scale</b> operator. It fires on <i>any</i> intensity change &mdash; texture, shading, JPEG blocks, sensor noise &mdash; not just true object boundaries. It has <b>no</b> thinning (edges come out several pixels wide) and <b>no</b> threshold decision; that is why Canny bolts non-max suppression and hysteresis on top.</p></div>
+   <p class="small" style="margin-top:8px">It is also only <i>approximately</i> isotropic: the diagonal response is not identical to the axis response, so measured orientation is biased a few degrees. Scharr's 3&times;3 (3,10,3) was designed to fix exactly that. Sobel is the first cheap gradient, not the last word.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Sobel detects edges."</s> <b>Corrected.</b> It measures the <i>gradient</i>. An "edge" is a later decision (threshold + thinning) made from that gradient &mdash; Sobel alone just reports slope.</p>
+   <p class="grave"><s>"G<sub>x</sub> and G<sub>y</sub> are unrelated kernels."</s> <b>Cut.</b> G<sub>y</sub> is G<sub>x</sub> transposed; both factor as smooth&otimes;difference. That is the whole trick &mdash; and the seam the tamper attacks.</p>
+   <p class="grave"><s>"The magnitude uses |G<sub>x</sub>|+|G<sub>y</sub>|."</s> <b>Kept as an approximation.</b> The L1 sum is a fast stand-in; the true magnitude is the Euclidean &radic;(G<sub>x</sub>&sup2;+G<sub>y</sub>&sup2;), which is what the engine computes.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>swap G<sub>x</sub> and G<sub>y</sub></b> (transpose the kernels). The vertical edge is then reported with a <i>horizontal</i> gradient direction &mdash; off by 90&deg;. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; swap G<sub>x</sub> &harr; G<sub>y</sub></button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Swap the kernels and the vertical edge's direction jumps from 0&deg; to 90&deg; &mdash; the witness recomputes, sees the known-edge orientation is wrong, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE SOBEL OPERATOR — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (image <b style="color:var(--cy)">in</b> &rarr; convolve &rarr; gradient <b style="color:var(--gr)">out</b>). A runnable rendering of Sobel &amp; Feldman's 1968 Stanford operator &mdash; the engine is LIT (kernels separable, step response exact to 1e&#8722;9, orientation self-checked, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single stencil cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// the Sobel kernels: Gx (vertical-edge / horizontal-gradient), Gy = Gx transposed
+const KGX=[[-1,0,1],[-2,0,2],[-1,0,1]];
+const KGY=[[-1,-2,-1],[0,0,0],[1,2,1]];
+let TAMPER=false;   // swaps Gx and Gy when true — the witness must catch it
+function outer(col,row){ return col.map(a=>row.map(b=>a*b)); }
+function matEq(A,B,tol){ tol=tol||1e-9; if(A.length!==B.length) return false; for(let i=0;i<A.length;i++){ if(A[i].length!==B[i].length) return false; for(let j=0;j<A[i].length;j++){ if(Math.abs(A[i][j]-B[i][j])>tol) return false; } } return true; }
+function transpose(M){ return M.map((_,i)=>M.map(r=>r[i])); }
+function conv3(img,K,r,c){ let s=0; for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++) s+=K[i+1][j+1]*img[r+i][c+j]; return s; }
+function activeKernels(){ return TAMPER?[KGY,KGX]:[KGX,KGY]; }
+function gradAt(img,r,c){ const K=activeKernels(); const gx=conv3(img,K[0],r,c), gy=conv3(img,K[1],r,c); return {gx,gy,mag:Math.hypot(gx,gy),ori:Math.atan2(gy,gx)}; }
+function makeImg(kind){ const N=7,g=[]; for(let r=0;r<N;r++){ const row=[]; for(let c=0;c<N;c++){ let v=50; if(kind==="vert") v=(c<=3)?0:100; else if(kind==="horiz") v=(r<=3)?0:100; else if(kind==="diag") v=((r+c)<=6)?0:100; else v=50; row.push(v);} g.push(row);} return g; }
+function magMap(img){ const N=img.length, out=[]; for(let r=0;r<N;r++){ const row=[]; for(let c=0;c<N;c++){ if(r===0||c===0||r===N-1||c===N-1){ row.push(0); } else { row.push(gradAt(img,r,c).mag); } } out.push(row);} return out; }
+// fail-loud self-check — runs untampered, then plants the disclosed tamper and confirms it is caught
+function selfcheck(){
+ const t=(cond,msg)=>{ if(!cond) throw new Error(msg); };
+ const save=TAMPER; TAMPER=false;
+ // separability: each Sobel kernel is smooth (x) difference, and Gy is Gx transposed
+ t(matEq(outer([1,2,1],[-1,0,1]),KGX),"Gx must equal outer([1,2,1],[-1,0,1])");
+ t(matEq(outer([-1,0,1],[1,2,1]),KGY),"Gy must equal outer([-1,0,1],[1,2,1])");
+ t(matEq(KGY,transpose(KGX)),"Gy must be the transpose of Gx");
+ const V=makeImg("vert"), H=makeImg("horiz"), C=makeImg("const");
+ // vertical edge: Gx strong AT the step, ZERO in flat regions; Gy ZERO everywhere
+ t(Math.abs(gradAt(V,3,3).gx-400)<1e-9,"vert-edge Gx at the step must be 400");
+ t(Math.abs(gradAt(V,3,4).gx-400)<1e-9,"vert-edge Gx one past the step must be 400");
+ t(Math.abs(gradAt(V,3,1).gx)<1e-9,"vert-edge Gx in the flat-left region must be 0");
+ t(Math.abs(gradAt(V,3,5).gx)<1e-9,"vert-edge Gx in the flat-right region must be 0");
+ for(let r=1;r<=5;r++)for(let c=1;c<=5;c++) t(Math.abs(gradAt(V,r,c).gy)<1e-9,"vert-edge Gy must be 0 everywhere");
+ // magnitude peaks exactly at the step, and is 0 in the flat region
+ t(gradAt(V,3,3).mag>gradAt(V,3,1).mag,"vert-edge magnitude must peak at the step, not the flat");
+ t(Math.abs(gradAt(V,3,1).mag)<1e-9,"vert-edge magnitude in the flat region must be 0");
+ // horizontal edge: the roles swap exactly
+ t(Math.abs(gradAt(H,3,3).gy-400)<1e-9,"horiz-edge Gy at the step must be 400");
+ for(let r=1;r<=5;r++)for(let c=1;c<=5;c++) t(Math.abs(gradAt(H,r,c).gx)<1e-9,"horiz-edge Gx must be 0 everywhere");
+ // constant image: zero gradient everywhere
+ for(let r=1;r<=5;r++)for(let c=1;c<=5;c++){ const g=gradAt(C,r,c); t(Math.abs(g.gx)<1e-9&&Math.abs(g.gy)<1e-9,"a constant image must have zero gradient"); }
+ // orientation: vertical edge -> gradient is horizontal (0 rad); horizontal edge -> pi/2
+ t(Math.abs(gradAt(V,3,3).ori-0)<1e-9,"vert-edge gradient orientation must be 0 rad (horizontal gradient)");
+ t(Math.abs(gradAt(H,3,3).ori-Math.PI/2)<1e-9,"horiz-edge gradient orientation must be pi/2");
+ // the planted void: swap Gx and Gy -> the known vertical edge now reads 90 deg off
+ TAMPER=true;
+ const oriT=gradAt(V,3,3).ori;
+ t(Math.abs(Math.abs(oriT)-Math.PI/2)<1e-9,"tamper must rotate the vert-edge orientation to +/-90 deg");
+ t(Math.abs(oriT-0)>1e-6,"tamper must make the known-edge orientation check FAIL");
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const rnd=(x)=>Math.round(x*1e6)/1e6;
+const deg=(rad)=>rnd(rad*180/Math.PI);
+function gridHTML(img,hi){
+ let h='<table><tbody>';
+ for(let r=0;r<img.length;r++){ h+='<tr>'; for(let c=0;c<img[r].length;c++){ const on=hi&&hi[0]===r&&hi[1]===c; const v=img[r][c]; const bg=`rgba(255,158,106,${(v/100)*0.5})`; h+=`<td style="background:${bg};${on?'outline:2px solid var(--cy);color:var(--cy);font-weight:700':''}">${v}</td>`; } h+='</tr>'; }
+ return h+'</tbody></table>';
+}
+function drawImg(cv,img,scale){ const ctx=cv.getContext("2d"); const N=img.length; let lo=Infinity,hiv=-Infinity; for(const row of img)for(const v of row){ if(v<lo)lo=v; if(v>hiv)hiv=v; } const rng=(hiv-lo)||1; for(let r=0;r<N;r++)for(let c=0;c<N;c++){ const t=(img[r][c]-lo)/rng; const g=Math.round(t*255); ctx.fillStyle=`rgb(${g},${g},${g})`; ctx.fillRect(c*scale,r*scale,scale,scale); } }
+function probe(){ const [r,c]=$("px").value.split(",").map(Number); return [r,c]; }
+function render(){
+ const kind=$("img").value, img=makeImg(kind), [r,c]=probe(), g=gradAt(img,r,c);
+ $("inmap").innerHTML=gridHTML(makeImg("vert"),[3,3]);
+ drawImg($("cIn"),img,16);
+ drawImg($("cMag"),magMap(img),16);
+ $("gxv").textContent=rnd(g.gx); $("gyv").textContent=rnd(g.gy);
+ const edge=g.mag>1e-9;
+ $("verdict").textContent = edge?"EDGE HERE":"FLAT — no gradient";
+ $("verdict").className="verdict "+(edge?"ok":"no");
+ $("magv").innerHTML = `magnitude <b>${rnd(g.mag)}</b> &nbsp;·&nbsp; direction <b>${edge?deg(g.ori)+"&deg;":"—"}</b>`;
+ let why;
+ if(!edge){ why="every 3×3 neighbour is equal here, so both convolutions sum to 0."; }
+ else if(kind==="vert"){ why="dark→bright across x: Gx fires, Gy is 0, so the gradient points along x (0°) — straight across the vertical edge."; }
+ else if(kind==="horiz"){ why="dark→bright across y: Gy fires, Gx is 0, so the gradient points along y (90°)."; }
+ else { why="the step runs diagonally, so both Gx and Gy fire and the direction is ~45°."; }
+ $("reason").textContent = why;
+}
+function audit(){
+ const V=makeImg("vert"), C=makeImg("const");
+ const g=gradAt(V,3,3), flat=gradAt(V,3,1).mag, blank=gradAt(C,3,3).mag;
+ const oriOk=Math.abs(g.ori-0)<1e-9, flatOk=Math.abs(flat)<1e-9, blankOk=Math.abs(blank)<1e-9;
+ const ok=oriOk&&flatOk&&blankOk;
+ $("auditout").innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">vert-edge direction: <b style="color:${oriOk?'var(--gr)':'var(--wall)'}">${deg(g.ori)}°</b> (want 0°) &nbsp;·&nbsp; flat cell: <b style="color:${flatOk?'var(--gr)':'var(--wall)'}">${rnd(flat)}</b> &nbsp;·&nbsp; constant image: <b style="color:${blankOk?'var(--gr)':'var(--wall)'}">${rnd(blank)}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red swapped Gx↔Gy</span>':''}</div>`;
+}
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ ["img","px"].forEach(id=>$(id).addEventListener("change",()=>{render();audit();}));
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("kmode").innerHTML="<b style='color:var(--wall)'>Kernels swapped.</b> Gx and Gy are transposed — the vertical edge now reads a 90° (horizontal) direction. The witness (window 7) recomputed and went red."; $("tampernote").innerHTML="<b style='color:var(--wall)'>Swapped.</b> The known vertical edge now reports direction 90° instead of 0°. The witness caught it live. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("kmode").textContent="Kernels intact. Change the image or probe — the gradient is recomputed by convolution each time."; $("tampernote").textContent="Swap the kernels and the vertical edge's direction jumps from 0° to 90° — the witness recomputes, sees the known-edge orientation is wrong, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Sobel engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

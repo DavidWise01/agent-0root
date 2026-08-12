@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE LORENZ SYSTEM · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fe0c0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,224,192,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,224,192,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,224,192,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;accent-color:var(--am);vertical-align:middle;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:17px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+canvas{display:block;width:100%;height:auto;background:#060b08;border:1px solid var(--line);border-radius:6px;margin:6px 0;}
+.legend{font-size:11px;color:var(--dim);margin:2px 0 4px;} .legend .a{color:var(--cy);} .legend .b{color:var(--gr);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE LORENZ SYSTEM</h1>
+ <p class="sub">Three simple equations whose weather never repeats. Feed a state <b style="color:var(--cy)">in</b>, the flow winds forever around two wings and <b>never closes a loop</b>; two starts a hair apart come out <b style="color:var(--gr)">worlds</b> apart — the butterfly effect. The <b style="color:var(--blue)">blue team</b> builds and defends the attractor; the <b style="color:var(--red)">red team</b> tries to break it. This is a <b>model</b> — a three-mode truncation of convection, not the weather.</p>
+ <p class="src"><span class="tag t-amber">source</span> Lorenz, <i>Deterministic Nonperiodic Flow</i> (1963), <i>J. Atmos. Sci.</i> <b>20</b>:130&ndash;141 &nbsp;&middot;&nbsp; DOI 10.1175/1520-0469(1963)020&lt;0130:DNF&gt;2.0.CO;2 &mdash; <a href="https://journals.ametsoc.org/view/journals/atsc/20/2/1520-0469_1963_020_0130_dnf_2_0_co_2.xml">journals.ametsoc.org</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">&#9639; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — three equations</h2>
+   <p>Convection stripped to three modes (Saltzman 1962; Lorenz 1963):</p>
+   <p class="sent" style="font-size:12px">
+    <span class="S">x&#775;</span> = &sigma;(<span class="P">y</span>&minus;<span class="S">x</span>)<br>
+    <span class="P">y&#775;</span> = <span class="S">x</span>(&rho;&minus;<span class="M">z</span>)&minus;<span class="P">y</span><br>
+    <span class="M">z&#775;</span> = <span class="S">x</span><span class="P">y</span>&minus;&beta;<span class="M">z</span></p>
+   <p>Classic: <b class="k">&sigma;=10</b>, <b class="k">&rho;=28</b>, <b class="k">&beta;=8/3</b>. <b>Fixed points</b>: the origin, plus (for &rho;&gt;1) two centres <b>C&plusmn;</b> at (&plusmn;&radic;(&beta;(&rho;&minus;1)), same, &rho;&minus;1) &mdash; here <b>&plusmn;8.485</b>, z=27, checked live.</p>
+   <p class="small">The flow <b>contracts volume</b> everywhere: divergence &nabla;&middot;f = &minus;(&sigma;+1+&beta;) = <b class="k" id="divv">&minus;13.667</b> &lt; 0, so the attractor has <b>zero volume</b>. Live state of trajectory <span class="a" style="color:var(--cy)">A</span>:</p>
+   <table id="stTbl"><thead><tr><th>x</th><th>y</th><th>z</th><th>|A&minus;B|</th></tr></thead><tbody><tr><td id="sx">&mdash;</td><td id="sy">&mdash;</td><td id="sz">&mdash;</td><td id="ssep">&mdash;</td></tr></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — chaos begins <span class="tag t-amber">AVAN</span></h2>
+   <p>1963: a three-variable convection toy whose <b>bounded aperiodic</b> flow founded chaos theory. Deterministic yet unpredictable &mdash; the <b style="color:var(--am)">butterfly effect</b> got its name from the wing-shaped attractor and from Lorenz's talk title.</p>
+   <p>Its bounded-but-never-repeating orbit is the same signature as <a href="https://davidwise01.github.io/the-double-pendulum/" style="color:var(--cy)">the-double-pendulum</a>: a low-dimensional, fully determined system that no forecast can pin down for long. Each sphere is the next one's initial condition.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-integrate the classic system and confirm divergence&lt;0, the twin-1e&minus;8 <b>divergence trend</b>, and that &rho;&lt;1 decays to 0. If red tampers, this badge catches it.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the state <span class="tag t-in">in &darr;</span></h2>
+   <p>The machine takes a <b>3-vector</b> state <b class="S" style="color:var(--cy)">x</b>, <b class="P" style="color:var(--gr)">y</b>, <b class="M" style="color:var(--am)">z</b> and three parameters:</p>
+   <table><thead><tr><th>symbol</th><th>meaning</th><th>value</th></tr></thead>
+    <tbody>
+     <tr><td>&sigma;</td><td>Prandtl number</td><td class="k">10</td></tr>
+     <tr><td>&rho;</td><td>Rayleigh ratio</td><td class="k">28</td></tr>
+     <tr><td>&beta;</td><td>geometry</td><td class="k">8/3</td></tr>
+    </tbody></table>
+   <p class="small">Two starts are fed at once: <b style="color:var(--cy)">A</b> = (1,1,1) and its <b>twin</b> <b style="color:var(--gr)">B</b> = (1+<b>1e&minus;8</b>,1,1). Integrated with <b>RK4</b>, fixed step dt=0.006. Named assumptions: well-posed truncation, no noise &mdash; a model, not a weather forecast.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; release both into the flow &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <canvas id="cv" width="520" height="300"></canvas>
+   <div class="legend">projection x&rarr;z &nbsp;&middot;&nbsp; <span class="a">&#9679; A</span> &nbsp; <span class="b">&#9679; twin B (+1e&minus;8)</span> &nbsp;&middot;&nbsp; watch them ride together, then split</div>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>&rho; (Rayleigh)</label><input type="range" id="rhoR" min="0.5" max="40" step="0.5" value="28" style="flex:1;min-width:120px"><b class="k" id="rhoV">28</b></div>
+     <div class="row"><label>reading</label>
+      <span class="small" id="regmode">&rho;&gt;1: two unstable centres &rarr; the strange attractor.</span></div>
+     <div class="row"><button id="restart">&#8635; restart</button><button id="classic">&rarr; classic 28</button></div>
+     <p class="small">Drag &rho; below 1 to watch the wings collapse into the origin &mdash; the same collapse the red team weaponises. Everything is integrated live; no frame is looked up.</p>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="verdict">&mdash;</div>
+     <div class="moodname" id="regime">&mdash;</div>
+     <div class="reason" id="reason">&mdash;</div>
+     <div class="sent" id="sepbox" style="font-size:12px">&mdash;</div>
+    </div>
+   </div>
+  </div>
+  <div class="flow">&#9660; &nbsp; the flow emits its verdict &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — what is proven <span class="tag t-out">out &darr;</span></h2>
+   <p>The machine's proven output for the classic parameters: the flow is <b class="k">BOUNDED</b> (stays forever in a finite ball), <b class="k">APERIODIC</b> (z never settles to a point or a cycle), <b class="k">VOLUME-CONTRACTING</b> (&nabla;&middot;f&lt;0 &rArr; zero-volume attractor), and shows <b class="k">SENSITIVE DEPENDENCE</b> (a 1e&minus;8 twin diverges by &gt;5 orders of magnitude &mdash; a positive Lyapunov exponent). For <b>&rho;&lt;1</b> the origin is the only fixed point and is globally stable.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) confirms these live; the red team (right) tries to make them false.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9640;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> This is a <b>drastic truncation</b> &mdash; Saltzman's convection PDE cut to <b>three</b> Fourier modes. At &rho;=28 it is <b>not</b> quantitatively valid for real Rayleigh&ndash;B&eacute;nard flow; the discarded modes matter. It models the <i>shape</i> of chaos, not the atmosphere.</div>
+   <p class="small" style="margin-top:8px">And &quot;chaos&quot; is a claim about a <b>model with named assumptions</b> (well-mixed modes, constant parameters, no noise). The full rigorous proof that this attractor is genuinely strange stayed <b>open for 39 years</b> &mdash; only settled by Tucker's computer-assisted proof (2002). Determinism does not buy predictability.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>&quot;A butterfly's wing causes a tornado.&quot;</s> <b>Cut.</b> The effect is <b>sensitive dependence</b> &mdash; a tiny error in the <i>initial state</i> grows exponentially. No wing <i>causes</i> anything; forecasts just lose skill.</p>
+   <p class="grave"><s>&quot;Chaos means random.&quot;</s> <b>Cut.</b> The system is fully <b>deterministic</b> &mdash; no randomness anywhere. Same state in, same state out, forever. Only <i>initial-condition error</i> is amplified.</p>
+   <p class="grave"><s>&quot;Lorenz set out to find chaos.&quot;</s> <b>Kept, corrected.</b> He found it by <b>accident</b> in 1961, restarting a run from a rounded printout (0.506 for 0.506127) and getting a wildly different forecast.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: quietly drop &rho; below 1. Now the origin is the <b>only</b> fixed point and it is <b>globally stable</b> &mdash; every trajectory decays to 0, the wings vanish, the chaos is gone.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; set &rho; = 0.5</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Push &rho;&lt;1 and both the bounded-aperiodic test and the sensitive-dependence test fail &mdash; the witness (window 7) re-integrates, finds the flow collapsing to a point, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE LORENZ SYSTEM — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (state <b style="color:var(--cy)">in</b> &rarr; flow &rarr; verdict <b style="color:var(--gr)">out</b>). A runnable rendering of Lorenz's 1963 convection model &mdash; the engine is LIT (RK4 live, boundedness / aperiodicity / volume-contraction / sensitive-dependence self-checked, eigenvalue stability exact, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what three modes cannot. A model with named assumptions, not a weather forecast. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (Lorenz 1963: sigma=10, rho=28, beta=8/3) ===== */
+const SIGMA=10, RHO=28, BETA=8/3;
+let TAMPER=false;   // red team sets rho<1 when true — the witness must catch it
+function deriv(s,p){ const x=s[0],y=s[1],z=s[2];
+ return [ p.sigma*(y-x), x*(p.rho-z)-y, x*y-p.beta*z ]; }
+function rk4(s,dt,p){
+ const k1=deriv(s,p);
+ const s2=[s[0]+0.5*dt*k1[0], s[1]+0.5*dt*k1[1], s[2]+0.5*dt*k1[2]], k2=deriv(s2,p);
+ const s3=[s[0]+0.5*dt*k2[0], s[1]+0.5*dt*k2[1], s[2]+0.5*dt*k2[2]], k3=deriv(s3,p);
+ const s4=[s[0]+dt*k3[0], s[1]+dt*k3[1], s[2]+dt*k3[2]], k4=deriv(s4,p);
+ return [ s[0]+dt/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),
+          s[1]+dt/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]),
+          s[2]+dt/6*(k1[2]+2*k2[2]+2*k3[2]+k4[2]) ]; }
+function run(s,dt,n,p){ let a=s.slice(); for(let i=0;i<n;i++) a=rk4(a,dt,p); return a; }
+function radius(s){ return Math.hypot(s[0],s[1],s[2]); }
+function derivMag(s,p){ const d=deriv(s,p); return Math.hypot(d[0],d[1],d[2]); }
+function divergence(p){ return -(p.sigma+1+p.beta); }
+// exact stability of the origin: z-mode has eigenvalue -beta; the (x,y) block gives the rest
+function blockEig(sigma,rho){ const tr=-(sigma+1), det=sigma*(1-rho), disc=tr*tr-4*det;
+ if(disc>=0){ const sq=Math.sqrt(disc); return {re:[(tr+sq)/2,(tr-sq)/2], im:[0,0]}; }
+ const sq=Math.sqrt(-disc); return {re:[tr/2,tr/2], im:[sq/2,-sq/2]}; }
+function maxRealPart(sigma,rho){ const e=blockEig(sigma,rho); return Math.max(e.re[0],e.re[1]); }
+// classic parameters, corrupted to rho=0.5 while the red team's TAMPER holds
+function classicP(){ return {sigma:SIGMA, rho: TAMPER?0.5:RHO, beta:BETA}; }
+// one twin integration: returns divergence, separations, and the z-range of A
+function probe(p, nT, nM){
+ let a=run([1,1,1],0.005,nT,p);
+ let b=[a[0]+1e-8, a[1], a[2]];
+ const sep0=1e-8; let zmin=1e18, zmax=-1e18;
+ for(let i=0;i<nM;i++){ a=rk4(a,0.005,p); b=rk4(b,0.005,p);
+  if(a[2]<zmin)zmin=a[2]; if(a[2]>zmax)zmax=a[2]; }
+ const sep1=Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ return {div:divergence(p), sep0, sep1, zmin, zmax}; }
+
+/* ===== fail-loud self-check (runs untampered, then plants the void) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const p=classicP();
+ // 1. exact volume contraction — the attractor has zero volume
+ t(Math.abs(divergence(p)+(SIGMA+1+BETA))<1e-12,"divergence must equal -(sigma+1+beta)");
+ t(divergence(p)<0,"the flow must contract phase-space volume");
+ // 2. closed-form fixed points: origin and C+ (rho>1)
+ t(derivMag([0,0,0],p)<1e-12,"the origin must be a fixed point");
+ const c=Math.sqrt(BETA*(RHO-1));
+ t(derivMag([c,c,RHO-1],p)<1e-9,"C+ closed-form fixed point must have zero velocity");
+ // 3. exact stability by the Jacobian eigenvalues (trace/determinant classification)
+ t(maxRealPart(SIGMA,28)>0,"at rho=28 the origin is a saddle (an eigenvalue is positive)");
+ t(maxRealPart(SIGMA,0.5)<0 && -BETA<0,"at rho<1 every eigenvalue is negative — origin globally stable");
+ // 4. bounded + aperiodic (robust trend): finite ball, z never settles
+ const pr=probe(p,4000,8000);
+ t(pr.zmax<200 && pr.zmin>-50,"trajectory must stay in a bounded region");
+ t(pr.zmax-pr.zmin>10,"aperiodic: z keeps oscillating — no fixed point, no short cycle");
+ // 5. sensitive dependence: 1e-8 twin diverges by many orders of magnitude
+ t(pr.sep0===1e-8,"the twin starts exactly 1e-8 away");
+ t(pr.sep1/pr.sep0>1e5,"sensitive dependence: nearby trajectories must diverge (positive Lyapunov)");
+ // 6. rho<1: origin globally stable — every trajectory decays to 0
+ const sd=run([1,1,1],0.01,4000,{sigma:SIGMA,rho:0.5,beta:BETA});
+ t(radius(sd)<1e-2,"for rho<1 every trajectory must decay to the origin");
+ // ---- the planted void: TAMPER pushes rho<1, and the chaos vanishes ----
+ TAMPER=true;
+ const pt=probe(classicP(),4000,8000);   // classicP now yields rho=0.5
+ t(pt.zmax-pt.zmin<1,"TAMPER: the classic run collapses — z stops oscillating");
+ t(pt.sep1/pt.sep0<1,"TAMPER: the twins no longer diverge — sensitive dependence is gone");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let panelRho=28, A=[1,1,1], B=[1+1e-8,1,1], simT=0, raf=0;
+const cv=$("cv"), ctx=cv.getContext("2d");
+function fmt(v){ return (v>=0?" ":"")+v.toFixed(3); }
+function proj(s){ const W=cv.width,H=cv.height; return [ W/2 + s[0]*(W/70), H*0.94 - s[2]*(H/60) ]; }
+function clearCv(){ ctx.fillStyle="#060b08"; ctx.fillRect(0,0,cv.width,cv.height); }
+function seg(prev,next,color){ const a=proj(prev), b=proj(next);
+ ctx.strokeStyle=color; ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
+function resetSim(){ A=[1,1,1]; B=[1+1e-8,1,1]; simT=0; clearCv(); }
+function regimeText(){
+ if(panelRho<1) return {v:"DECAYS TO ORIGIN", vc:"no",
+   r:"rho<1: the origin is the only fixed point and is globally stable. Every start spirals into 0 — the chaos is gone.",
+   m:"rho<1: one globally stable fixed point."};
+ if(panelRho<=1.0001) return {v:"BIFURCATION", vc:"no", r:"rho=1: the origin loses stability; C+/C- are born.", m:"rho=1: pitchfork bifurcation."};
+ return {v:"BOUNDED · APERIODIC · SENSITIVE", vc:"ok",
+   r:"rho>1: origin is a saddle, C+/C- are unstable — the flow is trapped in a bounded region it never repeats.",
+   m:"rho>1: two unstable centres → the strange attractor."};
+}
+function paintRegime(){
+ const g=regimeText();
+ $("verdict").textContent=g.v; $("verdict").className="verdict "+g.vc;
+ $("regime").textContent=g.m; $("reason").textContent=g.r;
+ $("regmode").textContent=g.m;
+}
+function step(){
+ const p={sigma:SIGMA,rho:panelRho,beta:BETA}, dt=0.006;
+ for(let i=0;i<6;i++){ const na=rk4(A,dt,p), nb=rk4(B,dt,p);
+  seg(A,na,"#57e0d0"); seg(B,nb,"#39fc6b"); A=na; B=nb; simT+=dt; }
+ const sep=Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2]);
+ $("sx").textContent=fmt(A[0]); $("sy").textContent=fmt(A[1]); $("sz").textContent=fmt(A[2]);
+ $("ssep").textContent=sep.toExponential(2);
+ $("sepbox").innerHTML="t = <b>"+simT.toFixed(2)+"</b> &nbsp;&middot;&nbsp; twin gap |A&minus;B| = <b style='color:"+(sep>1?"var(--wall)":"var(--cy)")+"'>"+sep.toExponential(2)+"</b><br><span class='small'>started at 1.00e&minus;8 &mdash; "+(panelRho>=1?"growing (sensitive dependence)":"shrinking (both decay to 0)")+"</span>";
+ if(radius(A)>1e4){ resetSim(); }
+ raf=requestAnimationFrame(step);
+}
+function witness(){
+ const el=$("auditout");
+ const p=classicP();                       // rho=0.5 while TAMPER holds
+ const pr=probe(p,3000,6000);
+ const ratio=pr.sep1/pr.sep0;
+ const stab=run([1,1,1],0.01,3000,{sigma:SIGMA,rho:0.5,beta:BETA});
+ const okDiv=pr.div<0, okChaos=(ratio>1e4)&&((pr.zmax-pr.zmin)>10), okStable=radius(stab)<1e-1;
+ const ok=okDiv&&okChaos&&okStable;
+ el.innerHTML="<span class=\"badge "+(ok?"pass":"failb")+"\">"+(ok?"✓ WITNESS — holds":"✗ WITNESS — broken")+"</span>"
+  +"<div class=\"small\" style=\"margin-top:6px\">&nabla;&middot;f = <b style=\"color:"+(okDiv?"var(--gr)":"var(--wall)")+"\">"+pr.div.toFixed(3)+"</b> (&lt;0) &nbsp;&middot;&nbsp; twin ratio = <b style=\"color:"+(ratio>1e4?"var(--gr)":"var(--wall)")+"\">"+ratio.toExponential(1)+"</b> &nbsp;&middot;&nbsp; z-swing = <b style=\"color:"+((pr.zmax-pr.zmin)>10?"var(--gr)":"var(--wall)")+"\">"+(pr.zmax-pr.zmin).toFixed(1)+"</b> &nbsp;&middot;&nbsp; rho&lt;1 &rarr; |A|=<b style=\"color:"+(okStable?"var(--gr)":"var(--wall)")+"\">"+radius(stab).toExponential(1)+"</b>"
+  +(TAMPER?" &nbsp; — <span style=\"color:var(--wall)\">red set rho=0.5</span>":"")+"</div>";
+}
+function setRho(v){ panelRho=v; $("rhoR").value=v; $("rhoV").textContent=(v%1===0?v:v.toFixed(1)); paintRegime(); resetSim(); }
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("divv").textContent=divergence(classicP()).toFixed(3);
+ $("litbadge").innerHTML="<span class=\"badge pass\">✓ LIT · self-check passed on load</span>";
+ clearCv(); paintRegime();
+ $("rhoR").addEventListener("input",e=>setRho(parseFloat(e.target.value)));
+ $("restart").addEventListener("click",resetSim);
+ $("classic").addEventListener("click",()=>setRho(28));
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>rho set to 0.5.</b> The origin is now globally stable — the wings collapsed to a point. The witness (window 7) re-integrated, saw the twins converge and z stop swinging, and went red. The attack is real; it is caught."; setRho(0.5); witness(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Push rho<1 and both the bounded-aperiodic test and the sensitive-dependence test fail — the witness (window 7) re-integrates, finds the flow collapsing to a point, and turns red. Nothing is faked; the attack is real and it is caught."; setRho(28); witness(); });
+ witness();
+ raf=requestAnimationFrame(step);
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Lorenz engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

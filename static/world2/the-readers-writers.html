@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE READERS WRITERS · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#c8a2ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(200,162,255,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO — refined layout: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(200,162,255,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(200,162,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13.5px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .R{color:var(--cy);} .sent .W{color:var(--red);} .sent .M{color:var(--am);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.tl{font-size:11.5px;margin-top:8px;background:#0a130c;border:1px solid var(--line);border-radius:6px;padding:8px;}
+.tl .ev{display:flex;justify-content:space-between;gap:8px;padding:1px 0;border-bottom:1px dashed #16301d;}
+.tl .ev:last-child{border-bottom:none;} .tl .rd{color:var(--cy);} .tl .wr{color:var(--red);} .tl .cnt{color:var(--dim);}
+.tl .hot{color:var(--gr);font-weight:700;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9664; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE READERS WRITERS</h1>
+ <p class="sub">Let many read at once — but a writer must be alone. Two classes of process share one datum: <b style="color:var(--cy)">readers</b> may pile in together, a <b style="color:var(--red)">writer</b> needs the room to itself. The solution is a read-counter guarded by its own mutex plus one exclusion semaphore. It is <b>runnable</b>, and the exclusion is checked <b class="k">exhaustively over every interleaving</b> of the threads — not asserted, model-checked. Data flows down the center: requests <b style="color:var(--cy)">in</b>, the semaphores grant access, the proof comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and witnesses; the <b style="color:var(--red)">red team</b> breaks it.</p>
+ <p class="src"><span class="tag t-amber">source</span> P. J. Courtois, F. Heymans, D. L. Parnas, <i>Concurrent Control with "Readers" and "Writers"</i>, CACM <b>14</b>(10), 667–668 (1971) — <a href="https://doi.org/10.1145/362759.362813">doi:10.1145/362759.362813</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds and defends -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — three tools</h2>
+   <p>Nothing is memorised; the guarantee falls out of <b>two semaphores and a counter</b>:</p>
+   <p><b class="k">wrt</b> — a binary semaphore that means "the datum is free". The <i>first</i> reader to arrive takes it; the <i>last</i> to leave gives it back. A writer takes it directly. So a writer and any reader can never both hold it.</p>
+   <p><b class="k">readcount</b> — how many readers are inside, and <b class="k">mutex</b> — a second binary semaphore that guards <i>readcount itself</i>, so two readers never corrupt the count while incrementing.</p>
+   <p class="small">Live invariants over every reachable state of the current model:</p>
+   <table id="invTbl"><thead><tr><th>invariant</th><th>holds?</th></tr></thead><tbody id="invBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — built on the semaphore <span class="tag t-amber">AVAN</span></h2>
+   <p>"Many readers <b>or</b> one writer" is not a primitive — it is <b>assembled</b> from Dijkstra's <b style="color:var(--am)">P</b>/<b style="color:var(--am)">V</b>. Every P here blocks a thread until the count is positive; every V wakes it.</p>
+   <p>Courtois–Heymans–Parnas 1971 is the first to layer a <i>policy</i> (readers preferred) on top of the raw <a href="https://davidwise01.github.io/the-semaphore/" style="color:var(--cy)">semaphore</a>. That layering is the read/write lock behind every database row and every <span class="mut">RwLock</span> you have ever used. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-model-check the exclusion over <b>four configurations</b> of readers and writers, exploring <i>all</i> interleavings, and confirm the known truth — writers alone, readers together. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE · data in -> panel -> data out -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the request stream <span class="tag t-in">in &#8595;</span></h2>
+   <p>Threads arrive wanting the one shared datum. Each is one of two kinds:</p>
+   <table><thead><tr><th>kind</th><th>wants</th><th>may share?</th><th>protocol</th></tr></thead>
+    <tbody class="dist">
+     <tr><td class="y">reader</td><td>to observe</td><td class="y">yes — with other readers</td><td>P(mutex); rc++; if first P(wrt); V(mutex); READ; P(mutex); rc--; if last V(wrt); V(mutex)</td></tr>
+     <tr><td class="n">writer</td><td>to mutate</td><td class="n">no — exclusive</td><td>P(wrt); WRITE; V(wrt)</td></tr>
+    </tbody></table>
+   <p class="small">The arrivals interleave in <i>every</i> order the scheduler permits. That whole set of orders is what you feed the panel — and the panel proves the rule survives all of them.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the arrivals into the model &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>readers</label>
+      <select id="nr"><option>1</option><option selected>2</option><option>3</option></select></div>
+     <div class="row"><label>writers</label>
+      <select id="nw"><option selected>1</option><option>2</option></select></div>
+     <p class="small" id="cfgnote">Every interleaving of these threads is enumerated by breadth-first search — a real bounded model-checker.</p>
+     <div class="row"><button id="demo">&#8635; re-run one schedule</button><button id="classic">&#8594; 2R · 1W</button></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change readers or writers — the exclusion is re-proven on the spot by exploring every interleaving, never looked up.</p>
+   <div class="tl" id="timeline"></div>
+  </div>
+  <div class="flow">&#9660; &nbsp; the model emits a proof &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the guarantee <span class="tag t-out">out &#8595;</span></h2>
+   <p>What the machine produces, proven over <b>all interleavings</b>: a writer is <b>never</b> in the critical section while any reader is (nor a second writer); yet up to <b class="k">N</b> readers <i>are</i> there together — readers do not serialise like a plain mutex; a writer <b>waits</b> until the last reader leaves; and readcount never corrupts, because its own mutex guards it. The current config's verdict is above; the guarantee is the output.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-checks this live; the red team (right) tries to make a reader see a half-written value.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks and breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> This is the <b>readers-preference</b> solution — and it can <b>starve the writer</b> forever. As long as at least one reader is always inside, readcount never hits 0, wrt is never released, and a waiting writer never runs. Correct on safety, unfair on liveness.</div>
+   <p class="small" style="margin-top:8px">The 1971 paper knew this: its second algorithm gives writers priority, trading the symmetric starvation the other way. There is no free lunch — a truly fair lock needs a third mechanism (a turnstile / queue). "Correct" here means <i>mutual exclusion</i>, not <i>fairness</i>; the panel proves the first, not the second.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"A reader–writer lock is just a mutex."</s> <b>Cut.</b> A plain mutex serialises readers too — max 1 in the section. The model here reaches <b>N</b> concurrent readers; that concurrency is the whole point, and it is measured live.</p>
+   <p class="grave"><s>"One semaphore is enough."</s> <b>Cut.</b> Without the second mutex guarding readcount, two readers can race the counter — first-reader detection breaks and wrt is double-acquired or leaked. Two semaphores, not one.</p>
+   <p class="grave"><s>"It's fair to both sides."</s> <b>Kept, corrected.</b> It is <i>safe</i> for both, <i>fair</i> to neither by default — readers-preference starves writers (window 1). Safety and fairness are different proofs.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: let a writer skip its exclusive P(wrt) and mutate <b>while readers are still inside</b> — so a reader observes a half-written value. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; writer skips P(wrt)</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Skip the writer's acquire and an interleaving appears where writer-in-CS and reader-in-CS coincide — the exclusion invariant fails on that state, the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE READERS WRITERS — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (requests <b style="color:var(--cy)">in</b> → semaphores → proof <b style="color:var(--gr)">out</b>). A runnable rendering of Courtois, Heymans &amp; Parnas (CACM 1971) — the engine is LIT (mutual exclusion model-checked over every interleaving of up to five threads, concurrency measured, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what safety alone cannot promise. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// the concurrency model (verified: writer-exclusive, readers concurrent, over ALL interleavings)
+let TAMPER=false;   // when true, a writer skips P(wrt)/V(wrt) — the witness must catch the overlap
+
+function mkInit(nR,nW){
+ return { R:Array.from({length:nR},()=>({pc:0,first:null,last:null})),
+          W:Array.from({length:nW},()=>({pc:0})), mutex:1, wrt:1, rc:0 };
+}
+function clone(s){
+ return { R:s.R.map(r=>({pc:r.pc,first:r.first,last:r.last})),
+          W:s.W.map(w=>({pc:w.pc})), mutex:s.mutex, wrt:s.wrt, rc:s.rc };
+}
+function key(s){
+ return s.R.map(r=>r.pc+","+r.first+","+r.last).join("|")+"#"+s.W.map(w=>w.pc).join("|")+"#"+s.mutex+","+s.wrt+","+s.rc;
+}
+// one thread advances one atomic step; returns {next,ev} moves enabled in state s
+function moves(s){
+ const out=[];
+ s.R.forEach((r,i)=>{
+  const pc=r.pc;
+  if(pc===0){ if(s.mutex>0){ const n=clone(s); n.mutex--; n.R[i].pc=1; out.push({next:n}); } }
+  else if(pc===1){ const n=clone(s); n.rc++; n.R[i].first=(n.rc===1)?1:0; n.R[i].pc=2; out.push({next:n}); }
+  else if(pc===2){ if(r.first===1){ if(s.wrt>0){ const n=clone(s); n.wrt--; n.R[i].pc=3; out.push({next:n}); } }
+                   else { const n=clone(s); n.R[i].pc=3; out.push({next:n}); } }
+  else if(pc===3){ const n=clone(s); n.mutex++; n.R[i].pc=4; out.push({next:n,ev:{t:"R"+i,kind:"rd",act:"enters (reading)"}}); }
+  else if(pc===4){ const n=clone(s); n.R[i].pc=5; out.push({next:n,ev:{t:"R"+i,kind:"rd",act:"exits"}}); }
+  else if(pc===5){ if(s.mutex>0){ const n=clone(s); n.mutex--; n.R[i].pc=6; out.push({next:n}); } }
+  else if(pc===6){ const n=clone(s); n.rc--; n.R[i].last=(n.rc===0)?1:0; n.R[i].pc=7; out.push({next:n}); }
+  else if(pc===7){ if(r.last===1){ const n=clone(s); n.wrt++; n.R[i].pc=8; out.push({next:n}); }
+                   else { const n=clone(s); n.R[i].pc=8; out.push({next:n}); } }
+  else if(pc===8){ const n=clone(s); n.mutex++; n.R[i].pc=9; out.push({next:n}); }
+ });
+ s.W.forEach((w,i)=>{
+  const pc=w.pc;
+  if(pc===0){
+   if(TAMPER){ const n=clone(s); n.W[i].pc=1; out.push({next:n,ev:{t:"W"+i,kind:"wr",act:"enters (writing)"}}); }   // skip P(wrt)
+   else if(s.wrt>0){ const n=clone(s); n.wrt--; n.W[i].pc=1; out.push({next:n,ev:{t:"W"+i,kind:"wr",act:"enters (writing)"}}); }
+  } else if(pc===1){ const n=clone(s); n.W[i].pc=2; out.push({next:n,ev:{t:"W"+i,kind:"wr",act:"exits"}}); }
+  else if(pc===2){
+   if(TAMPER){ const n=clone(s); n.W[i].pc=3; out.push({next:n}); }   // skip V(wrt)
+   else { const n=clone(s); n.wrt++; n.W[i].pc=3; out.push({next:n}); }
+  }
+ });
+ return out;
+}
+const readersInCS=s=>s.R.filter(r=>r.pc===4).length;
+const writersInCS=s=>s.W.filter(w=>w.pc===1).length;
+const holdingMutex=s=>s.R.filter(r=>r.pc>=1&&r.pc<=3||r.pc>=6&&r.pc<=8).length;
+const rcRegion=s=>s.R.filter(r=>r.pc>=2&&r.pc<=6).length;
+
+// exhaustive breadth-first exploration of EVERY interleaving; checks invariants on every reachable state
+function explore(nR,nW){
+ const init=mkInit(nR,nW), seen=new Set(), stack=[init]; seen.add(key(init));
+ let states=0,maxR=0,exclusionOK=true,mutexBin=true,wrtBin=true,rcOK=true,holdOK=true,atMostOneW=true,overlap=false,writerWaits=false;
+ while(stack.length){
+  const s=stack.pop(); states++;
+  const rICS=readersInCS(s), wICS=writersInCS(s);
+  if(rICS>maxR) maxR=rICS;
+  if(wICS>1) atMostOneW=false;
+  if(wICS>=1&&rICS>=1){ overlap=true; exclusionOK=false; }
+  if(!(s.mutex>=0&&s.mutex<=1)) mutexBin=false;
+  if(!(s.wrt>=0&&s.wrt<=1)) wrtBin=false;
+  if(holdingMutex(s)>1) holdOK=false;
+  if(rcRegion(s)!==s.rc) rcOK=false;
+  for(const w of s.W){ if(w.pc===0&&s.wrt===0&&s.rc>0) writerWaits=true; }   // a writer blocked while readers hold the lock
+  for(const m of moves(s)){ const k=key(m.next); if(!seen.has(k)){ seen.add(k); stack.push(m.next); } }
+  if(states>500000) throw new Error("state explosion");
+ }
+ return {states,maxR,exclusionOK,mutexBin,wrtBin,rcOK,holdOK,atMostOneW,overlap,writerWaits};
+}
+
+// one concrete legal schedule, executed for real: pile the readers in (they overlap), drain them, then writers go alone
+function demoRun(nR,nW){
+ let s=mkInit(nR,nW); const log=[]; let guard=0;
+ const stepThread=pred=>{ const ms=moves(s); for(const m of ms){ if(pred(m)){ s=m.next; if(m.ev){ log.push({ev:m.ev,r:readersInCS(s),w:writersInCS(s)}); } return true; } } return false; };
+ const readerNotIn=()=> s.R.some(r=>r.pc<4);
+ while(readerNotIn()&&guard++<400){ if(!stepThread(m=>{ const idx=m.next.R.findIndex((r,i)=>r.pc!==s.R[i].pc); return idx>=0&&s.R[idx].pc<4; })) break; }
+ const readerNotDone=()=> s.R.some(r=>r.pc>=4&&r.pc<9);
+ while(readerNotDone()&&guard++<800){ if(!stepThread(m=>{ const idx=m.next.R.findIndex((r,i)=>r.pc!==s.R[i].pc); return idx>=0&&s.R[idx].pc>=4&&s.R[idx].pc<9; })) break; }
+ const writerNotDone=()=> s.W.some(w=>w.pc<3);
+ while(writerNotDone()&&guard++<800){ if(!stepThread(m=>{ const idx=m.next.W.findIndex((w,i)=>w.pc!==s.W[i].pc); return idx>=0; })) break; }
+ return log;
+}
+
+// fail-loud self-check (saves and restores the tamper flag; RETURNS true)
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const configs=[[1,1],[2,1],[3,1],[2,2]];
+ for(const c of configs){
+  const r=explore(c[0],c[1]); const tag=c[0]+"R/"+c[1]+"W";
+  t(r.exclusionOK,"writer must never overlap a reader — "+tag);
+  t(!r.overlap,"no reader-writer overlap state may be reachable — "+tag);
+  t(r.atMostOneW,"at most one writer in the critical section — "+tag);
+  t(r.mutexBin,"mutex must stay binary (0..1) — "+tag);
+  t(r.wrtBin,"wrt must stay binary (0..1) — "+tag);
+  t(r.holdOK,"readcount is guarded by its own mutex — one holder max — "+tag);
+  t(r.rcOK,"readcount must equal the number of readers in the read region — "+tag);
+ }
+ t(explore(2,1).maxR===2,"two readers must be able to read at the same time");
+ t(explore(3,1).maxR===3,"three readers must be able to read at the same time");
+ t(explore(2,1).maxR>1,"readers must NOT serialise like a plain mutex");
+ t(explore(2,1).writerWaits,"a writer must WAIT while readers hold the lock");
+ // the planted void: skip the writer's exclusive acquire -> a reader can observe a mid-write value
+ TAMPER=true;
+ const bad=explore(2,1);
+ t(bad.overlap===true,"tamper must expose an interleaving where a reader is in the section with a writer");
+ t(bad.exclusionOK===false,"tamper must break the reader-writer exclusion invariant");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const val=id=>$(id).value;
+function verdictOf(r){ return r.exclusionOK&&r.atMostOneW&&r.mutexBin&&r.wrtBin&&r.holdOK&&r.rcOK; }
+
+function renderInv(r){
+ const rows=[
+  ["writer exclusive of readers", r.exclusionOK],
+  ["at most one writer inside", r.atMostOneW],
+  ["mutex binary (guards readcount)", r.mutexBin&&r.holdOK],
+  ["wrt binary (the exclusion lock)", r.wrtBin],
+  ["readcount integrity", r.rcOK]
+ ];
+ $("invBody").innerHTML=rows.map(x=>`<tr><td style="text-align:left">${x[0]}</td><td class="${x[1]?'y':'n'}">${x[1]?'&#10003; holds':'&#10007; BROKEN'}</td></tr>`).join("");
+}
+function renderTimeline(log){
+ if(!log.length){ $("timeline").innerHTML='<span class="small">no access events</span>'; return; }
+ $("timeline").innerHTML='<div class="small" style="margin-bottom:4px">one legal schedule, executed step by step:</div>'+
+  log.map(e=>{ const c=e.ev.kind==="rd"?"rd":"wr"; const hot=e.r>=2?" hot":"";
+   return `<div class="ev"><span class="${c}">${e.ev.t} ${e.ev.act}</span><span class="cnt${hot}">readers inside: ${e.r} · writer inside: ${e.w?'yes':'no'}</span></div>`; }).join("");
+}
+function render(){
+ const nR=+val("nr"), nW=+val("nw");
+ const r=explore(nR,nW);
+ renderInv(r);
+ $("sent").innerHTML = `${nR} <span class="R">reader${nR>1?'s':''}</span> &nbsp;·&nbsp; ${nW} <span class="W">writer${nW>1?'s':''}</span> &nbsp;→&nbsp; <b>${r.states}</b> reachable states across every interleaving.`;
+ const ok=verdictOf(r);
+ $("verdict").textContent = ok?"EXCLUSION HOLDS":"EXCLUSION BROKEN";
+ $("verdict").className="verdict "+(ok?"ok":"no");
+ $("moodname").innerHTML = `max concurrent readers: <b>${r.maxR}</b> &nbsp;·&nbsp; writer alone: <b>${r.overlap?'<span style=color:var(--wall)>NO</span>':'yes'}</b>`;
+ $("reason").innerHTML = ok
+  ? `over all ${r.states} states: a writer is never in the section with a reader; ${r.maxR} readers overlap freely; the writer waits for the last reader.`
+  : (TAMPER? `red skipped P(wrt): a writer entered while a reader was still inside — the reader saw a half-written value.`
+           : `an invariant failed on some interleaving.`);
+ renderTimeline(demoRun(nR,nW));
+}
+function audit(){
+ const el=$("auditout");
+ const configs=[[1,1],[2,1],[3,1],[2,2]];
+ let allOK=true, worst=0, conc=0;
+ for(const c of configs){ const r=explore(c[0],c[1]); if(!verdictOf(r)) allOK=false; worst+=r.states; }
+ conc=explore(3,1).maxR;
+ const wr=explore(2,1);
+ const ok=allOK;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'&#10003; WITNESS — exclusion holds':'&#10007; WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">${worst} states explored across 4 configs · concurrency reached: <b style="color:${conc>1?'var(--gr)':'var(--wall)'}">${conc}</b> readers · writer-waits: <b>${wr.writerWaits?'yes':'no'}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red skipped the writer\'s acquire</span>':''}</div>`;
+}
+
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">&#10003; LIT · exclusion model-checked on load</span>';
+ ["nr","nw"].forEach(id=>$(id).addEventListener("change",()=>{ render(); audit(); }));
+ $("demo").addEventListener("click",()=>{ render(); audit(); });
+ $("classic").addEventListener("click",()=>{ $("nr").value="2"; $("nw").value="1"; render(); audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Writer skips P(wrt).</b> An interleaving now exists where the writer mutates while a reader is still inside — the reader reads a half-written value. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Skip the writer's acquire and an interleaving appears where writer-in-CS and reader-in-CS coincide — the exclusion invariant fails on that state, the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the readers-writers model did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

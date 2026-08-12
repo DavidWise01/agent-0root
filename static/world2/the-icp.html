@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE ITERATIVE CLOSEST POINT</title>
+<style>
+:root{
+  --am:#ff7a7a;
+  --bg:#08160e;
+  --bg2:#0c1f14;
+  --panel:#0e2417;
+  --panel2:#0b1d12;
+  --ink:#dcefe0;
+  --mut:#7fa88d;
+  --line:#1d3a28;
+  --blue:#7ab8ff;
+  --red:#ff7a7a;
+  --lit:#5fe08c;
+  --amber:#ffb84d;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  --sans:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 82% -8%, rgba(255,122,122,.10), transparent 60%),
+    radial-gradient(900px 500px at 12% 4%, rgba(122,184,255,.08), transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1200px;margin:0 auto}
+header.head{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:20px}
+h1{
+  font-size:clamp(26px,4.4vw,46px);
+  letter-spacing:.02em;line-height:1.02;margin:0 0 10px;
+  font-weight:800;
+  color:#fff;
+  text-shadow:0 0 30px rgba(255,122,122,.20);
+}
+.sub{max-width:74ch;color:var(--ink);font-size:15.5px;margin:0 0 12px}
+.sub b{color:var(--am)}
+.src{font-family:var(--mono);font-size:12.5px;color:var(--mut);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.src a{color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue)}
+.src a:hover{color:#bcd9ff}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.09em;
+  padding:2px 7px;border-radius:4px;border:1px solid;text-transform:uppercase;white-space:nowrap}
+.t-amber{color:var(--amber);border-color:#5a4416;background:rgba(255,184,77,.08)}
+.t-lit{color:var(--lit);border-color:#1c5233;background:rgba(95,224,140,.09)}
+.t-in{color:var(--blue);border-color:#234a70;background:rgba(122,184,255,.09)}
+.t-out{color:var(--am);border-color:#5a2626;background:rgba(255,122,122,.09)}
+.t-wall{color:#ff9d9d;border-color:#5a2020;background:rgba(255,80,80,.10)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;padding:7px 10px;border-radius:6px;border:1px solid var(--line)}
+.col.blue .teamhdr{color:var(--blue);border-color:#22405f;background:linear-gradient(180deg,rgba(122,184,255,.10),transparent)}
+.col.red .teamhdr{color:var(--red);border-color:#552626;background:linear-gradient(180deg,rgba(255,122,122,.10),transparent)}
+.col.center .teamhdr{color:var(--ink);border-color:#2a3f31;background:linear-gradient(180deg,rgba(255,255,255,.05),transparent);text-align:center}
+
+.win{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+  border-radius:10px;padding:13px 13px 15px;position:relative}
+.win .whd{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.wnum{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--mono);font-size:11.5px;font-weight:700;border:1px solid}
+.col.blue .wnum{color:var(--blue);border-color:#2c527a;background:rgba(122,184,255,.10)}
+.col.red .wnum{color:var(--red);border-color:#6a2c2c;background:rgba(255,122,122,.10)}
+.col.center .wnum{color:#fff;border-color:#3a5142;background:rgba(255,255,255,.06)}
+.wt{font-size:13px;font-weight:700;letter-spacing:.02em;color:#fff;margin-right:auto}
+.win p{margin:6px 0;font-size:13px;color:var(--ink)}
+.win p.small{font-size:12px;color:var(--mut)}
+.win .k{font-family:var(--mono);color:var(--am)}
+.win .kb{font-family:var(--mono);color:var(--blue)}
+
+.panel{background:linear-gradient(180deg,#0c2016,#081409);border-color:#26492f}
+.flow{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--mut);
+  font-family:var(--mono);font-size:11px;letter-spacing:.12em;margin:11px 0;text-transform:uppercase}
+.flow::before,.flow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+
+#cv{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:#061007}
+.ctrls{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+button{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--ink);
+  background:#12281a;border:1px solid #2b5237;border-radius:6px;padding:6px 11px;cursor:pointer}
+button:hover{background:#173venue}
+button:hover{background:#17331f;border-color:#3a6b48}
+button.danger{color:#ffcaca;background:#2a1414;border-color:#5a2626}
+button.danger:hover{background:#3a1a1a}
+button.warn{color:#ffe6bd;background:#2a2011;border-color:#5a4416}
+.readout{font-family:var(--mono);font-size:12px;margin-top:10px;display:grid;grid-template-columns:auto 1fr;
+  gap:2px 12px;color:var(--mut)}
+.readout b{color:var(--ink);font-weight:600}
+.readout .v{color:var(--lit)}
+
+.badge{font-family:var(--mono);font-size:12px;font-weight:700;border-radius:7px;padding:9px 11px;
+  border:1px solid;display:flex;align-items:center;gap:9px;line-height:1.35}
+.badge .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.badge.ok{color:var(--lit);border-color:#1c5233;background:rgba(95,224,140,.07)}
+.badge.ok .dot{background:var(--lit);box-shadow:0 0 9px var(--lit)}
+.badge.bad{color:#ff9d9d;border-color:#5a2020;background:rgba(255,80,80,.09)}
+.badge.bad .dot{background:#ff5a5a;box-shadow:0 0 9px #ff5a5a}
+#failb{display:none;margin-top:10px}
+
+.wall-note{border-left:3px solid var(--red);padding:2px 0 2px 10px;margin-top:6px}
+.grave{list-style:none;padding:0;margin:6px 0 0}
+.grave li{font-size:12.5px;margin:9px 0;padding-left:15px;position:relative}
+.grave li::before{content:"\271D";position:absolute;left:0;top:0;color:#6a4a4a}
+.grave s{color:#9c7a7a;text-decoration-color:#7a3a3a}
+.grave em{color:var(--lit);font-style:normal}
+.litline{font-family:var(--mono);font-size:12px;color:var(--lit);margin-top:8px}
+.outbox{font-family:var(--mono);font-size:12.5px;color:var(--ink);background:rgba(255,122,122,.06);
+  border:1px solid #4a2626;border-radius:7px;padding:9px 11px;margin-top:4px}
+.outbox .v{color:var(--am)}
+footer{margin-top:34px;border-top:1px solid var(--line);padding-top:16px;color:var(--mut);
+  font-family:var(--mono);font-size:11.5px;text-align:center;letter-spacing:.04em}
+code{font-family:var(--mono);color:var(--blue);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="head">
+  <h1>THE ITERATIVE CLOSEST POINT</h1>
+  <p class="sub">Snap one point cloud onto another by <b>matching then fitting</b>, over and over. Match each source point to its nearest target point, solve the optimal <b>rigid</b> transform for those pairs in closed form, apply it, and repeat. The mean-square distance falls monotonically to a local minimum — this is how two scans become one map. Rendered, not quoted.</p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>Besl &amp; McKay, <em>A Method for Registration of 3-D Shapes</em> (1992), IEEE Trans. PAMI 14(2):239–256 —</span>
+    <a href="https://doi.org/10.1109/34.121791" target="_blank" rel="noopener">doi:10.1109/34.121791</a>
+  </div>
+</header>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <div class="whd"><span class="wnum">3</span><span class="wt">THE MODEL</span><span class="tag t-lit">lit</span></div>
+      <p>ICP alternates two steps until the pose stops moving:</p>
+      <p class="small"><span class="kb">1 · match</span> — for every source point, find its <b>nearest</b> target point (Euclidean). This guesses the correspondences.</p>
+      <p class="small"><span class="kb">2 · solve</span> — with those pairs held fixed, the optimal <b>rigid</b> transform <span class="k">(R,t)</span> is the closed-form orthogonal Procrustes / SVD solution: center both sets, correlate them, take the rotation, then <span class="k">t = q̄ − R·p̄</span>.</p>
+      <p class="small">Each step can only <b>lower</b> the mean-square distance, so the metric decreases monotonically to a fixed point.</p>
+      <p class="small"><span class="tag t-amber">amber</span> Point-to-point here; point-to-plane converges in fewer iterations but needs surface normals.</p>
+    </div>
+
+    <div class="win">
+      <div class="whd"><span class="wnum">5</span><span class="wt">THE LINEAGE</span><span class="tag t-lit">lit</span></div>
+      <p>Besl &amp; McKay 1992 turned nearest-neighbour matching plus the rigid Procrustes fit into an iteration — the standard way a fresh scan is registered against the last one.</p>
+      <p class="small">Downstream neighbour: the <b>pose-graph SLAM</b> sphere (Smith &amp; Cheeseman 1986) consumes these scan-to-scan rigid transforms as graph edges. ICP gives the <i>relative pose</i>; the back-end fuses the chain of poses into one consistent map. Rigidity is the contract the map depends on.</p>
+    </div>
+
+    <div class="win">
+      <div class="whd"><span class="wnum">7</span><span class="wt">THE WITNESS</span><span class="tag t-lit">lit</span></div>
+      <p class="small">Live re-check of the rigidity guarantee on a dedicated anisotropic probe: the solver must return an <b>orthonormal</b> map (RᵀR = I, det = +1). It confirms green now, and flips red the instant window 6 swaps the rigid solve for an affine one.</p>
+      <div id="auditout" class="badge ok"><span class="dot"></span><span>witness idle</span></div>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="whd"><span class="wnum">4</span><span class="wt">DATA IN</span><span class="tag t-in">in ↓</span></div>
+      <p class="small">A source cloud <span class="kb">P</span> and a target cloud <span class="kb">Q</span>. Here <span class="kb">Q</span> is a <b>known</b> rigid transform of a hexagonal token with one displaced marker vertex: rotation <span class="k">θ*=25.000°</span>, translation <span class="k">t*=(1.30, −0.80)</span>. Initialization: identity.</p>
+    </div>
+
+    <div class="flow">match → solve → apply</div>
+
+    <div class="win panel">
+      <div class="whd"><span class="wnum">0</span><span class="wt">THE PANEL — live ICP</span><span class="tag t-lit">lit</span></div>
+      <canvas id="cv" width="520" height="360" aria-label="ICP alignment canvas"></canvas>
+      <div class="ctrls">
+        <button id="step">STEP</button>
+        <button id="run">RUN</button>
+        <button id="reset">RESET</button>
+        <button id="badinit" class="warn">BAD INIT (+60°)</button>
+      </div>
+      <div class="readout">
+        <b>iteration</b><span class="v" id="rIter">0</span>
+        <b>SSE (nearest²)</b><span class="v" id="rErr">—</span>
+        <b>recovered θ</b><span class="v" id="rTheta">—</span>
+        <b>recovered t</b><span class="v" id="rT">—</span>
+        <b>‖R−R*‖</b><span class="v" id="rDelta">—</span>
+      </div>
+      <div id="failb" class="badge bad"><span class="dot"></span><span id="failmsg">selfcheck failed</span></div>
+    </div>
+
+    <div class="flow">proven result</div>
+
+    <div class="win">
+      <div class="whd"><span class="wnum">8</span><span class="wt">DATA OUT</span><span class="tag t-out">out ↓</span></div>
+      <div class="outbox" id="litbadge">booting…</div>
+      <p class="small">From identity, correct correspondences are found (25° &lt; 30° half-spacing), so ICP recovers the exact rigid pose and the SSE collapses to machine zero.</p>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="whd"><span class="wnum">1</span><span class="wt">THE ADVERSARY</span><span class="tag t-wall">wall</span></div>
+      <p class="small">The adversary owns the <b>initial pose</b> and the <b>overlap</b>. Real ways ICP breaks:</p>
+      <p class="small">• <b>Local minima</b> — a far or symmetric start locks onto the wrong basin (window 0's BAD INIT shows it).</p>
+      <p class="small">• <b>Outliers &amp; partial overlap</b> — nearest-neighbour pairs the wrong points and drags the fit off; needs rejection / trimming.</p>
+      <p class="small">• <b>Non-rigid deformation</b> — a rigid model cannot fit it; loosening to affine over-fits it (window 6).</p>
+      <div class="wall-note"><b>The wall:</b> ICP guarantees convergence only to the <b>nearest local</b> minimum of the mean-square metric — never the global one.</div>
+    </div>
+
+    <div class="win">
+      <div class="whd"><span class="wnum">2</span><span class="wt">THE GRAVEYARD</span></div>
+      <ul class="grave">
+        <li><s>“ICP converges to the correct global alignment.”</s> <em>It converges monotonically to the nearest local minimum; global correctness needs a good coarse pose (features / branch-and-bound).</em></li>
+        <li><s>“More free parameters (affine) always fit better, so they are safer.”</s> <em>Dropping the orthogonality constraint lets scale &amp; shear absorb noise and mismatched pairs — the object distorts and the true pose is lost.</em></li>
+        <li><s>“Point-to-point ICP is as fast as any variant.”</s> <em><span class="tag t-amber">amber</span> Point-to-plane typically converges in far fewer iterations near a surface.</em></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <div class="whd"><span class="wnum">6</span><span class="wt">THE TAMPER</span><span class="tag t-wall">wall</span></div>
+      <p class="small">Planted void: replace the <b>rigid</b> Procrustes solve with a general <b>affine</b> least-squares solve (scale + shear allowed). On the witness's anisotropic probe the fit distorts the shape and the recovered map is no longer a rotation — the rigidity guarantee dies.</p>
+      <div class="ctrls">
+        <button id="tamper" class="danger">TAMPER → affine</button>
+        <button id="restore">RESTORE → rigid</button>
+      </div>
+      <p class="small" style="margin-top:8px"><span class="tag t-amber">amber</span> Honest subtlety: on <i>perfectly</i> rigid data (window 0's token) affine coincides with rigid, so the bug hides there — which is exactly why the witness runs its own non-rigid probe.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  the-icp · World II · THE FOLD · ud0 corpus — the engine is LIT: it computes live and a fail-loud selfcheck throws on any violation.<br>
+  Rendered by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- fixed-seed PRNG (deterministic; used only for optional visual jitter) ----
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// ---- 2x2 linear algebra (M = {a,b,c,d} means [[a,b],[c,d]]) ----
+function mv(M,p){return {x:M.a*p.x+M.b*p.y, y:M.c*p.x+M.d*p.y};}
+function add(p,q){return {x:p.x+q.x, y:p.y+q.y};}
+function sub(p,q){return {x:p.x-q.x, y:p.y-q.y};}
+function rot(th){var c=Math.cos(th),s=Math.sin(th);return {a:c,b:-s,c:s,d:c};}
+function det2(M){return M.a*M.d - M.b*M.c;}
+function inv2(M){var d=det2(M);return {a:M.d/d, b:-M.b/d, c:-M.c/d, d:M.a/d};}
+function mm(M,N){return {a:M.a*N.a+M.b*N.c, b:M.a*N.b+M.b*N.d, c:M.c*N.a+M.d*N.c, d:M.c*N.b+M.d*N.d};}
+function centroid(P){var x=0,y=0;for(var i=0;i<P.length;i++){x+=P[i].x;y+=P[i].y;}return {x:x/P.length, y:y/P.length};}
+
+// ---- the solver: rigid (orthogonal Procrustes) OR affine (least squares) ----
+function solveTransform(A,B,affine){
+  var ca=centroid(A), cb=centroid(B), M;
+  if(!affine){
+    // 2D orthogonal Procrustes closed form -> proper rotation, exact for clean pairing
+    var Sxx=0,Sxy=0;
+    for(var i=0;i<A.length;i++){
+      var ax=A[i].x-ca.x, ay=A[i].y-ca.y, bx=B[i].x-cb.x, by=B[i].y-cb.y;
+      Sxx+=ax*bx+ay*by; Sxy+=ax*by-ay*bx;
+    }
+    var th=Math.atan2(Sxy,Sxx);
+    M=rot(th);
+  } else {
+    // general affine: minimize ||B - (M A + t)||  ->  M = H G^{-1}
+    var Haa=0,Hab=0,Hba=0,Hbb=0,Gaa=0,Gab=0,Gbb=0;
+    for(var j=0;j<A.length;j++){
+      var px=A[j].x-ca.x, py=A[j].y-ca.y, qx=B[j].x-cb.x, qy=B[j].y-cb.y;
+      Haa+=qx*px; Hab+=qx*py; Hba+=qy*px; Hbb+=qy*py;
+      Gaa+=px*px; Gab+=px*py; Gbb+=py*py;
+    }
+    var G={a:Gaa,b:Gab,c:Gab,d:Gbb};
+    M=mm({a:Haa,b:Hab,c:Hba,d:Hbb}, inv2(G));
+  }
+  var t={x:cb.x - (M.a*ca.x+M.b*ca.y), y:cb.y - (M.c*ca.x+M.d*ca.y)};
+  return {M:M, t:t};
+}
+
+// is the linear part a proper rotation? (R^T R = I, det = +1)
+function orthoDev(M){
+  var aa=M.a*M.a+M.c*M.c, bb=M.b*M.b+M.d*M.d, off=M.a*M.b+M.c*M.d;
+  return Math.abs(aa-1)+Math.abs(bb-1)+2*Math.abs(off);
+}
+function isRotation(M){return orthoDev(M)<1e-6 && det2(M)>0;}
+
+// ---- correspondences + error ----
+function nearest(S,Q){
+  var out=[];
+  for(var i=0;i<S.length;i++){
+    var best=0,bd=Infinity;
+    for(var k=0;k<Q.length;k++){var dx=S[i].x-Q[k].x,dy=S[i].y-Q[k].y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=k;}}
+    out.push(Q[best]);
+  }
+  return out;
+}
+function sse(S,Qm){var e=0;for(var i=0;i<S.length;i++){var d=sub(S[i],Qm[i]);e+=d.x*d.x+d.y*d.y;}return e;}
+function applyT(M,t,P){return P.map(function(p){return add(mv(M,p),t);});}
+
+// ---- ICP: match -> solve(absolute P->matchedQ) -> apply, iterated ----
+function icp(P,Q,M0,t0,iters,affine){
+  var M=M0,t=t0,errs=[];
+  for(var i=0;i<iters;i++){
+    var S=applyT(M,t,P);
+    var Qm=nearest(S,Q);
+    errs.push(sse(S,Qm));
+    var sol=solveTransform(P,Qm,affine); M=sol.M; t=sol.t;
+  }
+  var Sf=applyT(M,t,P);
+  errs.push(sse(Sf,nearest(Sf,Q)));
+  return {M:M,t:t,errs:errs};
+}
+
+// ---- the disclosed tamper flag + the routed solve the engine/witness use ----
+var TAMPER=false;
+function solveActive(A,B){return solveTransform(A,B,TAMPER);}
+
+// ---- constructed problems ----
+function hexToken(){
+  // regular hexagon r=2 with one displaced marker vertex (breaks the 60-deg symmetry)
+  var P=[];
+  for(var i=0;i<6;i++){var a=i*Math.PI/3, r=(i===0?2.6:2.0);P.push({x:r*Math.cos(a), y:r*Math.sin(a)});}
+  return P;
+}
+var TRUE_TH=25*Math.PI/180, TRUE_T={x:1.30,y:-0.80};
+function tamperProbe(){
+  // target = A_true * S0 + t2 with A_true non-orthonormal (rotation * anisotropic scale)
+  var S0=[{x:1,y:0},{x:0,y:1},{x:-1,y:0.5},{x:0.7,y:-1.2},{x:1.5,y:1.1}];
+  var A=mm(rot(30*Math.PI/180), {a:1.25,b:0,c:0,d:0.85});
+  var t2={x:0.4,y:-0.3};
+  var B=applyT(A,t2,S0);
+  return {S0:S0,B:B,A:A};
+}
+
+// ---- fail-loud selfcheck: throws on any violation; returns true ----
+function selfcheck(){
+  var save=TAMPER;
+  try{
+    var P=hexToken();
+    var Q=applyT(rot(TRUE_TH),TRUE_T,P);
+
+    // (A) closed-form Procrustes is EXACT for the true correspondences
+    var sol=solveTransform(P,Q,false);
+    if(Math.abs(Math.atan2(sol.M.c,sol.M.a)-TRUE_TH)>1e-9) throw "Procrustes rotation not exact";
+    if(Math.abs(sol.t.x-TRUE_T.x)>1e-9||Math.abs(sol.t.y-TRUE_T.y)>1e-9) throw "Procrustes translation not exact";
+    if(!isRotation(sol.M)) throw "rigid solve not orthonormal";
+
+    // (B) recovery: from a centroid-aligned identity init (the standard ICP start —
+    // align the two clouds' centroids first so the nearest-neighbour matching is sane)
+    // ICP recovers the KNOWN rigid transform.
+    var cP=centroid(P), cQ=centroid(Q);
+    var good=icp(P,Q,{a:1,b:0,c:0,d:1},{x:cQ.x-cP.x,y:cQ.y-cP.y},60,false);
+    if(Math.abs(Math.atan2(good.M.c,good.M.a)-TRUE_TH)>1e-6) throw "ICP did not recover rotation";
+    if(Math.abs(good.t.x-TRUE_T.x)>1e-6||Math.abs(good.t.y-TRUE_T.y)>1e-6) throw "ICP did not recover translation";
+    if(good.errs[good.errs.length-1]>1e-9) throw "ICP did not drive SSE to zero";
+
+    // (C) the SSE decreases monotonically every iteration
+    for(var i=1;i<good.errs.length;i++){ if(good.errs[i]>good.errs[i-1]+1e-9) throw "SSE not monotone at "+i; }
+
+    // (D) known failure: a bad init converges to a LOCAL minimum, not the global
+    var bad=icp(P,Q,rot(TRUE_TH+Math.PI/3),{x:TRUE_T.x,y:TRUE_T.y},60,false);
+    var thBad=Math.atan2(bad.M.c,bad.M.a);
+    if(bad.errs[bad.errs.length-1]<1e-3) throw "bad init should NOT reach the global optimum";
+    if(Math.abs(thBad-TRUE_TH)<0.5) throw "bad init should land in a different basin";
+
+    // (E) tamper: the affine solve breaks the rigidity guarantee on the probe
+    var pr=tamperProbe();
+    TAMPER=false;
+    var mR=solveActive(pr.S0,pr.B);
+    if(!isRotation(mR.M)) throw "untampered solve must be a rotation";
+    TAMPER=true;
+    var mA=solveActive(pr.S0,pr.B);
+    if(isRotation(mA.M)) throw "tamper not detected: affine still orthonormal";
+    if(sse(applyT(mA.M,mA.t,pr.S0),pr.B)>1e-9) throw "affine should reproduce the distortion exactly";
+    TAMPER=save; // restore
+    if(!isRotation(solveActive(pr.S0,pr.B).M)) throw "restore failed";
+
+    return true;
+  } catch(err){ TAMPER=save; throw err; }
+}
+
+/* ===== UI ===== */
+(function(){
+  var P=hexToken();
+  var Q=applyT(rot(TRUE_TH),TRUE_T,P);
+  var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  var state={M:{a:1,b:0,c:0,d:1}, t:{x:0,y:0}, iter:0, timer:null};
+
+  function draw(){
+    var W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    var sc=40, ox=W*0.42, oy=H*0.52;
+    function px(p){return {x:ox+p.x*sc, y:oy-p.y*sc};}
+    // grid
+    ctx.strokeStyle="rgba(120,180,150,.08)";ctx.lineWidth=1;
+    for(var g=-6;g<=6;g++){ctx.beginPath();ctx.moveTo(ox+g*sc,0);ctx.lineTo(ox+g*sc,H);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(0,oy-g*sc);ctx.lineTo(W,oy-g*sc);ctx.stroke();}
+    var S=applyT(state.M,state.t,P), Qm=nearest(S,Q);
+    // correspondence lines
+    ctx.strokeStyle="rgba(255,255,255,.22)";ctx.lineWidth=1;
+    for(var i=0;i<S.length;i++){var a=px(S[i]),b=px(Qm[i]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+    // target cloud (blue)
+    for(var k=0;k<Q.length;k++){var q=px(Q[k]);ctx.fillStyle="#7ab8ff";ctx.beginPath();ctx.arc(q.x,q.y,5,0,7);ctx.fill();}
+    // source cloud (accent)
+    for(var j=0;j<S.length;j++){var s=px(S[j]);ctx.fillStyle=(j===0?"#ffd24d":"#ff7a7a");ctx.beginPath();ctx.arc(s.x,s.y,5,0,7);ctx.fill();}
+    // legend
+    ctx.font="11px monospace";ctx.fillStyle="#7ab8ff";ctx.fillText("● target Q",12,20);
+    ctx.fillStyle="#ff7a7a";ctx.fillText("● source P (moving)",12,36);
+    ctx.fillStyle="#ffd24d";ctx.fillText("● marker vertex",12,52);
+    updateReadout(S,Qm);
+  }
+  function updateReadout(S,Qm){
+    var th=Math.atan2(state.M.c,state.M.a)*180/Math.PI;
+    document.getElementById('rIter').textContent=state.iter;
+    document.getElementById('rErr').textContent=sse(S,Qm).toExponential(3);
+    document.getElementById('rTheta').textContent=th.toFixed(3)+"°";
+    document.getElementById('rT').textContent="("+state.t.x.toFixed(3)+", "+state.t.y.toFixed(3)+")";
+    var R=rot(TRUE_TH);
+    var dR=Math.abs(state.M.a-R.a)+Math.abs(state.M.b-R.b)+Math.abs(state.M.c-R.c)+Math.abs(state.M.d-R.d);
+    document.getElementById('rDelta').textContent=dR.toExponential(3);
+  }
+  function step(){
+    var S=applyT(state.M,state.t,P), Qm=nearest(S,Q);
+    var sol=solveActive(P,Qm); state.M=sol.M; state.t=sol.t; state.iter++; draw();
+  }
+  function reset(){ if(state.timer){clearInterval(state.timer);state.timer=null;} state.M={a:1,b:0,c:0,d:1};state.t={x:0,y:0};state.iter=0;draw(); }
+  function run(){ if(state.timer)return; state.timer=setInterval(function(){var before=Math.atan2(state.M.c,state.M.a);step();var after=Math.atan2(state.M.c,state.M.a);if(Math.abs(after-before)<1e-9){clearInterval(state.timer);state.timer=null;}},420); }
+  function badInit(){ if(state.timer){clearInterval(state.timer);state.timer=null;} state.M=rot(TRUE_TH+Math.PI/3);state.t={x:TRUE_T.x,y:TRUE_T.y};state.iter=0;draw(); }
+
+  document.getElementById('step').onclick=step;
+  document.getElementById('run').onclick=run;
+  document.getElementById('reset').onclick=reset;
+  document.getElementById('badinit').onclick=badInit;
+
+  // ---- witness (window 7) ----
+  var auditEl=document.getElementById('auditout');
+  function auditNow(){
+    var pr=tamperProbe();
+    var m=solveActive(pr.S0,pr.B);
+    var dev=orthoDev(m.M);
+    if(isRotation(m.M)){
+      auditEl.className="badge ok";
+      auditEl.innerHTML='<span class="dot"></span><span>RIGID VERIFIED · RᵀR=I, det=+1 · dev='+dev.toExponential(2)+'</span>';
+    } else {
+      auditEl.className="badge bad";
+      auditEl.innerHTML='<span class="dot"></span><span>TAMPER CAUGHT · affine map, not a rotation · dev='+dev.toFixed(3)+'</span>';
+    }
+  }
+  document.getElementById('tamper').onclick=function(){TAMPER=true;auditNow();draw();};
+  document.getElementById('restore').onclick=function(){TAMPER=false;auditNow();draw();};
+
+  // ---- boot: run fail-loud selfcheck, then light the panel ----
+  try{
+    var ok=selfcheck();
+    if(ok!==true) throw "selfcheck did not return true";
+    // real recovered numbers for DATA OUT
+    var good=icp(P,Q,{a:1,b:0,c:0,d:1},{x:0,y:0},60,false);
+    var thr=Math.atan2(good.M.c,good.M.a)*180/Math.PI;
+    document.getElementById('litbadge').innerHTML=
+      'LIT · recovered θ=<span class="v">'+thr.toFixed(3)+'°</span> (θ*=25.000°), '+
+      't=<span class="v">('+good.t.x.toFixed(3)+', '+good.t.y.toFixed(3)+')</span>, '+
+      'SSE→<span class="v">'+good.errs[good.errs.length-1].toExponential(2)+'</span>';
+    reset();
+    auditNow();
+  } catch(e){
+    document.getElementById('failb').style.display='flex';
+    document.getElementById('failmsg').textContent='SELFCHECK FAILED: '+e;
+    document.getElementById('litbadge').textContent='DEAD · selfcheck threw';
+    throw e;
+  }
+})();
+</script>
+</body>
+</html>

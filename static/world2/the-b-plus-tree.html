@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE B-PLUS TREE</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --ground:#0c1a12;
+  --ground2:#0f2418;
+  --ink:#e8f2ea;
+  --dim:#9db6a6;
+  --line:#1f3a2a;
+  --panel:#0e2016;
+  --blue:#63b3ff;
+  --red:#ff7b7b;
+  --amber:#ffcf5a;
+  --lit:#7cf0a0;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1200px 700px at 12% -8%, #12301f 0%, transparent 60%),
+    radial-gradient(1000px 600px at 110% 6%, #14261a 0%, transparent 55%),
+    var(--ground);
+  color:var(--ink);
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+  line-height:1.5;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1220px;margin:0 auto;}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px;}
+h1{
+  font-size:clamp(26px,4vw,42px);
+  margin:0 0 8px;
+  letter-spacing:.06em;
+  color:var(--am);
+  text-shadow:0 0 26px rgba(200,162,255,.30);
+}
+.sub{color:var(--ink);max-width:78ch;margin:0 0 12px;font-size:15px;}
+.sub b{color:var(--am);}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am);}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.09em;
+  padding:2px 7px;border-radius:4px;border:1px solid currentColor;text-transform:uppercase;
+  vertical-align:middle;
+}
+.t-amber{color:var(--amber);} .t-lit{color:var(--lit);}
+.t-in{color:var(--blue);} .t-out{color:var(--am);} .t-wall{color:var(--red);}
+
+.ocho{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px;align-items:start;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+.col{display:flex;flex-direction:column;gap:14px;}
+.teamhdr{
+  font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  padding:7px 10px;border-radius:7px;border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#1c3350;}
+.col.red  .teamhdr{color:var(--red);border-color:#4a2626;}
+.col.center .teamhdr{color:var(--am);border-color:#33264a;text-align:center;}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:11px;
+  background:linear-gradient(180deg,var(--ground2),var(--panel));
+  padding:13px 13px 14px;
+}
+.win h3{margin:0 0 7px;font-size:13px;letter-spacing:.05em;color:var(--ink);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.win p{margin:6px 0;font-size:12.7px;color:var(--dim);}
+.win.panel{border-color:#3a2a58;box-shadow:0 0 0 1px rgba(200,162,255,.10),0 14px 40px rgba(0,0,0,.4);}
+.wnum{
+  position:absolute;top:-10px;right:-10px;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:var(--ground);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .wnum{color:var(--blue);border-color:#1c3350;}
+.col.red .wnum{color:var(--red);border-color:#4a2626;}
+.col.center .wnum{color:var(--am);border-color:#3a2a58;}
+
+.flow{height:20px;position:relative;margin:2px 0;}
+.flow::after{content:"\25BC";position:absolute;left:50%;top:0;transform:translateX(-50%);
+  color:var(--am);font-size:13px;opacity:.7;}
+
+code,.mono{font-family:"Cascadia Code",Consolas,"Courier New",monospace;}
+.kbd{font-family:"Cascadia Code",Consolas,monospace;font-size:12px;background:#0a160f;
+  border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--ink);}
+
+.seq{font-family:"Cascadia Code",Consolas,monospace;font-size:12.5px;color:var(--ink);
+  background:#0a160f;border:1px solid var(--line);border-radius:7px;padding:8px 10px;word-spacing:2px;}
+
+.tree{display:flex;flex-direction:column;gap:14px;align-items:center;padding:6px 2px 2px;}
+.trow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center;}
+.node{
+  font-family:"Cascadia Code",Consolas,monospace;font-size:12px;font-weight:700;
+  border:1px solid var(--am);border-radius:7px;padding:5px 8px;color:var(--am);
+  background:rgba(200,162,255,.06);white-space:nowrap;
+}
+.node.leaf{border-color:var(--lit);color:var(--lit);background:rgba(124,240,160,.06);
+  display:flex;align-items:center;gap:5px;}
+.node.leaf .arrow{color:var(--dim);font-weight:400;}
+.node .k{opacity:.55;font-weight:400;}
+.legend{font-size:11px;color:var(--dim);text-align:center;}
+.legend .sw{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:middle;margin:0 3px 0 9px;}
+
+.badge{border-radius:8px;padding:9px 11px;font-size:12.5px;font-family:"Cascadia Code",Consolas,monospace;
+  border:1px solid var(--line);}
+.badge.ok{color:var(--lit);border-color:#1f4a30;background:rgba(124,240,160,.06);}
+.badge.bad{color:var(--red);border-color:#4a2626;background:rgba(255,123,123,.08);}
+.badge .row{display:flex;justify-content:space-between;gap:10px;}
+.badge .pass{color:var(--lit);} .badge .fail{color:var(--red);}
+
+.out{font-family:"Cascadia Code",Consolas,monospace;font-size:13px;color:var(--am);
+  background:#0a160f;border:1px solid #3a2a58;border-radius:7px;padding:9px 11px;font-weight:700;}
+
+.wall-note{border-left:3px solid var(--red);padding:4px 0 4px 10px;margin:6px 0;font-size:12.6px;color:#f2cfcf;}
+.grave{margin:7px 0;font-size:12.6px;color:var(--dim);}
+.grave s{color:#c98b8b;text-decoration-thickness:2px;}
+.grave .fix{color:var(--ink);}
+
+button{
+  font-family:"Segoe UI",system-ui,sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;
+  border-radius:7px;padding:8px 12px;margin:4px 6px 2px 0;border:1px solid var(--line);
+  background:#0a160f;color:var(--ink);transition:.15s;
+}
+button:hover{border-color:var(--am);}
+#tamper{color:var(--red);border-color:#4a2626;}
+#tamper:hover{background:rgba(255,123,123,.1);}
+#restore{color:var(--lit);border-color:#1f4a30;}
+#failb{display:none;margin:10px 0;color:var(--red);border:1px solid #4a2626;
+  background:rgba(255,123,123,.1);border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;}
+.litline{margin-top:8px;font-size:11.5px;color:var(--dim);}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;font-size:12px;color:var(--dim);}
+footer b{color:var(--am);}
+.note{font-size:11.5px;color:var(--dim);margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE B-PLUS TREE</h1>
+  <p class="sub">The balanced, disk-friendly index: internal nodes only <b>route</b>, and every key and value lives in the <b>leaves</b> &mdash; which are linked in order so a range scan just walks the chain. Every node stays at least half full; a full node splits and can grow the height. <b>Rendered, not quoted:</b> the tree below is built live by inserting 1&hellip;12, then verified exhaustively.</p>
+  <p class="src">
+    <span class="tag t-amber">SOURCE</span>
+    Comer, D. &mdash; <a href="https://doi.org/10.1145/356770.356776" target="_blank" rel="noopener">The Ubiquitous B-Tree</a>, ACM Computing Surveys 11(2):121&ndash;137 (1979); on Bayer &amp; McCreight (1972).
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- LEFT / BLUE -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wnum">3</span>
+      <h3>THE MODEL</h3>
+      <p>Order <b>m = 4</b>: up to 3 keys per node, split on the 4th. Internal keys are <em>separators</em> only &mdash; a key <span class="kbd">k</span> descends right when <span class="kbd">k &ge; sep</span>. All values sit in leaves; each leaf holds a <span class="kbd">next</span> pointer to its right neighbour.</p>
+      <p>Invariants, checked exhaustively: keys sorted within every node; <b>all leaves at one depth</b>; every non-root node &ge; <span class="kbd">ceil(m/2)=2</span> full; every value reachable in a leaf; each separator equals the minimum key of its right subtree.</p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>The index behind nearly every SQL database. It is <b>the-b-tree</b> specialised for disk pages: Bayer's balanced multiway tree with all data pushed into <em>linked</em> leaves, so a page holds only routing keys (higher fan-out, shallower tree) and range queries become a sequential chain walk instead of an in-order traversal.</p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">7</span>
+      <h3>THE WITNESS</h3>
+      <p>Re-checks the <em>displayed</em> tree live &mdash; flips red if the Red Team tampers.</p>
+      <div id="auditout" class="badge ok">checking&hellip;</div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="wnum">4</span>
+      <h3>DATA IN <span class="tag t-in">IN &darr;</span></h3>
+      <p>Insert this sequence into an empty B+ tree, in order:</p>
+      <div class="seq" id="seqin"></div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <span class="wnum">0</span>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <p>The live tree after all inserts. Purple = routing nodes, green = leaves; the leaf chain (&rarr;) is the range-scan path.</p>
+      <div class="tree" id="treeview"></div>
+      <div class="legend">
+        <span class="sw" style="background:var(--am)"></span>router &nbsp;
+        <span class="sw" style="background:var(--lit)"></span>leaf &middot; values live here
+      </div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win">
+      <span class="wnum">8</span>
+      <h3>DATA OUT <span class="tag t-out">OUT &darr;</span></h3>
+      <p>Point lookup <span class="kbd">find(9)</span> and range scan <span class="kbd">[4, 9]</span> walked over the leaf chain:</p>
+      <div class="out" id="dataout">&hellip;</div>
+      <div class="litbadge" id="litbadge"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT / RED -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wnum">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <div class="wall-note">"Just sort the keys in one big leaf." &mdash; then every insert shifts <span class="kbd">O(n)</span> keys and each split rewrites a whole page. The tree exists to bound work at <span class="kbd">O(log n)</span> per op and to keep pages half full so disk reads stay few.</div>
+      <div class="wall-note">"Skip the min-fullness rule to avoid splits." &mdash; nodes drift to one key, fan-out collapses, height blows up, and the balance guarantee is gone. That exact attack is wired into window 6.</div>
+    </div>
+
+    <div class="win">
+      <span class="wnum">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p class="grave"><s>A B+ tree stores values in internal nodes too.</s> <span class="fix">&rarr; No &mdash; internal nodes hold <b>only separators</b>; all values are in leaves. That is the B+ vs. plain B-tree distinction.</span></p>
+      <p class="grave"><s>Range scans do an in-order tree traversal.</s> <span class="fix">&rarr; They descend once to the low key, then follow leaf <span class="kbd">next</span> pointers &mdash; sequential, cache-friendly.</span></p>
+      <p class="grave"><s>Leaves can sit at different depths if it saves a split.</s> <span class="fix">&rarr; <b>Never.</b> Growth happens only at the root, so all leaves stay at one depth &mdash; perfect balance.</span></p>
+    </div>
+
+    <div class="win">
+      <span class="wnum">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Skip the min-fullness invariant on a split: bias it <span class="kbd">1&nbsp;+&nbsp;3</span> so the left leaf is left under-full. Balance is lost &mdash; the Witness (7) catches it live.</p>
+      <button id="tamper">Tamper the split</button>
+      <button id="restore">Restore</button>
+      <p class="note" id="tampstate">state: clean</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p><b>THE B-PLUS TREE</b> &middot; World II &middot; THE FOLD &middot; refined OCHO. The engine is genuinely LIT: it builds a real order-4 B+ tree, verifies every invariant exhaustively against reference sets, and a fixed disclosed tamper (window 6) is caught live by the witness (window 7). No floats, no faked numbers &mdash; integer and set truths only.</p>
+  <p>Built by <b>David Lee Wise (ROOT0) with AVAN.</b></p>
+</footer>
+</div>
+
+<script>
+const ORDER = 4;
+const MINCHILD = Math.ceil(ORDER/2);
+const MINLEAF  = Math.ceil(ORDER/2);
+let TAMPER = false;
+
+function makeLeaf(){ return {leaf:true, keys:[], vals:[], next:null}; }
+function makeInternal(){ return {leaf:false, keys:[], children:[]}; }
+
+function splitLeaf(node){
+  const mid = TAMPER ? 1 : Math.floor(ORDER/2);
+  const right = makeLeaf();
+  right.keys = node.keys.splice(mid);
+  right.vals = node.vals.splice(mid);
+  right.next = node.next;
+  node.next = right;
+  return {sep: right.keys[0], right: right};
+}
+function splitInternal(node){
+  const mid = Math.floor(ORDER/2);
+  const sep = node.keys[mid];
+  const right = makeInternal();
+  right.keys = node.keys.splice(mid+1);
+  right.children = node.children.splice(mid+1);
+  node.keys.splice(mid);
+  return {sep: sep, right: right};
+}
+function insertInto(node, key, val){
+  if(node.leaf){
+    let i=0; while(i<node.keys.length && node.keys[i]<key) i++;
+    if(node.keys[i]===key){ node.vals[i]=val; return null; }
+    node.keys.splice(i,0,key); node.vals.splice(i,0,val);
+    if(node.keys.length>=ORDER) return splitLeaf(node);
+    return null;
+  }
+  let i=0; while(i<node.keys.length && key>=node.keys[i]) i++;
+  const r = insertInto(node.children[i], key, val);
+  if(!r) return null;
+  node.keys.splice(i,0,r.sep);
+  node.children.splice(i+1,0,r.right);
+  if(node.keys.length>=ORDER) return splitInternal(node);
+  return null;
+}
+function insert(tree, key, val){
+  const r = insertInto(tree.root, key, val);
+  if(r){
+    const nr = makeInternal();
+    nr.keys=[r.sep]; nr.children=[tree.root, r.right];
+    tree.root = nr;
+  }
+}
+function buildTree(seq){
+  const tree = {root: makeLeaf()};
+  for(const k of seq) insert(tree, k, k);
+  return tree;
+}
+function lookup(tree, key){
+  let node = tree.root, comps=0;
+  while(!node.leaf){
+    let i=0; while(i<node.keys.length && key>=node.keys[i]){ i++; comps++; }
+    node = node.children[i];
+  }
+  for(let i=0;i<node.keys.length;i++){ comps++; if(node.keys[i]===key) return {val:node.vals[i], comps:comps}; }
+  return {val:null, comps:comps};
+}
+function rangeScan(tree, lo, hi){
+  let node = tree.root;
+  while(!node.leaf){ let i=0; while(i<node.keys.length && lo>=node.keys[i]) i++; node=node.children[i]; }
+  const out=[];
+  while(node){
+    for(let i=0;i<node.keys.length;i++){
+      const k=node.keys[i];
+      if(k>=lo && k<=hi) out.push(k);
+      if(k>hi) return out;
+    }
+    node = node.next;
+  }
+  return out;
+}
+function leafDepths(node, d, arr){
+  if(node.leaf){ arr.push(d); return; }
+  for(const c of node.children) leafDepths(c, d+1, arr);
+}
+function minKey(n){ while(!n.leaf) n=n.children[0]; return n.keys[0]; }
+function maxKey(n){ while(!n.leaf) n=n.children[n.children.length-1]; return n.keys[n.keys.length-1]; }
+function checkSorted(node){
+  for(let i=1;i<node.keys.length;i++) if(!(node.keys[i-1]<node.keys[i])) return false;
+  if(!node.leaf) for(const c of node.children) if(!checkSorted(c)) return false;
+  return true;
+}
+function checkFull(node, isRoot){
+  if(!isRoot){
+    if(node.leaf){ if(node.keys.length < MINLEAF) return false; }
+    else { if(node.children.length < MINCHILD) return false; }
+  }
+  if(!node.leaf) for(const c of node.children) if(!checkFull(c,false)) return false;
+  return true;
+}
+function checkSep(node){
+  if(node.leaf) return true;
+  for(let i=0;i<node.keys.length;i++){
+    if(maxKey(node.children[i]) >= node.keys[i]) return false;
+    if(minKey(node.children[i+1]) !== node.keys[i]) return false;
+  }
+  for(const c of node.children) if(!checkSep(c)) return false;
+  return true;
+}
+function leafKeys(tree){
+  let n=tree.root; while(!n.leaf) n=n.children[0];
+  const out=[]; while(n){ for(const k of n.keys) out.push(k); n=n.next; }
+  return out;
+}
+function verifyAll(tree, seq, lo, hi){
+  const depths=[]; leafDepths(tree.root,0,depths);
+  const balanced = depths.every(d=>d===depths[0]);
+  const sorted = checkSorted(tree.root);
+  const full = checkFull(tree.root, true);
+  const sepOK = checkSep(tree.root);
+  const ref = seq.slice().sort((a,b)=>a-b);
+  const lk = leafKeys(tree);
+  const values = lk.length===ref.length && lk.every((k,i)=>k===ref[i]);
+  const rref = ref.filter(k=>k>=lo && k<=hi);
+  const rng = rangeScan(tree, lo, hi);
+  const rangeOK = rng.length===rref.length && rng.every((k,i)=>k===rref[i]);
+  let lookupOK = true;
+  for(const k of seq){ if(lookup(tree,k).val!==k){ lookupOK=false; break; } }
+  const ok = balanced&&sorted&&full&&sepOK&&values&&rangeOK&&lookupOK;
+  return {balanced, sorted, full, sepOK, values, rangeOK, lookupOK, ok};
+}
+
+const SEQ = [1,2,3,4,5,6,7,8,9,10,11,12];
+const LO = 4, HI = 9;
+
+function selfcheck(){
+  const savedTamper = TAMPER;
+  TAMPER = false;
+  const tree = buildTree(SEQ);
+  const v = verifyAll(tree, SEQ, LO, HI);
+  if(!v.sorted)   throw new Error('keys not sorted within nodes');
+  if(!v.balanced) throw new Error('leaves not all at same depth');
+  if(!v.full)     throw new Error('a non-root node is under-half-full');
+  if(!v.sepOK)    throw new Error('separator not equal to min of right subtree');
+  if(!v.values)   throw new Error('leaf key set does not equal inserted set');
+  if(!v.rangeOK)  throw new Error('range scan disagrees with reference set');
+  if(!v.lookupOK) throw new Error('point lookup returned wrong value');
+  if(!v.ok)       throw new Error('verifyAll false on clean tree');
+
+  const depths=[]; leafDepths(tree.root,0,depths);
+  const height = depths[0];
+  const lk = lookup(tree, 9);
+  if(lk.val!==9) throw new Error('lookup(9) returned wrong value');
+  if(lk.comps > (height+1)*ORDER) throw new Error('point lookup not O(log n) bounded');
+  if(tree.root.leaf) throw new Error('no separator propagated upward to a root');
+
+  TAMPER = true;
+  const bad = buildTree(SEQ);
+  const vb = verifyAll(bad, SEQ, LO, HI);
+  if(vb.full !== false) throw new Error('tamper did not create an under-full node');
+  if(v.full === vb.full) throw new Error('tamper flag did not change the full invariant');
+  TAMPER = savedTamper;
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  try{
+    if(selfcheck()!==true) throw new Error('selfcheck did not return true');
+  }catch(e){
+    const fb=document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent='SELFCHECK FAILED: '+e.message+' — engine is NOT lit; nothing below is trustworthy.';
+    throw e;
+  }
+
+  document.getElementById('seqin').textContent = SEQ.join('  ');
+
+  function renderTree(tree){
+    const rows=[]; let level=[tree.root];
+    while(level.length){
+      rows.push(level);
+      let next=[];
+      for(const n of level) if(!n.leaf) next=next.concat(n.children);
+      level=next;
+    }
+    const host=document.getElementById('treeview');
+    host.innerHTML='';
+    rows.forEach(function(row){
+      const rd=document.createElement('div'); rd.className='trow';
+      row.forEach(function(n){
+        const el=document.createElement('div');
+        if(n.leaf){
+          el.className='node leaf';
+          el.appendChild(document.createTextNode(n.keys.join(' ')));
+          if(n.next){ const a=document.createElement('span'); a.className='arrow'; a.textContent='→'; el.appendChild(a); }
+        }else{
+          el.className='node';
+          el.innerHTML=n.keys.map(function(k){return '<span class="k">|</span>'+k;}).join(' ')+' <span class="k">|</span>';
+        }
+        rd.appendChild(el);
+      });
+      host.appendChild(rd);
+    });
+  }
+
+  function runWitness(tree){
+    const v=verifyAll(tree, SEQ, LO, HI);
+    const b=document.getElementById('auditout');
+    b.className='badge '+(v.ok?'ok':'bad');
+    const rows=[
+      ['keys sorted', v.sorted],
+      ['all leaves same depth', v.balanced],
+      ['every node >= half full', v.full],
+      ['separators = min-right', v.sepOK],
+      ['all values in leaves', v.values],
+      ['range [4,9] exact', v.rangeOK],
+      ['point lookups correct', v.lookupOK]
+    ];
+    let html=rows.map(function(r){
+      return '<div class="row"><span>'+r[0]+'</span><span class="'+(r[1]?'pass':'fail')+'">'+(r[1]?'PASS':'FAIL')+'</span></div>';
+    }).join('');
+    html='<div class="row" style="margin-bottom:6px;font-weight:800"><span>WITNESS</span><span class="'+(v.ok?'pass':'fail')+'">'+(v.ok?'TREE VALID':'TAMPER CAUGHT')+'</span></div>'+html;
+    b.innerHTML=html;
+    return v;
+  }
+
+  function paintOut(tree){
+    const lk=lookup(tree,9);
+    const rng=rangeScan(tree,LO,HI);
+    document.getElementById('dataout').innerHTML =
+      'find(9) &rarr; val '+(lk.val===null?'MISS':lk.val)+' in '+lk.comps+' comparisons<br>'+
+      'range [4,9] &rarr; ['+rng.join(', ')+']';
+  }
+
+  function show(mode){
+    TAMPER = (mode==='tamper');
+    const tree=buildTree(SEQ);
+    renderTree(tree);
+    paintOut(tree);
+    runWitness(tree);
+    document.getElementById('tampstate').textContent='state: '+(TAMPER?'TAMPERED (split biased 1+3)':'clean');
+    TAMPER=false;
+  }
+
+  const depths=[]; leafDepths(buildTree(SEQ).root,0,depths);
+  document.getElementById('litbadge').innerHTML =
+    '<div class="out" style="margin-top:8px;color:var(--lit);border-color:#1f4a30">PROVEN: 12 keys, height '+depths[0]+
+    ', 6 leaves x 2 keys, range [4,9] = exactly {4,5,6,7,8,9}</div>'+
+    '<div class="litline">LIT at boot &mdash; selfcheck() passed: invariants exhaustive, lookup O(log n), range == reference set.</div>';
+
+  document.getElementById('tamper').addEventListener('click', function(){ show('tamper'); });
+  document.getElementById('restore').addEventListener('click', function(){ show('clean'); });
+
+  show('clean');
+})();
+</script>
+</body>
+</html>

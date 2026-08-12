@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PID CONTROLLER · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff7a7a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,122,122,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,122,122,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,122,122,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#1a1204;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+input[type=range]{flex:1;min-width:90px;accent-color:var(--am);}
+.sent{font-size:13px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+.plot{width:100%;height:auto;background:#0a130c;border:1px solid var(--line);border-radius:6px;margin-top:6px;}
+.terms{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.term{flex:1;min-width:70px;text-align:center;padding:6px 4px;border:1px solid var(--line);border-radius:5px;background:#0a130c;font-size:11px;}
+.term b{display:block;font-size:15px;margin-top:2px;}
+.tP b{color:var(--cy);} .tI b{color:var(--am);} .tD b{color:var(--gr);}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE PID CONTROLLER</h1>
+ <p class="sub">Three gains, <b>no model</b>, and ninety percent of the world's control loops. Multiply the error by <b style="color:var(--cy)">K<sub>p</sub></b>, its running sum by <b style="color:var(--am)">K<sub>i</sub></b>, its slope by <b style="color:var(--gr)">K<sub>d</sub></b> — add them, feed the plant, watch the loop close. The <b class="k">integral</b> erases the steady offset; the <b class="k">derivative</b> tames the overshoot; push either too hard and the whole thing shakes apart. Down the center: the error goes <b style="color:var(--cy)">in</b>, three terms sum, the response comes <b style="color:var(--gr)">out</b>. <b style="color:var(--blue)">Blue</b> builds it; <b style="color:var(--red)">red</b> breaks it.</p>
+ <p class="src"><span class="tag t-amber">source</span> N. Minorsky, <i>Directional Stability of Automatically Steered Bodies</i>, J. Amer. Soc. Naval Engineers <b>34</b>(2):280–309 (1922), DOI <a href="https://doi.org/10.1111/j.1559-3584.1922.tb04958.x">10.1111/j.1559-3584.1922.tb04958.x</a> — 1922 print, no open scan (AMBER). Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — plant &amp; loop</h2>
+   <p>The plant is a fixed second-order body: <b>G(s) = 1/(s²+2s+1)</b>, a double pole at <b class="k">−1</b> (open-loop A = [[0,1],[−1,−2]]). No model enters the controller — only the error <b>e = r − y</b>.</p>
+   <p>The control law is three tuned gains:</p>
+   <p class="sent" style="text-align:center">u = K<sub>p</sub>·e + K<sub>i</sub>·∫e dt + K<sub>d</sub>·de/dt</p>
+   <p class="small">Closing the loop gives the cubic characteristic <b>s³ + (2+K<sub>d</sub>)s² + (1+K<sub>p</sub>)s + K<sub>i</sub></b>. Live coefficients for the current gains:</p>
+   <table id="charTbl"><thead><tr><th>α₂ (s²)</th><th>α₁ (s¹)</th><th>α₀ (s⁰)</th></tr></thead><tbody><tr id="charRow"></tr></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — control without a model</h2>
+   <p>PID is the <b>model-free</b> special case of full state feedback: instead of a gain vector on measured states, it feeds back only the output error and two operators on it — one memory (∫), one prediction (d/dt).</p>
+   <p>Give it the states and a plant and it becomes <a href="https://davidwise01.github.io/the-state-space/" style="color:var(--cy)">the-state-space</a> feedback u = −Kx. Strip the model away and three tuned knobs remain — the loop that steers ships (Minorsky's <i>New Mexico</i>), holds thermostats, and levels quadrotors. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-simulate the reference PI loop and confirm its steady-state error is zero, that P-only leaves an offset, and that the derivative sweep damps. If red removes the integral, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the error <span class="tag t-in">in ↓</span></h2>
+   <p>The reference is a unit <b>step</b>: r jumps to 1 at t=0. The output y starts at 0, so the error <b class="S" style="color:var(--cy)">e = r − y</b> starts at 1 and is what the controller sees — never the plant's internals.</p>
+   <p>Three things are read off that one error signal each instant:</p>
+   <table><thead><tr><th>term</th><th>reads</th><th>gain</th></tr></thead>
+    <tbody class="dist">
+     <tr><td style="color:var(--cy)">P</td><td>e now</td><td>K<sub>p</sub></td></tr>
+     <tr><td style="color:var(--am)">I</td><td>∫e (history)</td><td>K<sub>i</sub></td></tr>
+     <tr><td style="color:var(--gr)">D</td><td>de/dt (trend)</td><td>K<sub>d</sub></td></tr>
+    </tbody></table>
+   <p class="small">Sum the three, send <b>u</b> to the plant — that is the whole machine. It is fed to the engine below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; sum the three terms into u &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>K<sub>p</sub> <span id="vKp" class="k"></span></label><input type="range" id="Kp" min="0" max="10" step="0.5" value="4"></div>
+     <div class="row"><label>K<sub>i</sub> <span id="vKi" class="k"></span></label><input type="range" id="Ki" min="0" max="18" step="0.5" value="2"></div>
+     <div class="row"><label>K<sub>d</sub> <span id="vKd" class="k"></span></label><input type="range" id="Kd" min="0" max="4" step="0.25" value="1"></div>
+     <div class="row"><span class="toggle"><button id="pP">P</button><button id="pPI">PI</button><button id="pPID" class="on">PID</button></span></div>
+     <div class="terms">
+      <div class="term tP">P term<b id="termP">—</b></div>
+      <div class="term tI">I term<b id="termI">—</b></div>
+      <div class="term tD">D term<b id="termD">—</b></div>
+     </div>
+     <div class="row" style="margin-top:6px"><button id="reset">↺ reset (4·2·1)</button></div>
+     <p class="small">Terms shown are the controller output at the moment of peak error.</p>
+    </div>
+    <div class="readout">
+     <svg class="plot" id="plot" viewBox="0 0 300 150" preserveAspectRatio="none"></svg>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+     <div class="small" id="metrics"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every curve is an RK4 simulation of the closed loop — the steady-state error and overshoot are measured off it, never looked up. Stability is the Routh test on the live cubic.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the loop settles — read the result &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, live: with <b class="k">K<sub>i</sub>&gt;0</b> the step settles to exactly r — steady-state error <b>0</b> (final value within 1e-6). Kill the integral and a fixed offset <b>a/(a+K<sub>p</sub>) = 1/(1+K<sub>p</sub>)</b> remains. Raising <b class="k">K<sub>d</sub></b> across 0→1.5 drives the overshoot monotonically down; raising <b class="k">K<sub>i</sub></b> past <b>(2+K<sub>d</sub>)(1+K<sub>p</sub>)</b> tips the loop unstable.</p>
+   <div id="litbadge"></div>
+   <p class="small">The witness (left) confirms these live; the red team (right) tries to make them lie.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> PID is <b>blind</b>. With no model it cannot anticipate — only react to error already made. It has no notion of constraints, and pure derivative amplifies measurement noise without bound, so real loops must filter D and clamp the integrator (anti-windup) or it saturates and overshoots wildly.</div>
+   <p class="small" style="margin-top:8px">Three scalar gains cannot place three-plus poles independently, handle dead time, or decouple multivariable plants. For those you need the model PID throws away — the state-space, MPC, robust designs. PID is not <i>the</i> controller; it is the proof that three numbers steer most of the world.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"More gain is always better control."</s> <b>Cut.</b> Past the Routh boundary (2+K<sub>d</sub>)(1+K<sub>p</sub>) &lt; K<sub>i</sub> the loop diverges — verified in the engine at K<sub>i</sub>=40.</p>
+   <p class="grave"><s>"The derivative term always reduces overshoot."</s> <b>Cut.</b> Only up to a point: the fixed controller zero at −K<sub>i</sub>/K<sub>p</sub> means very large K<sub>d</sub> brings overshoot <i>back</i>. The witness sweeps only the monotone region 0→1.5.</p>
+   <p class="grave"><s>"P-only can be tuned to zero error."</s> <b>Kept, corrected.</b> Its offset shrinks with K<sub>p</sub> but is a/(a+K<sub>p</sub>) &gt; 0 for any finite gain — only ∫ removes it exactly.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: quietly set <b>K<sub>i</sub> = 0</b> — delete the integral action — while still claiming "steady-state error is zero." The blue witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ set Ki = 0, keep the claim</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">With the integral gone, the residual proportional offset 1/(1+K<sub>p</sub>) is nonzero — so the "error is 0" check fires. The witness re-simulates, finds the offset, and turns red. The attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE PID CONTROLLER — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (error <b style="color:var(--cy)">in</b> → three terms → response <b style="color:var(--gr)">out</b>). A runnable rendering of Minorsky's 1922 three-term controller on a fixed second-order plant — the engine is LIT (RK4 closed-loop sim, integral zeroes the offset, derivative damps, Routh boundary self-checked, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what three gains cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* the engine — a fixed 2nd-order plant G(s)=1/(s^2+2s+1), PID closed loop, all closed-form-checkable */
+const b=1.0, c0=1.0, c1=2.0;               // plant: dx1=x2 ; dx2=-c0 x1 - c1 x2 + b u ; y=x1
+const A0=[[0,1],[-c0,-c1]];                // open-loop system matrix, known double eigenvalue -1
+let TAMPER=false;                          // red move: forces the integral gain to 0 (disclosed void)
+function effKi(Ki){ return TAMPER?0:Ki; }
+
+// --- fixed-seed PRNG (kept for determinism; engine itself is deterministic) ---
+let _seed=0x2f6e2b1;
+function rnd(){ _seed=(_seed*1664525+1013904223)>>>0; return _seed/4294967296; }
+
+// --- small 2x2 linear algebra, closed-form-checkable ---
+function mm(A,B){ return [[A[0][0]*B[0][0]+A[0][1]*B[1][0], A[0][0]*B[0][1]+A[0][1]*B[1][1]],
+                          [A[1][0]*B[0][0]+A[1][1]*B[1][0], A[1][0]*B[0][1]+A[1][1]*B[1][1]]]; }
+function mAdd(A,B){ return [[A[0][0]+B[0][0],A[0][1]+B[0][1]],[A[1][0]+B[1][0],A[1][1]+B[1][1]]]; }
+function mScale(A,s){ return [[A[0][0]*s,A[0][1]*s],[A[1][0]*s,A[1][1]*s]]; }
+function det2(A){ return A[0][0]*A[1][1]-A[0][1]*A[1][0]; }
+function inv2(A){ const d=det2(A); return [[A[1][1]/d,-A[0][1]/d],[-A[1][0]/d,A[0][0]/d]]; }
+function rank2(A){ if(Math.abs(det2(A))>1e-9) return 2;
+  if(Math.abs(A[0][0])>1e-9||Math.abs(A[0][1])>1e-9||Math.abs(A[1][0])>1e-9||Math.abs(A[1][1])>1e-9) return 1; return 0; }
+function eig2(A){ const tr=A[0][0]+A[1][1], dt=det2(A), disc=tr*tr-4*dt, s=Math.sqrt(Math.abs(disc));
+  return disc>=0? [(tr-s)/2,(tr+s)/2] : [tr/2,tr/2]; } // real part on the double/complex case
+function matexp2(A,t){ let M=mScale(A,t), T=[[1,0],[0,1]], term=[[1,0],[0,1]];
+  for(let k=1;k<40;k++){ term=mScale(mm(term,M),1/k); T=mAdd(T,term); } return T; }
+function ctrbRank(){ const B=[[0,b],[1,-2]]; // [B, A0 B] with B=[0;b], A0 B=[b; -c1 b]=[1;-2]
+  return rank2(B); }
+function obsvRank(){ const O=[[1,0],[0,1]]; // [C; C A0] with C=[1,0], C A0=[0,1]
+  return rank2(O); }
+
+// --- closed-loop RK4 simulation of the PID loop on a unit step ---
+function deriv(s,Kp,Ki,Kd,r){
+  const x1=s[0],x2=s[1],z=s[2];
+  const u=Kp*(r-x1)+effKi(Ki)*z-Kd*x2;    // de/dt = -x2 for a constant reference, so D term = -Kd x2
+  return [x2, -c0*x1-c1*x2+b*u, r-x1];
+}
+function simulate(Kp,Ki,Kd,T,dt){
+  T=T||40; dt=dt||0.01; const n=Math.round(T/dt); let s=[0,0,0], peak=-1e9, yfin=0;
+  const ys=[]; const sample=Math.max(1,Math.floor(n/240));
+  for(let i=0;i<n;i++){
+    const k1=deriv(s,Kp,Ki,Kd,1);
+    const k2=deriv([s[0]+0.5*dt*k1[0],s[1]+0.5*dt*k1[1],s[2]+0.5*dt*k1[2]],Kp,Ki,Kd,1);
+    const k3=deriv([s[0]+0.5*dt*k2[0],s[1]+0.5*dt*k2[1],s[2]+0.5*dt*k2[2]],Kp,Ki,Kd,1);
+    const k4=deriv([s[0]+dt*k3[0],s[1]+dt*k3[1],s[2]+dt*k3[2]],Kp,Ki,Kd,1);
+    s=[s[0]+dt/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),
+       s[1]+dt/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]),
+       s[2]+dt/6*(k1[2]+2*k2[2]+2*k3[2]+k4[2])];
+    if(s[0]>peak) peak=s[0];
+    yfin=s[0];
+    if(i%sample===0) ys.push(s[0]);
+    if(Math.abs(s[0])>1e6) return {yfin:1e9,peak:1e9,ys:ys,diverged:true};
+  }
+  return {yfin:yfin,peak:peak,ys:ys,diverged:false};
+}
+function ssError(Kp,Ki,Kd){ return 1-simulate(Kp,Ki,Kd).yfin; }
+function overshoot(Kp,Ki,Kd){ const r=simulate(Kp,Ki,Kd); return r.peak-1; }
+// Routh test on s^3 + a2 s^2 + a1 s + a0 : stable iff a2>0, a0>0, a2*a1>a0
+function routhStable(Kp,Ki,Kd){ const a2=c1+b*Kd, a1=c0+b*Kp, a0=b*effKi(Ki);
+  return a2>0 && a0>0 && a2*a1>a0; }
+function stabBoundaryKi(Kp,Kd){ return (c1+b*Kd)*(c0+b*Kp)/b; }
+
+// --- fail-loud self-check: THROWS on any violation, returns true on success ---
+function selfcheck(){
+  const t=(cond,msg)=>{ if(!cond) throw new Error(msg); };
+  const near=(a,x,tol,msg)=>{ if(Math.abs(a-x)>tol) throw new Error(msg+" (got "+a+")"); };
+  const save=TAMPER; TAMPER=false;
+
+  // (a) LTI plant identities — closed-form, to 1e-8
+  const ev=eig2(A0); near(ev[0],-1,1e-12,"open-loop eigenvalue #1 must be -1"); near(ev[1],-1,1e-12,"open-loop eigenvalue #2 must be -1");
+  near(det2(A0),1,1e-12,"det(A0) must be 1");
+  const iv=inv2(A0); near(iv[0][0],-2,1e-12,"inv(A0)[0][0]"); near(iv[0][1],-1,1e-12,"inv(A0)[0][1]");
+  near(iv[1][0],1,1e-12,"inv(A0)[1][0]"); near(iv[1][1],0,1e-12,"inv(A0)[1][1]");
+  const E=matexp2(A0,0.5), e=Math.exp(-0.5);   // defective: e^{A0 t}=e^{-t}[[1+t,t],[-t,1-t]]
+  near(E[0][0],e*1.5,1e-8,"matexp[0][0]"); near(E[0][1],e*0.5,1e-8,"matexp[0][1]");
+  near(E[1][0],-e*0.5,1e-8,"matexp[1][0]"); near(E[1][1],e*0.5,1e-8,"matexp[1][1]");
+  t(ctrbRank()===2,"plant must be controllable (rank 2)");
+  t(obsvRank()===2,"plant must be observable (rank 2)");
+
+  // (b) INTEGRAL eliminates steady-state error; P-only does not
+  t(Math.abs(ssError(4,2,1))<1e-6,"with Ki>0 the steady-state error must be 0");
+  t(Math.abs(ssError(4,0,0))>0.01,"P-only control must leave a nonzero offset");
+  near(ssError(4,0,0),1/(1+4),1e-6,"P-only offset must equal 1/(1+Kp)");
+
+  // (c) DERIVATIVE adds damping: overshoot strictly decreases over the monotone Kd sweep
+  const sweep=[0,0.5,1.0,1.5]; let prev=Infinity;
+  for(const Kd of sweep){ const os=overshoot(4,2,Kd); t(os<prev-1e-6,"increasing Kd must reduce overshoot at Kd="+Kd); prev=os; }
+
+  // (d) STABLE inside the computed range, UNSTABLE outside it
+  near(stabBoundaryKi(4,1),15,1e-12,"Routh boundary Ki* must be 15 for Kp=4,Kd=1");
+  t(routhStable(4,2,1),"Ki=2 must be inside the stable range");
+  t(!routhStable(4,40,1),"Ki=40 must be outside the stable range");
+  t(!simulate(4,40,1).diverged===false,"unstable gains must diverge in simulation");
+  t(simulate(4,40,1).diverged===true,"unstable gains must diverge in simulation");
+  t(simulate(4,2,1).diverged===false,"stable gains must not diverge");
+
+  // (e) THE PLANTED VOID — set Ki=0 (remove integral) yet the "error is 0" claim must now FAIL
+  TAMPER=true;
+  t(Math.abs(ssError(4,2,1))>0.01,"tamper: with Ki forced to 0 the steady-state error is no longer 0 — the check must fire");
+  TAMPER=false;
+
+  TAMPER=save; return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+function fmt(x,d){ return (x>=0?"":"")+x.toFixed(d===undefined?3:d); }
+
+function drawPlot(ys){
+  const W=300,H=150, n=ys.length; if(!n){ $("plot").innerHTML=""; return; }
+  let mx=1.05; for(const v of ys) if(v>mx) mx=v; if(mx>3) mx=3;
+  const x=i=>i/(n-1)*W;
+  const y=v=>H-6-(v/mx)*(H-16);
+  let pts=""; for(let i=0;i<n;i++) pts+=(i?" ":"")+x(i).toFixed(1)+","+y(Math.min(ys[i],mx)).toFixed(1);
+  const yr=y(1), y0=y(0);
+  $("plot").innerHTML=
+    `<line x1="0" y1="${yr.toFixed(1)}" x2="${W}" y2="${yr.toFixed(1)}" stroke="#3a5a42" stroke-dasharray="4 3"/>`+
+    `<line x1="0" y1="${y0.toFixed(1)}" x2="${W}" y2="${y0.toFixed(1)}" stroke="#20402a"/>`+
+    `<polyline points="${pts}" fill="none" stroke="var(--am)" stroke-width="1.8"/>`+
+    `<text x="4" y="${(yr-3).toFixed(1)}" fill="#3a5a42" font-size="8">r = 1</text>`;
+}
+
+function render(){
+  const Kp=+$("Kp").value, Ki=+$("Ki").value, Kd=+$("Kd").value;
+  $("vKp").textContent=Kp.toFixed(1); $("vKi").textContent=Ki.toFixed(1); $("vKd").textContent=Kd.toFixed(2);
+  const a2=(c1+b*Kd), a1=(c0+b*Kp), a0=(b*effKi(Ki));
+  $("charRow").innerHTML=`<td>${a2.toFixed(2)}</td><td>${a1.toFixed(2)}</td><td>${a0.toFixed(2)}</td>`;
+  const sim=simulate(Kp,Ki,Kd);
+  drawPlot(sim.ys);
+  const stable=routhStable(Kp,Ki,Kd) && !sim.diverged;
+  const ess=1-sim.yfin, os=sim.peak-1;
+  $("verdict").textContent = stable ? "STABLE LOOP" : "UNSTABLE — diverges";
+  $("verdict").className="verdict "+(stable?"ok":"no");
+  if(stable){
+    $("reason").innerHTML = (Math.abs(ess)<1e-4? "steady-state error ≈ <b style='color:var(--gr)'>0</b>":"offset e<sub>ss</sub> = <b style='color:var(--am)'>"+fmt(ess)+"</b>")
+      + " · peak overshoot "+(os>1e-4?(100*os).toFixed(1)+"%":"none");
+    $("metrics").innerHTML="Routh: (2+K<sub>d</sub>)(1+K<sub>p</sub>) = "+ (a2*a1).toFixed(2) +" &gt; K<sub>i</sub> = "+a0.toFixed(2)+" ✓ &nbsp;·&nbsp; boundary K<sub>i</sub>* = "+stabBoundaryKi(Kp,Kd).toFixed(2);
+  }else{
+    $("reason").innerHTML = "Routh test fails: (2+K<sub>d</sub>)(1+K<sub>p</sub>) = "+(a2*a1).toFixed(2)+" ≤ K<sub>i</sub> = "+a0.toFixed(2);
+    $("metrics").innerHTML = "past the boundary K<sub>i</sub>* = "+stabBoundaryKi(Kp,Kd).toFixed(2)+" the loop oscillates and grows without bound.";
+  }
+  // three term contributions at the moment of peak error (t=0, e=1, de/dt from first step)
+  const e0=1;
+  $("termP").textContent = (Kp*e0).toFixed(2);
+  $("termI").textContent = TAMPER? "0.00 ⚠" : "grows";
+  $("termD").textContent = Kd? "damps" : "0.00";
+  audit();
+}
+function audit(){
+  const el=$("auditout");
+  const essPI=1-simulate(4,2,1).yfin;          // reference PI loop — should be ~0
+  const essP =1-simulate(4,0,0).yfin;          // P-only — should be ~0.2
+  const claimZero = Math.abs(essPI)<1e-6;       // the standing claim: PI erases the error
+  const ok = claimZero && essP>0.01 && routhStable(4,2,1) && !routhStable(4,40,1);
+  el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+   + `<div class="small" style="margin-top:6px">PI e<sub>ss</sub>: <b style="color:${claimZero?'var(--gr)':'var(--wall)'}">${essPI.toExponential(1)}</b> (claim: 0) &nbsp;·&nbsp; P-only offset: <b style="color:${essP>0.01?'var(--gr)':'var(--wall)'}">${essP.toFixed(3)}</b> &nbsp;·&nbsp; Ki=2 stable ${routhStable(4,2,1)} · Ki=40 stable ${routhStable(4,40,1)}${TAMPER?' &nbsp; — <span style="color:var(--wall)">red set Ki=0; the loop no longer erases the error</span>':''}</div>`;
+}
+function preset(kind){
+  $("pP").classList.toggle("on",kind==="P"); $("pPI").classList.toggle("on",kind==="PI"); $("pPID").classList.toggle("on",kind==="PID");
+  if(kind==="P"){ $("Kp").value=4; $("Ki").value=0; $("Kd").value=0; }
+  if(kind==="PI"){ $("Kp").value=4; $("Ki").value=2; $("Kd").value=0; }
+  if(kind==="PID"){ $("Kp").value=4; $("Ki").value=2; $("Kd").value=1; }
+  render();
+}
+
+/* ===== boot ===== */
+try{
+  selfcheck();
+  $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+  ["Kp","Ki","Kd"].forEach(id=>$(id).addEventListener("input",()=>{ ["pP","pPI","pPID"].forEach(p=>$(p).classList.remove("on")); render(); }));
+  $("pP").addEventListener("click",()=>preset("P"));
+  $("pPI").addEventListener("click",()=>preset("PI"));
+  $("pPID").addEventListener("click",()=>preset("PID"));
+  $("reset").addEventListener("click",()=>preset("PID"));
+  $("tamper").addEventListener("click",()=>{ TAMPER=true;
+    $("tampernote").innerHTML="<b style='color:var(--wall)'>K<sub>i</sub> deleted.</b> The integral action is gone, yet the claim stands. The witness (window 7) re-simulated: the residual proportional offset is nonzero, the 'error is 0' check fired, and it went red. The attack is real; it is caught.";
+    render(); });
+  $("restore").addEventListener("click",()=>{ TAMPER=false;
+    $("tampernote").innerHTML="With the integral gone, the residual proportional offset 1/(1+K<sub>p</sub>) is nonzero — so the &quot;error is 0&quot; check fires. The witness re-simulates, finds the offset, and turns red. The attack is real and it is caught.";
+    render(); });
+  preset("PID");
+}catch(e){
+  const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the PID engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE NUCLEAR FISSION</title>
+<style>
+:root{
+  --am:#ffd23f;
+  --bg:#071a10;
+  --bg2:#0a2416;
+  --ground:#04120a;
+  --ink:#e8f5ea;
+  --dim:#9fc7a8;
+  --line:#1c3d28;
+  --blue:#5bb8ff;
+  --bluebg:#0a1f2e;
+  --red:#ff6b6b;
+  --redbg:#2a1010;
+  --lit:#7CFC7C;
+  --wall:#ff9a3c;
+  --panel:#0c2818;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #0e3320 0%, var(--bg) 55%, var(--ground) 100%);
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:22px 16px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{
+  font-size:clamp(26px,5vw,44px);
+  letter-spacing:.06em;margin:0 0 8px;
+  color:var(--am);
+  text-shadow:0 0 24px rgba(255,210,63,.28);
+}
+.sub{color:var(--dim);max-width:70ch;margin:0 0 12px;font-size:14px}
+.src{font-size:12.5px;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.09em;
+  padding:2px 7px;border-radius:4px;vertical-align:middle;margin-right:6px;
+  border:1px solid currentColor;
+}
+.t-amber{color:var(--am)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  padding:7px 10px;border-radius:6px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);background:var(--bluebg);border-color:#12405e}
+.col.red .teamhdr{color:var(--red);background:var(--redbg);border-color:#5e1414}
+.col.center .teamhdr{color:var(--am);background:#241d05;border-color:#5e4c12;text-align:center}
+
+.win{
+  position:relative;background:linear-gradient(180deg,var(--bg2),var(--panel));
+  border:1px solid var(--line);border-radius:9px;padding:13px 13px 13px 40px;
+}
+.win .wn{
+  position:absolute;left:10px;top:11px;width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  background:#0c2417;border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .win .wn{color:var(--blue);border-color:#12405e}
+.col.red .win .wn{color:var(--red);border-color:#5e1414}
+.win h3{margin:0 0 7px;font-size:13px;letter-spacing:.05em;color:var(--ink)}
+.win p{margin:0 0 8px;font-size:12.5px;color:var(--dim)}
+.win.panel{border-color:#5e4c12;box-shadow:0 0 0 1px rgba(255,210,63,.08),0 0 30px rgba(255,210,63,.06)}
+.win.panel .wn{color:var(--am);border-color:#5e4c12}
+
+.flow{
+  text-align:center;color:var(--am);font-size:16px;letter-spacing:.3em;
+  margin:2px 0;opacity:.7;
+}
+.mono{font-size:12px;color:var(--ink)}
+.kv{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line);padding:3px 0;font-size:12px}
+.kv b{color:var(--am);font-weight:700}
+.readout{
+  background:#04140b;border:1px solid var(--line);border-radius:6px;
+  padding:9px;font-size:12px;white-space:pre-wrap;color:var(--lit);
+  margin:8px 0;overflow-x:auto;
+}
+canvas{width:100%;height:auto;background:#04140b;border:1px solid var(--line);border-radius:6px;display:block}
+.badge{
+  display:inline-block;font-size:11px;font-weight:700;padding:4px 9px;border-radius:5px;
+  border:1px solid currentColor;margin-top:6px;
+}
+.b-ok{color:var(--lit)}
+.b-bad{color:var(--red)}
+.dead{color:#6f8f79;text-decoration:line-through;text-decoration-color:var(--red)}
+.fix{color:var(--lit)}
+.wall-note{
+  border-left:3px solid var(--wall);padding:6px 0 6px 10px;margin:6px 0;
+  color:#ffd7ab;font-size:12.5px;background:rgba(255,154,60,.05);
+}
+button{
+  font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+  background:#123;border:1px solid var(--line);border-radius:6px;padding:6px 11px;margin:4px 6px 0 0;
+}
+button:hover{border-color:var(--am)}
+#tamper{border-color:#5e1414;color:var(--red)}
+#restore{border-color:#12405e;color:var(--blue)}
+#failb{display:none;color:var(--red);border:1px solid var(--red);border-radius:6px;padding:8px;margin:8px 0;font-size:12px}
+input[type=range]{width:100%;accent-color:var(--am)}
+label.rng{font-size:11.5px;color:var(--dim);display:block;margin-top:6px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;color:var(--dim);font-size:11.5px}
+.small{font-size:11px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE NUCLEAR FISSION</h1>
+  <p class="sub">A heavy nucleus splits; the two fragments sit higher on the binding-energy curve than the parent, closer to the iron peak, and the mass they shed comes out as ~200 MeV — mostly the Coulomb recoil of two positive fragments flying apart. The freed neutrons can start the next split. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Bohr &amp; Wheeler, <em>The Mechanism of Nuclear Fission</em>, Phys. Rev. <b>56</b>, 426 (1939) &mdash; <a href="https://doi.org/10.1103/PhysRev.56.426" target="_blank" rel="noopener">doi:10.1103/PhysRev.56.426</a></p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wn">3</span>
+      <h3>THE MODEL &mdash; liquid drop + Coulomb ledger</h3>
+      <p>The nucleus is a charged liquid drop. Its binding energy follows the semi-empirical mass formula (Weizsaecker): volume minus surface minus Coulomb minus asymmetry, plus pairing. Fission is the ledger entry when a drop splits.</p>
+      <div class="mono readout" id="modelout"></div>
+      <p class="small">B(Z,A) = a<sub>V</sub>A &minus; a<sub>S</sub>A<sup>2/3</sup> &minus; a<sub>C</sub>Z&sup2;/A<sup>1/3</sup> &minus; a<sub>A</sub>(A&minus;2Z)&sup2;/A + &delta;. The Q of a split is just B(fragments) &minus; B(parent).</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>Bohr &amp; Wheeler 1939 gave fission its first worked theory: the drop deforms, the Coulomb term wins over surface tension past the saddle, and it snaps. The fragments climb toward the <b>the-binding-energy</b> Fe-56 peak, releasing ~200 MeV. The multiplication factor <b>k</b> sets criticality. This is the downhill mirror of <b>the-nuclear-fusion</b> &mdash; both cash in the same binding curve, one from above the peak, one from below.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">7</span>
+      <h3>THE WITNESS</h3>
+      <p>Re-runs the full selfcheck live, including the planted tamper. Flips red if any invariant is broken.</p>
+      <div id="auditout" class="badge b-ok">witness: idle</div>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="wn">4</span>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>A parent (U-236* = U-235 + n) and one representative split: Ba-141 + Kr-92 + 3 neutrons. Prompt neutrons per fission &nu;. Multiplication factor k.</p>
+      <div class="mono">
+        <div class="kv"><span>parent</span><b>U-236 (Z=92, A=236)</b></div>
+        <div class="kv"><span>fragment A</span><b>Ba-141 (Z=56)</b></div>
+        <div class="kv"><span>fragment B</span><b>Kr-92 (Z=36)</b></div>
+        <div class="kv"><span>prompt neutrons &nu;</span><b>2.43</b></div>
+      </div>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win panel">
+      <span class="wn">0</span>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span> &mdash; the live engine</h3>
+      <div class="mono readout" id="engineout"></div>
+      <canvas id="cv" width="520" height="220" aria-label="binding-energy curve and chain regimes"></canvas>
+      <label class="rng">multiplication factor k = <span id="klab">1.00</span>
+        <input id="k" type="range" min="0.80" max="1.20" step="0.01" value="1.00"></label>
+      <div class="mono readout" id="chainout"></div>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win">
+      <span class="wn">8</span>
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <div class="mono readout" id="outout"></div>
+      <div id="litbadge" class="badge b-ok">result: pending</div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wn">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <div class="wall-note">"Energy comes out, so the fragments must be more tightly held &mdash; heavier binding." Wrong sign of the intuition. Binding energy is a <em>deficit</em>: the fragments have MORE binding energy per nucleon but LESS total mass. What is released is the mass defect, and most of it is not nuclear glue at all &mdash; it is the electrostatic potential of two positive fragments repelling each other apart (~170&ndash;250 MeV at contact).</div>
+      <div class="wall-note">"The liquid drop predicts everything." No &mdash; it misses shell structure. Bohr-Wheeler is smooth; it does not explain why the split is asymmetric (Ba/Kr, not two equal halves) nor the exact 235-vs-238 fissility gap. That needs shell corrections. Marked AMBER.</div>
+    </div>
+
+    <div class="win">
+      <span class="wn">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p class="dead">"Fission energy is stored chemical energy released fast."</p>
+      <p class="fix">&rarr; It is nuclear: ~10<sup>6</sup>&times; chemical, from the mass difference B(frag)&minus;B(parent).</p>
+      <p class="dead">"A single neutron guarantees a chain reaction."</p>
+      <p class="fix">&rarr; Only if k&ge;1. Below critical mass most neutrons leak or are captured; k&lt;1 dies out.</p>
+      <p class="dead">"Splitting any nucleus releases energy."</p>
+      <p class="fix">&rarr; Only above the Fe-56 peak. Below it, splitting COSTS energy &mdash; that is fusion territory.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Planted void: force the fragment binding LOWER than the parent, so Q&lt;0 and fission would ABSORB energy. The witness (7) catches it.</p>
+      <button id="tamper">flip fragments below parent (Q&lt;0)</button>
+      <button id="restore">restore</button>
+      <div id="tampout" class="mono readout"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE NUCLEAR FISSION &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus. Engine computed live from the semi-empirical mass formula, the Coulomb potential at scission, and the multiplication factor k; the smooth liquid-drop split energy is a first estimate (measured total ~200 MeV, fragment KE ~165 MeV). Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===================================================================
+// PURE ENGINE + SELFCHECK  (runs headless: no canvas, no DOM)
+// ===================================================================
+
+// --- physical constants (explicit) ---
+var C_LIGHT = 2.99792458e8;      // m/s
+var U_MEV   = 931.5;             // atomic mass unit in MeV/c^2
+var N_A     = 6.02214076e23;     // Avogadro
+var E2      = 1.43996;           // e^2/(4 pi eps0), MeV*fm
+var R0      = 1.2;               // nuclear radius constant, fm
+var LN2     = Math.log(2);
+
+// --- semi-empirical mass formula coefficients (MeV) ---
+var aV = 15.75, aS = 17.80, aC = 0.711, aA = 23.70, aP = 11.18;
+
+// disclosed planted void: plain top-level variable so selfcheck runs headless
+var TAMPER = false;
+
+// fixed-seed PRNG (deterministic) for any stochastic demo
+function mkPRNG(seed){
+  var s = seed >>> 0;
+  return function(){ s = (1664525*s + 1013904223) >>> 0; return s/4294967296; };
+}
+
+function approx(a,b,tol){ return Math.abs(a-b) <= tol; }
+
+// pairing term delta(Z,A)
+function pairing(Z,A){
+  var N = A - Z;
+  var even = function(x){ return x % 2 === 0; };
+  if(even(Z) && even(N)) return  aP/Math.sqrt(A);
+  if(!even(Z) && !even(N)) return -aP/Math.sqrt(A);
+  return 0;
+}
+
+// total binding energy (MeV) via Weizsaecker: five terms with correct signs
+function bindingEnergy(Z,A){
+  var vol  =  aV*A;
+  var surf = -aS*Math.pow(A,2/3);
+  var coul = -aC*Z*Z/Math.pow(A,1/3);
+  var asym = -aA*(A-2*Z)*(A-2*Z)/A;
+  var pair =  pairing(Z,A);
+  return vol + surf + coul + asym + pair;
+}
+function bindingPerNucleon(Z,A){ return bindingEnergy(Z,A)/A; }
+
+// Q-value of fission = B(fragments) - B(parent).  Positive => energy released.
+// The tamper corrupts the fragment binding downward so Q flips negative.
+function qFission(){
+  var scale = TAMPER ? 0.85 : 1.0;
+  var bFrag = scale*(bindingEnergy(56,141) + bindingEnergy(36,92));
+  var bPar  = bindingEnergy(92,236);
+  return bFrag - bPar;
+}
+
+// Coulomb energy of two fragments touching at scission (point-charge estimate)
+function coulombFragments(Z1,A1,Z2,A2){
+  var d = R0*(Math.pow(A1,1/3) + Math.pow(A2,1/3));
+  return E2*Z1*Z2/d;
+}
+
+// chain population after n generations, relative to N0=1
+function chainPop(k,n){ return Math.pow(k,n); }
+
+// multiplication factor from prompt neutrons: k = nu * f  (f = fraction inducing next fission)
+function kFromNu(nu,f){ return nu*f; }
+
+// radioactive decay law
+function decayN(N0,t,halflife){ return N0*Math.exp(-LN2*t/halflife); }
+
+// Geiger-Nuttall / Gamow: log10(half-life) linear in 1/sqrt(Q).  a>0 => higher Q, shorter life.
+function gnLogHalfLife(Q,Z){ var a=1.61*Z, b=-28.9; return a/Math.sqrt(Q) + b; }
+
+// beta-minus decay: n -> p + e- + antineutrino.  charge and A conserved.
+function betaMinus(Z,A){ return { Z:Z+1, A:A, neutrino:true, lepton:"antineutrino" }; }
+
+// fusion Q for D + T -> He4 + n  (binding difference), MeV
+function fusionQ_DT(){
+  // B(He4) approx measured 28.30 MeV; B(D)=2.224, B(T)=8.482; neutron unbound
+  var bHe4 = 28.30, bD = 2.224, bT = 8.482;
+  return bHe4 - (bD + bT);
+}
+
+// exponential attenuation and mean free path
+function attenuate(I0,n,sigma,x){ return I0*Math.exp(-n*sigma*x); }
+function meanFreePath(n,sigma){ return 1/(n*sigma); }
+
+// neutrino oscillation survival-appearance probability
+function oscP(theta,dm2,L,E){
+  var s2 = Math.sin(2*theta);
+  return s2*s2 * Math.pow(Math.sin(1.27*dm2*L/E),2);
+}
+
+// Bateman two-step chain, analytic daughter N2(t), N2(0)=0
+function batemanN2(N10,l1,l2,t){
+  return N10*l1/(l2-l1)*(Math.exp(-l1*t) - Math.exp(-l2*t));
+}
+// same chain by RK4 ODE integration (compared to analytic at 1e-6)
+function batemanRK4(N10,l1,l2,T,dt){
+  var N1=N10, N2=0, steps=Math.round(T/dt);
+  var f1=function(a){ return -l1*a; };
+  var f2=function(a,b){ return l1*a - l2*b; };
+  for(var i=0;i<steps;i++){
+    var k11=f1(N1),                 k12=f2(N1,N2);
+    var k21=f1(N1+0.5*dt*k11),      k22=f2(N1+0.5*dt*k11,N2+0.5*dt*k12);
+    var k31=f1(N1+0.5*dt*k21),      k32=f2(N1+0.5*dt*k21,N2+0.5*dt*k22);
+    var k41=f1(N1+dt*k31),          k42=f2(N1+dt*k31,N2+dt*k32);
+    N1 += dt*(k11+2*k21+2*k31+k41)/6;
+    N2 += dt*(k12+2*k22+2*k32+k42)/6;
+  }
+  return N2;
+}
+
+var NU_U235 = 2.43;
+
+// -------------------------------------------------------------------
+// fail-loud selfcheck: THROWS on any violation, RETURNS true on pass
+// -------------------------------------------------------------------
+function selfcheck(){
+  var TOL = 1e-6;
+
+  // 1. decay law N = N0 exp(-lambda t); half-life halves it
+  if(decayN(1000,0,10) !== 1000) throw new Error("decay t=0");
+  if(!approx(decayN(1000,10,10),500,1e-9)) throw new Error("decay half-life");
+
+  // 2. binding-energy curve peaks near Fe-56 at ~8.8 MeV/nucleon
+  var baFe = bindingPerNucleon(26,56);
+  if(!(baFe>8.6 && baFe<9.0)) throw new Error("Fe-56 peak out of range: "+baFe);
+  if(!(bindingPerNucleon(26,56) > bindingPerNucleon(92,238))) throw new Error("Fe above U");
+  if(!(bindingPerNucleon(26,56) > bindingPerNucleon(2,4))) throw new Error("Fe above He");
+
+  // 3. Weizsaecker term signs: volume adds, surface/Coulomb/asymmetry subtract
+  if(!(aV>0 && aS>0 && aC>0 && aA>0)) throw new Error("SEMF coeff signs");
+  var probeZ=50, probeA=118;
+  if(!( -aS*Math.pow(probeA,2/3) < 0 )) throw new Error("surface sign");
+  if(!( -aC*probeZ*probeZ/Math.pow(probeA,1/3) < 0 )) throw new Error("coulomb sign");
+
+  // 4. fission Q positive, order ~200 MeV, from B/A difference (climb to the peak)
+  var Q = qFission();
+  if(!(Q>0)) throw new Error("Q must be positive (release)");
+  if(!(Q>140 && Q<210)) throw new Error("Q magnitude out of range: "+Q);
+  if(!(bindingPerNucleon(56,141) > bindingPerNucleon(92,236))) throw new Error("Ba climb");
+  if(!(bindingPerNucleon(36,92)  > bindingPerNucleon(92,236))) throw new Error("Kr climb");
+
+  // 5. released energy dominated by Coulomb repulsion of the two fragments (order 100+ MeV)
+  var Ec = coulombFragments(56,141,36,92);
+  if(!(Ec>120)) throw new Error("Coulomb estimate too small: "+Ec);
+
+  // 6. chain regimes: k<1 dies, k=1 sustains, k>1 grows over n generations
+  if(!(chainPop(0.95,100) < 1)) throw new Error("subcritical");
+  if(chainPop(1.00,100) !== 1) throw new Error("critical");
+  if(!(chainPop(1.05,100) > 1)) throw new Error("supercritical");
+  if(!(chainPop(1.05,200) > chainPop(1.05,100))) throw new Error("supercritical monotone");
+
+  // 7. ~2-3 prompt neutrons feed k; k = nu*f, linear in nu
+  if(!(NU_U235>2 && NU_U235<3)) throw new Error("nu range");
+  var fcrit = 1/NU_U235;
+  if(!approx(kFromNu(NU_U235,fcrit),1,1e-9)) throw new Error("k critical from nu");
+  if(!approx(kFromNu(2*NU_U235,0.2),2*kFromNu(NU_U235,0.2),1e-9)) throw new Error("k linear in nu");
+
+  // 8. Geiger-Nuttall: lower Q => longer half-life (monotone in 1/sqrt(Q))
+  if(!(gnLogHalfLife(4,90) > gnLogHalfLife(9,90))) throw new Error("Geiger-Nuttall monotone");
+
+  // 9. beta-minus conserves charge (Z+1) and A, emits a neutrino
+  var bd = betaMinus(92,239);
+  if(!(bd.Z===93 && bd.A===239 && bd.neutrino===true)) throw new Error("beta conservation");
+
+  // 10. fusion D+T releases ~17.6 MeV
+  var Qf = fusionQ_DT();
+  if(!(Qf>17 && Qf<18)) throw new Error("fusion Q: "+Qf);
+
+  // 11. attenuation: at one mean free path, I/I0 = 1/e
+  var n=1e28, sig=1e-28, mfp=meanFreePath(n,sig);
+  if(!approx(attenuate(1,n,sig,mfp)/1, 1/Math.E, 1e-9)) throw new Error("mean free path");
+
+  // 12. neutrino oscillation: P=0 at L=0, peak = sin^2(2 theta)
+  var th=0.5, dm2=2.5e-3, E=1;
+  if(!approx(oscP(th,dm2,0,E),0,1e-12)) throw new Error("osc at L=0");
+  var Lpeak = Math.PI/2/(1.27*dm2/E);
+  if(!approx(oscP(th,dm2,Lpeak,E), Math.pow(Math.sin(2*th),2), 1e-9)) throw new Error("osc peak");
+
+  // 13. Bateman chain: RK4 integral agrees with analytic to 1e-6 (secular equilibrium)
+  var l1=0.001, l2=0.1, T=200, dt=0.02;
+  var an = batemanN2(1,l1,l2,T);
+  var nu = batemanRK4(1,l1,l2,T,dt);
+  if(!approx(nu,an,TOL)) throw new Error("Bateman RK4 vs analytic > 1e-6: "+(nu-an));
+  // transient/secular ratio A2/A1 -> l2/(l2-l1) ~ 1 when l1<<l2
+  var A1=l1*Math.exp(-l1*T), A2=l2*an;
+  if(!approx(A2/A1, l2/(l2-l1), 1e-3)) throw new Error("secular equilibrium ratio");
+
+  // ---- PLANTED VOID: exercise the tamper, prove the witness catches it, restore ----
+  var savedTamper = TAMPER;          // save flag
+  var qGood = qFission();            // > 0
+  TAMPER = true;                     // corrupt fragments below parent
+  var qBad = qFission();             // must now be negative
+  if(!(qBad < 0)) throw new Error("tamper failed to flip Q negative");
+  if(!(qBad !== qGood)) throw new Error("tamper produced no change");
+  TAMPER = savedTamper;              // restore flag
+  if(qFission() !== qGood) throw new Error("restore failed");
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+var boot_ok = false;
+try {
+  boot_ok = selfcheck();
+} catch(err) {
+  boot_ok = false;
+  if (typeof document !== "undefined") {
+    var fb = document.getElementById("failb");
+    if (fb){ fb.style.display="block"; fb.textContent = "SELFCHECK FAILED  -  engine not LIT  -  "+err.message; }
+  }
+  throw err;
+}
+
+if (typeof document !== "undefined") {
+  var $ = function(id){ return document.getElementById(id); };
+
+  // window 3  -  THE MODEL readout
+  (function(){
+    var rows = [
+      ["B/A U-236 (parent)", bindingPerNucleon(92,236).toFixed(3)+" MeV"],
+      ["B/A Ba-141 fragment", bindingPerNucleon(56,141).toFixed(3)+" MeV"],
+      ["B/A Kr-92 fragment",  bindingPerNucleon(36,92).toFixed(3)+" MeV"],
+      ["B/A Fe-56 (the peak)", bindingPerNucleon(26,56).toFixed(3)+" MeV"]
+    ];
+    $("modelout").textContent = rows.map(function(r){return r[0].padEnd(22)+" "+r[1];}).join("\n");
+  })();
+
+  // window 0  -  THE PANEL live engine
+  var Q  = qFission();
+  var Ec = coulombFragments(56,141,36,92);
+  function renderEngine(){
+    var lines = [
+      "Q = B(frag) - B(parent) = +"+Q.toFixed(1)+" MeV   (POSITIVE => release)",
+      "fragments climb  "+bindingPerNucleon(92,236).toFixed(2)+" -> ~"+
+        ((bindingPerNucleon(56,141)+bindingPerNucleon(36,92))/2).toFixed(2)+" MeV/nucleon",
+      "Coulomb push at scission ~ "+Ec.toFixed(0)+" MeV  (dominates the release)",
+      "prompt neutrons nu = "+NU_U235.toFixed(2)+"  ->  critical when f = "+(1/NU_U235).toFixed(3),
+      "measured total ~200 MeV (KE ~165 + neutrons + gamma + beta + nu)"
+    ];
+    $("engineout").textContent = lines.join("\n");
+  }
+  renderEngine();
+
+  // window 8  -  DATA OUT + litbadge
+  $("outout").textContent =
+    "FISSION RELEASES ENERGY.\nQ = +"+Q.toFixed(1)+" MeV from the mass defect; ~200 MeV total.\n"+
+    "k<1 dies  |  k=1 self-sustains  |  k>1 grows as k^n.";
+  var lb = $("litbadge");
+  lb.textContent = "result: Q = +"+Q.toFixed(1)+" MeV  |  LIT";
+  lb.className = "badge b-ok";
+
+  // chain slider
+  function renderChain(){
+    var k = parseFloat($("k").value);
+    $("klab").textContent = k.toFixed(2);
+    var gens = [1,5,10,20];
+    var out = gens.map(function(n){
+      return "gen "+String(n).padStart(2)+":  "+chainPop(k,n).toExponential(2)+" x N0";
+    });
+    var regime = k<1 ? "SUBCRITICAL  -  dies out" : (k===1 ? "CRITICAL  -  self-sustains" : "SUPERCRITICAL  -  grows");
+    $("chainout").textContent = "k = "+k.toFixed(2)+"  ["+regime+"]\n"+out.join("\n");
+    draw(k);
+  }
+  $("k").addEventListener("input", renderChain);
+
+  // canvas  -  binding-energy curve + chain regime
+  var cv = $("cv"), ctx = cv.getContext("2d");
+  function draw(k){
+    var W=cv.width, H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    // binding-energy curve B/A vs A (representative nuclei)
+    var pad=34;
+    ctx.strokeStyle="#1c3d28"; ctx.lineWidth=1;
+    ctx.strokeRect(pad,10,W-pad-10,H/2-20);
+    ctx.fillStyle="#9fc7a8"; ctx.font="10px monospace";
+    ctx.fillText("B/A (MeV) vs mass number A  -  fragments climb toward Fe-56", pad, 8);
+    var pts=[[2,4],[6,12],[8,16],[20,40],[26,56],[36,92],[50,118],[56,141],[74,184],[92,236]];
+    ctx.strokeStyle="#ffd23f"; ctx.lineWidth=1.6; ctx.beginPath();
+    for(var i=0;i<pts.length;i++){
+      var A=pts[i][1], ba=bindingPerNucleon(pts[i][0],A);
+      var x=pad+(A/240)*(W-pad-10);
+      var y=(10+H/2-20)-(ba/9.2)*(H/2-24);
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    // mark parent + fragments
+    function mark(Z,A,col,txt){
+      var ba=bindingPerNucleon(Z,A);
+      var x=pad+(A/240)*(W-pad-10);
+      var y=(10+H/2-20)-(ba/9.2)*(H/2-24);
+      ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y,3,0,7); ctx.fill();
+      ctx.fillText(txt,x-6,y-6);
+    }
+    mark(92,236,"#ff6b6b","U");
+    mark(56,141,"#5bb8ff","Ba");
+    mark(36,92,"#5bb8ff","Kr");
+    mark(26,56,"#7CFC7C","Fe");
+
+    // chain regime bars
+    var y0=H/2+8;
+    ctx.fillStyle="#9fc7a8"; ctx.fillText("chain: N per generation at k="+k.toFixed(2), pad, y0);
+    var prng=mkPRNG(20260811);
+    var base=(W-pad-10)/12;
+    for(var g=0;g<12;g++){
+      var pop=chainPop(k,g);
+      var hh=Math.max(1,Math.min(H/2-24, Math.log10(1+pop)*20));
+      var x=pad+g*base;
+      var col = k<1 ? "#5bb8ff" : (k>1 ? "#ff6b6b" : "#ffd23f");
+      ctx.fillStyle=col;
+      ctx.fillRect(x, H-14-hh, base-3, hh);
+      // deterministic jitter dots (fixed-seed) as neutron flecks
+      var j=prng();
+      ctx.fillStyle="rgba(255,210,63,0.4)";
+      ctx.fillRect(x+ (base-3)*j, H-16-hh, 1.5,1.5);
+    }
+  }
+
+  renderChain();
+
+  // window 7  -  THE WITNESS (live re-check)
+  function witness(){
+    var el=$("auditout");
+    try {
+      var ok = selfcheck();
+      el.className="badge b-ok";
+      el.textContent = "witness: PASS  Q=+"+qFission().toFixed(1)+" MeV - all invariants hold";
+    } catch(e){
+      el.className="badge b-bad";
+      el.textContent = "witness: BROKEN - "+e.message;
+    }
+  }
+  witness();
+
+  // window 6  -  THE TAMPER (live: shows the witness catching a real void)
+  function showTamper(){
+    var el=$("tampout");
+    var savedT=TAMPER;
+    var qNow=qFission();
+    el.textContent =
+      "TAMPER = "+TAMPER+"\n"+
+      "Q(now) = "+qNow.toFixed(1)+" MeV "+(qNow<0?"(NEGATIVE  -  fission would ABSORB energy)":"(positive  -  release)")+"\n"+
+      (TAMPER ? "invariant Q>0 VIOLATED  -  see witness (7)" : "invariant Q>0 holds");
+  }
+  $("tamper").addEventListener("click", function(){
+    TAMPER = true;
+    showTamper();
+    // witness re-runs selfcheck, which saves/restores TAMPER internally,
+    // but the live TAMPER flag stays set, so re-derive the displayed Q honestly:
+    var el=$("auditout");
+    var qBad=qFission();
+    if(qBad<0){ el.className="badge b-bad"; el.textContent="witness: BROKEN - Q="+qBad.toFixed(1)+" MeV < 0 (release check fails)"; }
+    renderEngineTampered(qBad);
+  });
+  $("restore").addEventListener("click", function(){
+    TAMPER = false;
+    showTamper();
+    Q = qFission();
+    renderEngine();
+    witness();
+    lb.textContent = "result: Q = +"+Q.toFixed(1)+" MeV  |  LIT";
+    lb.className="badge b-ok";
+  });
+  function renderEngineTampered(qBad){
+    $("engineout").textContent =
+      "TAMPERED: fragment binding forced below parent.\n"+
+      "Q = "+qBad.toFixed(1)+" MeV  <  0  =>  fission would ABSORB energy.\n"+
+      "This contradicts the binding-energy climb. Witness (7) is red.\n"+
+      "Press restore.";
+    lb.textContent="result: Q = "+qBad.toFixed(1)+" MeV  |  INVALID";
+    lb.className="badge b-bad";
+  }
+  showTamper();
+}
+</script>
+</body>
+</html>

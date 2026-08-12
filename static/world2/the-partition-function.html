@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PARTITION FUNCTION</title>
+<style>
+  :root{
+    --am:#c0b0ff;
+    --bg:#08130d;
+    --bg2:#0c1c13;
+    --panel:#0e2015;
+    --ink:#e8f2ea;
+    --dim:#9db4a6;
+    --line:#1d3626;
+    --blue:#7fb0ff;
+    --red:#ff8a8a;
+    --amber:#ffbe5c;
+    --lit:#6ee787;
+    --in:#7fe0d0;
+    --out:#ffd27f;
+    --wall:#ff8a8a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #10281a 0%, transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, #0d1f16 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    padding:26px 18px 60px;
+  }
+  .wrap{max-width:1220px;margin:0 auto}
+  header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+  h1{
+    font-size:30px;letter-spacing:.08em;margin:0 0 8px;
+    color:var(--am);text-shadow:0 0 22px rgba(192,176,255,.25);
+  }
+  .sub{color:var(--dim);max-width:78ch;margin:0 0 10px}
+  .sub b{color:var(--ink)}
+  .src{font-size:12.5px;color:var(--dim)}
+  .src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+  .tag{
+    display:inline-block;font-size:10.5px;letter-spacing:.14em;font-weight:700;
+    padding:2px 7px;border-radius:4px;vertical-align:middle;margin-right:6px;
+    border:1px solid currentColor;
+  }
+  .t-amber{color:var(--amber)}
+  .t-lit{color:var(--lit)}
+  .t-in{color:var(--in)}
+  .t-out{color:var(--out)}
+  .t-wall{color:var(--wall)}
+
+  .ocho{display:grid;grid-template-columns:1fr 1.06fr 1fr;gap:16px;align-items:start}
+  @media(max-width:880px){.ocho{grid-template-columns:1fr}}
+
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{
+    font-size:11px;letter-spacing:.18em;font-weight:700;text-transform:uppercase;
+    padding:7px 10px;border-radius:6px;border:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);
+  }
+  .col.blue .teamhdr{color:var(--blue);border-color:#1c3350}
+  .col.red .teamhdr{color:var(--red);border-color:#4a2626}
+  .col.center .teamhdr{color:var(--am);border-color:#33305a;text-align:center}
+
+  .win{
+    position:relative;border:1px solid var(--line);border-radius:9px;
+    background:linear-gradient(180deg,var(--bg2),var(--panel));
+    padding:13px 13px 12px 40px;
+  }
+  .win .wn{
+    position:absolute;left:10px;top:11px;width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11.5px;font-weight:700;color:#04110a;background:var(--dim);
+  }
+  .col.blue .win .wn{background:var(--blue)}
+  .col.red .win .wn{background:var(--red)}
+  .col.center .win .wn{background:var(--am)}
+  .win h3{margin:0 0 7px;font-size:12.5px;letter-spacing:.09em;color:var(--ink)}
+  .win p{margin:0 0 7px;font-size:12.6px;color:var(--dim)}
+  .win p b{color:var(--ink)}
+  .win.panel{border-color:#3a3568;background:linear-gradient(180deg,#0f1330,#0e142c);box-shadow:0 0 30px rgba(120,100,220,.10) inset}
+
+  .flow{
+    text-align:center;color:var(--am);font-size:13px;letter-spacing:.3em;
+    padding:2px 0;opacity:.7;
+  }
+
+  code,.mono{font-family:inherit}
+  .eq{background:#04110a;border:1px solid var(--line);border-radius:6px;padding:8px 9px;margin:6px 0;font-size:12.4px;color:var(--ink);overflow-x:auto}
+  .eq .k{color:var(--am)}
+  .kv{display:flex;justify-content:space-between;gap:10px;font-size:12.6px;padding:2px 0;border-bottom:1px dashed rgba(255,255,255,.06)}
+  .kv:last-child{border-bottom:0}
+  .kv span:first-child{color:var(--dim)}
+  .kv span:last-child{color:var(--ink);font-variant-numeric:tabular-nums}
+  .kv b{color:var(--am)}
+
+  .ctrl{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .ctrl label{font-size:11.5px;color:var(--dim);min-width:52px}
+  input[type=range]{flex:1;accent-color:var(--am)}
+  .tval{font-variant-numeric:tabular-nums;color:var(--am);min-width:56px;text-align:right}
+
+  .bars{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+  .bar{display:flex;align-items:center;gap:8px;font-size:11px}
+  .bar .lab{color:var(--dim);min-width:44px}
+  .bar .track{flex:1;height:12px;background:#04110a;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .bar .fill{height:100%;background:linear-gradient(90deg,var(--am),#8a76e0)}
+  .bar .pv{color:var(--ink);min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
+
+  .badge{
+    display:inline-block;padding:4px 9px;border-radius:5px;font-size:11px;font-weight:700;
+    letter-spacing:.09em;border:1px solid currentColor;
+  }
+  .ok{color:var(--lit)}
+  .bad{color:var(--red)}
+  #litbadge{margin-top:6px}
+  #auditout{margin-top:6px}
+
+  .btn{
+    font:inherit;font-size:11.5px;cursor:pointer;color:var(--ink);
+    background:#132a1c;border:1px solid var(--line);border-radius:6px;padding:6px 11px;
+    margin:4px 6px 2px 0;letter-spacing:.05em;
+  }
+  .btn:hover{border-color:var(--am);color:var(--am)}
+  #tamper{border-color:#4a2626;color:var(--red)}
+  #tamper:hover{background:#2a1414}
+
+  .wall-note{border-left:3px solid var(--wall);padding-left:10px;color:var(--dim);font-size:12.4px}
+  .dead{color:var(--dim)}
+  .dead s{color:#6c8577}
+  .dead .fix{color:var(--lit)}
+
+  #failb{
+    display:none;margin:14px 0;padding:12px 14px;border:1px solid var(--red);
+    border-radius:8px;background:#2a1414;color:var(--red);font-size:12.5px;
+  }
+  footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:11.5px}
+  .small{font-size:11px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE PARTITION FUNCTION</h1>
+  <p class="sub">One sum over every state, and it knows the whole system. Write <b>Z = &Sigma;<sub>i</sub> e<sup>&minus;&beta;E<sub>i</sub></sup></b> with <b>&beta; = 1/kT</b>; then energy, entropy, free energy, and heat capacity all fall out of <b>ln Z</b> and its derivatives. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">SOURCE</span> J. W. Gibbs, <i>Elementary Principles in Statistical Mechanics</i> (C. Scribner's Sons, 1902) &mdash; <a href="https://archive.org/details/elementaryprinc00gibbgoog" target="_blank" rel="noopener">archive.org/details/elementaryprinc00gibbgoog</a>. <span class="small">AMBER: period edition scan, no canonical DOI; foundational text where Z (the &ldquo;phase integral&rdquo;) is defined.</span></p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- LEFT: BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wn">3</span>
+      <h3>THE MODEL</h3>
+      <p>A discrete system with energy levels <b>{E<sub>i</sub>}</b>. The demo uses a two-level system, <b>E<sub>0</sub>=0, E<sub>1</sub>=&epsilon;=1</b>, in natural units (<b>k=1</b>). Every equilibrium quantity is a functional of the single number Z.</p>
+      <div class="eq">
+        Z(&beta;) = <span class="k">&Sigma;</span> e<sup>&minus;&beta;E<sub>i</sub></sup> = 1 + e<sup>&minus;&beta;</sup><br>
+        p<sub>i</sub> = e<sup>&minus;&beta;E<sub>i</sub></sup> / Z<br>
+        &#10216;E&#10217; = &minus; d(ln Z)/d&beta;<br>
+        F = &minus;kT ln Z &nbsp; S = (&#10216;E&#10217;&minus;F)/T &nbsp; C = d&#10216;E&#10217;/dT
+      </div>
+      <p class="small">The claim Blue defends: <b>Z is a generating function</b>. Each derivative of ln Z is a physical observable, so the whole thermodynamics is read off, never separately postulated.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>The sum over states that knows all. <b>Boltzmann</b> gives the weight <b>e<sup>&minus;&beta;E</sup></b> of a single state; Gibbs's Z <b>collects them</b> and turns the collection into a lever: <b>&#8722;d(ln Z)/d&beta;</b> is energy, <b>&#8722;kT ln Z</b> is free energy, <b>&#8706;<sup>2</sup>ln Z/&#8706;&beta;<sup>2</sup></b> is energy variance &rarr; heat capacity.</p>
+      <p class="small">Neighbour sphere: <b>the-boltzmann-distribution</b> &rarr; here its normaliser becomes the object of study. Z is the bridge from one-state weights to whole-system thermodynamics &mdash; the generating function of statistical mechanics.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">7</span>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check of the load-bearing identity <b>&minus;d(ln Z)/d&beta; = &Sigma; E<sub>i</sub> p<sub>i</sub></b> (energy from the log-derivative equals the direct average). It confirms green, and flips <b>red</b> the instant window 6 tampers with Z.</p>
+      <span id="auditout" class="badge ok">WITNESS: pending&hellip;</span>
+      <p class="small" style="margin-top:8px">Also checked live: F = &minus;kT ln Z, S = k(ln Z + &beta;&#10216;E&#10217;), and the fluctuation identity C = &beta;<sup>2</sup>Var(E).</p>
+    </div>
+  </div>
+
+  <!-- CENTER: THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="wn">4</span>
+      <h3>DATA IN <span class="tag t-in">IN &darr;</span></h3>
+      <p>Energy spectrum <b>{0, 1}</b> and a temperature <b>T</b> (drag). From these two inputs alone the machine forms <b>&beta;=1/T</b> and <b>Z</b>.</p>
+      <div class="ctrl">
+        <label for="tsl">T</label>
+        <input id="tsl" type="range" min="0.10" max="4.00" step="0.01" value="1.00">
+        <span class="tval" id="tval">1.00</span>
+      </div>
+      <div class="kv"><span>&beta; = 1/kT</span><span id="betaout">1.000000</span></div>
+    </div>
+
+    <div class="flow">&darr; &nbsp; &beta; &nbsp; &darr;</div>
+
+    <div class="win panel">
+      <span class="wn">0</span>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <div class="eq" id="zeq">Z = 1 + e<sup>&minus;&beta;</sup></div>
+      <div class="kv"><span>Z(&beta;)</span><span><b id="Zout">&mdash;</b></span></div>
+      <div class="kv"><span>ln Z</span><span id="lnZout">&mdash;</span></div>
+      <div class="kv"><span>&#10216;E&#10217; = &minus;d(ln Z)/d&beta;</span><span><b id="Eout">&mdash;</b></span></div>
+      <div class="kv"><span>F = &minus;kT ln Z</span><span id="Fout">&mdash;</span></div>
+      <div class="kv"><span>S = k(ln Z + &beta;&#10216;E&#10217;)</span><span id="Sout">&mdash;</span></div>
+      <div class="kv"><span>C = &beta;<sup>2</sup> Var(E)</span><span id="Cout">&mdash;</span></div>
+      <div class="bars" id="bars"></div>
+    </div>
+
+    <div class="flow">&darr; &nbsp; ln Z &nbsp; &darr;</div>
+
+    <div class="win">
+      <span class="wn">8</span>
+      <h3>DATA OUT <span class="tag t-out">OUT &darr;</span></h3>
+      <p>Proven result: at any T the four thermodynamic potentials above are <b>consistent derivatives of one function</b>. The average energy computed from the log-derivative agrees with the direct state-average to <b>&lt;10<sup>&minus;9</sup></b>, and the heat capacity equals <b>&beta;<sup>2</sup></b> times the energy variance.</p>
+      <span id="litbadge" class="badge ok">LIT: booting&hellip;</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wn">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note">&ldquo;Z is a free parameter you tune.&rdquo; &mdash; False. Z is <b>fixed</b> the moment {E<sub>i</sub>} and &beta; are fixed; it is the normaliser, not a knob. The only genuine walls are physical: Z assumes the system is in <b>equilibrium with a heat bath</b> and that the spectrum is <b>known and summable</b>. For real continuous / many-body systems the sum diverges or is intractable &mdash; Z is exact but rarely closed-form.</p>
+      <p class="small">Second wall (AMBER): the classical phase integral needs an <b>h<sup>3N</sup>/N!</b> factor (Gibbs paradox) to be dimensionless and extensive; the discrete demo sidesteps this and states so.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p class="dead"><s>&ldquo;Free energy F is just the average energy &#10216;E&#10217;.&rdquo;</s><br><span class="fix">&rarr; F = &#10216;E&#10217; &minus; TS. They coincide only at T=0; the &minus;TS term is what makes F the quantity minimised at fixed T.</span></p>
+      <p class="dead"><s>&ldquo;Entropy needs a separate microscopic count; Z can't give it.&rdquo;</s><br><span class="fix">&rarr; S = k(ln Z + &beta;&#10216;E&#10217;) falls straight out of ln Z. No extra postulate.</span></p>
+      <p class="dead"><s>&ldquo;Heat capacity is unrelated to fluctuations.&rdquo;</s><br><span class="fix">&rarr; C = &beta;<sup>2</sup>(&#10216;E<sup>2</sup>&#10217;&minus;&#10216;E&#10217;<sup>2</sup>): response equals fluctuation. Verified live to &lt;10<sup>&minus;6</sup>.</span></p>
+    </div>
+
+    <div class="win">
+      <span class="wn">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Disclosed planted void. This drops the exponential and sums the <b>bare energies</b>: <b>Z &rarr; &Sigma; E<sub>i</sub></b>. Now Z has no &beta;-dependence, so <b>&minus;d(ln Z)/d&beta; = 0 &ne; &#10216;E&#10217;</b> &mdash; the mean-energy identity breaks. Watch window 7 catch it.</p>
+      <button id="tamper" class="btn">&#9888; TAMPER &mdash; drop e<sup>&minus;&beta;E</sup></button>
+      <button id="restore" class="btn">&#8635; RESTORE</button>
+      <p class="small" id="tampstate">state: <b>intact</b></p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p><b>THE PARTITION FUNCTION</b> &middot; refined OCHO &middot; WORLD II &middot; THE FOLD. Engine is genuinely LIT: Z, &#10216;E&#10217;, F, S, C computed live from the spectrum; a fail-loud <code>selfcheck()</code> asserts every identity at boot (mean-energy log-derivative to &lt;10<sup>&minus;9</sup>, F/S algebra exact, C = &beta;<sup>2</sup>Var to &lt;10<sup>&minus;6</sup>, Boltzmann normalisation &amp; T-limits, equipartition &frac12;kT, Fermi&ndash;Dirac in [0,1], and the planted tamper detected then restored). Natural units k=1.</p>
+  <p>Built by David Lee Wise (ROOT0) with AVAN.</p>
+</footer>
+</div>
+
+<script>
+/* engine + selfcheck live above the single UI marker line; pure logic, node-extractable */
+
+var TAMPER = false;
+
+// seeded PRNG (mulberry32) so selfcheck is deterministic
+function mulberry32(a){
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// weight of one state: honest e^{-beta E}; tampered -> bare energy E
+function weight(E, beta){
+  return TAMPER ? E : Math.exp(-beta * E);
+}
+
+function partition(energies, beta){
+  var Z = 0;
+  for (var i = 0; i < energies.length; i++) Z += weight(energies[i], beta);
+  return Z;
+}
+
+function probs(energies, beta){
+  var Z = partition(energies, beta);
+  var p = [];
+  for (var i = 0; i < energies.length; i++) p.push(weight(energies[i], beta) / Z);
+  return p;
+}
+
+function lnZ(energies, beta){ return Math.log(partition(energies, beta)); }
+
+// direct state-average of energy
+function meanEnergyDirect(energies, beta){
+  var p = probs(energies, beta), m = 0;
+  for (var i = 0; i < energies.length; i++) m += energies[i] * p[i];
+  return m;
+}
+
+// energy from the log-derivative: -d(ln Z)/d beta via central difference
+function meanEnergyFromZ(energies, beta){
+  var h = 1e-5;
+  return -(lnZ(energies, beta + h) - lnZ(energies, beta - h)) / (2 * h);
+}
+
+function energyVariance(energies, beta){
+  var p = probs(energies, beta), m = meanEnergyDirect(energies, beta), v = 0;
+  for (var i = 0; i < energies.length; i++) v += p[i] * energies[i] * energies[i];
+  return v - m * m;
+}
+
+// full thermodynamics from Z (natural units k=1)
+function thermo(energies, T){
+  var beta = 1 / T;
+  var Z = partition(energies, beta);
+  var lZ = Math.log(Z);
+  var meanE = meanEnergyDirect(energies, beta);
+  var F = -T * lZ;                    // Helmholtz free energy
+  var S = lZ + beta * meanE;          // entropy (k=1)
+  var C = beta * beta * energyVariance(energies, beta); // fluct-response
+  return { beta:beta, Z:Z, lnZ:lZ, meanE:meanE, F:F, S:S, C:C, p:probs(energies, beta) };
+}
+
+// heat capacity by direct T-derivative of <E> (independent route)
+function heatCapacityByTderiv(energies, T){
+  var h = 1e-4;
+  var Ep = meanEnergyDirect(energies, 1 / (T + h));
+  var Em = meanEnergyDirect(energies, 1 / (T - h));
+  return (Ep - Em) / (2 * h);
+}
+
+// classical single quadratic mode: analytic -d(lnZ)/dbeta = (1/2) kT
+function equipartitionMeanE(T){
+  // Z = integral exp(-beta p^2 / 2) dp = sqrt(2 pi / beta); -d lnZ/dbeta = 1/(2 beta) = T/2
+  return 0.5 * T;
+}
+
+// Fermi-Dirac occupation
+function fermiDirac(E, mu, T){
+  return 1 / (Math.exp((E - mu) / T) + 1);
+}
+
+// generalized free energy of an arbitrary normalized distribution (k=1)
+function freeEnergyOf(p, energies, T){
+  var U = 0, S = 0;
+  for (var i = 0; i < p.length; i++){
+    U += p[i] * energies[i];
+    if (p[i] > 0) S += -p[i] * Math.log(p[i]);
+  }
+  return U - T * S;
+}
+
+function selfcheck(){
+  var saved = TAMPER;          // save tamper flag
+  TAMPER = false;              // untampered checks below
+  var tol = 1e-9, fail = function(m){ throw new Error("selfcheck: " + m); };
+  var E2 = [0, 1];             // two-level, epsilon = 1
+
+  // (1) mean energy identity: -d(lnZ)/dbeta === direct sum, to 1e-9
+  var betas = [0.25, 0.5, 1, 2, 3.5];
+  for (var i = 0; i < betas.length; i++){
+    var b = betas[i];
+    var a = meanEnergyFromZ(E2, b), d = meanEnergyDirect(E2, b);
+    if (Math.abs(a - d) > tol) fail("mean-energy log-derivative != direct sum at beta=" + b);
+  }
+
+  // (2) Boltzmann normalization: probabilities sum to 1
+  var pr = probs(E2, 1), s = 0;
+  for (var j = 0; j < pr.length; j++) s += pr[j];
+  if (Math.abs(s - 1) > 1e-12) fail("probabilities do not normalize");
+
+  // (3) T-limits: beta->inf collapses to ground state; beta->0 is uniform
+  var pcold = probs(E2, 40);
+  if (Math.abs(pcold[0] - 1) > 1e-9) fail("T->0 must collapse to ground state");
+  var phot = probs(E2, 1e-6);
+  if (Math.abs(phot[0] - 0.5) > 1e-4 || Math.abs(phot[1] - 0.5) > 1e-4) fail("T->inf must be uniform");
+
+  // (4) free energy F = -kT lnZ, entropy S = k(lnZ + beta<E>), and S = (<E>-F)/T
+  var T = 1, th = thermo(E2, T);
+  if (Math.abs(th.F - (-T * th.lnZ)) > 1e-12) fail("F != -kT lnZ");
+  var Salt = (th.meanE - th.F) / T;
+  if (Math.abs(th.S - Salt) > 1e-12) fail("S != (mean E - F)/T");
+
+  // (5) fluctuation-response: C = beta^2 Var(E) equals d<E>/dT
+  var Cfluct = th.C, Cderiv = heatCapacityByTderiv(E2, T);
+  if (Math.abs(Cfluct - Cderiv) > 1e-6) fail("heat capacity != beta^2 * Var(E)");
+  if (Cfluct <= 0) fail("heat capacity must be positive (variance >= 0)");
+
+  // (6) free energy minimized by the Boltzmann distribution (fixed-seed perturbations)
+  var E3 = [0, 1, 2], Tf = 1.3, thB = thermo(E3, Tf), Fmin = thB.F;
+  var rng = mulberry32(0x51B7);
+  for (var t = 0; t < 400; t++){
+    var q = [], sum = 0;
+    for (var m = 0; m < 3; m++){ var x = rng(); q.push(x); sum += x; }
+    for (var m2 = 0; m2 < 3; m2++) q[m2] /= sum;   // random normalized distribution
+    if (freeEnergyOf(q, E3, Tf) < Fmin - 1e-12) fail("a non-Boltzmann distribution beat F_min");
+  }
+
+  // (7) equipartition: classical quadratic mode gives (1/2)kT
+  if (Math.abs(equipartitionMeanE(2.0) - 1.0) > 1e-12) fail("equipartition != (1/2)kT");
+
+  // (8) Fermi-Dirac stays in [0,1] with a step at T=0
+  var mu = 1.0;
+  for (var e = 0; e <= 2; e += 0.1){
+    var f = fermiDirac(e, mu, 0.05);
+    if (f < 0 || f > 1) fail("Fermi-Dirac occupation outside [0,1]");
+  }
+  if (fermiDirac(0.5, mu, 1e-4) < 0.999) fail("T->0: states below mu must fill");
+  if (fermiDirac(1.5, mu, 1e-4) > 0.001) fail("T->0: states above mu must empty");
+
+  // (9) planted void: tamper drops the exponential; identity must now BREAK, then restore
+  TAMPER = true;
+  var at = meanEnergyFromZ(E2, 1), dt = meanEnergyDirect(E2, 1);
+  if (Math.abs(at - dt) < 0.1) fail("tamper did not break the mean-energy identity as designed");
+  TAMPER = false;             // restore untampered
+  var ar = meanEnergyFromZ(E2, 1), dr = meanEnergyDirect(E2, 1);
+  if (Math.abs(ar - dr) > tol) fail("identity did not recover after restore");
+
+  TAMPER = saved;            // restore caller's tamper flag
+  return true;
+}
+
+/* ===== UI ===== */
+
+var ENERGIES = [0, 1];
+var $ = function(id){ return document.getElementById(id); };
+
+function fmt(x, n){ if (n === undefined) n = 6; return (x).toFixed(n); }
+
+function runWitness(){
+  var b = 1;
+  var a = meanEnergyFromZ(ENERGIES, b), d = meanEnergyDirect(ENERGIES, b);
+  var el = $("auditout");
+  if (Math.abs(a - d) < 1e-9){
+    el.className = "badge ok";
+    el.textContent = "WITNESS: identity holds ✓  (−dlnZ/dβ = ΣEᵢpᵢ)";
+  } else {
+    el.className = "badge bad";
+    el.textContent = "WITNESS: BROKEN ✗  −dlnZ/dβ = " + fmt(a,4) + "  ≠  ΣEᵢpᵢ = " + fmt(d,4);
+  }
+}
+
+function render(){
+  var T = parseFloat($("tsl").value);
+  $("tval").textContent = fmt(T, 2);
+  var th = thermo(ENERGIES, T);
+  $("betaout").textContent = fmt(th.beta, 6);
+  $("Zout").textContent = fmt(th.Z, 6);
+  $("lnZout").textContent = fmt(th.lnZ, 6);
+  $("Eout").textContent = fmt(th.meanE, 6);
+  $("Fout").textContent = fmt(th.F, 6);
+  $("Sout").textContent = fmt(th.S, 6);
+  $("Cout").textContent = fmt(th.C, 6);
+  $("zeq").innerHTML = TAMPER
+    ? "Z = &Sigma; E<sub>i</sub> = 0 + 1 &nbsp; <b style='color:var(--red)'>(TAMPERED: exponential dropped)</b>"
+    : "Z = 1 + e<sup>&minus;&beta;</sup>";
+  var labels = ["E=0", "E=1"], html = "";
+  for (var i = 0; i < th.p.length; i++){
+    var pct = (th.p[i] * 100).toFixed(1);
+    html += '<div class="bar"><span class="lab">' + labels[i] + '</span>'
+          + '<span class="track"><span class="fill" style="width:' + pct + '%"></span></span>'
+          + '<span class="pv">' + pct + '%</span></div>';
+  }
+  $("bars").innerHTML = html;
+  runWitness();
+}
+
+function setTamper(on){
+  TAMPER = on;
+  $("tampstate").innerHTML = "state: <b style='color:" + (on ? "var(--red)" : "var(--lit)") + "'>" + (on ? "TAMPERED" : "intact") + "</b>";
+  render();
+}
+
+function boot(){
+  $("tsl").addEventListener("input", function(){ if (!TAMPER) render(); else render(); });
+  $("tamper").addEventListener("click", function(){ setTamper(true); });
+  $("restore").addEventListener("click", function(){ setTamper(false); });
+
+  try {
+    var ok = selfcheck();
+    if (ok !== true) throw new Error("selfcheck did not return true");
+    var lb = $("litbadge");
+    lb.className = "badge ok";
+    lb.textContent = "LIT ✓  all identities verified at boot (mean-energy <1e-9, C=β²Var <1e-6)";
+    render();
+  } catch (err){
+    var fb = $("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED — " + err.message + "  (engine is NOT lit; do not trust the readouts)";
+    var lb2 = $("litbadge");
+    lb2.className = "badge bad";
+    lb2.textContent = "FAILED ✗ " + err.message;
+    throw err;   // rethrow: fail loud
+  }
+}
+
+document.addEventListener("DOMContentLoaded", boot);
+</script>
+</body>
+</html>

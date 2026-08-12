@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE EQUIPARTITION THEOREM</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --ground:#0e1c14; --ground2:#122a1d; --panel:#0f2418; --panel2:#12301f;
+  --ink:#e9f2ec; --dim:#9db8a8; --line:#254a34;
+  --blue:#7bb6ff; --bluebg:#0e2233;
+  --red:#ff8a8a; --redbg:#301418;
+  --amber:#ffc061; --lit:#79ffab; --wall:#ff9d63; --in:#8fd0ff; --out:#b6ffce;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 82% -8%, rgba(200,162,255,.16), transparent 60%),
+    radial-gradient(900px 500px at 8% 108%, rgba(121,255,171,.08), transparent 60%),
+    linear-gradient(180deg,var(--ground),var(--ground2));
+  color:var(--ink);
+  font:15px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  padding:26px 20px 60px;
+  min-height:100vh;
+}
+.wrap{max-width:1220px;margin:0 auto}
+header{max-width:1220px;margin:0 auto 22px}
+h1{
+  font-size:clamp(24px,4.6vw,42px);letter-spacing:.5px;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 24px rgba(200,162,255,.28);font-weight:800;
+}
+.sub{font-size:clamp(15px,2vw,18px);color:var(--ink);max-width:78ch;margin:0 0 10px}
+.src{font-family:var(--mono);font-size:12.5px;color:var(--dim);margin:0}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.6px;
+  padding:2px 7px;border-radius:5px;vertical-align:middle;margin-right:6px;font-weight:700}
+.t-amber{background:rgba(255,192,97,.14);color:var(--amber);border:1px solid rgba(255,192,97,.4)}
+.t-in{background:rgba(143,208,255,.13);color:var(--in);border:1px solid rgba(143,208,255,.4)}
+.t-out{background:rgba(182,255,206,.12);color:var(--out);border:1px solid rgba(182,255,206,.4)}
+.t-lit{background:rgba(121,255,171,.14);color:var(--lit);border:1px solid rgba(121,255,171,.45)}
+.t-wall{background:rgba(255,157,99,.14);color:var(--wall);border:1px solid rgba(255,157,99,.45)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.teamhdr{font-family:var(--mono);font-size:12px;letter-spacing:1px;font-weight:700;
+  text-transform:uppercase;padding:8px 12px;border-radius:8px;border:1px solid var(--line)}
+.col.blue .teamhdr{color:var(--blue);background:linear-gradient(180deg,rgba(123,182,255,.10),transparent);border-color:rgba(123,182,255,.35)}
+.col.red .teamhdr{color:var(--red);background:linear-gradient(180deg,rgba(255,138,138,.10),transparent);border-color:rgba(255,138,138,.35)}
+.col.center .teamhdr{color:var(--am);background:linear-gradient(180deg,rgba(200,162,255,.12),transparent);border-color:rgba(200,162,255,.4);text-align:center}
+
+.win{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.018),transparent),var(--panel);
+  border:1px solid var(--line);border-radius:11px;padding:14px 14px 13px;min-width:0}
+.win h3{margin:0 0 8px;font-size:13.5px;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+.wn{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--mono);font-size:11px;font-weight:800;border:1px solid var(--line);color:var(--dim)}
+.col.blue .wn{color:var(--blue);border-color:rgba(123,182,255,.5);background:rgba(123,182,255,.08)}
+.col.red .wn{color:var(--red);border-color:rgba(255,138,138,.5);background:rgba(255,138,138,.08)}
+.col.center .wn{color:var(--am);border-color:rgba(200,162,255,.55);background:rgba(200,162,255,.10)}
+.win p{margin:6px 0;color:var(--dim);font-size:13px}
+.win p b,.win p strong{color:var(--ink)}
+.win.panel{border-color:rgba(200,162,255,.4);background:linear-gradient(180deg,rgba(200,162,255,.05),transparent),var(--panel2);
+  box-shadow:0 0 30px rgba(200,162,255,.08)}
+.mono{font-family:var(--mono)}
+.k{color:var(--am)}
+code{font-family:var(--mono);font-size:12px;color:var(--am);background:rgba(200,162,255,.08);padding:1px 5px;border-radius:4px}
+
+.flow{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--dim);
+  font-family:var(--mono);font-size:11px;letter-spacing:2px;padding:2px 0}
+.flow::before,.flow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+
+table.modes{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin:8px 0 4px}
+table.modes th,table.modes td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}
+table.modes th{color:var(--dim);font-weight:600;font-size:11px;letter-spacing:.5px}
+table.modes td.n{text-align:right;color:var(--am)}
+
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 4px}
+.ctl label{font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+select,input[type=number]{background:var(--ground);color:var(--ink);border:1px solid var(--line);
+  border-radius:6px;padding:5px 8px;font-family:var(--mono);font-size:12.5px}
+input[type=number]{width:78px}
+.result{font-family:var(--mono);font-size:14px;margin-top:8px;padding:8px 10px;border-radius:8px;
+  background:rgba(121,255,171,.06);border:1px solid rgba(121,255,171,.25);color:var(--ink)}
+.result b{color:var(--lit)}
+
+.badge{font-family:var(--mono);font-size:12px;padding:8px 10px;border-radius:8px;line-height:1.35;display:block}
+.badge.ok{background:rgba(121,255,171,.08);border:1px solid rgba(121,255,171,.4);color:var(--lit)}
+.badge.bad{background:rgba(255,138,138,.1);border:1px solid rgba(255,138,138,.55);color:var(--red);animation:pulse .9s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 14px rgba(255,138,138,.45)}}
+
+.wall-note{border-left:3px solid var(--wall);padding-left:10px;background:rgba(255,157,99,.05);border-radius:0 6px 6px 0}
+.grave li{margin:7px 0;color:var(--dim);font-size:12.5px;list-style:none}
+.grave{padding-left:0;margin:6px 0}
+.grave s{color:#7d5a5a;text-decoration-color:var(--red)}
+.grave .fix{color:var(--out)}
+.grave .fix::before{content:"→ ";color:var(--am)}
+
+button{font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;
+  border-radius:7px;padding:7px 12px;border:1px solid var(--line);background:var(--ground);color:var(--ink);transition:.15s}
+button#tamper{border-color:rgba(255,138,138,.5);color:var(--red);background:rgba(255,138,138,.06)}
+button#tamper:hover{background:rgba(255,138,138,.16)}
+button#restore{border-color:rgba(121,255,171,.5);color:var(--lit);background:rgba(121,255,171,.06)}
+button#restore:hover{background:rgba(121,255,171,.16)}
+.btns{display:flex;gap:8px;margin-top:8px}
+
+#failb{display:none;max-width:1220px;margin:0 auto 16px;padding:12px 14px;border-radius:9px;
+  background:rgba(255,138,138,.12);border:1px solid var(--red);color:var(--red);font-family:var(--mono);font-size:13px}
+
+footer{max-width:1220px;margin:26px auto 0;padding-top:14px;border-top:1px solid var(--line);
+  color:var(--dim);font-size:12px;font-family:var(--mono);line-height:1.6}
+
+@media(max-width:880px){
+  .ocho{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="failb"></div>
+<header>
+  <h1>THE EQUIPARTITION THEOREM</h1>
+  <p class="sub">At equilibrium, energy does not play favourites. Every square-law way a system can store it &mdash; each translation, each spring &mdash; is handed the same ration: half a <span class="k">kT</span>. Count the quadratic degrees of freedom and you have the energy. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> J. C. Maxwell, &ldquo;On Boltzmann&rsquo;s Theorem on the average distribution of energy in a system of material points,&rdquo; <em>Transactions of the Cambridge Philosophical Society</em>, vol. 12 (1879), pp. 547&ndash;570 &mdash; developed with L. Boltzmann. <a href="https://archive.org/details/scientificpapers02maxw" target="_blank" rel="noopener">Scientific Papers, vol. 2 (archive.org)</a> &middot; no single stable article DOI &mdash; <span style="color:var(--amber)">AMBER</span>.</p>
+</header>
+
+<div class="wrap">
+<div class="ocho">
+
+  <!-- LEFT: BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <h3><span class="wn">3</span> THE MODEL</h3>
+      <p>Write the energy as a sum of independent square-law terms, <code>H = &Sigma; c&#8339; q&#8339;&sup2;</code>. Weight each configuration by Boltzmann, <code>e&#8315;&#7480;&#7488;&#7488;</code>. The generalized equipartition theorem says <code>&#10216;q &part;H/&part;q&#10217; = kT</code>.</p>
+      <p>For a purely quadratic term <b>c&#183;q&sup2;</b> that forces <b>&#10216;c q&sup2;&#10217; = &frac12;kT</b> &mdash; the constant <b>c</b> and the mass drop out. The share depends only on the <em>power</em>, not the stiffness.</p>
+      <p class="mono" style="font-size:12px">General law: a term <b>&prop;|q|&#8319;</b> carries <b>kT/n</b>. Quadratic (n=2) &rarr; <span class="k">&frac12;kT</span>. That is the whole engine.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="wn">5</span> THE LINEAGE</h3>
+      <p>Energy shared equally among the modes &mdash; this is why <b>the-ideal-gas</b> carries <b>&frac32;kT</b> per atom: three translational (quadratic) modes, each <span class="k">&frac12;kT</span>.</p>
+      <p>Add rotations and vibrations and the same accounting sets every classical heat capacity: <code>C&#7515; = (f/2) N k</code> for <b>f</b> quadratic freedoms. Monatomic &rarr; <b>3/2 R</b>; rigid diatomic &rarr; <b>5/2 R</b>. The counting IS the physics.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="wn">7</span> THE WITNESS</h3>
+      <p>A live re-check, independent of the boot selfcheck. It recomputes the mode shares now and confirms the quartic mode reads <b>T/4</b>, the quadratic <b>T/2</b>. Trip the tamper (window 6) and this flips red.</p>
+      <span id="auditout" class="badge ok">WITNESS &middot; initialising&hellip;</span>
+    </div>
+  </div>
+
+  <!-- CENTER: THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <h3><span class="wn">4</span> DATA IN <span class="tag t-in" style="margin-left:auto">in &darr;</span></h3>
+      <p>A temperature <b>T</b> and a list of degrees of freedom, each labelled by the power of its coordinate in the energy. Natural units: <b>k = 1</b> (Boltzmann constant set to one), so energies read directly in units of <b>T</b>.</p>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win panel">
+      <h3><span class="wn">0</span> THE PANEL <span class="tag t-lit" style="margin-left:auto">LIT</span></h3>
+      <p style="margin-top:0">Pick a system and a temperature. The panel counts each mode&rsquo;s power and awards it <b>kT/n</b> live &mdash; verified against a direct numerical average over the Boltzmann distribution.</p>
+      <div class="ctl">
+        <label>system
+          <select id="sys">
+            <option value="osc">harmonic oscillator (1D)</option>
+            <option value="mon">monatomic gas atom</option>
+            <option value="dia">rigid diatomic molecule</option>
+            <option value="qua">quartic oscillator (1D)</option>
+          </select>
+        </label>
+        <label>T <input id="temp" type="number" value="1" min="0.05" step="0.05"></label>
+      </div>
+      <table class="modes" id="modetab">
+        <thead><tr><th>mode</th><th>power n</th><th>share kT/n</th><th class="n">energy</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="result" id="panelout"></div>
+    </div>
+
+    <div class="flow">&darr; &darr; &darr;</div>
+
+    <div class="win">
+      <h3><span class="wn">8</span> DATA OUT <span class="tag t-out" style="margin-left:auto">out &darr;</span></h3>
+      <p>A total mean energy, and the proven law behind it: <b>&frac12;kT per quadratic mode</b> &mdash; kT per oscillator, <b>&frac32;kT</b> per monatomic atom, and <b>kT/4</b> for a quartic (anharmonic) mode.</p>
+      <span id="litbadge" class="badge ok">booting&hellip;</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <h3><span class="wn">1</span> THE ADVERSARY <span class="tag t-wall" style="margin-left:auto">WALL</span></h3>
+      <div class="wall-note">
+        <p><b>Equipartition is classical, and it lies at low T.</b> It assumes every mode is continuously excitable &mdash; that <b>kT</b> dwarfs the quantum level spacing.</p>
+        <p>When <b>kT &#8810; &#295;&omega;</b> a mode <em>freezes out</em>: it stops taking its share. Vibrations are frozen at room temperature; solid heat capacities fall to zero as <b>T&rarr;0</b> (Debye), not to <b>3R</b>. Push equipartition to a field with infinite modes and it predicts the ultraviolet catastrophe. <b>WALL:</b> the classical high-T limit is assumed, not universal.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <h3><span class="wn">2</span> THE GRAVEYARD</h3>
+      <ul class="grave">
+        <li><s>Every degree of freedom gets &frac12;kT.</s> <span class="fix">only <b>quadratic</b> ones do; a quartic term gets kT/4, a linear one kT.</span></li>
+        <li><s>A solid&rsquo;s molar heat capacity is 3R at all temperatures.</s> <span class="fix">it collapses toward 0 as T&rarr;0 &mdash; modes freeze (Einstein/Debye).</span></li>
+        <li><s>A diatomic gas always carries 7/2&#183;kT.</s> <span class="fix">vibration is frozen near 300 K, so C&#7515; sits at 5/2 R.</span></li>
+        <li><s>Heavier atoms store more thermal energy per mode.</s> <span class="fix">the share is mass-independent &mdash; c and m cancel in the Gaussian integral.</span></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <h3><span class="wn">6</span> THE TAMPER</h3>
+      <p><b>Disclosed planted void.</b> Press below to mis-assign <span class="k">&frac12;kT</span> to the <b>quartic</b> mode &mdash; treating a term <b>&prop;x&#8308;</b> as if it were <b>&prop;x&sup2;</b>. Its true share is <b>kT/4</b>. The Witness (window 7) recomputes and catches the lie.</p>
+      <div class="btns">
+        <button id="tamper">&#9888; assign &frac12;kT to quartic</button>
+        <button id="restore">restore kT/4</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer>
+  THE EQUIPARTITION THEOREM &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus. Engine computes live: mode shares kT/n from the generalized equipartition theorem, cross-checked by numerical averaging over the Boltzmann distribution; a fixed-seed selfcheck throws on any violation. Natural units k=1. Rendered, not quoted. &mdash; David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+// ============================================================
+// ENGINE + SELFCHECK  (pure logic — node-extractable, above the single UI marker)
+// Natural units throughout: Boltzmann constant k = 1.
+// ============================================================
+var TAMPER = false;
+
+function assert(cond,msg){ if(!cond) throw new Error(msg||"assertion failed"); }
+function close(a,b,tol){ return Math.abs(a-b) <= (tol===undefined?1e-9:tol); }
+
+// deterministic PRNG (mulberry32) — fixed seed keeps selfcheck reproducible
+function mulberry32(seed){
+  let a = seed>>>0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a>>>15), 1 | a);
+    t = (t + Math.imul(t ^ (t>>>7), 61 | t)) ^ t;
+    return ((t ^ (t>>>14)) >>> 0) / 4294967296;
+  };
+}
+
+// --- CORE: equipartition share of a single square-law-of-power-n mode ---
+// generalized equipartition: a term proportional to |q|^n carries kT/n.
+// quadratic (n=2) -> T/2. TAMPER wrongly re-labels the quartic (n=4) as quadratic.
+function modeShareRaw(n,T){ return T/n; }
+function modeShare(type,T){
+  if(type==='quadratic') return modeShareRaw(2,T);
+  if(type==='quartic')   return TAMPER ? modeShareRaw(2,T) : modeShareRaw(4,T);
+  if(type==='linear')    return modeShareRaw(1,T);
+  return null;
+}
+
+// --- numerical mean energy of a mode E = c|x|^n under Boltzmann weight (independent check) ---
+function meanEnergyPowerLaw(c,n,T){
+  const L=12, N=24000, h=(2*L)/N;
+  let num=0, den=0;
+  for(let i=0;i<=N;i++){
+    const x = -L + i*h;
+    const E = c*Math.pow(Math.abs(x), n);
+    const w = Math.exp(-E/T);
+    const wt = (i===0||i===N) ? 0.5 : 1;
+    num += wt*E*w; den += wt*w;
+  }
+  return num/den;
+}
+
+// --- Monte-Carlo cross-check of the harmonic oscillator (2 quadratic modes -> kT) ---
+function mcOscillator(T,N){
+  const rnd = mulberry32(1234567);
+  let s = 0;
+  for(let i=0;i<N;i++){
+    // Box-Muller: two standard normals; variance-T normal has weight e^{-q^2/(2T)}
+    const u1 = Math.max(rnd(),1e-12), u2 = rnd();
+    const r = Math.sqrt(-2*Math.log(u1));
+    const gx = r*Math.cos(2*Math.PI*u2);
+    const gv = r*Math.sin(2*Math.PI*u2);
+    const x = gx*Math.sqrt(T), v = gv*Math.sqrt(T);
+    s += 0.5*x*x + 0.5*v*v;      // (1/2)k x^2 + (1/2)m v^2 with c=1
+  }
+  return s/N;
+}
+
+// --- heat capacity: C_v = (f/2) N k for f quadratic degrees of freedom ---
+function heatCapacity(f,N){ return (f/2)*N*1; }   // k=1
+
+// --- Boltzmann distribution over a discrete spectrum ---
+function boltzmann(E,T){
+  const beta = 1/T;
+  const w = E.map(e=>Math.exp(-beta*e));
+  const Z = w.reduce((a,b)=>a+b,0);
+  return { p: w.map(x=>x/Z), Z:Z };
+}
+function meanEnergyDirect(E,T){ const {p}=boltzmann(E,T); return E.reduce((a,e,i)=>a+e*p[i],0); }
+// -d(lnZ)/dbeta computed in closed form = (sum E_i e^{-beta E_i})/Z
+function meanEnergyFromZ(E,T){
+  const beta=1/T;
+  const w=E.map(e=>Math.exp(-beta*e));
+  const Z=w.reduce((a,b)=>a+b,0);
+  const num=E.reduce((a,e,i)=>a+e*w[i],0);
+  return num/Z;
+}
+
+// --- Fermi-Dirac occupation ---
+function fermiDirac(e,mu,T){ return 1/(Math.exp((e-mu)/T)+1); }
+
+// --- heat-equation Gaussian: total conserved, width = sqrt(2 D t) ---
+function heatMoments(D,t){
+  const L=60, N=48000, h=(2*L)/N;
+  const s2 = 2*D*t;
+  let tot=0, m2=0;
+  for(let i=0;i<=N;i++){
+    const x=-L+i*h;
+    const g=Math.exp(-x*x/(2*s2))/Math.sqrt(2*Math.PI*s2);
+    const wt=(i===0||i===N)?0.5:1;
+    tot += wt*g*h; m2 += wt*x*x*g*h;
+  }
+  return { total:tot, std:Math.sqrt(m2) };
+}
+
+// --- free energy F = U - T S = sum p E + T sum p ln p ; minimized by Boltzmann ---
+function freeEnergy(E,p,T){
+  let U=0, negS=0;
+  for(let i=0;i<E.length;i++){ U+=p[i]*E[i]; if(p[i]>0) negS+=p[i]*Math.log(p[i]); }
+  return U + T*negS;   // U - T S, with S = -sum p ln p
+}
+
+// ============================================================
+function selfcheck(){
+  const T = 1.0, tol = 1e-9;
+
+  // 1) equipartition: each quadratic mode carries T/2 (kT/2)
+  assert(close(modeShare('quadratic',T), 0.5, tol), "quadratic mode share != T/2");
+  //    numerical confirmation, independent of stiffness c
+  assert(close(meanEnergyPowerLaw(1.0,2,T), 0.5, 2e-3), "numeric quadratic mean != T/2");
+  assert(close(meanEnergyPowerLaw(3.7,2,T), 0.5, 2e-3), "quadratic share depends on stiffness (it must not)");
+
+  // 2) harmonic oscillator: KE (1/2 m v^2) + PE (1/2 k x^2) = two quadratic modes = kT
+  const osc = modeShare('quadratic',T) + modeShare('quadratic',T);
+  assert(close(osc, T, tol), "oscillator mean energy != kT");
+  //    Monte-Carlo cross-check (fixed seed -> deterministic)
+  assert(close(mcOscillator(T,120000), T, 0.03), "MC oscillator energy off kT");
+
+  // 3) monatomic ideal gas: three translational quadratic modes = (3/2)kT
+  const mon = 3*modeShare('quadratic',T);
+  assert(close(mon, 1.5*T, tol), "monatomic gas KE != (3/2)kT");
+
+  // 4) heat capacity C_v = (f/2) N k
+  assert(close(heatCapacity(2,1), 1.0, tol), "C_v(f=2,N=1) != 1");
+  assert(close(heatCapacity(3,2), 3.0, tol), "C_v(f=3,N=2) != 3");
+  assert(close(heatCapacity(5,1), 2.5, tol), "C_v(f=5,N=1) != 5/2");
+
+  // 5) THE EXCEPTION: a QUARTIC potential (E ~ x^4) carries kT/4, NOT kT/2
+  assert(close(modeShare('quartic',T), 0.25, tol), "quartic mode share != T/4");
+  assert(close(meanEnergyPowerLaw(1.0,4,T), 0.25, 2e-3), "numeric quartic mean != T/4");
+  assert(close(meanEnergyPowerLaw(2.9,4,T), 0.25, 2e-3), "quartic share depends on coefficient (it must not)");
+  //    a linear term carries kT (sanity of the kT/n law)
+  assert(close(modeShare('linear',T), 1.0, tol), "linear mode share != kT");
+
+  // 6) Boltzmann normalizes, with correct temperature limits
+  const E = [0,1,2,3];
+  const bLo = boltzmann(E, 1e6);   // T -> infinity : uniform
+  assert(close(bLo.p.reduce((a,b)=>a+b,0), 1, 1e-12), "Boltzmann not normalized");
+  for(const pi of bLo.p) assert(close(pi, 0.25, 1e-3), "T->inf not uniform");
+  const bHi = boltzmann(E, 1e-3);  // T -> 0 : ground state
+  assert(close(bHi.p[0], 1, 1e-6), "T->0 ground state prob != 1");
+
+  // 7) mean energy from partition-function log-derivative equals direct average (to 1e-9)
+  const spec = [0,0.5,1.0,1.7,2.4];
+  for(const TT of [0.3,1.0,2.5]){
+    assert(close(meanEnergyDirect(spec,TT), meanEnergyFromZ(spec,TT), 1e-9),
+      "-dlnZ/dbeta != <E> at T="+TT);
+  }
+
+  // 8) ideal gas law PV = N k T (k=1)
+  const N=1000, Tg=2.5;
+  const P=3.1, V=(N*1*Tg)/P;   // construct V from PV=NkT
+  assert(close(P*V, N*1*Tg, 1e-9), "PV != NkT");
+
+  // 9) heat equation Gaussian: total heat conserved, width spreads as sqrt(t)
+  const D=0.5, t1=1.0, t2=4.0;
+  const m1=heatMoments(D,t1), m2=heatMoments(D,t2);
+  assert(close(m1.total,1,1e-4) && close(m2.total,1,1e-4), "heat not conserved");
+  assert(close(m2.std/m1.std, Math.sqrt(t2/t1), 1e-3), "width does not spread as sqrt(t)");
+
+  // 10) free energy minimized by the Boltzmann distribution (Gibbs inequality)
+  const Ef=[0,1,2], Tf=1.0;
+  const pB=boltzmann(Ef,Tf).p;
+  const Fb=freeEnergy(Ef,pB,Tf);
+  assert(close(Fb, -Tf*Math.log(boltzmann(Ef,Tf).Z), 1e-9), "F != -kT ln Z");
+  const pQ=[0.5,0.3,0.2];   // any other normalized distribution
+  assert(freeEnergy(Ef,pQ,Tf) > Fb - 1e-12, "Boltzmann does not minimize F");
+
+  // 11) detailed balance implies stationarity
+  const eDB=[0, 0.8], Td=1.3;
+  const pi=boltzmann(eDB,Td).p;
+  const P01=0.4, P10=P01*pi[0]/pi[1];   // detailed balance: pi0 P01 = pi1 P10
+  assert(P10<=1, "constructed P10 out of range");
+  const M=[[1-P01,P01],[P10,1-P10]];
+  const j0=pi[0]*M[0][0]+pi[1]*M[1][0];
+  const j1=pi[0]*M[0][1]+pi[1]*M[1][1];
+  assert(close(j0,pi[0],1e-12) && close(j1,pi[1],1e-12), "detailed-balance dist not stationary");
+
+  // 12) Fermi-Dirac stays in [0,1] with a step at T=0
+  for(const e of [-2,-0.5,0,0.5,2]){
+    const f=fermiDirac(e,0,1.0);
+    assert(f>=0 && f<=1, "Fermi-Dirac out of [0,1]");
+  }
+  assert(close(fermiDirac(-1,0,1e-4),1,1e-6), "T->0: below mu should be 1");
+  assert(close(fermiDirac( 1,0,1e-4),0,1e-6), "T->0: above mu should be 0");
+
+  // ---- DISCLOSED TAMPER: prove the Witness can catch the planted void ----
+  const saved = TAMPER;
+  TAMPER = true;                         // mis-label the quartic mode as quadratic
+  const bad = modeShare('quartic',T);
+  assert(!close(bad, 0.25, 1e-6), "tamper produced no change (mechanism broken)");
+  assert(close(bad, 0.5, tol), "tamper did not yield the wrong (T/2) share");
+  TAMPER = saved;                         // restore
+  assert(close(modeShare('quartic',T), 0.25, tol), "restore failed: quartic != T/4");
+
+  return true;
+}
+
+/* ===== UI ===== */
+function fmtT(x){ const r=Math.round(x*1000)/1000; return (Number.isInteger(r)?r:r)+"T"; }
+
+const SYS = {
+  osc: { name:"harmonic oscillator", modes:[
+    {label:"translation-like KE  ½mv²", n:2},
+    {label:"spring PE  ½kx²",           n:2} ] },
+  mon: { name:"monatomic gas atom", modes:[
+    {label:"KE along x", n:2},{label:"KE along y", n:2},{label:"KE along z", n:2} ] },
+  dia: { name:"rigid diatomic molecule", modes:[
+    {label:"KE x", n:2},{label:"KE y", n:2},{label:"KE z", n:2},
+    {label:"rotation ①", n:2},{label:"rotation ②", n:2} ] },
+  qua: { name:"quartic oscillator", modes:[
+    {label:"KE  ½mv² (quadratic)", n:2},
+    {label:"potential  αx⁴ (quartic)", n:4, quartic:true} ] }
+};
+
+function shareForMode(m,T){
+  if(m.quartic) return modeShare('quartic',T);   // tamperable surface
+  if(m.n===2)   return modeShare('quadratic',T);
+  return modeShareRaw(m.n,T);
+}
+
+function renderPanel(){
+  const sys = document.getElementById('sys').value;
+  let T = parseFloat(document.getElementById('temp').value);
+  if(!(T>0)) T=1;
+  const spec = SYS[sys];
+  const tb = document.querySelector('#modetab tbody');
+  tb.innerHTML='';
+  let total=0;
+  for(const m of spec.modes){
+    const s = shareForMode(m,T);
+    total += s;
+    const tr=document.createElement('tr');
+    tr.innerHTML = '<td>'+m.label+'</td><td>'+m.n+'</td><td>kT/'+m.n+'</td><td class="n">'+fmtT(s)+'</td>';
+    tb.appendChild(tr);
+  }
+  const nq = spec.modes.filter(m=>m.n===2).length;
+  const out = document.getElementById('panelout');
+  out.innerHTML = 'mean energy of one <b>'+spec.name+'</b> at T = '+T+' &nbsp;=&nbsp; <b>'+fmtT(total)+'</b>'
+    + '<br><span style="color:var(--dim)">'+nq+' quadratic mode'+(nq===1?'':'s')+' × ½kT'
+    + (sys==='qua' ? ' + one quartic mode × ¼kT' : '') + '</span>';
+}
+
+function runWitness(){
+  const T=1;
+  const q  = modeShare('quadratic',T);
+  const q4 = modeShare('quartic',T);
+  const el = document.getElementById('auditout');
+  const okQuad = close(q,0.5,1e-9);
+  const okQuar = close(q4,0.25,1e-9);
+  if(okQuad && okQuar){
+    el.className='badge ok';
+    el.textContent='WITNESS · re-check PASS — quadratic mode = ½T, quartic mode = ¼T. Every quadratic freedom holds its kT/2.';
+  } else {
+    el.className='badge bad';
+    el.textContent='WITNESS · TAMPER DETECTED — quartic mode reads '+fmtT(q4)+' (must be ¼T = 0.25T). Equipartition wrongly applied to a non-quadratic term.';
+  }
+}
+
+// wire UI
+document.getElementById('sys').addEventListener('change', renderPanel);
+document.getElementById('temp').addEventListener('input', renderPanel);
+document.getElementById('tamper').addEventListener('click', function(){ TAMPER=true;  runWitness(); renderPanel(); });
+document.getElementById('restore').addEventListener('click', function(){ TAMPER=false; runWitness(); renderPanel(); });
+
+// boot: fail-loud selfcheck, then light the badges
+(function boot(){
+  try{
+    const ok = selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    document.getElementById('litbadge').className='badge ok';
+    document.getElementById('litbadge').innerHTML='LIT · selfcheck PASS — ½kT per quadratic mode, kT/4 for quartic, Cᵥ=(f/2)Nk, PV=NkT, Fermi–Dirac ∈[0,1]. Verified 2026-08-11.';
+  }catch(e){
+    const fb=document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent='SELFCHECK FAILED — engine not LIT: '+e.message;
+    const lb=document.getElementById('litbadge');
+    if(lb){ lb.className='badge bad'; lb.textContent='DEAD — '+e.message; }
+    throw e;
+  }
+  renderPanel();
+  runWitness();
+})();
+</script>
+</body>
+</html>

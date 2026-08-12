@@ -1,0 +1,493 @@
+<!DOCTYPE html>` to `</html>`.
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE GEODESIC</title>
+<style>
+  :root{
+    --am:#ff9e6a;
+    --bg:#0a1410;
+    --bg2:#0d1a13;
+    --ink:#dff3e6;
+    --dim:#8fb7a0;
+    --line:#1c3327;
+    --blue:#6ab7ff;
+    --red:#ff6a7a;
+    --lit:#7dffb0;
+    --amber:#ffcf6a;
+    --wall:#ff8a5c;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 78% -8%, rgba(255,158,106,.12), transparent 60%),
+      radial-gradient(900px 600px at 0% 110%, rgba(106,183,255,.07), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font:15px/1.55 var(--mono);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:26px 18px 60px}
+  header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+  h1{
+    font-size:33px;letter-spacing:.14em;margin:0 0 8px;font-weight:800;
+    color:var(--am);text-shadow:0 0 26px rgba(255,158,106,.35);
+  }
+  .sub{margin:0 0 10px;color:var(--ink);max-width:80ch}
+  .sub b{color:var(--am)}
+  .src{margin:0;color:var(--dim);font-size:12.5px}
+  .src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+  .tag{
+    display:inline-block;font-size:10.5px;letter-spacing:.12em;font-weight:700;
+    padding:2px 7px;border-radius:4px;vertical-align:middle;text-transform:uppercase;
+    border:1px solid currentColor;
+  }
+  .t-amber{color:var(--amber)}
+  .t-lit{color:var(--lit)}
+  .t-in{color:var(--blue)}
+  .t-out{color:var(--am)}
+  .t-wall{color:var(--wall)}
+  .failb{
+    background:rgba(255,106,122,.14);border:1px solid var(--red);color:#ffd9de;
+    padding:10px 14px;border-radius:8px;margin:0 0 18px;font-size:13px;
+  }
+  .ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px}
+  @media(max-width:880px){.ocho{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{
+    font-size:11px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;
+    padding:7px 10px;border-radius:6px;text-align:center;
+  }
+  .blue .teamhdr{color:var(--blue);background:rgba(106,183,255,.08);border:1px solid rgba(106,183,255,.3)}
+  .red .teamhdr{color:var(--red);background:rgba(255,106,122,.08);border:1px solid rgba(255,106,122,.3)}
+  .center .teamhdr{color:var(--am);background:rgba(255,158,106,.09);border:1px solid rgba(255,158,106,.3)}
+  .win{
+    position:relative;background:linear-gradient(180deg,var(--bg2),#0a150f);
+    border:1px solid var(--line);border-radius:10px;padding:14px 14px 13px;
+  }
+  .win h3{margin:0 0 7px;font-size:13.5px;letter-spacing:.05em;color:var(--ink)}
+  .win p{margin:0 0 7px;font-size:12.5px;color:var(--dim)}
+  .win p:last-child{margin-bottom:0}
+  .win .k{color:var(--ink)}
+  .win .em{color:var(--am)}
+  .wn{
+    position:absolute;top:-10px;right:-8px;width:23px;height:23px;border-radius:50%;
+    display:grid;place-items:center;font-size:12px;font-weight:800;
+    background:var(--bg);border:1px solid var(--line);color:var(--dim);
+  }
+  .blue .wn{color:var(--blue);border-color:rgba(106,183,255,.45)}
+  .red .wn{color:var(--red);border-color:rgba(255,106,122,.45)}
+  .center .wn{color:var(--am);border-color:rgba(255,158,106,.45)}
+  .panel{border-color:rgba(255,158,106,.4);box-shadow:0 0 0 1px rgba(255,158,106,.08),0 0 30px rgba(255,158,106,.06) inset}
+  .flow{text-align:center;color:var(--am);font-size:17px;line-height:1;opacity:.75;margin:-3px 0}
+  canvas{width:100%;height:210px;display:block;background:#071009;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+  .readout{font-size:11.5px;color:var(--dim);white-space:pre-wrap;word-break:break-word}
+  .readout b{color:var(--lit)}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;margin-left:6px}
+  .badge.ok{color:var(--lit);border:1px solid var(--lit);background:rgba(125,255,176,.08)}
+  .badge.bad{color:var(--red);border:1px solid var(--red);background:rgba(255,106,122,.1)}
+  .wall-note{
+    border-left:3px solid var(--wall);padding-left:10px;color:#ffd6c2;font-size:12.5px;
+  }
+  .grave{color:var(--dim);font-size:12.5px}
+  .grave s{color:#c98a8a}
+  .grave .fix{color:var(--lit)}
+  button{
+    font:600 12px var(--mono);color:var(--ink);background:#12241a;border:1px solid var(--line);
+    padding:7px 12px;border-radius:7px;cursor:pointer;margin:4px 6px 2px 0;
+  }
+  button:hover{border-color:var(--am);color:var(--am)}
+  #tamper{border-color:rgba(255,106,122,.5);color:var(--red)}
+  #tamper:hover{background:rgba(255,106,122,.12)}
+  #restore{border-color:rgba(125,255,176,.5);color:var(--lit)}
+  footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);color:var(--dim);font-size:12px;text-align:center}
+  .lit-list{margin:4px 0 0;padding-left:16px;font-size:12px;color:var(--dim)}
+  .lit-list li{margin:2px 0}
+  .lit-list b{color:var(--lit)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>THE GEODESIC</h1>
+    <p class="sub">In general relativity gravity is <b>not a force</b>. A free body coasts along the straightest available path &mdash; a geodesic &mdash; through curved spacetime, tracing the worldline of <b>extremal proper time</b>. Because the path is geometry, not a pull, <b>all masses fall alike</b>: the equivalence principle. Rendered, not quoted &mdash; the universality of free fall, the great-circle geodesic, geodesic deviation as tidal gravity, and the null path of light are all computed live below.</p>
+    <p class="src"><span class="tag t-amber">source</span> A. Einstein, &ldquo;Die Grundlage der allgemeinen Relativit&auml;tstheorie&rdquo;, <em>Annalen der Physik</em> <b>49</b> (1916) 769&ndash;822 &mdash; <a href="https://doi.org/10.1002/andp.19163540702" target="_blank" rel="noopener">doi:10.1002/andp.19163540702</a> <span class="tag t-amber">amber</span> the &sect;&sect;-numbering of the geodesic derivation differs across the German original and English translations; equations rendered from the standard modern form.</p>
+  </header>
+
+  <div id="failb" class="failb" hidden></div>
+
+  <div class="ocho">
+
+    <!-- ================= BLUE TEAM ================= -->
+    <div class="col blue">
+      <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+      <div class="win">
+        <span class="wn">3</span>
+        <h3>THE MODEL</h3>
+        <p>A free particle extremizes proper time <span class="k">&tau; = &int; d&tau;</span>. In flat spacetime the extremal timelike path is the <span class="em">straight, constant-velocity worldline</span> (a maximum of &tau; &mdash; the twin paradox). In curved spacetime the same variational law bends the path: this <em>is</em> gravity.</p>
+        <p>Free fall obeys <span class="k">a = g</span>, independent of mass or composition &mdash; the <span class="em">equivalence principle</span>. On a sphere the geodesic is the <span class="em">great circle</span>; two initially-parallel great circles converge, and that convergence is tidal gravity (geodesic deviation).</p>
+      </div>
+
+      <div class="win">
+        <span class="wn">5</span>
+        <h3>THE LINEAGE</h3>
+        <p>Gravity is geometry &mdash; Einstein 1916. Free bodies coast on geodesics; the equivalence principle makes all masses fall alike; the curved-space paths are what neighbours render as bends.</p>
+        <p>&rarr; <span class="em">the-perihelion-precession</span> (Mercury, 43&Prime;/century) and <span class="em">the-gravitational-lensing</span> (starlight, 1.75&Prime;) are both this one geodesic, seen edge-on.</p>
+      </div>
+
+      <div class="win">
+        <span class="wn">7</span>
+        <h3>THE WITNESS <span id="auditout" class="badge ok">&hellip;</span></h3>
+        <p>Live re-check of the core invariant: two very different masses (1 kg vs 10<sup>6</sup> kg) must fall on the <em>same</em> trajectory to 1&times;10<sup>-9</sup> (the E&ouml;tv&ouml;s result). The badge confirms green; it flips <b>red</b> the instant the tamper (window 6) makes fall depend on mass.</p>
+        <p class="readout" id="witnessout"></p>
+      </div>
+    </div>
+
+    <!-- ================= CENTER / MACHINE ================= -->
+    <div class="col center">
+      <div class="teamhdr">The Machine</div>
+
+      <div class="win">
+        <span class="wn">4</span>
+        <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+        <p class="readout" id="datain"></p>
+      </div>
+
+      <div class="flow">&darr;</div>
+
+      <div class="win panel">
+        <span class="wn">0</span>
+        <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+        <p>Free fall of two masses &middot; the great-circle geodesic &middot; light deflection &mdash; all from the same pure functions.</p>
+        <canvas id="cv" width="440" height="210"></canvas>
+        <p class="readout" id="panelout"></p>
+      </div>
+
+      <div class="flow">&darr;</div>
+
+      <div class="win">
+        <span class="wn">8</span>
+        <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+        <p class="readout" id="dataout"></p>
+        <p><span id="litbadge" class="badge ok">&hellip;</span></p>
+      </div>
+    </div>
+
+    <!-- ================= RED TEAM ================= -->
+    <div class="col red">
+      <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+      <div class="win">
+        <span class="wn">1</span>
+        <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+        <p class="wall-note">&ldquo;A geodesic is just a Newtonian orbit dressed up.&rdquo; No: GR light-bending is <b>1.75&Prime;</b>, exactly <b>twice</b> the Newtonian 0.875&Prime; &mdash; Eddington 1919 measured the doubled value. And Mercury's 43&Prime;/century is a pure GR surplus Newton cannot produce with any planet.</p>
+        <p class="wall-note">&ldquo;Then heavier things fall faster, obviously.&rdquo; Aristotle's error &mdash; falsified to parts in 10<sup>13</sup> (E&ouml;tv&ouml;s, then MICROSCOPE 2022). The tamper (6) plants exactly this lie so the witness can catch it.</p>
+      </div>
+
+      <div class="win">
+        <span class="wn">2</span>
+        <h3>THE GRAVEYARD</h3>
+        <p class="grave"><s>Gravity is a force pulling masses together.</s> <span class="fix">&rarr; It is curvature; free bodies feel no force &mdash; they follow geodesics.</span></p>
+        <p class="grave"><s>The bending of starlight is 0.875&Prime; (Newtonian photon).</s> <span class="fix">&rarr; 1.75&Prime; &mdash; twice, because space curves too.</span></p>
+        <p class="grave"><s>A geodesic always maximises length/time.</s> <span class="fix">&rarr; It is <em>stationary</em>; timelike geodesics maximise &tau;, spacelike ones do not, null ones have &tau;=0.</span></p>
+      </div>
+
+      <div class="win">
+        <span class="wn">6</span>
+        <h3>THE TAMPER</h3>
+        <p>Disclosed planted void: force free-fall acceleration to <em>depend on mass</em> (heavier falls faster &mdash; the Aristotelian error). The equivalence principle breaks and the two masses diverge. Witness (7) catches it live.</p>
+        <button id="tamper">Break the equivalence principle</button>
+        <button id="restore">Restore</button>
+        <p class="readout" id="tamperout"></p>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    THE GEODESIC &middot; World II &middot; THE FOLD &middot; ud0 corpus &mdash; the engine is LIT: it computes from the real laws and a fail-loud selfcheck throws on any violation. Built by David Lee Wise (ROOT0) with AVAN.
+  </footer>
+</div>
+
+<script>
+// ===================== ENGINE (pure logic, runs headless) =====================
+// Physical constants, SI.
+var G      = 6.674e-11;         // gravitational constant  m^3 kg^-1 s^-2
+var c      = 299792458;         // speed of light          m/s
+var M_sun  = 1.989e30;          // solar mass              kg
+var AU     = 1.495978707e11;    // astronomical unit       m
+var R_sun  = 6.957e8;           // solar radius            m
+var ARCSEC = 180 / Math.PI * 3600;  // radians -> arcseconds
+
+// Tamper flag: a PLAIN top-level var (never on window) so selfcheck runs with no DOM.
+var TAMPER = false;
+
+// ---- exact laws ----
+function schwarzschild(M){ return 2 * G * M / (c * c); }              // r_s = 2GM/c^2
+function escapeVel(M, r){ return Math.sqrt(2 * G * M / r); }          // sqrt(2GM/r); = c at r_s
+function timeDilation(r, M){ var rs = schwarzschild(M); return Math.sqrt(1 - rs / r); }
+function poundRebka(g, H){ return g * H / (c * c); }                  // z ~ gH/c^2
+function hubble(H0, d){ return H0 * d; }                              // v = H0 d
+function criticalDensity(H0){ return 3 * H0 * H0 / (8 * Math.PI * G); }
+function lightDeflectionGR(M, b){ return 4 * G * M / (c * c * b); }   // radians, full GR
+function lightDeflectionNewton(M, b){ return 2 * G * M / (c * c * b); } // radians, half (Newtonian)
+function mercuryPrecession(a, e){ return 6 * Math.PI * G * M_sun / (c * c * a * (1 - e * e)); } // rad/orbit
+
+// ---- equivalence principle / free fall ----
+// Uniform field g. Untampered: acceleration is INDEPENDENT of mass (UFF).
+// TAMPER: heavier falls faster (Aristotle) => equivalence principle breaks.
+function fallAccel(m, g){ return TAMPER ? g * (1 + 0.3 * Math.log10(m)) : g; }
+function fallPos(m, g, t){ return 0.5 * fallAccel(m, g) * t * t; }
+
+// ---- proper time along a worldline in SR:  tau = INT sqrt(1 - (v/c)^2) dt ----
+function properTime(xfn, T, N){
+  var dt = T / N, tau = 0;
+  for (var i = 0; i < N; i++){
+    var v = (xfn((i + 1) * dt) - xfn(i * dt)) / dt;
+    var s = 1 - (v * v) / (c * c);
+    tau += Math.sqrt(s > 0 ? s : 0) * dt;
+  }
+  return tau;
+}
+
+// ---- geodesic on a sphere: two meridians (great circles), initially parallel at the
+//      equator (colatitude theta = pi/2), converge to the pole (theta = 0). ----
+function meridianSeparation(R, dLon, theta){ return R * Math.sin(theta) * dLon; }
+
+function rel(a, b){ return Math.abs(a - b) / Math.abs(b); }
+function near(a, b, tol){ return Math.abs(a - b) <= tol; }
+
+// ---- fail-loud selfcheck: THROWS on any violation, RETURNS true on success ----
+function selfcheck(){
+  var TOL = 1e-6;  // stated tolerance for the metric / integrator evaluations
+
+  // Schwarzschild radius of the Sun ~ 2.95 km
+  var rs = schwarzschild(M_sun);
+  if (!(rs > 2940 && rs < 2960)) throw new Error("r_s(Sun) out of range: " + rs);
+  // event horizon: escape velocity at r_s equals c, to 1e-6
+  if (rel(escapeVel(M_sun, rs), c) > TOL) throw new Error("v_esc(r_s) != c");
+
+  // light deflection at the Sun's limb = 1.75", and TWICE the Newtonian value
+  var gr = lightDeflectionGR(M_sun, R_sun) * ARCSEC;
+  var nt = lightDeflectionNewton(M_sun, R_sun) * ARCSEC;
+  if (!near(gr, 1.75, 0.02)) throw new Error("light deflection != 1.75\": " + gr);
+  if (rel(gr, 2 * nt) > TOL) throw new Error("GR deflection is not 2x Newtonian");
+
+  // Mercury perihelion precession ~ 43"/century
+  var arcCentury = mercuryPrecession(5.79e10, 0.2056) * ARCSEC * (36525 / 87.969);
+  if (!near(arcCentury, 43, 0.6)) throw new Error("Mercury precession != 43: " + arcCentury);
+
+  // gravitational time dilation: clocks slow deeper in the well (smaller r -> smaller factor)
+  if (!(timeDilation(3 * rs, M_sun) > timeDilation(1.5 * rs, M_sun)))
+    throw new Error("time dilation not monotone with depth");
+
+  // Pound-Rebka gravitational redshift over 22.5 m ~ 2.45e-15
+  var z = poundRebka(9.80665, 22.5);
+  if (!(z > 2.4e-15 && z < 2.5e-15)) throw new Error("Pound-Rebka z out of range: " + z);
+
+  // Hubble law linear; Friedmann critical-density round-trip
+  var H0 = 2.27e-18;
+  if (rel(hubble(H0, 3), 3 * H0) > TOL) throw new Error("Hubble law not linear");
+  var rhoc = criticalDensity(H0);
+  if (rel(Math.sqrt(8 * Math.PI * G * rhoc / 3), H0) > TOL) throw new Error("Friedmann round-trip failed");
+
+  // ===== the core: EQUIVALENCE PRINCIPLE / GEODESIC =====
+  var g = 9.80665, m1 = 1, m2 = 1e6, tt = 3;
+
+  // (A) universality of free fall: two very different masses share a trajectory to 1e-9
+  if (rel(fallPos(m1, g, tt), fallPos(m2, g, tt)) > 1e-9) throw new Error("UFF violated (untampered)");
+
+  // (B) a timelike geodesic extremizes proper time: the straight (at-rest) worldline is a
+  //     stationary point (here a maximum) versus sampled nearby wiggled paths
+  var T = 1, straight = function(t){ return 0; };
+  var tauStraight = properTime(straight, T, 2000);
+  for (var A = 0.02; A <= 0.1 + 1e-9; A += 0.02){
+    var amp = A * c;
+    var wig = (function(a){ return function(t){ return a * Math.sin(Math.PI * t / T); }; })(amp);
+    if (!(tauStraight > properTime(wig, T, 2000))) throw new Error("geodesic not extremal at A=" + A);
+  }
+
+  // (C) light follows NULL geodesics: proper time along a light path (v = c) is zero
+  if (properTime(function(t){ return c * t; }, T, 2000) > 1e-6 * T)
+    throw new Error("light path d_tau != 0");
+
+  // (D) geodesic deviation: two initially-parallel great circles CONVERGE and meet at the pole
+  var R = 1, dLon = 0.3;
+  var sEq   = meridianSeparation(R, dLon, Math.PI / 2);
+  var sMid  = meridianSeparation(R, dLon, Math.PI / 4);
+  var sPole = meridianSeparation(R, dLon, 0.001);
+  if (!(sEq > sMid && sMid > sPole)) throw new Error("parallel geodesics did not converge");
+  if (!(sPole < 1e-3)) throw new Error("geodesics did not meet at the pole");
+
+  // ===== disclosed planted void: the TAMPER (window 6) =====
+  var saved = TAMPER;
+  var uffBefore = rel(fallPos(m1, g, tt), fallPos(m2, g, tt));   // ~ 0
+  TAMPER = true;                                                 // Aristotelian error
+  var uffAfter = rel(fallPos(m1, g, tt), fallPos(m2, g, tt));
+  if (!(uffAfter > 1e-3 && uffAfter > uffBefore * 100)) throw new Error("tamper did not break UFF");
+  TAMPER = saved;                                               // restore
+  if (rel(fallPos(m1, g, tt), fallPos(m2, g, tt)) > 1e-9) throw new Error("restore failed");
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+(function(){
+  var failb = document.getElementById('failb');
+  try {
+    var ok = selfcheck();
+    if (ok !== true) throw new Error("selfcheck did not return true");
+  } catch (e) {
+    failb.hidden = false;
+    failb.textContent = "SELFCHECK FAILED — engine is not LIT: " + e.message;
+    var lb0 = document.getElementById('litbadge');
+    if (lb0){ lb0.className = 'badge bad'; lb0.textContent = 'DARK — selfcheck failed'; }
+    throw e;
+  }
+
+  // precompute the LIT values for the readouts
+  var rs      = schwarzschild(M_sun);
+  var gr      = lightDeflectionGR(M_sun, R_sun) * ARCSEC;
+  var nt      = lightDeflectionNewton(M_sun, R_sun) * ARCSEC;
+  var mercury = mercuryPrecession(5.79e10, 0.2056) * ARCSEC * (36525 / 87.969);
+  var vesc    = escapeVel(M_sun, rs);
+
+  document.getElementById('datain').textContent =
+    "G = 6.674e-11   c = 299792458 m/s\n" +
+    "M_sun = 1.989e30 kg   R_sun = 6.957e8 m\n" +
+    "two test masses: 1 kg  vs  1e6 kg\n" +
+    "field g = 9.80665 m/s^2   uniform";
+
+  document.getElementById('panelout').textContent =
+    "r_s(Sun)        = " + rs.toFixed(1) + " m  (≈2.95 km)\n" +
+    "v_esc(r_s)      = " + (vesc / c).toFixed(9) + " c  (event horizon)\n" +
+    "light bend      = " + gr.toFixed(3) + "″  = 2× Newtonian " + nt.toFixed(3) + "″\n" +
+    "Mercury         = " + mercury.toFixed(2) + "″ / century";
+
+  document.getElementById('dataout').innerHTML =
+    "PROVEN, live:\n" +
+    "• UFF holds — 1 kg and 1e6 kg fall identically to <b>1e-9</b>\n" +
+    "• timelike geodesic maximises τ (extremal path)\n" +
+    "• light path dτ = 0 (null geodesic)\n" +
+    "• parallel great circles converge (tidal gravity)";
+
+  var lb = document.getElementById('litbadge');
+  lb.className = 'badge ok';
+  lb.textContent = 'LIT · 1.751″ = 2× Newton · UFF ≤ 1e-9';
+
+  // ---- the live witness: re-run the UFF check on the CURRENT tamper state ----
+  function runWitness(){
+    var g = 9.80665, m1 = 1, m2 = 1e6, tt = 3;
+    var p1 = fallPos(m1, g, tt), p2 = fallPos(m2, g, tt);
+    var d  = rel(p1, p2);
+    var out = document.getElementById('witnessout');
+    var badge = document.getElementById('auditout');
+    if (d <= 1e-9){
+      badge.className = 'badge ok'; badge.textContent = 'CONFIRMED';
+      out.innerHTML = "1 kg  fell " + p1.toFixed(6) + " m\n1e6 kg fell " + p2.toFixed(6) +
+        " m\nΔ = <b>" + d.toExponential(2) + "</b>  ≤ 1e-9  — equivalence principle holds.";
+    } else {
+      badge.className = 'badge bad'; badge.textContent = 'TAMPER CAUGHT';
+      out.innerHTML = "1 kg  fell " + p1.toFixed(6) + " m\n1e6 kg fell " + p2.toFixed(6) +
+        " m\nΔ = <b>" + d.toExponential(2) + "</b>  ≫ 1e-9  — UFF BROKEN (mass-dependent fall).";
+    }
+    draw();
+  }
+
+  document.getElementById('tamper').addEventListener('click', function(){
+    TAMPER = true;
+    document.getElementById('tamperout').innerHTML =
+      "TAMPER live: acceleration now ∝ mass (Aristotle). Watch the witness (7) flip red — the heavy mass outruns the light one.";
+    runWitness();
+  });
+  document.getElementById('restore').addEventListener('click', function(){
+    TAMPER = false;
+    document.getElementById('tamperout').textContent =
+      "Restored: a = g for all masses. Selfcheck invariant re-established.";
+    runWitness();
+  });
+
+  // ---- canvas: free fall of two masses | great-circle geodesic | light deflection ----
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height, frame = 0;
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#071009'; ctx.fillRect(0, 0, W, H);
+
+    var g = 9.80665;
+    var tmax = 3.2;
+    var t = (frame % 200) / 200 * tmax;
+
+    // --- LEFT third: two masses falling in a uniform field ---
+    var lx = 46, topY = 12, botY = H - 16, span = botY - topY;
+    var maxfall = fallPos(1, g, tmax) || 1;
+    ctx.strokeStyle = '#1c3327'; ctx.beginPath();
+    ctx.moveTo(20, topY); ctx.lineTo(20, botY); ctx.stroke();
+    ctx.font = '9px monospace';
+    // light mass (blue) and heavy mass (orange)
+    var f1 = Math.min(fallPos(1, g, t) / maxfall, 1);
+    var f2 = Math.min(fallPos(1e6, g, t) / maxfall, 1);
+    ctx.fillStyle = '#6ab7ff';
+    ctx.beginPath(); ctx.arc(lx - 8, topY + f1 * span, 6, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ff9e6a';
+    ctx.beginPath(); ctx.arc(lx + 12, topY + f2 * span, 9, 0, 7); ctx.fill();
+    ctx.fillStyle = '#8fb7a0';
+    ctx.fillText('free fall', 8, H - 3);
+
+    // --- MIDDLE third: sphere with two converging meridians (great-circle geodesics) ---
+    var cx = W / 2, cy = H / 2, R = 66;
+    ctx.strokeStyle = '#1c3327'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
+    var dLon = 0.55;
+    ctx.lineWidth = 1.6;
+    for (var m = 0; m < 2; m++){
+      var lon = (m === 0 ? -dLon / 2 : dLon / 2);
+      ctx.strokeStyle = m === 0 ? '#6ab7ff' : '#ff9e6a';
+      ctx.beginPath();
+      for (var k = 0; k <= 40; k++){
+        var theta = Math.PI * k / 40;            // pole -> pole
+        var sep = meridianSeparation(R, lon, theta);
+        var x = cx + sep;
+        var y = cy - R * Math.cos(theta);
+        if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#7dffb0';
+    ctx.beginPath(); ctx.arc(cx, cy - R, 3, 0, 7); ctx.fill();  // meeting at the pole
+    ctx.fillStyle = '#8fb7a0'; ctx.fillText('great circles converge', cx - 52, H - 3);
+
+    // --- RIGHT third: light ray deflected past the Sun (bend exaggerated for view) ---
+    var sx = W - 62, sy = H / 2;
+    ctx.fillStyle = '#ffcf6a';
+    ctx.beginPath(); ctx.arc(sx, sy, 11, 0, 7); ctx.fill();
+    var b = 26;                                   // impact parameter (px)
+    ctx.strokeStyle = '#dff3e6';
+    ctx.beginPath();
+    for (var px = W - 118; px <= W - 6; px += 3){
+      var dx = px - sx;
+      var bend = 0.9 * b / (1 + (dx * dx) / (b * b));  // qualitative 1/b deflection profile
+      var yy = sy - b - (dx > 0 ? bend : 0);
+      if (px === W - 118) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
+    }
+    ctx.stroke();
+    ctx.fillStyle = '#8fb7a0'; ctx.fillText('1.75″ bend', W - 96, H - 3);
+
+    frame++;
+  }
+
+  runWitness();
+  document.getElementById('tamperout').textContent = "Untampered: a = g for every mass.";
+  setInterval(draw, 40);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE REPARAMETERIZATION TRICK · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#c0b0ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(192,176,255,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(192,176,255,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(192,176,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;background:var(--line);border-radius:3px;accent-color:var(--am);width:150px;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:220px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:82px;}
+.rv{color:var(--am);font-weight:700;min-width:34px;}
+.sent{font-size:14px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:18px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+.varbars{margin-top:8px;} .barrow{display:flex;align-items:center;gap:7px;margin:4px 0;font-size:11px;}
+.barrow .lab{min-width:64px;color:var(--dim);} .bartrack{flex:1;height:11px;background:#0a130c;border:1px solid var(--line);border-radius:3px;overflow:hidden;}
+.barfill{height:100%;border-radius:2px;} .barfill.rep{background:var(--gr);} .barfill.sco{background:var(--red);}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE REPARAMETERIZATION TRICK</h1>
+ <p class="sub">How do you take a <b>gradient</b> through a <b>random sample</b>? You cannot differentiate <i>the act of sampling</i> — but you can move the randomness out of the parameters. Rewrite <b class="k">z ~ N(&mu;,&sigma;&sup2;)</b> as <b class="k">z = &mu; + &sigma;&middot;&epsilon;</b> with &epsilon; ~ N(0,1): now the noise is a fixed input and the gradient of <b>E[f(z)]</b> flows straight through &mu; and &sigma;. The <b style="color:var(--blue)">blue team</b> builds and proves it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Kingma &amp; Welling, <i>Auto-Encoding Variational Bayes</i> (2013) — <a href="https://arxiv.org/abs/1312.6114">arxiv.org/abs/1312.6114</a>; independently Rezende, Mohamed &amp; Wierstra, <i>Stochastic Backpropagation</i> (2014), <a href="https://arxiv.org/abs/1401.4082">arxiv.org/abs/1401.4082</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — pathwise vs score</h2>
+   <p>Two ways to estimate <b>&nabla;<sub>&mu;</sub> E<sub>z~N(&mu;,&sigma;&sup2;)</sub>[f(z)]</b>. Both are <b>unbiased</b>; they differ only in <b>variance</b>.</p>
+   <p><b class="k">PATHWISE</b> (reparam): z = &mu;+&sigma;&epsilon;, so <b>&part;f/&part;&mu; = f&prime;(z)</b>. The gradient rides <i>through</i> the sample. <b class="k">SCORE</b> (REINFORCE): <b>f(z)&middot;&part;<sub>&mu;</sub>log p(z) = f(z)(z&minus;&mu;)/&sigma;&sup2;</b>. It only sees f as a black-box weight — and pays for it in variance.</p>
+   <p class="small">Live, for the current &mu;,&sigma; (f(z)=z<sup>k</sup>), over the same fixed-seed draws:</p>
+   <table id="modelTbl"><thead><tr><th>&nabla;<sub>&mu;</sub> estimate</th><th>mean</th><th>variance</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — through the seam <span class="tag t-amber">AVAN</span></h2>
+   <p>This one identity is what makes <a href="https://davidwise01.github.io/the-vae/" style="color:var(--cy)">the VAE</a> trainable: the encoder outputs &mu;,&sigma;, the sample z=&mu;+&sigma;&epsilon; feeds the decoder, and the reconstruction loss backpropagates <b>through the latent draw</b> into the encoder.</p>
+   <p>It is the low-variance twin of <a href="https://davidwise01.github.io/the-policy-gradient/" style="color:var(--cy)">the policy gradient</a>'s score-function estimator — <b>same problem</b> (differentiate an expectation over a sampled variable), <b>different geometry</b>. Reparam needs a differentiable, reparameterizable q; score-function works when reparam cannot. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: redraw a fixed-seed batch and confirm z = &mu;+&sigma;&epsilon; still has <b>variance &sigma;&sup2;</b> and that reparam variance stays <b>below</b> score variance. If red tampers with &epsilon;, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the objective <span class="tag t-in">in ↓</span></h2>
+   <p>You want to <b>minimize</b> an expectation over a random variable whose distribution you control:</p>
+   <div class="sent">L(&mu;,&sigma;) = E<sub>z~N(&mu;,&sigma;&sup2;)</sub>[ f(z) ] &nbsp;&rarr;&nbsp; need <span class="M">&nabla;<sub>&mu;</sub>L</span>, <span class="P">&nabla;<sub>&sigma;</sub>L</span></div>
+   <p class="small">The obstacle: to estimate L you must <b>sample</b> z — and <code>z = sample(&mu;,&sigma;)</code> has no derivative. The distribution parameters go <b style="color:var(--cy)">in</b>; the trouble is getting a gradient back out through the random node.</p>
+  </div>
+  <div class="flow">▼ &nbsp; push the noise out of the parameters &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>&mu; (mean)</label><input type="range" id="mu" min="-3" max="3" step="0.1" value="1.3"><span class="rv" id="muv">1.3</span></div>
+     <div class="row"><label>&sigma; (std)</label><input type="range" id="sig" min="0.3" max="2" step="0.1" value="0.8"><span class="rv" id="sigv">0.8</span></div>
+     <div class="row"><label>f(z)</label>
+      <select id="fk"><option value="1">f(z) = z</option><option value="2" selected>f(z) = z&sup2;</option><option value="3">f(z) = z&sup3;</option></select></div>
+     <p class="small" id="tampstate">&epsilon; drawn from N(0,1) — the honest noise. Untampered.</p>
+     <div class="row"><button id="reset">↺ reset</button><button id="ex">→ &mu;=0, &sigma;=1</button></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+     <div class="varbars" id="varbars"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every number is computed on the spot from fixed-seed draws and the closed-form moments — never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the estimator emits a gradient &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves: the pathwise estimator <b>&nabla;<sub>&mu;</sub>L &asymp; f&prime;(z)</b> is <b class="k">unbiased</b> — its mean equals the true gradient — and for smooth f it has <b class="k">strictly lower variance</b> than the score-function estimator on the <i>same</i> draws. For f(z)=z&sup2;: Var<sub>rep</sub>=4&sigma;&sup2;, Var<sub>score</sub>=&mu;&#8308;/&sigma;&sup2;+14&mu;&sup2;+15&sigma;&sup2; — provably larger by &mu;&#8308;/&sigma;&sup2;+14&mu;&sup2;+11&sigma;&sup2;.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms this live; the red team (right) tries to make it false.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The trick is <b>not universal</b>. It needs a distribution you can write as a deterministic, differentiable function of parameter-free noise (location-scale, or inverse-CDF). A <b>discrete</b> latent — a categorical z — has no such reparameterization; you fall back to the score-function estimator, or to a <i>biased</i> continuous relaxation (Gumbel-softmax).</div>
+   <p class="small" style="margin-top:8px">It also needs <b>f differentiable</b> in z. Where f is a black box, a reward from an environment, or z is discrete, the high-variance score-function estimator is the only game — which is exactly why policy-gradient RL lives there. "Lower variance" is a property of a <i>regime</i>, not a law.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Reparameterization always beats REINFORCE."</s> <b>Cut.</b> Only for smooth f and reparameterizable q. For non-smooth or very high-dimensional f the pathwise gradient can have <i>higher</i> variance; there is no free lunch.</p>
+   <p class="grave"><s>"You can reparameterize any distribution."</s> <b>Cut.</b> Only location-scale families and those with a differentiable inverse-CDF. Discrete distributions need a biased relaxation.</p>
+   <p class="grave"><s>"Kingma &amp; Welling invented the pathwise gradient."</s> <b>Kept, corrected.</b> <span class="tag t-amber">AMBER</span> The pathwise / infinitesimal-perturbation-analysis estimator predates them (Glasserman, Rubinstein). Their contribution was wiring it into deep latent-variable models as the VAE.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: draw &epsilon; with the <b>wrong variance</b> (2 instead of 1). Now z = &mu;+&sigma;&epsilon; has variance <b>2&sigma;&sup2;</b>, not &sigma;&sup2; — the sample no longer matches N(&mu;,&sigma;&sup2;). The witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ break ε → Var=2</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Corrupt the noise variance and the reparameterized sample silently mis-represents the distribution; the witness recomputes Var(z), sees it is no longer &sigma;&sup2;, and turns red. Nothing is faked — the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE REPARAMETERIZATION TRICK — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (objective <b style="color:var(--cy)">in</b> → estimator → gradient <b style="color:var(--gr)">out</b>). A runnable rendering of Kingma &amp; Welling's <i>Auto-Encoding Variational Bayes</i> and Rezende et al.'s stochastic backpropagation — the engine is LIT (gradients unbiased and variances checked live against closed forms, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// engine: reparameterization trick — pathwise vs score-function gradient estimators
+// fixed-seed PRNG (mulberry32) spans the full [0,1) interval
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+// standard normal via Box-Muller, seeded and deterministic
+function makeNormal(seed){ const r=mulberry32(seed>>>0); let spare=null; return function(){ if(spare!==null){const s=spare;spare=null;return s;} let u=1-r(), v=r(); const m=Math.sqrt(-2*Math.log(u)); const a=2*Math.PI*v; spare=m*Math.sin(a); return m*Math.cos(a); }; }
+let EPSVAR=1;   // TAMPER: set to 2 → epsilon has the wrong variance; the witness catches it
+// closed-form Gaussian moments
+function dfact(n){ let p=1; for(let i=n;i>1;i-=2)p*=i; return p; }
+function stdMoment(j){ return (j%2)? 0 : (j===0?1:dfact(j-1)); }
+function comb(n,k){ let c=1; for(let i=0;i<k;i++)c=c*(n-i)/(i+1); return Math.round(c); }
+function rawMoment(k,mu,sig){ let s=0; for(let j=0;j<=k;j++){ s+=comb(k,j)*Math.pow(mu,k-j)*Math.pow(sig,j)*stdMoment(j); } return s; }
+function trueGrad(k,mu,sig){ return k*rawMoment(k-1,mu,sig); }   // pathwise identity: d/dmu E[z^k] = k E[z^{k-1}]
+// one fixed-seed batch → both estimators of d/dmu E[f(z)], f(z)=z^k
+function estimators(n,seed,mu,sig,k){ const nrm=makeNormal(seed); const sc=Math.sqrt(EPSVAR); let sz=0,sz2=0,sr=0,sr2=0,ss=0,ss2=0;
+ for(let i=0;i<n;i++){ const eps=nrm()*sc; const z=mu+sig*eps; const fz=Math.pow(z,k); const gr=k*Math.pow(z,k-1); const gs=fz*(z-mu)/(sig*sig);
+  sz+=z; sz2+=z*z; sr+=gr; sr2+=gr*gr; ss+=gs; ss2+=gs*gs; }
+ const mz=sz/n, mr=sr/n, ms=ss/n;
+ return { meanZ:mz, varZ:sz2/n-mz*mz, gRepMean:mr, gRepVar:sr2/n-mr*mr, gScoreMean:ms, gScoreVar:ss2/n-ms*ms }; }
+// closed-form population variances for f(z)=z^2
+function varRepPop(mu,sig){ return 4*sig*sig; }
+function varScorePop(mu,sig){ return Math.pow(mu,4)/(sig*sig) + 14*mu*mu + 15*sig*sig; }
+// fail-loud self-check (runs untampered, then plants + catches the tamper, then restores)
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=EPSVAR; EPSVAR=1;
+ const mu=1.3, sig=0.8, N=120000, SEED=0x51ed;
+ // central finite-difference of the closed-form L(mu)=E[z^2] equals the true gradient exactly
+ const L=(m)=>rawMoment(2,m,sig); const h=1e-3;
+ t(Math.abs((L(mu+h)-L(mu-h))/(2*h)-2*mu)<1e-9,"finite-diff of E[z^2] must equal true gradient 2mu");
+ t(Math.abs(trueGrad(2,mu,sig)-2*mu)<1e-12,"closed-form true gradient must be 2mu");
+ const s=estimators(N,SEED,mu,sig,2);
+ // reparam sample matches N(mu,sig^2): moments agree (fixed seed, large N, stated tolerance)
+ t(Math.abs(s.meanZ-mu)<0.02,"empirical mean(z) must match mu");
+ t(Math.abs(s.varZ-sig*sig)<0.03,"empirical var(z) must match sig^2");
+ // both estimators unbiased: mean equals the true gradient 2mu
+ t(Math.abs(s.gRepMean-2*mu)<0.02,"reparam gradient must be unbiased (mean 2mu)");
+ t(Math.abs(s.gScoreMean-2*mu)<0.2,"score gradient must be unbiased (mean 2mu)");
+ // empirical variances match the closed-form population variances
+ t(Math.abs(s.gRepVar-varRepPop(mu,sig))<0.05,"reparam variance must match 4 sig^2");
+ t(Math.abs(s.gScoreVar-varScorePop(mu,sig))<8.0,"score variance must match closed form");
+ // STRICT: reparam variance is lower than score — in population and on the same draws
+ t(varRepPop(mu,sig)<varScorePop(mu,sig),"population: reparam variance < score variance");
+ t(s.gRepVar<s.gScoreVar,"empirical: reparam variance strictly lower than score variance");
+ t(s.gScoreVar>3*s.gRepVar,"score variance must be much larger than reparam variance");
+ // TAMPER: epsilon with variance 2 → z has variance 2 sig^2, the distribution match breaks
+ EPSVAR=2;
+ const bad=estimators(N,SEED,mu,sig,2);
+ t(Math.abs(bad.varZ-sig*sig)>0.3,"TAMPER must break var(z)=sig^2");
+ t(Math.abs(bad.varZ-2*sig*sig)<0.05,"TAMPER var(z) must be about 2 sig^2");
+ EPSVAR=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const PANEL_N=40000, PANEL_SEED=0x1c0de, AUDIT_N=60000, AUDIT_SEED=0x7a17;
+function fmt(x){ return (Math.abs(x)>=100? x.toFixed(1) : x.toFixed(3)); }
+function cur(){ return { mu:+$("mu").value, sig:+$("sig").value, k:+$("fk").value }; }
+function render(){
+ const {mu,sig,k}=cur();
+ $("muv").textContent=mu.toFixed(1); $("sigv").textContent=sig.toFixed(1);
+ const s=estimators(PANEL_N,PANEL_SEED,mu,sig,k);
+ const tg=trueGrad(k,mu,sig);
+ const fname=k===1?"z":(k===2?"z²":"z³");
+ $("sent").innerHTML='z = <span class="M">&mu;</span> + <span class="M">&sigma;</span>&middot;<span class="S">&epsilon;</span>,&nbsp; &epsilon;~N(0,1)&nbsp; &rarr;&nbsp; &nabla;<sub>&mu;</sub>E['+fname+'] = <span class="P">f&prime;(z)</span>';
+ const zOk = Math.abs(s.varZ-sig*sig)<0.05 && EPSVAR===1;
+ $("verdict").textContent = zOk? "UNBIASED · LOWER VARIANCE" : (EPSVAR!==1? "SAMPLE CORRUPTED" : "CHECKING");
+ $("verdict").className="verdict "+(zOk?"ok":"no");
+ const ratio = s.gScoreVar/(s.gRepVar>1e-12?s.gRepVar:1e-12);
+ $("moodname").innerHTML = 'true &nabla;<sub>&mu;</sub> = <b>'+fmt(tg)+'</b> &nbsp;·&nbsp; reparam mean <b>'+fmt(s.gRepMean)+'</b> &nbsp;·&nbsp; score mean <b>'+fmt(s.gScoreMean)+'</b>';
+ $("reason").innerHTML = 'Var(z) = <b>'+fmt(s.varZ)+'</b> (target &sigma;&sup2;='+fmt(sig*sig)+')'+(EPSVAR!==1?' &nbsp;<span style="color:var(--wall)">&larr; corrupted, expected 2&sigma;&sup2;</span>':'')+' &nbsp;·&nbsp; score variance is <b>'+(s.gRepVar<1e-9?'&infin;×':fmt(ratio)+'×')+'</b> the reparam variance';
+ const mx=Math.max(s.gScoreVar,s.gRepVar,1e-9);
+ $("varbars").innerHTML =
+  '<div class="barrow"><span class="lab">reparam</span><div class="bartrack"><div class="barfill rep" style="width:'+(100*s.gRepVar/mx).toFixed(1)+'%"></div></div><span class="rv">'+fmt(s.gRepVar)+'</span></div>'+
+  '<div class="barrow"><span class="lab">score</span><div class="bartrack"><div class="barfill sco" style="width:'+(100*s.gScoreVar/mx).toFixed(1)+'%"></div></div><span class="rv">'+fmt(s.gScoreVar)+'</span></div>';
+ $("modelBody").innerHTML =
+  '<tr><td>pathwise (reparam)</td><td class="y">'+fmt(s.gRepMean)+'</td><td class="y">'+fmt(s.gRepVar)+'</td></tr>'+
+  '<tr><td>score (REINFORCE)</td><td class="y">'+fmt(s.gScoreMean)+'</td><td class="n">'+fmt(s.gScoreVar)+'</td></tr>'+
+  '<tr><td>true gradient</td><td colspan="2" class="y">'+fmt(tg)+'</td></tr>';
+}
+function audit(){
+ const el=$("auditout"); const {mu,sig}=cur();
+ const s=estimators(AUDIT_N,AUDIT_SEED,mu,sig,2);
+ const matchZ = Math.abs(s.meanZ-mu)<0.03 && Math.abs(s.varZ-sig*sig)<0.05;
+ const lower = s.gRepVar < s.gScoreVar;
+ const ok = matchZ && lower && EPSVAR===1;
+ el.innerHTML = '<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — holds':'✗ WITNESS — broken')+'</span>'
+  + '<div class="small" style="margin-top:6px">Var(z)=<b style="color:'+(matchZ?'var(--gr)':'var(--wall)')+'">'+fmt(s.varZ)+'</b> / &sigma;&sup2;='+fmt(sig*sig)
+  + ' &nbsp;·&nbsp; reparam var <b style="color:'+(lower?'var(--gr)':'var(--wall)')+'">'+fmt(s.gRepVar)+'</b> &lt; score var <b>'+fmt(s.gScoreVar)+'</b>'
+  + (EPSVAR!==1?' &nbsp; — <span style="color:var(--wall)">red set Var(&epsilon;)=2</span>':'')+'</div>';
+}
+function setTamper(on){
+ EPSVAR = on?2:1;
+ $("tampstate").innerHTML = on? '<b style="color:var(--wall)">&epsilon; ~ N(0,2)</b> — the noise variance is corrupted.' : '&epsilon; drawn from N(0,1) — the honest noise. Untampered.';
+ $("tampernote").innerHTML = on? '<b style="color:var(--wall)">&epsilon; broken.</b> z=&mu;+&sigma;&epsilon; now has variance 2&sigma;&sup2;; the reparameterized sample mis-represents N(&mu;,&sigma;&sup2;). The witness (window 7) recomputed Var(z), disagreed, and went red. The attack is real; it is caught.'
+  : 'Corrupt the noise variance and the reparameterized sample silently mis-represents the distribution; the witness recomputes Var(z), sees it is no longer &sigma;&sup2;, and turns red. Nothing is faked — the attack is real and it is caught.';
+ render(); audit();
+}
+
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ ["mu","sig","fk"].forEach(id=>$(id).addEventListener("input",()=>{render();audit();}));
+ $("reset").addEventListener("click",()=>{ $("mu").value="1.3"; $("sig").value="0.8"; $("fk").value="2"; render();audit(); });
+ $("ex").addEventListener("click",()=>{ $("mu").value="0"; $("sig").value="1"; $("fk").value="2"; render();audit(); });
+ $("tamper").addEventListener("click",()=>setTamper(true));
+ $("restore").addEventListener("click",()=>setTamper(false));
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the reparameterization engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

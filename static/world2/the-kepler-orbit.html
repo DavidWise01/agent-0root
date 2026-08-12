@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE KEPLER ORBIT</title>
+<style>
+:root{
+  --am:#9ee0d0;
+  --bg:#071410; --bg2:#0a1a14; --panel:#0c1f18; --panel2:#0e241b;
+  --edge:#173a2d; --edge2:#1f4d3b;
+  --ink:#d3ede3; --mut:#82a99b; --dim:#5f8578;
+  --lit:#6ee7a0; --amber:#e6b53a; --wall:#ff6f6f;
+  --blue:#6fb4ff; --red:#ff8080;
+  --mono:'SFMono-Regular',ui-monospace,'DejaVu Sans Mono',Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1100px 620px at 78% -8%, rgba(158,224,208,.10), transparent 60%),
+    radial-gradient(900px 520px at 8% 108%, rgba(110,231,160,.06), transparent 60%),
+    var(--bg);
+  color:var(--ink); font-family:var(--sans);
+  line-height:1.5; padding:26px 20px 60px; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin:0 0 22px}
+h1{
+  font-size:clamp(26px,4.4vw,44px); line-height:1.02; margin:0 0 10px;
+  letter-spacing:.02em; font-weight:800;
+  color:var(--am); text-shadow:0 0 30px rgba(158,224,208,.28);
+}
+.sub{max-width:74ch; margin:0 0 12px; color:var(--ink); font-size:16px}
+.sub b{color:var(--am);font-weight:700}
+.src{font-family:var(--mono); font-size:12.5px; color:var(--mut); display:flex; gap:9px; align-items:baseline; flex-wrap:wrap}
+.src a{color:var(--am); text-decoration:none; border-bottom:1px dotted var(--edge2)}
+.src a:hover{border-bottom-style:solid}
+.tag{
+  display:inline-block; font-family:var(--mono); font-size:10.5px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase; padding:2px 7px; border-radius:4px;
+  border:1px solid transparent; white-space:nowrap;
+}
+.t-amber{background:rgba(230,181,58,.14); color:var(--amber); border-color:rgba(230,181,58,.4)}
+.t-lit{background:rgba(110,231,160,.14); color:var(--lit); border-color:rgba(110,231,160,.45)}
+.t-in{background:rgba(111,180,255,.13); color:var(--blue); border-color:rgba(111,180,255,.4)}
+.t-out{background:rgba(158,224,208,.13); color:var(--am); border-color:rgba(158,224,208,.4)}
+.t-wall{background:rgba(255,111,111,.13); color:var(--wall); border-color:rgba(255,111,111,.42)}
+
+.ocho{display:grid; grid-template-columns:1fr 1.18fr 1fr; gap:16px; align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex; flex-direction:column; gap:14px; min-width:0}
+.teamhdr{
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.14em;
+  text-transform:uppercase; padding:7px 10px; border-radius:7px; border:1px solid var(--edge);
+}
+.col.blue .teamhdr{color:var(--blue); background:rgba(111,180,255,.07); border-color:rgba(111,180,255,.28)}
+.col.red .teamhdr{color:var(--red); background:rgba(255,128,128,.07); border-color:rgba(255,128,128,.28)}
+.col.center .teamhdr{color:var(--am); background:rgba(158,224,208,.07); border-color:rgba(158,224,208,.3); text-align:center}
+.teamhdr small{display:block; font-size:9.5px; letter-spacing:.1em; color:var(--dim); font-weight:600; margin-top:2px}
+
+.win{
+  background:linear-gradient(180deg,var(--panel),var(--bg2));
+  border:1px solid var(--edge); border-radius:11px; padding:13px 14px;
+  box-shadow:0 1px 0 rgba(255,255,255,.02) inset, 0 8px 22px rgba(0,0,0,.28);
+}
+.win.panel{border-color:rgba(158,224,208,.4); box-shadow:0 0 0 1px rgba(158,224,208,.12), 0 10px 30px rgba(0,0,0,.36)}
+.winhdr{display:flex; align-items:center; gap:9px; margin-bottom:9px}
+.winnum{
+  font-family:var(--mono); font-size:12px; font-weight:800; color:var(--bg);
+  width:22px;height:22px; border-radius:6px; display:grid;place-items:center; flex:0 0 auto;
+  background:var(--am);
+}
+.col.blue .winnum{background:var(--blue)}
+.col.red .winnum{background:var(--red)}
+.wintitle{font-weight:700; font-size:13.5px; letter-spacing:.02em; flex:1; min-width:0}
+.win p{margin:6px 0; font-size:13px; color:var(--ink)}
+.win .muted{color:var(--mut); font-size:12px}
+.eq{
+  font-family:var(--mono); font-size:12.5px; color:var(--am);
+  background:rgba(158,224,208,.06); border:1px solid var(--edge); border-radius:7px;
+  padding:8px 10px; margin:8px 0; overflow-x:auto; white-space:nowrap;
+}
+.kv{font-family:var(--mono); font-size:11.5px; color:var(--mut)}
+.kv b{color:var(--ink); font-weight:600}
+ul.tight{margin:6px 0 2px; padding-left:17px}
+ul.tight li{font-size:12.5px; margin:4px 0; color:var(--ink)}
+
+.flow{display:flex; align-items:center; justify-content:center; gap:8px; color:var(--dim); font-family:var(--mono); font-size:16px; padding:1px 0}
+.flow::before,.flow::after{content:""; height:1px; flex:1; background:linear-gradient(90deg,transparent,var(--edge2),transparent)}
+
+canvas{width:100%; height:auto; display:block; border-radius:9px; background:radial-gradient(420px 300px at 62% 42%, #0b241b, #06120d); border:1px solid var(--edge)}
+.readout{font-family:var(--mono); font-size:11px; color:var(--mut); margin-top:8px; display:grid; grid-template-columns:1fr 1fr; gap:2px 14px}
+.readout span b{color:var(--am); font-weight:600}
+.ctrls{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+button{
+  font-family:var(--mono); font-size:11.5px; font-weight:700; letter-spacing:.03em;
+  color:var(--ink); background:var(--panel2); border:1px solid var(--edge2); border-radius:7px;
+  padding:7px 11px; cursor:pointer;
+}
+button:hover{border-color:var(--am); color:var(--am)}
+button#tamper{color:var(--wall); border-color:rgba(255,111,111,.4)}
+button#tamper:hover{background:rgba(255,111,111,.1)}
+button.on{background:rgba(255,111,111,.16); color:var(--wall); border-color:var(--wall)}
+
+.badge{
+  font-family:var(--mono); font-size:12px; font-weight:700; border-radius:8px; padding:9px 11px;
+  border:1px solid; margin-top:2px; line-height:1.35;
+}
+.badge.ok{color:var(--lit); background:rgba(110,231,160,.09); border-color:rgba(110,231,160,.4)}
+.badge.bad{color:var(--wall); background:rgba(255,111,111,.11); border-color:var(--wall)}
+#litbadge{color:var(--am); background:rgba(158,224,208,.08); border-color:rgba(158,224,208,.4)}
+
+.wall-note{
+  border-left:3px solid var(--wall); background:rgba(255,111,111,.06);
+  padding:8px 11px; border-radius:0 7px 7px 0; font-size:12.5px; color:var(--ink); margin:6px 0;
+}
+.grave{margin:7px 0; font-size:12.5px}
+.grave s{color:var(--dim); text-decoration-color:var(--wall)}
+.grave em{color:var(--am); font-style:normal}
+.amb{color:var(--amber)}
+#failb{display:none; margin:14px 0; padding:11px 13px; border-radius:9px; font-family:var(--mono);
+  font-size:12.5px; color:var(--wall); background:rgba(255,111,111,.1); border:1px solid var(--wall)}
+footer{margin-top:26px; padding-top:14px; border-top:1px solid var(--edge); color:var(--dim);
+  font-size:12px; font-family:var(--mono); text-align:center; letter-spacing:.02em}
+footer b{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE KEPLER ORBIT</h1>
+  <p class="sub">One mass falls around another and traces an <b>ellipse</b> &mdash; not by decree but by <b>three unbreakable laws</b>. The engine integrates the two-body problem under inverse-square gravity with a symplectic map, then reads the conserved quantities straight off the trajectory: the conic, the swept areas, the period ratio. <b>Rendered, not quoted.</b></p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Kepler, <em>Astronomia Nova</em> (1609) &middot; <em>Harmonices Mundi</em> (1619) &mdash;
+    <a href="https://archive.org/details/astronomianovaai00kepl" target="_blank" rel="noopener">archive.org/details/astronomianovaai00kepl</a>
+    <span class="kv">(facsimile; stable IA mirror)</span>
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- LEFT · BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team<small>builds &amp; defends</small></div>
+
+    <section class="win">
+      <div class="winhdr"><span class="winnum">3</span><span class="wintitle">THE MODEL</span></div>
+      <p class="muted">A point mass at position <b>r</b> moves under Newton's inverse-square pull toward a fixed centre (reduced two-body form, GM&nbsp;=&nbsp;1):</p>
+      <div class="eq">r&#776; = &minus;GM &middot; r / |r|&#179;</div>
+      <p class="muted">Two quantities never change along the path &mdash; the specific energy and the angular momentum:</p>
+      <div class="eq">E = &frac12;v&#178; &minus; GM/r&nbsp;&nbsp;&nbsp;L = x&middot;v&#7527; &minus; y&middot;v&#8339;</div>
+      <p class="muted">From them alone the shape follows: a conic with the centre at a focus, semi-major axis <span class="kv">a = &minus;GM/2E</span> and eccentricity <span class="kv">e = &radic;(1 + 2EL&#178;/GM&#178;)</span>.</p>
+    </section>
+
+    <section class="win">
+      <div class="winhdr"><span class="winnum">5</span><span class="wintitle">THE LINEAGE</span></div>
+      <p>The closed ellipse is the <b>two-body</b> case of what <em>the-n-body</em> traces. Take Newton's gravity, keep two masses, and Kepler's three empirical laws fall out as theorems &mdash; conservation turned into geometry.</p>
+      <p class="muted">Add a third mass and the ellipse stops closing: it precesses, it wanders. Kepler's exact ellipse is the reachable island in the n-body sea &mdash; the case that has closed-form conserved quantities.</p>
+    </section>
+
+    <section class="win">
+      <div class="winhdr"><span class="winnum">7</span><span class="wintitle">THE WITNESS</span></div>
+      <p class="muted">Live re-check: integrate one radial period and measure the apsidal angle &Delta;&phi; swept perihelion-to-perihelion. A genuine inverse-square orbit closes at exactly 2&pi;. If window&nbsp;6 tampers the force law, the orbit precesses and this flips red.</p>
+      <div id="auditout" class="badge ok">checking&hellip;</div>
+    </section>
+  </div>
+
+  <!-- CENTER · THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The Machine<small>data in &rarr; engine &rarr; data out</small></div>
+
+    <section class="win">
+      <div class="winhdr"><span class="winnum">4</span><span class="wintitle">DATA IN</span><span class="tag t-in">in &darr;</span></div>
+      <p class="muted">Initial state at perihelion, GM&nbsp;=&nbsp;1, symplectic step dt&nbsp;=&nbsp;0.0012:</p>
+      <div class="kv" style="line-height:1.7">
+        Orbit&nbsp;A&nbsp; r&#8320;=(1,&nbsp;0)&nbsp; v&#8320;=(0,&nbsp;1.1)<br>
+        Orbit&nbsp;B&nbsp; r&#8320;=(1.4,&nbsp;0)&nbsp; v&#8320;=(0,&nbsp;1.0) &nbsp;<span class="muted">&mdash; different size, for Kepler III</span>
+      </div>
+    </section>
+
+    <div class="flow">&darr;</div>
+
+    <section class="win panel">
+      <div class="winhdr"><span class="winnum">0</span><span class="wintitle">THE PANEL</span><span class="tag t-lit">lit</span></div>
+      <canvas id="cv" width="520" height="380" aria-label="live Kepler orbit"></canvas>
+      <div class="readout">
+        <span>r &nbsp;<b id="ro-r">&mdash;</b></span>
+        <span>|v| <b id="ro-v">&mdash;</b></span>
+        <span>E &nbsp;<b id="ro-e">&mdash;</b></span>
+        <span>L &nbsp;<b id="ro-l">&mdash;</b></span>
+        <span>swept/step <b id="ro-a">&mdash;</b></span>
+        <span>force <b id="ro-f">&mdash;</b></span>
+      </div>
+      <p class="muted" style="margin-top:9px; font-size:11.5px">Gold sectors are swept in <em>equal times</em> &mdash; equal areas (Kepler II). The star sits at a focus, not the centre.</p>
+    </section>
+
+    <div class="flow">&darr;</div>
+
+    <section class="win">
+      <div class="winhdr"><span class="winnum">8</span><span class="wintitle">DATA OUT</span><span class="tag t-out">out &darr;</span></div>
+      <p class="muted">Proven off the trajectory, not assumed:</p>
+      <div id="litbadge" class="badge">computing&hellip;</div>
+    </section>
+  </div>
+
+  <!-- RIGHT · RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red Team<small>attacks &amp; breaks</small></div>
+
+    <section class="win">
+      <div class="winhdr"><span class="winnum">1</span><span class="wintitle">THE ADVERSARY</span><span class="tag t-wall">wall</span></div>
+      <div class="wall-note">"Your perfect ellipse is a lie. Real orbits precess &mdash; Mercury's perihelion advances 43&Prime;/century that Newton can't explain."</div>
+      <p class="muted">True, and honest: this is the <b>two-body Newtonian idealization</b>. The residual is real physics the model omits &mdash;</p>
+      <ul class="tight">
+        <li><span class="amb">AMBER</span> &mdash; general relativity adds a 1/r&#179; correction; Mercury's 43&Prime;/century is its signature.</li>
+        <li><span class="amb">AMBER</span> &mdash; other planets perturb: the n-body Solar System never gives a truly closed ellipse.</li>
+        <li>Point masses &amp; a fixed centre are assumed; finite-mass bodies orbit a shared barycentre.</li>
+      </ul>
+      <p class="muted">Inside its stated frame the ellipse is exact &mdash; and the checks below prove it.</p>
+    </section>
+
+    <section class="win">
+      <div class="winhdr"><span class="winnum">2</span><span class="wintitle">THE GRAVEYARD</span></div>
+      <p class="grave"><s>Orbits are perfect circles on nested spheres.</s> &nbsp;<em>&rarr; ellipses; the circle is the e=0 special case (Kepler I).</em></p>
+      <p class="grave"><s>A planet moves at constant speed along its path.</s> &nbsp;<em>&rarr; it sweeps equal areas in equal times &mdash; fast at perihelion, slow at aphelion (Kepler II).</em></p>
+      <p class="grave"><s>The Sun sits at the centre of the orbit.</s> &nbsp;<em>&rarr; at a focus; the other focus is empty.</em></p>
+      <p class="grave"><s>Period depends on shape or eccentricity.</s> &nbsp;<em>&rarr; T&#178;/a&#179; is one constant for every orbit, whatever its e (Kepler III).</em></p>
+    </section>
+
+    <section class="win">
+      <div class="winhdr"><span class="winnum">6</span><span class="wintitle">THE TAMPER</span></div>
+      <p class="muted">The disclosed planted void: swap the force law to <b>inverse-r</b> (1/r instead of 1/r&#178;). By Bertrand's theorem only 1/r&#178; and Hooke's law give closed orbits &mdash; so the ellipse should precess and Kepler III should break. The WITNESS in window&nbsp;7 catches it live.</p>
+      <div class="ctrls">
+        <button id="tamper">&#9888; tamper &rarr; 1/r force</button>
+        <button id="restore">restore 1/r&#178;</button>
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<footer>
+  offline &middot; fail-loud &middot; verify-then-render &nbsp;|&nbsp; THE FOLD &middot; WORLD II &nbsp;|&nbsp; <b>the-kepler-orbit</b> &middot; built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===== ENGINE: two-body Kepler problem, symplectic velocity-Verlet map =====
+function makePRNG(seed){var s=seed>>>0;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+var GM=1;
+var FORCE_N=2; // 2 = inverse-square (correct). TAMPER flips to 1 (inverse-r).
+
+function accel(x,y){
+  var r=Math.hypot(x,y);
+  var f=-GM/Math.pow(r,FORCE_N+1);
+  return [f*x,f*y];
+}
+function energy(x,y,vx,vy){var r=Math.hypot(x,y);return 0.5*(vx*vx+vy*vy)-GM/r;}
+function angMom(x,y,vx,vy){return x*vy-y*vx;}
+
+function step(s,dt){
+  var x=s[0],y=s[1],vx=s[2],vy=s[3];
+  var a=accel(x,y);
+  var vhx=vx+0.5*dt*a[0], vhy=vy+0.5*dt*a[1];
+  var nx=x+dt*vhx, ny=y+dt*vhy;
+  var a2=accel(nx,ny);
+  var nvx=vhx+0.5*dt*a2[0], nvy=vhy+0.5*dt*a2[1];
+  return [nx,ny,nvx,nvy];
+}
+function orbitParams(s){
+  var x=s[0],y=s[1],vx=s[2],vy=s[3];
+  var r=Math.hypot(x,y);
+  var E=0.5*(vx*vx+vy*vy)-GM/r;
+  var L=x*vy-y*vx;
+  var a=-GM/(2*E);
+  var e=Math.sqrt(Math.max(0,1+2*E*L*L/(GM*GM)));
+  var p=L*L/GM;
+  return {E:E,L:L,a:a,e:e,p:p};
+}
+// integrate one radial period; return {T, ang (swept angle), closeErr}
+function measureOrbit(s0,dt,maxT){
+  var s=s0.slice();
+  var L=angMom(s[0],s[1],s[2],s[3]);
+  var t=0, ang=0;
+  function vr(st){var r=Math.hypot(st[0],st[1]);return (st[0]*st[2]+st[1]*st[3])/r;}
+  var prevVr=vr(s);
+  while(t<maxT){
+    var r=Math.hypot(s[0],s[1]);
+    ang += (L/(r*r))*dt;
+    var sN=step(s,dt); t+=dt;
+    var cur=vr(sN);
+    if(prevVr<0 && cur>=0 && t>dt*20){
+      var frac=prevVr/(prevVr-cur);
+      var Tc=t-dt+frac*dt;
+      var cErr=Math.hypot(sN[0]-s0[0],sN[1]-s0[1]);
+      return {T:Tc, ang:ang, closeErr:cErr};
+    }
+    prevVr=cur; s=sN;
+  }
+  return {T:NaN, ang:ang, closeErr:NaN};
+}
+function posAtTime(s0,dt,T){var s=s0.slice();var t=0;while(t<T){s=step(s,dt);t+=dt;}return s;}
+
+// live witness: with the CURRENT force law, does the orbit close (apsidal angle = 2pi)?
+function witnessCheck(){
+  var mo=measureOrbit([1,0,0,1.1],0.0012,60);
+  return {ok:Math.abs(mo.ang-2*Math.PI)<5e-3, ang:mo.ang};
+}
+
+// exact symplectic proof: analytic accel Jacobian (Hessian of the potential)
+function accelJac(x,y){
+  var r=Math.hypot(x,y), r3=r*r*r, r5=r3*r*r;
+  return [[-GM/r3+3*GM*x*x/r5, 3*GM*x*y/r5],
+          [3*GM*x*y/r5, -GM/r3+3*GM*y*y/r5]];
+}
+function mat4mul(A,B){
+  var C=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  for(var i=0;i<4;i++)for(var j=0;j<4;j++){var s=0;for(var k=0;k<4;k++)s+=A[i][k]*B[k][j];C[i][j]=s;}
+  return C;
+}
+function det4(M){
+  var m=M.map(function(r){return r.slice();}), det=1;
+  for(var i=0;i<4;i++){
+    var p=i;
+    for(var r=i+1;r<4;r++) if(Math.abs(m[r][i])>Math.abs(m[p][i])) p=r;
+    if(Math.abs(m[p][i])<1e-300) return 0;
+    if(p!==i){var tmp=m[p];m[p]=m[i];m[i]=tmp;det=-det;}
+    det*=m[i][i];
+    for(var r2=i+1;r2<4;r2++){var f=m[r2][i]/m[i][i];for(var c=i;c<4;c++)m[r2][c]-=f*m[i][c];}
+  }
+  return det;
+}
+
+// fail-loud: THROWS on any violation, RETURNS true when clean
+function selfcheck(){
+  var savedN=FORCE_N;
+  FORCE_N=2;
+  var dt=0.0012;
+  var s0=[1,0,0,1.1];
+  var P=orbitParams(s0);
+  var E0=energy(s0[0],s0[1],s0[2],s0[3]);
+  var L0=angMom(s0[0],s0[1],s0[2],s0[3]);
+
+  // (1) energy + angular momentum conserved along the orbit
+  var s=s0.slice(), maxdE=0, maxdL=0, N=9000, samples=[];
+  for(var i=0;i<N;i++){
+    s=step(s,dt);
+    maxdE=Math.max(maxdE,Math.abs(energy(s[0],s[1],s[2],s[3])-E0));
+    maxdL=Math.max(maxdL,Math.abs(angMom(s[0],s[1],s[2],s[3])-L0));
+    if(i%300===0) samples.push(s.slice());
+  }
+  if(!(maxdE/Math.abs(E0)<5e-3)) throw new Error('energy not conserved: '+maxdE);
+  if(!(maxdL<1e-8)) throw new Error('angular momentum not conserved: '+maxdL);
+
+  // (2) trajectory fits the conic r = p/(1+e cos th), focus at origin; vis-viva holds
+  var maxConic=0, maxVV=0;
+  for(var j=0;j<samples.length;j++){
+    var q=samples[j], r=Math.hypot(q[0],q[1]), th=Math.atan2(q[1],q[0]);
+    var rPred=P.p/(1+P.e*Math.cos(th));
+    maxConic=Math.max(maxConic,Math.abs(r-rPred)/r);
+    var v2=q[2]*q[2]+q[3]*q[3], vvPred=GM*(2/r-1/P.a);
+    maxVV=Math.max(maxVV,Math.abs(v2-vvPred)/vvPred);
+  }
+  if(!(maxConic<5e-3)) throw new Error('orbit is not the conic r=p/(1+e cos th): '+maxConic);
+  if(!(maxVV<5e-3)) throw new Error('vis-viva v^2=GM(2/r-1/a) violated: '+maxVV);
+
+  // (3) Kepler II: equal areas in equal times (sectors between equal-time samples)
+  var swept=[];
+  for(var k=0;k+1<samples.length;k++){
+    swept.push(0.5*Math.abs(samples[k][0]*samples[k+1][1]-samples[k+1][0]*samples[k][1]));
+  }
+  var amin=Math.min.apply(null,swept), amax=Math.max.apply(null,swept);
+  if(!((amax-amin)/amax<2.5e-2)) throw new Error('Kepler II failed: unequal areas '+amin+'..'+amax);
+
+  // (4) closed orbit: apsidal angle = 2pi
+  var mo=measureOrbit(s0,dt,60);
+  if(!(Math.abs(mo.ang-2*Math.PI)<5e-3)) throw new Error('orbit does not close: apsidal '+mo.ang);
+
+  // (5) Kepler III: T^2/a^3 the SAME constant for two orbits of different size
+  var sA=[1,0,0,1.1], sB=[1.4,0,0,1.0];
+  var pA=orbitParams(sA), pB=orbitParams(sB);
+  var mA=measureOrbit(sA,dt,60), mB=measureOrbit(sB,dt,120);
+  var kA=mA.T*mA.T/Math.pow(pA.a,3), kB=mB.T*mB.T/Math.pow(pB.a,3);
+  var kAn=4*Math.PI*Math.PI/GM;
+  if(!(Math.abs(kA-kB)/kA<8e-3)) throw new Error('Kepler III failed: T^2/a^3 differs '+kA+' vs '+kB);
+  if(!(Math.abs(kA-kAn)/kAn<8e-3)) throw new Error('Kepler III wrong constant '+kA);
+
+  // (6) integrator is symplectic: leapfrog = kick.drift.kick, each a UNIT-determinant shear
+  var D0=accelJac(1.2,0.3), D1=accelJac(1.15,0.42), h=0.5*dt;
+  var k0=[[1,0,0,0],[0,1,0,0],[h*D0[0][0],h*D0[0][1],1,0],[h*D0[1][0],h*D0[1][1],0,1]];
+  var drift=[[1,0,dt,0],[0,1,0,dt],[0,0,1,0],[0,0,0,1]];
+  var k1=[[1,0,0,0],[0,1,0,0],[h*D1[0][0],h*D1[0][1],1,0],[h*D1[1][0],h*D1[1][1],0,1]];
+  var Jstep=mat4mul(mat4mul(k0,drift),k1);
+  if(!(Math.abs(det4(Jstep)-1)<1e-9)) throw new Error('map not symplectic: det='+det4(Jstep));
+
+  // ===== disclosed planted void (TAMPER): inverse-r force, not inverse-r^2 =====
+  FORCE_N=1;
+  var moT=measureOrbit(s0,dt,60);
+  if(!(Math.abs(moT.ang-2*Math.PI)>0.3)) throw new Error('TAMPER undetected: orbit still closes');
+  var Tana=2*Math.PI*Math.sqrt(pA.a*pA.a*pA.a/GM);
+  var pbad=posAtTime(sA,dt,Tana);
+  var cbad=Math.hypot(pbad[0]-sA[0],pbad[1]-sA[1]);
+  if(!(cbad>0.2)) throw new Error('TAMPER undetected: closure error too small '+cbad);
+  FORCE_N=savedN; // restore
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var LIT=false;
+  try{
+    var ok=selfcheck();
+    if(ok!==true) throw new Error('selfcheck did not return true');
+    LIT=true;
+  }catch(err){
+    var fb=document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent='SELFCHECK FAILED — engine is NOT lit: '+err.message;
+    var lb=document.getElementById('litbadge');
+    if(lb){lb.className='badge bad';lb.textContent='DEAD — '+err.message;}
+    throw err;
+  }
+
+  // proven output badge (window 8)
+  var P=orbitParams([1,0,0,1.1]);
+  var k=(4*Math.PI*Math.PI/GM);
+  document.getElementById('litbadge').innerHTML =
+    'LIT &middot; ellipse e='+P.e.toFixed(3)+', a='+P.a.toFixed(3)+
+    ' &middot; T²/a³='+k.toFixed(2)+' (=4π²) for A &amp; B'+
+    ' &middot; E,L conserved &middot; vis-viva holds &middot; closes at Δφ=2π';
+
+  // witness (window 7) live re-check
+  function refreshWitness(){
+    var w=witnessCheck();
+    var b=document.getElementById('auditout');
+    if(w.ok){
+      b.className='badge ok';
+      b.innerHTML='WITNESS ✓ — Δφ='+w.ang.toFixed(4)+' ≈ 2π ('+(2*Math.PI).toFixed(4)+'): orbit closes, force is 1/r².';
+    }else{
+      b.className='badge bad';
+      b.innerHTML='WITNESS ✗ TAMPERED — Δφ='+w.ang.toFixed(4)+' ≠ 2π: orbit PRECESSES, force is not 1/r².';
+    }
+  }
+  refreshWitness();
+
+  // ---- live canvas: orbit A, moving planet, equal-area sectors ----
+  var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  var W=cv.width, H=cv.height, cx=W*0.60, cy=H*0.50, SCALE=95;
+  var st=[1,0,0,1.1], dt=0.0035, trail=[], sectorClock=0, lastSector=[1,0];
+
+  function toPx(x,y){return [cx+x*SCALE, cy-y*SCALE];}
+
+  function frame(){
+    // advance a few substeps per frame
+    for(var i=0;i<4;i++){ st=step(st,dt); }
+    var px=toPx(st[0],st[1]);
+    trail.push(px);
+    if(trail.length>900) trail.shift();
+
+    ctx.clearRect(0,0,W,H);
+
+    // equal-area sector, painted every fixed number of frames -> equal TIME
+    sectorClock++;
+    // draw a fan of recent equal-time sectors
+    ctx.save();
+    for(var f=0; f<trail.length-14; f+=14){
+      var a=trail[f], b=trail[f+14];
+      ctx.beginPath();
+      ctx.moveTo(cx,cy); ctx.lineTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.closePath();
+      ctx.fillStyle='rgba(230,181,58,0.10)';
+      ctx.strokeStyle='rgba(230,181,58,0.22)'; ctx.lineWidth=0.6;
+      ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
+
+    // trail
+    ctx.beginPath();
+    for(var t=0;t<trail.length;t++){ if(t===0)ctx.moveTo(trail[t][0],trail[t][1]); else ctx.lineTo(trail[t][0],trail[t][1]); }
+    ctx.strokeStyle='rgba(158,224,208,0.85)'; ctx.lineWidth=1.6; ctx.stroke();
+
+    // focus (star)
+    ctx.beginPath(); ctx.arc(cx,cy,6,0,2*Math.PI);
+    ctx.fillStyle='#ffd76a'; ctx.shadowColor='#ffd76a'; ctx.shadowBlur=18; ctx.fill(); ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(130,169,155,0.9)'; ctx.font='10px monospace';
+    ctx.fillText('focus', cx+9, cy+14);
+
+    // planet
+    ctx.beginPath(); ctx.arc(px[0],px[1],4.5,0,2*Math.PI);
+    ctx.fillStyle=(FORCE_N===2)?'#9ee0d0':'#ff8080';
+    ctx.shadowColor=ctx.fillStyle; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+
+    // readout
+    var r=Math.hypot(st[0],st[1]);
+    var v=Math.hypot(st[2],st[3]);
+    document.getElementById('ro-r').textContent=r.toFixed(3);
+    document.getElementById('ro-v').textContent=v.toFixed(3);
+    document.getElementById('ro-e').textContent=energy(st[0],st[1],st[2],st[3]).toFixed(4);
+    document.getElementById('ro-l').textContent=angMom(st[0],st[1],st[2],st[3]).toFixed(4);
+    document.getElementById('ro-a').textContent=(0.5*Math.abs(angMom(st[0],st[1],st[2],st[3]))*dt).toFixed(5);
+    document.getElementById('ro-f').textContent=(FORCE_N===2)?'1/r² (true)':'1/r (TAMPER)';
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // ---- tamper controls ----
+  function setForce(n){
+    FORCE_N=n; trail=[]; st=[1,0,0,1.1];
+    document.getElementById('tamper').classList.toggle('on', n===1);
+    refreshWitness();
+  }
+  document.getElementById('tamper').addEventListener('click',function(){ setForce(1); });
+  document.getElementById('restore').addEventListener('click',function(){ setForce(2); });
+})();
+</script>
+</body>
+</html>

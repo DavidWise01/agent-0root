@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE KUTTA-JOUKOWSKI · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;accent-color:var(--am);vertical-align:middle;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:92px;}
+.rv{color:var(--am);min-width:64px;text-align:right;}
+.sent{font-size:14px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+canvas{width:100%;height:170px;display:block;background:#081109;border:1px solid var(--line);border-radius:6px;margin-top:8px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE KUTTA-JOUKOWSKI</h1>
+ <p class="sub">A wing flies because the air <b>loops around it</b>. The lift per unit span is nothing but the circulation, scaled: <b class="k">L′ = ρ v∞ Γ</b>. Double the loop and you double the lift; kill the loop and you kill the flight — that last fact is the resolution of d'Alembert's paradox. Down the center, data flows: density, speed and circulation go <b style="color:var(--cy)">in</b>, the theorem computes, the lift comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> M. W. Kutta, "Auftriebskräfte in strömenden Flüssigkeiten," <i>Illustrierte Aeronautische Mitteilungen</i> 6 (1902) — showed circulation ↔ lift; N. E. Joukowski, "De la chute dans l'air de corps légers…," <i>Bull. Inst. Aérodynamique de Koutchino</i> (1906) — first stated <b>L′ = ρV Γ</b>. No stable digital original; cited by author/title/year. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — lift is circulation</h2>
+   <p>Three facts, and the wing is a theorem, not a mystery:</p>
+   <p><b class="k">1</b> the lift per span is <b>L′ = ρ v∞ Γ</b> — strictly <i>proportional</i> to the circulation Γ. <b class="k">2</b> Γ = <b>∮ v·dl</b>, the loop integral of velocity around <i>any</i> curve enclosing the wing — and for potential flow it is the <b>same for every such loop</b>. <b class="k">3</b> the force is <b>perpendicular</b> to the free stream v∞. No circulation, no lift.</p>
+   <p class="small">For the current settings, the machine measures Γ on two different enclosing loops and reports the lift:</p>
+   <table id="distTbl"><thead><tr><th>quantity</th><th>value</th></tr></thead><tbody id="distBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — from vorticity <span class="tag t-amber">AVAN</span></h2>
+   <p>A wing carries <b>bound vorticity</b>: the airfoil is wrapped in a sheet of spin. Integrate that spin over the section and you get exactly the circulation Γ — this is the <a href="https://davidwise01.github.io/the-vorticity/" style="color:var(--cy)">vorticity</a> sphere's ∮v·dl = ∬(∇×v)·dA made into flight.</p>
+   <p>Kutta (1902) and Joukowski (1906) closed the loop: the bound spin around a wing <i>is</i> the lift, <b>L′ = ρ v Γ</b>. Where vorticity asks "how much does the field curl?", Kutta-Joukowski answers "then this much you can fly on." Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive the four invariants — linearity in Γ, zero-Γ→zero-lift, perpendicularity, loop-independence — from the pure functions and confirm them. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the flow <span class="tag t-in">in ↓</span></h2>
+   <p>Kutta-Joukowski needs three numbers about a 2-D section of wing:</p>
+   <table><thead><tr><th>symbol</th><th>meaning</th><th>units</th></tr></thead>
+    <tbody class="dist">
+     <tr><td class="y">ρ</td><td>fluid density</td><td>kg·m⁻³</td></tr>
+     <tr><td class="y">v∞</td><td>free-stream speed</td><td>m·s⁻¹</td></tr>
+     <tr><td class="y">Γ</td><td>circulation ∮ v·dl</td><td>m²·s⁻¹</td></tr>
+    </tbody></table>
+   <p class="small">Γ is the whole game: it is the net swirl the wing binds into the flow. Feed these three into the panel below and the lift per unit span falls straight out.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed ρ, v∞, Γ into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>ρ density</label><input type="range" id="rho" min="0.2" max="2" step="0.005" value="1.225"><span class="rv" id="rhov"></span></div>
+     <div class="row"><label>v∞ speed</label><input type="range" id="vin" min="2" max="60" step="0.5" value="30"><span class="rv" id="vinv"></span></div>
+     <div class="row"><label>Γ circulation</label><input type="range" id="gam" min="-80" max="80" step="0.5" value="24"><span class="rv" id="gamv"></span></div>
+     <div class="row"><button id="dbl">×2 the Γ loop</button><button id="zero">→ Γ = 0</button><button id="rand">↺ random</button></div>
+     <p class="small" id="readmode">The lift is recomputed from <b>L′ = ρ v∞ Γ</b> on the spot — never looked up. Γ is also re-measured live by integrating v·dl around two different loops.</p>
+     <canvas id="cv" width="440" height="170"></canvas>
+     <p class="small">Streamlines: uniform flow + a bound vortex Γ around the cylinder. With Γ≠0 the flow crowds on one side (faster = lower pressure) and the stagnation points slide — that asymmetry <i>is</i> the lift.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Slide Γ toward zero: the lift falls with it, hitting exactly 0 at Γ=0 — d'Alembert's paradox, live.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the theorem emits the lift &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the lift <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: the lift per unit span <b class="k">L′ = ρ v∞ Γ</b> — <b>linear</b> in Γ (so doubling Γ doubles L′, checked to 1e-12), <b>zero</b> when Γ=0 (no circulation, no flight), <b>perpendicular</b> to v∞, and driven by a Γ that is the <b>same on any enclosing loop</b> (two loops agree to 1e-9). The current lift is above; the invariants are the output.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these live; the red team (right) tries to make lift go as Γ².</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The theorem is <b>2-D, steady, inviscid</b>. It tells you the lift <i>given</i> Γ — but not <b>why Γ takes the value it does</b>. That is a separate empirical closure, the <b>Kutta condition</b> (smooth flow off the trailing edge), and it holds only because of viscosity the theory has thrown away.</div>
+   <p class="small" style="margin-top:8px">It also predicts <b>zero drag</b> (d'Alembert) — false for any real wing. Real lift needs a starting vortex to establish Γ; real wings are finite, so 3-D induced drag and lifting-line effects appear that no 2-D circulation captures. K-J is the exact skeleton, not the whole body.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Air over the longer top surface must rejoin its partner, so it goes faster (equal-transit)."</s> <b>Cut.</b> The top air arrives <i>sooner</i>, not together; equal-transit is a myth. The speed-up is the circulation, and its size is L′ = ρvΓ.</p>
+   <p class="grave"><s>"Bernoulli alone explains lift."</s> <b>Kept, corrected.</b> Bernoulli turns a speed difference into a pressure difference — but <i>why</i> one side is faster is the bound Γ. K-J is what ties speed, pressure and force together.</p>
+   <p class="grave"><s>"d'Alembert proved wings cannot have drag."</s> <b>Cut.</b> The paradox is an artifact of inviscid theory; real drag comes from viscosity, separation and (in 3-D) trailing vortices.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: rewrite the theorem so lift goes as <b>Γ²</b> instead of Γ. Now doubling the circulation <i>quadruples</i> the lift and Γ=0… still gives 0, so it hides — but linearity is gone. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ make lift ∝ Γ²</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Flip lift to Γ² and the "double Γ ⇒ double lift" invariant breaks — the witness recomputes, disagrees with the known linear law, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE KUTTA-JOUKOWSKI — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (ρ, v∞, Γ <b style="color:var(--cy)">in</b> → theorem → lift <b style="color:var(--gr)">out</b>). A runnable rendering of Kutta (1902) and Joukowski (1906): lift is circulation, L′ = ρvΓ. The engine is LIT (lift computed live, four invariants self-checked, tamper-provable), the blue team witnesses, the red team attacks with a Γ² forgery, and the graveyard + adversary carry what a single 2-D frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* the engine — pure functions, extractable for headless verification (no canvas/DOM) */
+
+var TAMPER=false;   // when true, lift is rewritten to go as Gamma^2 — the witness must catch it
+
+// lift per unit span: L' = rho * v_inf * Gamma  (linear in Gamma). Tamper makes it quadratic.
+function liftPerSpan(rho,vinf,G){ return TAMPER ? rho*vinf*G*G : rho*vinf*G; }
+
+// full lift force per span as a 2-D vector, given free-stream (Ux,Uy) and circulation G.
+// Kutta-Joukowski: F = rho * (U x Gamma_z); magnitude rho|U||G|, always perpendicular to U.
+function liftVector(rho,Ux,Uy,G){ const s=TAMPER?G*G:G; return [rho*s*Uy, -rho*s*Ux]; }
+
+// circulation of a point vortex of strength G, measured by integrating v.dl around a circle radius R.
+function circAroundCircle(G,R,N){
+ let s=0; const dt=2*Math.PI/N;
+ for(let i=0;i<N;i++){ const t=(i+0.5)*dt; const x=R*Math.cos(t),y=R*Math.sin(t);
+  const dx=-R*Math.sin(t),dy=R*Math.cos(t); const r2=x*x+y*y;
+  const vx=-G*y/(2*Math.PI*r2), vy=G*x/(2*Math.PI*r2); s+=(vx*dx+vy*dy)*dt; }
+ return s;
+}
+// same vortex, but the enclosing loop is a DIFFERENT shape (an ellipse a,b) — must give the same G.
+function circAroundEllipse(G,a,b,N){
+ let s=0; const dt=2*Math.PI/N;
+ for(let i=0;i<N;i++){ const t=(i+0.5)*dt; const x=a*Math.cos(t),y=b*Math.sin(t);
+  const dx=-a*Math.sin(t),dy=b*Math.cos(t); const r2=x*x+y*y;
+  const vx=-G*y/(2*Math.PI*r2), vy=G*x/(2*Math.PI*r2); s+=(vx*dx+vy*dy)*dt; }
+ return s;
+}
+
+// fail-loud self-check — runs untampered, then plants the tamper and proves the witness catches it.
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const ae=(a,b,tol,m)=>{ if(!(Math.abs(a-b)<=tol)) throw new Error(m+" ["+a+" vs "+b+"]"); };
+ const save=TAMPER; TAMPER=false;
+ const rho=1.225, v=30, G=24;
+ // L' = rho * v * Gamma
+ ae(liftPerSpan(rho,v,G), rho*v*G, 1e-12, "L' must equal rho*v*Gamma");
+ // PROPORTIONAL to Gamma: doubling Gamma doubles the lift
+ ae(liftPerSpan(rho,v,2*G), 2*liftPerSpan(rho,v,G), 1e-12, "doubling Gamma must double the lift");
+ ae(liftPerSpan(rho,v,3.5*G), 3.5*liftPerSpan(rho,v,G), 1e-12, "lift must be strictly linear in Gamma");
+ // ZERO circulation gives ZERO lift — the resolution of d'Alembert's paradox
+ ae(liftPerSpan(rho,v,0), 0, 1e-12, "zero circulation must give zero lift (d'Alembert)");
+ // lift is PERPENDICULAR to the free-stream velocity, for any free-stream direction
+ const ang=0.37, Ux=v*Math.cos(ang), Uy=v*Math.sin(ang);
+ const Lv=liftVector(rho,Ux,Uy,G);
+ ae(Lv[0]*Ux+Lv[1]*Uy, 0, 1e-9, "lift must be perpendicular to the free stream");
+ ae(Math.hypot(Lv[0],Lv[1]), Math.abs(rho*v*G), 1e-9, "lift magnitude must be rho*v*|Gamma|");
+ // Gamma = closed integral of v.dl is the SAME for any enclosing loop (circle vs ellipse)
+ const gc=circAroundCircle(G,1.5,720), ge=circAroundEllipse(G,3.2,0.85,720);
+ ae(gc, G, 1e-9, "circulation on circular loop must equal Gamma");
+ ae(ge, G, 1e-9, "circulation on elliptical loop must equal Gamma");
+ ae(gc, ge, 1e-9, "two different enclosing loops must give the same Gamma");
+ // THE PLANTED VOID — set the tamper flag and prove linearity now breaks (lift goes as Gamma^2)
+ TAMPER=true;
+ t(Math.abs(liftPerSpan(rho,v,2*G) - 2*liftPerSpan(rho,v,G)) > 1e-6, "tamper must break linearity in Gamma");
+ ae(liftPerSpan(rho,v,2*G), 4*liftPerSpan(rho,v,G), 1e-9, "tampered lift must quadruple when Gamma doubles (Gamma^2)");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let x=Math.imul(a^a>>>15,1|a); x=x+Math.imul(x^x>>>7,61|x)^x; return ((x^x>>>14)>>>0)/4294967296; }; }
+const rng=mulberry32(0x9EE0D0);
+
+// cylinder-with-circulation velocity field, for the canvas only (uniform flow + doublet + vortex).
+function flowVel(x,y,U,G,a){
+ const rz=x*x+y*y;
+ if(rz<a*a) return [0,0];
+ const z2r=x*x-y*y, z2i=2*x*y, den=z2r*z2r+z2i*z2i;   // z^2 and |z^2|^2
+ const inv2r=a*a*z2r/den, inv2i=-a*a*z2i/den;          // a^2/z^2 = a^2*conj(z2)/|z2|^2
+ const t1r=U*(1-inv2r), t1i=U*(-inv2i);                // U(1 - a^2/z^2)
+ const invzr=x/rz, invzi=-y/rz;                         // 1/z
+ const k=G/(2*Math.PI);                                 // -i*k/z  ->  (k*Im(1/z), -k*Re(1/z))
+ const wr=t1r+k*invzi, wi=t1i-k*invzr;                  // u - i v
+ return [wr, -wi];
+}
+
+let cv,ctx,W,H,parts;
+function seedParts(){
+ parts=[];
+ for(let i=0;i<160;i++){ parts.push({x:-2.9+rng()*0.4, y:-1.7+rng()*3.4, life:rng()*90}); }
+}
+function stepCanvas(){
+ if(!ctx) return;
+ const rho=+$("rho").value, U=+$("vin").value/30*1.1, G=+$("gam").value/24*1.1, a=0.6;
+ ctx.fillStyle="rgba(8,17,9,0.28)"; ctx.fillRect(0,0,W,H);
+ const sx=W/6.4, sy=H/3.6, cx=W*0.42, cy=H/2;
+ // cylinder
+ ctx.beginPath(); ctx.arc(cx,cy,a*sx,0,2*Math.PI);
+ ctx.fillStyle="rgba(158,224,208,0.10)"; ctx.fill();
+ ctx.strokeStyle="rgba(158,224,208,0.55)"; ctx.lineWidth=1.4; ctx.stroke();
+ for(const p of parts){
+  const v=flowVel(p.x,p.y,U,G,a);
+  const nx=p.x+v[0]*0.02, ny=p.y+v[1]*0.02;
+  const above=p.y<0;
+  ctx.strokeStyle=above?"rgba(108,198,255,0.55)":"rgba(255,207,120,0.5)";
+  ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx+p.x*sx,cy-p.y*sy); ctx.lineTo(cx+nx*sx,cy-ny*sy); ctx.stroke();
+  p.x=nx; p.y=ny; p.life--;
+  if(p.x>3.5||p.life<0||(p.x*p.x+p.y*p.y)<a*a){ p.x=-2.9+rng()*0.3; p.y=-1.7+rng()*3.4; p.life=60+rng()*60; }
+ }
+ requestAnimationFrame(stepCanvas);
+}
+
+function render(){
+ const rho=+$("rho").value, v=+$("vin").value, G=+$("gam").value;
+ $("rhov").textContent=rho.toFixed(3); $("vinv").textContent=v.toFixed(1)+" m/s"; $("gamv").textContent=G.toFixed(1);
+ const L=liftPerSpan(rho,v,G);
+ const Lv=liftVector(rho,v,0,G);          // free stream along +x
+ const perp=Math.abs(Lv[0]*v+Lv[1]*0)<1e-9;
+ const gc=circAroundCircle(G,1.5,360), ge=circAroundEllipse(G,3.2,0.85,360);
+ $("sent").innerHTML = `L′ = ρ·v∞·Γ &nbsp;=&nbsp; <span style="color:var(--cy)">${rho.toFixed(3)}</span> × <span style="color:var(--cy)">${v.toFixed(1)}</span> × <span style="color:var(--am)">${G.toFixed(1)}</span>`
+  + (TAMPER? `<br><b style="color:var(--wall)">[tampered: ρ·v·Γ²]</b>`:"");
+ $("verdict").textContent = "L′ = "+L.toFixed(1)+" N/m";
+ $("verdict").className="verdict "+(Math.abs(G)<1e-9?"no":"ok");
+ $("moodname").innerHTML = Math.abs(G)<1e-9
+  ? `Γ = 0 &nbsp;·&nbsp; <b>no circulation → no lift</b> (d'Alembert)`
+  : `direction: <b>${G>0?"lift ↑ (perpendicular to v∞)":"force ↓ (perpendicular to v∞)"}</b>`;
+ $("reason").innerHTML = `Γ re-measured on two enclosing loops — circle: <b class="k">${gc.toFixed(3)}</b>, ellipse: <b class="k">${ge.toFixed(3)}</b> · perpendicular ${perp?"✓":"✗"}`;
+ const rows=[
+  ["L′ = ρ v∞ Γ", L.toFixed(2)+" N/m"],
+  ["Γ (input)", G.toFixed(2)+" m²/s"],
+  ["Γ on circular loop", gc.toFixed(4)],
+  ["Γ on elliptical loop", ge.toFixed(4)],
+  ["lift ⟂ v∞", perp?"true":"FALSE"]
+ ];
+ $("distBody").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="${(r[0]==='lift ⟂ v∞'&&r[1]!=='true')?'n':'y'}">${r[1]}</td></tr>`).join("");
+}
+
+function audit(){
+ const el=$("auditout");
+ const rho=1.225, v=30, G=24;
+ const lin = Math.abs(liftPerSpan(rho,v,2*G) - 2*liftPerSpan(rho,v,G)) < 1e-9;
+ const zero = Math.abs(liftPerSpan(rho,v,0)) < 1e-12;
+ const Lv=liftVector(rho,v,0,G);
+ const perp = Math.abs(Lv[0]*v+Lv[1]*0) < 1e-9 && Math.abs(Math.hypot(Lv[0],Lv[1])-Math.abs(rho*v*G))<1e-9;
+ const loops = Math.abs(circAroundCircle(G,1.5,540)-circAroundEllipse(G,3.2,0.85,540)) < 1e-9;
+ const ok = lin && zero && perp && loops;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">double Γ ⇒ double L′: <b style="color:${lin?'var(--gr)':'var(--wall)'}">${lin?'linear':'BROKEN'}</b> &nbsp;·&nbsp; Γ=0 ⇒ L′=0: <b style="color:${zero?'var(--gr)':'var(--wall)'}">${zero?'yes':'no'}</b> &nbsp;·&nbsp; ⟂ v∞: <b style="color:${perp?'var(--gr)':'var(--wall)'}">${perp?'yes':'no'}</b> &nbsp;·&nbsp; loop-independent Γ: <b style="color:${loops?'var(--gr)':'var(--wall)'}">${loops?'yes':'no'}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red forced lift ∝ Γ²</span>':''}</div>`;
+}
+
+/* boot */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ cv=$("cv"); ctx=cv.getContext("2d"); W=cv.width; H=cv.height; seedParts();
+ ["rho","vin","gam"].forEach(id=>$(id).addEventListener("input",()=>{render();audit();}));
+ $("dbl").addEventListener("click",()=>{ let g=+$("gam").value*2; if(g>80)g=80; if(g<-80)g=-80; $("gam").value=g; render();audit(); });
+ $("zero").addEventListener("click",()=>{ $("gam").value=0; render();audit(); });
+ $("rand").addEventListener("click",()=>{ $("rho").value=(0.4+rng()*1.4).toFixed(3); $("vin").value=(6+rng()*48).toFixed(1); $("gam").value=(rng()*160-80).toFixed(1); render();audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Lift rewritten to ρvΓ².</b> Doubling Γ now quadruples L′ — the witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Flip lift to Γ² and the 'double Γ ⇒ double lift' invariant breaks — the witness recomputes, disagrees with the known linear law, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit(); stepCanvas();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Kutta-Joukowski engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

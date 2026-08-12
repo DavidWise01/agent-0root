@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PHILLIPS CURVE</title>
+<style>
+:root{
+  --am:#ff9e6a;
+  --ground:#0c1a12;
+  --ground2:#102417;
+  --panel:#12251a;
+  --ink:#e7f3ea;
+  --dim:#9fb7a8;
+  --line:#26402f;
+  --blue:#5aa9ff;
+  --red:#ff6a7a;
+  --lit:#7df0a6;
+  --amber:#ffcf6a;
+  --wall:#ff8a5a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 20% -10%, #14301f 0%, transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, #16281c 0%, transparent 55%),
+    linear-gradient(160deg,var(--ground) 0%, var(--ground2) 100%);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  padding:24px 18px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{
+  font-size:30px;letter-spacing:.14em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 24px rgba(255,158,106,.28)
+}
+.sub{color:var(--ink);max-width:78ch;margin:0 0 12px;font-size:14.5px}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.rendered{color:var(--dim);font-style:italic;margin-left:6px}
+
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.13em;
+  padding:2px 8px;border-radius:3px;border:1px solid currentColor;
+  text-transform:uppercase;font-weight:600;white-space:nowrap
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  padding:7px 10px;border-radius:5px;font-weight:700
+}
+.col.blue .teamhdr{color:var(--blue);background:rgba(90,169,255,.08);border:1px solid rgba(90,169,255,.3)}
+.col.center .teamhdr{color:var(--am);background:rgba(255,158,106,.08);border:1px solid rgba(255,158,106,.3)}
+.col.red .teamhdr{color:var(--red);background:rgba(255,106,122,.08);border:1px solid rgba(255,106,122,.3)}
+
+.win{
+  position:relative;background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;padding:14px 14px 13px
+}
+.win.panel{border-color:rgba(255,158,106,.4);box-shadow:0 0 0 1px rgba(255,158,106,.08),0 8px 30px rgba(0,0,0,.35)}
+.wnum{
+  position:absolute;top:-10px;right:10px;width:24px;height:24px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:700;
+  background:var(--ground2);border:1px solid var(--line)
+}
+.col.blue .wnum{color:var(--blue);border-color:rgba(90,169,255,.5)}
+.col.center .wnum{color:var(--am);border-color:rgba(255,158,106,.5)}
+.col.red .wnum{color:var(--red);border-color:rgba(255,106,122,.5)}
+.win h3{margin:2px 0 8px;font-size:13px;letter-spacing:.08em;color:var(--ink)}
+.win p{margin:6px 0;font-size:13px;color:var(--dim)}
+.win .lead{color:var(--ink)}
+.win code{color:var(--am);font-size:12.5px}
+.k{color:var(--ink);font-weight:600}
+
+.flow{
+  text-align:center;color:var(--dim);font-size:16px;
+  margin:2px 0;letter-spacing:.3em
+}
+canvas{display:block;width:100%;height:auto;background:#0a160f;border:1px solid var(--line);border-radius:6px;margin:8px 0}
+.readout{font-size:12px;color:var(--ink);white-space:pre-wrap;background:#0a160f;border:1px solid var(--line);border-radius:6px;padding:9px 10px;margin-top:8px}
+.badge{
+  display:inline-block;margin-top:8px;padding:6px 10px;border-radius:5px;
+  font-size:12px;font-weight:600;border:1px solid var(--line)
+}
+.badge.ok{color:var(--lit);border-color:rgba(125,240,166,.5);background:rgba(125,240,166,.07)}
+.badge.bad{color:var(--red);border-color:rgba(255,106,122,.6);background:rgba(255,106,122,.1)}
+.wall-note{border-left:3px solid var(--wall);padding-left:10px}
+.struck{text-decoration:line-through;color:#6f8a79}
+.fix{color:var(--lit)}
+button{
+  font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+  background:#16281c;border:1px solid var(--line);border-radius:5px;
+  padding:6px 11px;margin:4px 6px 0 0
+}
+button:hover{border-color:var(--am);color:var(--am)}
+#failb{display:none;margin-top:10px;color:var(--red);border:1px solid var(--red);border-radius:6px;padding:8px 10px;font-size:12px}
+.ctrl{margin-top:8px;font-size:12px;color:var(--dim)}
+.ctrl input{width:100%;accent-color:var(--am)}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12px}
+.amberflag{color:var(--amber)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE PHILLIPS CURVE</h1>
+  <p class="sub">The short-run trade-off between inflation and unemployment — buy lower joblessness with higher prices — and why the bargain vanishes in the long run. Once wage-setters expect the inflation, the curve stands straight up at the natural rate: no permanent trade-off, only a higher price level. <span class="amberflag">These are models of an economy, not investment advice; forecasts are AMBER.</span></p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    A. W. Phillips, "The Relation between Unemployment and the Rate of Change of Money Wage Rates in the United Kingdom, 1861–1957," <a href="https://onlinelibrary.wiley.com/doi/10.1111/j.1468-0335.1958.tb00003.x" target="_blank" rel="noopener">Economica 25 (1958): 283–299</a> · doi:10.1111/j.1468-0335.1958.tb00003.x
+    <span class="rendered">Rendered, not quoted.</span>
+  </p>
+</header>
+
+<div class="ocho">
+
+  <!-- LEFT · BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">BLUE TEAM · builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wnum">3</div>
+      <h3>THE MODEL</h3>
+      <p class="lead">The expectations-augmented curve:</p>
+      <p><code>π = πᵉ − h·(u − uₙ)</code></p>
+      <p><span class="k">π</span> actual inflation · <span class="k">πᵉ</span> expected inflation · <span class="k">u</span> unemployment · <span class="k">uₙ</span> natural rate · <span class="k">h &gt; 0</span> the slope.</p>
+      <p>Hold πᵉ fixed and the short-run curve slopes <span class="k">down</span>: <code>dπ/du = −h &lt; 0</code>. Lower unemployment is bought with higher inflation. At <code>u = uₙ</code> the surprise term is zero, so <code>π = πᵉ</code>.</p>
+      <p>Let expectations catch up — <code>πᵉ → π</code> — and the whole curve slides up until <code>u = uₙ</code> again. The long-run locus is a <span class="k">vertical line</span> at uₙ: the trade-off is a disequilibrium mistake, not a lever.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">5</div>
+      <h3>THE LINEAGE</h3>
+      <p>Inflation versus unemployment — Phillips 1958 read the wage data; Friedman &amp; Phelps (1968) added expectations. A downward short-run trade-off that goes vertical at the natural rate once πᵉ adjusts is the <span class="k">labour-market face</span> of <code>the-quantity-theory</code>: MV=PQ makes money neutral in the long run, so extra money buys only extra inflation, never a permanently lower u.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">7</div>
+      <h3>THE WITNESS</h3>
+      <p>Re-runs the live slope check every render. Downward &amp; anchored at uₙ ⇒ green. If the TAMPER (window 6) inverts the slope, the witness turns red.</p>
+      <div id="auditout" class="badge ok">witness: pending…</div>
+    </div>
+  </div>
+
+  <!-- CENTER · THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">THE MACHINE · the live engine</div>
+
+    <div class="win">
+      <div class="wnum">4</div>
+      <h3>DATA IN <span class="tag t-in">in ↓</span></h3>
+      <p>Expected inflation πᵉ, slope h, natural rate uₙ, and a scan over unemployment u.</p>
+      <div class="ctrl">πᵉ expected inflation: <span id="pieVal" class="k">2.0%</span>
+        <input id="pie" type="range" min="0" max="8" step="0.5" value="2"></div>
+      <div class="ctrl">h slope: <span id="hVal" class="k">0.50</span>
+        <input id="hslider" type="range" min="0.1" max="1.2" step="0.05" value="0.5"></div>
+    </div>
+
+    <div class="flow">↓</div>
+
+    <div class="win panel">
+      <div class="wnum">0</div>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <p>Solid = short-run curve at current πᵉ. Faint = the same curve after expectations rise. Vertical dashed = the long-run curve at uₙ.</p>
+      <canvas id="cv" width="520" height="300"></canvas>
+      <div id="readout" class="readout">computing…</div>
+    </div>
+
+    <div class="flow">↓</div>
+
+    <div class="win">
+      <div class="wnum">8</div>
+      <h3>DATA OUT <span class="tag t-out">out ↓</span></h3>
+      <p>Proven at boot:</p>
+      <div id="litbadge" class="badge ok">proving…</div>
+      <div id="failb"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT · RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">RED TEAM · attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wnum">1</div>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note">"There is always a stable menu — pick 3% unemployment and pay 6% inflation, forever." That reading of the 1960s curve is the wall. It assumes πᵉ is <span class="k">frozen</span>. It is not: exploit the trade-off and expectations chase the inflation, the curve lifts, and you are back at uₙ with only higher prices. The 1970s <span class="k">stagflation</span> — high u AND high π together — walked straight through this wall.</p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">2</div>
+      <h3>THE GRAVEYARD</h3>
+      <p><span class="struck">"The Phillips curve is a permanent, exploitable trade-off policymakers can sit anywhere on."</span><br>
+      <span class="fix">↳ Only short-run. Long-run curve is vertical at uₙ; raising πᵉ shifts it up, u returns to uₙ.</span></p>
+      <p><span class="struck">"A supply shock cannot raise inflation and unemployment at once."</span><br>
+      <span class="fix">↳ It can — <span class="amberflag">AMBER</span>: raise uₙ and add a cost-push intercept and both rise (stagflation), the naive trade-off breaks.</span></p>
+      <p><span class="struck">"Rational agents, perfect competition, ceteris paribus make this exact."</span><br>
+      <span class="fix">↳ <span class="amberflag">AMBER</span> idealizations. Economics is not physics; h, uₙ, and πᵉ are estimated and drift. Treat forecasts as AMBER.</span></p>
+    </div>
+
+    <div class="win">
+      <div class="wnum">6</div>
+      <h3>THE TAMPER</h3>
+      <p>The disclosed planted void: flip the slope <span class="k">positive</span> (h → −h) so higher unemployment comes with higher inflation. The curve inverts; the WITNESS in window 7 catches it live.</p>
+      <button id="tamper">invert the slope</button>
+      <button id="restore">restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE FOLD · WORLD II — a live instrument of Phillips (1958). The engine computes π = πᵉ − h·(u − uₙ) from real logic; the graveyard and adversary name true failure modes; forecasts are AMBER; no financial advice. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===== ENGINE (pure logic — runs headless, no canvas/DOM) =====
+var H0 = 0.5;          // baseline short-run slope magnitude (h > 0)
+var UN = 0.05;         // natural rate 5%
+var TAMPER = false;    // live planted-void flag (plain top-level var)
+var TOL = 1e-6;        // stated tolerance for numeric checks
+
+// live slope: tamper inverts its sign (positive slope = broken trade-off)
+function curH(){ return TAMPER ? -H0 : H0; }
+
+// expectations-augmented Phillips relation
+function phillips(pie, h, u, un){ return pie - h*(u - un); }
+
+// analytic short-run slope dπ/du
+function slope(h){ return -h; }
+
+// numeric slope from two points (secant)
+function slopeNum(pie, h, un, uA, uB){
+  return (phillips(pie,h,uB,un) - phillips(pie,h,uA,un)) / (uB - uA);
+}
+
+function selfcheck(){
+  var pie = 0.02, un = UN, h = H0;
+
+  // 1) SHORT RUN: downward-sloping trade-off, dπ/du = -h < 0
+  if(!(slope(h) < 0)) throw new Error("short-run slope not negative");
+  if(Math.abs(slope(h) - (-h)) > TOL) throw new Error("analytic slope != -h");
+  var sN = slopeNum(pie, h, un, 0.03, 0.07);
+  if(Math.abs(sN - (-h)) > TOL) throw new Error("numeric slope != -h");
+  // lower u => higher pi
+  if(!(phillips(pie,h,0.03,un) > phillips(pie,h,0.07,un)))
+    throw new Error("lower unemployment did not raise inflation");
+  // exact values: pi(0.03)=0.03, pi(0.07)=0.01
+  if(Math.abs(phillips(pie,h,0.03,un) - 0.03) > TOL) throw new Error("pi(3%) wrong");
+  if(Math.abs(phillips(pie,h,0.07,un) - 0.01) > TOL) throw new Error("pi(7%) wrong");
+
+  // 2) NATURAL RATE: at u = un, pi = pi_e
+  if(Math.abs(phillips(pie,h,un,un) - pie) > TOL) throw new Error("pi(un) != pi_e");
+
+  // 3) LONG RUN: raise pi_e, curve shifts up in parallel, still pi=pi_e at un
+  var pie2 = 0.05;
+  if(Math.abs(phillips(pie2,h,un,un) - pie2) > TOL) throw new Error("pi(un) != pi_e' after shift");
+  // parallel shift: pi'(u) - pi(u) = (pie2 - pie) for every u  => vertical long-run locus at un
+  var d1 = phillips(pie2,h,0.03,un) - phillips(pie,h,0.03,un);
+  var d2 = phillips(pie2,h,0.07,un) - phillips(pie,h,0.07,un);
+  if(Math.abs(d1 - (pie2-pie)) > TOL || Math.abs(d2 - (pie2-pie)) > TOL)
+    throw new Error("expectations shift not parallel");
+  // unemployment unchanged at un despite higher inflation => no permanent trade-off
+  if(Math.abs(phillips(pie2,h,un,un) - phillips(pie,h,un,un) - (pie2-pie)) > TOL)
+    throw new Error("long-run trade-off leaked");
+
+  // 4) SUPPLY SHOCK (AMBER): raise un and add cost-push s => both u and pi rise
+  var unS = 0.07, s = 0.02;
+  var baseU = un, baseP = phillips(pie,h,un,un);          // (0.05, 0.02)
+  var shockP = phillips(pie,h,unS,unS) + s;               // at new natural rate: 0.02 + 0.02 = 0.04
+  if(!(unS > baseU && shockP > baseP)) throw new Error("supply shock not stagflationary");
+  if(Math.abs(shockP - 0.04) > TOL) throw new Error("stagflation inflation wrong");
+
+  // 5) TAMPER PROOF: flipping the slope must invert the trade-off (witness will catch it)
+  var save = TAMPER;
+  TAMPER = true;
+  if(!(curH() < 0)) throw new Error("tamper did not flip slope sign");
+  if(!(slope(curH()) > 0)) throw new Error("tampered slope not positive");
+  // under tamper, higher u => higher pi (broken)
+  if(!(phillips(0.02, curH(), 0.07, UN) > phillips(0.02, curH(), 0.03, UN)))
+    throw new Error("tamper did not invert trade-off");
+  TAMPER = save;   // restore
+
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var failb = document.getElementById('failb');
+  var lit = document.getElementById('litbadge');
+  try{
+    var ok = selfcheck();
+    if(ok !== true) throw new Error("selfcheck did not return true");
+    lit.className = 'badge ok';
+    lit.textContent = 'PROVEN · at u=uₙ π=πᵉ (2.00%) · short-run dπ/du = −h = −0.50 · long-run VERTICAL at uₙ=5.00%';
+  }catch(e){
+    lit.className = 'badge bad';
+    lit.textContent = 'SELFCHECK FAILED';
+    failb.style.display = 'block';
+    failb.textContent = 'selfcheck() threw: ' + e.message;
+    throw e;
+  }
+
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var pieEl = document.getElementById('pie'), hEl = document.getElementById('hslider');
+  var pieVal = document.getElementById('pieVal'), hVal = document.getElementById('hVal');
+  var readout = document.getElementById('readout');
+  var auditout = document.getElementById('auditout');
+
+  var uMin = 0.01, uMax = 0.10, piMin = -0.02, piMax = 0.10;
+  function X(u){ return 44 + (u - uMin)/(uMax - uMin) * (cv.width - 60); }
+  function Y(p){ return (cv.height - 34) - (p - piMin)/(piMax - piMin) * (cv.height - 52); }
+
+  function line(pie, h, style, w){
+    ctx.strokeStyle = style; ctx.lineWidth = w; ctx.beginPath();
+    var first = true;
+    for(var u = uMin; u <= uMax + 1e-9; u += 0.002){
+      var p = phillips(pie, h, u, UN);
+      var x = X(u), y = Y(p);
+      if(first){ ctx.moveTo(x,y); first = false; } else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+
+  function draw(){
+    var pie = parseFloat(pieEl.value)/100;
+    var h = parseFloat(hEl.value);
+    if(TAMPER) h = -h;                       // live view reflects tamper
+    pieVal.textContent = (pie*100).toFixed(1)+'%';
+    hVal.textContent = (parseFloat(hEl.value)).toFixed(2) + (TAMPER?' (inverted)':'');
+
+    ctx.clearRect(0,0,cv.width,cv.height);
+    // axes
+    ctx.strokeStyle = '#26402f'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(X(uMin), Y(0)); ctx.lineTo(X(uMax), Y(0)); ctx.stroke(); // pi=0
+    ctx.beginPath(); ctx.moveTo(X(uMin), Y(piMin)); ctx.lineTo(X(uMin), Y(piMax)); ctx.stroke();
+    ctx.fillStyle = '#9fb7a8'; ctx.font = '11px monospace';
+    ctx.fillText('π', X(uMin)-8, Y(piMax)+2);
+    ctx.fillText('u →', X(uMax)-24, Y(0)+16);
+
+    // long-run vertical curve at un
+    ctx.setLineDash([5,4]); ctx.strokeStyle = '#ffcf6a'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(X(UN), Y(piMin)); ctx.lineTo(X(UN), Y(piMax)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ffcf6a'; ctx.fillText('uₙ · long-run', X(UN)+4, Y(piMax)+14);
+
+    // faint shifted curve (expectations up by 3 pts)
+    line(pie + 0.03, h, 'rgba(255,158,106,.35)', 1.5);
+    // solid short-run curve
+    line(pie, h, '#ff9e6a', 2.5);
+
+    // natural-rate anchor point (u=un, pi=pie)
+    ctx.fillStyle = '#7df0a6';
+    ctx.beginPath(); ctx.arc(X(UN), Y(phillips(pie,h,UN,UN)), 4, 0, 6.29); ctx.fill();
+
+    var p3 = phillips(pie,h,0.03,UN), p7 = phillips(pie,h,0.07,UN);
+    readout.textContent =
+      'πᵉ = '+(pie*100).toFixed(1)+'%   h = '+h.toFixed(2)+'   uₙ = '+(UN*100).toFixed(0)+'%\n' +
+      'dπ/du = '+slope(h).toFixed(2)+ (slope(h)<0?'  (downward ✓)':'  (POSITIVE — inverted!)') +'\n' +
+      'u=3%: π = '+(p3*100).toFixed(2)+'%   u=5%(=uₙ): π = '+(phillips(pie,h,UN,UN)*100).toFixed(2)+'% (=πᵉ)   u=7%: π = '+(p7*100).toFixed(2)+'%\n' +
+      'long-run: vertical at uₙ — raising πᵉ only lifts π, u returns to uₙ (no permanent trade-off)';
+
+    // WITNESS re-check on live state
+    if(curH() < 0){
+      auditout.className = 'badge bad';
+      auditout.textContent = 'witness: TAMPERED — slope positive (' + slope(curH()).toFixed(2) + '), trade-off inverted';
+    }else{
+      auditout.className = 'badge ok';
+      auditout.textContent = 'witness OK — slope −'+H0.toFixed(2)+' (downward), anchored at uₙ, selfcheck() = true';
+    }
+  }
+
+  pieEl.addEventListener('input', draw);
+  hEl.addEventListener('input', draw);
+  document.getElementById('tamper').addEventListener('click', function(){ TAMPER = true; draw(); });
+  document.getElementById('restore').addEventListener('click', function(){ TAMPER = false; draw(); });
+
+  draw();
+})();
+</script>
+</body>
+</html>

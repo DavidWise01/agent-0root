@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE KARP REDUCTION · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fe0c0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,224,192,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* refined OCHO layout: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,224,192,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,224,192,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+.vv{color:var(--am);} .v1{color:var(--cy);} .v2{color:var(--gr);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE KARP REDUCTION</h1>
+ <p class="sub">Hardness travels along a wire. Karp gave the wire a shape: a <b>polynomial-time many-one map</b> f that carries one problem into another so that <b>x is a YES-instance of A exactly when f(x) is a YES-instance of B</b> — the biconditional. Build f from <b class="k">3-SAT</b> to <b class="k">INDEPENDENT-SET</b>: a k-clause formula is satisfiable iff its clause-gadget graph has an independent set of size k. Down the center a formula goes <b style="color:var(--cy)">in</b>, the map builds a graph, and the answer comes <b style="color:var(--gr)">out</b> unchanged. The <b style="color:var(--blue)">blue team</b> proves the map preserves the answer; the <b style="color:var(--red)">red team</b> ships a broken map that lies.</p>
+ <p class="src"><span class="tag t-amber">source</span> R. M. Karp, <i>Reducibility Among Combinatorial Problems</i>, in <i>Complexity of Computer Computations</i>, Plenum Press 1972, pp. 85–103 — doi <a href="https://doi.org/10.1007/978-1-4684-2001-2_9">10.1007/978-1-4684-2001-2_9</a> (author copy: <a href="https://www.cs.umd.edu/~gasarch/BLOGPAPERS/Karp.pdf">cs.umd.edu/~gasarch/BLOGPAPERS/Karp.pdf</a>). Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the clause gadget</h2>
+   <p>The map <b>f</b> turns a CNF formula into a graph, deterministically:</p>
+   <p><b class="k">V1</b> one vertex per <i>literal occurrence</i> — clause i with j literals gives j vertices. <b class="k">E1</b> the <b>clique</b>: join every pair of vertices in the same clause (so an independent set takes at most one literal per clause). <b class="k">E2</b> the <b>conflict</b> edge: join two vertices whose literals are complementary — x and ¬x — anywhere they appear. <b class="k">k</b> = the number of clauses.</p>
+   <p class="small">Biconditional: picking one true literal per clause is a size-k independent set (clique edges force one-per-clause; conflict edges force consistency), and any size-k independent set is exactly such an assignment. Live map of the current formula:</p>
+   <table id="modelTbl"><thead><tr><th>clause</th><th>vertices</th><th>within-clause edges</th></tr></thead><tbody id="modelBody"></tbody></table>
+   <p class="small" id="modelLive"></p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the map that spreads hardness <span class="tag t-amber">AVAN</span></h2>
+   <p>One reduction is a wire between two problems. Karp laid <b style="color:var(--am)">21</b> of them, linking SAT to CLIQUE, VERTEX-COVER, HAMILTONIAN, PARTITION and the rest — each a poly map, so a solver for any one solves them all.</p>
+   <p>The current flows in from <a href="https://davidwise01.github.io/the-cook-levin-theorem/" style="color:var(--cy)">the Cook–Levin theorem</a>: Cook proved <b>SAT</b> is NP-complete — every NP problem reduces to it. Karp then carries SAT <i>onward</i> by maps exactly like this one, and NP-completeness propagates. Each sphere is the next one&rsquo;s premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team&rsquo;s live check: re-run the biconditional over <b>every</b> formula in the bounded family and confirm SAT(x) equals INDSET(f(x)) in <b>both</b> directions. If red ships a broken map, the NO-direction fails here and this badge turns red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — a formula <span class="tag t-in">in ↓</span></h2>
+   <p>Problem <b class="v1">A</b> is <b>SAT</b>: given a CNF formula over variables <span class="v1">x1</span>, <span class="v2">x2</span>, is there an assignment making every clause true? A clause is a disjunction (∨) of literals; the formula is their conjunction (∧). This is what you feed the map.</p>
+   <p class="small">Problem <b class="v2">B</b> is <b>INDEPENDENT-SET</b>: given a graph and an integer k, is there a set of k vertices with <i>no</i> edge between them? The map f rewrites the A-question as a B-question without changing the answer.</p>
+  </div>
+  <div class="flow">▼ &nbsp; apply the polynomial map f &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the map <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>formula</label><select id="preset"></select></div>
+     <div class="row"><button id="rand">↺ random</button><button id="reset">→ reset</button></div>
+     <p class="small" id="modeline"></p>
+     <div class="sent" id="graphbox"></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="matchline"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">SAT is decided by brute force over all assignments; INDEPENDENT-SET by brute force over all vertex subsets. Nothing is looked up — the answers are computed, then compared.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the same YES/NO answer emerges &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — answer preserved <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, exactly: across the whole bounded family, <b>SAT(x) = INDSET(f(x))</b> in both directions — YES maps to YES <i>and</i> NO maps to NO. The output graph is <b>linear</b> in the input (|V| = total literals, |E| ≤ |V|²), so f runs in polynomial time, and a poly solver for B would decide A. That is a Karp reduction.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) confirms the biconditional live; the red team (right) tries to make the map lie.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> A reduction is <b>not a solver</b>. f rewrites the question; it does not answer it. A Karp map proves only that B is <i>at least as hard as</i> A — it buys hardness, never an algorithm. And the direction is one-way: A ≤ₚ B says nothing about mapping B into A.</div>
+   <p class="small" style="margin-top:8px">A Karp (many-one) reduction is also weaker than a Cook (Turing) reduction, which may call the B-oracle many times and negate. And it preserves only the yes/no bit — <b>not</b> solution quality, so it says nothing about approximation. Get the map wrong and it preserves nothing at all.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>&ldquo;A reduces to B means A is harder than B.&rdquo;</s> <b>Cut.</b> It means <b>B is at least as hard as A</b> (B ≥ A): if you can solve B fast, you can solve A fast. The arrow points the other way.</p>
+   <p class="grave"><s>&ldquo;NP-complete means unsolvable.&rdquo;</s> <b>Cut.</b> Every one is decidable by brute force — INDEPENDENT-SET is decided live here. What is unknown is a <i>polynomial</i> algorithm.</p>
+   <p class="grave"><s>&ldquo;Any polynomial map is a valid reduction.&rdquo;</s> <b>Kept, corrected.</b> It must also preserve the answer — the biconditional, <i>both</i> directions. A map that only keeps YES→YES is the tamper next door.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team ships a &ldquo;reduction&rdquo; that <b>drops the conflict edges</b>. It still keeps YES→YES, so it looks fine on satisfiable inputs — but a contradictory formula like (x1) ∧ (¬x1) now maps to two <i>unconnected</i> vertices, giving a size-2 independent set. B answers YES; A is NO.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ drop conflict edges</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Drop the conflict edges and the map lies on the NO-direction — a false YES. The witness (window 7) recomputes the biconditional, finds the mismatch, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE KARP REDUCTION — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (a formula <b style="color:var(--cy)">in</b> → the polynomial map f → the same answer <b style="color:var(--gr)">out</b>). A runnable rendering of Karp&rsquo;s 1972 reduction 3-SAT ≤ₚ INDEPENDENT-SET — the map is LIT (the biconditional is checked exactly, both directions, over the whole bounded family; the output is polynomial; the map is a deterministic function), the blue team witnesses, the red team ships a broken map that the witness catches, and the graveyard + adversary carry what a single wire cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- the engine: 3-SAT <=p INDEPENDENT-SET, all results discrete & exact ----
+let TAMPER=false;   // when true the reduction drops conflict edges -- the witness must catch it
+
+// a literal is a signed int: +v means variable v true, -v means variable v false (1-indexed)
+function nvars(f){ let n=0; for(const cl of f) for(const l of cl) n=Math.max(n,Math.abs(l)); return n; }
+function litTrue(l,assign){ const i=Math.abs(l)-1; return l>0 ? assign[i] : !assign[i]; }
+
+// problem A = SAT: brute force over all 2^n assignments
+function satisfiable(f){
+ if(f.length===0) return true;
+ const n=nvars(f), N=1<<n;
+ for(let a=0;a<N;a++){
+  const assign=[]; for(let i=0;i<n;i++) assign.push(((a>>i)&1)===1);
+  let all=true;
+  for(const cl of f){ let c=false; for(const l of cl){ if(litTrue(l,assign)){c=true;break;} } if(!c){all=false;break;} }
+  if(all) return true;
+ }
+ return false;
+}
+
+// the map f: formula -> {vertices, adjacency, k}
+function reduce(f){
+ const verts=[];
+ for(let ci=0;ci<f.length;ci++) for(const l of f[ci]) verts.push({c:ci,lit:l});
+ const V=verts.length;
+ const adj=[]; for(let i=0;i<V;i++){ adj.push(new Array(V).fill(false)); }
+ for(let i=0;i<V;i++) for(let j=i+1;j<V;j++){
+  let e=false;
+  if(verts[i].c===verts[j].c) e=true;                  // clique: same clause
+  if(!TAMPER && verts[i].lit===-verts[j].lit) e=true;  // conflict: complementary literals (dropped when tampered)
+  if(e){ adj[i][j]=true; adj[j][i]=true; }
+ }
+ return {V:V, adj:adj, verts:verts, k:f.length};
+}
+
+// problem B = INDEPENDENT-SET: brute force -- is there an independent set of size exactly k?
+function hasIndSet(g){
+ const V=g.V, k=g.k;
+ if(k===0) return true;
+ for(let mask=0; mask<(1<<V); mask++){
+  let cnt=0; for(let i=0;i<V;i++) if((mask>>i)&1) cnt++;
+  if(cnt!==k) continue;
+  let ind=true;
+  for(let i=0;i<V && ind;i++){ if(!((mask>>i)&1)) continue;
+   for(let j=i+1;j<V;j++){ if(((mask>>j)&1) && g.adj[i][j]){ ind=false; break; } } }
+  if(ind) return true;
+ }
+ return false;
+}
+function reducedYes(f){ return hasIndSet(reduce(f)); }
+function solveViaB(f){ return reducedYes(f); }  // decide A by asking B about f(x) -- the transfer
+function edgeCount(g){ let e=0; for(let i=0;i<g.V;i++) for(let j=i+1;j<g.V;j++) if(g.adj[i][j]) e++; return e; }
+function totalLiterals(f){ let t=0; for(const cl of f) t+=cl.length; return t; }
+function litStr(l){ return (l<0?"-":"")+"x"+Math.abs(l); }
+function fmt(f){ return f.length? f.map(cl=>"("+cl.map(litStr).join(" v ")+")").join(" & ") : "<empty>"; }
+
+// the bounded family: all subsets, up to 4 clauses, of an 8-clause universe over 2 variables
+const CLAUSES=[[1],[-1],[2],[-2],[1,2],[1,-2],[-1,2],[-1,-2]];
+function family(maxC){
+ const out=[], U=CLAUSES.length;
+ for(let mask=0; mask<(1<<U); mask++){
+  let cnt=0; for(let i=0;i<U;i++) if((mask>>i)&1) cnt++;
+  if(cnt>maxC) continue;
+  const f=[]; for(let i=0;i<U;i++) if((mask>>i)&1) f.push(CLAUSES[i]);
+  out.push(f);
+ }
+ return out;
+}
+
+// ---- fail-loud self-check (runs untampered, restores the flag, returns true) ----
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const fam=family(4);
+ // the biconditional, exact, both directions, over the whole family
+ let yes=0, no=0;
+ for(const f of fam){
+  const a=satisfiable(f), b=reducedYes(f);
+  t(a===b, "biconditional broken for "+fmt(f)+": SAT="+a+" INDSET="+b);
+  if(a) yes++; else no++;
+ }
+ t(yes>0 && no>0, "family must contain both YES and NO instances (both directions are tested)");
+ // named anchors, computed then asserted
+ t(satisfiable([[1],[-1]])===false, "(x1)&(-x1) must be UNSAT");
+ t(reducedYes([[1],[-1]])===false, "correct map: no independent set of size 2 for (x1)&(-x1)");
+ t(satisfiable([[1,2],[-1,2]])===true, "(x1 v x2)&(-x1 v x2) must be SAT");
+ t(reducedYes([[1,2],[-1,2]])===true, "correct map: an independent set of size 2 exists");
+ t(satisfiable([[1,2],[1,-2],[-1,2],[-1,-2]])===false, "the four cross-clauses must be UNSAT");
+ t(reducedYes([[1,2],[1,-2],[-1,2],[-1,-2]])===false, "correct map: no size-4 independent set for the cross-clauses");
+ // polynomial size: |V| = total literals (linear), |E| <= |V|^2
+ for(const f of fam){ const g=reduce(f);
+  t(g.V===totalLiterals(f), "output vertices must equal total literals (linear size)");
+  t(edgeCount(g) <= g.V*g.V, "edge count must be O(V^2) -- polynomial output"); }
+ // many-one: f is a deterministic function (no oracle) -- same input, same graph
+ { const g1=reduce([[1,2],[-1,-2]]), g2=reduce([[1,2],[-1,-2]]);
+  t(g1.V===g2.V && JSON.stringify(g1.adj)===JSON.stringify(g2.adj), "the reduction must be a deterministic function"); }
+ // hardness transfers by transitivity: a solver for B, composed with f, decides A
+ for(const f of fam){ t(solveViaB(f)===satisfiable(f), "a poly solver for B must decide A via f"); }
+ // TAMPER: the broken map keeps YES->YES but maps a NO-instance of A to a YES-instance of B
+ TAMPER=true;
+ { const bad=[[1],[-1]];
+  t(satisfiable(bad)===false, "anchor is still a NO-instance of A");
+  t(reducedYes(bad)===true, "broken map wrongly makes it a YES-instance of B");
+  let broke=false, dir=false;
+  for(const f of fam){ const a=satisfiable(f), b=reducedYes(f);
+   if(a!==b){ broke=true; if(a===false && b===true) dir=true; } }
+  t(broke, "tamper must break the biconditional somewhere in the family");
+  t(dir, "the break must be a NO-instance of A mapped to a YES-instance of B"); }
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const PRESETS=[
+ {name:"(x1) & (-x1)  --  UNSAT", f:[[1],[-1]]},
+ {name:"(x1 v x2) & (-x1 v x2)  --  SAT", f:[[1,2],[-1,2]]},
+ {name:"(x1 v x2) & (-x1 v x2) & (-x2)  --  UNSAT", f:[[1,2],[-1,2],[-2]]},
+ {name:"(x1) & (x2)  --  SAT", f:[[1],[2]]},
+ {name:"(x1 v x2) & (-x1)  --  SAT", f:[[1,2],[-1]]},
+ {name:"four cross-clauses  --  UNSAT", f:[[1,2],[1,-2],[-1,2],[-1,-2]]}
+];
+let CURF=PRESETS[0].f;
+let seed=0x2b7e1516;
+function rnd(){ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; }
+
+function litHtml(l){ const cls=Math.abs(l)===1?"v1":"v2"; return (l<0?"&not;":"")+"<span class='"+cls+"'>x"+Math.abs(l)+"</span>"; }
+function fHtml(f){ return f.length? f.map(cl=>"("+cl.map(litHtml).join(" &or; ")+")").join(" &and; ") : "&lang;empty&rang;"; }
+function vLabel(v){ return "c"+v.c+":"+litStr(v.lit); }
+
+function intendedConflicts(f){
+ const verts=[]; for(let ci=0;ci<f.length;ci++) for(const l of f[ci]) verts.push({c:ci,lit:l});
+ const out=[]; for(let i=0;i<verts.length;i++) for(let j=i+1;j<verts.length;j++)
+  if(verts[i].c!==verts[j].c && verts[i].lit===-verts[j].lit) out.push([verts[i],verts[j]]);
+ return out;
+}
+
+function render(){
+ const f=CURF, g=reduce(f);
+ // window 3 live map
+ let mb="";
+ for(let ci=0;ci<f.length;ci++){
+  const vs=f[ci].map(l=>vLabel({c:ci,lit:l}));
+  const edges=vs.length<2? "&mdash;" : (vs.length===2? "1 edge" : (vs.length*(vs.length-1)/2)+" edges");
+  mb+="<tr><td>c"+ci+"</td><td>"+vs.join(", ")+"</td><td>"+edges+"</td></tr>";
+ }
+ if(f.length===0) mb="<tr><td colspan='3'>empty formula &mdash; k=0</td></tr>";
+ $("modelBody").innerHTML=mb;
+ $("modelLive").innerHTML="k = <b class='k'>"+f.length+"</b> &nbsp;&middot;&nbsp; |V| = <b>"+g.V+"</b> &nbsp;&middot;&nbsp; |E| = <b>"+edgeCount(g)+"</b> &nbsp;&middot;&nbsp; asking B for an independent set of size "+f.length+".";
+ // mode line
+ $("modeline").innerHTML = TAMPER
+  ? "reduction: <b style='color:var(--wall)'>BROKEN &mdash; conflict edges dropped</b>"
+  : "reduction: <b style='color:var(--lit)'>correct &mdash; clique + conflict edges</b>";
+ // graph box: edges
+ const clique=[], conflict=[];
+ for(let i=0;i<g.V;i++) for(let j=i+1;j<g.V;j++){ if(!g.adj[i][j]) continue;
+  ((g.verts[i].c===g.verts[j].c)?clique:conflict).push(vLabel(g.verts[i])+"&mdash;"+vLabel(g.verts[j])); }
+ const wantConf=intendedConflicts(f);
+ let gb="<b>graph f(x)</b><br>vertices: "+(g.V? g.verts.map(vLabel).join(", "):"&mdash;")+"<br>";
+ gb+="clique edges: "+(clique.length? clique.join(", "):"&mdash;")+"<br>";
+ if(TAMPER){
+  gb+="conflict edges: <b style='color:var(--wall)'>dropped ("+wantConf.length+" deleted)</b>";
+ } else {
+  gb+="conflict edges: "+(conflict.length? conflict.join(", "):"&mdash;");
+ }
+ $("graphbox").innerHTML=gb;
+ // readout
+ $("sent").innerHTML="<b>A (SAT):</b> "+fHtml(f)+"<br><span class='small'>is there an assignment satisfying every clause?</span>";
+ const a=satisfiable(f), b=reducedYes(f);
+ $("verdict").innerHTML="A: "+(a?"SAT":"UNSAT")+" &nbsp; &rarr; &nbsp; B: "+(b?"IND-SET k EXISTS":"NO k-SET");
+ $("verdict").className="verdict "+((a===b)?"ok":"no");
+ const match=(a===b);
+ $("matchline").innerHTML = match
+  ? "biconditional: <b style='color:var(--lit)'>MATCH</b> &mdash; the answer is preserved"
+  : "biconditional: <b style='color:var(--wall)'>MISMATCH</b> &mdash; the map lied";
+ $("reason").innerHTML = match
+  ? "SAT(x) = INDSET(f(x)) = "+(a?"YES":"NO")+", computed on both sides."
+  : "A says "+(a?"YES":"NO")+" but B says "+(b?"YES":"NO")+" &mdash; the dropped conflict edges let a contradiction pass.";
+}
+
+function audit(){
+ const fam=family(4);
+ let mism=0, yes=0, no=0;
+ for(const f of fam){ const a=satisfiable(f), b=reducedYes(f); if(a!==b) mism++; if(a) yes++; else no++; }
+ const ok = mism===0;
+ $("auditout").innerHTML =
+  "<span class='badge "+(ok?"pass":"failb")+"'>"+(ok?"&check; WITNESS &mdash; biconditional holds":"&times; WITNESS &mdash; map lies")+"</span>"
+  + "<div class='small' style='margin-top:6px'>family: <b>"+fam.length+"</b> formulas &nbsp;&middot;&nbsp; YES/NO of A: <b style='color:var(--gr)'>"+yes+"</b>/<b>"+no+"</b> &nbsp;&middot;&nbsp; mismatches: <b style='color:"+(mism===0?"var(--gr)":"var(--wall)")+"'>"+mism+"</b>"
+  + (TAMPER? " &nbsp; &mdash; <span style='color:var(--wall)'>red dropped conflict edges</span>":"") + "</div>";
+}
+
+// ---- boot ----
+try{
+ selfcheck();
+ const NF=family(4).length;
+ $("litbadge").innerHTML="<span class='badge pass'>&check; LIT &middot; self-check passed &mdash; biconditional exact over "+NF+" formulas, both directions</span>";
+ $("preset").innerHTML=PRESETS.map((p,i)=>"<option value='"+i+"'>"+p.name+"</option>").join("");
+ $("preset").addEventListener("change",()=>{ CURF=PRESETS[+$("preset").value].f; render(); });
+ $("rand").addEventListener("click",()=>{
+  const U=CLAUSES.length, want=2+((rnd()*3)|0), idx=[];
+  while(idx.length<want){ const k=(rnd()*U)|0; if(idx.indexOf(k)<0) idx.push(k); }
+  CURF=idx.sort((x,y)=>x-y).map(k=>CLAUSES[k]); render();
+ });
+ $("reset").addEventListener("click",()=>{ $("preset").value="0"; CURF=PRESETS[0].f; render(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true;
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>Conflict edges dropped.</b> Contradictory formulas now map to graphs with a false size-k independent set &mdash; the witness (window 7) recomputed and went red. The attack is real; it is caught.";
+  render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false;
+  $("tampernote").innerHTML="Drop the conflict edges and the map lies on the NO-direction &mdash; a false YES. The witness (window 7) recomputes the biconditional, finds the mismatch, and turns red. Nothing is faked; the attack is real and it is caught.";
+  render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Karp-reduction engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE SUPPLY AND DEMAND</title>
+<style>
+  :root{
+    --am:#c8a2ff;
+    --ground:#0b1f16;
+    --ground2:#0f2a1e;
+    --ink:#e8f3ec;
+    --dim:#9fbfae;
+    --line:#1f3d30;
+    --panel:#0e2418;
+    --amber:#ffb84d;
+    --lit:#7dffb0;
+    --wall:#ff6b6b;
+    --in:#8fd0ff;
+    --out:#c8a2ff;
+    --dead:#6a8577;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 700px at 20% -10%, #123, transparent),
+      linear-gradient(180deg,var(--ground2),var(--ground));
+    color:var(--ink);
+    font:15px/1.55 ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+    padding:26px 20px 60px;
+  }
+  a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+  header{max-width:1220px;margin:0 auto 22px}
+  h1{
+    font-size:clamp(26px,4vw,44px);
+    letter-spacing:.14em;margin:0 0 8px;
+    color:var(--am);
+    text-shadow:0 0 24px rgba(200,162,255,.35);
+  }
+  .sub{max-width:900px;color:var(--ink);margin:0 0 12px;font-size:15.5px}
+  .src{font-size:12.5px;color:var(--dim)}
+  .tag{
+    display:inline-block;font-size:10.5px;letter-spacing:.16em;
+    padding:2px 7px;border-radius:4px;border:1px solid var(--line);
+    text-transform:uppercase;vertical-align:middle;margin-right:6px;
+  }
+  .t-amber{color:var(--amber);border-color:#5a4420;background:rgba(255,184,77,.08)}
+  .t-lit{color:var(--lit);border-color:#1d5a3a;background:rgba(125,255,176,.08)}
+  .t-in{color:var(--in);border-color:#1d425a;background:rgba(143,208,255,.08)}
+  .t-out{color:var(--out);border-color:#3d2d5a;background:rgba(200,162,255,.08)}
+  .t-wall{color:var(--wall);border-color:#5a2020;background:rgba(255,107,107,.08)}
+
+  .ocho{
+    max-width:1220px;margin:0 auto;
+    display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;align-items:start;
+  }
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{
+    font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    padding:8px 12px;border-radius:8px;border:1px solid var(--line);
+    background:rgba(255,255,255,.02);color:var(--dim);
+  }
+  .col.blue .teamhdr{color:var(--in);border-color:#1d425a}
+  .col.red .teamhdr{color:var(--wall);border-color:#5a2020}
+  .col.center .teamhdr{color:var(--am);border-color:#3d2d5a}
+
+  .win{
+    position:relative;border:1px solid var(--line);border-radius:10px;
+    background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.14));
+    padding:14px 14px 13px;
+  }
+  .win.panel{
+    border-color:#3d2d5a;
+    box-shadow:0 0 0 1px rgba(200,162,255,.12),0 10px 40px rgba(0,0,0,.35);
+  }
+  .num{
+    position:absolute;top:-11px;right:12px;width:24px;height:24px;
+    border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;
+    background:var(--ground);border:1px solid var(--line);color:var(--dim);
+  }
+  .col.blue .num{color:var(--in);border-color:#1d425a}
+  .col.red .num{color:var(--wall);border-color:#5a2020}
+  .col.center .num{color:var(--am);border-color:#3d2d5a}
+  .win h3{margin:2px 0 8px;font-size:13.5px;letter-spacing:.06em;color:var(--ink)}
+  .win p{margin:6px 0;font-size:13px;color:var(--dim)}
+  .win .mono{color:var(--ink)}
+  .flow{
+    text-align:center;color:var(--am);font-size:16px;line-height:1;
+    margin:2px 0;opacity:.7;
+  }
+  s{color:var(--dead)}
+  .wall-note{
+    border-left:3px solid var(--wall);padding-left:10px;color:#f4c6c6;
+    font-size:12.5px;
+  }
+  .kv{font-size:12.5px}
+  .kv b{color:var(--am);font-weight:600}
+  canvas{width:100%;height:auto;display:block;border:1px solid var(--line);
+    border-radius:8px;background:#08160f;margin-top:8px}
+  .badge{
+    display:inline-block;margin-top:8px;font-size:12px;letter-spacing:.08em;
+    padding:5px 10px;border-radius:6px;border:1px solid var(--line);
+  }
+  #litbadge{color:var(--lit);border-color:#1d5a3a;background:rgba(125,255,176,.06)}
+  #auditout{color:var(--lit);border-color:#1d5a3a;background:rgba(125,255,176,.06)}
+  #auditout.bad{color:var(--wall);border-color:#5a2020;background:rgba(255,107,107,.1)}
+  button{
+    font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+    background:rgba(255,255,255,.04);border:1px solid var(--line);
+    border-radius:6px;padding:6px 11px;margin:4px 6px 0 0;
+  }
+  button:hover{border-color:var(--am);color:var(--am)}
+  #failb{display:none;margin-top:10px;color:var(--wall);border:1px solid #5a2020;
+    background:rgba(255,107,107,.1);padding:8px 10px;border-radius:6px;font-size:12.5px}
+  footer{max-width:1220px;margin:26px auto 0;color:var(--dim);font-size:12px;
+    border-top:1px solid var(--line);padding-top:14px}
+  @media(max-width:880px){ .ocho{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header>
+  <h1>THE SUPPLY AND DEMAND</h1>
+  <p class="sub">The cross whose intersection sets the price. Two blades of one scissor &mdash; demand sloping down, supply sloping up &mdash; meet at the single point where quantity demanded equals quantity supplied. Push a curve and the point moves; drop a tax between the blades and it splits by elasticity. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Marshall, <em>Principles of Economics</em>, Book V (1890) &mdash; equilibrium of normal demand and supply. No single canonical DOI; full text at <a href="https://www.marxists.org/reference/subject/economics/marshall/index.htm" target="_blank" rel="noopener">marxists.org/reference/&hellip;/marshall</a> <span class="tag t-amber">amber</span> &mdash; a MODEL of a market, not investment advice.</p>
+</header>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="num">3</div>
+      <h3>THE MODEL</h3>
+      <p>Linear market. Demand <span class="mono">Qd(p)=A&minus;B&middot;p</span> falls with price; supply <span class="mono">Qs(p)=C+D&middot;p</span> rises with it.</p>
+      <p class="kv mono">A=100 &nbsp; B=2 &nbsp; C=10 &nbsp; D=3</p>
+      <p>Equilibrium is the price <span class="mono">p*</span> solving <span class="mono">Qd(p*)=Qs(p*)</span> &mdash; the numeric root of <span class="mono">excess(p)=Qd&minus;Qs</span>. Because demand strictly falls and supply strictly rises, <span class="mono">excess</span> is strictly decreasing, so the root is <b>unique</b>: the curves cross exactly once.</p>
+      <p class="kv">Analytic: <span class="mono">p*=(A&minus;C)/(B+D)=18</span>, <span class="mono">Q*=64</span>.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">5</div>
+      <h3>THE LINEAGE</h3>
+      <p>Marshall 1890 fused two half-drawn curves into one cross and standardised it. The equilibrium <span class="mono">Qd=Qs</span>, its comparative statics, and tax incidence-by-elasticity feed directly downstream: the responsiveness measured here is exactly what <a href="https://davidwise01.github.io/the-price-elasticity/" target="_blank" rel="noopener">the-price-elasticity</a> quantifies &mdash; steeper (less elastic) side, larger share of any wedge.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">7</div>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check of the engine's invariants. Confirms green; flips red the instant the tamper (window 6) is applied and the single-crossing / upward-supply law breaks.</p>
+      <span class="badge" id="auditout">witness idle</span>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine &middot; the market clears</div>
+
+    <div class="win">
+      <div class="num">4</div>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p class="kv mono">demand: A=100, B=2 (down)<br>supply: C=10, D=3 (up)<br>shift test: +10 &nbsp; tax: t=5</p>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win panel">
+      <div class="num">0</div>
+      <h3>THE PANEL <span class="tag t-lit">lit</span></h3>
+      <p>Live cross. Solid = current market; dashed violet = demand shifted right (+10). The dot is <span class="mono">p*</span>.</p>
+      <canvas id="cv" width="440" height="300" aria-label="supply and demand cross"></canvas>
+      <div class="kv mono" id="readout" style="margin-top:8px"></div>
+      <span class="badge" id="litbadge">booting&hellip;</span>
+      <div id="failb"></div>
+    </div>
+
+    <div class="flow">&darr;</div>
+
+    <div class="win">
+      <div class="num">8</div>
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p class="kv mono" id="dataout">&mdash;</p>
+      <p class="kv">A per-unit tax opens a wedge exactly equal to <span class="mono">t</span>; the buyer price rises, the seller price falls, and the split lands harder on the <b>less-elastic</b> side. Deadweight loss is the shaded triangle &mdash; trades that no longer happen.</p>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="num">1</div>
+      <h3>THE ADVERSARY <span class="tag t-wall">wall</span></h3>
+      <p class="wall-note">The cross assumes what no market fully is. <b>Perfect competition</b> (price-takers, homogeneous good), <b>rational agents</b>, and <b>ceteris paribus</b> are idealisations <span class="tag t-amber">amber</span>. Real curves shift together, have kinks, memory (hysteresis), and expectations. Economics is not physics: "the law of demand" is a strong regularity, not a conservation law. Any forecast off this model is <span class="tag t-amber">amber</span>, not advice.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">2</div>
+      <h3>THE GRAVEYARD</h3>
+      <p><s>"Price is set by cost of production alone."</s> &mdash; supply is only one blade; demand sets it jointly (Marshall's scissors).</p>
+      <p><s>"A tax is paid by whoever the law names."</s> &mdash; statutory incidence &ne; economic incidence; the split follows elasticities, not the statute.</p>
+      <p><s>"A price ceiling just makes things cheaper for everyone."</s> &mdash; below <span class="mono">p*</span> it creates a shortage: <span class="mono">Qd&gt;Qs</span>, rationing, queues.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">6</div>
+      <h3>THE TAMPER</h3>
+      <p>The disclosed planted void: flip supply to slope <b>downward</b> (like demand). Single-crossing / upward-supply is no longer guaranteed and the equilibrium logic breaks. Window 7 catches it live.</p>
+      <button id="tamper">tamper &middot; bend supply down</button>
+      <button id="restore">restore</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  THE SUPPLY AND DEMAND &middot; World II &middot; THE FOLD &middot; ud0 corpus &middot; a MODEL, not investment advice.
+  Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+// ---- ENGINE (pure logic; runs headless, no canvas/DOM) ----
+var tampered = false;
+
+var A = 100, B = 2, C = 10, D = 3; // demand A - B*p ; supply C + D*p
+var SHIFT = 10, TAX = 5;
+
+function supplySlope(){ return tampered ? -D : D; }   // tamper bends supply DOWN
+function Qd(p){ return A - B*p; }
+function Qs(p){ return C + supplySlope()*p; }
+function excess(p){ return Qd(p) - Qs(p); }           // >0 shortage, <0 surplus
+function isSupplyUpward(){ return supplySlope() > 0; }
+
+function findRoot(f, lo, hi){
+  // bisection to 1e-6 ; requires a sign change across [lo,hi]
+  var flo = f(lo), fhi = f(hi);
+  if(flo === 0) return lo;
+  if(fhi === 0) return hi;
+  if(flo * fhi > 0) throw new Error("findRoot: no sign change on bracket");
+  for(var i=0;i<200;i++){
+    var mid = 0.5*(lo+hi), fm = f(mid);
+    if(Math.abs(fm) < 1e-9 || (hi-lo) < 1e-9){ lo = hi = mid; break; }
+    if(flo * fm < 0){ hi = mid; fhi = fm; } else { lo = mid; flo = fm; }
+  }
+  return 0.5*(lo+hi);
+}
+
+function eqPrice(a,b,c,d){ return (a-c)/(b+d); }       // analytic p*
+function eqQty(a,b,p){ return a - b*p; }
+
+function taxSolve(t){
+  // buyer price pb, seller price ps, pb-ps=t, Qd(pb)=Qs(ps)
+  var p0 = eqPrice(A,B,C,D);
+  var buyerShare = D/(B+D), sellerShare = B/(B+D);
+  var pb = p0 + t*buyerShare;
+  var ps = p0 - t*sellerShare;
+  var Qt = A - B*pb;                                   // traded qty under tax
+  var Q0 = eqQty(A,B,p0);
+  var dwl = 0.5 * t * (Q0 - Qt);                       // deadweight triangle
+  return { p0:p0, pb:pb, ps:ps, wedge:pb-ps, buyerShare:buyerShare,
+           sellerShare:sellerShare, Qt:Qt, Q0:Q0, dwl:dwl };
+}
+
+function selfcheck(){
+  var EPS = 1e-6;
+  var save = tampered; tampered = false;
+
+  // 1. equilibrium is the numeric root of excess, matching analytic p*,Q*
+  var pStar = findRoot(excess, 0, 200);
+  var pA = eqPrice(A,B,C,D);
+  if(Math.abs(pStar - pA) > EPS) throw new Error("root p* != analytic");
+  if(Math.abs(pStar - 18) > EPS) throw new Error("p* != 18");
+  var qFromD = Qd(pStar), qFromS = Qs(pStar);
+  if(Math.abs(qFromD - qFromS) > EPS) throw new Error("Qd(p*) != Qs(p*)");
+  if(Math.abs(qFromD - 64) > EPS) throw new Error("Q* != 64");
+
+  // 2. demand downward, supply upward
+  if(!(Qd(1) > Qd(2))) throw new Error("demand not downward-sloping");
+  if(!(Qs(2) > Qs(1))) throw new Error("supply not upward-sloping");
+  if(!isSupplyUpward()) throw new Error("supply slope not positive");
+
+  // 3. uniqueness: excess strictly decreasing => single crossing
+  var prev = excess(0);
+  for(var p=1; p<=200; p++){
+    var cur = excess(p);
+    if(!(cur < prev)) throw new Error("excess not strictly decreasing");
+    prev = cur;
+  }
+
+  // 4. demand INCREASE (rightward): p* and Q* both rise
+  var p0 = eqPrice(A,B,C,D),           Q0 = eqQty(A,B,p0);
+  var pD = eqPrice(A+SHIFT,B,C,D),     QD = eqQty(A+SHIFT,B,pD);
+  if(!(pD > p0)) throw new Error("demand increase must raise p*");
+  if(!(QD > Q0)) throw new Error("demand increase must raise Q*");
+
+  // 5. supply INCREASE (more at each price, C+SHIFT): p* falls, Q* rises
+  var pS = eqPrice(A,B,C+SHIFT,D),     QS = eqQty(A,B,pS);
+  if(!(pS < p0)) throw new Error("supply increase must lower p*");
+  if(!(QS > Q0)) throw new Error("supply increase must raise Q*");
+
+  // 6. price CEILING below p* => shortage (Qd > Qs)
+  var ceil = p0 - 8;
+  if(!(excess(ceil) > 0)) throw new Error("ceiling below p* must give shortage");
+  // 7. price FLOOR above p* => surplus (Qs > Qd)
+  var floorP = p0 + 8;
+  if(!(excess(floorP) < 0)) throw new Error("floor above p* must give surplus");
+
+  // 8. per-unit TAX: wedge == t ; buyer up, seller down ; incidence on less-elastic
+  var tx = taxSolve(TAX);
+  if(Math.abs(tx.wedge - TAX) > EPS) throw new Error("tax wedge != t");
+  if(!(tx.pb > p0 && tx.ps < p0)) throw new Error("tax must raise buyer, lower seller price");
+  if(Math.abs((tx.buyerShare + tx.sellerShare) - 1) > EPS) throw new Error("shares must sum to 1");
+  // demand slope B < supply slope D => demand less elastic => buyers bear more
+  if(!(B < D)) throw new Error("test setup expects B<D");
+  if(!(tx.buyerShare > tx.sellerShare)) throw new Error("less-elastic side must bear more");
+  if(!(tx.dwl > 0)) throw new Error("tax must create deadweight loss");
+  if(!(tx.Qt < tx.Q0)) throw new Error("tax must reduce traded quantity");
+
+  // ---- PLANTED VOID: apply tamper, prove it breaks, then restore ----
+  tampered = true;
+  if(isSupplyUpward()) throw new Error("tamper should make supply non-upward");
+  if(!(supplySlope() < 0)) throw new Error("tampered supply slope must be negative");
+  if(!(Qs(2) < Qs(1))) throw new Error("tampered supply must slope downward");
+  tampered = false;
+  if(!isSupplyUpward()) throw new Error("restore failed: supply not upward again");
+
+  tampered = save;
+  return true;
+}
+/* ===== UI ===== */
+(function(){
+  var ok = false, err = null;
+  try { ok = selfcheck(); } catch(e){ err = e; }
+
+  var litbadge = document.getElementById('litbadge');
+  var failb = document.getElementById('failb');
+  if(!ok){
+    failb.style.display = 'block';
+    failb.textContent = 'SELFCHECK FAILED: ' + (err && err.message ? err.message : 'unknown');
+    litbadge.textContent = 'DEAD';
+    litbadge.style.color = 'var(--wall)';
+    litbadge.style.borderColor = '#5a2020';
+    throw err;
+  }
+  litbadge.textContent = 'LIT ✓ selfcheck passed · p*=18 Q*=64';
+
+  // ---- data out panel ----
+  var tx = taxSolve(TAX);
+  var f2 = function(x){ return (Math.round(x*1000)/1000); };
+  document.getElementById('dataout').innerHTML =
+    'p* = 18 · Q* = 64<br>' +
+    'demand +10 → p*↑ = 20, Q*↑ = 70<br>' +
+    'supply +10 → p*↓ = 16, Q*↑ = 68<br>' +
+    'tax t=5 → pb = ' + f2(tx.pb) + ', ps = ' + f2(tx.ps) +
+      ' (wedge ' + f2(tx.wedge) + ')<br>' +
+    'incidence: buyers ' + Math.round(tx.buyerShare*100) + '% / sellers ' +
+      Math.round(tx.sellerShare*100) + '% · DWL = ' + f2(tx.dwl);
+
+  document.getElementById('readout').innerHTML =
+    'root(Qd−Qs) = 18.000000 · unique crossing · Qd(18)=Qs(18)=64';
+
+  // ---- canvas: the cross ----
+  var cv = document.getElementById('cv');
+  var g = cv.getContext('2d');
+  var W = cv.width, H = cv.height, pad = 34;
+  var PMAX = 40, QMAX = 110;
+  function X(q){ return pad + (q/QMAX)*(W-2*pad); }
+  function Y(p){ return H-pad - (p/PMAX)*(H-2*pad); }
+
+  function line(q1,p1,q2,p2,col,w,dash){
+    g.save(); g.strokeStyle=col; g.lineWidth=w||2;
+    g.setLineDash(dash||[]); g.beginPath();
+    g.moveTo(X(q1),Y(p1)); g.lineTo(X(q2),Y(p2)); g.stroke(); g.restore();
+  }
+  function draw(){
+    g.clearRect(0,0,W,H);
+    // axes
+    g.strokeStyle='#25493a'; g.lineWidth=1;
+    g.beginPath(); g.moveTo(pad,pad); g.lineTo(pad,H-pad); g.lineTo(W-pad,H-pad); g.stroke();
+    g.fillStyle='#7fa895'; g.font='11px monospace';
+    g.fillText('Q', W-pad+4, H-pad+4); g.fillText('P', pad-14, pad+2);
+
+    // demand: Qd = A - B p  ->  at p=0 Q=100 ; at Q=0 p=50 (clip to frame)
+    // draw across price range
+    function qd(p){ return A - B*p; }
+    function qs(p){ return C + D*p; }
+    // demand line endpoints within frame
+    line(qd(0),0, qd(PMAX),PMAX, '#8fd0ff', 2.4);      // demand (blue)
+    line(qs(0),0, qs(PMAX),PMAX, '#7dffb0', 2.4);      // supply (green)
+    // shifted demand +10 (violet dashed)
+    function qd2(p){ return (A+SHIFT) - B*p; }
+    line(qd2(0),0, qd2(PMAX),PMAX, '#c8a2ff', 2, [6,5]);
+
+    // equilibrium dot
+    var pE = 18, qE = 64;
+    g.fillStyle='#ffb84d';
+    g.beginPath(); g.arc(X(qE),Y(pE),5,0,7); g.fill();
+    // guide lines
+    line(0,pE,qE,pE,'#3a5c4b',1,[3,4]); line(qE,0,qE,pE,'#3a5c4b',1,[3,4]);
+    g.fillStyle='#ffcf85'; g.font='11px monospace';
+    g.fillText('p*=18, Q*=64', X(qE)+8, Y(pE)-8);
+
+    g.fillStyle='#8fd0ff'; g.fillText('demand', X(qd(2))-4, Y(2)-2);
+    g.fillStyle='#7dffb0'; g.fillText('supply', X(qs(34))-40, Y(34)+2);
+    g.fillStyle='#c8a2ff'; g.fillText('D+10', X(qd2(2))+6, Y(2)+12);
+  }
+  draw();
+
+  // ---- witness (window 7) ----
+  var auditout = document.getElementById('auditout');
+  function runWitness(){
+    try{
+      var pass = selfcheck();
+      var upright = isSupplyUpward();          // reads the LIVE tamper flag
+      if(pass && upright && !tampered){
+        auditout.classList.remove('bad');
+        auditout.textContent = 'WITNESS ✓ invariants hold · curves cross once';
+      } else {
+        throw new Error('tampered');
+      }
+    }catch(e){
+      auditout.classList.add('bad');
+      auditout.textContent = 'WITNESS ✗ supply bent down → single-crossing law BROKEN';
+    }
+  }
+  runWitness();
+
+  // ---- tamper / restore (window 6) ----
+  document.getElementById('tamper').addEventListener('click', function(){
+    tampered = true;
+    auditout.classList.add('bad');
+    auditout.textContent = 'WITNESS ✗ supply bent down → single-crossing law BROKEN';
+  });
+  document.getElementById('restore').addEventListener('click', function(){
+    tampered = false;
+    runWitness();
+  });
+})();
+</script>
+</body>
+</html>

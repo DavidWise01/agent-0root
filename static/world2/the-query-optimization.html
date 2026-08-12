@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE QUERY OPTIMIZATION · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee06a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#12200a;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:14px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+tr.opt td{background:rgba(57,252,107,.10);color:#eafff0;} tr.bad td{background:rgba(255,122,122,.08);}
+.mono{font-family:inherit;} .big{color:var(--am);font-weight:700;}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9664; WORLD II &middot; THE FOLD</a><span>THE OCHO &middot; <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE QUERY OPTIMIZATION</h1>
+ <p class="sub">You write <i>what</i> you want; the database decides <i>how</i> to get it. The same four-table join can run in <b class="k">210</b> units or <b>1200</b> &mdash; a 5.7&times; gap that turns on nothing but the <b>order</b> the tables are joined. Selinger&rsquo;s System R optimizer searches that space by <b>dynamic programming</b> over subsets and returns the cheapest plan. Down the center, data flows: the query goes <b style="color:var(--cy)">in</b>, the optimizer chooses, the plan comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Selinger, Astrahan, Chamberlin, Lorie &amp; Price, <i>Access Path Selection in a Relational Database Management System</i> (1979), ACM SIGMOD, pp.23&ndash;34 &mdash; DOI <a href="https://dl.acm.org/doi/10.1145/582095.582099">10.1145/582095.582099</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT -->
+ <div class="col blue">
+  <div class="teamhdr">&#9639; blue team &middot; builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL &mdash; cost &amp; recurrence</h2>
+   <p>A join result&rsquo;s <b>estimated size</b> is the product of the base rows times the selectivity of every predicate inside the set:</p>
+   <p class="small mono">card(S) = &prod;<sub>r&isin;S</sub> rows(r) &middot; &prod;<sub>edge(i,j)&sub;S</sub> sel(i,j)</p>
+   <p>Cost is <b>output rows &times; per-row cost</b> (here per-row = 1), summed over every join. The optimum obeys a <b>recurrence</b> over subsets &mdash; a left-deep plan for S is some cheapest plan for S minus one relation, then that relation joined last:</p>
+   <p class="small mono">best(S) = card(S) + min<sub>r&isin;S</sub> best(S&minus;r), &nbsp; best(&#123;r&#125;)=0</p>
+   <p class="small">Live pairwise join sizes for the current query &mdash; note the two small pairs and the huge cross products:</p>
+   <table id="pairTbl"><thead><tr><th>pair</th><th>rows</th><th>pair</th><th>rows</th></tr></thead><tbody id="pairBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE &mdash; DP on join order <span class="tag t-amber">AVAN</span></h2>
+   <p>Selinger&rsquo;s move is <a href="https://davidwise01.github.io/the-dynamic-programming/" style="color:var(--cy)">the dynamic programming</a> applied to join order: reuse the best plan for each <b>subset</b> instead of re-deriving it inside every full ordering. That collapses <b class="k">n!</b> orderings into <b>2<sup>n</sup></b> subproblems.</p>
+   <p>It is the reason SQL is <b>declarative</b>. You never write the join order; the optimizer&rsquo;s DP chooses it from statistics. Held &amp; Karp built the same subset-DP for the travelling salesman in 1962 &mdash; each sphere is the next one&rsquo;s premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team&rsquo;s live check: run the optimizer, then <b>brute-force all 24 orders</b>, and confirm the optimizer&rsquo;s cost equals the true minimum. If red swaps the DP for greedy, the two disagree and this badge turns red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN &mdash; the query <span class="tag t-in">in &#8595;</span></h2>
+   <p>Four tables, joined along a chain &mdash; a <b>declarative</b> request that says nothing about order:</p>
+   <div class="sent" style="font-size:12.5px">SELECT * FROM <b class="k">A</b>,<b class="k">B</b>,<b class="k">C</b>,<b class="k">D</b><br>WHERE A.x=B.x AND B.y=C.y AND C.z=D.z</div>
+   <table><thead><tr><th>table</th><th>rows</th><th>predicate</th><th>selectivity</th></tr></thead>
+    <tbody class="dist">
+     <tr><td class="k">A</td><td>1000</td><td>A.x = B.x</td><td>1/100</td></tr>
+     <tr><td class="k">B</td><td>10</td><td>B.y = C.y</td><td>1/100</td></tr>
+     <tr><td class="k">C</td><td>1000</td><td>C.z = D.z</td><td>1/100</td></tr>
+     <tr><td class="k">D</td><td>10</td><td>&mdash;</td><td>&mdash;</td></tr>
+    </tbody></table>
+   <p class="small">The join graph is a chain <b>A&mdash;B&mdash;C&mdash;D</b>. Every join order returns the same rows; only the <b>intermediate</b> sizes &mdash; and the cost &mdash; differ. That is what you feed the panel below.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the query into the optimizer &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL &mdash; the optimizer <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>plan by</label>
+      <span class="toggle"><button id="tDP" class="on">DP OPTIMIZER</button><button id="tGreedy">GREEDY</button></span></div>
+     <div class="row"><label>or pick order</label>
+      <select id="ordsel"><option value="">&mdash; any of 24 &mdash;</option></select></div>
+     <p class="small" id="modenote">DP: the minimum-cost left-deep order by dynamic programming over subsets.</p>
+     <div class="row"><button id="showopt">&#8594; optimal</button><button id="shownaive">&#8594; naive ABCD</button></div>
+     <p class="small">The chosen plan&rsquo;s cost is recomputed live from the cost model &mdash; never looked up.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="planln" style="font-size:14px"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="planname"></div>
+     <table id="stepTbl"><thead><tr><th>step: join</th><th>set</th><th>rows</th><th>running cost</th></tr></thead><tbody id="stepBody"></tbody></table>
+    </div>
+   </div>
+   <p class="small" style="margin-top:8px">Live DP table &mdash; best cost for every subset of size &ge;2 (the 11 subproblems the DP solves once each):</p>
+   <table id="dpTbl"><thead><tr><th>subset</th><th>card</th><th>best cost</th><th>subset</th><th>card</th><th>best cost</th></tr></thead><tbody id="dpBody"></tbody></table>
+  </div>
+  <div class="flow">&#9660; &nbsp; the optimizer emits a plan &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT &mdash; the plan <span class="tag t-out">out &#8595;</span></h2>
+   <p>What the machine proves, exactly: the minimum-cost left-deep plan is <b class="k">(((B&#8904;C)&#8904;D)&#8904;A)</b> at cost <b class="k">210</b> &mdash; matched by <b>brute force over all 24 orders</b>. The naive textual order <b>(((A&#8904;B)&#8904;C)&#8904;D)</b> costs <b style="color:var(--red)">1200</b>, and so does <b>greedy</b>: both build a 1000-row intermediate &#123;A,B,C&#125; where the optimum builds a 10-row &#123;B,C,D&#125;.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team&rsquo;s witness (left) confirms 210 against brute force live; the red team (right) tries to make the optimizer settle for 1200.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT -->
+ <div class="col red">
+  <div class="teamhdr">red team &middot; attacks &amp; breaks &#9640;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The cost is built on <b>estimates</b>. Selectivities assume uniform values and <b>independent</b> predicates; correlated columns break that, and the errors <b>compound multiplicatively</b> up the plan (Ioannidis &amp; Christodoulakis, 1991). A single bad estimate can hand you a catastrophic &ldquo;optimal&rdquo; plan.</div>
+   <p class="small" style="margin-top:8px">And the DP is <b>exponential</b>: 2<sup>n</sup> subsets, and Selinger only keeps left-deep, cross-product-pruned plans &mdash; bushy trees that can win are never seen. Past ~10&ndash;15 relations the DP is abandoned for heuristics (Postgres GEQO, genetic search) &mdash; exactly the greedy shortcut the tamper installs. &ldquo;Optimal&rdquo; means optimal <i>for the cost model</i>, not fastest on the clock.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>&ldquo;The optimizer finds the fastest plan.&rdquo;</s> <b>Cut.</b> It finds the minimum-<i>estimated</i>-cost plan. With wrong statistics the estimate and the wall-clock diverge; it is optimal against its model, not reality.</p>
+   <p class="grave"><s>&ldquo;Dynamic programming makes optimization cheap.&rdquo;</s> <b>Cut.</b> DP is 2<sup>n</sup> &mdash; only cheap <i>relative to</i> n! and only tractable for a handful of relations.</p>
+   <p class="grave"><s>&ldquo;Greedy join ordering is good enough.&rdquo;</s> <b>Kept, corrected.</b> Fast and often fine &mdash; but provably suboptimal: on the panel&rsquo;s query it returns 1200 where the optimum is 210. That is the tamper.</p>
+   <p class="grave"><s>&ldquo;System R enumerated every plan.&rdquo;</s> <b>Cut.</b> It pruned cross products and kept only the cheapest plan per subset (and per interesting sort order) &mdash; the DP prune, not exhaustion.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER &mdash; break it</h2>
+   <p>The red team&rsquo;s move: replace the dynamic program with a <b>greedy</b> join order &mdash; always join the next-cheapest pair. On this query greedy chooses A&#8904;B first and gets trapped in the 1000-row intermediate. The witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; swap DP &#8594; greedy</button><button id="restore">&#8634; restore</button></div>
+   <p class="small" id="tampernote">Swap in greedy and the optimizer returns a plan costing 1200 &mdash; the witness brute-forces all 24 orders, finds the true minimum is 210, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE QUERY OPTIMIZATION &mdash; World II &middot; THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (query <b style="color:var(--cy)">in</b> &rarr; optimizer &rarr; plan <b style="color:var(--gr)">out</b>). A runnable rendering of Selinger et al.&rsquo;s System R access-path selection (SIGMOD 1979) &mdash; the engine is LIT (min-cost join order by DP over subsets, matched to brute force over all 24 orders, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a cost model cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* the four-relation join instance: chain A-B-C-D, each equijoin selectivity 1/100 */
+const NAMES=["A","B","C","D"];
+const CARD=[1000,10,1000,10];
+const EDGES={ "0,1":100, "1,2":100, "2,3":100 };
+const N=4;
+let USE_GREEDY=false;                       /* TAMPER flag: swaps the DP for greedy */
+
+function key(a,b){ return a<b? a+","+b : b+","+a; }
+function sel(a,b){ const d=EDGES[key(a,b)]; return d?1/d:1; }   /* missing edge = cross product */
+function cardOf(mask){
+  let p=1;
+  for(let i=0;i<N;i++) if(mask&(1<<i)) p*=CARD[i];
+  for(let a=0;a<N;a++) for(let b=a+1;b<N;b++)
+    if((mask&(1<<a))&&(mask&(1<<b))) p*=sel(a,b);
+  return Math.round(p);
+}
+function orderCost(order){
+  let m=0,c=0;
+  for(let k=0;k<order.length;k++){ m|=(1<<order[k]); if(k>=1) c+=cardOf(m); }
+  return c;
+}
+function stepsOf(order){
+  let m=0; const rows=[];
+  for(let k=0;k<order.length;k++){
+    m|=(1<<order[k]);
+    if(k>=1) rows.push({join:NAMES[order[k]], set:setName(m), rows:cardOf(m)});
+  }
+  let run=0; rows.forEach(r=>{run+=r.rows; r.run=run;});
+  return rows;
+}
+function setName(mask){ let s=""; for(let i=0;i<N;i++) if(mask&(1<<i)) s+=NAMES[i]; return s; }
+function pc(x){let n=0;while(x){n+=x&1;x>>>=1;}return n;}
+function factorial(k){let f=1;for(let i=2;i<=k;i++)f*=i;return f;}
+
+/* DYNAMIC PROGRAM over subsets: minimum-cost left-deep order, visits each subset once */
+function dpOptimize(){
+  const best=new Array(1<<N).fill(Infinity);
+  const last=new Array(1<<N).fill(-1);
+  let subsetsVisited=0;
+  for(let i=0;i<N;i++){ best[1<<i]=0; }
+  const masks=[];
+  for(let m=1;m<(1<<N);m++) masks.push(m);
+  masks.sort((x,y)=>pc(x)-pc(y));
+  for(const m of masks){
+    if(pc(m)<2) continue;
+    subsetsVisited++;
+    for(let r=0;r<N;r++){
+      if(!(m&(1<<r))) continue;
+      const sub=m^(1<<r);
+      if(best[sub]===Infinity) continue;
+      const cost=best[sub]+cardOf(m);
+      if(cost<best[m]){ best[m]=cost; last[m]=r; }
+    }
+  }
+  const full=(1<<N)-1;
+  let order=[]; let m=full;
+  while(m){
+    const r=last[m];
+    if(r<0){ for(let i=0;i<N;i++) if(m&(1<<i)){ order.push(i); break; } break; }
+    order.push(r); m^=(1<<r);
+  }
+  order.reverse();
+  return {cost:best[full], order, best, subsetsVisited};
+}
+
+/* GREEDY: cheapest starting pair, then always add the relation giving the smallest next intermediate */
+function greedyOptimize(){
+  let bp=null,bc=Infinity;
+  for(let a=0;a<N;a++) for(let b=a+1;b<N;b++){ const c=cardOf((1<<a)|(1<<b)); if(c<bc){bc=c;bp=[a,b];} }
+  let order=[bp[0],bp[1]]; let mask=(1<<bp[0])|(1<<bp[1]); let cost=bc;
+  while(pc(mask)<N){
+    let bn=-1,bnc=Infinity;
+    for(let r=0;r<N;r++){ if(mask&(1<<r))continue; const c=cardOf(mask|(1<<r)); if(c<bnc){bnc=c;bn=r;} }
+    order.push(bn); mask|=(1<<bn); cost+=bnc;
+  }
+  return {cost,order};
+}
+
+/* BRUTE FORCE over all n! left-deep orders */
+function permutations(arr){
+  if(arr.length<=1) return [arr.slice()];
+  const out=[];
+  for(let i=0;i<arr.length;i++){ const rest=arr.slice(0,i).concat(arr.slice(i+1));
+    for(const p of permutations(rest)) out.push([arr[i]].concat(p)); }
+  return out;
+}
+function bruteOptimize(){
+  const perms=permutations([0,1,2,3]);
+  let best=Infinity,bord=null;
+  for(const p of perms){ const c=orderCost(p); if(c<best){best=c;bord=p;} }
+  return {cost:best,order:bord,count:perms.length,perms};
+}
+
+/* the optimizer the panel calls: DP normally, greedy when tampered */
+function optimize(){ return USE_GREEDY? greedyOptimize() : dpOptimize(); }
+
+/* fail-loud self-check: throws on any violation; saves/restores the tamper flag; RETURNS true */
+function selfcheck(){
+  const t=(c,m)=>{ if(!c) throw new Error(m); };
+  const save=USE_GREEDY; USE_GREEDY=false;
+
+  const dpr=dpOptimize(), br=bruteOptimize();
+  t(br.count===24,"brute force must enumerate 4! = 24 orders");
+  t(dpr.cost===210,"DP optimum cost must be 210");
+  t(br.cost===210,"brute optimum cost must be 210");
+  t(dpr.cost===br.cost,"DP optimum must equal the brute-force optimum");
+  t(orderCost(dpr.order)===210,"the reconstructed DP plan must actually cost 210");
+
+  t(orderCost([0,1,2,3])===1200,"naive order ABCD must cost 1200");
+  t(orderCost([1,2,3,0])===210,"order BCDA must cost 210");
+  t(cardOf(0b0111)===1000,"intermediate {A,B,C} must be 1000 rows");
+  t(cardOf(0b1110)===10,"intermediate {B,C,D} must be 10 rows");
+  t(cardOf(0b1110) < cardOf(0b0111),"the smaller intermediate must be cheaper: cardinality drives cost");
+  t(1200/210 > 5,"the bad order must be more than 5x the optimum");
+
+  const gr=greedyOptimize();
+  t(gr.cost===1200,"greedy cost must be 1200");
+  t(gr.cost>dpr.cost,"greedy must be strictly worse than the DP optimum");
+
+  t(Math.pow(2,N) < factorial(N),"2^n must be fewer than n! for n=4");
+  t(dpr.subsetsVisited === (Math.pow(2,N)-N-1),"the DP visits every subset of size >=2 exactly once");
+
+  /* THE PLANTED VOID: swap the optimizer to greedy, assert it now diverges from the brute optimum, then restore */
+  USE_GREEDY=true;
+  const tampered=optimize();
+  t(tampered.cost !== br.cost,"under tamper the optimizer must diverge from the brute optimum");
+  t(tampered.cost===1200,"the tampered greedy optimizer returns 1200, not 210");
+  USE_GREEDY=save;
+
+  return true;
+}
+
+/* the witness re-check, respecting the current tamper state */
+function runWitness(){
+  const opt=optimize();
+  const save=USE_GREEDY; USE_GREEDY=false;
+  const br=bruteOptimize();
+  USE_GREEDY=save;
+  return {ok: opt.cost===br.cost, optCost:opt.cost, brute:br.cost, tampered:USE_GREEDY, order:opt.order};
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const BRUTE_OPT=210;
+let panelMode="optimizer";   /* "optimizer" | "greedy" | "pick" */
+let picked="";               /* chosen order string when panelMode==="pick" */
+
+function fmtOrder(order){
+  let s=NAMES[order[0]];
+  for(let k=1;k<order.length;k++) s="("+s+"⋈"+NAMES[order[k]]+")";
+  return s;
+}
+function planFromMode(){
+  if(panelMode==="pick" && picked){ const order=picked.split("").map(ch=>NAMES.indexOf(ch)); return {order, cost:orderCost(order), src:"pick"}; }
+  if(panelMode==="greedy"){ const r=greedyOptimize(); return {order:r.order, cost:r.cost, src:"greedy"}; }
+  const r=optimize(); return {order:r.order, cost:r.cost, src:USE_GREEDY?"greedy":"dp"};   /* optimizer respects the tamper flag */
+}
+
+function renderPairs(){
+  const pairs=[];
+  for(let a=0;a<N;a++) for(let b=a+1;b<N;b++)
+    pairs.push([NAMES[a]+NAMES[b], cardOf((1<<a)|(1<<b)), EDGES[key(a,b)]?"":" cross"]);
+  let html="";
+  for(let i=0;i<pairs.length;i+=2){
+    const p=pairs[i], q=pairs[i+1];
+    html+="<tr><td class='k'>"+p[0]+"</td><td>"+p[1].toLocaleString()+p[2]+"</td>"+
+      (q?"<td class='k'>"+q[0]+"</td><td>"+q[1].toLocaleString()+q[2]+"</td>":"<td></td><td></td>")+"</tr>";
+  }
+  $("pairBody").innerHTML=html;
+}
+
+function renderDP(){
+  const dpr=dpOptimize();
+  const subs=[];
+  for(let m=1;m<(1<<N);m++) if(pc(m)>=2) subs.push(m);
+  subs.sort((x,y)=>pc(x)-pc(y)||x-y);
+  let html="";
+  for(let i=0;i<subs.length;i+=2){
+    const build=(m)=>{ const isFull=(m===(1<<N)-1);
+      return "<td"+(isFull?" class='big'":"")+">"+setName(m)+"</td><td>"+cardOf(m).toLocaleString()+"</td><td"+(isFull?" class='big'":"")+">"+dpr.best[m].toLocaleString()+"</td>"; };
+    html+="<tr>"+build(subs[i])+(subs[i+1]!==undefined?build(subs[i+1]):"<td></td><td></td><td></td>")+"</tr>";
+  }
+  $("dpBody").innerHTML=html;
+}
+
+function render(){
+  const p=planFromMode();
+  $("planln").innerHTML="<b class='k'>"+fmtOrder(p.order)+"</b>";
+  const optimal = p.cost===BRUTE_OPT;
+  $("verdict").textContent = optimal? "OPTIMAL · cost "+p.cost : "SUBOPTIMAL · cost "+p.cost;
+  $("verdict").className="verdict "+(optimal?"ok":"no");
+  const label = p.src==="dp" ? "dynamic-program plan" : p.src==="greedy" ? "greedy plan (next-cheapest pair)" : "hand-picked order";
+  $("planname").innerHTML = label + (optimal? "" : " &mdash; "+(p.cost/BRUTE_OPT).toFixed(1)+"× the optimum ("+BRUTE_OPT+")");
+  const steps=stepsOf(p.order);
+  $("stepBody").innerHTML=steps.map(s=>
+    "<tr class='"+(s.rows>=1000?"bad":"")+"'><td>⋈ "+s.join+"</td><td>"+s.set+"</td><td>"+s.rows.toLocaleString()+"</td><td>"+s.run.toLocaleString()+"</td></tr>").join("");
+  renderDP();
+  renderWitness();
+}
+
+function renderWitness(){
+  const w=runWitness();
+  const el=$("auditout");
+  if(w.ok){
+    el.innerHTML="<span class='badge pass'>✔ WITNESS OK</span>"+
+      "<p class='small' style='margin-top:6px'>optimizer cost <b class='k'>"+w.optCost+"</b> = brute-force minimum over 24 orders <b class='k'>"+w.brute+"</b>. plan "+fmtOrder(w.order)+".</p>";
+  }else{
+    el.innerHTML="<span class='badge failb'>✖ WITNESS BROKEN</span>"+
+      "<p class='small' style='margin-top:6px;color:var(--wall)'>optimizer returns <b>"+w.optCost+"</b> but the true minimum is <b>"+w.brute+"</b> — the plan is <b>"+(w.optCost/w.brute).toFixed(1)+"×</b> too expensive. tamper caught.</p>";
+  }
+}
+
+function setToggle(){
+  $("tDP").classList.toggle("on", panelMode==="optimizer");
+  $("tGreedy").classList.toggle("on", panelMode==="greedy");
+  $("modenote").innerHTML = panelMode==="greedy"
+    ? "GREEDY: start with the cheapest pair, then add the next-cheapest relation — myopic, and trapped on this query."
+    : USE_GREEDY
+      ? "DP OPTIMIZER — but the DP has been swapped for greedy by the tamper (window 6). The witness catches it."
+      : "DP OPTIMIZER: the minimum-cost left-deep order by dynamic programming over subsets.";
+}
+
+function boot(){
+  /* fail-loud self-check at boot */
+  try{
+    const ok=selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    $("litbadge").innerHTML="<span class='badge pass'>✔ LIT — self-check passed</span>"+
+      "<p class='small' style='margin-top:6px'>DP optimum <b class='k'>210</b> = brute force over all <b>24</b> orders · join order matters: naive <b>1200</b> vs optimum <b class='k'>210</b> (5.7×) · greedy provably worse (1200) · DP solves <b>11</b> subproblems, not 24 orderings · tamper diverges and is caught.</p>";
+  }catch(e){
+    const fb=$("failb"); fb.style.display="block";
+    fb.textContent="SELF-CHECK FAILED — "+e.message;
+    throw e;
+  }
+
+  /* populate the order dropdown with all 24 permutations */
+  const sel=$("ordsel");
+  bruteOptimize().perms.forEach(p=>{
+    const s=p.map(i=>NAMES[i]).join("");
+    const o=document.createElement("option");
+    o.value=s; o.textContent=s+"  (cost "+orderCost(p)+")";
+    sel.appendChild(o);
+  });
+
+  renderPairs();
+  setToggle();
+  render();
+
+  $("tDP").onclick=()=>{ panelMode="optimizer"; picked=""; $("ordsel").value=""; setToggle(); render(); };
+  $("tGreedy").onclick=()=>{ panelMode="greedy"; picked=""; $("ordsel").value=""; setToggle(); render(); };
+  $("ordsel").onchange=(e)=>{ if(e.target.value){ panelMode="pick"; picked=e.target.value; } else { panelMode="optimizer"; picked=""; } setToggle(); render(); };
+  $("showopt").onclick=()=>{ panelMode="pick"; picked="BCDA"; $("ordsel").value="BCDA"; setToggle(); render(); };
+  $("shownaive").onclick=()=>{ panelMode="pick"; picked="ABCD"; $("ordsel").value="ABCD"; setToggle(); render(); };
+
+  $("tamper").onclick=()=>{ USE_GREEDY=true; panelMode="optimizer"; picked=""; $("ordsel").value=""; setToggle(); render();
+    $("tampernote").innerHTML="<b style='color:var(--wall)'>TAMPERED.</b> The optimizer itself is now greedy — it returns a plan costing 1200. The witness (window 7) brute-forces all 24 orders, finds the true minimum 210, and turns red.";
+  };
+  $("restore").onclick=()=>{ USE_GREEDY=false; panelMode="optimizer"; picked=""; $("ordsel").value=""; setToggle(); render();
+    $("tampernote").innerHTML="Swap in greedy and the optimizer returns a plan costing 1200 — the witness brute-forces all 24 orders, finds the true minimum is 210, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.";
+  };
+}
+document.addEventListener("DOMContentLoaded",boot);
+</script>
+</body>
+</html>

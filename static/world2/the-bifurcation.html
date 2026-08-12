@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BIFURCATION</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --ground:#0c1a12;
+  --ground2:#0f2117;
+  --panel:#122a1d;
+  --ink:#e8f5ec;
+  --dim:#9fc4ac;
+  --line:#22432f;
+  --blue:#6db3ff;
+  --blue-bg:#0e2233;
+  --red:#ff7b7b;
+  --red-bg:#301418;
+  --lit:#7dffa8;
+  --amber:#ffc24b;
+  --in:#8fd0ff;
+  --out:#9dffc0;
+  --wall:#ff9d9d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 15% -5%, #17371f 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, #123020 0%, transparent 55%),
+    linear-gradient(180deg,var(--ground) 0%,var(--ground2) 100%);
+  color:var(--ink);
+  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  min-height:100vh;
+  padding:22px 18px 40px;
+}
+header{max-width:1200px;margin:0 auto 20px}
+h1{
+  font-size:clamp(26px,4.4vw,44px);
+  letter-spacing:.06em;
+  margin:0 0 8px;
+  color:#fff;
+  text-shadow:0 0 24px rgba(200,162,255,.35);
+}
+h1 .knob{color:var(--am)}
+.sub{
+  max-width:820px;margin:0 0 12px;color:var(--dim);
+  font-size:15.5px;line-height:1.6;
+}
+.sub b{color:var(--ink)}
+.src{
+  font-size:12.5px;color:var(--dim);
+  border-left:2px solid var(--am);padding:4px 0 4px 12px;
+  max-width:820px;
+}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.09em;
+  padding:2px 7px;border-radius:4px;vertical-align:middle;margin-right:6px;
+  text-transform:uppercase;
+}
+.t-amber{background:rgba(255,194,75,.14);color:var(--amber);border:1px solid rgba(255,194,75,.4)}
+.t-lit{background:rgba(125,255,168,.14);color:var(--lit);border:1px solid rgba(125,255,168,.45)}
+.t-in{background:rgba(143,208,255,.14);color:var(--in);border:1px solid rgba(143,208,255,.4)}
+.t-out{background:rgba(157,255,192,.14);color:var(--out);border:1px solid rgba(157,255,192,.4)}
+.t-wall{background:rgba(255,157,157,.14);color:var(--wall);border:1px solid rgba(255,157,157,.42)}
+
+.ocho{
+  max-width:1200px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:14px;
+  align-items:start;
+}
+.col{display:flex;flex-direction:column;gap:12px}
+.teamhdr{
+  font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  padding:7px 10px;border-radius:7px;text-align:center;
+}
+.col.blue .teamhdr{background:var(--blue-bg);color:var(--blue);border:1px solid #1d4straight}
+.col.blue .teamhdr{border:1px solid #23496b}
+.col.red .teamhdr{background:var(--red-bg);color:var(--red);border:1px solid #5a2630}
+.col.center .teamhdr{background:rgba(200,162,255,.1);color:var(--am);border:1px solid #3a2f57}
+
+.win{
+  position:relative;
+  background:linear-gradient(180deg,rgba(18,42,29,.92),rgba(14,33,22,.92));
+  border:1px solid var(--line);border-radius:11px;
+  padding:14px 14px 15px;
+}
+.col.blue .win{border-color:#1d3d55}
+.col.red .win{border-color:#4c2530}
+.win.panel{
+  border-color:#3a2f57;
+  background:linear-gradient(180deg,rgba(26,22,44,.94),rgba(17,20,34,.94));
+  box-shadow:0 0 0 1px rgba(200,162,255,.12),0 10px 40px rgba(0,0,0,.35);
+}
+.num{
+  position:absolute;top:-9px;right:12px;
+  width:22px;height:22px;border-radius:50%;
+  font-size:11px;font-weight:800;display:grid;place-items:center;
+  background:var(--ground);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .num{border-color:var(--blue);color:var(--blue)}
+.col.red .num{border-color:var(--red);color:var(--red)}
+.win.panel .num{border-color:var(--am);color:var(--am)}
+.wt{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin:0 0 8px}
+.win p{margin:6px 0;font-size:13px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.win .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+.eq{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:7px;
+  padding:8px 10px;margin:8px 0;font-size:12.5px;color:var(--ink);overflow-x:auto;
+}
+.eq .c{color:var(--am)}
+.eq .g{color:var(--lit)}
+.eq .r{color:var(--red)}
+
+.flow{
+  text-align:center;color:var(--am);font-size:16px;letter-spacing:.3em;
+  margin:2px 0 0;opacity:.7;
+}
+
+.wall-note{
+  background:var(--red-bg);border:1px solid #5a2630;border-radius:8px;
+  padding:9px 11px;font-size:12.5px;color:var(--wall);
+}
+.grave p{margin:8px 0}
+.strike{text-decoration:line-through;color:#c07d86;opacity:.85}
+.fix{color:var(--lit)}
+
+.badge{
+  display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:12px;font-weight:700;padding:4px 9px;border-radius:6px;margin-top:4px;
+}
+.badge.ok{background:rgba(125,255,168,.13);color:var(--lit);border:1px solid rgba(125,255,168,.5)}
+.badge.bad{background:rgba(255,110,110,.16);color:#ff8a8a;border:1px solid rgba(255,110,110,.55)}
+
+#litbadge{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+#failb{
+  display:none;margin-top:10px;background:rgba(255,80,80,.14);
+  border:1px solid rgba(255,80,80,.55);border-radius:8px;padding:9px 11px;
+  color:#ff9a9a;font-size:12.5px;font-family:ui-monospace,Menlo,Consolas,monospace;
+}
+
+button{
+  font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+  background:#1a1030;color:var(--am);border:1px solid #4a3a72;
+  border-radius:7px;padding:7px 12px;margin:4px 6px 4px 0;
+  transition:.12s;
+}
+button:hover{background:#241542;border-color:var(--am)}
+button.warn{background:var(--red-bg);color:var(--red);border-color:#5a2630}
+button.warn:hover{background:#421c22}
+
+.ctl{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:6px 0 4px}
+.ctl label{font-size:11.5px;color:var(--dim);letter-spacing:.05em}
+.ctl select{
+  font:inherit;font-size:12.5px;background:#160f2a;color:var(--ink);
+  border:1px solid #3a2f57;border-radius:6px;padding:5px 8px;
+}
+input[type=range]{accent-color:var(--am);width:100%;margin-top:4px}
+.rval{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--am);font-size:12px}
+canvas{
+  width:100%;display:block;background:rgba(0,0,0,.32);
+  border:1px solid var(--line);border-radius:8px;margin-top:8px;
+}
+.legend{font-size:11px;color:var(--dim);margin-top:6px}
+.legend .s{color:var(--lit)}
+.legend .u{color:var(--red)}
+.readout{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;
+  color:var(--ink);background:rgba(0,0,0,.25);border:1px solid var(--line);
+  border-radius:7px;padding:8px 9px;margin-top:8px;white-space:pre-wrap;
+}
+footer{
+  max-width:1200px;margin:26px auto 0;padding-top:14px;
+  border-top:1px solid var(--line);color:var(--dim);font-size:12px;
+}
+footer b{color:var(--am)}
+@media(max-width:880px){
+  .ocho{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>THE <span class="knob">BIFURCATION</span></h1>
+  <p class="sub">The moment a system's behaviour changes <b>qualitatively</b> as you turn one knob. Fixed points are <b>born</b>, <b>destroyed</b>, or <b>exchange stability</b> as a parameter <span class="mono">r</span> crosses a threshold. This instrument renders the three elementary bifurcations of fixed points on a line — saddle-node, transcritical, pitchfork — and draws each bifurcation diagram live. <b>Rendered, not quoted.</b></p>
+  <p class="src"><span class="tag t-amber">source</span> Bifurcation theory — Poincaré (qualitative theory of dynamical systems); S. H. Strogatz, <a href="https://books.google.com/books/about/Nonlinear_Dynamics_and_Chaos.html?id=A0paDwAAQBAJ" target="_blank" rel="noopener">Nonlinear Dynamics and Chaos</a>, Addison-Wesley, 1994 (normal forms, ch.&nbsp;3). AMBER: textbook, no single canonical DOI/permalink — cited by author / title / year.</p>
+</header>
+
+<main class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <section class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <p class="wt">The Model</p>
+      <p>A 1-D flow <span class="mono">dx/dt = f(x; r)</span>. <b>Fixed points</b> solve <span class="mono">f(x)=0</span>. Their <b>stability</b> is the sign of the derivative there — the 1-D Jacobian is the scalar <span class="mono">f'(x*)</span>, and its single eigenvalue <span class="mono">λ=f'(x*)</span>:</p>
+      <div class="eq"><span class="g">λ&lt;0</span> → stable (attracts)&nbsp;&nbsp;<span class="r">λ&gt;0</span> → unstable (repels)</div>
+      <p>The three normal forms:</p>
+      <div class="eq"><b>saddle-node</b>&nbsp; dx/dt = <span class="c">r</span> + x²<br><b>transcritical</b> dx/dt = <span class="c">r</span>x − x²<br><b>pitchfork</b>&nbsp;&nbsp; dx/dt = <span class="c">r</span>x − x³</div>
+      <p class="mono" style="color:var(--dim)">Assumption (AMBER): autonomous, smooth 1-D flow; the local picture near <span class="mono">r=0</span> is the whole story only up to higher-order terms — the normal form. Not a claim about any real population; a model with named terms.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <p class="wt">The Lineage</p>
+      <p>A bifurcation is <b>where behaviour changes suddenly</b> — fixed points appear, vanish, or swap stability as the knob turns. Keep turning the knob on a map and these single events stack into a <b>cascade</b>: period-doubling after period-doubling, the road <span class="mono">the-feigenbaum</span> paves into chaos.</p>
+      <p class="mono" style="color:var(--am)">the-bifurcation → the-feigenbaum</p>
+      <p style="font-size:12px">One qualitative change here; an infinite accelerating sequence of them there, converging at δ ≈ 4.669.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <p class="wt">The Witness</p>
+      <p>Re-checks the load-bearing claim live: the origin of the pitchfork at <span class="mono">r=1</span> is <b>unstable</b> (<span class="mono">f'(0)=r=1&gt;0</span>). If the Tamper (window&nbsp;6) makes the engine judge stability without the derivative, this flips red.</p>
+      <div id="auditout" class="badge ok">witness: …</div>
+    </div>
+  </section>
+
+  <!-- ================= CENTER ================= -->
+  <section class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win panel">
+      <span class="num">4</span>
+      <p class="wt"><span class="tag t-in">in ↓</span>Data In</p>
+      <p>Pick a bifurcation and turn the knob <span class="mono">r</span>. The engine solves <span class="mono">f(x)=0</span> in closed form and classifies each root by <span class="mono">f'(x*)</span>.</p>
+      <div class="ctl">
+        <div>
+          <label for="typesel">normal form</label><br>
+          <select id="typesel">
+            <option value="saddle">saddle-node · r + x²</option>
+            <option value="trans">transcritical · rx − x²</option>
+            <option value="pitch" selected>pitchfork · rx − x³</option>
+          </select>
+        </div>
+      </div>
+      <div class="ctl" style="display:block">
+        <label for="rslider">knob r = <span class="rval" id="rval">1.00</span></label>
+        <input id="rslider" type="range" min="-2" max="2" step="0.01" value="1">
+      </div>
+    </div>
+
+    <div class="flow">↓ ↓ ↓</div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <p class="wt"><span class="tag t-lit">lit</span>The Panel</p>
+      <p style="margin-bottom:2px" class="mono" style="color:var(--dim)">left: f(x) &amp; its fixed points · right: the bifurcation diagram x*(r)</p>
+      <canvas id="cvF" width="520" height="220"></canvas>
+      <div class="legend"><span class="s">● solid green = stable (λ&lt;0)</span> &nbsp; <span class="u">○ dashed red = unstable (λ&gt;0)</span></div>
+      <canvas id="cvB" width="520" height="240"></canvas>
+      <div class="readout" id="readout"></div>
+    </div>
+
+    <div class="flow">↓ ↓ ↓</div>
+
+    <div class="win panel">
+      <span class="num">8</span>
+      <p class="wt"><span class="tag t-out">out ↓</span>Data Out</p>
+      <p><b>Proven result.</b> Saddle-node <span class="mono">r+x²</span>: two fixed points for <span class="mono">r&lt;0</span>, they collide and annihilate exactly at <span class="mono">r=0</span>, none for <span class="mono">r&gt;0</span>. Pitchfork <span class="mono">rx−x³</span>: one stable point for <span class="mono">r&lt;0</span>, three for <span class="mono">r&gt;0</span> (origin turns unstable, two stable branches split off ±√r). Transcritical <span class="mono">rx−x²</span>: the two points <span class="mono">0</span> and <span class="mono">r</span> pass through each other and swap stability at <span class="mono">r=0</span>.</p>
+      <div id="litbadge" class="badge">boot: …</div>
+      <div id="failb"></div>
+    </div>
+  </section>
+
+  <!-- ================= RED TEAM ================= -->
+  <section class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <p class="wt">The Adversary</p>
+      <div class="wall-note"><span class="tag t-wall">wall</span>"A normal form is the whole system." No — it is only the <b>local germ</b> near the bifurcation point. Away from <span class="mono">r=0</span>, higher-order terms and global structure dominate; the diagram you draw is guaranteed only in a neighbourhood.</div>
+      <p style="margin-top:10px">"Counting <span class="mono">f=0</span> roots tells you the dynamics." It tells you <b>where</b> the fixed points are, never whether they attract or repel. Stability lives in <span class="mono">f'</span>, not in <span class="mono">f</span>. Drop the derivative and the diagram is a lie in the right places.</p>
+      <p>"Every parameter crossing is a bifurcation." Only crossings where the <b>qualitative</b> phase portrait changes count. A root that merely moves is not a bifurcation.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <p class="wt">The Graveyard</p>
+      <div class="grave">
+        <p><span class="strike">"Saddle-node: the two fixed points survive at r=0, just very close."</span><br><span class="fix">→ They coincide into one degenerate point at r=0 and are gone for r&gt;0. Count drops 2→1→0.</span></p>
+        <p><span class="strike">"Pitchfork: the origin stays stable for all r."</span><br><span class="fix">→ At r&gt;0 the origin has f'(0)=r&gt;0, so it goes unstable; stability is handed to ±√r.</span></p>
+        <p><span class="strike">"Transcritical: one point is always the stable one."</span><br><span class="fix">→ The roles swap at r=0. Whoever was stable for r&lt;0 is unstable for r&gt;0.</span></p>
+        <p><span class="strike">"Stability = sign of f(x)."</span><br><span class="fix">→ Stability = sign of f'(x*). This exact error is the planted void in window 6.</span></p>
+      </div>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <p class="wt">The Tamper</p>
+      <p>Planted void, disclosed: make the engine judge stability from <b>f(x)=0 alone</b>, ignoring <span class="mono">f'(x)</span>. It then declares every fixed point "stable" — an unstable branch is mislabeled, the diagram's colours are wrong, and the Witness (7) catches it live.</p>
+      <button id="tamper" class="warn">⚠ tamper: drop f'(x)</button>
+      <button id="restore">↺ restore</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <b>THE BIFURCATION</b> · World II · THE FOLD — refined OCHO. Engine is genuinely live: fixed points solved in closed form, stability from the 1-D Jacobian eigenvalue λ=f'(x*), diagram plotted from those roots; a fail-loud <span class="mono">selfcheck()</span> gates boot and the Witness re-runs it. A model with named assumptions, not a claim about the world. Built by <b>David Lee Wise (ROOT0) with AVAN.</b>
+</footer>
+
+<script>
+/* engine + selfcheck live above the single marker line — pure logic, node-extractable */
+
+// fixed-seed PRNG (mulberry32) so any sampling is deterministic
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// ---- normal forms: f(x;r) ----
+function fSaddle(r,x){return r + x*x;}
+function fTrans(r,x){return r*x - x*x;}
+function fPitch(r,x){return r*x - x*x*x;}
+
+// ---- derivatives f'(x;r) : the 1-D Jacobian / eigenvalue ----
+function dSaddle(r,x){return 2*x;}
+function dTrans(r,x){return r - 2*x;}
+function dPitch(r,x){return r - 3*x*x;}
+
+// ---- closed-form fixed points ----
+function fpSaddle(r){
+  if(r>0) return [];
+  if(r===0) return [0];
+  const s=Math.sqrt(-r);
+  return [-s, s];
+}
+function fpTrans(r){
+  if(r===0) return [0];
+  return [0, r];
+}
+function fpPitch(r){
+  if(r<=0) return [0];
+  const s=Math.sqrt(r);
+  return [-s, 0, s];
+}
+
+// ---- stability classification ----
+// honest path: sign of the derivative (eigenvalue). tampered path: ignore f' and call everything stable.
+function classify(fprime, tampered){
+  if(tampered) return 'stable';            // planted void: judged by f(x)=0 alone
+  return fprime < 0 ? 'stable' : 'unstable';
+}
+
+// bundle a form so UI + checks share one source of truth
+function forms(type){
+  if(type==='saddle') return {f:fSaddle, d:dSaddle, fp:fpSaddle, label:'r + x^2'};
+  if(type==='trans')  return {f:fTrans,  d:dTrans,  fp:fpTrans,  label:'r*x - x^2'};
+  return {f:fPitch, d:dPitch, fp:fpPitch, label:'r*x - x^3'};
+}
+
+// RK4 fixed-step integrator — a genuine dynamical (robust-trend) check
+function rk4(f,x,dt){
+  const k1=f(x), k2=f(x+dt/2*k1), k3=f(x+dt/2*k2), k4=f(x+dt*k3);
+  return x + dt/6*(k1+2*k2+2*k3+k4);
+}
+function integrate(f,x0,dt,steps){
+  let x=x0;
+  for(let i=0;i<steps;i++) x=rk4(f,x,dt);
+  return x;
+}
+
+// live tamper flag (window 6) — witness recomputes against truth using this
+let TAMPER = false;
+
+// what the witness asserts: pitchfork origin at r=1 is unstable (f'(0)=1>0)
+function witnessTruth(){
+  const truth = classify(dPitch(1,0), false);   // 'unstable'
+  const now   = classify(dPitch(1,0), TAMPER);   // 'stable' when tampered
+  return {truth, now, ok: now===truth};
+}
+
+function approx(a,b,tol){return Math.abs(a-b)<=tol;}
+
+// fail-loud: THROWS on any violation, RETURNS true on success. saves/restores TAMPER.
+function selfcheck(){
+  const savedTamper = TAMPER;
+  try{
+    // ---- SADDLE-NODE r + x^2 : count 2 -> 1 -> 0, collision exactly at r=0 ----
+    if(fpSaddle(-1).length!==2) throw new Error('saddle: expected 2 fixed points for r<0');
+    if(fpSaddle(0).length!==1)  throw new Error('saddle: expected 1 fixed point at r=0');
+    if(fpSaddle(0.5).length!==0) throw new Error('saddle: expected 0 fixed points for r>0');
+    // roots at r=-1 are exactly ±1
+    if(!approx(fpSaddle(-1)[0],-1,1e-12) || !approx(fpSaddle(-1)[1],1,1e-12)) throw new Error('saddle: roots wrong');
+    // collision: as r->0-, both roots -> 0
+    if(!approx(fpSaddle(-1e-9)[0],0,1e-4) || !approx(fpSaddle(-1e-9)[1],0,1e-4)) throw new Error('saddle: roots do not collide at 0');
+    // stability: -1 stable (f'=-2), +1 unstable (f'=2)
+    if(classify(dSaddle(-1,-1),false)!=='stable')   throw new Error('saddle: x=-1 should be stable');
+    if(classify(dSaddle(-1, 1),false)!=='unstable') throw new Error('saddle: x=+1 should be unstable');
+
+    // ---- PITCHFORK r*x - x^3 : 1 fixed point for r<0, 3 for r>0 ----
+    if(fpPitch(-1).length!==1) throw new Error('pitchfork: expected 1 fixed point for r<0');
+    if(fpPitch( 1).length!==3) throw new Error('pitchfork: expected 3 fixed points for r>0');
+    // r<0 the lone origin is stable (f'=r<0)
+    if(classify(dPitch(-1,0),false)!=='stable') throw new Error('pitchfork: origin should be stable for r<0');
+    // r>0: origin unstable, ±sqrt(r) stable
+    if(classify(dPitch(1,0),false)!=='unstable')          throw new Error('pitchfork: origin should be unstable for r>0');
+    if(classify(dPitch(1, Math.sqrt(1)),false)!=='stable') throw new Error('pitchfork: +sqrt(r) should be stable');
+    if(classify(dPitch(1,-Math.sqrt(1)),false)!=='stable') throw new Error('pitchfork: -sqrt(r) should be stable');
+    // branches are exactly ±1 at r=1
+    if(!approx(fpPitch(1)[0],-1,1e-12) || !approx(fpPitch(1)[2],1,1e-12)) throw new Error('pitchfork: branch positions wrong');
+
+    // ---- TRANSCRITICAL r*x - x^2 : two points exchange stability at r=0 ----
+    if(fpTrans(-1).length!==2 || fpTrans(1).length!==2) throw new Error('transcritical: expected 2 fixed points off r=0');
+    // r<0: x=0 stable, x=r unstable ; r>0: x=0 unstable, x=r stable  (they swap)
+    if(classify(dTrans(-1,0),false)!=='stable')   throw new Error('transcritical: x=0 should be stable for r<0');
+    if(classify(dTrans(-1,-1),false)!=='unstable')throw new Error('transcritical: x=r should be unstable for r<0');
+    if(classify(dTrans(1,0),false)!=='unstable')  throw new Error('transcritical: x=0 should be unstable for r>0');
+    if(classify(dTrans(1,1),false)!=='stable')    throw new Error('transcritical: x=r should be stable for r>0');
+
+    // ---- ROBUST TREND: a trajectory in the pitchfork (r=1) converges to a stable branch ----
+    const fp1 = (x)=>fPitch(1,x);
+    const endPos = integrate(fp1, 0.1, 0.01, 3000);   // starts near 0 -> +1
+    const endNeg = integrate(fp1,-0.1, 0.01, 3000);   // -> -1
+    if(!approx(endPos, 1, 1e-3)) throw new Error('flow did not converge to +sqrt(r) stable branch');
+    if(!approx(endNeg,-1, 1e-3)) throw new Error('flow did not converge to -sqrt(r) stable branch');
+    // sensitive-but-bounded sanity: both stay bounded (|x|<2) throughout is implied by convergence to ±1
+
+    // ---- THE PLANTED VOID: with the tamper on, a KNOWN unstable point is mislabeled ----
+    TAMPER = true;
+    const truthU = classify(dPitch(1,0), false);      // 'unstable'
+    const tampered = classify(dPitch(1,0), TAMPER);    // 'stable'
+    if(tampered === truthU) throw new Error('tamper is inert — it must change the pitchfork origin classification');
+    if(tampered !== 'stable') throw new Error('tamper should force a bogus stable label');
+    TAMPER = savedTamper;   // restore
+
+    return true;
+  }catch(e){
+    TAMPER = savedTamper;   // restore even on failure
+    throw e;
+  }
+}
+
+/* ===== UI ===== */
+
+const $ = (id)=>document.getElementById(id);
+const cvF=$('cvF'), cvB=$('cvB'), ctxF=cvF.getContext('2d'), ctxB=cvB.getContext('2d');
+
+const COL={am:'#c8a2ff',lit:'#7dffa8',red:'#ff7b7b',dim:'#9fc4ac',ink:'#e8f5ec',grid:'#22432f'};
+
+function curType(){return $('typesel').value;}
+function curR(){return parseFloat($('rslider').value);}
+
+// map data coords -> pixels
+function mapper(w,h,xmin,xmax,ymin,ymax,pad){
+  return {
+    X:(x)=>pad + (x-xmin)/(xmax-xmin)*(w-2*pad),
+    Y:(y)=>h-pad - (y-ymin)/(ymax-ymin)*(h-2*pad)
+  };
+}
+function axes(ctx,w,h,m,xmin,xmax,ymin,ymax){
+  ctx.strokeStyle=COL.grid;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(m.X(xmin),m.Y(0));ctx.lineTo(m.X(xmax),m.Y(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(m.X(0),m.Y(ymin));ctx.lineTo(m.X(0),m.Y(ymax));ctx.stroke();
+}
+
+// ---- window 0 left canvas: f(x) with fixed points ----
+function drawF(){
+  const w=cvF.width,h=cvF.height,pad=22;
+  ctxF.clearRect(0,0,w,h);
+  const F=forms(curType()), r=curR();
+  const xmin=-2.4,xmax=2.4,ymin=-3,ymax=3;
+  const m=mapper(w,h,xmin,xmax,ymin,ymax,pad);
+  axes(ctxF,w,h,m,xmin,xmax,ymin,ymax);
+  // curve
+  ctxF.strokeStyle=COL.am;ctxF.lineWidth=2;ctxF.beginPath();
+  let first=true;
+  for(let px=pad;px<=w-pad;px++){
+    const x=xmin+(px-pad)/(w-2*pad)*(xmax-xmin);
+    let y=F.f(r,x); if(y>ymax)y=ymax; if(y<ymin)y=ymin;
+    const py=m.Y(y);
+    if(first){ctxF.moveTo(px,py);first=false;}else ctxF.lineTo(px,py);
+  }
+  ctxF.stroke();
+  // fixed points
+  F.fp(r).forEach(x=>{
+    const st=classify(F.d(r,x),TAMPER)==='stable';
+    ctxF.beginPath();ctxF.arc(m.X(x),m.Y(0),5,0,7);
+    if(st){ctxF.fillStyle=COL.lit;ctxF.fill();}
+    else{ctxF.strokeStyle=COL.red;ctxF.lineWidth=2;ctxF.stroke();
+      ctxF.setLineDash([2,2]);ctxF.beginPath();ctxF.arc(m.X(x),m.Y(0),5,0,7);ctxF.stroke();ctxF.setLineDash([]);}
+  });
+  ctxF.fillStyle=COL.dim;ctxF.font='10px monospace';
+  ctxF.fillText('f(x) = '+F.label,pad+2,14);
+  ctxF.fillText('x',w-pad+4,m.Y(0)-4);
+}
+
+// ---- window 0 bottom canvas: bifurcation diagram x*(r) ----
+function drawB(){
+  const w=cvB.width,h=cvB.height,pad=24;
+  ctxB.clearRect(0,0,w,h);
+  const F=forms(curType());
+  const rmin=-2,rmax=2,xmin=-2,xmax=2;
+  const m=mapper(w,h,rmin,rmax,xmin,xmax,pad);
+  axes(ctxB,w,h,m,rmin,rmax,xmin,xmax);
+  // sweep r, plot each branch coloured by stability
+  const N=360;
+  for(let i=0;i<=N;i++){
+    const r=rmin+i/N*(rmax-rmin);
+    F.fp(r).forEach(x=>{
+      if(x<xmin||x>xmax) return;
+      const st=classify(F.d(r,x),TAMPER)==='stable';
+      ctxB.beginPath();ctxB.arc(m.X(r),m.Y(x),st?1.6:1.2,0,7);
+      ctxB.fillStyle=st?COL.lit:COL.red;ctxB.fill();
+    });
+  }
+  // current-r marker
+  const r0=curR();
+  ctxB.strokeStyle='rgba(200,162,255,.5)';ctxB.setLineDash([3,3]);
+  ctxB.beginPath();ctxB.moveTo(m.X(r0),m.Y(xmin));ctxB.lineTo(m.X(r0),m.Y(xmax));ctxB.stroke();ctxB.setLineDash([]);
+  ctxB.fillStyle=COL.dim;ctxB.font='10px monospace';
+  ctxB.fillText('bifurcation diagram  x*(r)',pad+2,14);
+  ctxB.fillText('r',w-pad+4,m.Y(0)-4);
+}
+
+function readout(){
+  const F=forms(curType()), r=curR();
+  const pts=F.fp(r);
+  let lines='r = '+r.toFixed(2)+'   f(x) = '+F.label+'\n';
+  lines+='fixed points: '+(pts.length? pts.length : '0')+'\n';
+  pts.forEach(x=>{
+    const fp=F.d(r,x);
+    const st=classify(fp,TAMPER);
+    lines+='  x* = '+x.toFixed(3)+'   λ=f\'= '+fp.toFixed(3)+'  → '+st+(TAMPER?'  (TAMPERED: f\' ignored)':'')+'\n';
+  });
+  if(pts.length===0) lines+='  (none — flow has no equilibrium here)\n';
+  $('readout').textContent=lines.trim();
+}
+
+function render(){
+  $('rval').textContent=curR().toFixed(2);
+  drawF();drawB();readout();runWitness();
+}
+
+// ---- window 7 witness: live re-check ----
+function runWitness(){
+  const w=witnessTruth();
+  const b=$('auditout');
+  if(w.ok){
+    b.className='badge ok';
+    b.textContent='witness: PASS — pitchfork origin @r=1 is '+w.truth+' (λ=1>0)';
+  }else{
+    b.className='badge bad';
+    b.textContent='witness: TAMPERED — origin reported '+w.now+', truth is '+w.truth;
+  }
+}
+
+// wire controls
+$('typesel').addEventListener('change',render);
+$('rslider').addEventListener('input',render);
+$('tamper').addEventListener('click',()=>{TAMPER=true;render();});
+$('restore').addEventListener('click',()=>{TAMPER=false;render();});
+
+// boot: fail-loud gate
+(function boot(){
+  try{
+    const ok=selfcheck();
+    if(ok!==true) throw new Error('selfcheck did not return true');
+    const lb=$('litbadge');
+    lb.className='badge ok';
+    lb.textContent='LIT ✓ selfcheck passed — 3 normal forms, counts + stability + flow verified';
+  }catch(e){
+    const fb=$('failb');
+    fb.style.display='block';
+    fb.textContent='SELFCHECK FAILED: '+e.message;
+    const lb=$('litbadge');
+    lb.className='badge bad';
+    lb.textContent='DEAD ✗ boot check failed';
+    render();
+    throw e;
+  }
+  render();
+})();
+</script>
+</body>
+</html>

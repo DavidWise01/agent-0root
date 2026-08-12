@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE NUCLEAR FUSION</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --ground:#07160f;
+  --ground2:#0a1e14;
+  --ink:#dff5ea;
+  --dim:#8fb6a6;
+  --line:#1c3a2b;
+  --blue:#5fa8ff;
+  --red:#ff6b6b;
+  --lit:#7fe0c0;
+  --amber:#ffcf6b;
+  --wall:#ff8a8a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 20% -10%, #0d2b1d 0%, transparent 60%),
+    radial-gradient(1000px 800px at 110% 10%, #0b241a 0%, transparent 55%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:22px 16px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+a:hover{opacity:.8}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin:0 0 18px}
+h1{
+  font-size:clamp(26px,5vw,44px);
+  letter-spacing:.06em;
+  margin:0 0 8px;
+  color:var(--am);
+  text-shadow:0 0 22px rgba(127,224,192,.28);
+  font-weight:800;
+}
+.sub{max-width:74ch;color:var(--ink);margin:0 0 10px;font-size:15px}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.14em;font-weight:700;
+  padding:2px 7px;border-radius:4px;border:1px solid var(--line);text-transform:uppercase;
+}
+.t-amber{color:var(--amber);border-color:#5a4a1e;background:rgba(255,207,107,.06)}
+.t-lit{color:var(--lit);border-color:#2a5a46;background:rgba(127,224,192,.08)}
+.t-in{color:var(--blue);border-color:#254a6e;background:rgba(95,168,255,.07)}
+.t-out{color:var(--am);border-color:#2a5a46;background:rgba(127,224,192,.07)}
+.t-wall{color:var(--wall);border-color:#5a2626;background:rgba(255,107,107,.07)}
+
+.ocho{
+  display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:14px;margin-top:6px;
+}
+@media(max-width:880px){ .ocho{grid-template-columns:1fr} }
+.col{display:flex;flex-direction:column;gap:12px}
+.teamhdr{
+  font-size:11px;letter-spacing:.18em;font-weight:800;text-transform:uppercase;
+  padding:6px 10px;border-radius:6px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#234763;background:rgba(95,168,255,.06)}
+.col.center .teamhdr{color:var(--am);border-color:#2a5a46;background:rgba(127,224,192,.06)}
+.col.red .teamhdr{color:var(--red);border-color:#5a2626;background:rgba(255,107,107,.06)}
+
+.win{
+  border:1px solid var(--line);border-radius:9px;background:linear-gradient(180deg,var(--ground2),#08190f);
+  padding:12px 13px;position:relative;
+}
+.win .wn{
+  position:absolute;top:-9px;right:10px;font-size:10.5px;font-weight:800;color:var(--ground);
+  background:var(--am);border-radius:4px;padding:1px 6px;letter-spacing:.05em;
+}
+.col.blue .win .wn{background:var(--blue)}
+.col.red .win .wn{background:var(--red)}
+.win h3{margin:0 0 7px;font-size:12.5px;letter-spacing:.09em;color:var(--am);text-transform:uppercase;font-weight:800}
+.col.blue .win h3{color:var(--blue)}
+.col.red .win h3{color:var(--red)}
+.win p{margin:6px 0;font-size:13px;color:var(--ink)}
+.win .muted{color:var(--dim);font-size:12px}
+.win.panel{border-color:#2a5a46;box-shadow:0 0 0 1px rgba(127,224,192,.12) inset,0 0 30px rgba(127,224,192,.05)}
+.k{color:var(--am);font-weight:700}
+.mono{font-variant-numeric:tabular-nums}
+.flow{
+  text-align:center;color:var(--dim);font-size:11px;letter-spacing:.2em;margin:2px 0;
+}
+.badge{
+  display:inline-block;padding:3px 9px;border-radius:5px;font-weight:800;font-size:12px;
+  border:1px solid var(--line);letter-spacing:.06em;
+}
+.b-lit{color:var(--lit);border-color:#2a5a46;background:rgba(127,224,192,.1)}
+.b-ok{color:var(--lit);border-color:#2a5a46;background:rgba(127,224,192,.1)}
+.b-bad{color:var(--red);border-color:#5a2626;background:rgba(255,107,107,.12)}
+.readout{
+  font-size:12.5px;line-height:1.7;background:#06130d;border:1px solid var(--line);
+  border-radius:7px;padding:9px 10px;margin:8px 0 2px;white-space:pre-wrap;
+}
+.wall-note{border-left:3px solid var(--wall);padding-left:10px;color:var(--wall);font-size:12.5px}
+.grave{color:var(--dim);font-size:12.5px}
+.grave s{color:var(--red);opacity:.8}
+.grave .fix{color:var(--am)}
+canvas{width:100%;height:150px;display:block;background:#050f0a;border:1px solid var(--line);border-radius:7px;margin:8px 0 2px}
+.btn{
+  font:inherit;font-size:12px;cursor:pointer;color:var(--ink);background:#0d2418;
+  border:1px solid var(--line);border-radius:6px;padding:6px 11px;margin:4px 6px 2px 0;letter-spacing:.05em;
+}
+.btn:hover{border-color:var(--am);color:var(--am)}
+.btn.warn:hover{border-color:var(--red);color:var(--red)}
+#failb{display:none;margin:10px 0;color:var(--red);border:1px solid #5a2626;background:rgba(255,107,107,.08);padding:10px;border-radius:7px;font-size:12.5px}
+footer{margin-top:26px;color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+.small{font-size:11.5px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE NUCLEAR FUSION</h1>
+  <p class="sub">Light nuclei climb past a wall of their own repulsion and lock into a more-bound state, spilling the difference as energy. This is the furnace of every star: not that fusion is easy, but that quantum tunnelling makes the nearly-impossible happen often enough — the Gamow peak — to keep the sky lit. Rendered, not quoted.</p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>H. A. Bethe, <em>Energy Production in Stars</em>, Phys. Rev. <b>55</b>, 434 (1939) — <a href="https://doi.org/10.1103/PhysRev.55.434" target="_blank" rel="noopener">doi:10.1103/PhysRev.55.434</a>; barrier penetration: G. Gamow, Z. Phys. <b>51</b>, 204 (1928).</span>
+  </div>
+  <div id="failb"></div>
+</header>
+
+<div class="ocho">
+
+  <!-- LEFT / BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue team · builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wn">3</span>
+      <h3>The Model</h3>
+      <p>A fusion reaction is a walk on the <span class="k">binding-energy curve</span>. Each nucleus has a binding energy <span class="mono">B(Z,N) = (Z·m<sub>H</sub> + N·m<sub>n</sub> − M)·u</span>, with <span class="mono">u = 931.5 MeV</span>. The released energy is the gain in total binding:</p>
+      <p class="mono k">Q = B(products) − B(reactants)</p>
+      <p>For <span class="mono">D + T → He-4 + n</span>, the alpha particle (He-4) is <em>especially</em> bound, so Q is large and positive. Below it stand two barriers: the <span class="k">Coulomb wall</span> Z₁Z₂e²/r that classical thermal energy cannot clear, and beneath it the <span class="k">tunnel</span> — the reverse of alpha decay — that quantum mechanics opens.</p>
+      <p class="muted">Light side of the curve: merging climbs <em>toward</em> the Fe-56 peak from below, so it pays. (The heavy side pays by splitting — that is the-nuclear-fission.)</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">5</span>
+      <h3>The Lineage</h3>
+      <p>Neighbour: <span class="k">the-binding-energy</span>. Fusion is climbing that curve from the light side; the reactants are less bound than the product, and the height climbed is exactly Q.</p>
+      <p class="muted">Also touching: <span class="k">the-quantum-tunnelling</span> (the same barrier-penetration that lets alpha particles <em>out</em> lets fusing nuclei <em>in</em>), and <span class="k">the-nuclear-fission</span> — its uphill mirror on the heavy side. Bethe 1939 wired all of this to why stars shine.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">7</span>
+      <h3>The Witness</h3>
+      <p>Re-runs the engine's core invariants live and independently of the panel. If the machine is tampered, this flips red.</p>
+      <p class="mono">status: <span id="auditout" class="badge b-ok">…</span></p>
+      <p class="small">Checks: Q&gt;0 (release), He-4 most-bound of the set, barrier ≫ kT, tunnelling nonzero, Gamow-peak location matches theory.</p>
+    </div>
+  </div>
+
+  <!-- CENTER / MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The machine</div>
+
+    <div class="win">
+      <span class="wn">4</span>
+      <h3>Data In <span class="tag t-in">in ↓</span></h3>
+      <p class="muted">Measured atomic masses (u) and physical constants — the only inputs. Everything else is computed.</p>
+      <div class="readout" id="datain">…</div>
+    </div>
+
+    <div class="flow">▼ ▼ ▼</div>
+
+    <div class="win panel">
+      <span class="wn">0</span>
+      <h3>The Panel <span class="tag t-lit">LIT</span></h3>
+      <p class="muted">The live engine: Q-value from binding gain, the Coulomb barrier, and the Gamow-peak tunnelling that makes stars burn.</p>
+      <canvas id="cv" width="640" height="300" aria-label="Gamow peak"></canvas>
+      <div class="readout" id="panelout">…</div>
+      <p class="small">Curve: the Maxwell tail exp(−E/kT) falls, the tunnelling factor exp(−√(E<sub>G</sub>/E)) rises; their product is the <span class="k">Gamow peak</span> — the narrow window of energies where fusion actually happens.</p>
+    </div>
+
+    <div class="flow">▼ ▼ ▼</div>
+
+    <div class="win">
+      <span class="wn">8</span>
+      <h3>Data Out <span class="tag t-out">out ↓</span></h3>
+      <p class="mono">D + T → He-4 + n &nbsp; <span id="litbadge" class="badge b-lit">…</span></p>
+      <div class="readout" id="dataout">…</div>
+    </div>
+  </div>
+
+  <!-- RIGHT / RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wn">1</span>
+      <h3>The Adversary</h3>
+      <p class="wall-note tag-none">WALL — "If the barrier is ~1 MeV and the Sun's core is only ~1 keV, classically the two protons never touch. Rate should be <em>zero</em>. Stars can't fuse."</p>
+      <p class="muted">Rebuttal: classically, yes — the rate would be astronomically suppressed. But the barrier is <em>penetrated</em>, not cleared. The Gamow factor exp(−√(E<sub>G</sub>/E)) is small but strictly nonzero, and the Maxwell tail supplies a thin population at the Gamow-peak energy (~keV). The product is tiny per pair and enormous per star. The engine reports both: barrier/kT ≫ 1 <em>and</em> tunnelling &gt; 0.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">2</span>
+      <h3>The Graveyard</h3>
+      <p class="grave"><s>Fusion works because the product is lighter, and lightness itself is the fuel.</s> <span class="fix">→ It is the <em>binding</em>, not the mass alone: Q = B(products) − B(reactants). Mass defect is the accountant, not the cause.</span></p>
+      <p class="grave"><s>Hotter is always enough; just raise T until thermal energy exceeds the barrier.</s> <span class="fix">→ Stellar cores never reach barrier temperatures (~10<sup>10</sup> K). Fusion runs at ~10<sup>7</sup> K only because of tunnelling.</span></p>
+      <p class="grave"><s>Helium-4 sits at the top of the binding curve.</s> <span class="fix">→ The peak is near Fe-56 (~8.8 MeV/nucleon). He-4 is a local standout (~7.07), which is why its Q is large — but the climb continues past it.</span></p>
+    </div>
+
+    <div class="win">
+      <span class="wn">6</span>
+      <h3>The Tamper</h3>
+      <p class="muted">Planted void (disclosed): flip the sign of Q so the product is <em>less</em> bound than the reactants — fusion would <em>absorb</em> energy and no star could shine. The Witness (7) catches it live.</p>
+      <button class="btn warn" id="tamper">Tamper: make Q &lt; 0</button>
+      <button class="btn" id="restore">Restore</button>
+      <p class="mono small">tamper flag: <span id="tstate">off</span></p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>THE NUCLEAR FUSION — WORLD II · THE FOLD. The engine computes Q from real atomic masses, the Coulomb barrier from Z₁Z₂e²/r, and the Gamow peak by a live numeric integral; nothing is quoted. LIT = computed &amp; self-checked; AMBER = model assumption stated as such.</p>
+  <p class="small">Built by David Lee Wise (ROOT0) with AVAN.</p>
+</footer>
+</div>
+
+<script>
+// ============================================================
+// ENGINE (pure logic) + selfcheck — runs headless, NO canvas/DOM
+// ============================================================
+
+// --- fixed-seed PRNG (deterministic) ---
+function mulberry32(a){
+  return function(){
+    a|=0; a=(a+0x6D2B79F5)|0;
+    var t=Math.imul(a^(a>>>15),1|a);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+
+// --- physical constants (explicit) ---
+var U_MEV   = 931.5;              // atomic mass unit energy equivalent, MeV
+var N_A     = 6.02214076e23;      // Avogadro, 1/mol
+var C_LIGHT = 2.99792458e8;       // m/s (mass-energy bookkeeping via u)
+var K_COUL  = 1.43996;            // e^2/(4*pi*eps0), MeV*fm
+var ALPHA   = 1/137.035999;       // fine-structure constant
+var MP_C2   = 938.272;            // proton rest energy, MeV
+var KB_MEV_K= 8.617333e-11;       // Boltzmann constant, MeV/K
+var T_CORE  = 1.5e7;              // solar-core temperature, K
+
+// --- measured atomic masses (u) : keyed "Z,A" ---
+var M_H  = 1.0078250319;   // 1H atom
+var M_N  = 1.0086649;      // neutron
+var MASS = {
+  "1,2": 2.0141017779,     // deuterium (D)
+  "1,3": 3.0160492779,     // tritium   (T)
+  "2,4": 4.0026032541,     // helium-4  (alpha)
+  "26,56": 55.9349375      // iron-56   (near the binding peak)
+};
+
+// --- the tamper flag: a PLAIN top-level variable (never on window) ---
+var TAMPER = false;
+
+// Binding energy of a nucleus with Z protons, N neutrons, from mass defect (MeV)
+function bindingEnergy(Z,N){
+  var A=Z+N, key=Z+","+A, M=MASS[key];
+  if(M===undefined) throw new Error("no mass for "+key);
+  return (Z*M_H + N*M_N - M)*U_MEV;
+}
+function perNucleon(Z,N){ return bindingEnergy(Z,N)/(Z+N); }
+
+// Q of D + T -> He-4 + n, from the binding gain (neutron has B=0)
+function fusionQ(){
+  var Bprod = bindingEnergy(2,2);              // He-4
+  var Breac = bindingEnergy(1,1) + bindingEnergy(1,2); // D + T
+  var Q = Bprod - Breac;
+  if(TAMPER){ Q = -Q; }   // planted void: product made LESS bound than reactants
+  return Q;
+}
+// Independent Q via bare mass difference (algebraic identity with fusionQ, untampered)
+function fusionQ_mass(){
+  var reac = MASS["1,2"] + MASS["1,3"];
+  var prod = MASS["2,4"] + M_N;
+  return (reac - prod)*U_MEV;
+}
+
+// Coulomb barrier height (MeV) at contact radius r (fm)
+function coulombBarrier(Z1,Z2,r_fm){ return Z1*Z2*K_COUL/r_fm; }
+
+// Thermal energy kT (MeV)
+function kT_of(T){ return KB_MEV_K*T; }
+
+// Gamow energy E_G (MeV) for a Z1,Z2 pair with reduced mass mu*c^2 (MeV)
+function gamowEnergy(Z1,Z2,mu_c2){
+  var s = 2*Math.PI*ALPHA*Z1*Z2;
+  return s*s*mu_c2/2;
+}
+// Tunnelling probability factor (dimensionless, strictly (0,1))
+function tunnel(E, E_G){ return Math.exp(-Math.sqrt(E_G/E)); }
+
+// Gamow-peak integrand g(E) = exp(-E/kT) * exp(-sqrt(E_G/E))
+function gamowIntegrand(E, kT, E_G){ return Math.exp(-E/kT)*tunnel(E,E_G); }
+
+// Analytic Gamow-peak energy (MeV): E0 = ((kT/2)*sqrt(E_G))^(2/3)
+function gamowPeak(kT, E_G){ return Math.pow((kT/2)*Math.sqrt(E_G), 2/3); }
+
+// Relative reaction rate proportional to integral of g(E) dE (trapezoid)
+function reactionRate(T, E_G){
+  var kt=kT_of(T), Emax=60*Math.max(gamowPeak(kt,E_G),kt), n=4000, h=Emax/n, s=0;
+  for(var i=1;i<n;i++){ var E=i*h; s+=gamowIntegrand(E,kt,E_G); }
+  return s*h;
+}
+
+// Simpson integral of f on [a,b] with n (even) intervals
+function simpson(f,a,b,n){
+  if(n%2) n++;
+  var h=(b-a)/n, s=f(a)+f(b);
+  for(var i=1;i<n;i++){ s += (i%2? 4:2)*f(a+i*h); }
+  return s*h/3;
+}
+
+// Radioactive-decay law: N/N0 after time t given half-life
+function decayFrac(t, halfLife){
+  var lambda = Math.LN2/halfLife;
+  return Math.exp(-lambda*t);
+}
+
+// Locate the Gamow-peak argmax on a fine grid (numeric)
+function gamowPeakNumeric(kT,E_G){
+  var lo=1e-5, hi=0.06, n=6000, best=lo, bv=-1;
+  for(var i=0;i<=n;i++){
+    var E=lo+(hi-lo)*i/n, v=gamowIntegrand(E,kT,E_G);
+    if(v>bv){ bv=v; best=E; }
+  }
+  return best;
+}
+
+function assert(c,m){ if(!c) throw new Error("selfcheck FAILED: "+m); }
+function approx(a,b,t){ return Math.abs(a-b)<=t; }
+
+// ---- fail-loud selfcheck: THROWS on any violation, returns true ----
+function selfcheck(){
+  var TOL=1e-6;
+
+  // reduced-mass / Gamow constants for a proton-proton pair
+  var mu_c2 = MP_C2/2;
+  var E_G_pp = gamowEnergy(1,1,mu_c2);
+  var kt = kT_of(T_CORE);
+
+  // (1) binding energies are sane and He-4 is the standout of the set
+  var B_D=bindingEnergy(1,1), B_T=bindingEnergy(1,2), B_He=bindingEnergy(2,2);
+  assert(B_D>0 && B_T>0 && B_He>0, "binding energies must be positive");
+  assert(B_He > B_D + B_T, "He-4 must be more bound than D+T combined (why Q>0)");
+  assert(approx(perNucleon(2,2), 7.07, 0.15), "He-4 ~7.07 MeV/nucleon");
+
+  // (2) fusion RELEASES energy: Q > 0, ~17.6 MeV for D+T
+  var Q = fusionQ();
+  assert(Q>0, "fusion must RELEASE energy: Q>0");
+  assert(approx(Q, 17.59, 0.1), "D+T Q must be ~17.59 MeV, got "+Q);
+
+  // (3) binding-gain Q equals bare mass-difference Q to 1e-6 (exact identity)
+  assert(approx(Q, fusionQ_mass(), TOL), "Q(binding) must equal Q(mass) to 1e-6");
+
+  // (4) the peak of the binding curve is near Fe-56, ABOVE He-4
+  var feN = perNucleon(26,30);
+  assert(approx(feN, 8.79, 0.1), "Fe-56 ~8.79 MeV/nucleon, got "+feN);
+  assert(feN > perNucleon(2,2), "binding peak (Fe-56) must exceed He-4/nucleon");
+
+  // (5) Coulomb barrier for two protons is of order an MeV, far above kT (keV)
+  var V = coulombBarrier(1,1,1.4);           // ~1 MeV at ~1.4 fm contact
+  assert(V>0.3 && V<5, "p-p Coulomb barrier must be order MeV, got "+V);
+  assert(kt>0, "kT must be positive");
+  assert(V/kt > 100, "barrier must dwarf thermal energy, V/kT="+(V/kt));
+
+  // (6) quantum tunnelling: strictly positive despite E<<barrier, and rises with E
+  var P1 = tunnel(kt, E_G_pp);
+  var P2 = tunnel(2*kt, E_G_pp);
+  assert(P1>0 && P1<1, "tunnelling prob must be in (0,1), got "+P1);
+  assert(P2>P1, "tunnelling must rise with energy");
+
+  // (7) Gamow peak: numeric argmax matches the analytic E0 within 2%
+  var E0 = gamowPeak(kt, E_G_pp);
+  var E0n = gamowPeakNumeric(kt, E_G_pp);
+  assert(E0>0, "Gamow peak energy must be positive");
+  assert(Math.abs(E0n-E0)/E0 < 0.02, "numeric Gamow peak must match theory, "+E0n+" vs "+E0);
+  // ...and the peak sits between thermal energy and the barrier (a thin window)
+  assert(E0>kt && E0<V, "Gamow peak must lie between kT and the barrier");
+
+  // (8) the rate is nonzero and rises steeply with temperature
+  var r1 = reactionRate(T_CORE, E_G_pp);
+  var r2 = reactionRate(1.2*T_CORE, E_G_pp);
+  assert(r1>0, "reaction rate must be nonzero");
+  assert(r2 > r1, "reaction rate must rise with temperature");
+
+  // (9) a clean numeric integral to the stated 1e-6 tolerance (Simpson)
+  var I = simpson(function(x){return Math.exp(-x);}, 0, 40, 100000);
+  assert(approx(I, 1, TOL), "integral exp(-x) 0..inf must equal 1 to 1e-6, got "+I);
+
+  // (10) fixed-seed Monte-Carlo cross-check of the same integral (deterministic)
+  var rnd=mulberry32(1234567), acc=0, NS=20000;
+  for(var i=0;i<NS;i++){ var x=40*rnd(); acc += 40*Math.exp(-x); }
+  var Imc=acc/NS;
+  assert(approx(Imc, 1, 0.05), "seeded MC integral must be ~1, got "+Imc);
+
+  // (11) decay law sanity: N/N0 = 1/2 after one half-life
+  assert(approx(decayFrac(700,700), 0.5, 1e-12), "N=N0/2 at one half-life");
+
+  // ---- disclosed planted void: TAMPER makes Q<0 (product LESS bound) ----
+  var Q_ok = fusionQ();
+  TAMPER = true;
+  var Q_bad = fusionQ();
+  assert(Q_bad < 0, "TAMPER must drive Q negative (would ABSORB energy)");
+  assert(Q_bad !== Q_ok, "TAMPER must change the value the Witness reads");
+  TAMPER = false;                              // restore
+  assert(fusionQ() > 0, "restore must return Q>0");
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+(function(){
+  var ok=false, err=null;
+  try{ ok = selfcheck(); }
+  catch(e){ err=e; }
+
+  var failb=document.getElementById("failb");
+  if(!ok){
+    if(failb){
+      failb.style.display="block";
+      failb.textContent="ENGINE FAILED SELFCHECK — "+(err?err.message:"unknown")+" · this instrument refuses to render numbers it cannot prove.";
+    }
+    throw (err || new Error("selfcheck returned false"));
+  }
+
+  // --- recompute display values (untampered) ---
+  var mu_c2 = MP_C2/2;
+  var E_G_pp = gamowEnergy(1,1,mu_c2);
+  var kt = kT_of(T_CORE);
+  var B_D=bindingEnergy(1,1), B_T=bindingEnergy(1,2), B_He=bindingEnergy(2,2);
+  var Q = fusionQ();
+  var V = coulombBarrier(1,1,1.4);
+  var E0 = gamowPeak(kt, E_G_pp);
+  var P0 = tunnel(E0, E_G_pp);
+  var feN = perNucleon(26,30);
+
+  function f(x,d){ return Number(x).toFixed(d===undefined?3:d); }
+  function set(id,t){ var el=document.getElementById(id); if(el) el.textContent=t; }
+
+  set("litbadge","LIT · Q = +"+f(Q,2)+" MeV");
+
+  set("datain",
+    "masses (u):\n"+
+    "  D  = "+MASS["1,2"]+"\n"+
+    "  T  = "+MASS["1,3"]+"\n"+
+    "  He4= "+MASS["2,4"]+"\n"+
+    "  n  = "+M_N+"\n"+
+    "constants:\n"+
+    "  u  = "+U_MEV+" MeV     alpha = 1/137.036\n"+
+    "  T_core = 1.5e7 K  ->  kT = "+f(kt*1e3,3)+" keV"
+  );
+
+  set("panelout",
+    "binding energy (MeV):\n"+
+    "  B(D)  = "+f(B_D,3)+"    B(T) = "+f(B_T,3)+"\n"+
+    "  B(He4)= "+f(B_He,3)+"  (alpha: "+f(perNucleon(2,2),2)+" MeV/nucleon)\n"+
+    "  peak  ~ Fe-56 = "+f(feN,2)+" MeV/nucleon\n"+
+    "Q = B(He4) - B(D) - B(T) = +"+f(Q,3)+" MeV  (RELEASED)\n"+
+    "\n"+
+    "Coulomb barrier (p-p, r=1.4 fm) = "+f(V,3)+" MeV\n"+
+    "thermal kT (core)               = "+f(kt*1e3,3)+" keV\n"+
+    "  -> barrier / kT = "+f(V/kt,0)+"x  (classically forbidden)\n"+
+    "\n"+
+    "Gamow energy E_G = "+f(E_G_pp*1e3,1)+" keV\n"+
+    "Gamow peak  E0   = "+f(E0*1e3,2)+" keV   (kT < E0 < barrier)\n"+
+    "tunnelling P(E0) = "+P0.toExponential(2)+"  (small, NONZERO)"
+  );
+
+  set("dataout",
+    "D + T  ->  He-4 + n\n"+
+    "Q = +"+f(Q,2)+" MeV  released as kinetic energy\n"+
+    "  He-4 carries ~3.5 MeV, neutron ~14.1 MeV\n"+
+    "per mole of reactions: "+(Q*1.602e-13*N_A/1e9).toFixed(2)+" GJ  (order 10^8 x a chemical bond)\n"+
+    "sign(Q) = +  ->  the product is MORE bound  ->  stars shine"
+  );
+
+  // --- Witness (7): independent live re-check ---
+  function witness(){
+    var out=document.getElementById("auditout");
+    if(!out) return;
+    try{
+      // re-run the core release/binding/tunnelling invariants against LIVE state
+      var q=fusionQ();
+      var bHe=bindingEnergy(2,2), bReac=bindingEnergy(1,1)+bindingEnergy(1,2);
+      var eg=gamowEnergy(1,1,MP_C2/2), ktl=kT_of(T_CORE);
+      var e0=gamowPeak(ktl,eg), e0n=gamowPeakNumeric(ktl,eg);
+      var pass =
+        (q>0) &&
+        (bHe>bReac) &&
+        (coulombBarrier(1,1,1.4)/ktl > 100) &&
+        (tunnel(ktl,eg)>0) &&
+        (Math.abs(e0n-e0)/e0 < 0.02);
+      if(pass && !TAMPER){
+        out.className="badge b-ok";
+        out.textContent="VERIFIED · Q=+"+q.toFixed(2)+" MeV";
+      } else {
+        out.className="badge b-bad";
+        out.textContent="TAMPER DETECTED · Q="+q.toFixed(2)+" MeV (fusion would absorb energy)";
+      }
+    }catch(e){
+      out.className="badge b-bad";
+      out.textContent="TAMPER DETECTED · "+e.message;
+    }
+  }
+  witness();
+
+  // --- Tamper (6) controls ---
+  function refresh(){
+    document.getElementById("tstate").textContent = TAMPER? "ON — Q flipped negative" : "off";
+    witness();
+    draw();
+  }
+  var tb=document.getElementById("tamper"), rb=document.getElementById("restore");
+  if(tb) tb.onclick=function(){ TAMPER=true; refresh(); };
+  if(rb) rb.onclick=function(){ TAMPER=false; refresh(); };
+
+  // --- canvas: the Gamow peak (Maxwell tail x tunnelling) ---
+  var cv=document.getElementById("cv"), ctx=cv?cv.getContext("2d"):null;
+  var rnd=mulberry32(20260811); // fixed seed for any decorative jitter
+  function draw(){
+    if(!ctx) return;
+    var W=cv.width, H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle="#050f0a"; ctx.fillRect(0,0,W,H);
+    var eg=gamowEnergy(1,1,MP_C2/2), ktl=kT_of(T_CORE);
+    var Emax=0.05; // MeV window (0..50 keV)
+    var N=W;
+    // gather three curves scaled independently to fit
+    var maxwell=[], tun=[], prod=[], mmax=0,tmax=0,pmax=0;
+    for(var i=0;i<N;i++){
+      var E=(i+1)/N*Emax;
+      var m=Math.exp(-E/ktl);
+      var t=tunnel(E,eg);
+      var p=m*t;
+      maxwell.push(m); tun.push(t); prod.push(p);
+      if(m>mmax)mmax=m; if(t>tmax)tmax=t; if(p>pmax)pmax=p;
+    }
+    function plot(arr,mx,color,w){
+      ctx.beginPath();
+      for(var i=0;i<N;i++){
+        var x=i, y=H-6-(arr[i]/mx)*(H-24);
+        if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle=color; ctx.lineWidth=w; ctx.stroke();
+    }
+    // grid baseline
+    ctx.strokeStyle="#12281c"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,H-6); ctx.lineTo(W,H-6); ctx.stroke();
+    plot(maxwell,mmax,"#5fa8ff",1.2);          // Maxwell tail (falls)
+    plot(tun,tmax,"#ff8a8a",1.2);              // tunnelling (rises)
+    plot(prod,pmax, TAMPER?"#ff6b6b":"#7fe0c0", 2.4); // Gamow peak (product)
+    // mark analytic peak
+    var E0=gamowPeak(ktl,eg), px=Math.min(W-1,Math.max(0,Math.round(E0/Emax*N)));
+    ctx.strokeStyle="#ffcf6b"; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(px,6); ctx.lineTo(px,H-6); ctx.stroke(); ctx.setLineDash([]);
+    // labels
+    ctx.fillStyle="#8fb6a6"; ctx.font="11px monospace";
+    ctx.fillStyle="#5fa8ff"; ctx.fillText("Maxwell exp(-E/kT)", 8, 16);
+    ctx.fillStyle="#ff8a8a"; ctx.fillText("tunnelling exp(-√(E_G/E))", 8, 30);
+    ctx.fillStyle= TAMPER?"#ff6b6b":"#7fe0c0"; ctx.fillText(TAMPER?"product (Q<0: NO PEAK / unphysical)":"GAMOW PEAK (product)", 8, 44);
+    ctx.fillStyle="#ffcf6b"; ctx.fillText("E0="+(E0*1e3).toFixed(1)+" keV", px+4, H-12);
+    ctx.fillStyle="#8fb6a6"; ctx.fillText("0", 2, H-10); ctx.fillText("50 keV", W-46, H-10);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

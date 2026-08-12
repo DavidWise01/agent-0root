@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE COLLISION DETECTION</title>
+<style>
+:root{
+  --am:#ff7a7a;
+  --bg:#0a140e;
+  --bg2:#0d1c13;
+  --ink:#dff3e6;
+  --mut:#7fa891;
+  --line:#1c3527;
+  --blue:#5fb0ff;
+  --red:#ff7a7a;
+  --amber:#ffbe4d;
+  --lit:#57e08b;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 70% -10%, #10241800, #0a140e 60%),
+    linear-gradient(180deg,#0b1810,#0a140e);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:14px;line-height:1.5;
+  padding:26px 18px 60px;
+}
+.wrap{max-width:1220px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+h1{
+  font-size:30px;letter-spacing:2px;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 22px #ff7a7a33;
+}
+.sub{color:var(--ink);max-width:74ch;margin:0 0 12px;font-size:14px}
+.src{color:var(--mut);font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.src a{color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue)}
+.src .q{color:var(--mut);font-style:italic}
+.tag{
+  display:inline-block;font-size:10px;letter-spacing:1px;font-weight:700;
+  padding:2px 7px;border-radius:3px;border:1px solid;text-transform:uppercase;white-space:nowrap;
+}
+.t-amber{color:var(--amber);border-color:#ffbe4d55;background:#ffbe4d12}
+.t-lit{color:var(--lit);border-color:#57e08b55;background:#57e08b12}
+.t-in{color:var(--blue);border-color:#5fb0ff55;background:#5fb0ff12}
+.t-out{color:var(--am);border-color:#ff7a7a55;background:#ff7a7a12}
+.t-wall{color:var(--red);border-color:#ff7a7a55;background:#ff7a7a12}
+
+.ocho{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:2px;font-weight:700;text-transform:uppercase;
+  padding:7px 10px;border-radius:5px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#5fb0ff44;background:#5fb0ff0e}
+.col.red .teamhdr{color:var(--red);border-color:#ff7a7a44;background:#ff7a7a0e}
+.col.center .teamhdr{color:var(--lit);border-color:#57e08b44;background:#57e08b0e;text-align:center}
+
+.win{
+  position:relative;border:1px solid var(--line);border-radius:7px;
+  background:linear-gradient(180deg,var(--bg2),#0a160f);
+  padding:14px 14px 13px;
+}
+.win .num{
+  position:absolute;top:-9px;right:10px;
+  width:20px;height:20px;border-radius:50%;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);border:1px solid var(--line);color:var(--mut);
+}
+.col.blue .win .num{color:var(--blue);border-color:#5fb0ff55}
+.col.red .win .num{color:var(--red);border-color:#ff7a7a55}
+.col.center .win .num{color:var(--lit);border-color:#57e08b55}
+.win h3{margin:0 0 8px;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink)}
+.win p{margin:0 0 8px}
+.win p:last-child{margin-bottom:0}
+.win small{color:var(--mut);font-size:11.5px}
+.k{color:var(--am)}
+.mono-b{background:#0a1a10;border:1px solid var(--line);border-radius:5px;padding:9px 10px;font-size:12px;color:var(--mut);overflow-x:auto}
+.mono-b b{color:var(--ink)}
+
+.win.panel{
+  border-color:#57e08b40;
+  background:linear-gradient(180deg,#0c1e14,#0a1710);
+  box-shadow:0 0 34px #57e08b0f inset;
+}
+.flow{
+  text-align:center;color:var(--mut);font-size:11px;letter-spacing:2px;
+  padding:3px 0;user-select:none;
+}
+.flow::before{content:"▼"}
+canvas{
+  display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:6px;
+  background:#07110b;margin:4px 0 8px;
+}
+.readout{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11.5px}
+.readout div{background:#0a1a10;border:1px solid var(--line);border-radius:4px;padding:5px 7px}
+.readout span{color:var(--am)}
+.badge{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;
+  padding:3px 9px;border-radius:4px;border:1px solid;
+}
+.badge.ok{color:var(--lit);border-color:#57e08b66;background:#57e08b12}
+.badge.bad{color:var(--red);border-color:#ff7a7a88;background:#ff7a7a18}
+.strike{color:var(--mut);text-decoration:line-through}
+.fix{color:var(--lit)}
+.wall-note{border-left:3px solid var(--red);padding-left:10px;color:var(--ink)}
+button{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.5px;cursor:pointer;
+  background:#12241a;color:var(--ink);border:1px solid var(--line);border-radius:5px;
+  padding:6px 11px;margin:3px 5px 3px 0;
+}
+button:hover{border-color:var(--am);color:var(--am)}
+#tamper{border-color:#ff7a7a55;color:var(--red)}
+#restore{border-color:#57e08b44;color:var(--lit)}
+#failb{display:none;margin-top:10px;color:var(--red);border:1px solid #ff7a7a88;background:#ff7a7a12;padding:8px 10px;border-radius:5px;font-size:12px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--mut);font-size:11.5px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE COLLISION DETECTION</h1>
+  <p class="sub">Do these two shapes touch — and what happens when they do. A live engine tests overlap three ways (axis-aligned bounding box, sphere&ndash;sphere, and the Separating Axis Theorem for convex polygons), then resolves the hit with an elastic response that conserves both momentum and kinetic energy. Rendered, not quoted.</p>
+  <p class="src">
+    <span class="tag t-amber">SOURCE</span>
+    <span>Gilbert, Johnson &amp; Keerthi (1988), &ldquo;A Fast Procedure for Computing the Distance Between Complex Objects in Three-Dimensional Space,&rdquo; <em>IEEE J. Robotics &amp; Automation</em> 4(2):199&ndash;203 &middot; DOI <a href="https://doi.org/10.1109/56.2083" target="_blank" rel="noopener">10.1109/56.2083</a></span>
+    <span class="q">&mdash; paywalled; id AMBER-verified via IEEE Xplore doc 2083.</span>
+  </p>
+</header>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="num">3</div>
+      <h3>The Model</h3>
+      <p>A convex shape is the intersection of half-planes. Two convex shapes <b>do not</b> touch iff there exists a line onto which their shadows (projections) do not overlap &mdash; a <span class="k">separating axis</span>.</p>
+      <p><small>For polygons it suffices to test the edge normals of both shapes. Overlap holds iff <b>every</b> tested axis shows overlapping intervals: no separating axis exists.</small></p>
+      <div class="mono-b">overlap(A,B) = <b>&not;&exist;</b> axis&nbsp;:&nbsp;proj(A)&nbsp;&#8741;&nbsp;proj(B) disjoint<br>&nbsp;&nbsp;= <b>&forall;</b> axis&nbsp;:&nbsp;intervals overlap</div>
+    </div>
+
+    <div class="win">
+      <div class="num">5</div>
+      <h3>The Lineage</h3>
+      <p>Two questions, one seam. <b>Do these two things touch?</b> &mdash; detection, the separating-axis theorem. And when they do: a momentum-and-energy-conserving bounce &mdash; <b>the physics of contact.</b></p>
+      <p><small>Neighbour sphere: <span class="k">the-contact-response</span> in KR&Acirc;SIS (52) &mdash; detection here hands the contact normal to the response there.</small></p>
+    </div>
+
+    <div class="win">
+      <div class="num">7</div>
+      <h3>The Witness</h3>
+      <p><small>Live re-check: the SAT verdict is compared, on constructed pairs, against an independent brute-force overlap oracle. Green iff they agree on every pair.</small></p>
+      <p><span id="auditout" class="badge ok">witness idle</span></p>
+      <p><small>Press <b>TAMPER</b> (window 6) and this flips red within one frame &mdash; the planted void cannot hide from the oracle.</small></p>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="num">4</div>
+      <h3>Data In <span class="tag t-in">IN &darr;</span></h3>
+      <p><small>Two convex polygons in the plane, each a list of vertices. Below: a fixed diamond <b>A</b> and a moving square <b>B</b>, plus their velocities and masses for the response.</small></p>
+      <div class="mono-b">A: diamond, centre (0,0)<br>B: square, sliding along &minus;x &rarr; +x<br>m<sub>A</sub> = m<sub>B</sub> = 1 &nbsp; e = 1 (elastic)</div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <div class="num">0</div>
+      <h3>The Panel <span class="tag t-lit">LIT</span> <span id="litbadge" class="badge">booting&hellip;</span></h3>
+      <canvas id="cv" width="440" height="300"></canvas>
+      <div class="readout">
+        <div>SAT verdict: <span id="rv">&mdash;</span></div>
+        <div>Sep. axis: <span id="rax">&mdash;</span></div>
+        <div>Total KE: <span id="rke">&mdash;</span></div>
+        <div>Total p: <span id="rp">&mdash;</span></div>
+      </div>
+      <p><small>Detection is real <code>satOverlap()</code>; the bounce is the real elastic impulse along the contact normal. KE and momentum are printed live and stay flat &mdash; the collision is exact, not damped.</small></p>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win">
+      <div class="num">8</div>
+      <h3>Data Out <span class="tag t-out">OUT &darr;</span></h3>
+      <p><small>Proven at boot by <code>selfcheck()</code> (throws on any violation, runs with no canvas):</small></p>
+      <div class="mono-b">
+        SAT &equiv; brute-force overlap &nbsp;<b>&check;</b><br>
+        AABB = overlap on <b>all</b> axes &nbsp;<b>&check;</b><br>
+        equal-mass head-on &rarr; velocities swap &nbsp;<b>&check;</b><br>
+        &Sigma;p and &Sigma;KE conserved to 1e&minus;9 &nbsp;<b>&check;</b><br>
+        contact normal &#770; unit, impulse exact &nbsp;<b>&check;</b>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="num">1</div>
+      <h3>The Adversary <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note">Bounding boxes lie. Two diamonds whose <b>AABBs overlap</b> can still be cleanly apart &mdash; the gap lives on a diagonal axis no box edge tests. A broad-phase AABB pass is a filter, never a verdict.</p>
+      <p><small>SAT is exact only for <b>convex</b> shapes. A concave polygon can be non-overlapping on every edge normal yet still intersect &mdash; it must be decomposed into convex pieces first, or SAT reports a false miss.</small></p>
+    </div>
+
+    <div class="win">
+      <div class="num">2</div>
+      <h3>The Graveyard</h3>
+      <p><span class="strike">&ldquo;Their boxes overlap, so they collide.&rdquo;</span><br><span class="fix">&rarr; AABB overlap is necessary, not sufficient. Confirm with SAT / GJK.</span></p>
+      <p><span class="strike">&ldquo;Overlap on some axis means a hit.&rdquo;</span><br><span class="fix">&rarr; Backwards. A hit needs overlap on <b>every</b> axis; overlap on <b>one</b> proves nothing.</span></p>
+      <p><span class="strike">&ldquo;An elastic bounce can lose a little energy.&rdquo;</span><br><span class="fix">&rarr; Then it is not elastic (e&lt;1). Elastic means &Sigma;KE is invariant, exactly.</span></p>
+    </div>
+
+    <div class="win">
+      <div class="num">6</div>
+      <h3>The Tamper</h3>
+      <p><small>The disclosed planted void: flip <code>satOverlap</code> to report a hit when the shapes overlap on <b>any single</b> axis (instead of requiring <b>no</b> separating axis). Two disjoint shapes are then falsely called colliding.</small></p>
+      <button id="tamper">TAMPER &middot; break SAT</button>
+      <button id="restore">RESTORE</button>
+      <p><small>The Witness (window 7) catches it: the SAT-vs-brute check diverges on the disjoint pair.</small></p>
+    </div>
+  </div>
+
+</div>
+
+<div id="failb"></div>
+
+<footer>
+  THE COLLISION DETECTION &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus &middot; the-collision-detection &middot;
+  engine LIT, source AMBER, tamper disclosed &middot; built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ================= ENGINE (pure logic; extractable for node verification) =================
+"use strict";
+var TAMPER = false;               // the disclosed planted void; false = honest SAT
+var TOL = 1e-9;
+
+// ---- vector helpers ----
+function dot(a,b){ return a[0]*b[0] + a[1]*b[1]; }
+function sub(a,b){ return [a[0]-b[0], a[1]-b[1]]; }
+function add(a,b){ return [a[0]+b[0], a[1]+b[1]]; }
+function scale(a,s){ return [a[0]*s, a[1]*s]; }
+function len(a){ return Math.sqrt(dot(a,a)); }
+function unit(a){ var L=len(a); return [a[0]/L, a[1]/L]; }
+function cross(a,b){ return a[0]*b[1] - a[1]*b[0]; }
+
+// ---- fixed-seed PRNG (deterministic; used only for jitter, never for correctness) ----
+function makeRNG(seed){
+  var s = seed>>>0;
+  return function(){ s = (s*1664525 + 1013904223)>>>0; return s/4294967296; };
+}
+
+// ---- edge normals of a convex polygon (vertices in order) ----
+function edgeNormals(poly){
+  var out=[];
+  for(var i=0;i<poly.length;i++){
+    var a=poly[i], b=poly[(i+1)%poly.length];
+    var e=sub(b,a);
+    var n=[-e[1], e[0]];          // perpendicular
+    var L=len(n);
+    out.push([n[0]/L, n[1]/L]);
+  }
+  return out;
+}
+
+// ---- project a polygon onto an axis -> {min,max} ----
+function project(poly, axis){
+  var mn=Infinity, mx=-Infinity;
+  for(var i=0;i<poly.length;i++){
+    var d=dot(poly[i], axis);
+    if(d<mn) mn=d;
+    if(d>mx) mx=d;
+  }
+  return {min:mn, max:mx};
+}
+function intervalsOverlap(a,b){ return a.max >= b.min - TOL && b.max >= a.min - TOL; }
+
+// ---- SEPARATING AXIS THEOREM ----
+// honest: overlap iff there is NO separating axis, i.e. intervals overlap on EVERY axis.
+// tampered: reports overlap if intervals overlap on ANY single axis (wrong).
+function satOverlap(A,B){
+  var axes = edgeNormals(A).concat(edgeNormals(B));
+  var anyAxisOverlap=false, allAxesOverlap=true;
+  for(var i=0;i<axes.length;i++){
+    var ov = intervalsOverlap(project(A,axes[i]), project(B,axes[i]));
+    if(ov){ anyAxisOverlap=true; } else { allAxesOverlap=false; }
+  }
+  return TAMPER ? anyAxisOverlap : allAxesOverlap;
+}
+// which axis (if any) separates them — for display; unaffected by tamper
+function separatingAxis(A,B){
+  var axes = edgeNormals(A).concat(edgeNormals(B));
+  for(var i=0;i<axes.length;i++){
+    if(!intervalsOverlap(project(A,axes[i]), project(B,axes[i]))) return axes[i];
+  }
+  return null;
+}
+
+// ---- independent brute-force oracle: dense point sampling of the union bbox ----
+function pointInConvex(poly, p){
+  // convex, vertices CCW: inside iff p is left-of / on every edge
+  var sign=0;
+  for(var i=0;i<poly.length;i++){
+    var a=poly[i], b=poly[(i+1)%poly.length];
+    var c=cross(sub(b,a), sub(p,a));
+    if(c < -TOL){ if(sign>0) return false; sign=-1; }
+    else if(c > TOL){ if(sign<0) return false; sign=1; }
+  }
+  return true;
+}
+function polyAABB(poly){
+  var mnx=Infinity,mny=Infinity,mxx=-Infinity,mxy=-Infinity;
+  for(var i=0;i<poly.length;i++){
+    var v=poly[i];
+    if(v[0]<mnx)mnx=v[0]; if(v[0]>mxx)mxx=v[0];
+    if(v[1]<mny)mny=v[1]; if(v[1]>mxy)mxy=v[1];
+  }
+  return {minx:mnx,miny:mny,maxx:mxx,maxy:mxy};
+}
+function bruteOverlap(A,B){
+  var ba=polyAABB(A), bb=polyAABB(B);
+  var x0=Math.max(ba.minx,bb.minx), x1=Math.min(ba.maxx,bb.maxx);
+  var y0=Math.max(ba.miny,bb.miny), y1=Math.min(ba.maxy,bb.maxy);
+  if(x1<x0 || y1<y0) return false;          // AABBs disjoint => cannot overlap
+  var N=240;
+  for(var i=0;i<=N;i++){
+    var px = x0 + (x1-x0)*i/N;
+    for(var j=0;j<=N;j++){
+      var py = y0 + (y1-y0)*j/N;
+      if(pointInConvex(A,[px,py]) && pointInConvex(B,[px,py])) return true;
+    }
+  }
+  return false;
+}
+
+// ---- AABB overlap = conjunction of per-axis interval overlaps ----
+function aabbOverlap(a,b){
+  var xover = a.maxx >= b.minx - TOL && b.maxx >= a.minx - TOL;
+  var yover = a.maxy >= b.miny - TOL && b.maxy >= a.miny - TOL;
+  return xover && yover;               // overlap on ALL axes
+}
+
+// ---- sphere / disk overlap ----
+function sphereOverlap(c1,r1,c2,r2){ return len(sub(c2,c1)) <= r1+r2 + TOL; }
+
+// ---- ELASTIC collision responses (closed form) ----
+function elastic1D(m1,v1,m2,v2){
+  var s=m1+m2;
+  return [ ((m1-m2)*v1 + 2*m2*v2)/s, ((m2-m1)*v2 + 2*m1*v1)/s ];
+}
+// 2D impulse along contact normal (from body2 -> body1); e = restitution
+function resolveElastic2D(m1,p1,v1,m2,p2,v2,e){
+  var n = unit(sub(p1,p2));                 // contact normal
+  var vrel = sub(v1,v2);
+  var vn = dot(vrel,n);
+  if(vn > 0) return {v1:v1, v2:v2, n:n, j:0}; // separating already
+  var j = -(1+e)*vn / (1/m1 + 1/m2);
+  var v1p = add(v1, scale(n,  j/m1));
+  var v2p = add(v2, scale(n, -j/m2));
+  return {v1:v1p, v2:v2p, n:n, j:j};
+}
+function momentum(m1,v1,m2,v2){ return add(scale(v1,m1), scale(v2,m2)); }
+function kinetic(m1,v1,m2,v2){ return 0.5*m1*dot(v1,v1) + 0.5*m2*dot(v2,v2); }
+
+// polygon translate (for the moving square)
+function translate(poly,dx,dy){ return poly.map(function(v){return [v[0]+dx, v[1]+dy];}); }
+
+// ---- shared shapes for panel + witness ----
+var DIAMOND = [[0,-1.4],[1.4,0],[0,1.4],[-1.4,0]];            // convex, CCW
+var UNITSQ  = [[-1,-1],[1,-1],[1,1],[-1,1]];                  // convex, CCW
+
+// witness pairs: [A, B, expectedOverlap]
+function witnessPairs(){
+  var dA = [[1,0],[0,1],[-1,0],[0,-1]];                       // diamond @ origin
+  var dB = [[2.9,1.9],[1.9,2.9],[0.9,1.9],[1.9,0.9]];         // diamond @ (1.9,1.9): AABBs overlap, shapes disjoint
+  var sqOverlap = translate(UNITSQ, 1.2, 0);                  // overlaps DIAMOND
+  var sqApart   = translate(UNITSQ, 5.0, 0);                  // clearly apart
+  return [
+    [DIAMOND, sqOverlap, true],
+    [DIAMOND, sqApart,   false],
+    [dA, dB, false]                                           // the AABB-trap pair
+  ];
+}
+// live witness: does SAT agree with the brute oracle on every pair? honest under current TAMPER.
+function witnessCheck(){
+  var pairs=witnessPairs();
+  for(var i=0;i<pairs.length;i++){
+    if(satOverlap(pairs[i][0], pairs[i][1]) !== bruteOverlap(pairs[i][0], pairs[i][1])) return false;
+  }
+  return true;
+}
+
+// ---- FAIL-LOUD SELFCHECK: throws on any violation, returns true on success ----
+function selfcheck(){
+  var saved = TAMPER;
+  TAMPER = false;
+  function A(c,m){ if(!c) throw new Error("selfcheck: "+m); }
+
+  // 1) SAT === brute-force oracle on every constructed pair, incl. the AABB trap
+  var pairs = witnessPairs();
+  for(var i=0;i<pairs.length;i++){
+    var sat = satOverlap(pairs[i][0], pairs[i][1]);
+    var bf  = bruteOverlap(pairs[i][0], pairs[i][1]);
+    A(sat === bf,  "SAT disagrees with brute oracle on pair "+i);
+    A(sat === pairs[i][2], "SAT wrong verdict on pair "+i);
+  }
+  // the AABB-trap pair: boxes overlap yet SAT says apart, via a real separating axis
+  var dA = pairs[2][0], dB = pairs[2][1];
+  A(aabbOverlap(polyAABB(dA), polyAABB(dB)) === true, "trap pair AABBs should overlap");
+  A(separatingAxis(dA, dB) !== null, "trap pair must have a separating axis");
+
+  // 2) AABB overlap = conjunction of per-axis overlaps (overlap on ALL axes)
+  var b1={minx:0,miny:0,maxx:2,maxy:2};
+  var b2={minx:1,miny:1,maxx:3,maxy:3};       // overlaps on both axes
+  var b3={minx:1,miny:5,maxx:3,maxy:7};       // x overlaps, y does NOT
+  A(aabbOverlap(b1,b2) === true,  "AABB: both axes overlap -> hit");
+  A(aabbOverlap(b1,b3) === false, "AABB: y-axis gap must veto (conjunction)");
+
+  // 3) sphere-sphere
+  A(sphereOverlap([0,0],1,[1.5,0],1) === true,  "spheres touching should overlap");
+  A(sphereOverlap([0,0],1,[3,0],1)   === false, "spheres apart should not overlap");
+
+  // 4) elastic 1D: equal-mass head-on swaps velocities exactly
+  var s = elastic1D(1, 3, 1, -1);
+  A(Math.abs(s[0]-(-1))<TOL && Math.abs(s[1]-3)<TOL, "equal-mass 1D must swap velocities");
+  // unequal mass 1D conserves momentum and KE
+  var u = elastic1D(2, 3, 1, -1);
+  A(Math.abs((2*u[0]+1*u[1]) - (2*3+1*-1)) < TOL, "1D momentum not conserved");
+  A(Math.abs((0.5*2*u[0]*u[0]+0.5*1*u[1]*u[1]) - (0.5*2*9+0.5*1*1)) < TOL, "1D KE not conserved");
+
+  // 5) elastic 2D: contact normal unit, momentum + KE conserved, head-on swaps
+  var m1=1,m2=1, p1=[-1,0],p2=[1,0], v1=[2,0],v2=[-1,0];
+  var r = resolveElastic2D(m1,p1,v1,m2,p2,v2,1);
+  A(Math.abs(len(r.n)-1) < TOL, "contact normal must be unit length");
+  A(Math.abs(r.n[0]-(-1))<TOL && Math.abs(r.n[1])<TOL, "contact normal direction wrong");
+  var p0=momentum(m1,v1,m2,v2), k0=kinetic(m1,v1,m2,v2);
+  var pF=momentum(m1,r.v1,m2,r.v2), kF=kinetic(m1,r.v1,m2,r.v2);
+  A(Math.abs(pF[0]-p0[0])<TOL && Math.abs(pF[1]-p0[1])<TOL, "2D momentum not conserved");
+  A(Math.abs(kF-k0)<TOL, "2D kinetic energy not conserved");
+  A(Math.abs(r.v1[0]-(-1))<TOL && Math.abs(r.v2[0]-2)<TOL, "2D equal-mass head-on must swap normal velocities");
+  A(Math.abs(r.j-3)<TOL, "impulse magnitude wrong (expected 3)");
+
+  // 6) energy stays bounded over a free-flight run (no forces): exact invariance
+  var pos1=[-2,0],vel1=[1,0], pos2=[2,0],vel2=[-1,0], dt=0.05;
+  var keStart=kinetic(1,vel1,1,vel2);
+  for(var t=0;t<40;t++){
+    pos1=add(pos1,scale(vel1,dt)); pos2=add(pos2,scale(vel2,dt));
+    if(len(sub(pos1,pos2)) <= 1.0){                    // disks radius 0.5 touch
+      var rr=resolveElastic2D(1,pos1,vel1,1,pos2,vel2,1);
+      vel1=rr.v1; vel2=rr.v2;
+      pos1=add(pos1,scale(vel1,dt)); pos2=add(pos2,scale(vel2,dt));
+    }
+  }
+  A(Math.abs(kinetic(1,vel1,1,vel2)-keStart) < 1e-9, "free+elastic run must conserve energy");
+
+  // 7) CONFIRM THE PLANTED VOID: with TAMPER on, the disjoint trap pair is FALSELY called a hit,
+  //    and SAT now diverges from the brute oracle (the Witness will catch this live).
+  TAMPER = true;
+  A(satOverlap(dA, dB) === true, "tamper should force a false positive on the disjoint pair");
+  A(satOverlap(dA, dB) !== bruteOverlap(dA, dB), "tamper must diverge from the brute oracle");
+  A(witnessCheck() === false, "witness must report FAIL while tampered");
+  TAMPER = false;
+  A(satOverlap(dA, dB) === false, "restore must return the honest verdict");
+  A(witnessCheck() === true, "witness must pass once restored");
+
+  TAMPER = saved;               // restore whatever the caller had
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var failb = document.getElementById('failb');
+  var litbadge = document.getElementById('litbadge');
+  try{
+    if(selfcheck() !== true) throw new Error("selfcheck did not return true");
+    litbadge.textContent = "LIT · verified";
+    litbadge.className = "badge ok";
+  }catch(e){
+    litbadge.textContent = "FAILED";
+    litbadge.className = "badge bad";
+    failb.style.display = "block";
+    failb.textContent = "SELFCHECK FAILED — engine not trustworthy: " + e.message;
+    throw e;                    // fail loud
+  }
+
+  // ---- Witness UI ----
+  var auditout = document.getElementById('auditout');
+  function paintWitness(){
+    if(witnessCheck()){
+      auditout.textContent = TAMPER ? "witness: PASS (?!)" : "witness: PASS · SAT ≡ oracle";
+      auditout.className = "badge ok";
+    }else{
+      auditout.textContent = "witness: FAIL · SAT ≠ oracle";
+      auditout.className = "badge bad";
+    }
+  }
+  paintWitness();
+
+  document.getElementById('tamper').onclick = function(){ TAMPER = true; paintWitness(); };
+  document.getElementById('restore').onclick = function(){ TAMPER = false; paintWitness(); };
+
+  // ---- live panel: diamond A fixed, square B slides & bounces ----
+  var cv = document.getElementById('cv'), g = cv.getContext('2d');
+  var rv=document.getElementById('rv'), rax=document.getElementById('rax');
+  var rke=document.getElementById('rke'), rp=document.getElementById('rp');
+  var W=cv.width, H=cv.height, SC=52, OX=W*0.5, OY=H*0.5;   // world->screen
+  function S(p){ return [OX + p[0]*SC, OY - p[1]*SC]; }
+
+  var Bc=[-3.2,0], vB=[2.3,0], vA=[0,0];    // square B centre + velocity; A stationary
+  var last=0;
+  function drawPoly(poly, stroke, fill){
+    g.beginPath();
+    var s0=S(poly[0]); g.moveTo(s0[0],s0[1]);
+    for(var i=1;i<poly.length;i++){ var s=S(poly[i]); g.lineTo(s[0],s[1]); }
+    g.closePath();
+    if(fill){ g.fillStyle=fill; g.fill(); }
+    g.strokeStyle=stroke; g.lineWidth=2; g.stroke();
+  }
+  function frame(ts){
+    var dt = last? Math.min(0.033,(ts-last)/1000):0.016; last=ts;
+    // move B
+    Bc = add(Bc, scale(vB, dt));
+    var A = DIAMOND;
+    var B = translate(UNITSQ, Bc[0], Bc[1]);
+    var hit = satOverlap(A,B);
+    if(hit){
+      // resolve as equal-mass elastic between centroids along contact normal
+      var r = resolveElastic2D(1,[0,0],vA,1,Bc,vB,1);
+      vA=r.v1; vB=r.v2;
+      // nudge apart to avoid sticking
+      Bc = add(Bc, scale(vB, dt));
+    }
+    // keep B on stage
+    if(Bc[0] > 3.4 && vB[0]>0) vB[0]=-Math.abs(vB[0]);
+    if(Bc[0] < -3.4 && vB[0]<0) vB[0]= Math.abs(vB[0]);
+
+    // draw
+    g.clearRect(0,0,W,H);
+    // faint grid
+    g.strokeStyle="#12261a"; g.lineWidth=1;
+    for(var gx=-4;gx<=4;gx++){ var a=S([gx,-2.6]),b=S([gx,2.6]); g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); g.stroke(); }
+    B = translate(UNITSQ, Bc[0], Bc[1]);
+    hit = satOverlap(A,B);
+    var col = hit ? "#ff7a7a" : "#5fb0ff";
+    drawPoly(A, "#57e08b", hit?"#ff7a7a22":"#57e08b18");
+    drawPoly(B, col, hit? "#ff7a7a22":"#5fb0ff14");
+    // separating axis (when apart) drawn as a faint guide through midpoint
+    var ax = separatingAxis(A,B);
+    if(ax){
+      var mid = scale(add([0,0],Bc),0.5);
+      var t=[ -ax[1], ax[0] ];   // tangent to the sep axis (the separating line direction)
+      var p1s=S(add(mid, scale(t, 2.4))), p2s=S(add(mid, scale(t,-2.4)));
+      g.strokeStyle="#ffbe4d88"; g.setLineDash([5,4]); g.lineWidth=1.5;
+      g.beginPath(); g.moveTo(p1s[0],p1s[1]); g.lineTo(p2s[0],p2s[1]); g.stroke(); g.setLineDash([]);
+    }
+    // readouts
+    var ke=kinetic(1,vA,1,vB), p=momentum(1,vA,1,vB);
+    rv.textContent = hit? "COLLIDING" : "apart";
+    rv.style.color = hit? "#ff7a7a":"#5fb0ff";
+    rax.textContent = ax? ("["+ax[0].toFixed(2)+", "+ax[1].toFixed(2)+"]") : "none";
+    rke.textContent = ke.toFixed(3);
+    rp.textContent = "["+p[0].toFixed(2)+", "+p[1].toFixed(2)+"]";
+    paintWitness();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

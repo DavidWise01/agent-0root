@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE VALUE AT RISK</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --bg:#09120d; --bg2:#0d190f; --card:#0f1e15; --card2:#12241a;
+  --ink:#e2f0e8; --mut:#8fb3a1; --line:#1d3527;
+  --blue:#74a9ff; --red:#ff7d7d; --amber:#ffb54d; --lit:#5dffab; --cyan:#6fe6f7;
+  --wall:#ff7d7d;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 12% -10%, #16321f 0%, transparent 55%),
+    radial-gradient(1000px 700px at 110% 120%, #1a2440 0%, transparent 50%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
+  padding:26px 18px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-left:3px solid var(--am);padding:2px 0 2px 16px;margin-bottom:22px}
+h1{
+  margin:0 0 8px;font-size:30px;letter-spacing:.06em;font-weight:700;
+  color:#fff;text-shadow:0 0 22px rgba(200,162,255,.35)
+}
+.sub{margin:0 0 12px;color:var(--mut);max-width:78ch}
+.sub b{color:var(--ink);font-weight:600}
+.src{font-size:12.5px;color:var(--mut);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.14em;font-weight:700;
+  padding:2px 8px;border-radius:999px;border:1px solid currentColor;text-transform:uppercase
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--cyan)}
+.t-out{color:var(--cyan)}
+.t-wall{color:var(--wall)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:12px;letter-spacing:.16em;font-weight:700;text-transform:uppercase;
+  padding:8px 12px;border-radius:9px;border:1px solid var(--line)
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#22406a;background:linear-gradient(180deg,#0e1c2c,transparent)}
+.col.red  .teamhdr{color:var(--red);border-color:#5a2626;background:linear-gradient(180deg,#2a1212,transparent)}
+.col.center .teamhdr{color:var(--am);border-color:#3a2a5a;background:linear-gradient(180deg,#1a1430,transparent);text-align:center}
+
+.win{
+  position:relative;background:linear-gradient(180deg,var(--card),var(--card2));
+  border:1px solid var(--line);border-radius:12px;padding:14px 14px 13px;
+}
+.win h3{margin:0 0 8px;font-size:13px;letter-spacing:.04em;color:var(--ink);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.win p{margin:6px 0;color:var(--mut);font-size:13px}
+.win .k{color:var(--ink)}
+.wnum{
+  flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  font-size:11px;font-weight:700;border:1px solid currentColor
+}
+.col.blue .wnum{color:var(--blue)}
+.col.red .wnum{color:var(--red)}
+.col.center .wnum{color:var(--am)}
+.panel{border-color:#3a2a5a;box-shadow:0 0 0 1px rgba(200,162,255,.06),0 14px 40px -22px rgba(160,120,255,.6)}
+
+.flow{height:20px;display:grid;place-items:center;color:var(--am);opacity:.7;font-size:14px}
+.mono{font-variant-numeric:tabular-nums}
+.big{font-size:22px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:4px 0;font-size:12.5px}
+.row:last-child{border-bottom:0}
+.row .v{color:var(--ink);font-variant-numeric:tabular-nums}
+.lbl{color:var(--mut)}
+
+.ctl{display:flex;flex-direction:column;gap:9px;margin:10px 0 6px}
+.ctl label{font-size:11.5px;color:var(--mut);display:flex;justify-content:space-between}
+input[type=range]{width:100%;accent-color:var(--am)}
+.dist{margin:8px 0;border:1px solid var(--line);border-radius:9px;background:#08110c;padding:6px}
+.dist svg{display:block;width:100%;height:auto}
+
+.badge{
+  margin-top:8px;font-size:12px;font-weight:700;letter-spacing:.04em;padding:8px 10px;border-radius:9px;
+  border:1px solid currentColor;display:flex;gap:8px;align-items:center
+}
+.badge.ok{color:var(--lit);background:rgba(93,255,171,.06)}
+.badge.bad{color:var(--red);background:rgba(255,125,125,.09)}
+
+.wall-note{border-left:3px solid var(--wall);padding-left:10px;color:#f0c9c9;font-size:12.5px}
+.grave{color:var(--mut);font-size:12.5px}
+.grave s{color:#c98b8b;text-decoration-color:var(--red)}
+.grave .fix{color:var(--ink)}
+
+.btn{
+  cursor:pointer;font:inherit;font-size:12px;font-weight:700;letter-spacing:.05em;
+  border-radius:8px;padding:8px 12px;border:1px solid var(--line);background:#12241a;color:var(--ink)
+}
+.btn.tamper{color:var(--red);border-color:#5a2626}
+.btn.restore{color:var(--lit);border-color:#255a3c}
+.btnrow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+
+#failb{display:none;margin:14px 0;padding:12px 14px;border:1px solid var(--red);border-radius:10px;
+  background:rgba(255,125,125,.1);color:#ffd0d0;font-size:13px}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:4px 6px;text-align:right}
+.tbl th:first-child,.tbl td:first-child{text-align:left;color:var(--mut)}
+.tbl th{color:var(--am);font-weight:700;font-size:11px;letter-spacing:.05em}
+.verdict{font-size:12px;margin-top:6px}
+.verdict .no{color:var(--red);font-weight:700}
+.verdict .yes{color:var(--lit);font-weight:700}
+footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);color:var(--mut);font-size:12px;text-align:center}
+code{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE VALUE AT RISK</h1>
+  <p class="sub"><b>Value at Risk</b> is the loss you will not exceed with 95% confidence &mdash; and the reason it can lie. VaR at level &alpha; is the &alpha;-quantile of the loss distribution. It is easy to read, and it is <b>not a coherent risk measure</b>: it can punish diversification and it says nothing about how bad the tail beyond it gets. Expected Shortfall &mdash; the average loss <i>past</i> VaR &mdash; repairs both. Rendered, not quoted. <i>(A risk model with known blind spots, not investment advice.)</i></p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>J.P. Morgan/Reuters, <b>RiskMetrics&mdash;Technical Document</b> (1994; 4th ed. 1996) <span class="tag t-amber">amber &middot; no stable public link</span></span>
+    <span>&middot; Artzner, Delbaen, Eber &amp; Heath, <b>Coherent Measures of Risk</b>, <i>Mathematical Finance</i> 9(3):203&ndash;228 (1999) &mdash; <a href="https://doi.org/10.1111/1467-9965.00068" target="_blank" rel="noopener">doi:10.1111/1467-9965.00068</a></span>
+  </div>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ===== LEFT: BLUE TEAM ===== -->
+  <div class="col blue">
+    <div class="teamhdr">Blue team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <h3><span class="wnum">3</span> THE MODEL</h3>
+      <p>Losses <span class="k">L</span> have a distribution. Fix a confidence <span class="k">&alpha;=0.95</span>.</p>
+      <p><span class="k">VaR<sub>&alpha;</sub>(L) = inf{ l : P(L &le; l) &ge; &alpha; }</span> &mdash; the smallest loss the tail cannot beat with probability 1&minus;&alpha;.</p>
+      <p><span class="k">ES<sub>&alpha;</sub>(L) = VaR<sub>&alpha;</sub> + &frac1;&frasl;(1&minus;&alpha;) &middot; E[(L&minus;VaR<sub>&alpha;</sub>)<sup>+</sup>]</span> &mdash; the mean loss <i>inside</i> that tail (Rockafellar&ndash;Uryasev CVaR).</p>
+      <p>For a Normal loss <span class="k">L~N(&mu;,&sigma;&sup2;)</span> the quantile is closed form: <span class="k">VaR<sub>0.95</sub> = &mu; + 1.645&sigma;</span>. <span class="tag t-amber">assumes Normal</span></p>
+    </div>
+
+    <div class="win">
+      <h3><span class="wnum">5</span> THE LINEAGE</h3>
+      <p><b>RiskMetrics (1994)</b> gave the desk one number: <i>how much could I lose, with 95% confidence?</i> &mdash; a quantile of loss.</p>
+      <p>Five years later <b>Artzner et al. (1999)</b> named the four axioms a risk measure <i>should</i> obey (monotonicity, translation-invariance, positive homogeneity, <b>subadditivity</b>) and proved a quantile fails the last one. <b>Expected Shortfall</b> is coherent &mdash; the neighbouring sphere to this quantile.</p>
+      <p class="grave">Neighbour: <span class="k">the-coherent-measure</span> &middot; the four axioms as the wall this sphere leans on.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="wnum">7</span> THE WITNESS</h3>
+      <p>Live re-check of the coherence claim the panel prints. Green while the counterexample stands; flips red the instant the tamper (window 6) forces the false claim that VaR is subadditive.</p>
+      <div id="auditout" class="badge ok">witness idle</div>
+    </div>
+  </div>
+
+  <!-- ===== CENTER: THE MACHINE ===== -->
+  <div class="col center">
+    <div class="teamhdr">The machine</div>
+
+    <div class="win">
+      <h3><span class="wnum">4</span> DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>A loss position. Normal for the picture: mean <span class="k">&mu;</span> and volatility <span class="k">&sigma;</span>. Plus a fixed <b>two-bond counterexample</b> the closed form cannot see.</p>
+      <div class="ctl">
+        <label>&mu; (mean loss) <span class="mono" id="muv">0.00</span></label>
+        <input id="mu" type="range" min="-2" max="2" step="0.05" value="0">
+        <label>&sigma; (volatility) <span class="mono" id="sgv">1.00</span></label>
+        <input id="sg" type="range" min="0.5" max="5" step="0.05" value="1">
+      </div>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win panel">
+      <h3><span class="wnum">0</span> THE PANEL <span class="tag t-lit" id="litbadge">booting</span></h3>
+      <div class="dist" id="dist"></div>
+      <div class="row"><span class="lbl">95% VaR &mdash; N(&mu;,&sigma;)</span><span class="v big" id="var_out">&mdash;</span></div>
+      <div class="row"><span class="lbl">95% ES &mdash; average loss past VaR</span><span class="v mono" id="es_out">&mdash;</span></div>
+      <p style="margin-top:10px;color:var(--mut);font-size:12px">ES &ge; VaR always: the shaded tail can only sit further out than its own cutoff.</p>
+
+      <table class="tbl" aria-label="counterexample">
+        <tr><th>two i.i.d. bonds</th><th>VaR<sub>95</sub></th><th>ES<sub>95</sub></th></tr>
+        <tr><td>A (loss 100 w.p. 0.045)</td><td id="vA">0</td><td id="eA">90.00</td></tr>
+        <tr><td>B (identical, independent)</td><td id="vB">0</td><td id="eB">90.00</td></tr>
+        <tr><td>A + B (pooled)</td><td id="vAB">100</td><td id="eAB">104.05</td></tr>
+        <tr><td>sum of parts</td><td id="vSum">0</td><td id="eSum">180.00</td></tr>
+      </table>
+      <div class="verdict" id="subv"></div>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win">
+      <h3><span class="wnum">8</span> DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p class="k" id="dataout" style="font-size:13px">proving&hellip;</p>
+      <p style="font-size:12px;color:var(--mut)">VaR is a threshold; ES is the mean beyond it. The threshold is legible and incoherent; the mean beyond it is coherent and dearer to compute. <i>Models, not recommendations.</i></p>
+    </div>
+  </div>
+
+  <!-- ===== RIGHT: RED TEAM ===== -->
+  <div class="col red">
+    <div class="teamhdr">Red team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <h3><span class="wnum">1</span> THE ADVERSARY <span class="tag t-wall">wall</span></h3>
+      <p class="wall-note">VaR names a cutoff and then goes blind. Past that line it does not care whether you lose 10 or 10 million &mdash; same VaR. It also assumes the loss shape you fed it: Normal VaR presumes <b>constant volatility</b>, <b>log-normal / thin tails</b>, <b>no jumps</b>, <b>frictionless markets</b>. Real crashes are none of these. <span class="tag t-amber">assumed</span></p>
+    </div>
+
+    <div class="win">
+      <h3><span class="wnum">2</span> THE GRAVEYARD</h3>
+      <p class="grave"><s>&ldquo;VaR measures risk, so lower VaR is safer.&rdquo;</s><br><span class="fix">&rarr; VaR is not subadditive: pooling two positions can <i>raise</i> it (0 + 0 &rarr; 100 below). It can penalise diversification.</span></p>
+      <p class="grave"><s>&ldquo;Two books with the same 95% VaR carry the same risk.&rdquo;</s><br><span class="fix">&rarr; Same VaR, tail of 10 vs 1,000,000. VaR cannot tell them apart; ES multiplies them apart.</span></p>
+      <p class="grave"><s>&ldquo;VaR is a worst case.&rdquo;</s><br><span class="fix">&rarr; It is the <i>best</i> of the worst 5% &mdash; the tail&rsquo;s near edge, never its floor.</span></p>
+    </div>
+
+    <div class="win">
+      <h3><span class="wnum">6</span> THE TAMPER</h3>
+      <p>Planted void, disclosed: force the panel to assert <b>VaR is always subadditive</b> &mdash; <span class="k">VaR(A+B) &le; VaR(A)+VaR(B)</span>. The two-bond counterexample (100 &gt; 0) contradicts it, and the witness in window 7 catches it live.</p>
+      <div class="btnrow">
+        <button class="btn tamper" id="tamper">assert VaR subadditive</button>
+        <button class="btn restore" id="restore">restore truth</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Rendered, not quoted. &middot; WORLD&nbsp;II &middot; THE&nbsp;FOLD &middot; the-value-at-risk &middot; David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- engine + selfcheck: pure logic, extractable for node verification ----
+
+// disclosed planted void: honest state is false ("VaR is NOT subadditive")
+var TAMPERED = false;
+
+// fixed two-bond counterexample (loss, probability); i.i.d., independent
+var EXA = [[0, 0.955], [100, 0.045]];
+var EXB = [[0, 0.955], [100, 0.045]];
+// same-VaR / different-tail pair
+var EXP = [[5, 0.96], [10, 0.04]];
+var EXQ = [[5, 0.96], [1000000, 0.04]];
+
+function conv(A, B){
+  var m = new Map();
+  for(var i=0;i<A.length;i++){
+    for(var j=0;j<B.length;j++){
+      var l = A[i][0] + B[j][0];
+      m.set(l, (m.get(l)||0) + A[i][1]*B[j][1]);
+    }
+  }
+  return Array.from(m.entries()).sort(function(x,y){return x[0]-y[0];});
+}
+
+function dvar(D, alpha){
+  if(alpha===undefined) alpha = 0.95;
+  var s = D.slice().sort(function(a,b){return a[0]-b[0];});
+  var c = 0;
+  for(var i=0;i<s.length;i++){
+    c += s[i][1];
+    if(c >= alpha - 1e-12) return s[i][0];
+  }
+  return s[s.length-1][0];
+}
+
+function des(D, alpha){
+  if(alpha===undefined) alpha = 0.95;
+  var v = dvar(D, alpha), e = 0;
+  for(var i=0;i<D.length;i++) e += D[i][1] * Math.max(D[i][0]-v, 0);
+  return v + e/(1-alpha);
+}
+
+function normpdf(x){ return Math.exp(-x*x/2)/Math.sqrt(2*Math.PI); }
+
+function erf(x){
+  var s = x<0 ? -1 : 1; x = Math.abs(x);
+  var t = 1/(1 + 0.3275911*x);
+  var y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x);
+  return s*y;
+}
+function normcdf(x){ return 0.5*(1 + erf(x/Math.SQRT2)); }
+
+// Acklam inverse normal CDF (central region accurate to ~1e-9)
+function normPPF(p){
+  var a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  var b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  var c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  var d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  var pl=0.02425, ph=1-pl, q, r;
+  if(p<pl){ q=Math.sqrt(-2*Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  if(p<=ph){ q=p-0.5; r=q*q; return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
+  q=Math.sqrt(-2*Math.log(1-p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+}
+function varNormal(mu, sig, alpha){ return mu + sig*normPPF(alpha); }
+function esNormal(mu, sig, alpha){ return mu + sig*normpdf(normPPF(alpha))/(1-alpha); }
+
+// fixed-seed PRNG (full 32-bit range) for Monte-Carlo convergence check
+function mkRng(seed){
+  var s = seed>>>0;
+  return function(){ s = (Math.imul(1664525, s) + 1013904223)>>>0; return s/4294967296; };
+}
+function mcVaR(mu, sig, alpha, N, seed){
+  var r = mkRng(seed), xs = new Array(N);
+  for(var i=0;i<N;i++){
+    var u1 = r(), u2 = r();
+    if(u1 < 1e-12) u1 = 1e-12;
+    var z = Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+    xs[i] = mu + sig*z;
+  }
+  xs.sort(function(a,b){return a-b;});
+  return xs[Math.min(Math.floor(alpha*N), N-1)];
+}
+
+// the panel's coherence claim; reality is fixed and independent of the claim
+function claimVaRSubadditive(){ return TAMPERED; }              // honest=false; tamper=true
+function realityVaRSubadditive(){
+  var vA=dvar(EXA), vB=dvar(EXB), vAB=dvar(conv(EXA,EXB));
+  return vAB <= vA + vB + 1e-12;                                // = false
+}
+
+function selfcheck(){
+  // 1 — Normal 95% VaR is the closed-form quantile
+  var z = normPPF(0.95);
+  if(Math.abs(z - 1.6448536269514722) > 1e-6) throw new Error("normPPF(0.95) wrong");
+  var vN = varNormal(0,1,0.95);
+  if(Math.abs(vN - 1.645) > 1e-3) throw new Error("Normal 95% VaR is not mu + 1.645 sigma");
+  var eN = esNormal(0,1,0.95);
+  if(!(eN >= vN)) throw new Error("ES fell below VaR");
+  if(Math.abs(eN - 2.062713) > 5e-3) throw new Error("Normal ES value wrong");
+  if(Math.abs(normcdf(vN) - 0.95) > 1e-6) throw new Error("normcdf/ppf not inverse");
+
+  // 2 — VaR is NOT subadditive (exact two-bond counterexample)
+  var vA=dvar(EXA), vB=dvar(EXB), vAB=dvar(conv(EXA,EXB));
+  if(vA !== 0 || vB !== 0) throw new Error("component VaR should be 0");
+  if(vAB !== 100) throw new Error("VaR(A+B) should be 100");
+  if(!(vAB > vA + vB)) throw new Error("VaR turned out subadditive here");
+
+  // 3 — Expected Shortfall IS coherent (subadditive) on the same example
+  var eA=des(EXA), eB=des(EXB), eAB=des(conv(EXA,EXB));
+  if(Math.abs(eA-90) > 1e-6 || Math.abs(eB-90) > 1e-6) throw new Error("component ES wrong");
+  if(Math.abs(eAB-104.05) > 1e-6) throw new Error("ES(A+B) wrong");
+  if(!(eAB <= eA + eB + 1e-9)) throw new Error("ES not subadditive");
+
+  // 4 — VaR ignores the tail: same VaR, wildly different tail risk
+  var vP=dvar(EXP), vQ=dvar(EXQ);
+  if(vP !== vQ) throw new Error("tail example VaRs should be equal");
+  var eP=des(EXP), eQ=des(EXQ);
+  if(!(eQ > 1000*eP)) throw new Error("tail example ES should diverge");
+
+  // Monte-Carlo VaR converges to the closed form (fixed seed, stated tolerance)
+  var mc = mcVaR(0,1,0.95,20000,12345);
+  if(Math.abs(mc - vN) > 0.08) throw new Error("MC VaR did not converge to closed form");
+
+  // planted void — the tamper must be genuinely detectable
+  var t = TAMPERED; TAMPERED = true;
+  if(claimVaRSubadditive() !== true){ TAMPERED = t; throw new Error("tamper flag not wired"); }
+  if(realityVaRSubadditive() !== false){ TAMPERED = t; throw new Error("counterexample vanished under tamper"); }
+  if(claimVaRSubadditive() === realityVaRSubadditive()){ TAMPERED = t; throw new Error("tamper is not detectable"); }
+  TAMPERED = t;
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+function distSVG(mu, sig){
+  var W=320, H=150, pad=26;
+  var lo=mu-4*sig, hi=mu+4*sig;
+  var v=varNormal(mu,sig,0.95), es=esNormal(mu,sig,0.95);
+  var pk=normpdf(0)/sig;
+  function X(l){ return pad + (l-lo)/(hi-lo)*(W-2*pad); }
+  function Y(dv){ return (H-pad) - dv/pk*(H-2*pad); }
+  var n=140, i, l, dv, curve="", fill="", base=Y(0);
+  for(i=0;i<=n;i++){ l=lo+(hi-lo)*i/n; dv=normpdf((l-mu)/sig)/sig; curve+=(i?" L":"M")+X(l).toFixed(1)+" "+Y(dv).toFixed(1); }
+  fill="M"+X(v).toFixed(1)+" "+base.toFixed(1);
+  for(i=0;i<=n;i++){ l=v+(hi-v)*i/n; dv=normpdf((l-mu)/sig)/sig; fill+=" L"+X(l).toFixed(1)+" "+Y(dv).toFixed(1); }
+  fill+=" L"+X(hi).toFixed(1)+" "+base.toFixed(1)+" Z";
+  var vx=X(v).toFixed(1), ex=X(Math.min(es,hi)).toFixed(1), top=(pad-4).toFixed(1);
+  return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'
+    + '<line x1="'+pad+'" y1="'+base.toFixed(1)+'" x2="'+(W-pad)+'" y2="'+base.toFixed(1)+'" stroke="#1d3527"/>'
+    + '<path d="'+fill+'" fill="rgba(255,125,125,.22)" stroke="none"/>'
+    + '<path d="'+curve+'" fill="none" stroke="#c8a2ff" stroke-width="1.8"/>'
+    + '<line x1="'+vx+'" y1="'+top+'" x2="'+vx+'" y2="'+base.toFixed(1)+'" stroke="#ffb54d" stroke-width="1.4" stroke-dasharray="4 3"/>'
+    + '<text x="'+vx+'" y="'+(pad-8)+'" fill="#ffb54d" font-size="9" text-anchor="middle">VaR</text>'
+    + '<line x1="'+ex+'" y1="'+top+'" x2="'+ex+'" y2="'+base.toFixed(1)+'" stroke="#5dffab" stroke-width="1.4" stroke-dasharray="2 3"/>'
+    + '<text x="'+ex+'" y="'+(pad-8)+'" fill="#5dffab" font-size="9" text-anchor="middle">ES</text>'
+    + '<text x="'+(pad)+'" y="'+(H-6)+'" fill="#8fb3a1" font-size="8">loss &rarr;</text>'
+    + '</svg>';
+}
+
+function $(id){ return document.getElementById(id); }
+
+function runWitness(){
+  var el = $("auditout");
+  var claim = claimVaRSubadditive(), reality = realityVaRSubadditive();
+  if(claim === reality){
+    el.className = "badge ok";
+    el.innerHTML = "&#10003; WITNESS &mdash; claim matches reality: VaR is NOT subadditive (100 &gt; 0)";
+  } else {
+    el.className = "badge bad";
+    el.innerHTML = "&#10007; WITNESS &mdash; TAMPER: panel claims VaR subadditive, counterexample gives 100 &gt; 0";
+  }
+}
+
+function render(){
+  var mu = parseFloat($("mu").value), sig = parseFloat($("sg").value);
+  $("muv").textContent = mu.toFixed(2);
+  $("sgv").textContent = sig.toFixed(2);
+  var vN = varNormal(mu,sig,0.95), eN = esNormal(mu,sig,0.95);
+  $("var_out").textContent = vN.toFixed(3);
+  $("es_out").textContent = eN.toFixed(3) + "  (ES/VaR ratio " + (eN/vN>0?(eN/Math.abs(vN)).toFixed(2):"n/a") + ")";
+  $("dist").innerHTML = distSVG(mu,sig);
+
+  var subv = $("subv");
+  if(claimVaRSubadditive()){
+    subv.innerHTML = 'Panel claim: <span class="yes">VaR(A+B) &le; VaR(A)+VaR(B) &mdash; subadditive</span> &nbsp;<i>(tampered)</i>. '
+      + 'ES(A+B)=104.05 &le; 180 &mdash; ES coherent.';
+  } else {
+    subv.innerHTML = '<span class="no">VaR(A+B)=100 &gt; VaR(A)+VaR(B)=0 &mdash; NOT subadditive (incoherent).</span> '
+      + '<span class="yes">ES(A+B)=104.05 &le; 90+90=180 &mdash; ES subadditive (coherent).</span>';
+  }
+  runWitness();
+}
+
+function boot(){
+  try{
+    var ok = selfcheck();
+    if(ok !== true) throw new Error("selfcheck did not return true");
+    $("litbadge").textContent = "LIT";
+    $("litbadge").className = "tag t-lit";
+    $("dataout").innerHTML = "PROVEN &mdash; 95% VaR = &mu; + 1.645&sigma; (closed form); VaR non-subadditive (100 &gt; 0); ES coherent (104.05 &le; 180); MC &rarr; closed form within 0.08. VERIFIED.";
+  }catch(e){
+    var fb = $("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED: " + e.message;
+    $("litbadge").textContent = "DEAD";
+    $("litbadge").className = "tag t-wall";
+    throw e;
+  }
+
+  $("mu").addEventListener("input", render);
+  $("sg").addEventListener("input", render);
+  $("tamper").addEventListener("click", function(){ TAMPERED = true; render(); });
+  $("restore").addEventListener("click", function(){ TAMPERED = false; render(); });
+  render();
+}
+
+boot();
+</script>
+</body>
+</html>

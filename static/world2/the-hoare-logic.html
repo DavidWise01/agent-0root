@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE HOARE LOGIC · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#c0b0ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(192,176,255,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO layout — blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(192,176,255,.06);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(192,176,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:14px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;word-break:break-word;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:17px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);margin-top:3px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.y{color:var(--gr);font-weight:700;} .n{color:var(--wall);font-weight:700;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE HOARE LOGIC</h1>
+ <p class="sub">A proof system that says <b>exactly</b> what a program does. Wrap a command <b>C</b> between an assertion before and an assertion after — the triple <b class="k">{P} C {Q}</b> — and the claim is checkable: run C from <i>every</i> state where P holds and confirm Q holds after. Over a finite state space that is not a hand-wave, it is <b>exhaustive</b>. Down the center, the terms go <b style="color:var(--cy)">in</b>, the verifier decides, the proven triple comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> C. A. R. Hoare, <i>An Axiomatic Basis for Computer Programming</i>, Communications of the ACM <b>12</b>(10):576–580 (1969) — <a href="https://dl.acm.org/doi/10.1145/363235.363259">doi:10.1145/363235.363259</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the rules</h2>
+   <p>Validity is not memorized; it is <b>derived</b> by five rules over a tiny imperative language (assignment, sequence, if, while) with arithmetic <b>mod 4</b>. The state is a pair <b>(x,y)</b> ∈ {0,1,2,3}² — just <b class="k">16</b> states.</p>
+   <p><b class="k">Assignment</b> ⊢ {Q[x:=e]} x:=e {Q}. <b class="k">Sequence</b> {P}C₁{R},{R}C₂{Q} ⊢ {P}C₁;C₂{Q}. <b class="k">If</b> both branches land in Q. <b class="k">While</b> an invariant preserved by the body survives the loop. <b class="k">Consequence</b> strengthens P / weakens Q.</p>
+   <p class="small">Rule licensing the current triple:</p>
+   <p class="small" id="ruleUsed" style="color:#c3e8ca"></p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the promise kept <span class="tag t-amber">AVAN</span></h2>
+   <p>A Hoare triple is a <b>program keeping its promise</b>: given P, it guarantees Q. Hoare took <a href="https://davidwise01.github.io/the-natural-deduction/" style="color:var(--cy)">the-natural-deduction</a> — inference rules that build proofs from proofs — and pointed it at <i>imperative code</i>, one rule per construct.</p>
+   <p>The precondition each rule demands is computed backward from Q: the <b>weakest</b> assertion that still guarantees it. That is <a href="https://davidwise01.github.io/the-weakest-precondition/" style="color:var(--cy)">the-weakest-precondition</a> — Dijkstra's calculus, the next sphere. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive the <b>assignment axiom</b> over its whole family of assertions and expressions, and re-verify the loop rule — confirming every instance against exhaustive execution. If red flips a rule, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE · data in → panel → data out -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the triple <span class="tag t-in">in ↓</span></h2>
+   <p>A <b>Hoare triple</b> has three parts: a <b class="P" style="color:var(--gr)">precondition P</b> (what is assumed before), a <b class="M" style="color:var(--am)">command C</b> (what runs), and a <b class="S" style="color:var(--cy)">postcondition Q</b> (what must hold after). Assertions are boolean facts about the state; commands are:</p>
+   <table><thead><tr><th>form</th><th>reads</th></tr></thead>
+    <tbody>
+     <tr><td>x := e</td><td style="text-align:left">assign e to x</td></tr>
+     <tr><td>C₁ ; C₂</td><td style="text-align:left">do C₁, then C₂</td></tr>
+     <tr><td>if b then C₁ else C₂</td><td style="text-align:left">branch on b</td></tr>
+     <tr><td>while b do C</td><td style="text-align:left">repeat while b</td></tr>
+    </tbody></table>
+   <p class="small">Partial correctness: <i>if</i> C halts from a P-state, Q holds. Over 16 states each program below halts — feed the triple into the panel.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the triple into the verifier &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the verifier <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>construct</label>
+      <select id="kind">
+       <option value="assign">assignment axiom</option>
+       <option value="seq">sequence</option>
+       <option value="cond">conditional</option>
+       <option value="loop">while + invariant</option>
+       <option value="false">a false triple</option>
+      </select></div>
+     <div class="row"><label>parameter k</label>
+      <select id="kp"><option>0</option><option>1</option><option selected>2</option><option>3</option></select></div>
+     <p class="small" id="paramnote">k tunes the postcondition target so the verdict moves live.</p>
+     <div class="row"><button id="rand">↺ random</button><button id="ex1">→ while invariant</button></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="triple"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">The verdict is computed by running C from every P-state and testing Q — never looked up. The table below is that exhaustive check.</p>
+   <table id="stateTbl"><thead><tr><th>P-state (x,y)</th><th>after C (x,y)</th><th>Q?</th></tr></thead><tbody id="stateBody"></tbody></table>
+  </div>
+  <div class="flow">▼ &nbsp; the verifier emits a proof &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the proven triple <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: the current triple decided over <b>all 16 states</b>, plus the standing facts the self-check nails on load — the assignment axiom holds for <b>every</b> Q and e in its family, the sequence rule composes, and the loop invariant <b>(x+y)=k</b> survives every iteration for all four k.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-derives these live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Hoare logic proves <b>partial</b> correctness only. {P} C {Q} holds <i>vacuously</i> if C never halts — a diverging loop satisfies every postcondition. Termination is a separate proof (a decreasing variant), outside these rules.</div>
+   <p class="small" style="margin-top:8px">And it is <b>incomplete</b> over full arithmetic: by Gödel there is no finite axiom set proving every true triple. Hoare logic is only <i>relatively</i> complete (Cook, 1978) — it assumes an oracle for the assertion theory. Finding loop invariants is itself undecidable. The system is a frame for proof, not an automatic prover.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"A proved triple means the program terminates."</s> <b>Cut.</b> Partial correctness only — divergence makes any Q hold. Total correctness needs a ranking function proved to decrease.</p>
+   <p class="grave"><s>"The assignment axiom substitutes forward: {P} x:=e {P[e/x]}."</s> <b>Cut.</b> The sound rule substitutes <i>backward</i> into the postcondition: {Q[x:=e]} x:=e {Q}. The forward reading is exactly the tamper below.</p>
+   <p class="grave"><s>"Any invariant that's preserved will do."</s> <b>Kept, corrected.</b> It must be preserved <i>and</i> strong enough that I∧¬b implies the goal — the hard, undecidable art.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: apply the assignment axiom with the substitution in the <b>wrong direction</b> — {Q} x:=e {Q[x:=e]} — to "derive" a false triple. The blue team's witness (window 7) runs the exhaustive state check and catches the violating state.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ flip substitution</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Flip the direction and the derived precondition is wrong: some pre-state runs C into a state where Q fails. The witness recomputes, finds it, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE HOARE LOGIC — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (triple <b style="color:var(--cy)">in</b> → verifier → proof <b style="color:var(--gr)">out</b>). A runnable rendering of Hoare's <i>Axiomatic Basis</i> (CACM, 1969) — the verifier is LIT (every triple decided by exhaustive execution over 16 states, the assignment axiom and while rule self-checked, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what partial correctness cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// engine: Hoare logic over a finite state space {0,1,2,3}^2, arithmetic mod 4
+const MOD=4, VARS=["x","y"];
+const mod=n=>((n%MOD)+MOD)%MOD;
+function allStates(){ const S=[]; for(let x=0;x<MOD;x++) for(let y=0;y<MOD;y++) S.push({x:x,y:y}); return S; }
+
+// expression AST evaluation
+function evalExpr(e,st){
+ switch(e.k){
+  case "num": return mod(e.v);
+  case "var": return mod(st[e.v]);
+  case "add": return mod(evalExpr(e.a,st)+evalExpr(e.b,st));
+  case "mul": return mod(evalExpr(e.a,st)*evalExpr(e.b,st));
+ }
+ throw new Error("bad expr node "+e.k);
+}
+// boolean assertion AST evaluation
+function evalBool(b,st){
+ switch(b.k){
+  case "true": return true;
+  case "false": return false;
+  case "eq": return evalExpr(b.a,st)===evalExpr(b.b,st);
+  case "ne": return evalExpr(b.a,st)!==evalExpr(b.b,st);
+  case "lt": return evalExpr(b.a,st)<evalExpr(b.b,st);
+  case "le": return evalExpr(b.a,st)<=evalExpr(b.b,st);
+  case "not": return !evalBool(b.a,st);
+  case "and": return evalBool(b.a,st)&&evalBool(b.b,st);
+  case "or": return evalBool(b.a,st)||evalBool(b.b,st);
+ }
+ throw new Error("bad bool node "+b.k);
+}
+// syntactic substitution of variable X by expression E throughout an AST (expr or bool)
+function subst(node,X,E){
+ if(node.k==="var") return node.v===X ? E : node;
+ if(node.k==="num"||node.k==="true"||node.k==="false") return node;
+ const o={k:node.k};
+ if(node.a!==undefined) o.a=subst(node.a,X,E);
+ if(node.b!==undefined) o.b=subst(node.b,X,E);
+ if(node.c!==undefined) o.c=subst(node.c,X,E);
+ return o;
+}
+// operational semantics: run a command from a state; budget guards non-termination
+function exec(cmd,st,budget){
+ budget=budget||{n:0};
+ if(++budget.n>100000) throw new Error("non-termination");
+ switch(cmd.k){
+  case "skip": return {x:st.x,y:st.y};
+  case "assign":{ const v=evalExpr(cmd.e,st); const ns={x:st.x,y:st.y}; ns[cmd.v]=v; return ns; }
+  case "seq": return exec(cmd.b, exec(cmd.a,st,budget), budget);
+  case "if": return evalBool(cmd.c,st)? exec(cmd.t,st,budget): exec(cmd.f,st,budget);
+  case "while":{ let s={x:st.x,y:st.y}; while(evalBool(cmd.c,s)){ s=exec(cmd.body,s,budget); } return s; }
+ }
+ throw new Error("bad cmd node "+cmd.k);
+}
+// a triple {P} C {Q} holds iff EVERY P-state leads after C to a Q-state (exact over the finite space)
+function triple(P,C,Q){
+ for(const st of allStates()){
+  if(!evalBool(P,st)) continue;
+  const st2=exec(C,st);
+  if(!evalBool(Q,st2)) return {ok:false,witness:st,post:st2};
+ }
+ return {ok:true};
+}
+// the assignment axiom; wrong=true swaps the substitution direction (the tamper)
+function assignAxiomTriple(Q,X,e,wrong){
+ const asg={k:"assign",v:X,e:e};
+ if(!wrong) return triple(subst(Q,X,e), asg, Q);   // sound:   {Q[x:=e]} x:=e {Q}
+ return triple(Q, asg, subst(Q,X,e));              // unsound: {Q} x:=e {Q[x:=e]}
+}
+let TAMPER=false; // when true the witness reads the axiom in the wrong direction
+function axiomValid(Q,X,e){ return assignAxiomTriple(Q,X,e,TAMPER).ok; }
+
+// finite families for exhaustive rule-soundness checks
+function atomFamily(){
+ const F=[]; for(const v of VARS) for(let c=0;c<MOD;c++){
+  F.push({k:"eq",a:{k:"var",v:v},b:{k:"num",v:c}});
+  F.push({k:"lt",a:{k:"var",v:v},b:{k:"num",v:c}});
+ } return F;
+}
+function exprFamily(){
+ return [{k:"num",v:0},{k:"num",v:1},{k:"num",v:2},{k:"num",v:3},
+  {k:"var",v:"x"},{k:"var",v:"y"},
+  {k:"add",a:{k:"var",v:"x"},b:{k:"num",v:1}},
+  {k:"add",a:{k:"var",v:"y"},b:{k:"num",v:1}},
+  {k:"add",a:{k:"var",v:"x"},b:{k:"var",v:"y"}}];
+}
+// witness: count assignment-axiom instances valid in the current direction
+function axiomFamilyCount(){
+ let ok=0,tot=0,bad=null;
+ for(const Q of atomFamily()) for(const e of exprFamily()) for(const X of VARS){
+  tot++;
+  const r=assignAxiomTriple(Q,X,e,TAMPER);
+  if(r.ok) ok++; else if(!bad) bad={Q:Q,e:e,X:X,w:r};
+ }
+ return {ok:ok,tot:tot,bad:bad};
+}
+function loopRuleHolds(){
+ for(let k=0;k<MOD;k++){
+  const I={k:"eq",a:{k:"add",a:{k:"var",v:"x"},b:{k:"var",v:"y"}},b:{k:"num",v:k}};
+  const bcond={k:"ne",a:{k:"var",v:"x"},b:{k:"num",v:0}};
+  const body={k:"seq",a:{k:"assign",v:"y",e:{k:"add",a:{k:"var",v:"y"},b:{k:"num",v:1}}},
+                     b:{k:"assign",v:"x",e:{k:"add",a:{k:"var",v:"x"},b:{k:"num",v:3}}}};
+  if(!triple({k:"and",a:I,b:bcond},body,I).ok) return false;
+  if(!triple(I,{k:"while",c:bcond,body:body},{k:"and",a:I,b:{k:"not",a:bcond}}).ok) return false;
+ }
+ return true;
+}
+
+// fail-loud self-check: THROWS on any violation, RETURNS true on success
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+
+ // 1) ASSIGNMENT axiom {Q[x:=e]} x:=e {Q} valid EXHAUSTIVELY over its family
+ let ax=0;
+ for(const Q of atomFamily()) for(const e of exprFamily()) for(const X of VARS){
+  t(assignAxiomTriple(Q,X,e,false).ok,"assignment axiom must hold for every Q,e,x");
+  ax++;
+ }
+ t(ax>0,"axiom family must be non-empty");
+
+ // 2) a triple holds IFF every P-state reaches a Q-state (valid vs invalid, exact)
+ const Pv={k:"eq",a:{k:"var",v:"x"},b:{k:"num",v:1}};
+ const Cinc={k:"assign",v:"x",e:{k:"add",a:{k:"var",v:"x"},b:{k:"num",v:1}}};
+ t(triple(Pv,Cinc,{k:"eq",a:{k:"var",v:"x"},b:{k:"num",v:2}}).ok,"{x=1} x:=x+1 {x=2} must hold");
+ const Qbad={k:"eq",a:{k:"var",v:"x"},b:{k:"num",v:3}};
+ const r=triple(Pv,Cinc,Qbad);
+ t(!r.ok,"{x=1} x:=x+1 {x=3} must fail");
+ t(r.witness && evalBool(Pv,r.witness) && !evalBool(Qbad,exec(Cinc,r.witness)),"witness must be a real P-state that fails Q");
+
+ // 3) SEQUENCE rule: for all midconditions R, ({P}C1{R} & {R}C2{Q}) => {P}C1;C2{Q}
+ const C1=Cinc, C2={k:"assign",v:"y",e:{k:"add",a:{k:"var",v:"x"},b:{k:"num",v:1}}};
+ const Pseq={k:"eq",a:{k:"var",v:"x"},b:{k:"num",v:1}};
+ const Qseq={k:"eq",a:{k:"var",v:"y"},b:{k:"num",v:3}};
+ const Cseq={k:"seq",a:C1,b:C2};
+ let witnessedR=false;
+ for(const R of atomFamily()){
+  const p1=triple(Pseq,C1,R).ok, p2=triple(R,C2,Qseq).ok;
+  if(p1&&p2){ witnessedR=true; t(triple(Pseq,Cseq,Qseq).ok,"sequence rule: composed triple must hold"); }
+ }
+ t(witnessedR,"at least one midcondition R must witness the sequence rule");
+ t(triple(Pseq,Cseq,Qseq).ok,"the composed sequence triple must be valid");
+
+ // 4) WHILE rule: invariant I=(x+y)=k preserved by body, and {I} while b do C {I & not b}
+ t(loopRuleHolds(),"the while-invariant rule must hold for every k");
+
+ // 5) TAMPER (disclosed planted void): wrong-direction substitution derives a FALSE triple;
+ //    the exhaustive state check must catch it
+ const Qt={k:"eq",a:{k:"var",v:"x"},b:{k:"num",v:0}};
+ const et={k:"add",a:{k:"var",v:"x"},b:{k:"num",v:1}};
+ t(assignAxiomTriple(Qt,"x",et,false).ok,"untampered: {x=3} x:=x+1 {x=0} must hold");
+ TAMPER=true;
+ t(!assignAxiomTriple(Qt,"x",et,true).ok,"tamper: {x=0} x:=x+1 {x=3} must be exposed as false");
+ t(!axiomValid(Qt,"x",et),"tamper: the witness reading must now report the false triple");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+function exprS(e){ switch(e.k){
+ case "num": return ""+e.v; case "var": return e.v;
+ case "add": return exprS(e.a)+"+"+exprS(e.b); case "mul": return exprS(e.a)+"·"+exprS(e.b);
+} return "?"; }
+function boolS(b){ switch(b.k){
+ case "true": return "true"; case "false": return "false";
+ case "eq": return exprS(b.a)+"="+exprS(b.b); case "ne": return exprS(b.a)+"≠"+exprS(b.b);
+ case "lt": return exprS(b.a)+"<"+exprS(b.b); case "le": return exprS(b.a)+"≤"+exprS(b.b);
+ case "not": return "¬("+boolS(b.a)+")"; case "and": return boolS(b.a)+" ∧ "+boolS(b.b);
+ case "or": return boolS(b.a)+" ∨ "+boolS(b.b);
+} return "?"; }
+function cmdS(c){ switch(c.k){
+ case "skip": return "skip"; case "assign": return c.v+" := "+exprS(c.e);
+ case "seq": return cmdS(c.a)+" ; "+cmdS(c.b);
+ case "if": return "if "+boolS(c.c)+" then "+cmdS(c.t)+" else "+cmdS(c.f);
+ case "while": return "while "+boolS(c.c)+" do { "+cmdS(c.body)+" }";
+} return "?"; }
+
+function buildCatalog(k){
+ const V=v=>({k:"var",v:v}), N=n=>({k:"num",v:n});
+ const eq=(a,b)=>({k:"eq",a:a,b:b}), ne=(a,b)=>({k:"ne",a:a,b:b}), lt=(a,b)=>({k:"lt",a:a,b:b});
+ const add=(a,b)=>({k:"add",a:a,b:b}), asg=(v,e)=>({k:"assign",v:v,e:e});
+ const seq=(a,b)=>({k:"seq",a:a,b:b}), and=(a,b)=>({k:"and",a:a,b:b}), or=(a,b)=>({k:"or",a:a,b:b}), not=a=>({k:"not",a:a});
+ const iff=(c,t,f)=>({k:"if",c:c,t:t,f:f}), wh=(c,body)=>({k:"while",c:c,body:body});
+
+ const Qa=eq(V("x"),N(k)), ea=add(V("x"),N(1));
+ const assignT={P:subst(Qa,"x",ea), C:asg("x",ea), Q:Qa,
+  label:"the ASSIGNMENT axiom &nbsp;·&nbsp; {Q[x:=e]} x:=e {Q}",
+  desc:"Precondition is Q with x replaced by e — derived backward, then checked over every state.",
+  rule:"<b>Assignment</b> ⊢ {Q[x:=e]} x:=e {Q}. Here Q ≡ x="+k+", e ≡ x+1, so P ≡ "+boolS(subst(Qa,"x",ea))+" (mod 4)."};
+
+ const seqC=seq(asg("x",add(V("x"),N(1))), asg("y",add(V("x"),N(1))));
+ const seqT={P:eq(V("x"),N(1)), C:seqC, Q:eq(V("y"),N(3)),
+  label:"the SEQUENCE rule &nbsp;·&nbsp; {P}C₁{R}, {R}C₂{Q} ⊢ {P}C₁;C₂{Q}",
+  desc:"Midcondition R ≡ x=2 threads the two assignments together (k is not used here).",
+  rule:"<b>Sequence</b>: from {x=1} x:=x+1 {x=2} and {x=2} y:=x+1 {y=3}, compose {x=1} x:=x+1 ; y:=x+1 {y=3}."};
+
+ const condC=iff(lt(V("x"),N(2)), asg("y",N(0)), asg("y",N(1)));
+ const condQ=and(or(not(lt(V("x"),N(2))),eq(V("y"),N(0))), or(lt(V("x"),N(2)),eq(V("y"),N(1))));
+ const condT={P:{k:"true"}, C:condC, Q:condQ,
+  label:"the CONDITIONAL rule &nbsp;·&nbsp; both branches must land in Q",
+  desc:"Each branch is verified under its guard; Q ties y to the branch taken (k is not used here).",
+  rule:"<b>If</b>: {P∧b} C₁ {Q} and {P∧¬b} C₂ {Q} ⊢ {P} if b then C₁ else C₂ {Q}, with b ≡ x<2."};
+
+ const body=seq(asg("y",add(V("y"),N(1))), asg("x",add(V("x"),N(3))));
+ const bcond=ne(V("x"),N(0));
+ const I=eq(add(V("x"),V("y")),N(k));
+ const loopT={P:I, C:wh(bcond,body), Q:and(I,not(bcond)),
+  label:"the WHILE rule &nbsp;·&nbsp; invariant I ≡ (x+y)="+k,
+  desc:"I is preserved by every iteration (y+1, x−1 leave x+y fixed); at exit x=0, so y="+k+".",
+  rule:"<b>While</b>: {I∧b} C {I} ⊢ {I} while b do C {I∧¬b}, with I ≡ (x+y)="+k+" and b ≡ x≠0 (mod 4)."};
+
+ const falseT={P:eq(V("x"),N(1)), C:asg("x",add(V("x"),N(1))), Q:eq(V("x"),N(k)),
+  label:"a DELIBERATELY FALSE triple &nbsp;·&nbsp; holds only when k=2",
+  desc:"{x=1} x:=x+1 {x="+k+"} — after the assignment x=2, so this is VALID only for k=2.",
+  rule:"No rule licenses this unless k=2; the exhaustive check exposes the counterexample otherwise."};
+
+ return {assign:assignT, seq:seqT, cond:condT, loop:loopT, "false":falseT};
+}
+function currentTriple(){ return buildCatalog(+$("kp").value)[$("kind").value]; }
+
+function render(){
+ const T=currentTriple();
+ $("triple").innerHTML = "{ <span class=\"P\">"+boolS(T.P)+"</span> } &nbsp; <span class=\"M\">"+cmdS(T.C)+"</span> &nbsp; { <span class=\"S\">"+boolS(T.Q)+"</span> }";
+ const r=triple(T.P,T.C,T.Q);
+ $("verdict").textContent = r.ok? "VALID — holds for every pre-state" : "INVALID — a pre-state breaks it";
+ $("verdict").className="verdict "+(r.ok?"ok":"no");
+ $("moodname").innerHTML=T.label;
+ $("reason").textContent=T.desc;
+ $("ruleUsed").innerHTML=T.rule;
+ let rows="";
+ for(const st of allStates()){
+  if(!evalBool(T.P,st)) continue;
+  const st2=exec(T.C,st); const q=evalBool(T.Q,st2);
+  rows+="<tr><td>("+st.x+","+st.y+")</td><td>("+st2.x+","+st2.y+")</td><td class=\""+(q?"y":"n")+"\">"+(q?"✓":"✗")+"</td></tr>";
+ }
+ $("stateBody").innerHTML = rows || "<tr><td colspan=\"3\" class=\"mut\">no state satisfies P</td></tr>";
+}
+function audit(){
+ const el=$("auditout");
+ const fam=axiomFamilyCount();
+ const loop=loopRuleHolds();
+ const famOK=(fam.ok===fam.tot);
+ const ok=famOK && loop;
+ let extra="";
+ if(!famOK && fam.bad){
+  const b=fam.bad, X=b.X, e=b.e, Q=b.Q, w=b.w;
+  extra="<div class=\"small\" style=\"margin-top:4px;color:var(--wall)\">flipped axiom "
+   +"{ "+boolS(Q)+" } "+X+":="+exprS(e)+" { "+boolS(subst(Q,X,e))+" } fails at state ("+w.witness.x+","+w.witness.y+") → after "+X+":="+exprS(e)+" reaches ("+w.post.x+","+w.post.y+")</div>";
+ }
+ el.innerHTML = "<span class=\"badge "+(ok?"pass":"failb")+"\">"+(ok?"✓ WITNESS — holds":"✗ WITNESS — broken")+"</span>"
+  + "<div class=\"small\" style=\"margin-top:6px\">assignment axiom: <b style=\"color:"+(famOK?"var(--gr)":"var(--wall)")+"\">"+fam.ok+"</b>/"+fam.tot+" instances valid &nbsp;·&nbsp; while-invariant rule: <b style=\"color:"+(loop?"var(--gr)":"var(--wall)")+"\">"+(loop?"holds":"broken")+"</b>"+(TAMPER?" &nbsp; — <span style=\"color:var(--wall)\">red flipped the substitution</span>":"")+"</div>"+extra;
+}
+
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ render(); audit();
+ ["kind","kp"].forEach(id=>$(id).addEventListener("change",()=>{render();audit();}));
+ $("rand").addEventListener("click",()=>{
+  const kinds=["assign","seq","cond","loop","false"];
+  $("kind").value=kinds[(Math.random()*kinds.length)|0];
+  $("kp").value=(Math.random()*4)|0; render(); audit();
+ });
+ $("ex1").addEventListener("click",()=>{ $("kind").value="loop"; $("kp").value="2"; render(); audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true;
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>Substitution flipped.</b> The derived triple {Q} x:=e {Q[x:=e]} is unsound — the witness (window 7) ran the exhaustive check, found a violating state, and went red. The attack is real; it is caught.";
+  render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false;
+  $("tampernote").textContent="Flip the direction and the derived precondition is wrong: some pre-state runs C into a state where Q fails. The witness recomputes, finds it, and turns red. Nothing is faked; the attack is real and it is caught.";
+  render(); audit(); });
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Hoare-logic verifier did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

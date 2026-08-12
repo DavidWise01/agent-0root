@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE ABSTRACT INTERPRETATION · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffb0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,176,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,176,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,176,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE ABSTRACT INTERPRETATION</h1>
+ <p class="sub">Prove a property without running the program — compute on <b>shapes</b> instead of exact values, and never claim more than you can cover. A program that adds and multiplies unknown numbers is analysed in the <b>rule of signs</b> — Cousot's own example — where every concrete run is guaranteed to land inside the abstract answer. Down the center, data flows: an abstract input goes <b style="color:var(--cy)">in</b>, the abstract semantics compute, a <b>sound</b> over-approximation comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> proves it covers every real behaviour; the <b style="color:var(--red)">red team</b> under-approximates to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> P. Cousot &amp; R. Cousot, <i>Abstract Interpretation: a unified lattice model…</i>, POPL '77, pp. 238–252 — <a href="https://www.di.ens.fr/~cousot/COUSOTpapers/POPL77.shtml">di.ens.fr/~cousot/COUSOTpapers/POPL77</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the Galois connection</h2>
+   <p>The concrete world is sets of integers; the abstract world is <b>signs</b>. Eight abstract values, ordered by <b>subset</b>: <span class="k">⊥</span> ⊑ {neg},{zero},{pos} ⊑ {≤0},{≠0},{≥0} ⊑ <b>⊤</b>. Two maps bind the worlds:</p>
+   <p><b class="k">α</b> (abstraction) sends a set to the signs it contains. <b class="k">γ</b> (concretization) sends a sign-set back to every integer of that sign. They are <b>adjoint</b>: α(X) ⊑ a ⟺ X ⊆ γ(a), with α(γ(a))=a. The rule of signs (Cousot's example) gives exact abstract operators:</p>
+   <table><thead><tr><th>×</th><th>neg</th><th>zero</th><th>pos</th></tr></thead><tbody class="dist">
+    <tr><td>neg</td><td class="y">pos</td><td>zero</td><td class="n">neg</td></tr>
+    <tr><td>zero</td><td>zero</td><td>zero</td><td>zero</td></tr>
+    <tr><td>pos</td><td class="n">neg</td><td>zero</td><td class="y">pos</td></tr></tbody></table>
+   <table><thead><tr><th>+</th><th>neg</th><th>zero</th><th>pos</th></tr></thead><tbody class="dist">
+    <tr><td>neg</td><td class="n">neg</td><td>neg</td><td>⊤</td></tr>
+    <tr><td>zero</td><td>neg</td><td>zero</td><td>pos</td></tr>
+    <tr><td>pos</td><td>⊤</td><td>pos</td><td class="y">pos</td></tr></tbody></table>
+   <p class="small">neg + pos = <b>⊤</b>: addition of opposite signs genuinely loses information. Live for the panel's input: γ(x#) = <b id="mGamma" class="k"></b>, and α of the real results = <b id="mAlpha" class="k"></b>.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — sound approx as proof <span class="tag t-amber">AVAN</span></h2>
+   <p>Cousot's move is that a <b>sound over-approximation is a proof</b>: if no real behaviour escapes the abstract answer, then any property the abstract answer guarantees, the real program has. You never ran every input — you covered them all.</p>
+   <p>That is the door into <a href="https://davidwise01.github.io/the-model-checking/" style="color:var(--cy)">the model checking</a>: an infinite-state system is undecidable to check exactly, but its <b>abstraction</b> is finite and decidable. Over-approximate, check the abstraction, and a proof there is a proof here. Each sphere is the next one's premise — honesty by never claiming more than it can cover.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run soundness over <b>all 8 abstract inputs</b>, confirm the Galois adjunction, and confirm widening terminates. If red under-approximates, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the program &amp; the shape <span class="tag t-in">in ↓</span></h2>
+   <p>One tiny program with an <b>unknown</b> input <span class="M" style="color:var(--am)">x</span>:</p>
+   <div class="sent">a = <span class="M">x</span> · <span class="M">x</span> ;<br>b = a + <span class="M">x</span> ;<br>return b</div>
+   <p class="small">Instead of a number, you feed <span class="M" style="color:var(--am)">x</span> a <b>shape</b> — one of the eight sign-sets (its abstract value <span class="k">x#</span>). The concrete universe here is the integers <b>−3…3</b>, small enough to check every real run exhaustively. The panel computes the abstract answer and confronts it with all the real ones.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the shape into the abstract semantics &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>input x#</label>
+      <select id="xin">
+       <option value="1">{neg}</option><option value="2">{zero}</option><option value="4">{pos}</option>
+       <option value="3">{≤0} neg,zero</option><option value="6" selected>{≥0} zero,pos</option><option value="5">{≠0} neg,pos</option>
+       <option value="7">⊤ any</option><option value="0">⊥ none</option></select></div>
+     <div class="row"><button id="rand">↺ random shape</button><button id="reset">→ {≥0}</button></div>
+     <p class="small">Change the shape — the abstract answer is recomputed from the rule-of-signs operators, and every concrete run in γ(x#) is executed and confronted. Nothing is looked up.</p>
+     <table id="concTbl"><thead><tr><th>concrete x</th><th>b = x·x + x</th><th>sign</th></tr></thead><tbody id="concBody"></tbody></table>
+    </div>
+    <div class="readout">
+     <div class="sent" id="steps"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="cover"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">SOUNDNESS = α(real results) ⊑ abstract result. It may be <i>strictly</i> wider (a spurious sign) — that is legal. It may never be <i>narrower</i> — that would drop a real behaviour.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the semantics emit a sound over-approximation &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the covered answer <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: for <b>every</b> one of the 8 abstract inputs the real behaviour is contained in the abstract answer — <b class="k" id="oSound">8/8 sound</b>, of which <b class="k" id="oStrict"></b> are strict over-approximations (spurious signs added, none dropped) and <b class="k" id="oExact"></b> are exact. The interval fixpoint with <b>widening</b> reaches <b class="k" id="oWiden"></b> in <b class="k" id="oSteps"></b> steps, where plain iteration never stops.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these numbers live; the red team (right) tries to make a real value escape.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Sound does not mean <b>precise</b>. The sign domain says neg + pos = ⊤ and then can prove almost nothing about the result — over-approximation manufactures <b>false alarms</b>: warnings for behaviours that can never happen. A sound analysis that flags everything is useless.</div>
+   <p class="small" style="margin-top:8px">And exactness is out of reach on principle: by Rice's theorem no analysis decides every non-trivial property of every program. So the abstract answer is a <i>choice</i> of domain — signs, intervals, octagons, polyhedra — each trading cost for precision. The framework guarantees you don't <i>lie</i>; it cannot guarantee you say anything <i>useful</i>.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Abstract interpretation proves the program correct."</s> <b>Cut.</b> It proves a <i>property</i> holds, soundly. It also raises false alarms; a clean run is a proof, a warning may be spurious.</p>
+   <p class="grave"><s>"More abstract values = more precise."</s> <b>Cut.</b> A finer domain is more precise but may not <b>terminate</b> — infinite ascending chains need <b>widening</b>, which deliberately over-shoots to converge.</p>
+   <p class="grave"><s>"α and γ are inverses."</s> <b>Kept, corrected.</b> They form a <i>Galois connection</i>, not a bijection: α(γ(a))=a here, but X ⊆ γ(α(X)) is generally <b>strict</b> — abstraction loses, and that loss is the whole point.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: swap one sound operator for an <b>under</b>-approximation — make pos · pos drop the reachable <b>pos</b>. Now the abstract answer is <i>too small</i> and a real result escapes it. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ under-approximate ×</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Drop one reachable abstract value and soundness fails: the concrete <b>pos</b> result of x·x+x for a positive x is no longer covered — the witness recomputes, finds a real behaviour uncovered, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE ABSTRACT INTERPRETATION — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (a shape <b style="color:var(--cy)">in</b> → abstract semantics → a sound over-approximation <b style="color:var(--gr)">out</b>). A runnable rendering of Cousot &amp; Cousot's 1977 framework — the engine is LIT (soundness checked exhaustively over every input and the whole 128-subset Galois adjunction, widening proven to terminate, tamper-provable), the blue team witnesses, the red team under-approximates, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- the abstract domain: signs as a 3-bit mask (neg=1, zero=2, pos=4) ----
+const N=1,Z=2,P=4;
+const ANAME={0:"⊥",1:"{neg}",2:"{zero}",3:"{≤0}",4:"{pos}",5:"{≠0}",6:"{≥0}",7:"⊤"};
+const R=3;                                   // concrete universe is the integers -R..R
+const UNIV=(()=>{const u=[];for(let x=-R;x<=R;x++)u.push(x);return u;})();
+const M=UNIV.length;
+function sgn(x){ return x<0?N : x===0?Z : P; }
+function leq(a,b){ return (a & ~b)===0; }    // abstract order = subset of sign-bits
+// ---- Galois connection over concrete subsets (bitmask over universe indices) ----
+function alphaM(cm){ let m=0; for(let i=0;i<M;i++) if(cm&(1<<i)) m|=sgn(UNIV[i]); return m; }
+function gammaM(a){ let cm=0; for(let i=0;i<M;i++) if(a&sgn(UNIV[i])) cm|=1<<i; return cm; }
+function subM(x,y){ return (x & ~y)===0; }
+function gammaSet(a){ return UNIV.filter(x=> a & sgn(x)); }
+// ---- the rule of signs: exact per-sign operators (Cousot's borrowed example) ----
+function mulSign(sa,sb){ if(sa===Z||sb===Z) return Z; return (sa===sb)?P:N; }
+function addSign(sa,sb){ if(sa===sb) return sa; if(sa===Z) return sb; if(sb===Z) return sa; return N|Z|P; }
+let TAMPER=false;                            // red's under-approximation (disclosed planted void)
+function absMul(a,b){ let r=0; for(const sa of[N,Z,P]) if(a&sa) for(const sb of[N,Z,P]) if(b&sb) r|=mulSign(sa,sb); if(TAMPER) r&=~P; return r; }
+function absAdd(a,b){ let r=0; for(const sa of[N,Z,P]) if(a&sa) for(const sb of[N,Z,P]) if(b&sb) r|=addSign(sa,sb); return r; }
+// ---- the program: b = x*x + x, concrete and abstract ----
+function concProg(x){ return x*x + x; }
+function absProg(xa){ return absAdd(absMul(xa,xa), xa); }
+function concSigns(xa){ let m=0; for(const x of gammaSet(xa)) m|=sgn(concProg(x)); return m; }
+// ---- the interval domain with widening (termination on an infinite chain) ----
+const NINF=-Infinity, PINF=Infinity;
+function iplus1(a){ if(!a)return a; return [a[0]===NINF?NINF:a[0]+1, a[1]===PINF?PINF:a[1]+1]; }
+function ijoin(a,b){ if(!a)return b; if(!b)return a; return [Math.min(a[0],b[0]),Math.max(a[1],b[1])]; }
+function iwiden(a,b){ if(!a)return b; if(!b)return a; return [ b[0]<a[0]?NINF:a[0], b[1]>a[1]?PINF:a[1] ]; }
+function isub(a,b){ if(!a)return true; if(!b)return false; return b[0]<=a[0] && a[1]<=b[1]; }
+function loopStep(I){ return ijoin([0,0], iplus1(I)); }   // i=0; while(true) i=i+1;
+function fixWiden(maxIter){ let I=null,steps=0; while(steps<maxIter){ const nx=loopStep(I); const w=iwiden(I,nx); steps++; if(I && isub(w,I)) return {iv:I,steps}; I=w; } return {iv:I,steps,diverged:true}; }
+function fixPlain(maxIter){ let I=null,steps=0; while(steps<maxIter){ const nx=loopStep(I); steps++; if(I && isub(nx,I)) return {iv:I,steps,converged:true}; I=nx; } return {iv:I,steps,diverged:true}; }
+// ---- fail-loud self-check (exhaustive; runs untampered, restores the flag, returns true) ----
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ // Galois connection, exhaustive over all 128 subsets of the universe and all 8 abstract values
+ for(let a=0;a<8;a++) t(alphaM(gammaM(a))===a,"Galois insertion alpha(gamma(a))=a fails at a="+a);
+ const SUB=1<<M;
+ for(let cm=0;cm<SUB;cm++){
+   t(subM(cm,gammaM(alphaM(cm))),"extensivity X subset gamma(alpha(X)) fails");
+   for(let a=0;a<8;a++) t( leq(alphaM(cm),a)===subM(cm,gammaM(a)), "adjunction alpha(X)<=a iff X subset gamma(a) fails");
+ }
+ for(let a=0;a<8;a++)for(let b=0;b<8;b++) if(leq(a,b)) t(subM(gammaM(a),gammaM(b)),"gamma must be monotone");
+ for(let x=0;x<SUB;x++)for(let y=0;y<SUB;y++) if(subM(x,y)) t(leq(alphaM(x),alphaM(y)),"alpha must be monotone");
+ // SOUNDNESS, exhaustive: for every abstract input, every real run's sign is covered by the abstract answer
+ for(let xa=0;xa<8;xa++) t(leq(concSigns(xa),absProg(xa)),"SOUNDNESS: a real behaviour is dropped at input "+ANAME[xa]);
+ // the over-approximation is genuine (some input strictly wider — a spurious sign, none dropped)
+ let strict=false; for(let xa=0;xa<8;xa++) if(concSigns(xa)!==absProg(xa) && leq(concSigns(xa),absProg(xa))) strict=true;
+ t(strict,"over-approximation must be genuine on at least one input");
+ // widening TERMINATES on the infinite ascending chain; plain join iteration does not
+ const w=fixWiden(40); t(!w.diverged && w.steps<=5,"widening must terminate quickly");
+ t(w.iv[0]===0 && w.iv[1]===PINF,"widened fixpoint must be [0,+inf)");
+ t(fixPlain(60).diverged===true,"plain interval iteration must not stabilize (widening is required)");
+ t(isub([0,PINF],w.iv),"widened result must cover the concrete reachable set [0,+inf)");
+ t(!isub([0,PINF],[0,5]),"soundness must be falsifiable: [0,5] must NOT cover [0,+inf)");
+ // TAMPER: the under-approximation drops the reachable pos; a real pos result is now uncovered
+ TAMPER=true;
+ t(absMul(P,P)===0,"tamper must drop the reachable pos from pos*pos");
+ t(!leq(concSigns(P),absProg(P)),"TAMPER must break soundness: a real value escapes the abstract answer");
+ TAMPER=save;
+ t(leq(concSigns(P),absProg(P)),"restore must re-establish soundness");
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let _seed=0x2f6e2b1;
+function rnd(){ _seed=(_seed*1103515245+12345)&0x7fffffff; return _seed/0x7fffffff; }
+function curX(){ return +$("xin").value; }
+function render(){
+ const xa=curX();
+ const g=gammaSet(xa), am=absMul(xa,xa), out=absProg(xa), cs=concSigns(xa);
+ $("mGamma").textContent = "{"+(g.length?g.join(", "):"∅")+"}";
+ $("mAlpha").textContent = ANAME[cs];
+ $("concBody").innerHTML = (g.length?g:[]).map(x=>{ const b=concProg(x); const s=sgn(b);
+   return "<tr><td>"+x+"</td><td>"+b+"</td><td class=\""+(s===P?'y':(s===Z?'':'n'))+"\">"+(s===N?'neg':s===Z?'zero':'pos')+"</td></tr>"; }).join("")
+   || "<tr><td colspan=\"3\" class=\"mut\">⊥ — no concrete inputs</td></tr>";
+ $("steps").innerHTML = "a# = x# · x# = <b>"+ANAME[am]+"</b><br>b# = a# + x# = <b style=\"color:var(--am)\">"+ANAME[out]+"</b><br>real signs = <b style=\"color:var(--cy)\">"+ANAME[cs]+"</b>";
+ const sound = leq(cs,out);
+ $("verdict").textContent = sound?"SOUND":"UNSOUND";
+ $("verdict").className = "verdict "+(sound?"ok":"no");
+ const exact = cs===out;
+ $("cover").innerHTML = sound ? (exact? "exact — abstract = real" : "over-approximation — abstract ⮌ real") : "<b style=\"color:var(--wall)\">a real behaviour escapes the abstract answer</b>";
+ $("reason").textContent = sound
+   ? (exact ? "α(real) = abstract; no information lost on this shape."
+            : "α(real)="+ANAME[cs]+" ⊏ "+ANAME[out]+"; the extra signs are spurious but sound — none dropped.")
+   : "α(real)="+ANAME[cs]+" is NOT ⊏ "+ANAME[out]+" — the abstract answer is too small.";
+}
+function audit(){
+ const el=$("auditout");
+ let sound=0; for(let xa=0;xa<8;xa++) if(leq(concSigns(xa),absProg(xa))) sound++;
+ let gal=true; for(let a=0;a<8;a++) if(alphaM(gammaM(a))!==a) gal=false;
+ const w=fixWiden(40); const wid = !w.diverged && w.steps<=5;
+ const ok = sound===8 && gal && wid;
+ el.innerHTML = "<span class=\"badge "+(ok?'pass':'failb')+"\">"+(ok?'✓ WITNESS — sound':'✗ WITNESS — broken')+"</span>"
+  + "<div class=\"small\" style=\"margin-top:6px\">inputs covered: <b style=\"color:"+(sound===8?'var(--gr)':'var(--wall)')+"\">"+sound+"</b>/8 &nbsp;·&nbsp; Galois adjunction ✓"+(gal)+" &nbsp;·&nbsp; widening stops in <b style=\"color:var(--gr)\">"+w.steps+"</b>"
+  + (TAMPER?" &nbsp; — <span style=\"color:var(--wall)\">red under-approximated ×</span>":"")+"</div>";
+}
+// ---- boot ----
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ let strict=0,exact=0; for(let xa=0;xa<8;xa++){ const c=concSigns(xa),a=absProg(xa); if(c===a)exact++; else strict++; }
+ const w=fixWiden(40);
+ $("oStrict").textContent=strict; $("oExact").textContent=exact;
+ $("oWiden").textContent="[0,+∞)"; $("oSteps").textContent=w.steps;
+ $("xin").addEventListener("change",()=>{render();audit();});
+ $("rand").addEventListener("click",()=>{ $("xin").value=(Math.floor(rnd()*8)); render();audit(); });
+ $("reset").addEventListener("click",()=>{ $("xin").value="6"; render();audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Under-approximated.</b> pos · pos now drops the reachable <b>pos</b>, so for a positive x the abstract answer is ⊥ while the real result is pos — uncovered. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Drop one reachable abstract value and soundness fails: the concrete pos result of x·x+x for a positive x is no longer covered — the witness recomputes, finds a real behaviour uncovered, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the abstract-interpretation engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

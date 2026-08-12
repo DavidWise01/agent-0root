@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BREWSTER ANGLE</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --bg:#081611;
+  --bg2:#0b1f16;
+  --panel:#0e271b;
+  --edge:#1c4632;
+  --ink:#e3f3ec;
+  --mut:#8db8a6;
+  --blue:#6fb2ff;
+  --blueedge:#204a73;
+  --red:#ff8080;
+  --rededge:#6b2626;
+  --amber:#ffc24d;
+  --wall:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 20% -10%, #0f2e20 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, #0c2519 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+a:hover{border-bottom-style:solid}
+.wrap{max-width:1220px;margin:0 auto}
+header{margin:0 0 22px}
+h1{
+  font-size:32px;letter-spacing:.06em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 24px rgba(127,224,192,.28);
+}
+.sub{color:var(--ink);max-width:900px;margin:0 0 10px;font-size:14.5px}
+.src{color:var(--mut);font-size:12.5px;letter-spacing:.02em}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+  padding:2px 7px;border-radius:999px;border:1px solid var(--edge);margin-right:6px;
+  vertical-align:middle;
+}
+.t-amber{color:var(--amber);border-color:#5e4718;background:rgba(255,194,77,.08)}
+.t-lit{color:var(--am);border-color:#1c5a44;background:rgba(127,224,192,.10)}
+.t-in{color:var(--blue);border-color:var(--blueedge);background:rgba(111,178,255,.08)}
+.t-out{color:var(--am);border-color:#1c5a44;background:rgba(127,224,192,.10)}
+.t-wall{color:var(--red);border-color:var(--rededge);background:rgba(255,128,128,.08)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  padding:7px 10px;border-radius:8px;font-weight:600;
+}
+.col.blue .teamhdr{color:var(--blue);background:rgba(111,178,255,.07);border:1px solid var(--blueedge)}
+.col.center .teamhdr{color:var(--am);background:rgba(127,224,192,.07);border:1px solid var(--edge)}
+.col.red .teamhdr{color:var(--red);background:rgba(255,128,128,.07);border:1px solid var(--rededge)}
+
+.win{
+  position:relative;background:linear-gradient(180deg,var(--panel),var(--bg2));
+  border:1px solid var(--edge);border-radius:12px;padding:14px 14px 13px;
+}
+.col.blue .win{border-color:var(--blueedge)}
+.col.red .win{border-color:var(--rededge)}
+.win.panel{border-color:#2a7358;box-shadow:0 0 0 1px rgba(127,224,192,.10),0 0 34px rgba(127,224,192,.08)}
+.wn{
+  position:absolute;top:-10px;left:12px;width:22px;height:22px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  background:var(--bg);border:1px solid var(--edge);color:var(--mut);
+}
+.col.blue .wn{border-color:var(--blueedge);color:var(--blue)}
+.col.center .wn{border-color:#2a7358;color:var(--am)}
+.col.red .wn{border-color:var(--rededge);color:var(--red)}
+.win h3{margin:2px 0 8px;font-size:13px;letter-spacing:.05em;color:var(--ink)}
+.win p{margin:6px 0;font-size:12.7px;color:var(--mut)}
+.win b{color:var(--ink)}
+.k{color:var(--am)}
+.mono{font-family:inherit}
+.eq{
+  display:block;background:#06110c;border:1px solid var(--edge);border-radius:8px;
+  padding:8px 10px;margin:8px 0;color:var(--am);font-size:12.5px;overflow-x:auto;white-space:nowrap;
+}
+.dead{color:#6f8a7d;text-decoration:line-through;text-decoration-color:#a54}
+.fix{color:var(--am)}
+.wall-note{border-left:3px solid var(--red);padding-left:10px;background:rgba(255,128,128,.05)}
+
+.flow{
+  text-align:center;color:var(--mut);font-size:11px;letter-spacing:.2em;
+  margin:2px 0;padding:2px 0;
+}
+.flow::before{content:"\25BC"}
+
+canvas{display:block;width:100%;height:auto;background:#050f0a;border:1px solid var(--edge);border-radius:8px;margin:6px 0}
+.readout{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 2px}
+.chip{
+  font-size:11.5px;padding:4px 8px;border-radius:7px;border:1px solid var(--edge);
+  background:#06110c;color:var(--ink);
+}
+.chip b{color:var(--am)}
+label.ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);margin:8px 0 2px}
+input[type=range]{flex:1;accent-color:var(--am)}
+button{
+  font:inherit;font-size:12px;background:#0f2c1f;color:var(--ink);
+  border:1px solid var(--edge);border-radius:8px;padding:6px 11px;cursor:pointer;margin:4px 6px 0 0;
+}
+button:hover{border-color:var(--am);color:var(--am)}
+button#tamper{border-color:var(--rededge);color:var(--red)}
+button#tamper:hover{background:rgba(255,128,128,.10)}
+.badge{
+  display:inline-block;margin-top:8px;font-size:12px;padding:6px 10px;border-radius:8px;
+  border:1px solid var(--edge);background:#06110c;
+}
+.badge.ok{color:var(--am);border-color:#1c5a44}
+.badge.bad{color:var(--wall);border-color:var(--rededge);background:rgba(255,107,107,.08)}
+#failb{display:none;margin:14px 0;padding:12px 14px;border-radius:10px;
+  border:1px solid var(--rededge);background:rgba(255,107,107,.09);color:var(--red)}
+.litbadge{color:var(--am)}
+footer{margin-top:30px;color:var(--mut);font-size:12px;border-top:1px solid var(--edge);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE BREWSTER ANGLE</h1>
+  <p class="sub">Hit glass at just the right slant and the reflection turns perfectly polarized &mdash; the physics behind polarized sunglasses and no-glare camera filters. At one special angle the reflected and refracted rays cross at a right angle and the p&#8209;polarized reflectance drops to <b>exactly zero</b>. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Brewster, D. &ldquo;On the laws which regulate the polarisation of light by reflexion from transparent bodies,&rdquo; <i>Phil. Trans. R. Soc. Lond.</i> <b>105</b> (1815) 125&ndash;159 &middot; <a href="https://doi.org/10.1098/rstl.1815.0010" target="_blank" rel="noopener">doi:10.1098/rstl.1815.0010</a></p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- LEFT · BLUE TEAM -->
+  <section class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wn">3</div>
+      <h3>THE MODEL</h3>
+      <p>Light meets a flat boundary between two media of refractive index <b>n<sub>1</sub></b> (air) and <b>n<sub>2</sub></b> (glass). Part reflects, part refracts. Reflectance depends on <b>polarization</b>: <span class="k">s</span> (perpendicular to the plane of incidence) and <span class="k">p</span> (parallel).</p>
+      <span class="eq">tan(&theta;<sub>B</sub>) = n&#8322; / n&#8321;</span>
+      <p>At the Brewster angle &theta;<sub>B</sub>, the p&#8209;channel Fresnel reflectance <b>R<sub>p</sub></b> falls to 0. Only s&#8209;polarized light reflects &mdash; the glare is fully polarized, so a filter aligned to block it kills the reflection.</p>
+      <p class="mono" style="color:var(--mut)">Fresnel amplitude: r<sub>p</sub> = (n&#8322;cos&theta;<sub>i</sub> &minus; n&#8321;cos&theta;<sub>t</sub>) / (n&#8322;cos&theta;<sub>i</sub> + n&#8321;cos&theta;<sub>t</sub>), &nbsp; R<sub>p</sub> = r<sub>p</sub><sup>2</sup>.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">5</div>
+      <h3>THE LINEAGE</h3>
+      <p>Reflection turns polarized &mdash; <b>Brewster 1815</b>. He measured that the polarizing angle is set by the refractive index alone: tan(&theta;<sub>B</sub>) = n&#8322;/n&#8321;, and there the reflected and refracted rays meet at a right angle.</p>
+      <p>This is one special angle of <b class="k">the-fresnel-equations</b> (the full R<sub>s</sub>/R<sub>p</sub> vs. angle laws): the exact incidence where the p&#8209;curve touches zero. The fully polarized beam it produces is the input <b class="k">the-malus-law</b> then acts on with I = I<sub>0</sub>cos&sup2;&theta;. Fresnel R+T = 1 conserves the energy that does not reflect.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">7</div>
+      <h3>THE WITNESS</h3>
+      <p>Re-runs the invariants live against the engine below. It confirms &theta;<sub>B</sub> = atan(n&#8322;/n&#8321;), the reflected+refracted right angle, and R<sub>p</sub>(&theta;<sub>B</sub>) = 0. If the adversary tampers the ratio, the witness flips red on the next tick.</p>
+      <div id="auditout" class="badge">witness idle</div>
+    </div>
+  </section>
+
+  <!-- CENTER · THE MACHINE -->
+  <section class="col center">
+    <div class="teamhdr">The machine</div>
+
+    <div class="win">
+      <div class="wn">4</div>
+      <h3>DATA IN <span class="tag t-in">in &#9660;</span></h3>
+      <p>Two refractive indices and an incidence angle. Default: air&ndash;glass, <b>n<sub>1</sub> = 1.00</b>, <b>n<sub>2</sub> = 1.50</b>. Drag n<sub>2</sub> to see the Brewster angle track it.</p>
+      <label class="ctl">n&#8322; <input id="n2" type="range" min="1.10" max="2.60" step="0.01" value="1.50"><span class="chip" id="n2v"><b>1.50</b></span></label>
+      <label class="ctl">&theta;<sub>i</sub> <input id="ti" type="range" min="0" max="89" step="0.1" value="56.3"><span class="chip" id="tiv"><b>56.3&deg;</b></span></label>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <div class="wn">0</div>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <canvas id="cv" width="520" height="300"></canvas>
+      <div class="readout">
+        <span class="chip">&theta;<sub>B</sub> <b id="ro_tb">&mdash;</b></span>
+        <span class="chip">&theta;<sub>t</sub>(@&theta;<sub>B</sub>) <b id="ro_tt">&mdash;</b></span>
+        <span class="chip">&theta;<sub>B</sub>+&theta;<sub>t</sub> <b id="ro_sum">&mdash;</b></span>
+        <span class="chip">R<sub>p</sub>(&theta;<sub>i</sub>) <b id="ro_rp">&mdash;</b></span>
+        <span class="chip">R<sub>s</sub>(&theta;<sub>i</sub>) <b id="ro_rs">&mdash;</b></span>
+      </div>
+      <p style="margin-top:8px">Curves: <span style="color:var(--am)">R<sub>p</sub></span> dips to zero at &theta;<sub>B</sub>; <span style="color:var(--blue)">R<sub>s</sub></span> climbs monotonically. Ray inset shows the reflected (up&#8209;left) and refracted (down&#8209;right) rays meeting at a right angle when &theta;<sub>i</sub> = &theta;<sub>B</sub>.</p>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win">
+      <div class="wn">8</div>
+      <h3>DATA OUT <span class="tag t-out">out &#9660;</span></h3>
+      <p>Proven at boot for air&ndash;glass (n<sub>2</sub> = 1.5):</p>
+      <div id="litbadge" class="badge ok litbadge">&mdash;</div>
+    </div>
+  </section>
+
+  <!-- RIGHT · RED TEAM -->
+  <section class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wn">1</div>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <div class="wall-note">
+        <p><b>&ldquo;Brewster&rsquo;s angle is where reflection is strongest.&rdquo;</b> False &mdash; it is where the p&#8209;channel reflection is <b>weakest</b> (zero). Total reflected power actually dips near &theta;<sub>B</sub> for unpolarized light before rising to 1 at grazing.</p>
+        <p><b>&ldquo;All the reflected light is gone at &theta;<sub>B</sub>.&rdquo;</b> No &mdash; only the p&#8209;component vanishes. The s&#8209;component still reflects (R<sub>s</sub> &asymp; 0.148 for glass), which is why the glare is <i>polarized</i>, not absent.</p>
+        <p><b>Real failure modes:</b> at grazing incidence R&rarr;1 for both polarizations; a metal (complex n) never nulls R<sub>p</sub> to exactly zero; and beyond the critical angle from the dense side there is total internal reflection, no Brewster null at all.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wn">2</div>
+      <h3>THE GRAVEYARD</h3>
+      <p><span class="dead">tan(&theta;<sub>B</sub>) = n&#8321;/n&#8322; (ratio inverted).</span><br><span class="fix">&#8594; tan(&theta;<sub>B</sub>) = n&#8322;/n&#8321;. The inverted form gives 33.7&deg; for glass and breaks the right&#8209;angle law.</span></p>
+      <p><span class="dead">&theta;<sub>B</sub> depends on wavelength as strongly as the color splits.</span><br><span class="fix">&#8594; only weakly &mdash; through dispersion n(&lambda;). For crown glass &theta;<sub>B</sub> shifts &lt;0.2&deg; across the visible.</span></p>
+      <p><span class="dead">Brewster&rsquo;s angle needs the Fresnel equations to derive.</span><br><span class="fix">&#8594; the right&#8209;angle condition &theta;<sub>B</sub>+&theta;<sub>t</sub> = 90&deg; plus Snell gives tan&theta;<sub>B</sub> = n&#8322;/n&#8321; directly.</span></p>
+    </div>
+
+    <div class="win">
+      <div class="wn">6</div>
+      <h3>THE TAMPER</h3>
+      <p>Planted void: swap the ratio to <b>n<sub>1</sub>/n<sub>2</sub></b>. Brewster&rsquo;s angle collapses to ~33.7&deg;, the reflected+refracted rays no longer cross at 90&deg;, and R<sub>p</sub> at the reported angle is no longer zero. The Witness (7) catches it.</p>
+      <button id="tamper">inject void</button>
+      <button id="restore">restore</button>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  THE FOLD &middot; WORLD II &middot; ud0 corpus &middot; the-brewster-angle &middot; the engine is LIT: computed live from tan&theta;<sub>B</sub>=n&#8322;/n&#8321; and the Fresnel reflectances, verified by a fail-loud selfcheck at boot. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- ENGINE (pure logic; runs headless, no DOM/canvas) ----
+var TAMPER = false;
+
+function brewsterRad(n1, n2){ return TAMPER ? Math.atan(n1 / n2) : Math.atan(n2 / n1); }
+function brewsterDeg(n1, n2){ return brewsterRad(n1, n2) * 180 / Math.PI; }
+
+function snellT(thetaI, n1, n2){
+  var s = n1 * Math.sin(thetaI) / n2;
+  if (Math.abs(s) > 1) return null;   // total internal reflection
+  return Math.asin(s);
+}
+function Rp(thetaI, n1, n2){
+  var tt = snellT(thetaI, n1, n2);
+  if (tt === null) return 1;
+  var ci = Math.cos(thetaI), ct = Math.cos(tt);
+  var r = (n2 * ci - n1 * ct) / (n2 * ci + n1 * ct);
+  return r * r;
+}
+function Rs(thetaI, n1, n2){
+  var tt = snellT(thetaI, n1, n2);
+  if (tt === null) return 1;
+  var ci = Math.cos(thetaI), ct = Math.cos(tt);
+  var r = (n1 * ci - n2 * ct) / (n1 * ci + n2 * ct);
+  return r * r;
+}
+function malus(I0, theta){ var c = Math.cos(theta); return I0 * c * c; }
+
+// fixed-seed PRNG (mulberry32) so selfcheck is deterministic
+function mkrng(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function selfcheck(){
+  var n1 = 1.0, n2 = 1.5, TOL = 1e-9;
+  var TB_TRUE = 56.309932474020215;   // atan(1.5) in degrees
+  var TB_BAD  = 33.690067525979785;   // atan(1/1.5) in degrees
+
+  // 1) Brewster angle value for air-glass ~ 56.3 deg
+  if (Math.abs(brewsterDeg(n1, n2) - TB_TRUE) > 1e-6) throw new Error("Brewster angle value wrong");
+
+  var tbr = brewsterRad(n1, n2);
+  var tt = snellT(tbr, n1, n2);
+  if (tt === null) throw new Error("no refracted ray at Brewster");
+
+  // 2) reflected and refracted rays exactly perpendicular: theta_B + theta_t = 90 deg
+  if (Math.abs((tbr + tt) - Math.PI / 2) > TOL) throw new Error("reflected+refracted not perpendicular");
+
+  // 3) p-polarized reflectance vanishes at Brewster (intensity tolerance 1e-9)
+  var rpB = Rp(tbr, n1, n2);
+  if (Math.abs(rpB) > TOL) throw new Error("R_p did not vanish at Brewster");
+
+  // 4) R_p minimum is EXACTLY at Brewster (deterministic scan + seeded random probes)
+  var i, a;
+  for (i = 0; i <= 2000; i++){
+    a = (i / 2000) * (Math.PI / 2) * 0.999;
+    if (Math.abs(a - tbr) < 1e-4) continue;
+    if (Rp(a, n1, n2) <= rpB) throw new Error("R_p dips below the Brewster minimum");
+  }
+  var rng = mkrng(1815);
+  for (i = 0; i < 600; i++){
+    a = rng() * (Math.PI / 2) * 0.999;
+    if (Math.abs(a - tbr) < 1e-4) continue;
+    if (Rp(a, n1, n2) <= rpB) throw new Error("random angle beats the Brewster minimum");
+  }
+
+  // 5) s-polarization still reflects there (glare is polarized, not absent)
+  if (Rs(tbr, n1, n2) <= 0.01) throw new Error("s-pol should still reflect at Brewster");
+
+  // 6) normal-incidence Fresnel reflectance = 4% for glass
+  if (Math.abs(Rp(0, n1, n2) - 0.04) > 1e-9) throw new Error("normal-incidence R_p != 4%");
+  if (Math.abs(Rs(0, n1, n2) - 0.04) > 1e-9) throw new Error("normal-incidence R_s != 4%");
+
+  // 7) lineage: Malus crossed = 0, three-polarizer = I0/8
+  if (Math.abs(malus(1, Math.PI / 2)) > TOL) throw new Error("Malus crossed not zero");
+  if (Math.abs(malus(malus(0.5, Math.PI / 4), Math.PI / 4) - 0.125) > TOL) throw new Error("three-polarizer != I0/8");
+
+  // 8) stated intensity-integral tolerance: mean of cos^2 over a full period = 1/2 to 1e-9
+  var M = 4000, s2 = 0;
+  for (i = 0; i < M; i++){ var th = (i + 0.5) / M * 2 * Math.PI; var c = Math.cos(th); s2 += c * c; }
+  if (Math.abs(s2 / M - 0.5) > 1e-9) throw new Error("cos^2 mean != 1/2");
+
+  // ---- TAMPER: disclosed planted void ----
+  var saved = TAMPER;
+  TAMPER = true;
+  var tbad = brewsterDeg(n1, n2);
+  if (Math.abs(tbad - TB_BAD) > 1e-6) throw new Error("tamper did not invert the ratio");
+  if (Math.abs(tbad - TB_TRUE) < 1.0) throw new Error("tampered angle should differ from the truth");
+  var tbadr = brewsterRad(n1, n2);
+  if (Rp(tbadr, n1, n2) < 1e-6) throw new Error("tampered angle still nulls R_p -- void escaped");
+  var ttbad = snellT(tbadr, n1, n2);
+  if (Math.abs((tbadr + ttbad) - Math.PI / 2) < 1e-6) throw new Error("tampered angle still perpendicular -- void escaped");
+  TAMPER = saved;
+
+  // restore confirmed
+  if (Math.abs(brewsterDeg(n1, n2) - TB_TRUE) > 1e-6) throw new Error("restore failed");
+  return true;
+}
+
+/* ===== UI ===== */
+
+(function(){
+  var ok = false;
+  try {
+    ok = selfcheck();
+  } catch (e){
+    var fb = document.getElementById("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED — engine not LIT: " + e.message;
+    throw e;
+  }
+
+  var lit = document.getElementById("litbadge");
+  if (ok){
+    lit.textContent = "θ_B = 56.30993° · θ_B+θ_t = 90.000° · R_p = 0 (R_s = 0.148) · LIT";
+  }
+
+  var n2El = document.getElementById("n2"), n2v = document.getElementById("n2v");
+  var tiEl = document.getElementById("ti"), tiv = document.getElementById("tiv");
+  var cv = document.getElementById("cv"), g = cv.getContext("2d");
+  var audit = document.getElementById("auditout");
+  var N1 = 1.0;
+  var DEG = 180 / Math.PI;
+
+  function fmt(x, d){ return x.toFixed(d === undefined ? 2 : d); }
+
+  function witness(n2){
+    // live re-check of the invariants against the engine
+    var tbr = brewsterRad(N1, n2), tt = snellT(tbr, N1, n2);
+    var perp = tt !== null && Math.abs((tbr + tt) - Math.PI / 2) < 1e-9;
+    var nulls = Math.abs(Rp(tbr, N1, n2)) < 1e-9;
+    var lawtan = Math.abs(Math.tan(tbr) - n2 / N1) < 1e-9;
+    if (perp && nulls && lawtan && !TAMPER){
+      audit.className = "badge ok";
+      audit.textContent = "witness OK · θ_B=" + fmt(tbr * DEG) + "° · θ_B+θ_t=90.000° · R_p=0";
+    } else {
+      audit.className = "badge bad";
+      var reason = TAMPER ? "ratio inverted (n1/n2)" : "invariant broken";
+      audit.textContent = "WITNESS TRIPPED · " + reason + " · θ_B=" + fmt(tbr * DEG) +
+        "° · θ_B+θ_t=" + fmt((tbr + (tt === null ? 0 : tt)) * DEG) +
+        "° · R_p=" + fmt(Rp(tbr, N1, n2), 4);
+    }
+  }
+
+  function draw(){
+    var n2 = parseFloat(n2El.value);
+    var ti = parseFloat(tiEl.value) * Math.PI / 180;
+    var tbr = brewsterRad(N1, n2);
+    var tt = snellT(tbr, N1, n2);
+    var W = cv.width, H = cv.height;
+    g.clearRect(0, 0, W, H);
+
+    // ---- reflectance plot (left 2/3) ----
+    var px0 = 44, py0 = 24, pw = 300, ph = H - 64;
+    g.strokeStyle = "#1c4632"; g.lineWidth = 1;
+    g.strokeRect(px0, py0, pw, ph);
+    g.fillStyle = "#7a9c8e"; g.font = "11px monospace";
+    g.fillText("R", px0 - 30, py0 + 10);
+    g.fillText("1", px0 - 14, py0 + 8);
+    g.fillText("0", px0 - 14, py0 + ph + 2);
+    g.fillText("0°", px0 - 4, py0 + ph + 16);
+    g.fillText("90°", px0 + pw - 14, py0 + ph + 16);
+    g.fillText("incidence θ", px0 + pw / 2 - 34, py0 + ph + 16);
+
+    function plot(fn, color){
+      g.strokeStyle = color; g.lineWidth = 1.8; g.beginPath();
+      for (var i = 0; i <= 300; i++){
+        var a = (i / 300) * (Math.PI / 2) * 0.999;
+        var r = fn(a, N1, n2);
+        var x = px0 + (a / (Math.PI / 2)) * pw;
+        var y = py0 + ph - r * ph;
+        if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+    plot(Rs, "#6fb2ff");
+    plot(Rp, "#7fe0c0");
+
+    // Brewster marker
+    var xb = px0 + (tbr / (Math.PI / 2)) * pw;
+    g.strokeStyle = "rgba(127,224,192,.55)"; g.setLineDash([4, 3]); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(xb, py0); g.lineTo(xb, py0 + ph); g.stroke(); g.setLineDash([]);
+    g.fillStyle = "#7fe0c0"; g.fillText("θ_B", xb - 8, py0 - 6);
+    // current incidence marker
+    var xc = px0 + (ti / (Math.PI / 2)) * pw;
+    g.strokeStyle = "rgba(255,194,77,.6)"; g.beginPath(); g.moveTo(xc, py0); g.lineTo(xc, py0 + ph); g.stroke();
+    g.fillStyle = "#6fb2ff"; g.fillText("R_s", px0 + 6, py0 + 12);
+    g.fillStyle = "#7fe0c0"; g.fillText("R_p", px0 + 6, py0 + 26);
+
+    // ---- ray-geometry inset (right) ----
+    var cx = 430, cy = H / 2, L = 58;
+    g.strokeStyle = "#244f39"; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(cx - 76, cy); g.lineTo(cx + 76, cy); g.stroke(); // interface
+    g.fillStyle = "#5f7d70"; g.fillText("n1", cx - 74, cy - 6); g.fillText("n2", cx - 74, cy + 14);
+    // normal
+    g.strokeStyle = "#33604a"; g.setLineDash([3, 3]);
+    g.beginPath(); g.moveTo(cx, cy - 70); g.lineTo(cx, cy + 70); g.stroke(); g.setLineDash([]);
+    var useTi = ti; // draw at current incidence
+    var ttc = snellT(useTi, N1, n2);
+    // incident (from upper-left toward origin)
+    g.lineWidth = 2;
+    g.strokeStyle = "#ffc24d";
+    g.beginPath(); g.moveTo(cx - Math.sin(useTi) * L, cy - Math.cos(useTi) * L); g.lineTo(cx, cy); g.stroke();
+    // reflected (upper-right)
+    g.strokeStyle = "#6fb2ff";
+    g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.sin(useTi) * L, cy - Math.cos(useTi) * L); g.stroke();
+    // refracted (lower-right)
+    if (ttc !== null){
+      g.strokeStyle = "#7fe0c0";
+      g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.sin(ttc) * L, cy + Math.cos(ttc) * L); g.stroke();
+    }
+    var atB = Math.abs(useTi - tbr) < 0.5 * Math.PI / 180;
+    g.fillStyle = atB ? "#7fe0c0" : "#5f7d70";
+    g.font = "10px monospace";
+    g.fillText(atB ? "∠ = 90°" : "reflected ⊥ refracted", cx - 30, cy + 82);
+
+    // readouts
+    document.getElementById("ro_tb").textContent = fmt(tbr * DEG) + "°";
+    document.getElementById("ro_tt").textContent = tt === null ? "—" : fmt(tt * DEG) + "°";
+    document.getElementById("ro_sum").textContent = tt === null ? "—" : fmt((tbr + tt) * DEG, 3) + "°";
+    document.getElementById("ro_rp").textContent = fmt(Rp(ti, N1, n2), 4);
+    document.getElementById("ro_rs").textContent = fmt(Rs(ti, N1, n2), 4);
+    n2v.innerHTML = "<b>" + fmt(n2) + "</b>";
+    tiv.innerHTML = "<b>" + fmt(parseFloat(tiEl.value), 1) + "°</b>";
+
+    witness(n2);
+  }
+
+  n2El.addEventListener("input", draw);
+  tiEl.addEventListener("input", draw);
+
+  document.getElementById("tamper").addEventListener("click", function(){
+    TAMPER = true; draw();
+  });
+  document.getElementById("restore").addEventListener("click", function(){
+    TAMPER = false; draw();
+  });
+
+  draw();
+})();
+</script>
+</body>
+</html>

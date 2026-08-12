@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BEER-LAMBERT LAW</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --bg:#0a1512;
+  --bg2:#0e1c18;
+  --ink:#dcefe8;
+  --dim:#8fb0a6;
+  --line:#1d332c;
+  --blue:#6fb7ff;
+  --red:#ff7a6d;
+  --amber:#ffcf6b;
+  --lit:#7fe0c0;
+  --wall:#ff7a6d;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 15% -10%, #10241d 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, #0d201a 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+a:hover{border-bottom-style:solid}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin:0 0 22px}
+h1{
+  font-size:30px;letter-spacing:2px;margin:0 0 8px;
+  color:#fff;text-shadow:0 0 22px rgba(127,224,192,.35);
+}
+.sub{color:var(--dim);max-width:760px;margin:0 0 12px;font-size:14px}
+.sub b{color:var(--ink)}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:1px;padding:2px 7px;border-radius:4px;
+  border:1px solid var(--line);text-transform:uppercase;white-space:nowrap;
+}
+.t-amber{color:var(--amber);border-color:#5a4a1e;background:rgba(255,207,107,.06)}
+.t-lit{color:var(--lit);border-color:#1f4a3d;background:rgba(127,224,192,.07)}
+.t-in{color:var(--blue);border-color:#25415f;background:rgba(111,183,255,.06)}
+.t-out{color:var(--am);border-color:#1f4a3d;background:rgba(127,224,192,.07)}
+.t-wall{color:var(--wall);border-color:#5a2420;background:rgba(255,122,109,.07)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);
+  padding:4px 2px;border-bottom:1px solid var(--line);margin-bottom:2px;
+}
+.col.blue .teamhdr{color:var(--blue)}
+.col.red .teamhdr{color:var(--red)}
+.col.center .teamhdr{color:var(--am)}
+
+.win{
+  position:relative;background:linear-gradient(180deg,var(--bg2),#0b1713);
+  border:1px solid var(--line);border-radius:10px;padding:14px 14px 13px;
+}
+.win .num{
+  position:absolute;top:-9px;right:10px;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;font-size:11px;font-weight:700;
+  background:var(--bg);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .num{color:var(--blue);border-color:#25415f}
+.col.red .num{color:var(--red);border-color:#5a2420}
+.col.center .num{color:var(--am);border-color:#1f4a3d}
+.win h3{margin:0 0 8px;font-size:12.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink)}
+.win p{margin:6px 0;font-size:13px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.win.panel{border-color:#204a3e;box-shadow:0 0 0 1px rgba(127,224,192,.06),0 10px 40px rgba(0,0,0,.35)}
+
+.mono{font-size:12.5px;color:var(--ink);background:#08120f;border:1px solid var(--line);
+  border-radius:7px;padding:9px 10px;overflow-x:auto;white-space:pre;margin:8px 0}
+.eq{color:var(--am)}
+.flow{height:20px;display:grid;place-items:center;color:var(--dim);font-size:15px}
+.flow span{opacity:.7}
+
+.badge{display:inline-block;font-size:11px;letter-spacing:1px;padding:3px 9px;border-radius:5px;
+  border:1px solid var(--line);margin-top:6px}
+.badge.ok{color:var(--lit);border-color:#1f4a3d;background:rgba(127,224,192,.08)}
+.badge.bad{color:var(--wall);border-color:#5a2420;background:rgba(255,122,109,.12)}
+
+.wall-note{border-left:3px solid var(--wall);padding-left:10px;color:#e7b9b3;font-size:12.5px}
+.dead{color:#8a6f6b}
+.dead s{color:#6b524f}
+.fix{color:var(--am)}
+
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 4px}
+.ctrl label{font-size:11.5px;color:var(--dim);min-width:98px}
+input[type=range]{flex:1;accent-color:var(--am);min-width:110px}
+.val{font-variant-numeric:tabular-nums;color:var(--am);min-width:64px;text-align:right;font-size:12.5px}
+button{
+  font:inherit;font-size:12px;letter-spacing:1px;cursor:pointer;
+  background:#10201b;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 12px;
+}
+button:hover{border-color:var(--am);color:var(--am)}
+button.warn:hover{border-color:var(--wall);color:var(--wall)}
+
+canvas{width:100%;height:auto;display:block;background:#08120f;border:1px solid var(--line);border-radius:7px;margin-top:8px}
+.readout{font-size:12.5px;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:8px}
+.readout b{color:var(--am)}
+.tbar{height:16px;border-radius:4px;border:1px solid var(--line);background:#08120f;overflow:hidden;margin:4px 0}
+.tbar i{display:block;height:100%;background:linear-gradient(90deg,#ffe9a0,#7fe0c0)}
+
+#failb{display:none;margin:14px 0;padding:10px 12px;border:1px solid #5a2420;border-radius:8px;
+  background:rgba(255,122,109,.1);color:var(--wall);font-size:13px}
+footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);color:var(--dim);font-size:12px;text-align:center}
+footer b{color:var(--ink)}
+.small{font-size:11px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE BEER-LAMBERT LAW</h1>
+  <p class="sub">How much light a solution swallows, written in one line: <b>A = &epsilon;&middot;c&middot;l</b>. Absorbance is <b>linear</b> in concentration and path length; transmittance <b>T = 10<sup>&minus;A</sup></b> is what the detector actually sees. Rendered, not quoted &mdash; the engine below computes the law live and a planted flaw is caught by the witness.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Beer, A. (1852) <i>Bestimmung der Absorption des rothen Lichts in farbigen Fl&uuml;ssigkeiten</i>, Ann. Phys. Chem. <b>86</b>, 78&ndash;88 &middot; Bouguer (1729) <i>Essai d'optique</i> &middot; Lambert (1760) <i>Photometria</i>
+    <span class="tag t-amber">no stable DOI &mdash; cited by author/title/year</span>
+  </p>
+  <div id="failb"></div>
+</header>
+
+<div class="ocho">
+
+  <!-- ===================== BLUE TEAM ===================== -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="num">3</div>
+      <h3>The Model</h3>
+      <p>A beam of intensity <b>I&#8320;</b> enters a cuvette. Each thin slab absorbs a fixed <i>fraction</i>, so intensity falls exponentially with depth &mdash; and the exponent is <b>proportional</b> to both concentration and path length.</p>
+      <div class="mono"><span class="eq">A = &epsilon; &middot; c &middot; l</span>
+<span class="eq">T = I/I&#8320; = 10^(&minus;A)</span>
+<span class="eq">A = &minus;log&#8321;&#8320;(T)</span></div>
+      <p><b>&epsilon;</b> molar absorptivity (L&middot;mol&#8315;&#185;&middot;cm&#8315;&#185;) &middot; <b>c</b> concentration (mol/L) &middot; <b>l</b> path (cm). Double <b>c</b> &rarr; double <b>A</b>. Exact by construction.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">5</div>
+      <h3>The Lineage</h3>
+      <p>Light through solution &mdash; the neighbour to <b>the-nernst</b> (an ion concentration read as a voltage). Here concentration is read as <i>swallowed light</i>. Both are logarithms of a ratio: Nernst takes <b>ln</b> of an activity ratio; Beer-Lambert takes <b>log&#8321;&#8320;</b> of a transmittance ratio.</p>
+      <p>Absorbance is <b>additive</b>, transmittance <b>multiplicative</b> &mdash; the property every spectrophotometer inverts to recover an unknown <b>c</b>.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">7</div>
+      <h3>The Witness</h3>
+      <p>Re-runs the round trip <b>A &rarr; T &rarr; A</b> live on the current engine state. Green while <b>&minus;log&#8321;&#8320;(10<sup>&minus;A</sup>) = A</b> holds; flips red the instant the Tamper (window 6) swaps the base to <b>e</b>.</p>
+      <div id="auditout" class="badge ok">witness: idle</div>
+    </div>
+  </div>
+
+  <!-- ===================== CENTER ===================== -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="num">4</div>
+      <h3>Data In <span class="tag t-in">in &darr;</span></h3>
+      <p>Three knobs feed the law: molar absorptivity <b>&epsilon;</b>, concentration <b>c</b>, and path length <b>l</b>.</p>
+      <div class="ctrl"><label>&epsilon; (L/mol&middot;cm)</label><input id="ke" type="range" min="0.2" max="3" step="0.05" value="1.20"><span class="val" id="ve">1.20</span></div>
+      <div class="ctrl"><label>c (mol/L)</label><input id="kc" type="range" min="0" max="1" step="0.01" value="0.50"><span class="val" id="vc">0.50</span></div>
+      <div class="ctrl"><label>l (cm)</label><input id="kl" type="range" min="0.2" max="2" step="0.05" value="1.00"><span class="val" id="vl">1.00</span></div>
+    </div>
+
+    <div class="flow"><span>&#9660; feeds &#9660;</span></div>
+
+    <div class="win panel">
+      <div class="num">0</div>
+      <h3>The Panel <span class="tag t-lit">LIT</span></h3>
+      <p class="small">Live engine &mdash; pure functions <code>absorbance</code>, <code>transmittance</code>. No baked numbers.</p>
+      <canvas id="cv" width="520" height="260"></canvas>
+      <div class="tbar"><i id="tbar" style="width:32%"></i></div>
+      <div class="readout" id="rout">A = &middot; &middot; &middot;</div>
+    </div>
+
+    <div class="flow"><span>&#9660; proven &#9660;</span></div>
+
+    <div class="win">
+      <div class="num">8</div>
+      <h3>Data Out <span class="tag t-out">out &darr;</span></h3>
+      <p>The result the detector reports and the law the spectrophotometer inverts:</p>
+      <div class="mono" id="outmono">A = &middot; &middot; &middot;</div>
+      <div id="litbadge" class="badge ok">boot: pending</div>
+    </div>
+  </div>
+
+  <!-- ===================== RED TEAM ===================== -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="num">1</div>
+      <h3>The Adversary <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note">"Absorbance is <i>always</i> linear in c, so I can read any concentration off a straight line." <b>No.</b> Linearity is an idealisation. At high <b>c</b> the analyte's molecules interact, the refractive index shifts, and stray light &amp; polychromatic beams flatten the curve. The straight line is a <b>low-concentration limit</b> &mdash; the wall the law does not cross.</p>
+    </div>
+
+    <div class="win">
+      <div class="num">2</div>
+      <h3>The Graveyard</h3>
+      <p class="dead"><s>"Transmittance adds when you stack cuvettes."</s><br><span class="fix">&rarr; Transmittance <b>multiplies</b> (T&#8321;&middot;T&#8322;); it is <b>absorbance</b> that adds (A&#8321;+A&#8322;). Window 0 &amp; selfcheck verify both.</span></p>
+      <p class="dead"><s>"T = e<sup>&minus;A</sup> for a base-10 absorbance."</s><br><span class="fix">&rarr; That is the Tamper. For a base-10 A the detector reads <b>T = 10<sup>&minus;A</sup></b>; using base e breaks the round trip by exactly <b>1/ln10 &asymp; 0.4343</b>.</span></p>
+      <p class="dead"><s>"&epsilon; is a fixed material constant."</s><br><span class="fix">&rarr; <span class="tag t-amber">AMBER</span> &epsilon; depends on wavelength, solvent and temperature; the law holds <i>at a fixed &lambda;</i>.</span></p>
+    </div>
+
+    <div class="win">
+      <div class="num">6</div>
+      <h3>The Tamper</h3>
+      <p>Swap the transmittance base from <b>10</b> to <b>e</b> while still labelling A as base-10. The panel keeps running &mdash; but the round trip in window 7 no longer closes.</p>
+      <div class="ctrl">
+        <button id="tamper" class="warn">Inject: T = e^(&minus;A)</button>
+        <button id="restore">Restore: T = 10^(&minus;A)</button>
+      </div>
+      <p class="small" id="tampstate">base = 10 (intact)</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE BEER-LAMBERT LAW</b> &middot; A = &epsilon;cl, absorbance additive &amp; transmittance multiplicative &mdash; the law every spectrophotometer inverts.<br>
+  WORLD II &middot; THE FOLD &middot; ud0 corpus. Rendered, not quoted. Built by <b>David Lee Wise (ROOT0) with AVAN.</b>
+</footer>
+</div>
+
+<script>
+// ---- ENGINE: pure functions + fail-loud selfcheck (headless; no canvas/DOM) ----
+var TAMPER = false; // plain top-level flag so selfcheck runs headless
+
+function absorbance(eps, c, l){ return eps * c * l; }                 // Beer-Lambert: A = eps*c*l
+function transmittance(A){ return TAMPER ? Math.exp(-A) : Math.pow(10, -A); } // detector reading
+function absFromT(T){ return -Math.log10(T); }                        // inversion assumes base-10
+
+function selfcheck(){
+  var EPS = 1e-9;
+  var saved = TAMPER;
+  TAMPER = false;
+
+  var eps = 1.2, c = 0.5, l = 1.0;
+
+  // 1. linear in concentration: doubling c doubles A
+  if (Math.abs(absorbance(eps, 2*c, l) - 2*absorbance(eps, c, l)) > EPS)
+    throw new Error("linearity in c violated");
+
+  // 2. linear in path length: doubling l doubles A
+  if (Math.abs(absorbance(eps, c, 2*l) - 2*absorbance(eps, c, l)) > EPS)
+    throw new Error("linearity in l violated");
+
+  // 3. round trip A -> T -> A to 1e-9
+  var A = absorbance(eps, c, l);
+  if (Math.abs(absFromT(transmittance(A)) - A) > EPS)
+    throw new Error("round trip A->T->A failed");
+
+  // 4. at c = 0: A = 0 and T = 1
+  if (Math.abs(absorbance(eps, 0, l)) > EPS) throw new Error("A(c=0) != 0");
+  if (Math.abs(transmittance(absorbance(eps, 0, l)) - 1) > EPS) throw new Error("T(c=0) != 1");
+
+  // 5. stacking: absorbance ADDS, transmittance MULTIPLIES
+  var A1 = absorbance(eps, 0.3, 0.8);
+  var A2 = absorbance(eps, 0.7, 1.2);
+  var Atot = A1 + A2;
+  var Ttot = transmittance(A1) * transmittance(A2);
+  if (Math.abs(transmittance(Atot) - Ttot) > EPS) throw new Error("transmittance not multiplicative");
+  if (Math.abs(absFromT(Ttot) - Atot) > EPS) throw new Error("absorbance not additive");
+
+  // 6. TAMPER is a real, detectable defect: base-e transmittance breaks the round trip
+  TAMPER = true;
+  var At = absorbance(eps, c, l);
+  var rt = absFromT(transmittance(At));
+  if (Math.abs(rt - At) < EPS) throw new Error("tamper undetected: round trip still closes");
+  // the discrepancy is exactly the base conversion factor 1/ln(10)
+  if (At !== 0 && Math.abs((rt / At) - (1/Math.log(10))) > EPS)
+    throw new Error("tamper signature != 1/ln10");
+  TAMPER = false;
+  // restore verified: round trip closes again
+  if (Math.abs(absFromT(transmittance(At)) - At) > EPS) throw new Error("restore failed");
+
+  TAMPER = saved;
+  return true;
+}
+
+/* ===== UI ===== */
+
+var els = {};
+function $(id){ return document.getElementById(id); }
+
+function witnessCheck(){
+  // live re-run of the round trip on a representative A under the CURRENT base
+  var A = absorbance(1.2, 0.5, 1.0);
+  var ok = Math.abs(absFromT(transmittance(A)) - A) < 1e-9;
+  var b = $("auditout");
+  if (ok){ b.className = "badge ok"; b.textContent = "witness: A→T→A closes ✓ (base 10)"; }
+  else { b.className = "badge bad"; b.textContent = "witness: ROUND TRIP BROKEN ✗ base is e, not 10"; }
+}
+
+function draw(eps, c, l){
+  var cv = $("cv"); if(!cv) return;
+  var ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height, pad = 34;
+  ctx.clearRect(0,0,W,H);
+  // axes
+  ctx.strokeStyle = "#1d332c"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad,8); ctx.lineTo(pad,H-pad); ctx.lineTo(W-8,H-pad); ctx.stroke();
+  var cmax = 1.0;
+  var Amax = eps * cmax * l * 1.05 + 1e-6;
+  // A vs c straight line (LIT region) with high-c deviation shown AMBER
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#7fe0c0";
+  ctx.beginPath();
+  for (var i=0;i<=100;i++){
+    var cc = cmax*i/100;
+    var A = absorbance(eps, cc, l);
+    var x = pad + (W-8-pad)*(cc/cmax);
+    var y = (H-pad) - (H-pad-8)*(A/Amax);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  // amber real-world deviation (illustrative, labelled AMBER on the wall)
+  ctx.strokeStyle = "rgba(255,207,107,.55)"; ctx.setLineDash([5,4]);
+  ctx.beginPath();
+  for (var j=0;j<=100;j++){
+    var c2 = cmax*j/100;
+    var Aideal = absorbance(eps, c2, l);
+    var Areal = Aideal / (1 + 0.6*c2);           // saturating deviation at high c
+    var x2 = pad + (W-8-pad)*(c2/cmax);
+    var y2 = (H-pad) - (H-pad-8)*(Areal/Amax);
+    if(j===0) ctx.moveTo(x2,y2); else ctx.lineTo(x2,y2);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+  // operating point
+  var Aop = absorbance(eps, c, l);
+  var px = pad + (W-8-pad)*(c/cmax);
+  var py = (H-pad) - (H-pad-8)*(Aop/Amax);
+  ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(px,py,4,0,7); ctx.fill();
+  ctx.strokeStyle="#7fe0c0"; ctx.beginPath(); ctx.arc(px,py,7,0,7); ctx.stroke();
+  // labels
+  ctx.fillStyle = "#8fb0a6"; ctx.font = "11px monospace";
+  ctx.fillText("A", pad-18, 16);
+  ctx.fillText("c →", W-40, H-pad+18);
+  ctx.fillStyle = "rgba(255,207,107,.8)";
+  ctx.fillText("real (high-c deviation) — AMBER", pad+6, 20);
+}
+
+function render(){
+  var eps = parseFloat(els.ke.value);
+  var c   = parseFloat(els.kc.value);
+  var l   = parseFloat(els.kl.value);
+  els.ve.textContent = eps.toFixed(2);
+  els.vc.textContent = c.toFixed(2);
+  els.vl.textContent = l.toFixed(2);
+
+  var A = absorbance(eps, c, l);
+  var T = transmittance(A);
+  var Tpct = (T*100);
+
+  $("tbar").style.width = Math.max(0, Math.min(100, Tpct)).toFixed(1) + "%";
+  $("rout").innerHTML = "A = &epsilon;cl = " + eps.toFixed(2) + "&middot;" + c.toFixed(2) + "&middot;" + l.toFixed(2) +
+     " = <b>" + A.toFixed(4) + "</b> &nbsp; T = " + (TAMPER?"e":"10") + "^(&minus;A) = <b>" + T.toFixed(4) +
+     "</b> (" + Tpct.toFixed(1) + "% transmitted)";
+  $("outmono").innerHTML = "A  = " + A.toFixed(4) + "\nT  = " + T.toFixed(4) + "\n%T = " + Tpct.toFixed(2) + " %";
+
+  draw(eps, c, l);
+  witnessCheck();
+}
+
+function boot(){
+  els.ke=$("ke"); els.kc=$("kc"); els.kl=$("kl");
+  els.ve=$("ve"); els.vc=$("vc"); els.vl=$("vl");
+  [els.ke,els.kc,els.kl].forEach(function(k){ k.addEventListener("input", render); });
+
+  $("tamper").addEventListener("click", function(){
+    TAMPER = true; $("tampstate").textContent = "base = e (TAMPERED)"; render();
+  });
+  $("restore").addEventListener("click", function(){
+    TAMPER = false; $("tampstate").textContent = "base = 10 (intact)"; render();
+  });
+
+  try {
+    var ok = selfcheck();
+    var lb = $("litbadge");
+    lb.className = "badge ok";
+    lb.textContent = "boot: selfcheck PASSED ✓ engine LIT (" + (ok===true?"true":"?") + ")";
+  } catch(e) {
+    var fb = $("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED — engine NOT lit: " + e.message;
+    var lb2 = $("litbadge");
+    lb2.className = "badge bad";
+    lb2.textContent = "boot: selfcheck FAILED ✗";
+    throw e; // rethrow: fail loud
+  }
+  render();
+}
+
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+}
+</script>
+</body>
+</html>

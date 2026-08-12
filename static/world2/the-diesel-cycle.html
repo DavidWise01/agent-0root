@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE DIESEL CYCLE · WORLD II — THE FOLD</title>
+<style>
+  :root{
+    --am:#9ee06a;
+    --bg:#08130d; --bg2:#0c1c13; --ink:#e7f3e5; --dim:#9fb7a2;
+    --line:#1d3325; --panel:#0b1a11;
+    --blue:#5fb0ff; --blueln:#123049; --bluebg:#08131f;
+    --red:#ff6b6b; --redln:#3a1417; --redbg:#1a0b0c;
+    --amber:#ffcf5a; --lit:#9ee06a; --wall:#ff6b6b;
+    --mono:ui-monospace,"Cascadia Code","SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 78% -8%, #12281a 0%, transparent 60%),
+      radial-gradient(900px 500px at 8% 108%, #0f2416 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font:15px/1.55 var(--mono);
+    padding:26px 20px 60px;
+  }
+  a{color:var(--am);text-decoration:none;border-bottom:1px dotted #4c6b4f}
+  a:hover{border-bottom-style:solid}
+  header{max-width:1180px;margin:0 auto 20px}
+  h1{
+    margin:0 0 6px; font-size:31px; letter-spacing:.045em; font-weight:800;
+    color:var(--am);
+    text-shadow:0 0 22px rgba(158,224,106,.28);
+  }
+  .sub{margin:0 0 10px;color:var(--dim);max-width:860px;font-size:14px}
+  .src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .tag{
+    display:inline-block;padding:1px 7px;border-radius:5px;font-size:10.5px;font-weight:700;
+    letter-spacing:.06em;border:1px solid transparent;vertical-align:middle;white-space:nowrap;
+  }
+  .t-amber{background:rgba(255,207,90,.12);color:var(--amber);border-color:#5a4a1f}
+  .t-lit{background:rgba(158,224,106,.14);color:var(--lit);border-color:#38602a}
+  .t-in{background:rgba(95,176,255,.12);color:var(--blue);border-color:#1d4066}
+  .t-out{background:rgba(158,224,106,.12);color:var(--lit);border-color:#38602a}
+  .t-wall{background:rgba(255,107,107,.12);color:var(--wall);border-color:#5a2222}
+
+  .ocho{
+    max-width:1180px;margin:0 auto;
+    display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:14px;align-items:start;
+  }
+  .col{display:flex;flex-direction:column;gap:12px}
+  .teamhdr{
+    font-size:11px;letter-spacing:.14em;font-weight:800;text-transform:uppercase;
+    padding:7px 10px;border-radius:8px;border:1px solid var(--line);
+  }
+  .col.blue .teamhdr{color:var(--blue);border-color:var(--blueln);background:var(--bluebg)}
+  .col.red .teamhdr{color:var(--red);border-color:var(--redln);background:var(--redbg)}
+  .col.center .teamhdr{color:var(--am);border-color:#2a4a1e;background:#0a180f;text-align:center}
+
+  .win{
+    position:relative;border:1px solid var(--line);border-radius:10px;
+    background:linear-gradient(180deg,var(--bg2),var(--panel));
+    padding:12px 13px 13px;
+  }
+  .col.blue .win{border-color:#183048}
+  .col.red .win{border-color:#3a1a1c}
+  .win.panel{border-color:#2e5220;background:linear-gradient(180deg,#0c1d12,#0a1710);box-shadow:0 0 0 1px rgba(158,224,106,.08),0 10px 30px rgba(0,0,0,.35)}
+  .wn{
+    position:absolute;top:-9px;right:12px;width:22px;height:22px;border-radius:50%;
+    display:grid;place-items:center;font-size:11px;font-weight:800;
+    background:var(--bg);border:1px solid var(--line);color:var(--dim);
+  }
+  .win.panel .wn{border-color:#3a6a28;color:var(--am);background:#0a180f}
+  .col.blue .wn{border-color:#1d4066;color:var(--blue)}
+  .col.red .wn{border-color:#5a2222;color:var(--red)}
+  .wt{font-size:11px;letter-spacing:.1em;font-weight:800;text-transform:uppercase;color:var(--ink);margin:0 0 7px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .win p{margin:6px 0;font-size:12.7px;color:var(--dim)}
+  .win p b{color:var(--ink);font-weight:700}
+  code,.k{font-family:var(--mono);color:var(--am)}
+  .mono-blk{
+    font-size:11.6px;background:#06110b;border:1px solid var(--line);border-radius:7px;
+    padding:8px 9px;color:#bfe0bd;overflow-x:auto;white-space:pre;margin:7px 0;
+  }
+  .flow{height:20px;display:grid;place-items:center;color:#3f6a44;font-size:14px}
+  .flow::before{content:"▼"}
+
+  canvas{width:100%;height:auto;display:block;border-radius:8px;background:#06110b;border:1px solid var(--line)}
+  .ctrl{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;margin:9px 0 4px;font-size:12px}
+  .ctrl label{color:var(--dim)}
+  .ctrl input[type=range]{width:100%;accent-color:var(--am)}
+  .ctrl .v{color:var(--am);font-weight:700;min-width:44px;text-align:right}
+  .readout{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+  .stat{border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:#07130c}
+  .stat .lbl{font-size:9.5px;letter-spacing:.09em;color:var(--dim);text-transform:uppercase}
+  .stat .num{font-size:17px;font-weight:800;color:var(--am);line-height:1.15}
+  .bar{height:8px;border-radius:5px;background:#0c1d12;border:1px solid var(--line);overflow:hidden;margin-top:5px}
+  .bar > i{display:block;height:100%}
+
+  .badge{border-radius:8px;padding:9px 11px;font-size:12px;font-weight:700;letter-spacing:.03em;border:1px solid}
+  #auditout.ok{background:rgba(158,224,106,.10);border-color:#38602a;color:var(--lit)}
+  #auditout.bad{background:rgba(255,107,107,.13);border-color:#5a2222;color:var(--wall)}
+  #litbadge{display:inline-block;margin-top:6px;font-size:11px;color:var(--lit)}
+  .wall-note{background:#12080a;border:1px solid #3a1a1c;border-radius:7px;padding:8px 9px;color:#f0b9b9;font-size:12.3px}
+  .grave{margin:7px 0;padding-left:2px}
+  .grave s{color:#7d5b5b}
+  .grave em{color:var(--am);font-style:normal}
+  button{
+    font-family:var(--mono);font-size:11.5px;font-weight:700;cursor:pointer;
+    background:#1a0b0c;color:var(--red);border:1px solid #5a2222;border-radius:7px;padding:7px 11px;margin:3px 6px 3px 0;
+  }
+  button.restore{background:#08130d;color:var(--am);border-color:#38602a}
+  button:hover{filter:brightness(1.2)}
+  #failb{display:none;max-width:1180px;margin:0 auto 14px;background:#2a0c0e;border:1px solid #7a2a2e;color:#ffbcbc;padding:11px 13px;border-radius:9px;font-size:12.5px}
+  footer{max-width:1180px;margin:26px auto 0;color:#6d8770;font-size:11.5px;border-top:1px solid var(--line);padding-top:12px}
+  @media(max-width:880px){ .ocho{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>THE DIESEL CYCLE</h1>
+  <p class="sub">Ignite by compression alone — no spark. Squeeze air until it is hot enough to light the fuel, then burn it at <b>constant pressure</b> while the piston is already moving. You trade Otto's constant-volume flash for a higher compression ratio, and win efficiency the spark engine cannot reach.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Diesel, <a href="https://digital.deutsches-museum.de/de/digital-catalogue/archive-item/NL%20094%2F0001/" target="_blank" rel="noopener"><i>Theorie und Konstruktion eines rationellen Wärmemotors</i></a> — treatise 1893, running engine 1897 · <b>AMBER</b> (no single canonical DOI; year cited as 1897 per the working motor). Rendered, not quoted.
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- LEFT · BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wn">3</span>
+      <div class="wt">The Model</div>
+      <p>Four strokes on an ideal gas, <span class="k">γ = 7/5</span> (diatomic air):</p>
+      <div class="mono-blk">1→2  adiabatic COMPRESSION   V1→V2   r = V1/V2
+2→3  heat in @ CONST P      V2→V3   rc = V3/V2
+3→4  adiabatic EXPANSION    V3→V1
+4→1  heat out @ CONST V     V1</div>
+      <p>The burn (2→3) happens as the piston moves, so it <b>does work</b>. The closed exact law:</p>
+      <div class="mono-blk">η = 1 − (1/r^(γ−1)) · (rc^γ − 1)/(γ(rc − 1))</div>
+      <p>Net work = the <b>enclosed P–V area</b>; first law <code>dU = dQ − dW</code> holds each stroke.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">5</span>
+      <div class="wt">The Lineage</div>
+      <p>Ignite by compression — <b>Diesel 1897</b>. Set the cutoff ratio <code>rc → 1</code> and the burn shrinks to a point at constant volume: the factor <code>(rc^γ−1)/(γ(rc−1)) → 1</code> and η collapses to <a href="../the-otto-cycle/">the-otto-cycle</a> <code>1 − r^(1−γ)</code>. Both sit strictly beneath <a href="../the-carnot-cycle/">the-carnot-cycle</a> reservoir bound.</p>
+      <p class="mono-blk">rc=1 → Otto   ·   rc&gt;1 → Diesel   ·   both &lt; Carnot</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">7</span>
+      <div class="wt">The Witness <span class="tag t-lit">live</span></div>
+      <p>Re-computes η(r=18, rc=2) from the honest closed form and compares it to the panel's engine every render. Green = intact; the moment window&nbsp;6 drops the cutoff factor, this flips red.</p>
+      <div id="auditout" class="badge ok">witness idle</div>
+    </div>
+  </div>
+
+  <!-- CENTER · THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="wn">4</span>
+      <div class="wt">Data In <span class="tag t-in">in ▼</span></div>
+      <p>Ideal air, <code>γ=7/5</code>, <code>T1=300 K</code>. You set the squeeze and the burn:</p>
+      <div class="ctrl">
+        <label>r</label><input id="sr" type="range" min="8" max="24" step="0.5" value="18"><span class="v" id="vr">18.0</span>
+        <label>rc</label><input id="src2" type="range" min="1" max="3.5" step="0.05" value="2"><span class="v" id="vrc">2.00</span>
+      </div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <span class="wn">0</span>
+      <div class="wt">The Panel <span class="tag t-lit">LIT</span></div>
+      <canvas id="pv" width="520" height="320"></canvas>
+      <div class="readout">
+        <div class="stat"><div class="lbl">η Diesel</div><div class="num" id="etaD">–</div><div class="bar"><i id="barD" style="background:var(--am)"></i></div></div>
+        <div class="stat"><div class="lbl">η Otto (same r)</div><div class="num" id="etaO">–</div><div class="bar"><i id="barO" style="background:var(--blue)"></i></div></div>
+        <div class="stat"><div class="lbl">Carnot bound</div><div class="num" id="etaC">–</div><div class="bar"><i id="barC" style="background:var(--amber)"></i></div></div>
+        <div class="stat"><div class="lbl">Burn work W(2→3)</div><div class="num" id="wadd">–</div><div class="bar"><i id="barW" style="background:#7de0b0"></i></div></div>
+      </div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win">
+      <span class="wn">8</span>
+      <div class="wt">Data Out <span class="tag t-out">out ▼</span></div>
+      <p>Proven at boot (r=18, rc=2): <b>η Diesel ≈ 0.6316</b>, below Otto's 0.6853 at the same r, and far below Carnot's 0.8427. The burn does <b>W ≈ 953 R·K</b> of work — never zero.</p>
+      <span id="litbadge">litbadge: pending…</span>
+    </div>
+  </div>
+
+  <!-- RIGHT · RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wn">1</span>
+      <div class="wt">The Adversary <span class="tag t-wall">WALL</span></div>
+      <div class="wall-note">"Diesel beats Otto because its formula is higher — same engine, more efficiency."<br><br>False. At the <b>same compression ratio</b> the cutoff factor <code>&gt;1</code> makes Diesel <b>lower</b>. Diesel wins in the real world only because it <i>can</i> run at much higher r without knock — a different operating point, not a free lunch. That advantage is <b>AMBER</b>: material limits, turbo, NOx, and soot cap it.</div>
+    </div>
+
+    <div class="win">
+      <span class="wn">2</span>
+      <div class="wt">The Graveyard</div>
+      <p class="grave"><s>"Constant-pressure burn does no work, like Otto's."</s><br><em>Wrong — 2→3 moves the piston: W = P·ΔV = R(T3−T2) ≠ 0.</em></p>
+      <p class="grave"><s>"η rises without limit as rc grows."</s><br><em>No — larger rc raises the cutoff factor, so η falls; only higher r helps.</em></p>
+      <p class="grave"><s>"A real Diesel reaches Carnot efficiency."</s><br><em>Never — 1 − Tc/Th is the hard ceiling; the cycle stays strictly under it.</em></p>
+    </div>
+
+    <div class="win">
+      <span class="wn">6</span>
+      <div class="wt">The Tamper</div>
+      <p>Drop the cutoff factor — model the constant-pressure burn as if it were Otto's constant-volume flash (<code>η = 1 − r^(1−γ)</code>) even though <code>rc &gt; 1</code>. The heat added is mis-accounted; the reduces-to-Otto-<b>only</b>-at-rc=1 invariant breaks. Window&nbsp;7 catches it live.</p>
+      <button id="tamper">⚠ drop cutoff factor</button>
+      <button id="restore" class="restore">↺ restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  WORLD II · THE FOLD — the-diesel-cycle. Engine LIT; source AMBER; tamper is the disclosed planted void. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+// ===== engine + selfcheck (pure logic; runs headless, no canvas/DOM) =====
+var G = 7/5;
+
+function assert(c, m){ if(!c) throw new Error("selfcheck: " + m); }
+function near(a, b, t){ return Math.abs(a - b) <= t; }
+
+// fixed-seed PRNG so the sweep is deterministic
+function mkrng(seed){ var s = seed >>> 0; return function(){ s = (s*1664525 + 1013904223) >>> 0; return s/4294967296; }; }
+
+// exact laws
+function cutoffFactor(rc, g){ return (Math.pow(rc, g) - 1) / (g*(rc - 1)); }
+function dieselEffTrue(r, rc, g){ return 1 - (1/Math.pow(r, g-1)) * cutoffFactor(rc, g); }
+function ottoEff(r, g){ return 1 - Math.pow(r, 1-g); }
+function carnotEff(Tc, Th){ return 1 - Tc/Th; }
+
+// cycle state (ideal gas, n=1, R=1): temps + heats via the first law
+function cycle(r, rc, g, T1){
+  var T2 = T1 * Math.pow(r, g-1);      // adiabatic compression
+  var T3 = T2 * rc;                     // const-pressure burn (T ∝ V)
+  var T4 = T1 * Math.pow(rc, g);        // adiabatic expansion back to V1
+  var Cv = 1/(g-1), Cp = g/(g-1);
+  var Qin  = Cp*(T3 - T2);              // heat in at const P
+  var Qout = Cv*(T4 - T1);             // heat out at const V
+  var Wadd = (T3 - T2);                 // = P2(V3-V2) = R(T3-T2): work during the burn
+  return { T1:T1, T2:T2, T3:T3, T4:T4, Qin:Qin, Qout:Qout, Wadd:Wadd, effHeat: 1 - Qout/Qin };
+}
+
+// the planted void lives here: when TAMPER is on, the engine forgets the burn is at const P
+var TAMPER = false;
+function dieselEff(r, rc, g){
+  if(TAMPER) return ottoEff(r, g);     // BAD: drops the cutoff factor for rc>1
+  return dieselEffTrue(r, rc, g);
+}
+
+function selfcheck(){
+  var g = G, T1 = 300;
+
+  // 1) formula == first-law heat accounting, to 1e-9, across a deterministic sweep
+  var rng = mkrng(0x0D1E5E1);
+  for(var i=0;i<40;i++){
+    var r  = 8 + rng()*16;          // r in [8,24]
+    var rc = 1.05 + rng()*2.4;      // rc in (1, 3.45]
+    var cy = cycle(r, rc, g, T1);
+    assert(near(dieselEffTrue(r,rc,g), cy.effHeat, 1e-9), "formula must match heat accounting @ r="+r.toFixed(3)+" rc="+rc.toFixed(3));
+    // 2) burn does real work: W != 0 at const pressure (unlike Otto's const volume)
+    assert(cy.Wadd > 1e-6, "const-pressure burn must do nonzero work");
+    // 3) same r: Diesel < Otto because the cutoff factor exceeds 1
+    assert(cutoffFactor(rc,g) > 1, "cutoff factor must exceed 1 for rc>1");
+    assert(dieselEffTrue(r,rc,g) < ottoEff(r,g) - 1e-12, "Diesel must be below Otto at the same r");
+    // 4) stays under the Carnot reservoir bound (Tc=T1 coldest, Th=T3 hottest)
+    assert(dieselEffTrue(r,rc,g) < carnotEff(cy.T1, cy.T3) - 1e-9, "Diesel must stay under Carnot");
+  }
+
+  // 5) reduces to Otto ONLY at rc -> 1 (verify the limit)
+  assert(near(cutoffFactor(1 + 1e-8, g), 1, 1e-6), "cutoff factor -> 1 as rc -> 1");
+  assert(near(dieselEffTrue(18, 1 + 1e-9, g), ottoEff(18, g), 1e-6), "Diesel -> Otto as rc -> 1");
+  // ...and does NOT equal Otto once rc is genuinely > 1
+  assert(!near(dieselEffTrue(18, 2, g), ottoEff(18, g), 1e-3), "Diesel must differ from Otto for rc>1");
+
+  // 6) anchor values (r=18, rc=2)
+  assert(near(dieselEffTrue(18, 2, g), 0.6315775314, 1e-9), "anchor eta Diesel");
+  assert(near(ottoEff(18, g),          0.6853041629, 1e-9), "anchor eta Otto");
+
+  // 7) the planted void: flip TAMPER, confirm the witness would catch it, then restore
+  var saved = TAMPER;
+  var honest = dieselEffTrue(18, 2, g);
+  TAMPER = true;
+  var tampered = dieselEff(18, 2, g);
+  assert(!near(tampered, honest, 1e-9), "tamper must change the efficiency");
+  assert(near(tampered, ottoEff(18, g), 1e-12), "tampered engine collapses to Otto (cutoff dropped)");
+  TAMPER = saved;                    // restore
+  assert(near(dieselEff(18, 2, g), honest, 1e-12), "restore must return the honest engine");
+
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  try{
+    var ok = selfcheck();
+    if(ok !== true) throw new Error("selfcheck did not return true");
+    var lb = document.getElementById("litbadge");
+    lb.textContent = "litbadge: LIT · η(18,2)=" + dieselEffTrue(18,2,G).toFixed(6) + " · selfcheck ✓";
+  }catch(e){
+    var fb = document.getElementById("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED — " + e.message;
+    throw e;
+  }
+
+  var cv = document.getElementById("pv"), cx = cv.getContext("2d");
+  var W = cv.width, H = cv.height, PAD = 40;
+
+  function states(r, rc, g){
+    var V1=1, V2=1/r, V3=rc/r, V4=1;
+    var P1=1, P2=Math.pow(r,g), P3=P2, P4=Math.pow(rc,g);
+    return {V1:V1,V2:V2,V3:V3,V4:V4,P1:P1,P2:P2,P3:P3,P4:P4};
+  }
+  function draw(r, rc){
+    var g=G, s=states(r,rc,g);
+    var Vmax=1.06, Pmax=s.P2*1.06;
+    cx.clearRect(0,0,W,H);
+    function X(V){ return PAD + (V/Vmax)*(W-PAD-14); }
+    function Y(P){ return H-PAD - (P/Pmax)*(H-PAD-14); }
+    // axes
+    cx.strokeStyle="#1d3325"; cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(PAD,14); cx.lineTo(PAD,H-PAD); cx.lineTo(W-8,H-PAD); cx.stroke();
+    cx.fillStyle="#6d8770"; cx.font="10px monospace";
+    cx.fillText("P", PAD-8, 20); cx.fillText("V", W-16, H-PAD+16);
+    // loop
+    function adia(Va,Vb,Pa){ var pts=[]; var n=40; for(var i=0;i<=n;i++){ var V=Va+(Vb-Va)*i/n; pts.push([V, Pa*Math.pow(Va/V,g)]); } return pts; }
+    cx.beginPath();
+    var a=adia(s.V1,s.V2,s.P1); cx.moveTo(X(a[0][0]),Y(a[0][1])); a.forEach(function(p){cx.lineTo(X(p[0]),Y(p[1]));});
+    cx.lineTo(X(s.V3),Y(s.P3));                                  // const P burn 2->3
+    var b=adia(s.V3,s.V4,s.P3); b.forEach(function(p){cx.lineTo(X(p[0]),Y(p[1]));});
+    cx.lineTo(X(s.V1),Y(s.P1));                                  // const V reject 4->1
+    cx.closePath();
+    cx.fillStyle="rgba(158,224,106,.10)"; cx.fill();
+    cx.strokeStyle="#9ee06a"; cx.lineWidth=2; cx.stroke();
+    // highlight the const-pressure burn
+    cx.beginPath(); cx.moveTo(X(s.V2),Y(s.P2)); cx.lineTo(X(s.V3),Y(s.P3));
+    cx.strokeStyle="#ffcf5a"; cx.lineWidth=3; cx.stroke();
+    // node dots + labels
+    var nodes=[["1",s.V1,s.P1],["2",s.V2,s.P2],["3",s.V3,s.P3],["4",s.V4,s.P4]];
+    cx.fillStyle="#e7f3e5"; cx.font="11px monospace";
+    nodes.forEach(function(n){ cx.beginPath(); cx.arc(X(n[1]),Y(n[2]),3,0,7); cx.fillStyle="#9ee06a"; cx.fill(); cx.fillStyle="#cfe6cd"; cx.fillText(n[0], X(n[1])+5, Y(n[2])-4); });
+    cx.fillStyle="#ffcf5a"; cx.fillText("const-P burn", X((s.V2+s.V3)/2), Y(s.P2)-8);
+  }
+
+  function update(){
+    var r=parseFloat(document.getElementById("sr").value);
+    var rc=parseFloat(document.getElementById("src2").value);
+    document.getElementById("vr").textContent=r.toFixed(1);
+    document.getElementById("vrc").textContent=rc.toFixed(2);
+    draw(r,rc);
+    var g=G, cy=cycle(r,rc,g,300);
+    var eD=dieselEff(r,rc,g), eO=ottoEff(r,g), eC=carnotEff(cy.T1,cy.T3);
+    document.getElementById("etaD").textContent=eD.toFixed(4);
+    document.getElementById("etaO").textContent=eO.toFixed(4);
+    document.getElementById("etaC").textContent=eC.toFixed(4);
+    document.getElementById("wadd").textContent=cy.Wadd.toFixed(0)+" RK";
+    document.getElementById("barD").style.width=(eD*100)+"%";
+    document.getElementById("barO").style.width=(eO*100)+"%";
+    document.getElementById("barC").style.width=(eC*100)+"%";
+    document.getElementById("barW").style.width=Math.min(100,cy.Wadd/12)+"%";
+    witness();
+  }
+
+  function witness(){
+    var el=document.getElementById("auditout");
+    var live=dieselEff(18,2,G), truth=dieselEffTrue(18,2,G);
+    if(near(live,truth,1e-12)){
+      el.className="badge ok";
+      el.textContent="WITNESS ✓ η(18,2)="+live.toFixed(6)+" — cutoff factor intact";
+    }else{
+      el.className="badge bad";
+      el.textContent="⚠ TAMPER DETECTED — engine reads "+live.toFixed(6)+" but honest form is "+truth.toFixed(6)+" (cutoff factor dropped)";
+    }
+  }
+
+  document.getElementById("sr").addEventListener("input",update);
+  document.getElementById("src2").addEventListener("input",update);
+  document.getElementById("tamper").addEventListener("click",function(){ TAMPER=true; update(); });
+  document.getElementById("restore").addEventListener("click",function(){ TAMPER=false; update(); });
+
+  update();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE TWO-PHASE LOCKING · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#0d0906; --bg2:#160f0a; --ink:#ffe0cc; --dim:#a3765b; --line:#3d2416;
+ --am:#ff9e6a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,158,106,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,158,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#f2d6c6;} .win b{color:#fff2ea;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,158,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#150d08;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:250px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:12.5px;line-height:1.8;margin:8px 0;padding:10px;background:#150d08;border:1px solid var(--line);border-radius:6px;word-break:break-word;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:18px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#c8a; font-size:12px;} .grave s{color:#8a6d5e;} .grave b{color:#f0cbb8;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+.grow{color:var(--am);} .shrink{color:var(--gr);} .lp{color:var(--cy);font-weight:700;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE TWO-PHASE LOCKING</h1>
+ <p class="sub">Acquire <b>all</b> your locks before you release <b>any</b> — grow, then shrink — and serializability follows for free. The rule is a <b>discipline on the timing of locks</b>, not on which locks: one clean condition on a schedule that makes every interleaving it permits <b class="k">conflict-serializable</b>. It is runnable — enumerate the schedules 2PL can produce and each one's conflict graph is provably acyclic. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> breaks the two-phase rule and a cycle appears. The price of the guarantee is the wait-for cycle: 2PL can <b style="color:var(--red)">deadlock</b>.</p>
+ <p class="src"><span class="tag t-amber">source</span> K. P. Eswaran, J. N. Gray, R. A. Lorie &amp; I. L. Traiger, <i>The Notions of Consistency and Predicate Locks in a Database System</i>, Comm. ACM <b>19</b>(11):624–633 (1976) — <a href="https://dl.acm.org/doi/10.1145/360363.360369">doi:10.1145/360363.360369</a> (ACM DL, paywalled — <span style="color:var(--amber)">AMBER</span>). Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — grow then shrink</h2>
+   <p>A transaction locks items to touch them (<b>S</b> to read, <b>X</b> to write). The <b>two-phase rule</b>: split its life into a <b class="grow">growing phase</b> (only acquire) and a <b class="shrink">shrinking phase</b> (only release). The instant it turns — the last acquire before the first release — is the <b class="lp">lock point</b>.</p>
+   <p>Serializability is not asserted; it <b>falls out</b>. Order transactions by lock point and that order is a serial schedule the run is <b>conflict-equivalent</b> to — because the conflict (precedence) graph is then <b class="k">acyclic</b>. The panel's two working transactions, with phase shown live:</p>
+   <div class="sent" id="modelbox" style="font-size:11.5px"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the price of order <span class="tag t-amber">AVAN</span></h2>
+   <p>Locking alone does nothing; locking with a <b>discipline</b> — grow then shrink — is the protocol that <b>makes <a href="https://davidwise01.github.io/the-serializability/" style="color:var(--cy)">the-serializability</a> hold</b>. It converts a runtime property that is expensive to test into a rule you can obey step by step.</p>
+   <p>But the same rule that forbids the bad interleaving also forces transactions to <b>hold locks they still need while waiting</b> — and two waiters can close a ring. That ring is <a href="https://davidwise01.github.io/the-banker-deadlock/" style="color:var(--cy)">the-banker-deadlock</a>'s wait-for cycle. One sphere buys the next one's problem.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: enumerate <b>every schedule</b> 2PL can produce for the safe pair and confirm each conflict graph is acyclic. If red breaks the two-phase rule (window 6), a cyclic schedule enters the set and this badge flips.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — transactions &amp; conflicts <span class="tag t-in">in ↓</span></h2>
+   <p>A <b>schedule</b> interleaves the operations of several transactions, keeping each one's own order. Two operations <b>conflict</b> iff they touch the same item and at least one is a <b>write</b>:</p>
+   <table><thead><tr><th> </th><th>read</th><th>write</th></tr></thead>
+    <tbody>
+     <tr><td>read</td><td class="mut">ok</td><td style="color:var(--wall)">conflict</td></tr>
+     <tr><td>write</td><td style="color:var(--wall)">conflict</td><td style="color:var(--wall)">conflict</td></tr>
+    </tbody></table>
+   <p class="small" style="margin-top:6px">Locks enforce this: a shared (<b>S</b>) lock is compatible with other S locks; an exclusive (<b>X</b>) lock is compatible with nothing. Feed a set of transactions into the panel; it schedules them under the two-phase rule and reads out whether the result is serializable.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the transactions into the scheduler &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>scenario</label>
+      <select id="scn">
+       <option value="safe">safe pair · T1 reads, T2 writes</option>
+       <option value="dead">deadlock pair · each wants the other</option>
+       <option value="strict">strict 2PL · reader vs writer</option>
+      </select></div>
+     <div class="row"><label>schedule</label><select id="sch"></select></div>
+     <p class="small" id="scnnote"></p>
+     <div class="row"><button id="reset">↺ reset</button></div>
+    </div>
+    <div class="readout">
+     <div class="sent" id="progbox"></div>
+     <div class="sent" id="schbox"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every schedule is generated live by a lock manager, and every verdict is computed from the conflict graph on the spot — never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the scheduler emits proven schedules &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — what is proven <span class="tag t-out">out ↓</span></h2>
+   <p>Three exact results, checked at boot: <b class="k">(1)</b> every schedule 2PL can produce is conflict-serializable — all <b id="nsafe">·</b> produced schedules have acyclic conflict graphs; <b class="k">(2)</b> <b>strict</b> 2PL (hold write locks to commit) admits <b>no dirty read</b>, so no cascading abort; <b class="k">(3)</b> 2PL <b style="color:var(--red)">can deadlock</b> — the deadlock pair reaches a wait-for cycle.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) re-derives (1) live; the red team (right) breaks the rule and makes it false.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> 2PL buys serializability with concurrency and with liveness. It <b>is not deadlock-free</b> — it manufactures deadlocks, which a detector must break by aborting a victim. <b>Basic</b> 2PL still allows <b>cascading aborts</b> and even non-recoverable schedules; only <b>strict</b>/rigorous 2PL fixes that. And row locks alone miss the <b>phantom</b> — a new row matching a predicate — which is exactly why this paper reaches for <i>predicate locks</i>.</div>
+   <p class="small" style="margin-top:8px">Whole families avoid locking entirely: multi-version (MVCC), optimistic (OCC), timestamp ordering. "Serializable via 2PL" is one engineering choice among several, each with its own failure surface — this instrument shows what 2PL guarantees and what it costs, not that 2PL is <i>the</i> answer.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Two-phase locking prevents deadlock."</s> <b>Cut.</b> It guarantees serializability, not liveness — it <i>causes</i> deadlocks. Only <b>conservative</b> (static) 2PL, which grabs every lock up front, is deadlock-free.</p>
+   <p class="grave"><s>"2PL prevents cascading aborts."</s> <b>Cut.</b> <i>Basic</i> 2PL does not. You need <b>strict</b> 2PL — hold every write lock until commit — for that. The panel proves the strict version clean and shows a basic order that is dirty.</p>
+   <p class="grave"><s>"Serializable means executed one-at-a-time."</s> <b>Kept, corrected.</b> It means <b>conflict-equivalent</b> to some serial order — the run stays concurrent; only the <i>effect</i> matches a serial one.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: let T1 <b>acquire a lock after it has released one</b> — release x early, then reach for y. That breaks the two-phase rule, and a non-serializable interleaving becomes legal. The blue witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ break two-phase (release early)</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Break the rule and the cyclic schedule <code>r1(x) w2(x) w2(y) r1(y)</code> slips in — its conflict graph gains a cycle, the witness recomputes and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE TWO-PHASE LOCKING — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (transactions <b style="color:var(--cy)">in</b> → scheduler → proven schedules <b style="color:var(--gr)">out</b>). A runnable rendering of Eswaran, Gray, Lorie &amp; Traiger's 1976 result — the engine is LIT (every produced 2PL schedule shown conflict-serializable by exact conflict-graph acyclicity, strict 2PL shown cascade-free, deadlock shown reachable, tamper-provable), the blue team witnesses, the red team breaks the two-phase rule, and the graveyard + adversary carry what a single rule cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ===== THE ENGINE — 2PL: growing / shrinking, conflict-serializability, deadlock, strict =====
+const ITEMS=['x','y'];
+function op(t,k,item){return {t:t,k:k,item:item};}
+
+// transaction programs (ops carry their own locks; 2PL = all locks before all unlocks)
+const T1_2pl =[op(1,'SL','x'),op(1,'R','x'),op(1,'SL','y'),op(1,'R','y'),op(1,'U','x'),op(1,'U','y')];
+const T1_nonpl=[op(1,'SL','x'),op(1,'R','x'),op(1,'U','x'),op(1,'SL','y'),op(1,'R','y'),op(1,'U','y')];
+const T2     =[op(2,'XL','x'),op(2,'W','x'),op(2,'XL','y'),op(2,'W','y'),op(2,'U','x'),op(2,'U','y')];
+// deadlock pair
+const D1=[op(1,'XL','x'),op(1,'W','x'),op(1,'XL','y'),op(1,'W','y'),op(1,'U','y'),op(1,'U','x')];
+const D2=[op(2,'XL','y'),op(2,'W','y'),op(2,'XL','x'),op(2,'W','x'),op(2,'U','x'),op(2,'U','y')];
+// strict 2PL: X-lock held until commit
+const S1=[op(1,'XL','x'),op(1,'W','x'),op(1,'C','x'),op(1,'U','x')];
+const S2=[op(2,'SL','x'),op(2,'R','x'),op(2,'C','x'),op(2,'U','x')];
+
+let TAMPER=false; // when true, T1 is allowed to release x before it locks y (breaks two-phase)
+
+// --- lock manager ---
+function initState(){const st={};for(const it of ITEMS)st[it]={x:null,s:[]};return st;}
+function cloneState(st){const n={};for(const k in st)n[k]={x:st[k].x,s:st[k].s.slice()};return n;}
+function grantable(o,st){
+ if(o.k==='SL'){const L=st[o.item];return L.x===null||L.x===o.t;}
+ if(o.k==='XL'){const L=st[o.item];return (L.x===null||L.x===o.t)&&(L.s.length===0||(L.s.length===1&&L.s[0]===o.t));}
+ return true; // R,W,U,C never block (transaction already holds its lock)
+}
+function applyOp(o,st){
+ if(o.k==='SL'){const L=st[o.item];if(!L.s.includes(o.t))L.s.push(o.t);}
+ else if(o.k==='XL'){st[o.item].x=o.t;}
+ else if(o.k==='U'){const L=st[o.item];L.s=L.s.filter(t=>t!==o.t);if(L.x===o.t)L.x=null;}
+}
+
+// --- two-phase structure ---
+function lockPoint(prog){let last=-1;prog.forEach((o,i)=>{if(o.k==='SL'||o.k==='XL')last=i;});return last;}
+function isTwoPhase(prog){let lastLock=-1,firstU=Infinity;
+ prog.forEach((o,i)=>{if(o.k==='SL'||o.k==='XL')lastLock=i;if(o.k==='U'&&i<firstU)firstU=i;});
+ return lastLock<firstU;}
+
+// --- enumerate every produced (deadlock-free, lock-legal) interleaving ---
+function producedSchedules(progs){
+ const res=[];const n=progs.length;
+ function rec(ptr,st,seq){
+  if(ptr.every((p,i)=>p===progs[i].length)){res.push(seq.slice());return;}
+  for(let i=0;i<n;i++){
+   if(ptr[i]<progs[i].length){
+    const o=progs[i][ptr[i]];
+    if(grantable(o,st)){
+     const ns=cloneState(st);applyOp(o,ns);
+     const np=ptr.slice();np[i]++;
+     rec(np,ns,seq.concat([o]));
+    }
+   }
+  }
+  // if no branch advanced and not all done: blocked (deadlock) -> discard
+ }
+ rec(progs.map(()=>0),initState(),[]);
+ return res;
+}
+function deadlockReachable(progs){
+ let found=false;const n=progs.length;
+ function rec(ptr,st){
+  if(found)return;
+  if(ptr.every((p,i)=>p===progs[i].length))return; // completed cleanly here
+  let any=false;
+  for(let i=0;i<n;i++){
+   if(ptr[i]<progs[i].length&&grantable(progs[i][ptr[i]],st)){
+    any=true;const ns=cloneState(st);applyOp(progs[i][ptr[i]],ns);const np=ptr.slice();np[i]++;rec(np,ns);
+   }
+  }
+  if(!any)found=true; // blocked and incomplete = deadlock
+ }
+ rec(progs.map(()=>0),initState());
+ return found;
+}
+
+// --- validity of a specific full schedule ---
+function subseqOK(progs,sched){
+ for(const p of progs){
+  const t=p[0].t;const sub=sched.filter(o=>o.t===t);
+  if(sub.length!==p.length)return false;
+  for(let i=0;i<p.length;i++)if(sub[i].k!==p[i].k||sub[i].item!==p[i].item)return false;
+ }
+ return true;
+}
+function lockLegal(sched){
+ const st=initState();
+ for(const o of sched){if(!grantable(o,st))return false;applyOp(o,st);}
+ return true;
+}
+function isProducible(progs,sched){return subseqOK(progs,sched)&&lockLegal(sched);}
+
+// the target non-serializable schedule (needs T1 to release x early)
+const CYCLIC=[op(1,'SL','x'),op(1,'R','x'),op(1,'U','x'),
+ op(2,'XL','x'),op(2,'W','x'),op(2,'XL','y'),op(2,'W','y'),op(2,'U','x'),op(2,'U','y'),
+ op(1,'SL','y'),op(1,'R','y'),op(1,'U','y')];
+
+// --- conflict (precedence) graph + acyclicity (exact) ---
+function conflictGraph(sched){
+ const data=sched.filter(o=>o.k==='R'||o.k==='W');
+ const nodes=[];data.forEach(o=>{if(!nodes.includes(o.t))nodes.push(o.t);});
+ const edges=[];
+ for(let i=0;i<data.length;i++)for(let j=i+1;j<data.length;j++){
+  const a=data[i],b=data[j];
+  if(a.item===b.item&&a.t!==b.t&&(a.k==='W'||b.k==='W'))edges.push([a.t,b.t,a.item]);
+ }
+ return {nodes:nodes,edges:edges};
+}
+function isAcyclic(g){
+ const adj={};g.nodes.forEach(n=>adj[n]=[]);
+ const seen={};
+ g.edges.forEach(e=>{const k=e[0]+'>'+e[1];if(!seen[k]){seen[k]=1;adj[e[0]].push(e[1]);}});
+ const color={};let ok=true;
+ function dfs(u){color[u]=1;for(const v of adj[u]){if(color[v]===1)ok=false;else if(!color[v])dfs(v);}color[u]=2;}
+ g.nodes.forEach(n=>{if(!color[n])dfs(n);});
+ return ok;
+}
+function topo(g){
+ const adj={},indeg={};g.nodes.forEach(n=>{adj[n]=[];indeg[n]=0;});
+ const seen={};
+ g.edges.forEach(e=>{const k=e[0]+'>'+e[1];if(!seen[k]){seen[k]=1;adj[e[0]].push(e[1]);indeg[e[1]]++;}});
+ const q=g.nodes.filter(n=>indeg[n]===0),order=[];
+ while(q.length){const u=q.shift();order.push(u);for(const v of adj[u])if(--indeg[v]===0)q.push(v);}
+ return order.length===g.nodes.length?order:null;
+}
+
+// --- wait-for graph (deadlock detection) ---
+function waitForCycle(holds,reqs){
+ const owner={};for(const t in holds)for(const it of holds[t])owner[it]=t;
+ const nodes=Object.keys(holds),edges=[];
+ for(const t in reqs){const o=owner[reqs[t]];if(o!==undefined&&String(o)!==String(t))edges.push([t,o]);}
+ return !isAcyclic({nodes:nodes,edges:edges});
+}
+
+// --- dirty read (cascading-abort exposure) ---
+function hasDirtyRead(sched){
+ const lastW={},committed={};
+ for(const o of sched){
+  if(o.k==='C')committed[o.t]=1;
+  else if(o.k==='W')lastW[o.item]=o.t;
+  else if(o.k==='R'){const w=lastW[o.item];if(w!==undefined&&w!==o.t&&!committed[w])return true;}
+ }
+ return false;
+}
+
+// ===== FAIL-LOUD SELF-CHECK (runs untampered, then plants the void, then restores) =====
+function selfcheck(){
+ const t=(c,m)=>{if(!c)throw new Error(m);};
+ const save=TAMPER;TAMPER=false;
+
+ // structure: the two working transactions are two-phase, lock point well-defined
+ t(isTwoPhase(T1_2pl),"T1 must be two-phase (grow then shrink)");
+ t(isTwoPhase(T2),"T2 must be two-phase");
+ t(lockPoint(T1_2pl)===2&&lockPoint(T2)===2,"lock point is the last acquire before the first release");
+ t(!isTwoPhase(T1_nonpl),"the tamper program must NOT be two-phase");
+
+ // CLAIM 1: every schedule 2PL can produce is conflict-serializable (acyclic conflict graph), exact
+ const scheds=producedSchedules([T1_2pl,T2]);
+ t(scheds.length>0,"2PL must produce at least one schedule");
+ for(const s of scheds){
+  t(isAcyclic(conflictGraph(s)),"every produced 2PL schedule must be conflict-serializable");
+  t(topo(conflictGraph(s))!==null,"acyclic => conflict-equivalent to a serial order");
+ }
+ // and the cyclic (non-serializable) schedule is NOT producible under 2PL
+ t(!isProducible([T1_2pl,T2],CYCLIC),"the cyclic schedule must be impossible under two-phase locking");
+
+ // CLAIM 2: STRICT 2PL prevents cascading aborts — no transaction reads uncommitted data
+ const strict=producedSchedules([S1,S2]);
+ t(strict.length>0,"strict 2PL must produce schedules");
+ for(const s of strict)t(!hasDirtyRead(s),"strict 2PL: no dirty read => no cascading abort");
+ // (a non-strict order CAN expose a dirty read — the honest contrast the graveyard names)
+ const dirty=[op(1,'XL','x'),op(1,'W','x'),op(1,'U','x'),op(2,'SL','x'),op(2,'R','x'),op(2,'C','x'),op(2,'U','x'),op(1,'C','x')];
+ t(hasDirtyRead(dirty),"a non-strict order must expose the dirty read strict 2PL fixes");
+
+ // CLAIM 3: 2PL can DEADLOCK — two transactions each holding a lock the other needs
+ t(waitForCycle({1:['x'],2:['y']},{1:'y',2:'x'}),"a wait-for cycle must be a deadlock");
+ t(!waitForCycle({1:['x'],2:['y']},{1:'y'}),"a one-sided wait must NOT be a deadlock");
+ t(deadlockReachable([D1,D2]),"the deadlock pair must reach a blocked, incomplete state");
+ t(!deadlockReachable([T1_2pl,T2]),"the safe pair must never deadlock");
+
+ // ===== PLANTED VOID: set the tamper flag, assert a known value now differs, then restore =====
+ TAMPER=true;
+ const P1=TAMPER?T1_nonpl:T1_2pl;
+ t(isProducible([P1,T2],CYCLIC),"under tamper the cyclic schedule becomes producible");
+ t(!isAcyclic(conflictGraph(CYCLIC)),"the cyclic schedule's conflict graph must contain a cycle");
+ const tScheds=producedSchedules([P1,T2]);
+ t(tScheds.some(s=>!isAcyclic(conflictGraph(s))),"tamper must admit a non-serializable schedule the witness catches");
+
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const LAB={SL:'sl',XL:'xl',R:'r',W:'w',U:'u',C:'c'};
+function labelOp(o){return LAB[o.k]+o.t+(o.k==='C'?'':'('+o.item+')');}
+function scenarioProgs(){
+ const scn=$("scn").value;
+ if(scn==='safe')return TAMPER?[T1_nonpl,T2]:[T1_2pl,T2];
+ if(scn==='dead')return [D1,D2];
+ return [S1,S2];
+}
+function progBox(progs){
+ return progs.map(p=>{
+  const lp=lockPoint(p),tp=isTwoPhase(p);
+  const seq=p.map((o,i)=>{
+   const cls=i<=lp?'grow':'shrink';
+   return '<span class="'+cls+'">'+labelOp(o)+'</span>'+(i===lp?' <span class="lp">▲lock-point</span> ':' ');
+  }).join('');
+  const tag=tp?'<span class="tag t-lit">2-phase</span>':'<span class="tag t-wall">NOT 2-phase</span>';
+  return '<div><b>T'+p[0].t+'</b> '+tag+'<br>'+seq+'</div>';
+ }).join('<div style="border-top:1px solid var(--line);margin:6px 0"></div>');
+}
+function schBox(s){
+ const g=conflictGraph(s);
+ const es=[];const seen={};
+ g.edges.forEach(e=>{const k=e[0]+'>'+e[1]+e[2];if(!seen[k]){seen[k]=1;es.push('T'+e[0]+'→T'+e[1]+' ('+e[2]+')');}});
+ return '<div class="small mut">schedule</div>'+s.map(labelOp).join(' ')
+  +'<div class="small mut" style="margin-top:6px">conflict edges: '+(es.join(', ')||'none')+'</div>';
+}
+function fillSched(keep){
+ const progs=scenarioProgs();
+ const list=producedSchedules(progs);
+ window.__SCHEDS=list;
+ const sel=$("sch");
+ sel.innerHTML=list.map((s,i)=>{
+  const ok=isAcyclic(conflictGraph(s));
+  return '<option value="'+i+'">S'+i+' · '+(ok?'serializable':'CYCLIC ✗')+'</option>';
+ }).join('');
+ if(keep!==undefined&&keep<list.length)sel.value=keep;
+}
+function render(){
+ const scn=$("scn").value;
+ const progs=scenarioProgs();
+ $("progbox").innerHTML=progBox(progs);
+ const list=window.__SCHEDS||[];
+ const idx=Math.min(+$("sch").value||0,Math.max(0,list.length-1));
+ const s=list[idx];
+ if(s){
+  $("schbox").innerHTML=schBox(s);
+  const ac=isAcyclic(conflictGraph(s));
+  const ord=topo(conflictGraph(s));
+  $("verdict").textContent=ac?"CONFLICT-SERIALIZABLE":"NOT SERIALIZABLE";
+  $("verdict").className="verdict "+(ac?"ok":"no");
+  $("reason").innerHTML=ac
+   ?("equivalent to serial order "+(ord?ord.map(n=>'T'+n).join(' → '):'—'))
+   :"the conflict graph has a cycle — no serial order is equivalent";
+ }else{
+  $("schbox").innerHTML='<span class="mut">no completed schedule — this interleaving deadlocks</span>';
+  $("verdict").textContent="—";$("verdict").className="verdict";$("reason").textContent="";
+ }
+ let note="";
+ if(scn==='safe')note="Under the two-phase rule, T2's X-lock on x waits until T1 releases — every completion is serializable. Break the rule in window 6 and a cyclic schedule appears.";
+ else if(scn==='dead')note="These serial completions succeed, but an interleaving deadlocks: T1 holds x and wants y; T2 holds y and wants x — wait-for cycle T1→T2→T1. Reachable: "+deadlockReachable([D1,D2])+".";
+ else note="Strict 2PL holds the writer's X-lock to commit, so the reader cannot see uncommitted data — no dirty read, no cascading abort.";
+ $("scnnote").textContent=note;
+}
+function audit(){
+ const progs=TAMPER?[T1_nonpl,T2]:[T1_2pl,T2];
+ const sc=producedSchedules(progs);
+ const bad=sc.filter(s=>!isAcyclic(conflictGraph(s)));
+ const ok=bad.length===0;
+ const dl=deadlockReachable([D1,D2]);
+ const strictClean=producedSchedules([S1,S2]).every(s=>!hasDirtyRead(s));
+ $("auditout").innerHTML='<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — holds':'✗ WITNESS — broken')+'</span>'
+  +'<div class="small" style="margin-top:6px">2PL schedules counted: <b>'+sc.length+'</b> · non-serializable: <b style="color:'+(ok?'var(--gr)':'var(--wall)')+'">'+bad.length+'</b>'
+  +' &nbsp;·&nbsp; strict cascade-free: <b class="'+(strictClean?'':'')+'" style="color:'+(strictClean?'var(--gr)':'var(--wall)')+'">'+strictClean+'</b>'
+  +' &nbsp;·&nbsp; deadlock reachable: <b style="color:var(--am)">'+dl+'</b>'
+  +(TAMPER?' &nbsp; — <span style="color:var(--wall)">red broke two-phase</span>':'')+'</div>';
+}
+
+// ===== boot =====
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("nsafe").textContent=producedSchedules([T1_2pl,T2]).length;
+ $("modelbox").innerHTML=progBox([T1_2pl,T2]);
+ fillSched(0);render();audit();
+ $("scn").addEventListener("change",()=>{fillSched(0);render();});
+ $("sch").addEventListener("change",render);
+ $("reset").addEventListener("click",()=>{$("scn").value="safe";TAMPER=false;fillSched(0);render();audit();
+  $("modelbox").innerHTML=progBox([T1_2pl,T2]);
+  $("tampernote").innerHTML="Break the rule and the cyclic schedule <code>r1(x) w2(x) w2(y) r1(y)</code> slips in — its conflict graph gains a cycle, the witness recomputes and turns red. Nothing is faked; the attack is real and it is caught.";});
+ $("tamper").addEventListener("click",()=>{TAMPER=true;
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>Two-phase rule broken.</b> T1 releases x before locking y; the cyclic schedule <code>r1(x) w2(x) w2(y) r1(y)</code> is now producible and its conflict graph has a cycle. The witness (window 7) recomputed and went red.";
+  $("modelbox").innerHTML=progBox([T1_nonpl,T2]);
+  if($("scn").value==='safe')fillSched();render();audit();});
+ $("restore").addEventListener("click",()=>{TAMPER=false;
+  $("tampernote").innerHTML="Break the rule and the cyclic schedule <code>r1(x) w2(x) w2(y) r1(y)</code> slips in — its conflict graph gains a cycle, the witness recomputes and turns red. Nothing is faked; the attack is real and it is caught.";
+  $("modelbox").innerHTML=progBox([T1_2pl,T2]);
+  if($("scn").value==='safe')fillSched(0);render();audit();});
+}catch(e){
+ const fb=$("failb");fb.style.display="block";fb.textContent="FAIL-LOUD — the two-phase locking engine did not check out: "+e.message;throw e;
+}
+</script>
+</body></html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE NAVIER-STOKES EQUATIONS · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff7a7a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,122,122,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* the ocho grid: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,122,122,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,122,122,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;height:22px;accent-color:var(--am);vertical-align:middle;}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#1a0404;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:92px;}
+.row .val{color:var(--gr);min-width:44px;}
+.sent{font-size:13.5px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);} .sent .drop{color:#39503f;text-decoration:line-through;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+canvas{display:block;margin:8px 0;background:#0a130c;border:1px solid var(--line);border-radius:6px;max-width:100%;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE NAVIER-STOKES EQUATIONS</h1>
+ <p class="sub">Newton's second law, written for a fluid. Momentum in, momentum out: <b>&rho;(&part;v/&part;t + v&middot;&nabla;v) = &minus;&nabla;p + &mu;&nabla;&sup2;v</b>, with <b>&nabla;&middot;v = 0</b>. Set the viscosity to zero and it collapses to <b class="k">Euler</b>; drop the inertia at low Reynolds number and it collapses to <b class="k">Stokes</b>; plane <b>Poiseuille</b> flow is an exact solution you can watch balance. Whether smooth solutions always exist is a <b>million-dollar</b> open problem. Terms go <b style="color:var(--cy)">in</b>, the balance is computed, the residual comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds it; the <b style="color:var(--red)">red team</b> attacks it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Navier (1822), <i>M&eacute;m. Acad. Sci.</i> 6, 389; Stokes (1845), &ldquo;On the theories of the internal friction of fluids in motion&rdquo;, <i>Trans. Camb. Phil. Soc.</i> <b>8</b>, 287&ndash;319 &mdash; <a href="https://archive.org/details/cbarchive_39179_onthetheoriesoftheinternalfric1849">archive.org &middot; full text</a>. <span class="t-amber" style="border:none;padding:0">AMBER: pre-DOI printings; page-image scan, no stable canonical URL.</span> Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the momentum balance</h2>
+   <p>Every parcel obeys <b>F = ma</b>, per unit volume. Read the equation term by term:</p>
+   <p><b class="k">&rho; &part;v/&part;t</b> unsteady acceleration. <b class="k">&rho;(v&middot;&nabla;)v</b> the <i>convective</i> term &mdash; nonlinear, quadratic in v, the source of turbulence and of the smoothness question. <b class="k">&minus;&nabla;p</b> the pressure force. <b class="k">&mu;&nabla;&sup2;v</b> viscous diffusion of momentum. And <b class="k">&nabla;&middot;v = 0</b> &mdash; incompressibility, the constraint that fixes the pressure.</p>
+   <p class="small">Live terms for the current profile (plane Poiseuille, exact):</p>
+   <table id="distTbl"><thead><tr><th>term</th><th>value</th><th>status</th></tr></thead><tbody id="distBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the master equation <span class="tag t-amber">AVAN</span></h2>
+   <p>Navier-Stokes is <b>Newton for a continuum</b>: <b>&rho; Dv/Dt = &minus;&nabla;p + &mu;&nabla;&sup2;v</b>. Two neighbouring spheres are its <b>special cases</b>, not rivals.</p>
+   <p>Kill viscosity (&mu;&rarr;0) and integrate along a steady streamline &mdash; you get <a href="https://davidwise01.github.io/the-bernoulli-equation/" style="color:var(--cy)">the-bernoulli-equation</a>. Keep viscosity, drop inertia, drive a channel by pressure &mdash; you get the exact solution <a href="https://davidwise01.github.io/the-poiseuille-flow/" style="color:var(--cy)">the-poiseuille-flow</a>. This sphere is the trunk both branch from.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive the Euler and Stokes limits, re-verify that Poiseuille's exact profile drives the steady residual to zero, and confirm the convective term scales quadratically. If red drops the viscous term, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the fluid <span class="tag t-in">in &#8595;</span></h2>
+   <p>Four numbers feed the balance: density <b class="M" style="color:var(--am)">&rho;</b>, dynamic viscosity <b class="M" style="color:var(--am)">&mu;</b>, the driving pressure gradient <b class="S" style="color:var(--cy)">G = &minus;dp/dx</b>, and the channel half-gap <b class="S" style="color:var(--cy)">H</b>. From them the machine builds the exact plane-Poiseuille profile</p>
+   <p style="text-align:center;color:var(--am)"><b>v<sub>x</sub>(y) = (G / 2&mu;)&middot;(H&sup2; &minus; y&sup2;)</b></p>
+   <p class="small">a parabola pinned to zero at both walls (y = &plusmn;H), peaking at the centreline. Its curvature is exactly what the pressure gradient demands &mdash; that is what the engine below verifies, and what the Reynolds number tells you which regime it lives in.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the fluid into the balance &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>regime</label>
+      <span class="toggle"><button id="rFull" class="on">FULL N-S</button><button id="rEuler">EULER</button><button id="rStokes">STOKES</button></span></div>
+     <div class="row"><label>density &rho;</label><input type="range" id="rho" min="0.2" max="3" step="0.1" value="1"><span class="val" id="vrho"></span></div>
+     <div class="row"><label>viscosity &mu;</label><input type="range" id="mu" min="0.05" max="2" step="0.05" value="0.5"><span class="val" id="vmu"></span></div>
+     <div class="row"><label>gradient G</label><input type="range" id="G" min="0.2" max="4" step="0.1" value="2"><span class="val" id="vG"></span></div>
+     <div class="row"><label>half-gap H</label><input type="range" id="H" min="0.3" max="1.5" step="0.1" value="1"><span class="val" id="vH"></span></div>
+     <p class="small" id="readmode">FULL: all terms live. Poiseuille is fully-developed, so time and convective terms vanish identically and the viscous term alone must balance G.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <canvas id="cv" width="300" height="150"></canvas>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Move any slider &mdash; the profile, the residual and the Reynolds number are computed on the spot from the equation, never looked up.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the balance emits a residual &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out &#8595;</span></h2>
+   <p>What the machine proves: the exact Poiseuille profile makes the steady momentum residual <b>G + &mu;v<sub>x</sub>&Prime;(y)</b> vanish to a finite-difference tolerance of <b class="k">1e&minus;9</b> at every y; setting <b>&mu;=0</b> removes the viscous term exactly (Euler); at low Reynolds number the inertial-to-viscous ratio equals <b>Re</b> and vanishes (Stokes); and the convective term scales as <b>a&sup2;</b> under v &rarr; a&middot;v &mdash; nonlinear, by measurement.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-checks these live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> This panel only <b>verifies a known exact solution</b>. It does not <i>solve</i> Navier-Stokes in general &mdash; and no one can. Whether smooth, globally-bounded 3D solutions always exist from smooth data is a <b>Clay Millennium Prize</b> problem, still open. Poiseuille is laminar and one-dimensional; it says nothing about the turbulent, chaotic flows the same equation also allows.</div>
+   <p class="small" style="margin-top:8px">The plane-Poiseuille profile is also only <b>stable</b> below a critical Reynolds number (linear theory &asymp; 5772; experiment transitions far lower). Above it the parabola is a mathematical solution the real flow abandons &mdash; so &ldquo;solution&rdquo; and &ldquo;what the fluid does&rdquo; part ways. AMBER: the transition Re is regime- and disturbance-dependent, not a single constant.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>&ldquo;Viscous flow is just inviscid flow with a little friction.&rdquo;</s> <b>Cut.</b> The viscous term carries the highest derivative; dropping it changes the equation's <i>order</i> and its boundary conditions (no-slip dies). Euler is a singular limit, not a small correction &mdash; d'Alembert's paradox is the receipt.</p>
+   <p class="grave"><s>&ldquo;Doubling the pressure drop doubles the flow, always.&rdquo;</s> <b>Kept, corrected.</b> True only while laminar: here Q &prop; G exactly, and Poiseuille through a pipe gives Q &prop; r&#8308;. Once turbulent, the linear law breaks.</p>
+   <p class="grave"><s>&ldquo;Navier and Stokes derived the same thing together.&rdquo;</s> <b>Cut.</b> Navier (1822) reached the equations from a flawed molecular model; Stokes (1845) gave the continuum-stress derivation that survives. Same equations, different and decades-apart roads.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>drop the viscous term &mu;&nabla;&sup2;v</b> &mdash; treat the viscous channel flow as if it were inviscid. Now nothing balances the pressure gradient. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; drop &mu;&nabla;&sup2;v</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Delete the viscous term and Poiseuille's residual jumps from ~0 to G &mdash; the profile no longer solves the equation. The witness recomputes, disagrees with the known zero, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE NAVIER-STOKES EQUATIONS — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (fluid <b style="color:var(--cy)">in</b> &rarr; momentum balance &rarr; residual <b style="color:var(--gr)">out</b>). A runnable rendering of Navier (1822) &amp; Stokes (1845) &mdash; the engine is LIT (Euler and Stokes limits derived live, the exact Poiseuille solution verified to 1e&minus;9, the quadratic convective term measured, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one laminar solution cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- the engine (pure logic; runs headless, no canvas / DOM) ----
+// Incompressible momentum:  rho*(dv/dt + (v.grad)v) = -grad p + mu*lap(v),  div v = 0.
+// Plane Poiseuille exact solution between plates at y = -H .. +H, driven by G = -dp/dx.
+
+let DROP_VISCOUS = false;   // TAMPER flag: drops mu*lap(v); the witness must catch it
+
+function vxProfile(y, G, mu, H){ return (G/(2*mu))*(H*H - y*y); }        // exact parabola
+function d2vx(y, G, mu, H, h){                                            // finite-difference v_x''(y)
+ return (vxProfile(y+h,G,mu,H) - 2*vxProfile(y,G,mu,H) + vxProfile(y-h,G,mu,H))/(h*h);
+}
+// steady, fully-developed x-momentum residual for the Poiseuille profile:
+// time term and convective (v.grad)v both vanish (v_x depends on y only), leaving 0 = G + mu*v_x''.
+function poiseuilleResidual(y, G, mu, H, h, includeViscous){
+ if(includeViscous===undefined) includeViscous = !DROP_VISCOUS;
+ const visc = includeViscous ? mu*d2vx(y,G,mu,H,h) : 0;
+ return G + visc;
+}
+
+// Reynolds number (dimensionless) and the inertial/viscous magnitude ratio (independently formed).
+function reynolds(rho,U,L,mu){ return rho*U*L/mu; }
+function inertViscRatio(rho,U,L,mu){ const inert = rho*U*U/L, visc = mu*U/(L*L); return inert/visc; }
+
+// A divergence-free Taylor-Green field, for the viscous (Laplacian) and convective (nonlinear) terms.
+function tgVel(p){ const x=p[0], y=p[1]; return [Math.sin(x)*Math.cos(y), -Math.cos(x)*Math.sin(y)]; }
+function laplacianTG(p,h){
+ const x=p[0], y=p[1], lap=[0,0];
+ for(let c=0;c<2;c++){
+  const f=pp=>tgVel(pp)[c];
+  const dxx=(f([x+h,y])-2*f([x,y])+f([x-h,y]))/(h*h);
+  const dyy=(f([x,y+h])-2*f([x,y])+f([x,y-h]))/(h*h);
+  lap[c]=dxx+dyy;
+ }
+ return lap;
+}
+function viscousMag(mu){ const l=laplacianTG([0.7,0.4],1e-3); return Math.hypot(mu*l[0], mu*l[1]); }
+// convective (a*v . grad)(a*v)  -- scales as a^2, i.e. NONLINEAR
+function convectiveTG(p,a,h){
+ h=h||1e-3; const x=p[0], y=p[1];
+ const V=pp=>{ const v=tgVel(pp); return [a*v[0], a*v[1]]; };
+ const v0=V(p), out=[0,0];
+ for(let c=0;c<2;c++){
+  const f=pp=>V(pp)[c];
+  const dcx=(f([x+h,y])-f([x-h,y]))/(2*h);
+  const dcy=(f([x,y+h])-f([x,y-h]))/(2*h);
+  out[c]=v0[0]*dcx + v0[1]*dcy;
+ }
+ return out;
+}
+
+// ---- fail-loud self-check (runs untampered, saves/restores the flag, RETURNS true) ----
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=DROP_VISCOUS; DROP_VISCOUS=false;
+ const G=2.0, mu=0.5, H=1.0, h=1e-3;
+
+ // (A) exact Poiseuille solution drives the steady residual to zero to the 1e-9 FD tolerance
+ let maxres=0;
+ for(let y=-0.9; y<=0.9001; y+=0.3){ maxres=Math.max(maxres, Math.abs(poiseuilleResidual(y,G,mu,H,h))); }
+ t(maxres<1e-9, "Poiseuille residual must vanish to 1e-9, got "+maxres);
+ t(Math.abs(vxProfile(0,G,mu,H)-2.0)<1e-12, "centreline v_max must equal G*H^2/(2 mu)=2");
+
+ // (B) EULER limit: mu=0 removes the viscous term exactly; mu>0 it is present
+ t(viscousMag(0)===0, "mu=0 must remove the viscous term (Euler limit)");
+ t(viscousMag(0.5)>1e-6, "viscous term must be nonzero when mu>0");
+
+ // (C) STOKES limit: inertial/viscous ratio equals Re and vanishes as Re -> 0 (inertia drops)
+ t(Math.abs(reynolds(1,1,1,0.5)-2)<1e-12, "Re must equal rho*U*L/mu");
+ t(Math.abs(inertViscRatio(1,1,1,0.5)-reynolds(1,1,1,0.5))<1e-12, "inertial/viscous ratio must equal Re");
+ t(inertViscRatio(1,1,1,1e4)<1e-3, "at low Re inertia must be negligible (Stokes creeping flow)");
+
+ // (D) the convective term is NONLINEAR: (a v . grad)(a v) = a^2 (v.grad)v, not a*(...)
+ const a=3, p=[0.7,0.4];
+ const c1=convectiveTG(p,1), ca=convectiveTG(p,a);
+ t(Math.abs(ca[0]-a*a*c1[0])<1e-9 && Math.abs(ca[1]-a*a*c1[1])<1e-9, "convective term must scale as a^2 (quadratic)");
+ t(Math.abs(ca[0]-a*c1[0])>1e-6, "convective term must NOT be linear in v");
+
+ // (E) TAMPER: drop mu*lap(v) -> Poiseuille no longer balances G; residual becomes G, not zero
+ DROP_VISCOUS=true;
+ const rt=poiseuilleResidual(0.3,G,mu,H,h);
+ t(Math.abs(rt-G)<1e-9, "tampered (inviscid) residual must equal G");
+ t(Math.abs(rt)>0.5, "tampered residual must be nonzero -- the witness catches it");
+
+ DROP_VISCOUS=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let regime="full";   // full | euler | stokes  (a labelled control, distinct from the hidden TAMPER)
+
+function params(){ return { rho:+$("rho").value, mu:+$("mu").value, G:+$("G").value, H:+$("H").value }; }
+
+function drawProfile(G,mu,H,inviscid){
+ const cv=$("cv"); if(!cv||!cv.getContext) return;
+ const ctx=cv.getContext("2d"), W=cv.width, Hc=cv.height;
+ ctx.clearRect(0,0,W,Hc);
+ const padL=54, padR=18, padT=12, padB=12;
+ const y0=padT, y1=Hc-padB, xW=W-padL-padR;
+ // walls
+ ctx.strokeStyle="#3a1d1d"; ctx.lineWidth=2;
+ ctx.beginPath(); ctx.moveTo(padL,y0); ctx.lineTo(W-padR,y0); ctx.stroke();
+ ctx.beginPath(); ctx.moveTo(padL,y1); ctx.lineTo(W-padR,y1); ctx.stroke();
+ ctx.fillStyle="#5f8a68"; ctx.font="9px monospace";
+ ctx.fillText("wall  y=+H",4,y0+9); ctx.fillText("wall  y=−H",4,y1-2);
+ // profile v_x(y): map y in [-H,H] vertically, v_x in [0,vmax] horizontally
+ const vmax=Math.max(1e-9, vxProfile(0,G,mu,H));
+ const N=40;
+ ctx.strokeStyle=inviscid?"#ff6b6b":"#57e0d0"; ctx.lineWidth=2; ctx.beginPath();
+ for(let i=0;i<=N;i++){
+  const y=-H + 2*H*i/N;
+  const v = inviscid ? 0 : vxProfile(y,G,mu,H);
+  const px = padL + xW*(v/vmax);
+  const py = y0 + (y1-y0)*(1-(y+H)/(2*H));
+  i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+ }
+ ctx.stroke();
+ // a few velocity arrows
+ ctx.strokeStyle=inviscid?"#6b2b2b":"#2b5a80";
+ for(let i=1;i<6;i++){
+  const y=-H + 2*H*i/6;
+  const v=inviscid?0:vxProfile(y,G,mu,H);
+  const py=y0+(y1-y0)*(1-(y+H)/(2*H));
+  ctx.beginPath(); ctx.moveTo(padL,py); ctx.lineTo(padL+xW*(v/vmax),py); ctx.stroke();
+ }
+ ctx.fillStyle="#5f8a68";
+ ctx.fillText(inviscid?"no viscous balance":("v_max="+vmax.toFixed(2)), padL, Hc-2);
+}
+
+function eqSentence(){
+ const de = regime==="stokes" ? '<span class="drop">&rho;(v&middot;&nabla;)v</span>' : '<span class="S">&rho;(v&middot;&nabla;)v</span>';
+ const ve = (regime==="euler") ? '<span class="drop">&mu;&nabla;&sup2;v</span>' : '<span class="M">&mu;&nabla;&sup2;v</span>';
+ return '<span class="M">&rho;&part;v/&part;t</span> + '+de+' = <span class="P">&minus;&nabla;p</span> + '+ve+' &nbsp;;&nbsp; <span class="P">&nabla;&middot;v = 0</span>';
+}
+
+function render(){
+ const {rho,mu,G,H}=params();
+ $("vrho").textContent=rho.toFixed(1); $("vmu").textContent=mu.toFixed(2);
+ $("vG").textContent=G.toFixed(1); $("vH").textContent=H.toFixed(1);
+ $("sent").innerHTML=eqSentence();
+
+ const inviscid = DROP_VISCOUS || regime==="euler";
+ // residual of the steady balance for the Poiseuille profile
+ const res = poiseuilleResidual(0.5*H, G, mu, H, 1e-3, !inviscid);
+ const vmax = vxProfile(0,G,mu,H);
+ const Re = reynolds(rho, vmax, H, mu);
+
+ const balanced = Math.abs(res)<1e-9;
+ $("verdict").textContent = balanced ? "BALANCED · residual ≈ 0" : "UNBALANCED · residual = "+res.toFixed(3);
+ $("verdict").className = "verdict "+(balanced?"ok":"no");
+
+ let modeName, why;
+ if(regime==="euler"){ modeName="EULER limit &mdash; &mu;&rarr;0, inviscid"; why="viscous term removed; nothing balances G, so bounded Poiseuille is no longer a solution (a legitimate, labelled reduction)."; }
+ else if(regime==="stokes"){ modeName="STOKES limit &mdash; Re&rarr;0, creeping"; why="inertial (v&middot;&nabla;)v dropped; for this unidirectional flow it was already zero, so the exact balance is unchanged."; }
+ else { modeName="FULL Navier-Stokes"; why="fully-developed: &part;v/&part;t and (v&middot;&nabla;)v vanish identically; &mu;v<sub>x</sub>&Prime; balances G exactly."; }
+ if(DROP_VISCOUS) why="<b style='color:var(--wall)'>viscous term dropped by the red team</b> &mdash; residual = G, the profile no longer solves the equation.";
+ $("moodname").innerHTML = modeName;
+ $("reason").innerHTML = why + " &nbsp;·&nbsp; Re = &rho;v<sub>max</sub>H/&mu; = <b>"+Re.toFixed(2)+"</b> ("+(Re<1?"creeping":Re<100?"laminar":"inertial")+")";
+
+ drawProfile(G,mu,H,inviscid);
+
+ // window 3 live term table
+ const h=1e-3, viscTerm = inviscid?0:mu*d2vx(0.5*H,G,mu,H,h);
+ const rows=[
+  ["&minus;&nabla;p  (= G)", (G).toFixed(3), "drives"],
+  ["&mu;v<sub>x</sub>&Prime;(y)", (viscTerm).toFixed(3), inviscid?"dropped":"resists"],
+  ["&rho;(v&middot;&nabla;)v", "0.000", "vanishes (1-D)"],
+  ["residual", (res).toFixed(3), balanced?"&#10003; zero":"&#10007; nonzero"]
+ ];
+ $("distBody").innerHTML=rows.map(r=>{
+  const cls = r[2].indexOf("10003")>=0 ? "y" : (r[2].indexOf("10007")>=0 ? "n" : "");
+  return '<tr><td style="text-align:left">'+r[0]+'</td><td>'+r[1]+'</td><td class="'+cls+'">'+r[2]+'</td></tr>';
+ }).join("");
+}
+
+function setRegime(r){
+ regime=r;
+ $("rFull").classList.toggle("on",r==="full");
+ $("rEuler").classList.toggle("on",r==="euler");
+ $("rStokes").classList.toggle("on",r==="stokes");
+ const txt = r==="euler" ? "EULER: &mu;&rarr;0. The viscous term is removed &mdash; a singular limit, not a small correction. No viscous force means no Poiseuille balance."
+   : r==="stokes" ? "STOKES: Re&rarr;0. The inertial term &rho;(v&middot;&nabla;)v is neglected. For this 1-D flow it was already exactly zero, so the balance is untouched &mdash; Poiseuille IS a Stokes flow."
+   : "FULL: all terms live. Poiseuille is fully-developed, so time and convective terms vanish identically and the viscous term alone must balance G.";
+ $("readmode").innerHTML=txt;
+ render(); audit();
+}
+
+function audit(){
+ const el=$("auditout");
+ const G=2.0, mu=0.5, H=1.0, h=1e-3;
+ const res = poiseuilleResidual(0.3,G,mu,H,h);      // uses the live DROP_VISCOUS flag
+ const euler0 = viscousMag(0)===0;
+ const reOK = Math.abs(inertViscRatio(1,1,1,0.5)-reynolds(1,1,1,0.5))<1e-12;
+ const c1=convectiveTG([0.7,0.4],1), ca=convectiveTG([0.7,0.4],3);
+ const nonlin = Math.abs(ca[0]-9*c1[0])<1e-9;
+ const resOK = Math.abs(res)<1e-9;
+ const ok = resOK && euler0 && reOK && nonlin;
+ el.innerHTML = '<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — holds':'✗ WITNESS — broken')+'</span>'
+  + '<div class="small" style="margin-top:6px">Poiseuille residual: <b style="color:'+(resOK?'var(--gr)':'var(--wall)')+'">'+res.toFixed(3)+'</b> (want 0) &nbsp;·&nbsp; Euler &mu;=0 &rarr; 0: <b class="k">'+euler0+'</b> &nbsp;·&nbsp; ratio=Re: <b class="k">'+reOK+'</b> &nbsp;·&nbsp; conv &prop; a&sup2;: <b class="k">'+nonlin+'</b>'
+  + (DROP_VISCOUS?' &nbsp; — <span style="color:var(--wall)">red dropped &mu;&nabla;&sup2;v</span>':'')+'</div>';
+}
+
+// ---- boot ----
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ ["rho","mu","G","H"].forEach(id=>$(id).addEventListener("input",()=>{render();audit();}));
+ $("rFull").addEventListener("click",()=>setRegime("full"));
+ $("rEuler").addEventListener("click",()=>setRegime("euler"));
+ $("rStokes").addEventListener("click",()=>setRegime("stokes"));
+ $("tamper").addEventListener("click",()=>{ DROP_VISCOUS=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>&mu;&nabla;&sup2;v dropped.</b> The Poiseuille residual is now G, not zero &mdash; the profile no longer solves the equation. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ DROP_VISCOUS=false; $("tampernote").textContent="Delete the viscous term and Poiseuille's residual jumps from ~0 to G — the profile no longer solves the equation. The witness recomputes, disagrees with the known zero, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Navier-Stokes engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

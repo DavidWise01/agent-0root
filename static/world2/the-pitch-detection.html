@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PITCH DETECTION</title>
+<style>
+:root{
+  --am:#ffb0d0;
+  --bg:#0b1710; --bg2:#102217; --bg3:#0e1d14;
+  --ink:#e9f6 ec; --ink:#e9f6ec; --mut:#8fb39d;
+  --blue:#7fb4ff; --red:#ff7d7d; --line:#20362a; --line2:#2c4636;
+  --ok:#66d19e; --bad:#ff6b6b; --amber:#ffce7a;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 12% -8%, #12261a 0%, transparent 60%),
+    radial-gradient(1000px 700px at 100% 0%, #0f2016 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1220px;margin:0 auto}
+header{margin:0 0 18px}
+h1{
+  font-size:clamp(26px,4.4vw,44px);margin:0 0 6px;letter-spacing:.5px;
+  color:var(--am);text-shadow:0 0 26px rgba(255,176,208,.28);font-weight:800;
+}
+.sub{margin:0 0 10px;max-width:76ch;color:#d6ecdd;font-size:15.5px}
+.src{font-size:12.5px;color:var(--mut);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.rendered{color:var(--mut);font-style:italic;margin-left:4px}
+.tag{
+  display:inline-block;font:600 10.5px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  padding:4px 7px;border-radius:5px;letter-spacing:.6px;text-transform:uppercase;vertical-align:middle;
+}
+.t-amber{background:rgba(255,206,122,.12);color:var(--amber);border:1px solid rgba(255,206,122,.4)}
+.t-lit{background:rgba(255,176,208,.14);color:var(--am);border:1px solid rgba(255,176,208,.5)}
+.t-in{background:rgba(127,180,255,.12);color:var(--blue);border:1px solid rgba(127,180,255,.4)}
+.t-out{background:rgba(102,209,158,.12);color:var(--ok);border:1px solid rgba(102,209,158,.4)}
+.t-wall{background:rgba(255,125,125,.12);color:var(--red);border:1px solid rgba(255,125,125,.45)}
+
+#failb{display:none;margin:0 0 16px;padding:12px 14px;border-radius:9px;
+  background:rgba(255,107,107,.14);border:1px solid var(--bad);color:#ffd4d4;font-weight:600}
+
+.ocho{display:grid;grid-template-columns:1fr 1.16fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font:700 12px/1 ui-monospace,monospace;letter-spacing:1.4px;text-transform:uppercase;
+  padding:8px 10px;border-radius:8px;border:1px solid var(--line2)}
+.col.blue .teamhdr{color:var(--blue);background:rgba(127,180,255,.07);border-color:rgba(127,180,255,.28)}
+.col.red .teamhdr{color:var(--red);background:rgba(255,125,125,.07);border-color:rgba(255,125,125,.28)}
+.col.center .teamhdr{color:var(--am);background:rgba(255,176,208,.07);border-color:rgba(255,176,208,.3);text-align:center}
+
+.win{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+.win h3{margin:0 0 7px;font-size:13.5px;letter-spacing:.4px;color:#eafff2;text-transform:uppercase}
+.win p{margin:6px 0;font-size:13px;color:#cfe6d6}
+.win .n{position:absolute;top:-10px;left:-10px;width:23px;height:23px;border-radius:50%;
+  display:grid;place-items:center;font:700 12px/1 ui-monospace,monospace;color:#08130d;background:var(--mut)}
+.col.blue .win .n{background:var(--blue)}
+.col.red .win .n{background:var(--red)}
+.col.center .win .n{background:var(--am)}
+.win.panel{border-color:rgba(255,176,208,.45);background:linear-gradient(180deg,#13251a,#0f2015);
+  box-shadow:0 0 0 1px rgba(255,176,208,.08),0 10px 40px -20px rgba(255,176,208,.4)}
+
+.flow{height:26px;display:grid;place-items:center;color:var(--am);font-size:18px;opacity:.7}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.eq{font-size:12.5px;background:var(--bg3);border:1px solid var(--line);border-radius:7px;padding:8px 10px;margin:8px 0;color:#d7ecdd;overflow-x:auto}
+.k{color:var(--am)}
+.wall-note{border-left:3px solid var(--red);padding:6px 0 6px 11px;margin:8px 0;color:#ffdede;font-size:13px}
+del{color:#c99;text-decoration-color:var(--red)}
+.fix{color:var(--ok)}
+.amberword{color:var(--amber)}
+
+.badge{margin-top:8px;padding:9px 11px;border-radius:8px;font:600 12px/1.4 ui-monospace,monospace;
+  border:1px solid var(--line2);background:var(--bg3);color:var(--mut);word-break:break-word}
+.badge.ok{color:#bff3d8;border-color:rgba(102,209,158,.5);background:rgba(102,209,158,.09)}
+.badge.bad{color:#ffd0d0;border-color:var(--bad);background:rgba(255,107,107,.12)}
+
+button{font:600 12px ui-monospace,monospace;color:#08130d;background:var(--am);border:0;border-radius:7px;
+  padding:8px 12px;cursor:pointer;margin:4px 6px 4px 0}
+button.ghost{background:transparent;color:var(--am);border:1px solid var(--am)}
+button:active{transform:translateY(1px)}
+canvas{width:100%;height:auto;background:#081109;border:1px solid var(--line);border-radius:8px;display:block;margin:8px 0}
+.cap{font-size:11px;color:var(--mut);margin:2px 0 8px}
+footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);color:var(--mut);font-size:12.5px}
+.litout{color:var(--ok);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE PITCH DETECTION</h1>
+  <p class="sub">Finding the note inside the waveform. The lag at which a signal best matches a delayed copy of itself is its period; the fundamental is <span class="mono">f0 = sr / period</span>. And the octave trap that catches naive methods: the autocorrelation peaks again at <em>twice</em> the period, so a lazy peak-pick reports a pitch an octave too low.</p>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>de Cheveigné &amp; Kawahara, <em>YIN, a Fundamental Frequency Estimator for Speech and Music</em>, JASA <strong>111</strong>, 1917–1930 (2002) — <a href="https://doi.org/10.1121/1.1458024" target="_blank" rel="noopener">doi:10.1121/1.1458024</a></span>
+    <span class="rendered">Rendered, not quoted.</span>
+  </div>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ============ BLUE TEAM (LEFT) ============ -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <span class="n">3</span>
+      <h3>The Model</h3>
+      <p>A periodic signal repeats every <span class="mono">P</span> samples. The (biased) autocorrelation at lag τ measures self-similarity:</p>
+      <div class="eq">r[<span class="k">τ</span>] = Σ<sub>n</sub> x[n]·x[n+<span class="k">τ</span>]</div>
+      <p>It is maximal at <span class="mono">τ=0</span> (perfect self-match) and peaks again at <span class="mono">τ = P, 2P, 3P…</span> The period is the <em>first non-trivial</em> peak; the pitch is <span class="mono">f0 = sr / P</span>.</p>
+      <p>YIN instead minimises the difference function and normalises it:</p>
+      <div class="eq">d(τ)=Σ(x[n]−x[n+τ])² ,&nbsp; d′(τ)=d(τ)·τ / Σ<sub>j≤τ</sub>d(j) ,&nbsp; d′(0)=1</div>
+      <p>Pick the first τ with <span class="mono">d′(τ)</span> below threshold. <span class="amberword">AMBER:</span> the cumulative-mean normalisation suppresses — does not eliminate — octave errors.</p>
+    </div>
+
+    <div class="win">
+      <span class="n">5</span>
+      <h3>The Lineage</h3>
+      <p>The note inside the noise. Autocorrelation's peak at the period is the <em>time-domain twin</em> of <span class="mono">the-fourier</span>: by Wiener–Khinchin the autocorrelation is the inverse transform of the power spectrum. This sphere threads past the octave error the naive spectral/temporal pick makes.</p>
+    </div>
+
+    <div class="win">
+      <span class="n">7</span>
+      <h3>The Witness</h3>
+      <p>Re-runs <span class="mono">selfcheck()</span> live and confirms the peak-at-the-period. It flips red the instant the TAMPER (window 6) is armed.</p>
+      <div id="auditout" class="badge">witness idle…</div>
+    </div>
+  </div>
+
+  <!-- ============ CENTER (MACHINE) ============ -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="n">4</span>
+      <h3>Data In <span class="tag t-in">in ↓</span></h3>
+      <p>A synthetic tone at <span class="mono">f0 = 220.5 Hz</span>, sampled at <span class="mono">44.1 kHz</span> → exact period <span class="mono">P = 200</span> samples. Three harmonics (1, ½, ⅓) plus optional fixed-seed noise for the display.</p>
+    </div>
+
+    <div class="flow">↓</div>
+
+    <div class="win panel">
+      <span class="n">0</span>
+      <h3>The Panel <span class="tag t-lit">LIT</span></h3>
+      <canvas id="sig" width="520" height="120"></canvas>
+      <div class="cap">Signal x[n] — one period spans 200 samples.</div>
+      <canvas id="acf" width="520" height="140"></canvas>
+      <div class="cap">Autocorrelation r[τ] — <span style="color:var(--am)">■</span> first peak = period P, <span style="color:var(--red)">■</span> peak at 2P = the octave-low trap.</div>
+      <div>
+        <button id="play">▶ play tone</button>
+        <button id="recompute" class="ghost">re-detect</button>
+      </div>
+    </div>
+
+    <div class="flow">↓</div>
+
+    <div class="win">
+      <span class="n">8</span>
+      <h3>Data Out <span class="tag t-out">out ↓</span></h3>
+      <p>Detected from the live autocorrelation:</p>
+      <div id="litbadge" class="badge">computing…</div>
+    </div>
+  </div>
+
+  <!-- ============ RED TEAM (RIGHT) ============ -->
+  <div class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="n">1</span>
+      <h3>The Adversary <span class="tag t-wall">WALL</span></h3>
+      <div class="wall-note">Octave halving/doubling: a strong 2nd harmonic makes r peak near P/2 (pitch too high); the periodic peak at 2P makes it too low.</div>
+      <div class="wall-note">Biased-autocorrelation bias: the triangular window inflates short lags, tilting naive picks toward low periods.</div>
+      <div class="wall-note">Period quantisation: <span class="mono">f0 = sr/P</span> with integer P has coarse resolution at high pitch — YIN adds parabolic interpolation.</div>
+      <div class="wall-note">Noise &amp; non-stationarity blur the peak; formant structure adds spurious maxima. Real defeats need thresholds, not a bare argmax.</div>
+    </div>
+
+    <div class="win">
+      <span class="n">2</span>
+      <h3>The Graveyard</h3>
+      <p><del>"The global maximum of the autocorrelation gives the pitch."</del><br><span class="fix">→ The global max is always lag 0 (a signal matches itself perfectly). Search lag&gt;0 for the first significant peak.</span></p>
+      <p><del>"Autocorrelation never makes octave errors."</del><br><span class="fix">→ It peaks at 2P (an octave low) and near P/2 for harmonic-rich tones (an octave high). Both are classic failures.</span></p>
+      <p><del>"The recovered period is exact."</del><br><span class="fix amberword">→ AMBER: period is quantised to whole samples; f0 resolution is limited by sr. Interpolation refines it.</span></p>
+    </div>
+
+    <div class="win">
+      <span class="n">6</span>
+      <h3>The Tamper</h3>
+      <p>The disclosed planted void: pick the <em>global</em> maximum of r instead of the first non-trivial peak. The global max is lag 0 → period 0 → <span class="mono">f0 = sr/0 = ∞</span>. The Witness (7) catches it live.</p>
+      <button id="tamper">arm tamper</button>
+      <button id="restore" class="ghost">restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  THE PITCH DETECTION · WORLD II · THE FOLD — autocorrelation &amp; the YIN difference function, rendered live and self-checked. Engine is LIT: pure functions, fail-loud <span class="mono">selfcheck()</span>, one disclosed tamper. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+/* engine + selfcheck: pure logic, no canvas / audio / DOM. */
+var SR = 44100;      // sample rate (Hz)
+var F0 = 220.5;      // fundamental (Hz)  -> SR/F0 = 200 exactly
+var P  = 200;        // true period (samples)
+
+function mulberry32(a){
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function makeSignal(N, noiseAmp, seed){
+  noiseAmp = noiseAmp || 0;
+  var rnd = mulberry32(seed || 1);
+  var x = new Float64Array(N);
+  for (var n = 0; n < N; n++){
+    var t = n / SR;
+    var v = Math.sin(2*Math.PI*F0*t)
+          + 0.5  * Math.sin(2*Math.PI*2*F0*t)
+          + 0.33 * Math.sin(2*Math.PI*3*F0*t);
+    if (noiseAmp) v += noiseAmp * (rnd()*2 - 1);
+    x[n] = v;
+  }
+  return x;
+}
+
+function autocorr(x, maxLag){
+  var N = x.length;
+  var r = new Float64Array(maxLag + 1);
+  for (var lag = 0; lag <= maxLag; lag++){
+    var s = 0;
+    for (var n = 0; n + lag < N; n++) s += x[n] * x[n+lag];
+    r[lag] = s;
+  }
+  return r;
+}
+
+// first strict local maximum for lag>=2, above a fraction of r[0]
+function firstPeakLag(r){
+  for (var lag = 2; lag < r.length - 1; lag++){
+    if (r[lag] > r[lag-1] && r[lag] > r[lag+1] && r[lag] > 0.25 * r[0]) return lag;
+  }
+  return -1;
+}
+
+// global argmax over ALL lags (this always returns 0 — the tamper path)
+function argmaxAll(r){
+  var bi = 0, bv = r[0];
+  for (var i = 1; i < r.length; i++){ if (r[i] > bv){ bv = r[i]; bi = i; } }
+  return bi;
+}
+
+var tampered = false;
+
+function detectPeriod(x){
+  var r = autocorr(x, 3*P);
+  if (tampered) return argmaxAll(r);   // BUG (window 6): global max is lag 0
+  return firstPeakLag(r);
+}
+
+function detectF0(x){
+  var p = detectPeriod(x);
+  return SR / p;
+}
+
+// YIN cumulative-mean-normalized difference function
+function yinCMND(x, maxLag){
+  var N = x.length;
+  var d = new Float64Array(maxLag + 1);
+  for (var tau = 0; tau <= maxLag; tau++){
+    var s = 0;
+    for (var n = 0; n + tau < N; n++){ var diff = x[n] - x[n+tau]; s += diff*diff; }
+    d[tau] = s;
+  }
+  var dp = new Float64Array(maxLag + 1);
+  dp[0] = 1;
+  var run = 0;
+  for (var t = 1; t <= maxLag; t++){ run += d[t]; dp[t] = d[t] * t / run; }
+  return dp;
+}
+
+function yinPeriod(dp, thr){
+  thr = thr || 0.15;
+  for (var tau = 2; tau < dp.length - 1; tau++){
+    if (dp[tau] < thr && dp[tau] < dp[tau-1] && dp[tau] <= dp[tau+1]) return tau;
+  }
+  return -1;
+}
+
+function selfcheck(){
+  var x = makeSignal(1000, 0, 1);
+  var r = autocorr(x, 3*P);
+
+  // 1. autocorrelation of a periodic signal PEAKS at the PERIOD
+  var fp = firstPeakLag(r);
+  if (fp !== P) throw new Error("first non-trivial autocorr peak not at period: " + fp);
+
+  // 2. f0 = sample_rate / period  (exact here: 44100/200 = 220.5)
+  var f = SR / fp;
+  if (Math.abs(f - F0) > 1e-9) throw new Error("f0 mismatch: " + f);
+
+  // 3. OCTAVE trap: r ALSO peaks at 2P -> a naive pick reports an octave too LOW
+  var two = 2 * P;
+  if (!(r[two] > r[two-1] && r[two] > r[two+1])) throw new Error("no octave peak at 2P");
+  var fLow = SR / two;
+  if (Math.abs(fLow - F0/2) > 1e-9) throw new Error("octave-low freq wrong: " + fLow);
+  if (Math.abs((SR/P) / (SR/(2*P)) - 2) > 1e-12) throw new Error("octave ratio not exactly 2");
+
+  // 4. YIN CMND (AMBER): d'(0)=1 exactly, and its minimum sits at the true period
+  var dp = yinCMND(x, 3*P);
+  if (Math.abs(dp[0] - 1) > 1e-9) throw new Error("CMND d'(0) != 1");
+  var yp = yinPeriod(dp, 0.15);
+  if (yp !== P) throw new Error("YIN period not P: " + yp);
+
+  // TAMPER: global-max path -> period 0 -> f0 = sr/0 = Infinity
+  var save = tampered;
+  tampered = true;
+  var badP = detectPeriod(x);
+  if (badP !== 0) throw new Error("tamper expected period 0, got " + badP);
+  if (isFinite(SR / badP)) throw new Error("tampered f0 should be non-finite");
+  if (badP === fp) throw new Error("tamper did not change the result");
+  tampered = save;
+  if (detectPeriod(x) !== P) throw new Error("restore failed");
+
+  return true;
+}
+
+/* ===== UI ===== */
+function fmt(v){ return isFinite(v) ? v.toFixed(2) : "∞"; }
+
+function draw(){
+  var x = makeSignal(1000, 0.04, 1);
+  var live = detectPeriod(x);
+
+  // signal canvas
+  var c1 = document.getElementById("sig"); var g = c1.getContext("2d");
+  var W = c1.width, H = c1.height; g.clearRect(0,0,W,H);
+  g.strokeStyle = "#1c3325"; g.beginPath(); g.moveTo(0,H/2); g.lineTo(W,H/2); g.stroke();
+  var span = 600, mx = 0, i;
+  for (i=0;i<span;i++) mx = Math.max(mx, Math.abs(x[i]));
+  g.strokeStyle = "#7fb4ff"; g.lineWidth = 1.3; g.beginPath();
+  for (i=0;i<span;i++){ var px=i/span*W, py=H/2 - (x[i]/mx)*(H/2-6); if(i===0)g.moveTo(px,py); else g.lineTo(px,py); }
+  g.stroke();
+
+  // autocorr canvas
+  var c2 = document.getElementById("acf"); var a = c2.getContext("2d");
+  var W2=c2.width, H2=c2.height; a.clearRect(0,0,W2,H2);
+  var r = autocorr(x, 3*P);
+  var lags = 3*P, rmax = r[0];
+  a.strokeStyle="#1c3325"; a.beginPath(); a.moveTo(0,H2-14); a.lineTo(W2,H2-14); a.stroke();
+  a.strokeStyle="#66d19e"; a.lineWidth=1.3; a.beginPath();
+  for (i=0;i<=lags;i++){ var qx=i/lags*W2, qy=(H2-14)-(r[i]/rmax)*(H2-24); if(i===0)a.moveTo(qx,qy); else a.lineTo(qx,qy); }
+  a.stroke();
+  function vline(lag,col,dash){ a.save(); a.setLineDash(dash||[]); a.strokeStyle=col; a.beginPath();
+    var lx=lag/lags*W2; a.moveTo(lx,4); a.lineTo(lx,H2-14); a.stroke(); a.restore(); }
+  vline(P, "#ffb0d0");           // true period
+  vline(2*P, "#ff7d7d", [5,4]);  // octave-low trap
+  if (tampered) vline(0, "#ff7d7d", [2,3]); // tamper picks lag 0
+
+  var lb = document.getElementById("litbadge");
+  if (tampered){
+    lb.className = "badge bad";
+    lb.textContent = "TAMPERED — period = " + live + " (lag 0), f0 = sr/0 = ∞ Hz. Undefined pitch.";
+  } else {
+    lb.className = "badge ok";
+    lb.innerHTML = "<span class='litout'>f0 = " + fmt(SR/live) + " Hz</span> · period = " + live +
+      " samples @ 44.1 kHz · octave-low trap flagged at lag " + (2*P) + " (f0/2 = " + fmt(F0/2) + " Hz) · LIT";
+  }
+}
+
+function runWitness(){
+  var el = document.getElementById("auditout");
+  try { selfcheck(); }
+  catch(e){ el.className="badge bad"; el.textContent = "WITNESS FAIL — " + e.message; return; }
+  if (tampered){
+    var x = makeSignal(1000, 0, 1);
+    var p = detectPeriod(x);
+    el.className = "badge bad";
+    el.textContent = "TAMPER DETECTED — global-max path gives period = " + p +
+      " samples, f0 = " + fmt(SR/p) + " Hz. The peak-at-the-period contract is broken.";
+  } else {
+    el.className = "badge ok";
+    el.textContent = "WITNESS OK — autocorr peak at lag " + P + " = period; f0 = " + fmt(SR/P) +
+      " Hz; octave peak at " + (2*P) + " flagged; CMND d'(0)=1. selfcheck() passed.";
+  }
+}
+
+function playTone(){
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  var ac = new AC();
+  var asr = ac.sampleRate, dur = 1.0, N = Math.floor(asr*dur);
+  var buf = ac.createBuffer(1, N, asr), ch = buf.getChannelData(0);
+  var mx = 0, i, v;
+  var tmp = new Float64Array(N);
+  for (i=0;i<N;i++){
+    var t = i/asr;
+    v = Math.sin(2*Math.PI*F0*t) + 0.5*Math.sin(2*Math.PI*2*F0*t) + 0.33*Math.sin(2*Math.PI*3*F0*t);
+    tmp[i] = v; if (Math.abs(v) > mx) mx = Math.abs(v);
+  }
+  var env;
+  for (i=0;i<N;i++){ env = Math.min(1, i/2000, (N-i)/2000); ch[i] = 0.3*env*tmp[i]/mx; }
+  var s = ac.createBufferSource(); s.buffer = buf; s.connect(ac.destination); s.start();
+}
+
+(function boot(){
+  try {
+    if (selfcheck() !== true) throw new Error("selfcheck did not return true");
+  } catch(e){
+    var fb = document.getElementById("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED — engine is NOT lit: " + e.message;
+    throw e;
+  }
+  document.getElementById("tamper").onclick    = function(){ tampered = true;  draw(); runWitness(); };
+  document.getElementById("restore").onclick   = function(){ tampered = false; draw(); runWitness(); };
+  document.getElementById("recompute").onclick = function(){ draw(); runWitness(); };
+  document.getElementById("play").onclick      = playTone;
+  draw();
+  runWitness();
+})();
+</script>
+</body>
+</html>

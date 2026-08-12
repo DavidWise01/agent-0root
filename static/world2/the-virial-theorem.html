@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE VIRIAL THEOREM</title>
+<style>
+:root{
+  --am:#ffcf5a;
+  --ground:#08160f;
+  --ground2:#0c2016;
+  --panel:#0e2419;
+  --panel2:#102b1e;
+  --ink:#e8f3ea;
+  --mut:#8fb59d;
+  --line:#1d4230;
+  --blue:#5bb8ff;
+  --blue2:#0f2c3a;
+  --red:#ff6b6b;
+  --red2:#341417;
+  --lit:#7dffb0;
+  --wall:#ff8a5b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 15% -10%, #10301f 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, #0c241a 0%, transparent 55%),
+    linear-gradient(180deg,var(--ground2),var(--ground));
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  min-height:100vh;
+}
+.wrap{max-width:1240px;margin:0 auto;padding:26px 20px 60px}
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+h1{
+  font-size:clamp(26px,4.6vw,44px);letter-spacing:.06em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 26px rgba(255,207,90,.22);font-weight:800;
+}
+.sub{color:var(--ink);max-width:74ch;margin:0 0 12px;font-size:15px;line-height:1.6}
+.sub b{color:var(--am)}
+.src{font-size:12.5px;color:var(--mut);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue)}
+.src .rn{margin-left:auto;color:var(--mut);font-style:italic;opacity:.8}
+.tag{display:inline-block;font-size:10.5px;letter-spacing:.13em;font-weight:700;
+  padding:2px 7px;border-radius:5px;vertical-align:middle}
+.t-amber{background:var(--am);color:#241a00}
+.t-lit{background:rgba(125,255,176,.14);color:var(--lit);border:1px solid rgba(125,255,176,.4)}
+.t-in{background:rgba(91,184,255,.14);color:var(--blue);border:1px solid rgba(91,184,255,.4)}
+.t-out{background:rgba(255,207,90,.14);color:var(--am);border:1px solid rgba(255,207,90,.4)}
+.t-wall{background:rgba(255,138,91,.14);color:var(--wall);border:1px solid rgba(255,138,91,.45)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.16fr 1fr;gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font-size:11.5px;letter-spacing:.16em;font-weight:800;padding:8px 10px;border-radius:8px;
+  text-transform:uppercase;border:1px solid var(--line)}
+.col.blue .teamhdr{color:var(--blue);background:linear-gradient(90deg,var(--blue2),transparent)}
+.col.red .teamhdr{color:var(--red);background:linear-gradient(90deg,var(--red2),transparent);text-align:right}
+.col.center .teamhdr{color:var(--am);background:linear-gradient(90deg,transparent,rgba(255,207,90,.10),transparent);text-align:center}
+
+.win{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--line);border-radius:12px;padding:15px 15px 14px}
+.win .num{position:absolute;top:-11px;left:-10px;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:800;color:#04120a;background:var(--am);
+  box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.col.blue .win .num{background:var(--blue);color:#02141d}
+.col.red .win .num{background:var(--red);color:#1c0708;left:auto;right:-10px}
+.win h3{margin:0 0 8px;font-size:12.5px;letter-spacing:.1em;color:var(--ink);text-transform:uppercase}
+.win p{margin:0 0 8px;font-size:13px;color:var(--mut);line-height:1.55}
+.win p:last-child{margin-bottom:0}
+.win b{color:var(--ink)}
+.win .k{color:var(--am)}
+
+.win.panel{border-color:rgba(255,207,90,.55);box-shadow:0 0 0 1px rgba(255,207,90,.08),0 10px 40px rgba(0,0,0,.35)}
+.win.panel h3{color:var(--am)}
+.flow{display:flex;justify-content:center;align-items:center;height:22px;color:var(--am);font-size:15px;opacity:.7}
+.flow::before{content:"▼"}
+
+canvas{width:100%;height:190px;display:block;background:radial-gradient(circle at 50% 50%,#0a2417,#061109);
+  border:1px solid var(--line);border-radius:8px;margin:6px 0 10px}
+.readout{font-size:12px;color:var(--ink);background:#06140d;border:1px solid var(--line);border-radius:8px;
+  padding:9px 11px;margin-top:4px}
+.readout .row{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+.readout .row span:last-child{color:var(--am);font-variant-numeric:tabular-nums}
+.eq{font-size:12.5px;color:var(--lit);background:rgba(125,255,176,.06);border:1px dashed rgba(125,255,176,.3);
+  border-radius:7px;padding:7px 9px;margin:8px 0}
+
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:6px 10px;
+  border-radius:7px;border:1px solid var(--line)}
+#litbadge{background:rgba(125,255,176,.12);color:var(--lit);border-color:rgba(125,255,176,.4)}
+#auditout{width:100%;justify-content:center;margin-top:8px}
+.ok{background:rgba(125,255,176,.12)!important;color:var(--lit)!important;border-color:rgba(125,255,176,.45)!important}
+.bad{background:rgba(255,107,107,.16)!important;color:var(--red)!important;border-color:rgba(255,107,107,.5)!important}
+.dot{width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+
+.wall-note{background:linear-gradient(180deg,rgba(255,138,91,.08),transparent);
+  border:1px solid rgba(255,138,91,.35);border-radius:9px;padding:10px 11px;font-size:12.5px;color:#ffd9c6}
+.grave{list-style:none;margin:0;padding:0;font-size:12.5px}
+.grave li{padding:6px 0;border-bottom:1px dashed var(--line)}
+.grave li:last-child{border-bottom:0}
+.grave s{color:var(--red);opacity:.85}
+.grave .fix{color:var(--lit);display:block;margin-top:3px}
+
+.btn{font:inherit;font-size:12px;font-weight:700;cursor:pointer;border-radius:7px;padding:8px 12px;
+  border:1px solid var(--line);background:#132e20;color:var(--ink);margin:4px 6px 0 0}
+.btn:hover{border-color:var(--am)}
+#tamper{background:rgba(255,107,107,.14);color:var(--red);border-color:rgba(255,107,107,.4)}
+#restore{background:rgba(125,255,176,.12);color:var(--lit);border-color:rgba(125,255,176,.4)}
+
+#failb{display:none;margin:14px 0;padding:12px 14px;border-radius:10px;background:rgba(255,107,107,.16);
+  border:1px solid var(--red);color:#ffd7d7;font-size:13px;font-weight:600}
+footer{margin-top:34px;border-top:1px solid var(--line);padding-top:16px;color:var(--mut);font-size:12px}
+footer b{color:var(--am)}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}.col.red .teamhdr{text-align:left}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE VIRIAL THEOREM</h1>
+  <p class="sub">A time-averaged bookkeeping that pins the ratio of kinetic to potential energy — from atoms to galaxies. Over a bounded orbit the running term <b>d/dt&#8202;&#10216;&#931;&#8202;p&#183;r&#10217;</b> averages to nothing, leaving Clausius's identity <b>2&#10216;T&#10217; = &#8722;&#10216;&#931;&#8202;F&#183;r&#10217;</b>, which for a power law <b>V &#8764; r&#8319;</b> becomes <b>&#10216;T&#10217; = (n/2)&#10216;V&#10217;</b>. Rendered, not quoted.</p>
+  <p class="src">
+    <span class="tag t-amber">SOURCE</span>
+    R. Clausius, "On a Mechanical Theorem Applicable to Heat," <b>Phil. Mag. 40, 122&#8211;127 (1870)</b> — he named the quantity the <b>"virial."</b>
+    <a href="https://www.tandfonline.com/doi/abs/10.1080/14786447008640370" target="_blank" rel="noopener">tandfonline&#8202;/&#8202;10.1080/14786447008640370</a>
+    <span class="rn">stable DOI &#183; natural units m=1, k=1</span>
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- LEFT · BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &#183; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <h3>The Model</h3>
+      <p>A point mass moves under a central force. Multiply Newton's law by <b>r</b> and sum: the scalar <b>G = &#931;&#8202;p&#183;r</b> obeys <b>dG/dt = 2T + &#931;&#8202;F&#183;r</b>, where <b>T</b> is kinetic energy.</p>
+      <p>For a power-law potential <b class="k">V(r) = c&#8202;r&#8319;</b>, the radial force gives <b>&#931;&#8202;F&#183;r = &#8722;n&#8202;V</b>. Two engines run live: an <b>inverse-square</b> Kepler orbit (<b class="k">V = &#8722;1/r, n = &#8722;1</b>) and an <b>isotropic harmonic</b> orbit (<b class="k">V = &#189;r&#178;, n = 2</b>), each integrated with a symplectic velocity-Verlet step so energy does not drift.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <h3>The Lineage</h3>
+      <p>Kinetic and potential, time-averaged &#8212; Clausius 1870. <b>2&#10216;T&#10217; = &#8722;&#10216;&#931;&#8202;F&#183;r&#10217;</b> giving <b>&#10216;T&#10217; = (n/2)&#10216;V&#10217;</b>: the bound-orbit bookkeeping that reaches from <b>the-central-force</b> (which supplies the conserved orbit averaged over here) outward to galaxy-mass estimates, where the same identity turns velocity dispersions into hidden mass.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <h3>The Witness</h3>
+      <p>A live re-check of the Kepler prediction. It recomputes <b>&#10216;T&#10217;</b> predicted from <b>&#10216;V&#10217;</b> under the current virial rule and compares it to the frozen boot value. Trip the tamper in window 6 and this badge flips red.</p>
+      <div id="auditout" class="badge"><span class="dot"></span><span>witness idle</span></div>
+    </div>
+  </div>
+
+  <!-- CENTER · THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <span class="num">4</span>
+      <h3>Data In <span class="tag t-in">IN &#9660;</span></h3>
+      <p>Two bounded orbits, natural units <b>m=1, k=1</b>:</p>
+      <div class="readout">
+        <div class="row"><span>Kepler &#183; V=&#8722;1/r</span><span>a=1, e=0.5, P=2&#960;</span></div>
+        <div class="row"><span>Harmonic &#183; V=&#189;r&#178;</span><span>&#969;=1, P=2&#960;</span></div>
+        <div class="row"><span>integrator</span><span>velocity-Verlet</span></div>
+      </div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <h3>The Panel <span class="tag t-lit">LIT</span></h3>
+      <p>Time-averaging the live trajectory. The dot traces the integrated Kepler ellipse (focus at the star); the bars accumulate the running means of <b>T</b> and <b>V</b>.</p>
+      <canvas id="cv" width="700" height="380"></canvas>
+      <div class="eq">2&#10216;T&#10217; = &#8722;&#10216;&#931;&#8202;F&#183;r&#10217; &nbsp;&#8658;&nbsp; &#10216;T&#10217; = (n/2)&#10216;V&#10217;</div>
+      <div class="readout" id="live"></div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win">
+      <span class="num">8</span>
+      <h3>Data Out <span class="tag t-out">OUT &#9660;</span></h3>
+      <p>Proven, live from the integrator:</p>
+      <div class="readout" id="dataout"></div>
+      <div id="litbadge" class="badge" style="margin-top:9px"><span class="dot"></span><span>booting&#8230;</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT · RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &#183; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <h3>The Adversary</h3>
+      <div class="wall-note">
+        <span class="tag t-wall">WALL</span>
+        <p style="margin-top:7px">"Your averages are just <b>&#189;</b> because you picked <b>&#189;</b>." No &#8212; the ratio is <b>set by n</b>, not chosen. Change the potential and the split changes: <b>n=&#8722;1</b> gives <b>&#10216;T&#10217;=&#8722;&#189;&#10216;V&#10217;</b>, <b>n=2</b> gives <b>&#10216;T&#10217;=&#10216;V&#10217;</b>, <b>n=1</b> would give <b>&#10216;T&#10217;=&#189;&#10216;V&#10217;</b>. The engine runs two different n and both land on <b>(n/2)&#10216;V&#10217;</b> from independent integrations.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <h3>The Graveyard</h3>
+      <ul class="grave">
+        <li><s>The theorem holds for any orbit.</s><span class="fix">&#10003; Only for <b>bounded</b> motion. If G doesn't return, the boundary term survives and 2&#10216;T&#10217;&#8800;&#8722;&#10216;&#931;F&#183;r&#10217;. Verified: boundary drift &#8776; 0.</span></li>
+        <li><s>Instantaneous 2T = &#8722;&#931;F&#183;r.</s><span class="fix">&#10003; It is a <b>time average</b>. At a single instant it fails; only over a full period does dG/dt average to zero.</span></li>
+        <li><s>&#10216;T&#10217; = &#10216;V&#10217; always (equipartition of the two).</s><span class="fix">&#10003; That is the <b>harmonic</b> (n=2) case only. For Kepler (n=&#8722;1) &#10216;T&#10217; = &#8722;&#189;&#10216;V&#10217; and E = &#10216;T&#10217;+&#10216;V&#10217; = &#8722;&#10216;T&#10217;.</span></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <h3>The Tamper</h3>
+      <p>Force the <b>harmonic rule</b> onto the inverse-square case &#8212; predict <b>&#10216;T&#10217;=&#10216;V&#10217;</b> everywhere. Kepler's <b>E=&#8722;&#10216;T&#10217;</b> bookkeeping then breaks; the witness in 7 catches it live.</p>
+      <button class="btn" id="tamper">&#9888; apply harmonic rule to Kepler</button>
+      <button class="btn" id="restore">restore (n/2)&#10216;V&#10217;</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE VIRIAL THEOREM</b> &#183; WORLD II &#183; THE FOLD &#8212; the engine is LIT: every number above is computed live by a symplectic integrator; nothing is quoted. Planted void disclosed in window 6, caught in window 7. Built by <b>David Lee Wise (ROOT0) with AVAN.</b>
+</footer>
+</div>
+
+<script>
+// ===== engine + selfcheck (pure, headless: no canvas / no DOM) =====
+var TOL = 1e-6;
+var TAMPER = false;
+
+// symplectic velocity-Verlet integrator over one period; returns time averages
+function integrate(accel, Vf, x, y, vx, vy, period, N){
+  var dt = period / N;
+  var a = accel(x, y), ax = a[0], ay = a[1];
+  var sT = 0, sV = 0, sFr = 0, G0 = x*vx + y*vy;
+  for(var i=0;i<N;i++){
+    x  += vx*dt + 0.5*ax*dt*dt;
+    y  += vy*dt + 0.5*ay*dt*dt;
+    var an = accel(x, y);
+    vx += 0.5*(ax + an[0])*dt;
+    vy += 0.5*(ay + an[1])*dt;
+    ax = an[0]; ay = an[1];
+    sT  += 0.5*(vx*vx + vy*vy);
+    sV  += Vf(x, y);
+    sFr += ax*x + ay*y;
+  }
+  var Gend = x*vx + y*vy;
+  return { T:sT/N, V:sV/N, Fr:sFr/N, drift:(Gend-G0)/period };
+}
+
+// inverse-square (Kepler): V = -1/r, n = -1
+function keplerAcc(x, y){ var r = Math.sqrt(x*x+y*y), r3 = r*r*r; return [ -x/r3, -y/r3 ]; }
+function keplerV(x, y){ return -1/Math.sqrt(x*x+y*y); }
+
+// isotropic harmonic: V = 1/2 r^2, n = 2
+function harmAcc(x, y){ return [ -x, -y ]; }
+function harmV(x, y){ return 0.5*(x*x + y*y); }
+
+// the virial prediction of <T> from <V> for exponent n.
+// TAMPER swaps in the harmonic rule (<T>=<V>) regardless of n.
+function virialPredict(Vavg, n){ return TAMPER ? Vavg : (n/2)*Vavg; }
+
+function keplerRun(){ return integrate(keplerAcc, keplerV, 0.5, 0, 0, Math.sqrt(3), 2*Math.PI, 120000); }
+function harmRun(){ return integrate(harmAcc, harmV, 1, 0, 0, 0.6, 2*Math.PI, 120000); }
+
+function selfcheck(){
+  var saved = TAMPER;           // preserve caller state
+  TAMPER = false;
+
+  var K = keplerRun();
+  // bound inverse-square orbit: 2<T> = -<F.r>  (Clausius identity, direct)
+  if(Math.abs(2*K.T + K.Fr) > TOL) throw new Error("virial identity 2<T>+<F.r> != 0 for Kepler");
+  // 2<T> = -<V>  i.e. <T> = -<V>/2
+  if(Math.abs(K.T + K.V/2) > TOL) throw new Error("Kepler 2<T> = -<V> violated");
+  // prediction matches integrated average (untampered, n=-1)
+  if(Math.abs(K.T - virialPredict(K.V, -1)) > TOL) throw new Error("Kepler <T> != (n/2)<V>");
+  // energy bookkeeping E = <T>+<V> = -<T>
+  if(Math.abs((K.T + K.V) - (-K.T)) > TOL) throw new Error("Kepler E = -<T> violated");
+  // boundary term averages to zero over the period (bounded motion)
+  if(Math.abs(K.drift) > TOL) throw new Error("boundary term d/dt<G> did not vanish");
+
+  var H = harmRun();
+  // harmonic (n=2): <T> = <V>
+  if(Math.abs(H.T - H.V) > TOL) throw new Error("harmonic <T> = <V> violated");
+  if(Math.abs(H.T - virialPredict(H.V, 2)) > TOL) throw new Error("harmonic <T> != (n/2)<V>");
+  // general rule reproduces both from one formula
+  if(Math.abs(virialPredict(K.V,-1) - (-K.V/2)) > TOL) throw new Error("general (n/2)<V> mismatch n=-1");
+  if(Math.abs(virialPredict(H.V, 2) - ( H.V   )) > TOL) throw new Error("general (n/2)<V> mismatch n=2");
+
+  // disclosed planted void: force the harmonic rule onto Kepler and prove it now breaks
+  TAMPER = true;
+  if(Math.abs(K.T - virialPredict(K.V, -1)) < 0.4)
+    throw new Error("tamper did not perturb the Kepler prediction");
+  // under tamper, predicted <T> = <V> ~= -1, actual ~= +0.5  ->  E = -<T> bookkeeping breaks
+  TAMPER = false;
+  if(Math.abs(K.T - virialPredict(K.V, -1)) > TOL)
+    throw new Error("restore failed: prediction did not return");
+
+  TAMPER = saved;               // restore caller state
+  return true;
+}
+/* ===== UI ===== */
+var uiTamper = false;
+var boot = null;
+
+function fmt(v){ return (v>=0?" ":"") + v.toFixed(6); }
+
+function renderWitness(){
+  var el = document.getElementById("auditout");
+  var predT = uiTamper ? boot.K.V : (-boot.K.V/2);   // (n/2)<V> with n=-1, or harmonic rule
+  var ok = Math.abs(predT - boot.frozenT) <= 1e-6;
+  el.classList.remove("ok","bad");
+  el.classList.add(ok ? "ok" : "bad");
+  el.innerHTML = ok
+    ? '<span class="dot"></span><span>WITNESS &#10003; pred &#10216;T&#10217;=' + predT.toFixed(4) + ' matches frozen ' + boot.frozenT.toFixed(4) + '</span>'
+    : '<span class="dot"></span><span>WITNESS &#10007; pred &#10216;T&#10217;=' + predT.toFixed(4) + ' &#8800; frozen ' + boot.frozenT.toFixed(4) + ' &#8212; harmonic rule on Kepler</span>';
+}
+
+function drawFrame(){
+  var cv = document.getElementById("cv");
+  if(!cv) return;
+  var ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  var cx = W*0.42, cy = H*0.5, sc = H*0.30;
+  // draw the Kepler ellipse path from stored points
+  var pts = boot.path;
+  ctx.strokeStyle = "rgba(91,184,255,.55)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for(var i=0;i<pts.length;i++){
+    var X = cx + pts[i][0]*sc, Y = cy - pts[i][1]*sc;
+    if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+  }
+  ctx.stroke();
+  // the star (focus at origin)
+  ctx.fillStyle = "#ffcf5a";
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, 7); ctx.fill();
+  ctx.shadowColor="#ffcf5a"; ctx.shadowBlur=14; ctx.fill(); ctx.shadowBlur=0;
+  // moving body
+  var p = pts[boot.frame % pts.length];
+  var mx = cx + p[0]*sc, my = cy - p[1]*sc;
+  ctx.fillStyle = "#7dffb0";
+  ctx.beginPath(); ctx.arc(mx, my, 4.5, 0, 7); ctx.fill();
+  // running <T> / <V> bars on the right
+  var bx = W*0.80, top = 40, bh = H-80;
+  ctx.font = "11px monospace"; ctx.textAlign="center";
+  function bar(px, frac, col, lab, val){
+    ctx.strokeStyle="rgba(255,255,255,.15)"; ctx.strokeRect(px-12, top, 24, bh);
+    var h = Math.max(-bh, Math.min(bh, frac*bh*0.5));
+    ctx.fillStyle = col;
+    var midY = top + bh*0.5;
+    if(h>=0) ctx.fillRect(px-11, midY-h, 22, h);
+    else     ctx.fillRect(px-11, midY, 22, -h);
+    ctx.fillStyle="#cfe"; ctx.fillText(lab, px, top-8);
+    ctx.fillStyle=col; ctx.fillText(val, px, top+bh+16);
+  }
+  ctx.strokeStyle="rgba(255,255,255,.25)";
+  ctx.beginPath(); ctx.moveTo(bx-40, top+bh*0.5); ctx.lineTo(bx+60, top+bh*0.5); ctx.stroke();
+  bar(bx,    boot.K.T, "#7dffb0", "\u27E8T\u27E9",  boot.K.T.toFixed(3));
+  bar(bx+45, boot.K.V, "#5bb8ff", "\u27E8V\u27E9", boot.K.V.toFixed(3));
+  boot.frame = (boot.frame + Math.max(1, Math.floor(pts.length/240)));
+  requestAnimationFrame(drawFrame);
+}
+
+function buildPath(){
+  // re-integrate storing subsampled positions for the canvas (display only)
+  var x=0.5,y=0,vx=0,vy=Math.sqrt(3),dt=2*Math.PI/120000;
+  var a=keplerAcc(x,y),ax=a[0],ay=a[1],out=[];
+  for(var i=0;i<120000;i++){
+    x+=vx*dt+0.5*ax*dt*dt; y+=vy*dt+0.5*ay*dt*dt;
+    var an=keplerAcc(x,y);
+    vx+=0.5*(ax+an[0])*dt; vy+=0.5*(ay+an[1])*dt;
+    ax=an[0]; ay=an[1];
+    if(i%200===0) out.push([x,y]);
+  }
+  return out;
+}
+
+function run(){
+  try{
+    if(selfcheck() !== true) throw new Error("selfcheck did not return true");
+  }catch(e){
+    var fb = document.getElementById("failb");
+    fb.style.display = "block";
+    fb.textContent = "SELFCHECK FAILED \u2014 engine not LIT: " + e.message;
+    document.getElementById("litbadge").innerHTML =
+      '<span class="dot"></span><span>DEAD \u2014 selfcheck threw</span>';
+    document.getElementById("litbadge").classList.add("bad");
+    throw e;
+  }
+
+  var K = keplerRun(), H = harmRun();
+  boot = { K:K, H:H, frozenT:K.T, path:buildPath(), frame:0 };
+
+  // Data Out (window 8) \u2014 proven, live
+  document.getElementById("dataout").innerHTML =
+    '<div class="row"><span>Kepler &#10216;T&#10217;</span><span>'+K.T.toFixed(6)+'</span></div>' +
+    '<div class="row"><span>Kepler &#10216;V&#10217;</span><span>'+K.V.toFixed(6)+'</span></div>' +
+    '<div class="row"><span>2&#10216;T&#10217;+&#10216;V&#10217;</span><span>'+ (2*K.T+K.V).toExponential(1) +'</span></div>' +
+    '<div class="row"><span>E = &#10216;T&#10217;+&#10216;V&#10217;</span><span>'+ (K.T+K.V).toFixed(6) +'</span></div>' +
+    '<div class="row"><span>&#8722;&#10216;T&#10217;</span><span>'+ (-K.T).toFixed(6) +'</span></div>' +
+    '<div class="row"><span>Harmonic &#10216;T&#10217;&#8722;&#10216;V&#10217;</span><span>'+ (H.T-H.V).toExponential(1) +'</span></div>';
+
+  document.getElementById("litbadge").innerHTML =
+    '<span class="dot"></span><span>LIT \u2014 selfcheck passed @ tol 1e-6</span>';
+
+  document.getElementById("live").innerHTML =
+    '<div class="row"><span>n = &#8722;1 &#8594; &#10216;T&#10217; = (n/2)&#10216;V&#10217;</span><span>'+ ((-1/2)*K.V).toFixed(4) +' = '+ K.T.toFixed(4) +'</span></div>' +
+    '<div class="row"><span>n = +2 &#8594; &#10216;T&#10217; = (n/2)&#10216;V&#10217;</span><span>'+ ((2/2)*H.V).toFixed(4) +' = '+ H.T.toFixed(4) +'</span></div>' +
+    '<div class="row"><span>boundary drift d/dt&#10216;G&#10217;</span><span>'+ K.drift.toExponential(1) +'</span></div>';
+
+  renderWitness();
+  requestAnimationFrame(drawFrame);
+
+  document.getElementById("tamper").addEventListener("click", function(){ uiTamper = true;  renderWitness(); });
+  document.getElementById("restore").addEventListener("click", function(){ uiTamper = false; renderWitness(); });
+}
+
+run();
+</script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>` and ends with `</html>`.
+
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE FORWARD EULER · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fd4ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,212,255,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO layout — blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,212,255,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,212,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:12.5px;line-height:1.7;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+canvas{display:block;width:100%;height:auto;background:#0a130c;border:1px solid var(--line);border-radius:6px;margin-top:8px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II &middot; THE FOLD</a><span>THE OCHO &middot; <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE FORWARD EULER</h1>
+ <p class="sub">The simplest way to push an ODE forward in time &mdash; and the price you pay for it. Stand on the solution, read the slope <b>f(t,y)</b>, walk a straight step <b class="k">h</b> along the tangent, repeat. It is <b>runnable</b>, and its virtues and its sins are both provable: the global error is <b>O(h)</b>, an undamped oscillator's energy <b>grows without bound</b>, and past the stability limit the whole thing <b>oscillates and blows up</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source &middot; AMBER</span> Leonhard Euler, <i>Institutionum calculi integralis</i>, vol. I (1768) &mdash; Euler Archive <b>E342</b> &middot; <a href="https://scholarlycommons.pacific.edu/euler-works/342/">scholarlycommons.pacific.edu/euler-works/342</a>. Period source, no modern DOI &mdash; AMBER. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team &middot; builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL &mdash; the tangent step</h2>
+   <p>One rule, applied over and over. Given <b>y&prime; = f(t,y)</b> and the state <b>(t<sub>n</sub>, y<sub>n</sub>)</b>, the explicit step is:</p>
+   <div class="sent"><b class="k">y<sub>n+1</sub> = y<sub>n</sub> + h &middot; f(t<sub>n</sub>, y<sub>n</sub>)</b><br><span class="small">t<sub>n+1</sub> = t<sub>n</sub> + h</span></div>
+   <p>Taylor says the true step is <b>y(t+h) = y + h y&prime; + &frac12;h&sup2;y&Prime; + &hellip;</b>. Euler keeps the first two terms and throws away the rest, so one step is wrong by <b>&frac12;h&sup2;y&Prime;</b> &mdash; the <b>local</b> error is <b>O(h&sup2;)</b>. Take T/h steps to reach a fixed time and those errors accumulate to a <b>global</b> error of <b>O(h)</b>: first order. Halve h, halve the error.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE &mdash; the baseline <span class="tag t-amber">FOLD</span></h2>
+   <p>This is the <b>first-order tangent step</b>, written down in Euler's 1768 integral calculus. Everything after is a repair of one of its two sins.</p>
+   <p>Its <i>energy leak</i> is fixed by the <a href="https://davidwise01.github.io/the-symplectic-integrator/" style="color:var(--cy)">the-symplectic-integrator</a> (leapfrog keeps a bounded shadow energy). Its <i>low order</i> is refined by <a href="https://davidwise01.github.io/the-runge-kutta/" style="color:var(--cy)">the-runge-kutta</a> (four slope samples buy O(h&#8308;)). Forward Euler is the premise both of them answer.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive the four invariants from the pure engine on every render &mdash; the O(h) rate, the O(h&sup2;) local rate, the oscillator's energy growth, and boundedness at a <b>stable</b> step. If red pushes the step past the stability limit, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE · data in → panel → data out -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN &mdash; the problem <span class="tag t-in">in &#8595;</span></h2>
+   <p>Forward Euler eats three things and nothing else:</p>
+   <table><thead><tr><th>input</th><th>meaning</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>f(t,y)</td><td>the slope field &mdash; the ODE y&prime;=f(t,y)</td></tr>
+     <tr><td>y&#8320;</td><td>the initial condition at t&#8320;</td></tr>
+     <tr><td class="y">h</td><td>the step size &mdash; the one knob that decides accuracy <b>and</b> stability</td></tr>
+    </tbody></table>
+   <p class="small">Choose the problem and the step below. The verdict &mdash; error, energy, stability &mdash; is computed live from the tangent step, never looked up.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the problem into the engine &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL &mdash; the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>problem</label>
+      <select id="mode">
+       <option value="grow">y&prime; = y &nbsp;(growth, exact e^t)</option>
+       <option value="decay">y&prime; = &minus;y &nbsp;(decay, exact e^&minus;t)</option>
+       <option value="shm">oscillator &nbsp;x&Prime; = &minus;x</option>
+       <option value="stiff">stiff decay &nbsp;y&prime; = &minus;50 y</option>
+      </select></div>
+     <div class="row"><label>step h</label>
+      <select id="hsel"><option>0.2</option><option>0.1</option><option selected>0.05</option><option>0.01</option></select></div>
+     <p class="small" id="hnote">The step is the whole story: too big and the tangent overshoots; too big for a stiff problem and it detonates.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="out"></div>
+    </div>
+   </div>
+   <canvas id="cv" width="560" height="200"></canvas>
+   <p class="small" style="margin-top:6px"><b style="color:var(--gr)">green</b> = the exact solution / conserved orbit &nbsp;&middot;&nbsp; <b style="color:var(--am)">blue</b> = what forward Euler actually does.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits the proven behaviour &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT &mdash; the verdict <span class="tag t-out">out &#8595;</span></h2>
+   <p>What the machine proves, from the pure step, at boot:</p>
+   <p class="small">&bull; global error <b class="k">O(h)</b> &mdash; halving h halves it (rate &rarr; 2) &nbsp; &bull; local error <b class="k">O(h&sup2;)</b> &mdash; halving h quarters it (rate &rarr; 4) &nbsp; &bull; undamped oscillator energy <b style="color:var(--wall)">grows</b> by exactly (1+h&sup2;&omega;&sup2;) every step &nbsp; &bull; stiff decay is bounded only when <b class="k">h &lt; 2/|&lambda;|</b>.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms these live; the red team (right) tries to make them false.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team &middot; attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Nobody integrates a real problem with forward Euler. It is <b>first order</b> (RK4 gets four digits for the same work), it is <b>not symplectic</b> (it pumps energy into every oscillation), and it is only <b>conditionally stable</b> &mdash; a stiff system forces a step so tiny the run never finishes, or you cross h = 2/|&lambda;| and it explodes.</div>
+   <p class="small" style="margin-top:8px">Its whole value is pedagogical: it is the shortest true statement of what "integrate an ODE" means. The moment accuracy or stiffness matters, you reach for implicit (backward Euler, BDF), symplectic (leapfrog), or higher-order (Runge&ndash;Kutta) methods &mdash; the neighbours this sphere points to.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"A smaller step always gives a better answer."</s> <b>Cut.</b> Below the stability limit, yes &mdash; but round-off eventually dominates truncation, and no step ever makes Euler symplectic. Small h buys accuracy, never conservation.</p>
+   <p class="grave"><s>"Euler conserves energy for an oscillator."</s> <b>Cut.</b> It <i>injects</i> it: energy multiplies by (1+h&sup2;&omega;&sup2;) &gt; 1 every step, so the amplitude spirals out forever. Verified in the engine.</p>
+   <p class="grave"><s>"Forward and backward Euler are basically the same."</s> <b>Cut.</b> Backward (implicit) Euler is unconditionally stable and <i>damps</i> energy; forward is conditionally stable and <i>pumps</i> it. Same order, opposite failure.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER &mdash; break it</h2>
+   <p>The red team's move: on the stiff decay <b>y&prime; = &minus;50 y</b> (stability limit h &lt; 2/50 = <b>0.04</b>), push the step to <b>h = 0.05</b>. Now |1&minus;h&lambda;| = 1.5 &gt; 1, so the numerical solution flips sign and grows without bound &mdash; while the true solution decays to zero. The witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; push h beyond 2/&lambda;</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Cross the stability limit and forward Euler's amplification factor exceeds 1 in magnitude &mdash; the witness recomputes, finds the stiff run unbounded, and turns red. Nothing is faked; the instability is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE FORWARD EULER &mdash; World II &middot; THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (problem <b style="color:var(--cy)">in</b> &rarr; tangent step &rarr; verdict <b style="color:var(--gr)">out</b>). A runnable rendering of Euler's <i>Institutionum calculi integralis</i> (1768, E342) &mdash; the engine is LIT (O(h) global, O(h&sup2;) local, energy growth 1+h&sup2;&omega;&sup2;, and the h &lt; 2/|&lambda;| stability limit all self-checked and tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single tangent step cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+
+// ---- fixed-seed PRNG (deterministic; used only by the UI, never by selfcheck) ----
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+// ---- forward Euler core: the explicit tangent step ----
+function eulerStep(f,t,y,h){ return y + h*f(t,y); }
+function integrate(f,y0,t0,h,N){ let y=y0,t=t0; for(let i=0;i<N;i++){ y=eulerStep(f,t,y,h); t+=h; } return y; }
+function trajectory(f,y0,t0,h,N){ const ys=[y0]; let y=y0,t=t0; for(let i=0;i<N;i++){ y=eulerStep(f,t,y,h); t+=h; ys.push(y); } return ys; }
+
+// ---- problem 1: y' = y, exact e^t ----
+const fGrow=(t,y)=>y;
+function globalErrGrow(h,T){ const N=Math.round(T/h); return Math.abs(Math.exp(T)-integrate(fGrow,1,0,h,N)); }
+// ---- local truncation error of ONE step of y'=y from (0,1): e^h - (1+h) ----
+function localErrGrow(h){ return Math.abs(Math.exp(h)-eulerStep(fGrow,0,1,h)); }
+
+// ---- decaying ODE y' = -lam*y, exact e^{-lam t} ----
+function fDecay(lam){ return (t,y)=>-lam*y; }
+function globalErrDecay(lam,h,T){ const N=Math.round(T/h); return Math.abs(Math.exp(-lam*T)-integrate(fDecay(lam),1,0,h,N)); }
+
+// ---- undamped harmonic oscillator: x'=v, v'=-w2*x ; energy 0.5 v^2 + 0.5 w2 x^2 ----
+function shmStep(x,v,w2,h){ return [ x+h*v, v-h*w2*x ]; }
+function shmEnergy(x,v,w2){ return 0.5*v*v + 0.5*w2*x*x; }
+function shmEnergies(x0,v0,w2,h,N){ let x=x0,v=v0; const E=[shmEnergy(x,v,w2)]; for(let i=0;i<N;i++){ const s=shmStep(x,v,w2,h); x=s[0]; v=s[1]; E.push(shmEnergy(x,v,w2)); } return E; }
+function shmTraj(x0,v0,w2,h,N){ let x=x0,v=v0; const P=[[x,v]]; for(let i=0;i<N;i++){ const s=shmStep(x,v,w2,h); x=s[0]; v=s[1]; P.push([x,v]); } return P; }
+// closed form: forward Euler multiplies oscillator energy by exactly (1 + h^2 w^2) each step
+function shmGrowthFactor(w2,h){ return 1 + h*h*w2; }
+
+// ---- stiff decay y'=-50y ; TAMPER pushes the step past the stability limit h<2/lam=0.04 ----
+let TAMPER=false;
+function stiffStep(){ return TAMPER ? 0.05 : 0.01; }
+function stiffMaxAbs(){ const lam=50, h=stiffStep(), N=40; let y=1, m=1; for(let i=0;i<N;i++){ y=y*(1-h*lam); m=Math.max(m,Math.abs(y)); } return m; }
+
+// ---- fail-loud self-check: throws on any violation, returns true on success ----
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+
+ // (1) GLOBAL error is O(h): halving h halves the error at a fixed time on y'=y (first-order rate ~2)
+ const g1=globalErrGrow(0.01,1), g2=globalErrGrow(0.005,1), grate=g1/g2;
+ t(g1>0 && g2>0, "global errors must be positive");
+ t(grate>1.9 && grate<2.1, "global error must halve when h halves (rate ~2), got "+grate);
+ // closed form: forward Euler on y'=y is exactly (1+h)^N
+ t(Math.abs(integrate(fGrow,1,0,0.01,100)-Math.pow(1.01,100))<1e-9, "euler on y'=y must equal (1+h)^N");
+
+ // (2) LOCAL truncation error is O(h^2): halving h quarters it (rate ~4), and it equals ~ h^2/2
+ const l1=localErrGrow(0.01), l2=localErrGrow(0.005), lrate=l1/l2;
+ t(lrate>3.8 && lrate<4.2, "local error must quarter when h halves (rate ~4), got "+lrate);
+ t(l1/(0.01*0.01/2)>0.99 && l1/(0.01*0.01/2)<1.02, "local error must be ~ h^2/2");
+
+ // (3) undamped oscillator: forward Euler INJECTS energy -> it grows every step (anti-damping instability)
+ const w2=1, h=0.01, N=628; // ~ one period 2*pi/w
+ const E=shmEnergies(1,0,w2,h,N);
+ for(let i=1;i<E.length;i++) t(E[i]>E[i-1], "SHM energy must strictly increase each step (anti-damping)");
+ t(E[N]>E[0], "SHM energy after one period must exceed the start");
+ const gf=shmGrowthFactor(w2,h);
+ t(Math.abs(E[1]-gf*E[0])<1e-12, "SHM per-step energy growth must equal (1+h^2 w^2) exactly");
+ t(Math.abs(E[N]-Math.pow(gf,N)*E[0])<1e-6, "SHM energy must grow as (1+h^2 w^2)^N");
+
+ // (4) stable decaying ODE tracked to O(h) with a small enough step (lam=1, T=2)
+ const d1=globalErrDecay(1,0.01,2), d2=globalErrDecay(1,0.005,2);
+ t(d1<0.005, "small-step decay must track the analytic solution closely");
+ t(d1/d2>1.9 && d1/d2<2.1, "decay error must be first-order O(h)");
+ // a STABLE step keeps the stiff decay bounded (max|y| <= y0)
+ t(stiffMaxAbs()<=1+1e-9, "stable-step stiff decay must stay bounded");
+
+ // ---- TAMPER: push the step past the stability limit h > 2/|lam| so the stiff run oscillates and blows up ----
+ TAMPER=true;
+ t(stiffMaxAbs()>1e3, "TAMPER must make the over-large step blow up (stability check fails)");
+ TAMPER=false;
+
+ TAMPER=save; return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const HS={ "0.2":0.2, "0.1":0.1, "0.05":0.05, "0.01":0.01 };
+const AM="#7fd4ff", GR="#39fc6b", WALL="#ff6b6b", DIMC="rgba(95,138,104,.35)";
+let raf=null;
+
+function num(x){ if(!isFinite(x)) return (x>0?"+&infin;":"&minus;&infin;"); const a=Math.abs(x); if(a!==0 && (a<1e-3 || a>=1e5)) return x.toExponential(3); return x.toFixed(a<1?6:4); }
+
+function drawScalar(ctx,cv,exact,ys,t0,t1){
+ const W=cv.width,H=cv.height; ctx.clearRect(0,0,W,H);
+ let lo=Infinity,hi=-Infinity;
+ for(const y of ys){ if(isFinite(y)){ lo=Math.min(lo,y); hi=Math.max(hi,y); } }
+ const S=80; for(let i=0;i<=S;i++){ const y=exact(t0+(t1-t0)*i/S); lo=Math.min(lo,y); hi=Math.max(hi,y); }
+ if(!isFinite(lo)||!isFinite(hi)) { lo=-1; hi=1; }
+ if(lo===hi){ lo-=1; hi+=1; }
+ const pad=(hi-lo)*0.1||1; lo-=pad; hi+=pad;
+ const X=t=>10+(W-20)*(t-t0)/(t1-t0);
+ const Y=y=>H-12-(H-24)*(y-lo)/(hi-lo);
+ ctx.strokeStyle=DIMC; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(10,Y(0)); ctx.lineTo(W-10,Y(0)); ctx.stroke();
+ ctx.strokeStyle=GR; ctx.lineWidth=1.6; ctx.beginPath();
+ for(let i=0;i<=S;i++){ const tt=t0+(t1-t0)*i/S, px=X(tt), py=Y(exact(tt)); i?ctx.lineTo(px,py):ctx.moveTo(px,py); } ctx.stroke();
+ ctx.strokeStyle=AM; ctx.lineWidth=1.5; ctx.beginPath();
+ const dt=(t1-t0)/(ys.length-1);
+ for(let i=0;i<ys.length;i++){ const py=Y(ys[i]); if(!isFinite(py)) continue; const px=X(t0+i*dt); i?ctx.lineTo(px,py):ctx.moveTo(px,py); } ctx.stroke();
+ ctx.fillStyle=AM;
+ for(let i=0;i<ys.length;i++){ if(!isFinite(ys[i])) continue; const py=Y(ys[i]); if(py<0||py>H) continue; ctx.beginPath(); ctx.arc(X(t0+i*dt),py,2,0,7); ctx.fill(); }
+}
+
+function animatePhase(ctx,cv,w2,h,N){
+ const W=cv.width,H=cv.height, cx=W/2, cy=H/2;
+ const pts=shmTraj(1,0,w2,h,N);
+ let R=0; for(const p of pts) R=Math.max(R,Math.hypot(p[0],p[1]*Math.sqrt(w2)));
+ const sc=(Math.min(W,H)/2-14)/R;
+ const PX=p=>cx+sc*p[0], PY=p=>cy-sc*p[1]*Math.sqrt(w2);
+ let k=2, stepK=Math.max(1,Math.round(N/200));
+ function frame(){
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle=DIMC; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx,10); ctx.lineTo(cx,H-10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(14,cy); ctx.lineTo(W-14,cy); ctx.stroke();
+  ctx.strokeStyle=GR; ctx.lineWidth=1.3; ctx.beginPath();
+  for(let a=0;a<=72;a++){ const th=a/72*2*Math.PI, px=cx+sc*Math.cos(th), py=cy-sc*Math.sin(th); a?ctx.lineTo(px,py):ctx.moveTo(px,py); } ctx.stroke();
+  ctx.strokeStyle=AM; ctx.lineWidth=1.5; ctx.beginPath();
+  for(let i=0;i<k && i<pts.length;i++){ const px=PX(pts[i]), py=PY(pts[i]); i?ctx.lineTo(px,py):ctx.moveTo(px,py); } ctx.stroke();
+  const hd=pts[Math.min(k,pts.length)-1]; ctx.fillStyle=AM; ctx.beginPath(); ctx.arc(PX(hd),PY(hd),3.2,0,7); ctx.fill();
+  if(k<pts.length){ k+=stepK; raf=requestAnimationFrame(frame); } else { raf=null; }
+ }
+ frame();
+}
+
+function render(){
+ if(raf){ cancelAnimationFrame(raf); raf=null; }
+ const mode=$("mode").value, h=HS[$("hsel").value];
+ const cv=$("cv"), ctx=cv.getContext("2d");
+ let html="";
+ if(mode==="grow"){
+  const T=1, N=Math.round(T/h), ys=trajectory(fGrow,1,0,h,N);
+  const yN=ys[ys.length-1], ex=Math.exp(T), err=Math.abs(ex-yN);
+  html='<b>y&prime; = y</b>, y(0)=1, exact <b>e^t</b><br>step h = <b class="k">'+h+'</b>, '+N+' steps to t = 1<br>'
+     +'Euler y(1) = <b>'+num(yN)+'</b><br>exact e = <b>'+num(ex)+'</b><br>'
+     +'global error = <b style="color:'+WALL+'">'+num(err)+'</b> &nbsp;<span class="mut">(&prop; h)</span>';
+  drawScalar(ctx,cv,tt=>Math.exp(tt),ys,0,T);
+ } else if(mode==="decay"){
+  const lam=1,T=2,N=Math.round(T/h), ys=trajectory(fDecay(lam),1,0,h,N);
+  const yN=ys[ys.length-1], ex=Math.exp(-lam*T), err=Math.abs(ex-yN), osc=h*lam>1;
+  html='<b>y&prime; = &minus;y</b>, y(0)=1, exact <b>e^&minus;t</b><br>step h = <b class="k">'+h+'</b>, h&lambda; = '+(h*lam).toFixed(2)+' '
+     +(osc?'<b style="color:'+WALL+'">&gt;1 &rarr; oscillates</b>':'<span class="mut">&lt;1 &rarr; clean decay</span>')+'<br>'
+     +'Euler y(2) = <b>'+num(yN)+'</b><br>exact = <b>'+num(ex)+'</b><br>'
+     +'global error = <b style="color:'+WALL+'">'+num(err)+'</b>';
+  drawScalar(ctx,cv,tt=>Math.exp(-lam*tt),ys,0,T);
+ } else if(mode==="shm"){
+  const w2=1, N=Math.round((2*Math.PI)/h), E=shmEnergies(1,0,w2,h,N);
+  const gain=(E[N]/E[0]-1)*100, gf=shmGrowthFactor(w2,h);
+  html='<b>oscillator</b> x&Prime; = &minus;x, start x=1, v=0<br>step h = <b class="k">'+h+'</b>, one period = '+N+' steps<br>'
+     +'growth factor 1+h&sup2;&omega;&sup2; = <b>'+gf.toFixed(6)+'</b> / step<br>'
+     +'energy start = <b>'+num(E[0])+'</b><br>energy after 1 period = <b style="color:'+WALL+'">'+num(E[N])+'</b><br>'
+     +'energy gain = <b style="color:'+WALL+'">+'+gain.toFixed(1)+'%</b> <span class="mut">(anti-damping)</span>';
+  animatePhase(ctx,cv,w2,h,N);
+ } else {
+  const lam=50, h2=stiffStep(), N=40; const ys=[1]; let y=1;
+  for(let i=0;i<N;i++){ y=y*(1-h2*lam); ys.push(y); }
+  let m=1; for(const v of ys) m=Math.max(m,Math.abs(v));
+  const blown = m>1e3 || !isFinite(m);
+  html='<b>stiff decay</b> y&prime; = &minus;50 y, exact &rarr; 0<br>stability limit: h &lt; 2/&lambda; = <b>0.04</b><br>'
+     +'step in use h = <b class="k">'+h2+'</b> '+(TAMPER?'<b style="color:'+WALL+'">(TAMPERED &gt; 0.04)</b>':'<span class="mut">(stable)</span>')+'<br>'
+     +'amplification |1&minus;h&lambda;| = <b>'+Math.abs(1-h2*lam).toFixed(2)+'</b><br>'
+     +'max |y| over 40 steps = <b style="color:'+(blown?WALL:GR)+'">'+num(m)+'</b> '+(blown?'<b style="color:'+WALL+'">&mdash; BLOWS UP</b>':'<span class="mut">&mdash; bounded</span>');
+  drawScalar(ctx,cv,tt=>Math.exp(-lam*tt),ys,0,N*h2);
+ }
+ $("out").innerHTML=html;
+}
+
+function audit(){
+ const el=$("auditout");
+ const grate=globalErrGrow(0.01,1)/globalErrGrow(0.005,1);
+ const lrate=localErrGrow(0.01)/localErrGrow(0.005);
+ const E=shmEnergies(1,0,1,0.01,20); const grows=E[20]>E[0];
+ const m=stiffMaxAbs(); const bounded=m<=1+1e-9;
+ const gOK=grate>1.9&&grate<2.1, lOK=lrate>3.8&&lrate<4.2;
+ const ok=gOK&&lOK&&grows&&bounded;
+ el.innerHTML='<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'&#10003; WITNESS &mdash; holds':'&#10007; WITNESS &mdash; broken')+'</span>'
+  +'<div class="small" style="margin-top:6px">'
+  +'global O(h) rate <b style="color:'+(gOK?GR:WALL)+'">'+grate.toFixed(3)+'</b>&asymp;2 &middot; '
+  +'local O(h&sup2;) rate <b style="color:'+(lOK?GR:WALL)+'">'+lrate.toFixed(3)+'</b>&asymp;4 &middot; '
+  +'SHM energy grows <b style="color:'+(grows?GR:WALL)+'">'+grows+'</b> &middot; '
+  +'stiff-step bounded <b style="color:'+(bounded?GR:WALL)+'">'+(bounded?'yes':'NO')+'</b>'
+  +(TAMPER?' &nbsp;&mdash; <span style="color:'+WALL+'">red pushed h beyond 2/&lambda;</span>':'')
+  +'</div>';
+}
+
+// ---- boot ----
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">&#10003; LIT &middot; self-check passed on load</span>';
+ $("mode").addEventListener("change",()=>{ render(); });
+ $("hsel").addEventListener("change",()=>{ render(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:"+WALL+"'>Step pushed to h = 0.05 &gt; 2/&lambda; = 0.04.</b> Now |1&minus;h&lambda;| = 1.5 &gt; 1, so the stiff solution flips sign and grows without bound while the true solution decays to 0. The witness recomputed and went red."; if($("mode").value==="stiff") render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").innerHTML="Cross the stability limit and forward Euler's amplification factor exceeds 1 in magnitude &mdash; the witness recomputes, finds the stiff run unbounded, and turns red. Nothing is faked; the instability is real and it is caught."; if($("mode").value==="stiff") render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD &mdash; the forward-Euler engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

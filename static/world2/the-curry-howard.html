@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE CURRY HOWARD CORRESPONDENCE · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff9e6a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,158,106,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* the ocho grid : blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,158,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,158,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:72px;}
+.code{font-size:13px;line-height:1.75;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;word-break:break-word;}
+.code .lg{color:var(--am);} .code .pg{color:var(--cy);} .code .tm{color:#eafff0;}
+.verdict{font-size:18px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:left;vertical-align:top;} th{color:var(--dim);}
+td .lg{color:var(--am);} td .pg{color:var(--cy);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE CURRY HOWARD CORRESPONDENCE</h1>
+ <p class="sub">A proof and a program are not analogous — they are the <b>same object</b>, read twice. A proposition <b>is</b> a type; a proof <b>is</b> a term of that type; proof-simplification <b>is</b> evaluation. Down the center, data flows: a proposition goes <b style="color:var(--cy)">in</b>, the type-checker decides, an inhabiting program comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds the checker; the <b style="color:var(--red)">red team</b> pairs a proof with the wrong type to break the isomorphism.</p>
+ <p class="src"><span class="tag t-amber">source</span> W. A. Howard, "The Formulae-as-Types Notion of Construction" (privately circulated 1969; published 1980) — in <i>To H. B. Curry: Essays on Combinatory Logic, Lambda Calculus and Formalism</i>, Academic Press, pp. 479&ndash;491. No stable DOI — <a href="https://www.cs.cmu.edu/~crary/819-f09/Howard80.pdf">scanned copy</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds and defends -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — rules are constructors</h2>
+   <p>Each natural-deduction rule <b>is</b> a term constructor; checking a proof <b>is</b> type-checking a program. The blue team implements one type-checker; it decides every proof at once.</p>
+   <table><thead><tr><th>rule</th><th>term</th></tr></thead><tbody>
+    <tr><td>&#8594;I (implication intro)</td><td>&#955;x:A. e</td></tr>
+    <tr><td>&#8594;E (modus ponens)</td><td>(f&nbsp;a) &mdash; application</td></tr>
+    <tr><td>&#8743;I (conjunction intro)</td><td>&#10216;a, b&#10217; &mdash; pair</td></tr>
+    <tr><td>&#8743;E (conjunction elim)</td><td>fst e / snd e</td></tr>
+    <tr><td>&#8744;I (disjunction intro)</td><td>inl e / inr e</td></tr>
+    <tr><td>&#8744;E (disjunction elim)</td><td>case e of &hellip;</td></tr>
+   </tbody></table>
+   <p class="small" style="margin-top:8px">Selected proof-term, type derived live by the checker:</p>
+   <div id="modelout" class="small"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — logic = computation <span class="tag t-amber">AVAN</span></h2>
+   <p>This sphere is the bridge from <a href="https://davidwise01.github.io/the-natural-deduction/" style="color:var(--cy)">the-natural-deduction</a> to <a href="https://davidwise01.github.io/the-simply-typed-lambda-calculus/" style="color:var(--cy)">the-simply-typed-lambda-calculus</a>. Gentzen's proof rules and Church's typed terms turn out to be <b>one</b> system: a proof checked by a logician is a program checked by a <b>type-checker</b>.</p>
+   <p>Take a proof out of the left sphere, read its rules as constructors, and it lands as a term in the right sphere with <b>no gap</b>. Each sphere is the next one's premise — here the premise is that deduction and typing are the same act.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run the type-checker and the intuitionistic decision procedure over the whole corpus and confirm <b>provable &#8660; inhabited</b>. If red mislabels a proof, this badge catches it.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — a proposition <span class="tag t-in">in &#8595;</span></h2>
+   <p>Feed the machine a <b>proposition</b>. The correspondence reads it two ways at once — as a claim in logic, and as a <b>type</b> in a programming language. The dictionary is exact:</p>
+   <table><thead><tr><th>logic (proposition)</th><th>program (type)</th><th>a proof is&hellip;</th></tr></thead><tbody>
+    <tr><td><span class="lg">A &#8594; B</span> implication</td><td><span class="pg">A &#8594; B</span> function</td><td>a &#955;, used by application</td></tr>
+    <tr><td><span class="lg">A &#8743; B</span> conjunction</td><td><span class="pg">A &#215; B</span> product</td><td>a pair &#10216;a,b&#10217;, used by fst/snd</td></tr>
+    <tr><td><span class="lg">A &#8744; B</span> disjunction</td><td><span class="pg">A + B</span> sum</td><td>inl/inr, used by case</td></tr>
+    <tr><td><span class="lg">A</span> assumption</td><td><span class="pg">x : A</span></td><td>a variable</td></tr>
+   </tbody></table>
+   <p class="small">Same structure, two readings. That is the whole correspondence — and it is what you feed the panel below.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; hand the proposition to the type-checker &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>proposition</label><select id="propsel"></select></div>
+     <div class="row"><button id="rand">&#8635; random</button><button id="ident">&#8594; identity A&#8594;A</button></div>
+     <p class="small">The checker runs live: it type-checks the proof-term and, independently, decides provability by a contraction-free sequent search (Dyckhoff G4ip). Nothing is looked up.</p>
+    </div>
+    <div class="readout">
+     <div class="code" id="pcode"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits a proof-term (a program) &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the program <span class="tag t-out">out &#8595;</span></h2>
+   <p>What the machine produces, proven: for each <b>provable</b> proposition a well-typed <b>program</b> whose type <b>equals</b> the proposition (proofs = programs); for each <b>unprovable</b> one, an <b>empty</b> type — no closed term inhabits it. The identity proof of <span class="lg">A&#8594;A</span> is exactly the identity function <span class="tm">&#955;x. x</span>, and modus ponens is exactly application.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) re-checks provable&#8660;inhabited live; the red team (right) tries to make a proof-term claim the wrong type.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks and breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The correspondence is <b>constructive</b>. Classical tautologies with no computational content have no proof-term: Peirce's law <span class="lg">((A&#8594;B)&#8594;A)&#8594;A</span> and excluded middle <span class="lg">A&#8744;(A&#8594;B)</span> are <b>uninhabited</b> here. To recover them you must add control operators (call/cc) — a different, effectful calculus.</div>
+   <p class="small" style="margin-top:8px">This panel is also only <b>propositional</b>: no quantifiers, so no dependent types. First-order &#8704;/&#8707; needs &#8719;/&#8721; types (Martin-L&ouml;f), which this checker does not implement. And consistency of the logic rests on <b>strong normalization</b> of the calculus — assumed here, not proved on-page.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Curry and Howard proved it together."</s> <b>Cut.</b> Curry noted the combinator/axiom fit in the 1930s&ndash;50s; Howard extended it to natural deduction and full &#955;-calculus in a 1969 note, published 1980. Two people, decades apart.</p>
+   <p class="grave"><s>"A proof is like a program."</s> <b>Cut.</b> Not <i>like</i> &mdash; it <b>is</b> one, up to notation. The checker below type-checks the very term that is the proof; there is no translation step.</p>
+   <p class="grave"><s>"Every type is inhabited (just write some code)."</s> <b>Kept, corrected.</b> A type is inhabited iff its proposition is <b>provable</b>. <span class="lg">A</span> and <span class="lg">A&#8594;B</span> have no closed inhabitant &mdash; the decision procedure proves it.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: pair the identity proof <span class="tm">&#955;x. x</span> (which really proves <span class="lg">A&#8594;A</span>) with the <b>wrong</b> type <span class="pg">A&#8594;C</span>. If the correspondence were loose, the mislabel would slide by.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; claim &#955;x.x : A&#8594;C</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Claim the wrong type and two things fail at once: the type-checker still derives A&#8594;A (&#8800; A&#8594;C), and A&#8594;C is not provable — so provable&#8660;inhabited breaks and the witness (window 7) turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE CURRY HOWARD CORRESPONDENCE — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (a proposition <b style="color:var(--cy)">in</b> &#8594; type-checker &#8594; a program <b style="color:var(--gr)">out</b>). The engine is LIT — a real simply-typed &#955;-calculus type-checker, a &#946;-evaluator whose reductions preserve type (subject reduction, checked over an actual reduction sequence), and a complete contraction-free decision procedure (G4ip) that agrees with inhabitation across the corpus and is tamper-provable. A rendering of Howard's formulae-as-types note. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---------- types / propositions (one syntax, two readings) ----------
+const A={k:"atom",n:"A"}, B={k:"atom",n:"B"}, C={k:"atom",n:"C"};
+const arr=(a,b)=>({k:"arr",a,b});
+const prod=(a,b)=>({k:"prod",a,b});
+const sum=(a,b)=>({k:"sum",a,b});
+function teq(x,y){ if(x.k!==y.k) return false; if(x.k==="atom") return x.n===y.n; return teq(x.a,y.a)&&teq(x.b,y.b); }
+
+// ---------- terms (proof-terms = programs) ----------
+const V=n=>({k:"var",n});
+const lam=(v,t,b)=>({k:"lam",v,t,b});
+const app=(f,a)=>({k:"app",f,a});
+const pair=(a,b)=>({k:"pair",a,b});
+const fst=e=>({k:"fst",e});
+const snd=e=>({k:"snd",e});
+const inl=(t,e)=>({k:"inl",t,e});  // t = the full sum type being introduced
+const inr=(t,e)=>({k:"inr",t,e});
+const kase=(e,xl,el,xr,er)=>({k:"case",e,xl,el,xr,er});
+
+// ---------- the type-checker : checking a proof IS type-checking a program ----------
+function tc(ctx,m){
+ switch(m.k){
+  case "var": return ctx[m.n]||null;
+  case "lam": { const bt=tc(Object.assign({},ctx,{[m.v]:m.t}),m.b); return bt?arr(m.t,bt):null; }               // ->I
+  case "app": { const f=tc(ctx,m.f), a=tc(ctx,m.a); return (f&&a&&f.k==="arr"&&teq(f.a,a))?f.b:null; }           // ->E = application
+  case "pair":{ const a=tc(ctx,m.a), b=tc(ctx,m.b); return (a&&b)?prod(a,b):null; }                              // &I
+  case "fst": { const e=tc(ctx,m.e); return (e&&e.k==="prod")?e.a:null; }                                        // &E
+  case "snd": { const e=tc(ctx,m.e); return (e&&e.k==="prod")?e.b:null; }                                        // &E
+  case "inl": { const e=tc(ctx,m.e); return (m.t.k==="sum"&&e&&teq(e,m.t.a))?m.t:null; }                         // vI
+  case "inr": { const e=tc(ctx,m.e); return (m.t.k==="sum"&&e&&teq(e,m.t.b))?m.t:null; }                         // vI
+  case "case":{ const e=tc(ctx,m.e); if(!e||e.k!=="sum") return null;                                            // vE
+                const l=tc(Object.assign({},ctx,{[m.xl]:e.a}),m.el), r=tc(Object.assign({},ctx,{[m.xr]:e.b}),m.er);
+                return (l&&r&&teq(l,r))?l:null; }
+ }
+ return null;
+}
+
+// ---------- capture-avoiding substitution + beta reduction (proof-simplification = evaluation) ----------
+let FRESH=0; const fresh=b=>b+"#"+(FRESH++);
+function fv(m,s){ s=s||new Set();
+ switch(m.k){
+  case "var": s.add(m.n); break;
+  case "lam": { const i=new Set(); fv(m.b,i); i.forEach(x=>{ if(x!==m.v) s.add(x); }); break; }
+  case "app": fv(m.f,s); fv(m.a,s); break;
+  case "pair": fv(m.a,s); fv(m.b,s); break;
+  case "fst": case "snd": case "inl": case "inr": fv(m.e,s); break;
+  case "case": { fv(m.e,s); const li=new Set(); fv(m.el,li); li.forEach(x=>{ if(x!==m.xl) s.add(x); });
+                 const ri=new Set(); fv(m.er,ri); ri.forEach(x=>{ if(x!==m.xr) s.add(x); }); break; }
+ }
+ return s;
+}
+function subst(m,x,s){
+ switch(m.k){
+  case "var": return m.n===x? s : m;
+  case "lam": { if(m.v===x) return m;
+                if(fv(s).has(m.v)){ const nv=fresh(m.v); return lam(nv,m.t,subst(subst(m.b,m.v,V(nv)),x,s)); }
+                return lam(m.v,m.t,subst(m.b,x,s)); }
+  case "app": return app(subst(m.f,x,s),subst(m.a,x,s));
+  case "pair": return pair(subst(m.a,x,s),subst(m.b,x,s));
+  case "fst": return fst(subst(m.e,x,s));
+  case "snd": return snd(subst(m.e,x,s));
+  case "inl": return inl(m.t,subst(m.e,x,s));
+  case "inr": return inr(m.t,subst(m.e,x,s));
+  case "case": { let xl=m.xl,el=m.el,xr=m.xr,er=m.er;
+    if(xl!==x){ if(fv(s).has(xl)){ const nv=fresh(xl); el=subst(el,xl,V(nv)); xl=nv; } el=subst(el,x,s); }
+    if(xr!==x){ if(fv(s).has(xr)){ const nv=fresh(xr); er=subst(er,xr,V(nv)); xr=nv; } er=subst(er,x,s); }
+    return kase(subst(m.e,x,s),xl,el,xr,er); }
+ }
+ return m;
+}
+function step(m){                                        // one beta step, leftmost-outermost
+ if(m.k==="app"&&m.f.k==="lam") return subst(m.f.b,m.f.v,m.a);
+ if(m.k==="fst"&&m.e.k==="pair") return m.e.a;
+ if(m.k==="snd"&&m.e.k==="pair") return m.e.b;
+ if(m.k==="case"&&m.e.k==="inl") return subst(m.el,m.xl,m.e.e);
+ if(m.k==="case"&&m.e.k==="inr") return subst(m.er,m.xr,m.e.e);
+ let r;
+ switch(m.k){
+  case "app": if((r=step(m.f))) return app(r,m.a); if((r=step(m.a))) return app(m.f,r); break;
+  case "pair": if((r=step(m.a))) return pair(r,m.b); if((r=step(m.b))) return pair(m.a,r); break;
+  case "fst": if((r=step(m.e))) return fst(r); break;
+  case "snd": if((r=step(m.e))) return snd(r); break;
+  case "inl": if((r=step(m.e))) return inl(m.t,r); break;
+  case "inr": if((r=step(m.e))) return inr(m.t,r); break;
+  case "case": if((r=step(m.e))) return kase(r,m.xl,m.el,m.xr,m.er);
+               if((r=step(m.el))) return kase(m.e,m.xl,r,m.xr,m.er);
+               if((r=step(m.er))) return kase(m.e,m.xl,m.el,m.xr,r); break;
+ }
+ return null;
+}
+function normalize(m,ctx,check){ let t=m,n=0; while(true){ const u=step(t); if(!u) break;
+  if(check){ const a=tc(ctx,t), b=tc(ctx,u); if(!(a&&b&&teq(a,b))) throw new Error("subject reduction violated"); }
+  t=u; if(++n>2000) throw new Error("non-terminating reduction"); } return t; }
+
+// ---------- provability : a complete, terminating decision procedure (Dyckhoff G4ip, {->,&,v} fragment) ----------
+let PGUARD=0;
+function prov(goal){ PGUARD=0; return _prov([],goal); }
+function _prov(G,goal){
+ if(++PGUARD>500000) throw new Error("prover runaway");
+ if(G.some(f=>teq(f,goal))) return true;                                  // axiom
+ if(goal.k==="arr"){ if(_prov(G.concat([goal.a]),goal.b)) return true; }  // ->R (invertible)
+ if(goal.k==="prod"){ if(_prov(G,goal.a)&&_prov(G,goal.b)) return true; } // &R
+ for(let i=0;i<G.length;i++){
+   const H=G[i], rest=G.slice(0,i).concat(G.slice(i+1));
+   if(H.k==="prod"){ if(_prov(rest.concat([H.a,H.b]),goal)) return true; }                  // &L
+   else if(H.k==="sum"){ if(_prov(rest.concat([H.a]),goal)&&_prov(rest.concat([H.b]),goal)) return true; } // vL
+   else if(H.k==="arr"){ const P=H.a, Bb=H.b;
+     if(P.k==="atom"){ if(rest.some(f=>teq(f,P)) && _prov(rest.concat([Bb]),goal)) return true; }        // ->L atomic
+     else if(P.k==="prod"){ if(_prov(rest.concat([arr(P.a,arr(P.b,Bb))]),goal)) return true; }           // (C&D)->B
+     else if(P.k==="sum"){ if(_prov(rest.concat([arr(P.a,Bb),arr(P.b,Bb)]),goal)) return true; }         // (CvD)->B
+     else if(P.k==="arr"){ if(_prov(rest.concat([arr(P.b,Bb)]),P) && _prov(rest.concat([Bb]),goal)) return true; } // (C->D)->B
+   }
+ }
+ if(goal.k==="sum"){ if(_prov(G,goal.a)) return true; if(_prov(G,goal.b)) return true; } // vR (non-invertible)
+ return false;
+}
+
+// ---------- the corpus : propositions with their proof-terms (provable) and empty types (unprovable) ----------
+const CORPUS=[
+ {id:"id",   name:"identity",         prop:arr(A,A),                                        term:lam("x",A,V("x"))},
+ {id:"k",    name:"K (weakening)",    prop:arr(A,arr(B,A)),                                  term:lam("x",A,lam("y",B,V("x")))},
+ {id:"comp", name:"composition",      prop:arr(arr(A,B),arr(arr(B,C),arr(A,C))),             term:lam("f",arr(A,B),lam("g",arr(B,C),lam("x",A,app(V("g"),app(V("f"),V("x"))))))},
+ {id:"proj", name:"&-elim (proj1)",   prop:arr(prod(A,B),A),                                 term:lam("p",prod(A,B),fst(V("p")))},
+ {id:"swap", name:"& commutes",       prop:arr(prod(A,B),prod(B,A)),                         term:lam("p",prod(A,B),pair(snd(V("p")),fst(V("p"))))},
+ {id:"inj",  name:"v-intro (inl)",    prop:arr(A,sum(A,B)),                                  term:lam("x",A,inl(sum(A,B),V("x")))},
+ {id:"orsym",name:"v commutes",       prop:arr(sum(A,B),sum(B,A)),                           term:lam("s",sum(A,B),kase(V("s"),"x",inr(sum(B,A),V("x")),"y",inl(sum(B,A),V("y"))))},
+ {id:"mp",   name:"modus ponens",     prop:arr(prod(arr(A,B),A),B),                          term:lam("p",prod(arr(A,B),A),app(fst(V("p")),snd(V("p"))))}
+];
+const UNPROV=[
+ {id:"u_a",     name:"bare atom A",        prop:A},
+ {id:"u_ab",    name:"A -> B",             prop:arr(A,B)},
+ {id:"u_peirce",name:"Peirce law",         prop:arr(arr(arr(A,B),A),A)},
+ {id:"u_lem",   name:"A v (A -> B)",       prop:sum(A,arr(A,B))}
+];
+const ALL=CORPUS.map(e=>({id:e.id,name:e.name,prop:e.prop,term:e.term})).concat(UNPROV.map(e=>({id:e.id,name:e.name,prop:e.prop,term:null})));
+
+let TAMPER=false;   // red pairs the identity proof with the wrong type A->C ; the witness must catch it
+function claimedProp(e){ return (TAMPER && e.id==="id") ? arr(A,C) : e.prop; }
+
+// the isomorphism, recomputed live: every proof-term type-checks to its (claimed) proposition, and
+// a proposition is provable IFF its type is inhabited.
+function correspondenceHolds(){
+ for(const e of CORPUS){ const claim=claimedProp(e), ty=tc({},e.term);
+   if(!ty||!teq(ty,claim)) return false;   // proofs = programs : the term must carry the claimed type
+   if(!prov(claim)) return false;          // inhabited => provable
+ }
+ for(const e of UNPROV){ if(prov(e.prop)) return false; } // unprovable => empty type
+ return true;
+}
+
+// ---------- fail-loud self-check : throws on any violation, RETURNS true ----------
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ // (1) proofs = programs : every witness type-checks to its proposition, and each proposition is provable
+ for(const e of CORPUS){ const ty=tc({},e.term);
+   t(ty&&teq(ty,e.prop), "witness must type-check to its proposition: "+e.name);
+   t(prov(e.prop)===true, "provable-iff-inhabited (provable side): "+e.name); }
+ // (2) unprovable propositions have EMPTY types (decision procedure is complete)
+ for(const e of UNPROV) t(prov(e.prop)===false, "provable-iff-inhabited (empty side): "+e.name);
+ // (3) implication = function type; the identity proof of A->A is the identity function lambda x. x
+ t(teq(tc({},lam("x",A,V("x"))),arr(A,A)), "identity proof of A->A must have type A->A");
+ t(normalize(app(lam("x",A,V("x")),V("a")),{a:A},true).n==="a", "identity function returns its argument");
+ // (4) modus ponens IS function application (->E = app), exact type; ill-typed when domains disagree
+ t(teq(tc({f:arr(A,B),x:A},app(V("f"),V("x"))),B), "modus ponens (f x) : B, exact");
+ t(tc({f:arr(A,B),x:A},app(V("x"),V("f")))===null, "application ill-typed when domain does not match");
+ // (5) conjunction = product (a proof is a pair) ; disjunction = sum (a proof is a case)
+ t(teq(tc({a:A,b:B},pair(V("a"),V("b"))),prod(A,B)), "&-proof is a pair : product type");
+ t(teq(tc({p:prod(A,B)},fst(V("p"))),A)&&teq(tc({p:prod(A,B)},snd(V("p"))),B), "product projections give the components");
+ t(teq(tc({a:A},inl(sum(A,B),V("a"))),sum(A,B)), "v-proof is an injection : sum type");
+ t(teq(tc({s:sum(A,A)},kase(V("s"),"x",V("x"),"y",V("y"))),A), "case (sum elim) type-checks");
+ // (6) the beta laws : intro/elim are inverse (proof-simplification = evaluation)
+ t(normalize(fst(pair(V("a"),V("b"))),{a:A,b:B}).n==="a", "fst(<a,b>) beta-reduces to a");
+ t(normalize(kase(inl(sum(A,A),V("a")),"x",V("x"),"y",V("y")),{a:A}).n==="a", "case(inl a) beta-reduces to a");
+ // (7) type safety : subject reduction over an actual reduction sequence (checked at every step, exhaustive)
+ { const G={a:A,b:B,g:arr(A,B)};
+   const term=snd(pair( app(lam("x",A,V("x")),V("a")), app(V("g"),fst(pair(V("a"),V("b")))) )); // : B
+   t(teq(tc(G,term),B), "test term has type B");
+   const nf=normalize(term,G,true);                                   // throws if any step changes the type
+   t(teq(tc(G,nf),B), "normal form still has type B");
+   t(nf.k==="app"&&nf.f.k==="var"&&nf.f.n==="g"&&nf.a.k==="var"&&nf.a.n==="a", "normal form is (g a)"); }
+ // (8) the correspondence holds untampered
+ t(correspondenceHolds()===true, "correspondence must hold before tampering");
+ // (9) TAMPER : pair the proof lambda x. x with the WRONG type A->C ; a known value now differs, then restore
+ const save=TAMPER; TAMPER=true;
+ t(correspondenceHolds()===false, "tampered claim (lambda x.x : A->C) must break the correspondence");
+ t(!teq(tc({},lam("x",A,V("x"))),arr(A,C)), "the identity proof does NOT have type A->C");
+ t(prov(arr(A,C))===false, "A->C is not provable, so its type is empty");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+function showProp(t){ if(t.k==="atom") return t.n;
+ if(t.k==="arr") return "("+showProp(t.a)+" → "+showProp(t.b)+")";
+ if(t.k==="prod") return "("+showProp(t.a)+" ∧ "+showProp(t.b)+")";
+ return "("+showProp(t.a)+" ∨ "+showProp(t.b)+")"; }
+function showType(t){ if(t.k==="atom") return t.n;
+ if(t.k==="arr") return "("+showType(t.a)+" → "+showType(t.b)+")";
+ if(t.k==="prod") return "("+showType(t.a)+" × "+showType(t.b)+")";
+ return "("+showType(t.a)+" + "+showType(t.b)+")"; }
+function showTerm(m){ switch(m.k){
+  case "var": return m.n;
+  case "lam": return "λ"+m.v+":"+showType(m.t)+". "+showTerm(m.b);
+  case "app": return "("+showTerm(m.f)+" "+showTerm(m.a)+")";
+  case "pair": return "⟨"+showTerm(m.a)+", "+showTerm(m.b)+"⟩";
+  case "fst": return "fst "+showTerm(m.e);
+  case "snd": return "snd "+showTerm(m.e);
+  case "inl": return "inl "+showTerm(m.e);
+  case "inr": return "inr "+showTerm(m.e);
+  case "case": return "case "+showTerm(m.e)+" of inl "+m.xl+"⇒"+showTerm(m.el)+" | inr "+m.xr+"⇒"+showTerm(m.er);
+ } return "?"; }
+
+let SEED=0x2545f491; function rnd(){ SEED=(SEED*1103515245+12345)&0x7fffffff; return SEED/0x7fffffff; }
+
+function render(){
+ const e=ALL[+$("propsel").value];
+ const isProv=prov(e.prop);                        // decided live
+ $("pcode").innerHTML =
+   "<div><span class=\"mut\">proposition</span>&nbsp; <span class=\"lg\">"+showProp(e.prop)+"</span></div>"+
+   "<div><span class=\"mut\">as a type</span>&nbsp;&nbsp;&nbsp; <span class=\"pg\">"+showType(e.prop)+"</span></div>"+
+   "<div style=\"margin-top:6px\"><span class=\"mut\">proof / program</span><br>"+
+     (e.term? "<span class=\"tm\">"+showTerm(e.term)+"</span>" : "<span class=\"mut\">&mdash; none : the type is empty &mdash;</span>")+"</div>"+
+   (e.term? "<div style=\"margin-top:4px\"><span class=\"mut\">type of program</span>&nbsp; <span class=\"pg\">"+showType(tc({},e.term))+"</span> "+
+     (teq(tc({},e.term),e.prop)? "<span style=\"color:var(--gr)\">✓ equals the proposition</span>":"<span style=\"color:var(--wall)\">✗ mismatch</span>")+"</div>":"");
+ $("verdict").textContent = isProv? "PROVABLE — type is INHABITED" : "UNPROVABLE — type is EMPTY";
+ $("verdict").className = "verdict "+(isProv?"ok":"no");
+ $("reason").textContent = isProv
+   ? "a well-typed program of this type exists : it is a proof of the proposition."
+   : "no closed term has this type : G4ip finds no derivation, so nothing proves it.";
+ const mt = e.term? showType(tc({},e.term)) : "(no term)";
+ $("modelout").innerHTML = e.term
+   ? "<span class=\"tm\" style=\"color:#eafff0\">"+showTerm(e.term)+"</span><br>&#8627; checker derives type <span class=\"pg\" style=\"color:var(--cy)\">"+mt+"</span>"
+   : "<span class=\"mut\">no proof-term — the checker has nothing to type; the proposition is empty.</span>";
+}
+function audit(){
+ const ok=correspondenceHolds();
+ const idty=showType(tc({},lam("x",A,V("x"))));
+ $("auditout").innerHTML =
+   "<span class=\"badge "+(ok?"pass":"failb")+"\">"+(ok?"✓ WITNESS — correspondence holds":"✗ WITNESS — correspondence broken")+"</span>"+
+   "<div class=\"small\" style=\"margin-top:6px\">re-checked live: <b style=\"color:"+(ok?"var(--gr)":"var(--wall)")+"\">"+CORPUS.length+"</b> provable props, each proof-term type-checks to its proposition; <b>"+UNPROV.length+"</b> unprovable props, each type empty. identity &#955;x.x : <b>"+idty+"</b>."+
+   (TAMPER? " &nbsp; — <span style=\"color:var(--wall)\">red claims &#955;x.x : A→C</span>":"")+"</div>";
+}
+
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("propsel").innerHTML = ALL.map((e,i)=>'<option value="'+i+'">'+e.name+' : '+showProp(e.prop)+'</option>').join("");
+ $("propsel").value="0";
+ $("propsel").addEventListener("change",()=>{ render(); });
+ $("rand").addEventListener("click",()=>{ $("propsel").value=(rnd()*ALL.length)|0; render(); });
+ $("ident").addEventListener("click",()=>{ $("propsel").value="0"; render(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true;
+   $("tampernote").innerHTML="<b style='color:var(--wall)'>Mislabelled.</b> The checker still derives A→A (≠ A→C) and A→C is not provable — provable↔inhabited broke and the witness (window 7) went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false;
+   $("tampernote").textContent="Claim the wrong type and two things fail at once: the type-checker still derives A→A (≠ A→C), and A→C is not provable — so provable↔inhabited breaks and the witness (window 7) turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Curry–Howard engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

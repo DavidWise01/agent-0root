@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE CANNY EDGE DETECTOR</title>
+<style>
+:root{
+  --am:#c0b0ff;
+  --bg:#08160e; --pan:#0e2116; --pan2:#0b1c12; --panin:#102a1b;
+  --ink:#e2f0e8; --dim:#8fae9c; --line:#1d3c29;
+  --blue:#6db6ff; --red:#ff7d7d; --amber:#ffc860; --lit:#7dffb0; --wall:#ff9a5c; --in:#7fd0ff; --out:#7dffb0;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1100px 600px at 15% -8%, #12331f 0%, rgba(18,51,31,0) 60%),
+    radial-gradient(900px 520px at 105% 8%, #0f2a1c 0%, rgba(15,42,28,0) 55%),
+    var(--bg);
+  color:var(--ink);
+  font-family:"Iosevka",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  line-height:1.5; padding:26px 20px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:20px}
+h1{font-size:clamp(24px,4vw,40px);margin:0 0 8px;letter-spacing:.06em;color:#fff}
+h1 .amp{color:var(--am)}
+.sub{color:var(--dim);max-width:78ch;margin:0 0 12px;font-size:14.5px}
+.sub b{color:var(--ink);font-weight:600}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{display:inline-block;font-size:10.5px;letter-spacing:.14em;padding:2px 8px;border-radius:999px;border:1px solid;text-transform:uppercase}
+.t-amber{color:var(--amber);border-color:#5c4a1e;background:#231a08}
+.t-lit{color:var(--lit);border-color:#1e5c3a;background:#082013}
+.t-in{color:var(--in);border-color:#1e4a5c;background:#08181f}
+.t-out{color:var(--out);border-color:#1e5c3a;background:#082013}
+.t-wall{color:var(--wall);border-color:#5c3a1e;background:#211407}
+.rendered{color:var(--dim);font-style:italic}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font-size:12px;letter-spacing:.16em;text-transform:uppercase;padding:6px 2px;border-bottom:1px solid var(--line)}
+.col.blue .teamhdr{color:var(--blue)}
+.col.red .teamhdr{color:var(--red)}
+.col.center .teamhdr{color:var(--am)}
+
+.win{background:var(--pan);border:1px solid var(--line);border-radius:12px;padding:13px 14px;position:relative}
+.win h3{margin:0 0 8px;font-size:13px;letter-spacing:.05em;color:#fff;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.win p{margin:6px 0;font-size:12.8px;color:var(--dim)}
+.win p b{color:var(--ink)}
+.num{width:22px;height:22px;flex:0 0 22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid var(--line)}
+.col.blue .num{color:var(--blue);background:#08161f}
+.col.red .num{color:var(--red);background:#1f0a0a}
+.col.center .num{color:var(--am);background:#150f24}
+.win.panel{background:linear-gradient(180deg,#0f2419,#0b1c12);border-color:#26643f}
+.col.center{gap:10px}
+.flow{height:22px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:15px}
+.flow::before{content:"\25BC"}
+
+.wall-note{border-left:3px solid var(--wall);padding-left:10px}
+.dead{color:#c98b8b;text-decoration:line-through;text-decoration-color:#7a3b3b}
+.fix{color:var(--ink)}
+.badge{font-size:11.5px;padding:3px 9px;border-radius:6px;border:1px solid var(--line);display:inline-block;margin-top:6px}
+.ok{color:var(--lit);border-color:#1e5c3a;background:#082013}
+.bad{color:var(--red);border-color:#5c1e1e;background:#200a0a}
+button{font-family:inherit;font-size:12px;cursor:pointer;border-radius:7px;border:1px solid var(--line);
+  background:#15251b;color:var(--ink);padding:6px 11px;margin:4px 6px 2px 0}
+button:hover{border-color:var(--am)}
+#tamper{border-color:#5c1e1e;color:var(--red)}
+#restore{border-color:#1e5c3a;color:var(--lit)}
+canvas{background:#050d08;border:1px solid var(--line);border-radius:8px;display:block;margin:6px 0 2px;max-width:100%}
+.cap{font-size:10.5px;color:var(--dim);letter-spacing:.02em}
+.mono{font-family:inherit}
+.kbd{color:var(--am)}
+#failb{display:none;margin:10px 0;padding:9px 12px;border-radius:8px;background:#200a0a;border:1px solid #5c1e1e;color:var(--red);font-size:12.5px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12px}
+footer .amp{color:var(--am)}
+.legend{font-size:11px;color:var(--dim);margin-top:4px}
+.legend span{display:inline-block;margin-right:10px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin-right:3px;border:1px solid #000}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE CANNY EDGE DETECTOR <span class="amp">/ the optimal edge pipeline</span></h1>
+  <p class="sub">Four stages that turn a noisy raster into a clean line drawing: <b>Gaussian blur</b> quiets the noise, a <b>Sobel gradient</b> measures the slope, <b>non-maximum suppression</b> thins each ridge to a single pixel along its own normal, and <b>hysteresis</b> thresholds with memory &mdash; a strong edge, plus any weak pixel that can walk to a strong one. Canny derived the operator from an explicit uncertainty principle between detection and localization. <span class="rendered">Rendered, not quoted.</span></p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Canny, J. &mdash; <i>A Computational Approach to Edge Detection</i>, IEEE Trans. PAMI <b>PAMI-8</b>(6):679&ndash;698, <b>1986</b>.
+    <a href="https://doi.org/10.1109/TPAMI.1986.4767851" target="_blank" rel="noopener">doi:10.1109/TPAMI.1986.4767851</a>
+  </p>
+  <div id="failb"></div>
+</header>
+
+<div class="ocho">
+
+  <!-- ===================== BLUE TEAM ===================== -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <h3><span class="num">3</span> THE MODEL</h3>
+      <p>An edge is a step in intensity. The pipeline is four exact operators, in order:</p>
+      <p><b>1. Blur</b> &mdash; convolve with a separable Gaussian (integer kernels <span class="mono">[1,2,1]/4</span> or <span class="mono">[1,4,6,4,1]/16</span>). Sets the scale.</p>
+      <p><b>2. Gradient</b> &mdash; Sobel <span class="mono">Gx,Gy</span>; magnitude <span class="mono">&radic;(Gx&sup2;+Gy&sup2;)</span>, direction <span class="mono">atan2(Gy,Gx)</span>.</p>
+      <p><b>3. Thin (NMS)</b> &mdash; keep a pixel only if its magnitude is a local maximum along the gradient <i>normal</i> (direction quantized to 0/45/90/135&deg;). A thick ridge collapses to width&nbsp;1.</p>
+      <p><b>4. Hysteresis</b> &mdash; two thresholds. Above HIGH = edge. Below LOW = discarded. Between = edge <i>only if</i> connected (8-neighbour) to a strong edge.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="num">5</span> THE LINEAGE</h3>
+      <p>Stage&nbsp;2 is borrowed: <b>the-sobel-operator</b> supplies the gradient field. Canny&rsquo;s contribution is what comes <i>after</i> &mdash; thin that gradient to one pixel, then threshold it <i>with memory</i>.</p>
+      <p>Sobel answers &ldquo;how steep, which way.&rdquo; Canny answers &ldquo;which of those responses is the edge, and which is just the ridge&rsquo;s shoulder.&rdquo; The classic pipeline is the pair, in series.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="num">7</span> THE WITNESS</h3>
+      <p>Re-measures the live pipeline on the constructed step image and reports the edge width. Truth is <b>1</b>. If window&nbsp;6 removes the thinning stage, the width jumps and this badge flips red &mdash; live.</p>
+      <div id="auditout" class="badge ok">witness idle</div>
+    </div>
+  </div>
+
+  <!-- ===================== CENTER ===================== -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <h3><span class="num">4</span> DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>A constructed <b>13&times;5</b> raster: a smoothed vertical intensity step (dark left &rarr; bright right). One true edge, whose gradient ridge is deliberately several pixels wide.</p>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <h3><span class="num">0</span> THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <p class="cap">Live: blur &rarr; Sobel &rarr; NMS &rarr; hysteresis. Every strip is computed, not drawn.</p>
+      <canvas id="cv" width="252" height="560"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:#111"></span>0</span>
+        <span><span class="sw" style="background:#888"></span>mid</span>
+        <span><span class="sw" style="background:#eee"></span>max</span>
+        <span><span class="sw" style="background:#c0b0ff"></span>final edge</span>
+      </div>
+      <div>
+        <button id="tamper">plant void: skip NMS</button>
+        <button id="restore">restore</button>
+      </div>
+      <div id="litbadge" class="badge ok">booting&hellip;</div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win">
+      <h3><span class="num">8</span> DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p>A single-pixel-wide edge at the true step (<b>column 5</b>). Proven exact at boot: convolution&nbsp;=&nbsp;8, edge width&nbsp;=&nbsp;1, hysteresis&rsquo; three cases, heavier blur erases the fine line.</p>
+      <div id="outbadge" class="badge ok">&mdash;</div>
+    </div>
+  </div>
+
+  <!-- ===================== RED TEAM ===================== -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <h3><span class="num">1</span> THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note"><b>Detection vs. localization is a hard trade.</b> Canny proved it: the same Gaussian that suppresses noise also displaces and erases genuine fine structure. There is no &sigma; that is right everywhere &mdash; a corner, a texture edge, and a shadow boundary want different scales.</p>
+      <p class="wall-note"><b>Hysteresis streaks and breaks.</b> A noisy edge dipping below LOW splits into gaps; a bright background that grazes LOW near a strong edge floods in as false edge.</p>
+      <p class="wall-note"><b>4-bin direction is coarse.</b> Quantizing the normal to 0/45/90/135&deg; mislocates diagonal ridges by up to half a pixel.</p>
+    </div>
+
+    <div class="win">
+      <h3><span class="num">2</span> THE GRAVEYARD</h3>
+      <p><span class="dead">&ldquo;Canny finds every true edge.&rdquo;</span><br><span class="fix">&rarr; It is optimal for a <b>step</b> edge in Gaussian noise. It rounds corners, fragments junctions, and misses edges softer than its scale.</span></p>
+      <p><span class="dead">&ldquo;It is parameter-free.&rdquo;</span><br><span class="fix">&rarr; &sigma;, HIGH and LOW must be tuned; results move with all three. <span class="tag t-amber">amber</span> the ratio HIGH:LOW&asymp;2:1 or 3:1 is a rule of thumb, not a theorem.</span></p>
+      <p><span class="dead">&ldquo;NMS gives exact geometry.&rdquo;</span><br><span class="fix">&rarr; Thinning is exact only up to the direction quantization; sub-pixel edge location needs interpolation Canny does not specify.</span></p>
+    </div>
+
+    <div class="win">
+      <h3><span class="num">6</span> THE TAMPER</h3>
+      <p>The disclosed planted void: <b>delete stage&nbsp;3</b>. Threshold the raw gradient with no thinning &mdash; the whole ridge (columns 3&ndash;8) survives as a thick multi-pixel band. The WITNESS in window&nbsp;7 catches the width jump immediately.</p>
+      <p class="cap">Buttons live in window&nbsp;0. selfcheck() also plants and heals this void internally at boot.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  WORLD II &middot; THE FOLD &mdash; the-canny-edge-detector. Engine is LIT: the four stages compute live from real convolutions; selfcheck() throws on any violation and returns true. Built by <span class="amp">David Lee Wise (ROOT0) with AVAN.</span>
+</footer>
+</div>
+
+<script>
+// ================= ENGINE (pure) + selfcheck — no canvas / no DOM =================
+var TAMPER_SKIP_NMS = false;
+
+function cl(v,lo,hi){ return v<lo?lo:(v>hi?hi:v); }
+function approx(a,b,t){ return Math.abs(a-b) <= (t===undefined?1e-9:t); }
+function assert(c,msg){ if(!c) throw new Error("selfcheck violated: "+msg); }
+
+// separable Gaussian blur with an integer 1D kernel (normalized by its sum), clamp borders
+function blur(img,W,H,kernel){
+  var k=kernel.length, r=(k-1)>>1, sum=0, i,x,y;
+  for(i=0;i<k;i++) sum+=kernel[i];
+  var tmp=new Float64Array(W*H), out=new Float64Array(W*H);
+  for(y=0;y<H;y++) for(x=0;x<W;x++){
+    var acc=0;
+    for(i=0;i<k;i++){ var xx=cl(x+i-r,0,W-1); acc+=kernel[i]*img[y*W+xx]; }
+    tmp[y*W+x]=acc/sum;
+  }
+  for(y=0;y<H;y++) for(x=0;x<W;x++){
+    var acc2=0;
+    for(i=0;i<k;i++){ var yy=cl(y+i-r,0,H-1); acc2+=kernel[i]*tmp[yy*W+x]; }
+    out[y*W+x]=acc2/sum;
+  }
+  return out;
+}
+
+// Sobel gradient
+function sobel(img,W,H){
+  var gx=new Float64Array(W*H), gy=new Float64Array(W*H), mag=new Float64Array(W*H), dir=new Float64Array(W*H);
+  var Kx=[-1,0,1,-2,0,2,-1,0,1], Ky=[-1,-2,-1,0,0,0,1,2,1];
+  for(var y=0;y<H;y++) for(var x=0;x<W;x++){
+    var sx=0, sy=0, idx=0;
+    for(var dy=-1;dy<=1;dy++) for(var dx=-1;dx<=1;dx++){
+      var xx=cl(x+dx,0,W-1), yy=cl(y+dy,0,H-1), v=img[yy*W+xx];
+      sx+=Kx[idx]*v; sy+=Ky[idx]*v; idx++;
+    }
+    gx[y*W+x]=sx; gy[y*W+x]=sy;
+    mag[y*W+x]=Math.sqrt(sx*sx+sy*sy);
+    dir[y*W+x]=Math.atan2(sy,sx);
+  }
+  return {gx:gx,gy:gy,mag:mag,dir:dir};
+}
+
+// non-maximum suppression along the quantized gradient normal
+function nms(mag,dir,W,H){
+  var out=new Float64Array(W*H);
+  for(var y=0;y<H;y++) for(var x=0;x<W;x++){
+    var ang=dir[y*W+x]*180/Math.PI; if(ang<0) ang+=180;
+    var m=mag[y*W+x], ax,ay,bx,by;
+    if(ang<22.5 || ang>=157.5){ ax=x-1; ay=y;   bx=x+1; by=y;   }
+    else if(ang<67.5){          ax=x-1; ay=y+1; bx=x+1; by=y-1; }
+    else if(ang<112.5){         ax=x;   ay=y-1; bx=x;   by=y+1; }
+    else{                       ax=x-1; ay=y-1; bx=x+1; by=y+1; }
+    var ma=(ax<0||ax>=W||ay<0||ay>=H)?0:mag[ay*W+ax];
+    var mb=(bx<0||bx>=W||by<0||by>=H)?0:mag[by*W+bx];
+    out[y*W+x]=(m>=ma && m>=mb)?m:0;
+  }
+  return out;
+}
+
+// hysteresis threshold: strong = magnitude>=hi; flood weak (>=lo) reachable from any strong pixel (8-neighbour)
+function hysteresis(m,W,H,hi,lo){
+  var edge=new Uint8Array(W*H), N=W*H, stack=[], i;
+  for(i=0;i<N;i++){ if(m[i]>=hi){ edge[i]=1; stack.push(i); } }
+  while(stack.length){
+    var idx=stack.pop(), x=idx%W, y=(idx/W)|0;
+    for(var dy=-1;dy<=1;dy++) for(var dx=-1;dx<=1;dx++){
+      if(dx===0&&dy===0) continue;
+      var xx=x+dx, yy=y+dy;
+      if(xx<0||xx>=W||yy<0||yy>=H) continue;
+      var j=yy*W+xx;
+      if(!edge[j] && m[j]>=lo){ edge[j]=1; stack.push(j); }
+    }
+  }
+  return edge;
+}
+
+// full pipeline; skipNMS undefined => obey the live TAMPER flag
+function canny(img,W,H,kernel,hi,lo,skipNMS){
+  if(skipNMS===undefined) skipNMS=TAMPER_SKIP_NMS;
+  var b=blur(img,W,H,kernel);
+  var s=sobel(b,W,H);
+  var thin = skipNMS ? s.mag : nms(s.mag,s.dir,W,H);
+  var edge = hysteresis(thin,W,H,hi,lo);
+  return {edge:edge, mag:s.mag, thin:thin, blurred:b, dir:s.dir};
+}
+
+// measurement helpers
+function edgeWidthRow(edge,W,H,row){ var c=0; for(var x=0;x<W;x++) if(edge[row*W+x]) c++; return c; }
+function edgeColRow(edge,W,H,row){ for(var x=0;x<W;x++) if(edge[row*W+x]) return x; return -1; }
+function edgeCount(edge){ var c=0; for(var i=0;i<edge.length;i++) c+=edge[i]; return c; }
+
+// the shared constructed step image
+function stepImage(){
+  var W=13,H=5, prof=[0,0,0,0,10,40,80,95,100,100,100,100,100], img=new Float64Array(W*H);
+  for(var y=0;y<H;y++) for(var x=0;x<W;x++) img[y*W+x]=prof[x];
+  return {img:img,W:W,H:H};
+}
+
+function selfcheck(){
+  var saved=TAMPER_SKIP_NMS;
+  try{
+    var K3=[1,2,1], K5=[1,4,6,4,1];
+
+    // (1) EXACT convolution anchor: a unit-slope ramp (value = column) has Sobel Gx = 8, Gy = 0
+    var RW=7,RH=5, ramp=new Float64Array(RW*RH), x,y;
+    for(y=0;y<RH;y++) for(x=0;x<RW;x++) ramp[y*RW+x]=x;
+    var rs=sobel(ramp,RW,RH);
+    assert(approx(rs.gx[2*RW+3],8), "ramp Sobel Gx must equal 8 exactly");
+    assert(approx(rs.gy[2*RW+3],0), "ramp Sobel Gy must equal 0 exactly");
+
+    // step image, honest run
+    var S=stepImage(), W=S.W, H=S.H, mid=H>>1;
+    TAMPER_SKIP_NMS=false;
+    var r=canny(S.img,W,H,K3,100,30,false);
+
+    // (2) THIN: NMS collapses the multi-pixel ridge to a single-pixel edge, every row
+    for(y=0;y<H;y++) assert(edgeWidthRow(r.edge,W,H,y)===1, "NMS must thin the edge to width 1 in every row");
+    // (3) LOCATION: the edge sits at the true step (column 5, the gradient maximum)
+    assert(edgeColRow(r.edge,W,H,mid)===5, "edge must sit at the true step, column 5");
+
+    // demonstrate the contrapositive with an explicit skip: ridge stays thick
+    var rSkip=canny(S.img,W,H,K3,100,30,true);
+    assert(edgeWidthRow(rSkip.edge,W,H,mid)>1, "skipping NMS must leave a thick multi-pixel band");
+
+    // (4) HYSTERESIS, all three cases, on a constructed post-thinning magnitude row
+    var HW=5,HH=1, hm=new Float64Array([150,50,0,50,20]);
+    var he=hysteresis(hm,HW,HH,100,30);
+    assert(he[0]===1, "hysteresis: a pixel above HIGH is an edge");
+    assert(he[4]===0, "hysteresis: a pixel below LOW is not an edge");
+    assert(he[1]===1, "hysteresis: a BETWEEN pixel connected to a strong edge is an edge");
+    assert(he[3]===0, "hysteresis: a BETWEEN pixel isolated from any strong edge is not an edge");
+
+    // (5) heavier blur removes fine edges: a 1-pixel bright line vanishes under the wider kernel
+    var FW=15,FH=5, fine=new Float64Array(FW*FH);
+    for(y=0;y<FH;y++) fine[y*FW+7]=100;
+    var light=canny(fine,FW,FH,K3,50,20,false);
+    var heavy=canny(fine,FW,FH,K5,50,20,false);
+    var pl=0,ph=0,i;
+    for(i=0;i<FW*FH;i++){ if(light.mag[i]>pl) pl=light.mag[i]; if(heavy.mag[i]>ph) ph=heavy.mag[i]; }
+    assert(ph < pl-1e-9, "heavier blur must strictly reduce the fine-feature gradient");
+    var hiMid=(pl+ph)/2, loMid=hiMid*0.4;
+    var lC=edgeCount(canny(fine,FW,FH,K3,hiMid,loMid,false).edge);
+    var hC=edgeCount(canny(fine,FW,FH,K5,hiMid,loMid,false).edge);
+    assert(lC>0, "fine edge must be present under light blur");
+    assert(hC===0, "fine edge must be removed under heavy blur");
+
+    // (6) TAMPER: plant the void (skip NMS), assert a known value now differs, then restore
+    var wHonest=edgeWidthRow(r.edge,W,H,mid);           // == 1
+    TAMPER_SKIP_NMS=true;
+    var tam=canny(S.img,W,H,K3,100,30);                 // obeys the flag
+    var wTampered=edgeWidthRow(tam.edge,W,H,mid);
+    assert(wTampered>1, "TAMPER must break single-pixel width");
+    assert(wTampered!==wHonest, "TAMPER must change the witnessed width");
+    TAMPER_SKIP_NMS=saved;
+    var healed=canny(S.img,W,H,K3,100,30);
+    assert(edgeWidthRow(healed.edge,W,H,mid)===1, "restore must heal the width back to 1");
+
+    return true;
+  } finally {
+    TAMPER_SKIP_NMS=saved;
+  }
+}
+
+/* ===== UI ===== */
+(function(){
+  var litbadge=document.getElementById("litbadge");
+  var outbadge=document.getElementById("outbadge");
+  var auditout=document.getElementById("auditout");
+  var failb=document.getElementById("failb");
+
+  try{
+    var ok=selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    litbadge.className="badge ok";
+    litbadge.textContent="LIT \u2713 selfcheck passed \u2014 conv=8, width=1, hysteresis 3/3, fine-edge erased";
+    outbadge.className="badge ok";
+    outbadge.textContent="proven: single-pixel edge at column 5";
+  }catch(e){
+    litbadge.className="badge bad";
+    litbadge.textContent="DEAD \u2717 "+e.message;
+    failb.style.display="block";
+    failb.textContent="ENGINE HALTED \u2014 "+e.message;
+    throw e;
+  }
+
+  var cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+  var CELL=18, PADX=6, PADY=6, LBL=24;
+
+  function maxOf(a){ var m=0; for(var i=0;i<a.length;i++) if(Math.abs(a[i])>m) m=Math.abs(a[i]); return m||1; }
+
+  function drawStrip(arr,W,H,y0,label,colorEdge){
+    ctx.fillStyle="#8fae9c"; ctx.font="10px monospace"; ctx.fillText(label,PADX,y0-6);
+    var mx=maxOf(arr);
+    for(var y=0;y<H;y++) for(var x=0;x<W;x++){
+      var v=Math.abs(arr[y*W+x])/mx, g=Math.round(v*255);
+      if(colorEdge && arr[y*W+x]){ ctx.fillStyle="#c0b0ff"; }
+      else{ ctx.fillStyle="rgb("+g+","+g+","+g+")"; }
+      ctx.fillRect(PADX+x*CELL, y0+y*CELL, CELL-1, CELL-1);
+    }
+  }
+
+  function render(){
+    var S=stepImage(), W=S.W, H=S.H, K3=[1,2,1];
+    var r=canny(S.img,W,H,K3,100,30); // obeys live TAMPER flag
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var y=LBL;
+    drawStrip(S.img,W,H,y,"1 \u00b7 input (step)",false);           y+=H*CELL+LBL;
+    drawStrip(r.blurred,W,H,y,"2 \u00b7 gaussian blur",false);       y+=H*CELL+LBL;
+    var mag=canny(S.img,W,H,K3,100,30,true).thin;                    // raw magnitude field
+    drawStrip(mag,W,H,y,"3 \u00b7 sobel |gradient|",false);          y+=H*CELL+LBL;
+    drawStrip(r.thin,W,H,y,"4 \u00b7 after NMS (thin?)",false);      y+=H*CELL+LBL;
+    var em=new Float64Array(W*H); for(var i=0;i<W*H;i++) em[i]=r.edge[i];
+    drawStrip(em,W,H,y,"5 \u00b7 hysteresis edges",true);
+
+    // WITNESS: live width vs. truth
+    var mid=H>>1, w=edgeWidthRow(r.edge,W,H,mid);
+    if(w===1){
+      auditout.className="badge ok";
+      auditout.textContent="WITNESS OK \u2713 edge width = 1 px (thin)";
+      litbadge.className="badge ok";
+      litbadge.textContent="LIT \u2713 pipeline intact \u2014 single-pixel edge at column 5";
+    }else{
+      auditout.className="badge bad";
+      auditout.textContent="WITNESS \u2717 TAMPERED \u2014 edge is "+w+" px thick (NMS removed)";
+      litbadge.className="badge bad";
+      litbadge.textContent="VOID PLANTED \u2717 non-maximum suppression skipped \u2014 ridge never thinned";
+    }
+  }
+
+  document.getElementById("tamper").addEventListener("click",function(){ TAMPER_SKIP_NMS=true;  render(); });
+  document.getElementById("restore").addEventListener("click",function(){ TAMPER_SKIP_NMS=false; render(); });
+
+  render();
+})();
+</script>
+</body>
+</html>

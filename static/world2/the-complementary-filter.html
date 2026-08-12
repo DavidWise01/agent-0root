@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE COMPLEMENTARY FILTER · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fe0c0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,224,192,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO — refined: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,224,192,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,224,192,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;height:22px;accent-color:var(--am);vertical-align:middle;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:250px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:88px;}
+.rv{color:var(--am);min-width:44px;text-align:right;}
+canvas{width:100%;height:190px;background:#0a130c;border:1px solid var(--line);border-radius:6px;display:block;}
+.leg{font-size:11px;color:var(--dim);margin:6px 0;display:flex;gap:12px;flex-wrap:wrap;}
+.leg i{width:18px;height:3px;display:inline-block;vertical-align:middle;margin-right:4px;border-radius:2px;}
+.verdict{font-size:16px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.win .k2{color:var(--am);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9664; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE COMPLEMENTARY FILTER</h1>
+ <p class="sub">Two flawed sensors, fused into one good answer. A <b>gyroscope</b> reads rotation rate — crisp instant-to-instant, but its bias <b>drifts</b> without bound. An <b>accelerometer</b> reads tilt from gravity — dead stable over time, but drowned in <b>noise</b>. High-pass the gyro, low-pass the accel, and — because the two filters <b class="k">sum to exactly one at every frequency</b> — the fused tilt has less error than either sensor alone. Down the center the signals go <b style="color:var(--cy)">in</b>, the engine fuses, the estimate comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds it; the <b style="color:var(--red)">red team</b> breaks it.</p>
+ <p class="src"><span class="tag t-amber">source</span> T. Higgins, "A Comparison of Complementary and Kalman Filtering," <i>IEEE Trans. Aerospace &amp; Electronic Systems</i> AES-11(3), 1975; R. Mahony, T. Hamel, JM. Pflimlin, "Nonlinear Complementary Filters on the Special Orthogonal Group," <i>IEEE Trans. Automatic Control</i> 53(5):1203–1217, 2008 — <a href="https://hal.science/hal-00488376/document">hal-00488376</a>. Cited, not quoted; link AMBER (author preprint, not the paywalled IEEE record).</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the fusion law</h2>
+   <p>One line, run every step (dt = 10&nbsp;ms):</p>
+   <p class="k2" style="font-size:12.5px">&theta;&#8320; = &alpha;&middot;(&theta;&#8331;&#8321; + &omega;<sub>gyro</sub>&middot;dt) + (1&minus;&alpha;)&middot;&theta;<sub>accel</sub></p>
+   <p>The gyro path is a <b>high-pass</b> H(z), the accel path a <b>low-pass</b> L(z). They are <b>complementary</b>: H(z)+L(z) &equiv; 1, so no frequency is lost or double-counted. &alpha; sets the crossover time constant &tau; = &alpha;&middot;dt/(1&minus;&alpha;).</p>
+   <p class="small">Live error of each estimate on the current signal (smallest wins):</p>
+   <table id="mdlTbl"><thead><tr><th>estimate</th><th>RMS error (rad)</th></tr></thead><tbody id="mdlBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the cheap Kalman <span class="tag t-amber">AVAN</span></h2>
+   <p>The complementary filter is <a href="https://davidwise01.github.io/the-kalman/" style="color:var(--cy)">the Kalman filter</a> stripped to its bones for orientation: instead of propagating a covariance to earn a time-varying gain, it <b>fixes</b> the gain at &alpha; and splits the spectrum by hand — high-pass the gyro, low-pass the accel, sum to one.</p>
+   <p>For a steady-state single-axis problem the two <b>coincide</b>: Kalman's converged gain <i>is</i> a complementary crossover. One sphere is the other's limit case.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run <code>selfcheck()</code> — the complementary sum, the fused-error-is-smallest property, the &alpha;=1/&alpha;=0 limits, steady-state unbiasedness. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the two sensors <span class="tag t-in">in &darr;</span></h2>
+   <p>Both sensors report the same tilt &theta;, and both are wrong — in <b>opposite</b> bands:</p>
+   <table><thead><tr><th>sensor</th><th>measures</th><th>good</th><th>bad</th></tr></thead>
+    <tbody class="dist">
+     <tr><td style="color:var(--amber)">gyro</td><td>rate &omega;</td><td class="y">fast / short-term</td><td class="n">drifts (bias)</td></tr>
+     <tr><td style="color:var(--cy)">accel</td><td>angle &theta;</td><td class="y">stable / long-term</td><td class="n">noisy</td></tr>
+    </tbody></table>
+   <p class="small">Integrating the gyro gives a smooth angle that <i>walks away</i>; the accelerometer gives a jittery angle that <i>stays put</i>. Feed both into the panel below.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed both signals into the filter &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>signal</label>
+      <select id="prof"><option value="ramp">ramp · turning at 0.5 rad/s</option><option value="swing">swing · sinusoidal tilt</option><option value="still">still · held level</option></select></div>
+     <div class="row"><label>&alpha; (gyro trust)</label><input type="range" id="alpha" min="0" max="1" step="0.005" value="0.98"><span class="rv" id="alphaV">0.980</span></div>
+     <div class="row"><label>gyro bias</label><input type="range" id="bias" min="0" max="0.2" step="0.005" value="0.05"><span class="rv" id="biasV">0.050</span></div>
+     <div class="row"><label>accel noise</label><input type="range" id="noise" min="0" max="0.4" step="0.01" value="0.15"><span class="rv" id="noiseV">0.15</span></div>
+     <div class="row"><button id="reset">&#8635; defaults</button></div>
+     <p class="small" id="tau"></p>
+    </div>
+    <div class="readout">
+     <canvas id="plot" width="600" height="190"></canvas>
+     <div class="leg"><span><i style="background:var(--dim)"></i>true</span><span><i style="background:var(--amber)"></i>gyro (drifts)</span><span><i style="background:var(--cy)"></i>accel (noisy)</span><span><i style="background:var(--gr)"></i>fused</span></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Every value on the canvas is integrated and fused live from the sliders — never looked up.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the filter emits a fused tilt &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the estimate <span class="tag t-out">out &darr;</span></h2>
+   <p>What the machine produces, proven: a tilt whose error is <b>smaller than the raw gyro</b> (which drifts) and <b>smaller than the raw accelerometer</b> (which is noisy) — with the two filters summing to <b class="k">exactly 1</b> at every frequency and the estimate <b>unbiased</b> in steady state. The current signal's numbers are above; the guarantee is the output.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-checks these live; the red team (right) tries to make them false.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The filter trusts the accelerometer to read <b>gravity</b>. Under <b>linear acceleration</b> it reads gravity + motion, so the "tilt" it reports is wrong — a braking car tilts the estimate even on flat ground. The complementary law has no way to tell the two apart.</div>
+   <p class="small" style="margin-top:8px">It also assumes a <b>single</b>, well-chosen &alpha;. One fixed crossover cannot be optimal for both a slow drift and a fast manoeuvre — that time-varying trade-off is exactly what the Kalman filter earns with a covariance, and what this filter throws away for cheapness.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Higher &alpha; is always better — trust the gyro."</s> <b>Cut.</b> &alpha;=1 is <i>pure</i> gyro: no accel correction, so bias drifts without bound (see window 6). The optimum is interior.</p>
+   <p class="grave"><s>"The gains &alpha; and 1&minus;&alpha; are just a weighted average."</s> <b>Cut.</b> A static average of two angles keeps <i>both</i> flaws. The point is <b>spectral</b>: gyro only above the crossover, accel only below.</p>
+   <p class="grave"><s>"It needs no tuning."</s> <b>Kept, corrected.</b> &alpha; must match dt and the noise split via &tau;=&alpha;dt/(1&minus;&alpha;) — cheaper than Kalman, not free.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: force <b>&alpha;=1</b> — pure gyro, the accelerometer disconnected. The estimate now integrates bias forever and <b>drifts without bound</b>. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; force &alpha;=1 (cut accel)</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Cut the accelerometer and the fused error stops being the smallest — it becomes the drifting gyro itself. The witness recomputes, the property fails, and the badge turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE COMPLEMENTARY FILTER — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (two sensors <b style="color:var(--cy)">in</b> &rarr; filter &rarr; fused tilt <b style="color:var(--gr)">out</b>). A runnable rendering of complementary attitude filtering (Higgins 1975; Mahony–Hamel–Pflimlin 2008) — the engine is LIT (fused live from the sliders, H+L&equiv;1, fused-error-smallest self-checked, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one fixed crossover cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* complementary-filter engine — verified: H+L identically 1, fused error smallest */
+const DT=0.01;
+let TAMPER=false;   // forces alpha=1 (pure gyro, accel cut) — the witness must catch it
+
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function gauss(rng){ let u=0,v=0; while(u===0)u=rng(); while(v===0)v=rng(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+// effective gyro-trust: tamper cuts the accelerometer by pinning alpha to 1
+function effAlpha(alpha){ return TAMPER?1:alpha; }
+
+// one pass of the complementary filter over a rate + accel-angle series
+function fuse(gyroRate, accelAngle, alpha, dt){
+ const a=effAlpha(alpha), n=gyroRate.length, out=new Array(n); let th=accelAngle[0]; out[0]=th;
+ for(let k=1;k<n;k++){ th=a*(th+gyroRate[k]*dt)+(1-a)*accelAngle[k]; out[k]=th; }
+ return out;
+}
+// raw gyro estimate: integrate rate from the accelerometer's first reading
+function integrateGyro(gyroRate, theta0, dt){
+ const n=gyroRate.length, out=new Array(n); let th=theta0; out[0]=th;
+ for(let k=1;k<n;k++){ th=th+gyroRate[k]*dt; out[k]=th; } return out;
+}
+function rms(a,b){ let s=0; for(let i=0;i<a.length;i++){ const d=a[i]-b[i]; s+=d*d; } return Math.sqrt(s/a.length); }
+
+// complex helpers for the two transfer functions on z = e^{jw}
+function cdiv(ar,ai,br,bi){ const d=br*br+bi*bi; return [(ar*br+ai*bi)/d,(ai*br-ar*bi)/d]; }
+// H(z) = alpha*(1 - z^-1) / (1 - alpha z^-1)   (high-pass on the gyro angle)
+function Hgyro(w,alpha){ const cw=Math.cos(w),sw=Math.sin(w); return cdiv(alpha*(1-cw),alpha*sw,1-alpha*cw,alpha*sw); }
+// L(z) = (1 - alpha) / (1 - alpha z^-1)          (low-pass on the accel angle)
+function Laccel(w,alpha){ return cdiv(1-alpha,0,1-alpha*Math.cos(w),alpha*Math.sin(w)); }
+
+// build a constructed, fixed-seed scenario: profile drives true angle; gyro=rate+bias, accel=angle+noise
+function scenario(profile,bias,noiseSd,n){
+ const rng=mulberry32(12345), dt=DT;
+ const trueAngle=new Array(n),gyroRate=new Array(n),accelAngle=new Array(n);
+ for(let k=0;k<n;k++){
+  const t=k*dt; let ang,rate;
+  if(profile==="swing"){ const A=0.6, fr=0.25; ang=A*Math.sin(2*Math.PI*fr*t); rate=A*2*Math.PI*fr*Math.cos(2*Math.PI*fr*t); }
+  else if(profile==="still"){ ang=0; rate=0; }
+  else { const R=0.5; ang=R*t; rate=R; }               // ramp
+  trueAngle[k]=ang; gyroRate[k]=rate+bias; accelAngle[k]=ang+noiseSd*gauss(rng);
+ }
+ return {n,dt,trueAngle,gyroRate,accelAngle};
+}
+// three estimates + their errors for one scenario at gain alpha
+function estimates(sc,alpha){
+ const gyro=integrateGyro(sc.gyroRate,sc.accelAngle[0],sc.dt);
+ const accel=sc.accelAngle;
+ const fused=fuse(sc.gyroRate,accel,alpha,sc.dt);
+ return {gyro,accel,fused,
+  eGyro:rms(gyro,sc.trueAngle), eAccel:rms(accel,sc.trueAngle), eFused:rms(fused,sc.trueAngle)};
+}
+
+/* fail-loud self-check (runs untampered, then plants + catches the tamper) */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const ALPHA=0.98;
+
+ // 1) the two filters are COMPLEMENTARY: H(z)+L(z) is identically 1 across the spectrum
+ let maxsum=0;
+ for(let i=0;i<=200;i++){ const w=Math.PI*i/200; const H=Hgyro(w,ALPHA),L=Laccel(w,ALPHA); maxsum=Math.max(maxsum,Math.hypot(H[0]+L[0]-1,H[1]+L[1])); }
+ t(maxsum<1e-9,"H(z)+L(z) must equal 1 at every frequency (got dev "+maxsum+")");
+
+ // 2) on a constructed drifting-gyro / noisy-accel signal the FUSED error is the smallest
+ const sc=scenario("ramp",0.05,0.15,1500);
+ const e=estimates(sc,ALPHA);
+ t(e.eFused<e.eGyro,"fused error must beat the drifting gyro");
+ t(e.eFused<e.eAccel,"fused error must beat the noisy accelerometer");
+
+ // 3) alpha sets the crossover: alpha=1 is PURE gyro, alpha=0 is PURE accelerometer (exact)
+ const f1=fuse(sc.gyroRate,sc.accelAngle,1,sc.dt);
+ const gyroInt=integrateGyro(sc.gyroRate,sc.accelAngle[0],sc.dt);
+ t(rms(f1,gyroInt)===0,"alpha=1 must equal pure gyro integration exactly");
+ const f0=fuse(sc.gyroRate,sc.accelAngle,0,sc.dt);
+ for(let k=0;k<sc.n;k++) t(f0[k]===sc.accelAngle[k],"alpha=0 must equal the raw accelerometer exactly");
+
+ // 4) the estimate is UNBIASED in steady state (held level, zero bias, zero-mean noise)
+ const ss=scenario("still",0,0.15,3000);
+ const fss=fuse(ss.gyroRate,ss.accelAngle,ALPHA,ss.dt);
+ let m=0; for(let k=1000;k<ss.n;k++) m+=fss[k]; m/=(ss.n-1000);
+ t(Math.abs(m)<0.02,"steady-state fused estimate must be unbiased (mean "+m.toFixed(4)+")");
+
+ // 5) PLANTED VOID: force alpha=1 (cut the accel) — the fused estimate DRIFTS and is no longer smallest
+ TAMPER=true;
+ const et=estimates(sc,ALPHA);
+ t(rms(et.fused,et.gyro)===0,"under tamper the fused estimate must collapse to the drifting gyro");
+ t(!(et.eFused<et.eAccel),"under tamper the fused-error-smallest property must FAIL");
+ TAMPER=false; // restore
+
+ TAMPER=save; return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let alphaUI=0.98, biasUI=0.05, noiseUI=0.15, profUI="ramp";
+
+function drawPlot(sc,est){
+ const cv=$("plot"), dpr=window.devicePixelRatio||1;
+ const w=cv.clientWidth||600, h=190;
+ cv.width=w*dpr; cv.height=h*dpr;
+ const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h);
+ const series=[sc.trueAngle,est.accel,est.gyro,est.fused];
+ let lo=Infinity,hi=-Infinity;
+ for(const s of series) for(const v of s){ if(v<lo)lo=v; if(v>hi)hi=v; }
+ if(hi-lo<1e-6){ hi+=1; lo-=1; } const pad=(hi-lo)*0.08; lo-=pad; hi+=pad;
+ const n=sc.n, X=i=>i/(n-1)*(w-8)+4, Y=v=>h-6-(v-lo)/(hi-lo)*(h-12);
+ g.strokeStyle="#16301d"; g.lineWidth=1; g.beginPath(); g.moveTo(4,Y(0)); g.lineTo(w-4,Y(0)); g.stroke();
+ const line=(s,col,wd)=>{ g.strokeStyle=col; g.lineWidth=wd; g.beginPath(); for(let i=0;i<n;i++){ const x=X(i),y=Y(s[i]); i?g.lineTo(x,y):g.moveTo(x,y); } g.stroke(); };
+ line(sc.trueAngle,"#4a6b52",1.2);
+ line(est.accel,"rgba(87,224,208,.55)",1);
+ line(est.gyro,"#ffcf4d",1.4);
+ line(est.fused,"#39fc6b",1.8);
+}
+
+function fmt(x){ return x.toFixed(4); }
+
+function render(){
+ const n = profUI==="still"?3000:1500;
+ const sc=scenario(profUI,biasUI,noiseUI,n);
+ const est=estimates(sc,alphaUI);
+ drawPlot(sc,est);
+
+ // model table (window 3) — smallest error highlighted
+ const rows=[["gyro (integrated)",est.eGyro,"var(--amber)"],["accel (raw)",est.eAccel,"var(--cy)"],["fused",est.eFused,"var(--gr)"]];
+ const emin=Math.min(est.eGyro,est.eAccel,est.eFused);
+ $("mdlBody").innerHTML=rows.map(r=>`<tr><td style="color:${r[2]}">${r[0]}</td><td class="${r[1]===emin?'y':'n'}">${fmt(r[1])}${r[1]===emin?' &#9664; best':''}</td></tr>`).join("");
+
+ // verdict
+ const a=effAlpha(alphaUI);
+ const win = est.eFused<=est.eGyro && est.eFused<=est.eAccel;
+ $("verdict").textContent = win?"FUSED WINS":"FUSED DEGRADED";
+ $("verdict").className="verdict "+(win?"ok":"no");
+ if(TAMPER) $("reason").innerHTML="<b style='color:var(--wall)'>accel cut (&alpha;=1)</b> — the estimate is now the drifting gyro; error "+fmt(est.eFused)+" rad and climbing.";
+ else if(win) $("reason").textContent="fused error "+fmt(est.eFused)+" rad — below gyro ("+fmt(est.eGyro)+") and accel ("+fmt(est.eAccel)+").";
+ else $("reason").textContent="at this extreme gain the fused estimate is no better than a raw sensor — the interior optimum is gone.";
+
+ const tau = a>=1? Infinity : a*DT/(1-a);
+ $("tau").innerHTML = "effective &alpha; = <b class='k2'>"+a.toFixed(3)+"</b>"+(TAMPER?" (forced)":"")+" &nbsp;·&nbsp; &tau; = <b class='k2'>"+(tau===Infinity?"&infin;":tau.toFixed(3)+" s")+"</b>"+(a>=1?" &nbsp;— no accel correction":"");
+}
+
+function audit(){
+ const el=$("auditout"); let ok=false, msg="", detail="";
+ try{ ok = selfcheck()===true; msg = ok? "&#10003; WITNESS — holds" : "&#10007; WITNESS — broken"; }
+ catch(e){ ok=false; msg="&#10007; WITNESS — broken"; detail=e.message; }
+ // live property on the CURRENT settings (this is what the tamper flips)
+ const sc=scenario("ramp",0.05,0.15,1500), est=estimates(sc,0.98);
+ const liveOK = est.eFused<est.eGyro && est.eFused<est.eAccel;
+ el.innerHTML = `<span class="badge ${ok&&liveOK?'pass':'failb'}">${ok&&liveOK?'&#10003; WITNESS — holds':'&#10007; WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">self-check: <b style="color:${ok?'var(--gr)':'var(--wall)'}">${ok?'PASS':'FAIL'}</b>${detail?' — '+detail:''}<br>live: fused ${fmt(est.eFused)} &lt; gyro ${fmt(est.eGyro)} &amp; accel ${fmt(est.eAccel)} &nbsp;<b style="color:${liveOK?'var(--gr)':'var(--wall)'}">${liveOK?'&#10003;':'&#10007;'}</b>${TAMPER?' &nbsp; — <span style="color:var(--wall)">red cut the accelerometer</span>':''}</div>`;
+}
+
+/* boot */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">&#10003; LIT · self-check passed on load</span>';
+ const sync=()=>{ alphaUI=+$("alpha").value; biasUI=+$("bias").value; noiseUI=+$("noise").value; profUI=$("prof").value;
+   $("alphaV").textContent=alphaUI.toFixed(3); $("biasV").textContent=biasUI.toFixed(3); $("noiseV").textContent=noiseUI.toFixed(2); render(); audit(); };
+ ["alpha","bias","noise"].forEach(id=>$(id).addEventListener("input",sync));
+ $("prof").addEventListener("change",sync);
+ $("reset").addEventListener("click",()=>{ $("alpha").value=0.98; $("bias").value=0.05; $("noise").value=0.15; $("prof").value="ramp"; sync(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>&alpha; forced to 1 — accelerometer cut.</b> The fused estimate is now pure gyro integration; bias accumulates and it drifts without bound. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Cut the accelerometer and the fused error stops being the smallest — it becomes the drifting gyro itself. The witness recomputes, the property fails, and the badge turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ window.addEventListener("resize",render);
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the complementary filter engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

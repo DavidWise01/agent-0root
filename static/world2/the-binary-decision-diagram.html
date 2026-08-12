@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BINARY DECISION DIAGRAM</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --bg:#0b1712; --bg2:#0f2019; --bg3:#13271e;
+  --ink:#e8f5ee; --dim:#9fc3b1; --line:#244636;
+  --blue:#7fb4ff; --red:#ff8f8f;
+  --lit:#8affc0; --wall:#ffbf7a; --amber:#ffce6a;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 15% -10%, #122b20 0%, transparent 60%),
+    radial-gradient(1000px 600px at 110% 120%, #0e2419 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.5 "Inter",system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  padding:26px 20px 60px;
+}
+a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+header{max-width:1180px;margin:0 auto 20px}
+h1{
+  font-size:30px;letter-spacing:.08em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 24px rgba(200,162,255,.25)
+}
+.sub{max-width:820px;color:var(--dim);margin:0 0 12px;font-size:15px}
+.src{font-size:12.5px;color:var(--dim)}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;padding:2px 7px;border-radius:4px;vertical-align:middle;
+  border:1px solid currentColor
+}
+.t-amber{color:var(--amber)}
+.t-lit{color:var(--lit)}
+.t-in{color:var(--blue)}
+.t-out{color:var(--am)}
+.t-wall{color:var(--wall)}
+
+.ocho{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg2)
+}
+.col.blue .teamhdr{color:var(--blue);border-color:#25405e}
+.col.red .teamhdr{color:var(--red);border-color:#5e2828}
+.col.center .teamhdr{color:var(--am);border-color:#3a2f52;text-align:center}
+
+.win{
+  position:relative;background:var(--bg2);border:1px solid var(--line);
+  border-radius:10px;padding:14px 14px 13px
+}
+.col.blue .win{border-color:#1f3a52}
+.col.red .win{border-color:#4d2626}
+.win.panel{background:linear-gradient(180deg,#122a20,#0f2318);border-color:#3a2f52}
+.wn{
+  position:absolute;top:-11px;right:12px;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;font-size:13px;font-weight:800;
+  background:var(--bg3);border:1px solid var(--line);color:var(--dim)
+}
+.col.blue .wn{color:var(--blue);border-color:#25405e}
+.col.red .wn{color:var(--red);border-color:#5e2828}
+.col.center .wn{color:var(--am);border-color:#3a2f52}
+.win h3{margin:0 0 7px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.win p{margin:6px 0;color:var(--dim);font-size:13px}
+.win b{color:var(--ink)}
+code,.mono{font-family:"JetBrains Mono",Consolas,monospace}
+.k{color:var(--am)}
+
+.flow{
+  text-align:center;color:var(--am);font-size:18px;line-height:1;margin:2px 0;opacity:.7
+}
+
+table.tt{border-collapse:collapse;width:100%;font-family:"JetBrains Mono",Consolas,monospace;font-size:12.5px}
+table.tt th,table.tt td{border:1px solid var(--line);padding:3px 6px;text-align:center}
+table.tt th{color:var(--dim);font-weight:700;background:var(--bg3)}
+td.one{color:var(--lit);font-weight:700}
+td.zero{color:var(--dim)}
+
+#diagram svg{background:rgba(0,0,0,.16);border:1px solid var(--line);border-radius:8px}
+.ed{stroke-width:1.6}
+.ed.lo{stroke:#6f8a7d;stroke-dasharray:4 3}
+.ed.hi{stroke:var(--am)}
+.bn{fill:#173322;stroke:var(--am);stroke-width:1.6}
+.term{fill:#0e2016;stroke:#7fb4ff;stroke-width:1.6}
+.tl{fill:var(--ink);font:700 12px "JetBrains Mono",monospace;text-anchor:middle}
+.legend{font-size:11.5px;color:var(--dim);margin-top:6px}
+
+.badge{display:block;margin-top:6px;padding:8px 10px;border-radius:7px;font-size:12.5px;
+  border:1px solid var(--line);background:var(--bg3)}
+.badge.ok{color:var(--lit);border-color:#2c5a3f;background:#0f2418}
+.badge.bad{color:var(--red);border-color:#5e2828;background:#241010}
+#litbadge{font-weight:800;color:var(--lit)}
+.wall-note{border-left:3px solid var(--wall);padding-left:10px}
+.gy s{color:#6f8a7d}
+.gy .fix{color:var(--lit)}
+button{
+  font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink);
+  background:var(--bg3);border:1px solid var(--line);border-radius:7px;padding:7px 12px;margin:4px 6px 4px 0
+}
+button#tamper{border-color:#5e2828;color:var(--red)}
+button#restore{border-color:#2c5a3f;color:var(--lit)}
+#failb{display:none;max-width:1180px;margin:0 auto 14px;padding:10px 14px;border-radius:8px;
+  background:#241010;border:1px solid #5e2828;color:var(--red);font-weight:700}
+.foot{max-width:1180px;margin:26px auto 0;color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+.small{font-size:11.5px;color:var(--dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>THE BINARY DECISION DIAGRAM</h1>
+  <p class="sub">A Boolean function has exactly one canonical shape. Bryant's <b>reduced ordered BDD</b> is that shape: fix the variable order, share every repeated subgraph, drop every node that decides nothing — and two functions are equal precisely when their diagrams are the <i>same</i> graph. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span>
+    R. E. Bryant, <i>Graph-Based Algorithms for Boolean Function Manipulation</i>, IEEE Trans. Computers <b>C-35</b>(8):677–691, 1986 ·
+    <a href="https://doi.org/10.1109/TC.1986.1676819" target="_blank" rel="noopener">doi:10.1109/TC.1986.1676819</a></p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- LEFT / BLUE -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team · builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wn">3</div>
+      <h3>The Model</h3>
+      <p>A BDD node is a triple <code class="k">(var, lo, hi)</code>: test <code>var</code>, follow <code>lo</code> when it is 0 and <code>hi</code> when it is 1. Two terminals, <code>0</code> and <code>1</code>. Variables obey a fixed global order <code>x0 &lt; x1 &lt; x2</code>.</p>
+      <p>Two reduction rules make it an <b>ROBDD</b>:</p>
+      <p>① <b>Share</b> — never store two isomorphic subgraphs; a unique table returns the existing node.<br>
+         ② <b>Remove</b> — a node whose <code>lo</code> and <code>hi</code> are identical decides nothing; bypass it.</p>
+      <p>Every node is built by <b>Shannon expansion</b>:<br>
+      <code class="k">f = (¬x · f|<sub>x=0</sub>) + (x · f|<sub>x=1</sub>)</code>.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">5</div>
+      <h3>The Lineage</h3>
+      <p>An ROBDD is a <b>normal form</b> for Boolean functions — the compressed, comparable shadow of <b>the-boolean-circuit</b>. The same reduction that shrinks a truth table to a shared graph is the data structure that lets <b>the-model-checking</b> represent whole state sets symbolically and test equivalence in constant time.</p>
+      <p class="small">Neighbour → the-model-checking: reachable-set fixpoints become graph operations on ROBDDs.</p>
+    </div>
+
+    <div class="win">
+      <div class="wn">7</div>
+      <h3>The Witness</h3>
+      <p>Live re-check of canonicity. It builds <code>h = (x0·x1)+(¬x0·x1)</code> and <code>x1</code> — the same function two ways — and confirms their ROBDDs are the <i>same node id</i>. If the reduction is tampered, the two diagrams diverge and this badge flips red.</p>
+      <span id="auditout" class="badge">witness idle</span>
+      <p class="small" id="tstate">redundant-node reduction: ON</p>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="wn">4</div>
+      <h3>Data In <span class="tag t-in">in ↓</span></h3>
+      <p>Input space: the full truth table of majority-of-3, <code>maj₃ = 1 iff (x0+x1+x2) ≥ 2</code> — all 2³ assignments.</p>
+      <table class="tt"><thead><tr><th>x0</th><th>x1</th><th>x2</th><th>maj</th></tr></thead>
+        <tbody id="ttin"></tbody></table>
+    </div>
+
+    <div class="flow">▼</div>
+
+    <div class="win panel">
+      <div class="wn">0</div>
+      <h3>The Panel <span class="tag t-lit">LIT</span></h3>
+      <p class="small">Real ROBDD manager: Shannon build + unique-table sharing + redundant-node removal, over a fixed order. The diagram below is the reduced graph of <code>maj₃</code>.</p>
+      <div id="diagram"></div>
+      <div class="legend">dashed edge = <b>lo</b> (var = 0) · solid violet edge = <b>hi</b> (var = 1) · squares = terminals</div>
+      <p class="small" id="scstate">selfcheck idle</p>
+    </div>
+
+    <div class="flow">▼</div>
+
+    <div class="win">
+      <div class="wn">8</div>
+      <h3>Data Out <span class="tag t-out">out ↓</span></h3>
+      <p id="dout">…</p>
+      <p>Proven exhaustively: correct on all 2³ inputs, <b>canonical</b> (equal ⇔ identical), reduction rules hold, Shannon reconstructs.</p>
+      <p>Instrument state: <span id="litbadge">…</span> · nodes(maj₃) = <b id="ncount">–</b></p>
+    </div>
+  </div>
+
+  <!-- RIGHT / RED -->
+  <div class="col red">
+    <div class="teamhdr">Red Team · attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wn">1</div>
+      <h3>The Adversary</h3>
+      <div class="wall-note">
+        <p><span class="tag t-wall">WALL</span> Canonicity is <b>relative to the variable order</b>. The order is chosen, not given.</p>
+        <p>BDD size is exponentially sensitive to it: some functions are tiny under one order and exponential under another. The integer-multiplication middle bit has <b>no</b> polynomial-size ROBDD in <i>any</i> order (Bryant, 1991).</p>
+        <p class="small"><span class="tag t-amber">amber</span> "a good order always exists and is findable" — assumed, not proven; order-finding is itself NP-hard.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wn">2</div>
+      <h3>The Graveyard</h3>
+      <p class="gy"><s>"An ROBDD makes every Boolean function small."</s><br>
+        <span class="fix">✓ Only functions with bounded subfunction count. Multipliers and hidden-weighted-bit stay exponential.</span></p>
+      <p class="gy"><s>"Any variable ordering gives the same size."</s><br>
+        <span class="fix">✓ Size can jump from linear to exponential across orders; canonicity holds per fixed order only.</span></p>
+      <p class="gy"><s>"Skipping the redundant-node rule is a harmless optimisation."</s><br>
+        <span class="fix">✓ It destroys canonicity — equal functions get different diagrams (see window 6).</span></p>
+    </div>
+
+    <div class="win">
+      <div class="wn">6</div>
+      <h3>The Tamper</h3>
+      <p>Disclosed planted void: <b>skip reduction rule ②</b> (keep a node whose two children are identical). Function values are unchanged, but two <i>equal</i> functions now build <i>different</i> diagrams — canonicity is lost, and the Witness (7) catches it live.</p>
+      <button id="tamper">Skip redundant-node rule</button>
+      <button id="restore">Restore reduction</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="foot">
+  THE BINARY DECISION DIAGRAM · WORLD II · THE FOLD · ud0 corpus · rendered from Bryant (1986), verified by exhaustive check over 2³ inputs and structural invariants · deterministic, offline, fail-loud · David Lee Wise (ROOT0) with AVAN.
+</div>
+
+<script>
+// ROBDD ENGINE — pure logic, node-extractable. All engine + selfcheck() live above the single UI marker.
+let TAMPER = false;
+
+function Manager(){
+  const nodes = [ {t:0}, {t:1} ];   // ids 0 and 1 are terminal constants
+  const unique = new Map();
+  const amemo = new Map();
+
+  function mk(v, lo, hi){
+    if(!TAMPER && lo === hi) return lo;              // reduction 2: redundant-node removal
+    const key = v + ':' + lo + ':' + hi;
+    const got = unique.get(key);
+    if(got !== undefined) return got;                // reduction 1: share isomorphic subgraph
+    const id = nodes.length;
+    nodes.push({v:v, lo:lo, hi:hi});
+    unique.set(key, id);
+    return id;
+  }
+  function varOf(id){ return id < 2 ? Infinity : nodes[id].v; }
+  function vf(i){ return mk(i, 0, 1); }
+
+  function apply(op, a, b){
+    if(a < 2 && b < 2) return op(a, b) ? 1 : 0;
+    const mkey = op.tag + '|' + a + '|' + b;
+    const m = amemo.get(mkey);
+    if(m !== undefined) return m;
+    const v = Math.min(varOf(a), varOf(b));
+    const alo = varOf(a) === v ? nodes[a].lo : a;
+    const ahi = varOf(a) === v ? nodes[a].hi : a;
+    const blo = varOf(b) === v ? nodes[b].lo : b;
+    const bhi = varOf(b) === v ? nodes[b].hi : b;
+    const r = mk(v, apply(op, alo, blo), apply(op, ahi, bhi));
+    amemo.set(mkey, r);
+    return r;
+  }
+  function notf(a){ return apply(OP_XOR, a, 1); }
+
+  function evalId(id, asg){
+    while(id >= 2){ const nd = nodes[id]; id = asg[nd.v] ? nd.hi : nd.lo; }
+    return id;
+  }
+  function restrict(id, vr, val){
+    if(id < 2) return id;
+    const nd = nodes[id];
+    if(nd.v > vr) return id;
+    if(nd.v === vr) return restrict(val ? nd.hi : nd.lo, vr, val);
+    return mk(nd.v, restrict(nd.lo, vr, val), restrict(nd.hi, vr, val));
+  }
+  function reachable(root){
+    const seen = new Set(), out = [];
+    (function go(id){ if(seen.has(id)) return; seen.add(id); out.push(id);
+      if(id >= 2){ go(nodes[id].lo); go(nodes[id].hi); } })(root);
+    return out;
+  }
+  function node(id){ return nodes[id]; }
+  function count(){ return nodes.length; }
+  return { mk, vf, apply, notf, evalId, restrict, reachable, node, count, varOf };
+}
+
+const OP_AND = (a,b)=> (a===1 && b===1); OP_AND.tag = 'and';
+const OP_OR  = (a,b)=> (a===1 || b===1); OP_OR.tag  = 'or';
+const OP_XOR = (a,b)=> (a!==b);          OP_XOR.tag = 'xor';
+
+const N = 3; // variables x0, x1, x2
+
+function tt(m, id){            // truth table as an integer; bit index = assignment mask
+  let t = 0;
+  for(let mask = 0; mask < (1<<N); mask++){
+    const asg = [ (mask>>0)&1, (mask>>1)&1, (mask>>2)&1 ];
+    if(m.evalId(id, asg)) t |= (1<<mask);
+  }
+  return t;
+}
+
+// Independent oracle — plain-JS reference functions.
+const REF = {
+  and: a=> (a[0] && a[1]) ? 1 : 0,
+  or:  a=> (a[0] || a[1]) ? 1 : 0,
+  xor: a=> (a[0] ^ a[1]) ? 1 : 0,
+  maj: a=> (a[0]+a[1]+a[2] >= 2) ? 1 : 0,
+  x1:  a=> a[1] ? 1 : 0
+};
+
+function buildAll(m){
+  const x0 = m.vf(0), x1 = m.vf(1), x2 = m.vf(2);
+  const f_and = m.apply(OP_AND, x0, x1);
+  const f_or  = m.apply(OP_OR,  x0, x1);
+  const f_xor = m.apply(OP_XOR, x0, x1);
+  const f_maj = m.apply(OP_OR, m.apply(OP_AND, x0, x1),
+                  m.apply(OP_OR, m.apply(OP_AND, x0, x2), m.apply(OP_AND, x1, x2)));
+  const f_x1  = x1;
+  // h = (x0·x1) + (¬x0·x1) is the constant-x0 function, i.e. exactly x1 — built the long way.
+  const f_h   = m.apply(OP_OR, m.apply(OP_AND, x0, x1),
+                  m.apply(OP_AND, m.notf(x0), x1));
+  return { x0, x1, x2, f_and, f_or, f_xor, f_maj, f_x1, f_h };
+}
+
+// Fail-loud: throws on any violation, returns true on success. Saves and restores TAMPER.
+function selfcheck(){
+  const save = TAMPER;
+  TAMPER = false;
+  try{
+    const m = Manager();
+    const F = buildAll(m);
+
+    // CHECK 1 — the ROBDD computes its function on ALL 2^N inputs (exact match vs independent oracle).
+    for(let mask = 0; mask < (1<<N); mask++){
+      const a = [ (mask>>0)&1, (mask>>1)&1, (mask>>2)&1 ];
+      if(m.evalId(F.f_and, a) !== REF.and(a)) throw new Error('AND eval mismatch');
+      if(m.evalId(F.f_or , a) !== REF.or (a)) throw new Error('OR eval mismatch');
+      if(m.evalId(F.f_xor, a) !== REF.xor(a)) throw new Error('XOR eval mismatch');
+      if(m.evalId(F.f_maj, a) !== REF.maj(a)) throw new Error('MAJ eval mismatch');
+      if(m.evalId(F.f_x1 , a) !== REF.x1 (a)) throw new Error('x1 eval mismatch');
+      if(m.evalId(F.f_h  , a) !== REF.x1 (a)) throw new Error('h must equal x1');
+    }
+
+    // CHECK 2 — CANONICITY: equal iff identical, exhaustively over every pair of constructed functions.
+    const set = [ F.f_and, F.f_or, F.f_xor, F.f_maj, F.f_x1, F.f_h ];
+    for(let i = 0; i < set.length; i++){
+      for(let j = 0; j < set.length; j++){
+        const idEq = (set[i] === set[j]);
+        const fnEq = (tt(m, set[i]) === tt(m, set[j]));
+        if(idEq !== fnEq) throw new Error('canonicity broken at pair ' + i + ',' + j);
+      }
+    }
+    if(F.f_x1 !== F.f_h)  throw new Error('equal functions must share one diagram');   // equal  => identical
+    if(F.f_and === F.f_or) throw new Error('unequal functions must differ');            // unequal => different
+
+    // CHECK 3 — REDUCTION RULES hold structurally.
+    for(const id of m.reachable(F.f_maj)){
+      if(id >= 2){ const nd = m.node(id); if(nd.lo === nd.hi) throw new Error('redundant node survived'); }
+    }
+    const s1 = m.vf(1), s2 = m.vf(1);
+    if(s1 !== s2) throw new Error('sharing rule failed');                               // share isomorphic
+    if(m.mk(0, F.f_maj, F.f_maj) !== F.f_maj) throw new Error('redundant node not bypassed');
+
+    // CHECK 4 — SHANNON expansion reconstructs the function exactly (id-equality via canonicity).
+    const v  = m.node(F.f_maj).v;
+    const f0 = m.restrict(F.f_maj, v, 0);
+    const f1 = m.restrict(F.f_maj, v, 1);
+    const xv = m.vf(v);
+    const recomposed = m.apply(OP_OR, m.apply(OP_AND, m.notf(xv), f0),
+                                      m.apply(OP_AND, xv, f1));
+    if(recomposed !== F.f_maj) throw new Error('Shannon expansion failed');
+
+    // TAMPER PROBE — planted void: with reduction 2 off, EQUAL functions must now produce DIFFERENT diagrams.
+    TAMPER = true;
+    const mt = Manager();
+    const Ft = buildAll(mt);
+    if(tt(mt, Ft.f_x1) !== tt(mt, Ft.f_h)) throw new Error('probe: functions should still be equal');
+    if(Ft.f_x1 === Ft.f_h) throw new Error('probe: tamper failed to break canonicity');
+
+  } finally {
+    TAMPER = save;   // restore the flag no matter what
+  }
+  return true;
+}
+
+/* ===== UI ===== */
+
+function drawBDD(m, root){
+  const ids = m.reachable(root);
+  const byVar = [[],[],[]], terms = [];
+  ids.forEach(id=>{ if(id < 2) terms.push(id); else byVar[m.node(id).v].push(id); });
+  const Wd = 360, pad = 46, pos = {}, rows = [];
+  let yi = 0;
+  for(let v = 0; v < 3; v++){ if(byVar[v].length){ rows.push({items:byVar[v], y:46 + yi*72}); yi++; } }
+  const ty = 46 + yi*72;
+  rows.forEach(r=>{ const n = r.items.length;
+    r.items.forEach((id,i)=>{ pos[id] = { x: n===1 ? Wd/2 : pad + i*(Wd-2*pad)/(n-1), y:r.y }; }); });
+  const tpos = {};
+  terms.sort((a,b)=>a-b).forEach(t=>{ tpos[t] = { x: t===0 ? Wd*0.34 : Wd*0.66, y:ty }; });
+  const P = id => id < 2 ? tpos[id] : pos[id];
+  let edges = '', shapes = '';
+  ids.forEach(id=>{
+    if(id < 2) return;
+    const nd = m.node(id), p = P(id), a = P(nd.lo), b = P(nd.hi);
+    edges += '<line x1="'+p.x+'" y1="'+(p.y+16)+'" x2="'+a.x+'" y2="'+(a.y-15)+'" class="ed lo"/>';
+    edges += '<line x1="'+p.x+'" y1="'+(p.y+16)+'" x2="'+b.x+'" y2="'+(b.y-15)+'" class="ed hi"/>';
+  });
+  ids.forEach(id=>{
+    const p = P(id);
+    if(id < 2){
+      shapes += '<rect x="'+(p.x-14)+'" y="'+(p.y-14)+'" width="28" height="28" rx="4" class="term"/>'+
+                '<text x="'+p.x+'" y="'+(p.y+5)+'" class="tl">'+id+'</text>';
+    } else {
+      shapes += '<circle cx="'+p.x+'" cy="'+p.y+'" r="16" class="bn"/>'+
+                '<text x="'+p.x+'" y="'+(p.y+5)+'" class="tl">x'+m.node(id).v+'</text>';
+    }
+  });
+  return '<svg viewBox="0 0 '+Wd+' '+(ty+34)+'" width="100%" preserveAspectRatio="xMidYMid meet">'+edges+shapes+'</svg>';
+}
+
+function refresh(){
+  const m = Manager();
+  const F = buildAll(m);
+
+  let body = '';
+  for(let mask = 0; mask < 8; mask++){
+    const a = [ (mask>>0)&1, (mask>>1)&1, (mask>>2)&1 ];
+    const f = m.evalId(F.f_maj, a);
+    body += '<tr><td>'+a[0]+'</td><td>'+a[1]+'</td><td>'+a[2]+'</td>'+
+            '<td class="'+(f?'one':'zero')+'">'+f+'</td></tr>';
+  }
+  document.getElementById('ttin').innerHTML = body;
+  document.getElementById('diagram').innerHTML = drawBDD(m, F.f_maj);
+
+  const nn = m.reachable(F.f_maj).filter(x=>x>=2).length;
+  document.getElementById('ncount').textContent = nn;
+  document.getElementById('dout').innerHTML =
+    'ROBDD(maj\u2083) = <b>' + nn + '</b> decision nodes + 2 terminals · order x0&lt;x1&lt;x2 · <b>canonical</b>';
+
+  const funcsEqual = (tt(m, F.f_x1) === tt(m, F.f_h));
+  const same = (F.f_x1 === F.f_h);
+  const ao = document.getElementById('auditout');
+  if(funcsEqual && same){
+    ao.className = 'badge ok';
+    ao.innerHTML = 'WITNESS OK · h \u2261 x1 and their ROBDDs are the SAME node — equal \u21D4 identical';
+  } else {
+    ao.className = 'badge bad';
+    ao.innerHTML = 'TAMPER DETECTED · h \u2261 x1 as functions, but their ROBDDs DIFFER — canonicity lost';
+  }
+  document.getElementById('tstate').textContent =
+    TAMPER ? 'redundant-node reduction: OFF (planted void active)' : 'redundant-node reduction: ON';
+}
+
+document.getElementById('tamper').onclick  = function(){ TAMPER = true;  refresh(); };
+document.getElementById('restore').onclick = function(){ TAMPER = false; refresh(); };
+
+(function boot(){
+  try{
+    const ok = selfcheck();
+    if(ok !== true) throw new Error('selfcheck did not return true');
+    document.getElementById('litbadge').textContent = 'LIT';
+    document.getElementById('scstate').textContent  = 'selfcheck PASS · exhaustive over 2\u00B3 inputs · deterministic (no RNG)';
+    refresh();
+  }catch(e){
+    const fb = document.getElementById('failb');
+    fb.style.display = 'block';
+    fb.textContent = 'SELFCHECK FAILED — instrument not lit: ' + e.message;
+    document.getElementById('litbadge').textContent = 'FAIL';
+    throw e;
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE UNSCENTED KALMAN FILTER</title>
+<style>
+:root{
+  --am:#ff9e6a;
+  --bg:#0c1611;
+  --bg2:#10201780;
+  --panel:#0f1d15;
+  --ink:#e8f3ea;
+  --dim:#9fb8a6;
+  --line:#25402f;
+  --blue:#6fb2ff;
+  --bluebg:#0e1b2a;
+  --red:#ff7a6b;
+  --redbg:#2a1210;
+  --amber:#ffcf6a;
+  --lit:#7ff0a0;
+  --wall:#ff7a6b;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 12% -10%, #16301f 0%, transparent 55%),
+    radial-gradient(1000px 600px at 100% 0%, #172b3a55 0%, transparent 50%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:26px 18px 60px;
+}
+.wrap{max-width:1220px;margin:0 auto}
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+h1{
+  font-size:clamp(26px,4.4vw,44px);
+  letter-spacing:.02em;margin:0 0 10px;
+  color:var(--am);
+  text-shadow:0 0 24px #ff9e6a30;
+}
+.sub{margin:0 0 12px;max-width:70ch;color:var(--ink);font-size:16px}
+.sub b{color:var(--am)}
+.src{font:12.5px/1.5 var(--mono);color:var(--dim);margin:0}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font:11px/1 var(--mono);font-weight:700;
+  padding:3px 6px;border-radius:4px;letter-spacing:.06em;
+  vertical-align:middle;margin-right:6px;text-transform:uppercase;
+}
+.t-amber{background:#4a3410;color:var(--amber);border:1px solid #7a5a1e}
+.t-lit{background:#0f3320;color:var(--lit);border:1px solid #1f6b40}
+.t-in{background:#0e2436;color:var(--blue);border:1px solid #245176}
+.t-out{background:#123322;color:var(--lit);border:1px solid #1f6b40}
+.t-wall{background:#3a1512;color:var(--wall);border:1px solid #7a2a22}
+
+.ocho{
+  display:grid;
+  grid-template-columns:1fr 1.15fr 1fr;
+  gap:16px;
+  align-items:start;
+}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font:12px/1.3 var(--mono);font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;padding:8px 10px;border-radius:7px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);background:var(--bluebg);border-color:#22405f}
+.col.red .teamhdr{color:var(--red);background:var(--redbg);border-color:#5a231d}
+.col.center .teamhdr{color:var(--am);background:#1c130b;border-color:#5a3a1e;text-align:center}
+.teamhdr small{display:block;font-weight:400;color:var(--dim);letter-spacing:.02em;margin-top:3px;text-transform:none}
+
+.win{
+  position:relative;background:var(--panel);border:1px solid var(--line);
+  border-radius:9px;padding:13px 13px 14px 13px;
+}
+.win h3{margin:0 0 8px;font-size:13.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+.win p{margin:6px 0;color:var(--dim);font-size:13.5px}
+.win .n{
+  position:absolute;top:-10px;right:-9px;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;font:12px/1 var(--mono);font-weight:700;
+  background:var(--bg);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .n{color:var(--blue);border-color:#22405f}
+.col.red .n{color:var(--red);border-color:#5a231d}
+.col.center .win .n{color:var(--am);border-color:#5a3a1e}
+
+.panel{border-color:#5a3a1e;background:linear-gradient(180deg,#12201699,#0f1d15)}
+.flow{
+  text-align:center;color:var(--am);font:12px/1 var(--mono);letter-spacing:.2em;
+  margin:2px 0;opacity:.8;
+}
+.mono{font:12.5px/1.55 var(--mono)}
+.kv{font:12px/1.7 var(--mono);color:var(--ink)}
+.kv b{color:var(--am)}
+.grid2{display:grid;grid-template-columns:1fr;gap:10px}
+canvas{width:100%;height:auto;display:block;background:#0a130d;border:1px solid var(--line);border-radius:7px}
+.sigtab{width:100%;border-collapse:collapse;font:11.5px/1.4 var(--mono);margin-top:8px}
+.sigtab th,.sigtab td{border:1px solid var(--line);padding:3px 6px;text-align:right}
+.sigtab th{color:var(--am);text-align:right;font-weight:700}
+.sigtab td.l,.sigtab th.l{text-align:left;color:var(--dim)}
+.badge{
+  display:inline-block;font:12px/1.2 var(--mono);font-weight:700;padding:6px 9px;border-radius:6px;
+  border:1px solid;margin-top:6px;
+}
+.badge.ok{color:var(--lit);background:#0f3320;border-color:#1f6b40}
+.badge.bad{color:var(--wall);background:#3a1512;border-color:#7a2a22}
+.wall-note{border-left:3px solid var(--wall);padding-left:10px}
+.grave{color:var(--dim)}
+.grave s{color:#7a5c58}
+.grave b{color:var(--red)}
+.btn{
+  font:12px/1 var(--mono);font-weight:700;padding:8px 12px;border-radius:6px;cursor:pointer;
+  background:#241009;color:var(--am);border:1px solid #5a3a1e;margin:4px 6px 0 0;
+}
+.btn:hover{background:#31160c}
+.btn.warn{background:#3a1512;color:var(--wall);border-color:#7a2a22}
+#failb{display:none;margin-top:10px;color:var(--wall);background:#2a1210;border:1px solid #7a2a22;
+  border-radius:7px;padding:10px;font:12.5px/1.5 var(--mono)}
+footer{margin-top:30px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);
+  font:12px/1.6 var(--mono)}
+footer b{color:var(--am)}
+.lineage{font-size:13px}
+.lineage a{color:var(--blue);text-decoration:none;border-bottom:1px dotted var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE UNSCENTED KALMAN FILTER</h1>
+  <p class="sub">Do not linearize the function — <b>sample it</b>. Pick <b>2n+1 deterministic sigma points</b> that match the state's mean and covariance, push each through the <b>true</b> nonlinearity, and rebuild the mean and covariance from what comes out. No Jacobian. Accurate to second order on curved dynamics.</p>
+  <p class="src"><span class="tag t-amber">source</span> Julier &amp; Uhlmann, <em>A New Extension of the Kalman Filter to Nonlinear Systems</em> (1997), SPIE Vol. 3068, pp. 182–193 · DOI <a href="https://doi.org/10.1117/12.280797">10.1117/12.280797</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team<small>builds &amp; defends the transform</small></div>
+
+    <div class="win">
+      <span class="n">3</span>
+      <h3>The Model</h3>
+      <p>State <b>x ~ N(m, P)</b>. The unscented transform draws a fixed set of points that <em>exactly</em> carry the first two moments:</p>
+      <p class="kv">
+        χ₀ = m,&nbsp; W₀ = κ/(n+κ)<br>
+        χᵢ = m ± √(n+κ)·Sᵢ,&nbsp; Wᵢ = 1/2(n+κ)<br>
+        S Sᵀ = P&nbsp; (Cholesky factor of P)
+      </p>
+      <p>Push every χ through the real f. The output mean is Σ Wᵢ f(χᵢ); the output covariance is Σ Wᵢ (f(χᵢ)−ŷ)(·)ᵀ. This is exact for any quadratic — a full order beyond the EKF's tangent line.</p>
+    </div>
+
+    <div class="win">
+      <span class="n">5</span>
+      <h3>The Lineage</h3>
+      <p class="lineage">Parent: <a href="../the-extended-kalman-filter/">the-extended-kalman-filter</a>. The EKF freezes f at a single point — its Jacobian tangent line — and pays a bias on curvature. Julier &amp; Uhlmann (1997) keep the same predict/update skeleton but <b>propagate points, not a derivative</b>: no Jacobian to derive, and the mean stays correct through the bend.</p>
+    </div>
+
+    <div class="win">
+      <span class="n">7</span>
+      <h3>The Witness</h3>
+      <p>Live re-check of the engine's output against the closed-form true moments. Green while honest; flips red the instant window 6 tampers with the sigma set.</p>
+      <div id="auditout" class="badge ok">witness idle</div>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Unscented Transform<small>the live engine</small></div>
+
+    <div class="win">
+      <span class="n">4</span>
+      <h3><span class="tag t-in">in ↓</span>Data In</h3>
+      <p class="kv" id="datain">m, P loading…</p>
+      <p>A 2-D Gaussian and a genuinely nonlinear map f(x) = [x₀², x₁²].</p>
+    </div>
+
+    <div class="flow">▽ sample ▽</div>
+
+    <div class="win panel">
+      <span class="n">0</span>
+      <h3><span class="tag t-lit">LIT</span>The Panel</h3>
+      <canvas id="cv" width="520" height="300" aria-label="sigma points and propagated distribution"></canvas>
+      <table class="sigtab" id="sigtab"><thead>
+        <tr><th class="l">point</th><th>x₀</th><th>x₁</th><th>W</th></tr>
+      </thead><tbody></tbody></table>
+      <div id="failb"></div>
+    </div>
+
+    <div class="flow">▽ reconstruct ▽</div>
+
+    <div class="win">
+      <span class="n">8</span>
+      <h3><span class="tag t-out">out ↓</span>Data Out</h3>
+      <p class="kv" id="dataout">computing…</p>
+      <div id="litbadge" class="badge ok">boot pending</div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team<small>attacks &amp; breaks the transform</small></div>
+
+    <div class="win">
+      <span class="n">1</span>
+      <h3>The Adversary</h3>
+      <p class="wall-note"><span class="tag t-wall">wall</span>The UT is exact to <em>second</em> order, not all orders. Feed it a strongly cubic-or-higher f, or a bimodal / heavy-tailed prior, and the moment match degrades — the transformed set no longer summarizes the true density. On a non-positive-definite P the Cholesky factor does not exist and the sigma set is undefined. Scaling κ&lt;−n or a poorly chosen (α,β,κ) can push weights negative and yield an indefinite output covariance.</p>
+    </div>
+
+    <div class="win">
+      <span class="n">2</span>
+      <h3>The Graveyard</h3>
+      <p class="grave"><s>"The UKF is just the EKF with more points."</s> <b>No</b> — the EKF's mean is f(m), biased by ½·tr(Hess·P); the UKF mean is exact for quadratics, off by zero on this f.</p>
+      <p class="grave"><s>"More sigma points = more accuracy."</s> <b>No</b> — 2n+1 is fixed by the moment-matching, not a resolution knob; extra points buy nothing and can only mis-weight.</p>
+      <p class="grave"><s>"It's a particle filter."</s> <b>No</b> — the points are <em>deterministic</em> and moment-matched, not random samples; there is no importance weighting and no resampling.</p>
+    </div>
+
+    <div class="win">
+      <span class="n">6</span>
+      <h3>The Tamper</h3>
+      <p>The disclosed planted void: drop the 2n spread points and keep only χ₀. The transform collapses to a naive f(m) — it loses the covariance and the second-order mean correction. The witness in 7 catches it.</p>
+      <button class="btn warn" id="tamper">drop spread points</button>
+      <button class="btn" id="restore">restore</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE UNSCENTED KALMAN FILTER</b> · WORLD II · THE FOLD · ud0 corpus. Engine is LIT: sigma points, weights and propagated moments computed live; selfcheck throws on any violation and self-restores the planted void. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ---- engine: the unscented transform (pure logic, node-extractable) ----
+var TAMPER = false;
+
+function chol2(P){
+  var a=P[0][0], b=P[0][1], d=P[1][1];
+  var l00=Math.sqrt(a);
+  var l10=b/l00;
+  var l11=Math.sqrt(d - l10*l10);
+  return [[l00,0],[l10,l11]]; // lower-triangular S, S Sᵀ = P
+}
+function fnl(x){ return [x[0]*x[0], x[1]*x[1]]; } // the true nonlinearity
+function ekfMean(m){ return fnl(m); }            // linearization propagates the mean as f(m)
+function trueMean(m,P){ return [m[0]*m[0]+P[0][0], m[1]*m[1]+P[1][1]]; } // E[xᵢ²]=mᵢ²+Pᵢᵢ
+function approx(a,b,t){ return Math.abs(a-b) <= t; }
+
+function sigmaPoints(m,P,kappa){
+  var n=m.length;
+  if(TAMPER){ return { pts:[m.slice()], w:[1] }; } // planted void: mean point only
+  var S=chol2(P), c=Math.sqrt(n+kappa);
+  var pts=[m.slice()], w=[kappa/(n+kappa)];
+  for(var i=0;i<n;i++){
+    var col=[S[0][i],S[1][i]];
+    pts.push([m[0]+c*col[0], m[1]+c*col[1]]);
+    pts.push([m[0]-c*col[0], m[1]-c*col[1]]);
+    w.push(1/(2*(n+kappa))); w.push(1/(2*(n+kappa)));
+  }
+  return { pts:pts, w:w };
+}
+function utMean(pts,w){
+  var mn=[0,0];
+  for(var i=0;i<pts.length;i++){ mn[0]+=w[i]*pts[i][0]; mn[1]+=w[i]*pts[i][1]; }
+  return mn;
+}
+function utCov(pts,w,mn){
+  var C=[[0,0],[0,0]];
+  for(var i=0;i<pts.length;i++){
+    var d0=pts[i][0]-mn[0], d1=pts[i][1]-mn[1];
+    C[0][0]+=w[i]*d0*d0; C[0][1]+=w[i]*d0*d1;
+    C[1][0]+=w[i]*d1*d0; C[1][1]+=w[i]*d1*d1;
+  }
+  return C;
+}
+
+var STATE = { m:[1.0,-0.5], P:[[0.4,0.1],[0.1,0.25]], kappa:1 };
+
+function selfcheck(){
+  var m=STATE.m, P=STATE.P, k=STATE.kappa, n=m.length;
+  var sp=sigmaPoints(m,P,k);
+  // exactly 2n+1 points
+  if(sp.pts.length !== 2*n+1) throw new Error('sigma point count is not 2n+1');
+  // weights sum to 1
+  var ws=0; for(var i=0;i<sp.w.length;i++) ws+=sp.w[i];
+  if(!approx(ws,1,1e-12)) throw new Error('weights do not sum to 1');
+  // reconstruct the INPUT Gaussian exactly
+  var rm=utMean(sp.pts,sp.w);
+  if(!approx(rm[0],m[0],1e-9)||!approx(rm[1],m[1],1e-9)) throw new Error('sigma mean != state mean');
+  var rc=utCov(sp.pts,sp.w,rm);
+  if(!approx(rc[0][0],P[0][0],1e-9)||!approx(rc[1][1],P[1][1],1e-9)||!approx(rc[0][1],P[0][1],1e-9))
+    throw new Error('sigma covariance != state covariance');
+  // second-order: UKF matches the TRUE transformed mean on a quadratic
+  var tm=trueMean(m,P);
+  var um=utMean(sp.pts.map(fnl),sp.w);
+  if(!approx(um[0],tm[0],1e-9)||!approx(um[1],tm[1],1e-9)) throw new Error('UKF mean not exact on quadratic');
+  // and the EKF linearization is BIASED on the same quadratic
+  var em=ekfMean(m);
+  if(approx(em[0],tm[0],1e-6)||approx(em[1],tm[1],1e-6)) throw new Error('EKF should be biased but matched');
+  // planted void: with only the mean point the quadratic-mean match must FAIL, then restore
+  var saved=TAMPER;
+  TAMPER=true;
+  var sp2=sigmaPoints(m,P,k);
+  var um2=utMean(sp2.pts.map(fnl),sp2.w);
+  if(approx(um2[0],tm[0],1e-9)&&approx(um2[1],tm[1],1e-9)) throw new Error('tamper not detected');
+  TAMPER=saved;
+  return true;
+}
+
+/* ===== UI ===== */
+
+function fmt(x){ return (x>=0?' ':'') + x.toFixed(4); }
+function fmt2(x){ return x.toFixed(3); }
+
+function liveWitness(){
+  var m=STATE.m, P=STATE.P, k=STATE.kappa;
+  var sp=sigmaPoints(m,P,k);
+  var um=utMean(sp.pts.map(fnl),sp.w);
+  var tm=trueMean(m,P);
+  var ok=approx(um[0],tm[0],1e-9)&&approx(um[1],tm[1],1e-9)
+       && (sp.pts.length===2*m.length+1);
+  var b=document.getElementById('auditout');
+  if(ok){
+    b.className='badge ok';
+    b.textContent='witness ✓ output mean = true mean to 1e-9';
+  } else {
+    b.className='badge bad';
+    b.textContent='witness ✗ TAMPER DETECTED — mean off by '+
+      Math.max(Math.abs(um[0]-tm[0]),Math.abs(um[1]-tm[1])).toFixed(3);
+  }
+}
+
+function draw(){
+  var m=STATE.m, P=STATE.P, k=STATE.kappa;
+  var sp=sigmaPoints(m,P,k);
+  var tpts=sp.pts.map(fnl);
+  var cv=document.getElementById('cv'), g=cv.getContext('2d');
+  var W=cv.width, H=cv.height;
+  g.clearRect(0,0,W,H);
+  // two panes: left = input space, right = output space
+  function pane(x0,title,pts,mean,col){
+    var w=W/2-1, h=H;
+    // world bounds
+    var minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+    var all=pts.concat([mean]);
+    for(var i=0;i<all.length;i++){ minx=Math.min(minx,all[i][0]);maxx=Math.max(maxx,all[i][0]);
+      miny=Math.min(miny,all[i][1]);maxy=Math.max(maxy,all[i][1]); }
+    var pad=0.5; minx-=pad;maxx+=pad;miny-=pad;maxy+=pad;
+    function sx(v){ return x0+18+((v-minx)/(maxx-minx))*(w-34); }
+    function sy(v){ return 24+(1-(v-miny)/(maxy-miny))*(h-46); }
+    g.strokeStyle='#25402f'; g.strokeRect(x0+8,12,w-14,h-24);
+    g.fillStyle='#9fb8a6'; g.font='11px ui-monospace,monospace';
+    g.fillText(title,x0+14,26);
+    // connect mean->each point faintly
+    g.strokeStyle=col+'55';
+    for(var i=0;i<pts.length;i++){ g.beginPath(); g.moveTo(sx(mean[0]),sy(mean[1])); g.lineTo(sx(pts[i][0]),sy(pts[i][1])); g.stroke(); }
+    // points
+    for(var i=0;i<pts.length;i++){
+      g.beginPath(); g.arc(sx(pts[i][0]),sy(pts[i][1]),4.2,0,7); g.fillStyle=col; g.fill();
+    }
+    // mean
+    g.beginPath(); g.arc(sx(mean[0]),sy(mean[1]),5.5,0,7);
+    g.fillStyle='#ff9e6a'; g.fill();
+    g.strokeStyle='#0a130d'; g.lineWidth=1.5; g.stroke(); g.lineWidth=1;
+  }
+  var rm=utMean(sp.pts,sp.w);
+  var um=utMean(tpts,sp.w);
+  pane(0,'input χ (state space)',sp.pts,rm,'#6fb2ff');
+  pane(W/2,'f(χ) (output) · orange=UKF mean',tpts,um,'#7ff0a0');
+}
+
+function renderTable(){
+  var sp=sigmaPoints(STATE.m,STATE.P,STATE.kappa);
+  var tb=document.querySelector('#sigtab tbody'); tb.innerHTML='';
+  for(var i=0;i<sp.pts.length;i++){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td class="l">χ'+i+'</td><td>'+fmt(sp.pts[i][0])+'</td><td>'+fmt(sp.pts[i][1])+'</td><td>'+sp.w[i].toFixed(4)+'</td>';
+    tb.appendChild(tr);
+  }
+}
+
+function renderOut(){
+  var m=STATE.m,P=STATE.P,k=STATE.kappa;
+  var sp=sigmaPoints(m,P,k);
+  var um=utMean(sp.pts.map(fnl),sp.w);
+  var uc=utCov(sp.pts.map(fnl),sp.w,um);
+  var tm=trueMean(m,P), em=ekfMean(m);
+  document.getElementById('dataout').innerHTML=
+    'ŷ (UKF)  = ['+fmt2(um[0])+', '+fmt2(um[1])+']<br>'+
+    'ŷ (TRUE) = ['+fmt2(tm[0])+', '+fmt2(tm[1])+']  <b>match</b><br>'+
+    'ŷ (EKF)  = ['+fmt2(em[0])+', '+fmt2(em[1])+']  bias ['+fmt2(tm[0]-em[0])+', '+fmt2(tm[1]-em[1])+']<br>'+
+    'Pyy diag = ['+fmt2(uc[0][0])+', '+fmt2(uc[1][1])+']';
+}
+
+function renderAll(){ draw(); renderTable(); renderOut(); liveWitness(); }
+
+function boot(){
+  document.getElementById('datain').innerHTML=
+    'm = ['+STATE.m[0]+', '+STATE.m[1]+']<br>'+
+    'P = [['+STATE.P[0][0]+', '+STATE.P[0][1]+'], ['+STATE.P[1][0]+', '+STATE.P[1][1]+']]<br>'+
+    'κ = '+STATE.kappa+'  →  n+κ = '+(STATE.m.length+STATE.kappa)+',  2n+1 = '+(2*STATE.m.length+1)+' points';
+  try{
+    var ok=selfcheck();
+    var lb=document.getElementById('litbadge');
+    lb.className='badge ok';
+    lb.textContent='LIT ✓ selfcheck passed — reconstruct + quadratic-exact + tamper-detectable';
+    if(ok!==true) throw new Error('selfcheck did not return true');
+  }catch(e){
+    var fb=document.getElementById('failb');
+    fb.style.display='block';
+    fb.textContent='SELFCHECK FAILED: '+e.message;
+    var lb=document.getElementById('litbadge');
+    lb.className='badge bad'; lb.textContent='DEAD ✗ '+e.message;
+    throw e;
+  }
+  renderAll();
+}
+
+document.getElementById('tamper').addEventListener('click',function(){ TAMPER=true; renderAll(); });
+document.getElementById('restore').addEventListener('click',function(){ TAMPER=false; renderAll(); });
+
+boot();
+</script>
+</body>
+</html>

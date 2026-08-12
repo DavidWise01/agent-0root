@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE FM SYNTHESIS · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffd23f; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffd23f; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,210,63,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== UI ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,210,63,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,210,63,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;height:6px;accent-color:var(--am);vertical-align:middle;flex:1;min-width:90px;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:220px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:96px;}
+.val{color:var(--am);font-weight:700;min-width:66px;text-align:right;}
+canvas{width:100%;height:150px;background:#060b07;border:1px solid var(--line);border-radius:6px;display:block;margin-top:4px;}
+.readbox{font-size:12px;line-height:1.9;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.readbox .big{font-size:16px;color:var(--gr);font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.y{color:var(--gr);font-weight:700;} .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE FM SYNTHESIS</h1>
+ <p class="sub">Bend one sine wave with another and rich metallic timbres appear out of two oscillators. A <b>carrier</b> at f<sub>c</sub> whose instantaneous frequency is pushed by a <b>modulator</b> at f<sub>m</sub>, with modulation index <b class="k">I</b>, does not smear — it splits into a comb of <b>sidebands</b> at f<sub>c</sub> ± n·f<sub>m</sub>, and their amplitudes are the Bessel functions <b class="k">J<sub>n</sub>(I)</b>. Down the center, data flows: the two oscillators go <b style="color:var(--cy)">in</b>, the engine expands the spectrum, the sidebands come <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> J. M. Chowning, <i>The Synthesis of Complex Audio Spectra by Means of Frequency Modulation</i>, JAES <b>21</b>(7), 526–534 (1973) — <a href="https://www.aes.org/e-lib/browse.cfm?elib=1954">aes.org/e-lib · elib=1954</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the Bessel comb</h2>
+   <p>The spectrum is not memorized; it falls out of one trigonometric identity:</p>
+   <p class="small" style="color:#c3e8ca">sin(θ + I·sin φ) = Σ<sub>n=−∞</sub><sup>∞</sup> J<sub>n</sub>(I)·sin(θ + n·φ)</p>
+   <p>So the FM signal is a <b>sum of pure sines</b>, one per sideband: a line sits at every f<sub>c</sub> + n·f<sub>m</sub>, and its height is <b class="k">J<sub>n</sub>(I)</b>. Live sidebands for the current index:</p>
+   <table id="sbTbl"><thead><tr><th>n</th><th>freq (Hz)</th><th>J<sub>n</sub>(I)</th></tr></thead><tbody id="sbBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — two oscillators <span class="tag t-amber">AVAN</span></h2>
+   <p>The neighbour is <b>additive synthesis</b> / Fourier: to build a bright timbre you stack <i>many</i> oscillators, one per harmonic. Chowning's <b style="color:var(--am)">1973</b> move gets the same richness from just <b class="k">two</b> — a modulator bending a carrier into a whole Bessel sideband series.</p>
+   <p>One knob, the index I, opens and closes the spectrum in time. That efficiency — <i>rich spectra, two operators</i> — is the <a href="https://davidwise01.github.io/ud0/world2/" style="color:var(--cy)">sound of the DX7</a>. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: synthesize the FM time signal directly and, separately, from the sideband sum, then measure the <b>worst-case difference</b> over the waveform. It must be ~0. If red swaps FM for AM, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — two oscillators <span class="tag t-in">in ↓</span></h2>
+   <p>Three numbers define the sound: <b class="k">f<sub>c</sub></b> the carrier frequency (the pitch), <b class="k">f<sub>m</sub></b> the modulator frequency (sets sideband <i>spacing</i>), and <b class="k">I</b> the modulation index — the peak frequency deviation divided by f<sub>m</sub>, i.e. how hard the modulator bends the carrier.</p>
+   <p class="small">The ratio f<sub>m</sub>/f<sub>c</sub> decides the character: a simple integer ratio gives a <i>harmonic</i> (pitched) tone; an irrational ratio gives an <i>inharmonic</i> (bell / metallic) one. Feed these into the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the two oscillators into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>carrier f<sub>c</sub></label><input type="range" id="fc" min="100" max="800" step="10" value="300"><span class="val" id="fcv"></span></div>
+     <div class="row"><label>modulator f<sub>m</sub></label><input type="range" id="fm" min="50" max="800" step="10" value="150"><span class="val" id="fmv"></span></div>
+     <div class="row"><label>index I</label><input type="range" id="I" min="0" max="10" step="0.1" value="3"><span class="val" id="Iv"></span></div>
+     <div class="row"><button id="play">▶ hear it</button><button id="rand">↺ random</button><button id="carrier">→ pure carrier (I=0)</button></div>
+     <p class="small" style="margin-top:4px">Every value below is computed on the spot from J<sub>n</sub>(I) — never looked up.</p>
+     <canvas id="cv" width="520" height="150"></canvas>
+     <p class="small" style="margin-top:2px"><span style="color:var(--cy)">━</span> waveform &nbsp; <span style="color:var(--am)">▮</span> spectrum (sideband magnitudes)</p>
+    </div>
+    <div class="readout">
+     <div class="readbox" id="readbox"></div>
+    </div>
+   </div>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits the spectrum &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the spectrum <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: FM puts energy <b>exactly</b> at f<sub>c</sub> ± n·f<sub>m</sub> with amplitudes J<sub>n</sub>(I); total power is <b>conserved</b> (Σ J<sub>n</sub>² = 1 — index redistributes, it does not add); index <b class="k">0</b> gives a pure carrier (J<sub>0</sub>(0)=1, J<sub>n</sub>(0)=0); and the audible bandwidth grows as <b>≈ 2(I+1)·f<sub>m</sub></b> (Carson's rule, ~98% of power).</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) reconstructs the waveform live; the red team (right) tries to make the spectrum lie.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> FM is powerful but <b>unintuitive</b>: there is no simple map from a desired timbre to (f<sub>c</sub>, f<sub>m</sub>, I). Programming the DX7 was notoriously hard for exactly this reason. Carson's rule is a <i>rule of thumb</i>, not a hard edge — the Bessel tails never truly reach zero, so there is always a little aliasing energy above f<sub>c</sub> + (I+1)f<sub>m</sub>.</p>
+   <p class="small" style="margin-top:8px">And when f<sub>m</sub>/f<sub>c</sub> is irrational the sidebands are inharmonic — a bell, not a note — which is a feature only if you wanted one. FM is not <i>the</i> synthesis; it is one brilliant shortcut through spectrum space.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"FM creates new frequencies out of nothing."</s> <b>Cut.</b> The sidebands sit at fully predictable places, f<sub>c</sub> ± n·f<sub>m</sub> — the engine lists every one before you hear it.</p>
+   <p class="grave"><s>"Turning up the index makes it louder."</s> <b>Cut.</b> Σ J<sub>n</sub>(I)² = 1 for all I: the index <i>redistributes</i> power into more sidebands, it never adds power.</p>
+   <p class="grave"><s>"The DX7 does frequency modulation."</s> <b>Kept, corrected.</b> It does <i>phase</i> modulation — identical spectra for a steady index, but the honest name differs, and the two diverge when I changes in time.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: modulate the carrier's <b>amplitude</b> instead of its frequency — AM, not FM. AM has only three lines (f<sub>c</sub>, f<sub>c</sub> ± f<sub>m</sub>); the Bessel series above n=1 vanishes. The witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ swap FM → AM</button><button id="restore">↺ restore FM</button></div>
+   <p class="small" id="tampernote">Swap to amplitude modulation and the sideband-at-f<sub>c</sub>±n·f<sub>m</sub> reconstruction breaks: the AM spectrum has no n≥2 lines, so it can no longer rebuild the true FM waveform. The witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE FM SYNTHESIS — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (two oscillators <b style="color:var(--cy)">in</b> → engine → sidebands <b style="color:var(--gr)">out</b>). A runnable rendering of Chowning's 1973 JAES paper — the engine is LIT (Bessel sidebands at f<sub>c</sub>±n·f<sub>m</sub>, power conserved, pure-carrier at I=0, waveform reconstructed live and tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what two oscillators cannot promise. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- Bessel functions of the first kind, J_n(x), by power series ----
+function fact(n){ let f=1; for(let k=2;k<=n;k++) f*=k; return f; }
+function besselJ(n,x){
+ n=Math.abs(n);
+ const h=x/2;
+ // m = 0 term:  (x/2)^n / n!
+ let term=Math.pow(h,n)/fact(n);
+ let sum=term;
+ for(let m=1;m<60;m++){
+  term*=-(h*h)/(m*(m+n));   // ratio of successive series terms
+  sum+=term;
+  if(Math.abs(term)<1e-18) break;
+ }
+ return sum;
+}
+// signed index:  J_{-n}(x) = (-1)^n J_n(x)
+function Jn(n,x){
+ const m=Math.abs(n);
+ let v=besselJ(m,x);
+ if(n<0 && (m%2===1)) v=-v;
+ return v;
+}
+
+// ---- the tamper flag (plain top-level var so selfcheck runs headless) ----
+var AM_TAMPER=false;
+
+// ---- amplitude of the sideband sitting at fc + n*fm ----
+// FM  -> J_n(I)  (full Bessel comb)
+// AM  -> carrier 1, first pair I/2, nothing beyond (three lines only)
+function sideAmp(n,I){
+ if(AM_TAMPER){
+  if(n===0) return 1;
+  if(Math.abs(n)===1) return I/2;
+  return 0;
+ }
+ return Jn(n,I);
+}
+
+// ---- the two ways to make the FM tone ----
+// (a) directly, as one modulated sine
+function fmSignal(fc,fm,I,t){ return Math.sin(2*Math.PI*fc*t + I*Math.sin(2*Math.PI*fm*t)); }
+// (b) as the sum of sidebands at fc + n*fm with amplitude sideAmp(n,I)
+function fmFromSidebands(fc,fm,I,t,N){
+ let s=0;
+ for(let n=-N;n<=N;n++) s+=sideAmp(n,I)*Math.sin(2*Math.PI*(fc+n*fm)*t);
+ return s;
+}
+// worst-case difference between (a) and (b) across the waveform
+function reconError(fc,fm,I,N,samples){
+ let e=0;
+ for(let k=0;k<samples;k++){
+  const t=k/(samples*fm);            // span a full modulator period
+  e=Math.max(e,Math.abs(fmSignal(fc,fm,I,t)-fmFromSidebands(fc,fm,I,t,N)));
+ }
+ return e;
+}
+
+// ---- total sideband power (Bessel identity: this equals 1 for FM) ----
+function besselEnergy(I,N){ let e=Jn(0,I)*Jn(0,I); for(let n=1;n<=N;n++) e+=2*Jn(n,I)*Jn(n,I); return e; }
+// ---- fraction of power inside the Carson band |n| <= ceil(I+1) ----
+function carsonFraction(I){
+ const N=200, band=Math.ceil(I+1);
+ let tot=Jn(0,I)*Jn(0,I), within=Jn(0,I)*Jn(0,I);
+ for(let n=1;n<=N;n++){ const p=2*Jn(n,I)*Jn(n,I); tot+=p; if(n<=band) within+=p; }
+ return within/tot;
+}
+
+// ---- fixed-seed PRNG (so nothing in the engine is nondeterministic) ----
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+let RNG=mulberry32(0x0F3D2A01);
+
+// ---- fail-loud self-check (runs untampered, then plants + restores the tamper) ----
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=AM_TAMPER; AM_TAMPER=false;
+
+ // 1. Bessel values match the known constants (tol 1e-9)
+ t(Math.abs(besselJ(0,1)-0.7651976865579666)<1e-9,"J0(1) must be 0.76519768...");
+ t(Math.abs(besselJ(1,1)-0.4400505857449335)<1e-9,"J1(1) must be 0.44005058...");
+ t(Math.abs(besselJ(0,2)-0.2238907791412357)<1e-9,"J0(2) must be 0.22389077...");
+ t(Math.abs(besselJ(1,2)-0.5767248077568734)<1e-9,"J1(2) must be 0.57672480...");
+ t(Math.abs(besselJ(2,2)-0.3528340286156377)<1e-9,"J2(2) must be 0.35283402...");
+ // signed index identity  J_{-n}=(-1)^n J_n
+ t(Math.abs(Jn(-1,2)+besselJ(1,2))<1e-12,"J_{-1}=-J_1");
+ t(Math.abs(Jn(-2,2)-besselJ(2,2))<1e-12,"J_{-2}=+J_2");
+
+ // 2. index 0 gives a PURE carrier: only n=0 survives
+ t(Math.abs(sideAmp(0,0)-1)<1e-12,"J0(0)=1 -> carrier present at I=0");
+ t(sideAmp(1,0)===0,"J1(0)=0 -> no first sideband at I=0");
+ t(sideAmp(2,0)===0,"J2(0)=0 -> no second sideband at I=0");
+
+ // 3. sidebands live EXACTLY at fc +/- n*fm with Bessel amplitudes:
+ //    the direct FM signal equals the sideband sum, to a truncated-series tol.
+ const cases=[[300,150,3],[440,110,5],[220,220,2],[500,130,7]];
+ for(const [fc,fm,I] of cases){
+  t(reconError(fc,fm,I,40,64)<1e-9,"FM signal must equal its fc+/-n*fm sideband sum for I="+I);
+ }
+
+ // 4. power is conserved by the Bessel identity: Sum J_n(I)^2 = 1
+ for(const I of [0,1,2,5,8]) t(Math.abs(besselEnergy(I,200)-1)<1e-9,"Sum J_n("+I+")^2 must equal 1");
+
+ // 5. Carson's rule: >=98% of the power sits inside |n| <= ceil(I+1)
+ for(const I of [1,2,5]) t(carsonFraction(I)>=0.98,"Carson band must hold >=98% of power for I="+I);
+ // and the spectrum genuinely spreads: more sidebands are significant as I grows
+ const sig=I=>{ let c=0; for(let n=0;n<=60;n++) if(Math.abs(Jn(n,I))>0.01) c++; return c; };
+ t(sig(6)>sig(2) && sig(2)>sig(0.2),"increasing I must spread energy into more sidebands");
+
+ // 6. THE TAMPER — swap FM for AM and prove the witness catches it.
+ AM_TAMPER=true;
+ t(sideAmp(2,3)===0,"AM has no 2nd sideband");
+ t(Math.abs(besselJ(2,3)-0.4860912605858911)<1e-9,"but the true FM 2nd sideband J2(3) is 0.486... , not 0");
+ t(sideAmp(2,3)!==besselJ(2,3),"AM spectrum must differ from the Bessel comb");
+ t(reconError(440,110,5,40,64)>0.05,"under AM the fc+/-n*fm reconstruction must break");
+ AM_TAMPER=false;
+
+ AM_TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let actx=null;
+
+function curp(){ return { fc:+$("fc").value, fm:+$("fm").value, I:+$("I").value }; }
+
+function render(){
+ const {fc,fm,I}=curp();
+ $("fcv").textContent=fc+" Hz"; $("fmv").textContent=fm+" Hz"; $("Iv").textContent=I.toFixed(1);
+
+ // sideband table (window 3)
+ let rows="";
+ for(let n=0;n<=8;n++){
+  const a=Jn(n,I), sig=Math.abs(a)>0.01;
+  const fp=fc+n*fm, fm_=fc-n*fm;
+  const flabel = n===0 ? fc+"" : (fp+" / "+fm_);
+  rows+=`<tr><td class="${sig?'y':'n'}">${n===0?'0':'±'+n}</td><td>${flabel}</td><td class="${sig?'y':'n'}">${a.toFixed(4)}</td></tr>`;
+ }
+ $("sbBody").innerHTML=rows;
+
+ // readout (panel)
+ const E=besselEnergy(I,200);
+ const bw=2*(I+1)*fm;
+ let nsig=0; for(let n=0;n<=60;n++) if(Math.abs(Jn(n,I))>0.01) nsig++;
+ const ratio=fm/fc, harmonic=Math.abs(ratio*4-Math.round(ratio*4))<1e-9 || Math.abs(1/ratio-Math.round(1/ratio))<0.02;
+ $("readbox").innerHTML=
+  `carrier line J<sub>0</sub>(I): <b class="big">${Jn(0,I).toFixed(4)}</b><br>`+
+  `significant sidebands (|J<sub>n</sub>|&gt;0.01): <b style="color:var(--am)">${nsig}</b> per side<br>`+
+  `Carson bandwidth ≈ 2(I+1)f<sub>m</sub>: <b style="color:var(--am)">${bw.toFixed(0)} Hz</b><br>`+
+  `total power Σ J<sub>n</sub>²: <b style="color:${Math.abs(E-1)<1e-6?'var(--gr)':'var(--wall)'}">${E.toFixed(6)}</b> <span class="small">(conserved = 1)</span><br>`+
+  `f<sub>m</sub>/f<sub>c</sub> = <b>${ratio.toFixed(3)}</b> — <b style="color:${harmonic?'var(--gr)':'var(--am)'}">${harmonic?'harmonic (pitched)':'inharmonic (bell / metallic)'}</b>`+
+  (I===0?`<br><span style="color:var(--gr)">I = 0 → pure carrier, single line at ${fc} Hz.</span>`:``);
+
+ drawCanvas(fc,fm,I);
+ audit();
+}
+
+function drawCanvas(fc,fm,I){
+ const cv=$("cv"), g=cv.getContext("2d"), W=cv.width, H=cv.height;
+ g.clearRect(0,0,W,H);
+ const midY=H*0.34;
+ // waveform: one modulator period (its shape repeats at rate fm)
+ g.strokeStyle="var(--cy)"; g.strokeStyle="#57e0d0"; g.lineWidth=1.4; g.beginPath();
+ for(let px=0;px<W;px++){
+  const t=(px/W)/fm;
+  const y=midY - fmSignal(fc,fm,I,t)*(H*0.24);
+  px===0?g.moveTo(px,y):g.lineTo(px,y);
+ }
+ g.stroke();
+ // spectrum bars: sidebands fc + n*fm, height |J_n(I)| (or AM under tamper)
+ const baseY=H-6, maxN=Math.min(20,Math.floor((W/2-10)/8));
+ g.fillStyle="#ffd23f";
+ for(let n=-maxN;n<=maxN;n++){
+  const a=Math.abs(sideAmp(n,I));
+  if(a<0.005) continue;
+  const x=W/2 + n*8;
+  const h=a*(H*0.42);
+  g.fillRect(x-2,baseY-h,4,h);
+ }
+ g.strokeStyle="#20402a"; g.beginPath(); g.moveTo(W/2,baseY-H*0.46); g.lineTo(W/2,baseY); g.stroke();
+}
+
+function audit(){
+ const {fc,fm,I}=curp();
+ const err=reconError(fc,fm,I,40,64);
+ const E=besselEnergy(I,200);
+ const ok = err<1e-6 && Math.abs(E-1)<1e-6 && !AM_TAMPER;
+ $("auditout").innerHTML=
+  `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — waveform rebuilt':'✗ WITNESS — reconstruction broken'}</span>`+
+  `<div class="small" style="margin-top:6px">max |FM signal − sideband sum|: <b style="color:${err<1e-6?'var(--gr)':'var(--wall)'}">${err.toExponential(2)}</b> &nbsp;·&nbsp; Σ J<sub>n</sub>²: <b style="color:${Math.abs(E-1)<1e-6?'var(--gr)':'var(--wall)'}">${E.toFixed(5)}</b>`+
+  (AM_TAMPER?` &nbsp; — <span style="color:var(--wall)">red swapped FM → AM</span>`:``)+`</div>`;
+}
+
+function playTone(){
+ const {fc,fm,I}=curp();
+ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; }
+ const t0=actx.currentTime, dur=1.4;
+ const car=actx.createOscillator(); car.frequency.value=fc;
+ const mod=actx.createOscillator(); mod.frequency.value=fm;
+ const og=actx.createGain(); og.gain.value=0.0001;
+ if(AM_TAMPER){
+  // amplitude modulation: (1 + (I/2) sin) * carrier, scaled down
+  const mg=actx.createGain(); mg.gain.value=Math.min(0.9,I/2);
+  const dc=actx.createConstantSource(); dc.offset.value=1;
+  const amGain=actx.createGain(); amGain.gain.value=0;
+  dc.connect(amGain.gain); mod.connect(mg).connect(amGain.gain);
+  car.connect(amGain).connect(og);
+  dc.start(t0); dc.stop(t0+dur+0.1);
+ }else{
+  // frequency modulation: peak deviation = I * fm
+  const mg=actx.createGain(); mg.gain.value=I*fm;
+  mod.connect(mg).connect(car.frequency);
+  car.connect(og);
+ }
+ og.connect(actx.destination);
+ og.gain.setValueAtTime(0.0001,t0);
+ og.gain.exponentialRampToValueAtTime(0.22,t0+0.02);
+ og.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+ car.start(t0); mod.start(t0); car.stop(t0+dur+0.1); mod.stop(t0+dur+0.1);
+}
+
+// ---- boot ----
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ ["fc","fm","I"].forEach(id=>$(id).addEventListener("input",render));
+ $("play").addEventListener("click",playTone);
+ $("rand").addEventListener("click",()=>{
+  $("fc").value=100+10*Math.floor(RNG()*70);
+  $("fm").value=50+10*Math.floor(RNG()*75);
+  $("I").value=(RNG()*10).toFixed(1);
+  render();
+ });
+ $("carrier").addEventListener("click",()=>{ $("I").value="0"; render(); });
+ $("tamper").addEventListener("click",()=>{
+  AM_TAMPER=true;
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>FM → AM.</b> The spectrum collapsed to three lines (f<sub>c</sub>, f<sub>c</sub> ± f<sub>m</sub>); every Bessel sideband above n=1 is gone. The witness (window 7) recomputed the reconstruction error, it is now large, and the badge went red. The attack is real; it is caught.";
+  render();
+ });
+ $("restore").addEventListener("click",()=>{
+  AM_TAMPER=false;
+  $("tampernote").innerHTML="Swap to amplitude modulation and the sideband-at-f<sub>c</sub>±n·f<sub>m</sub> reconstruction breaks: the AM spectrum has no n≥2 lines, so it can no longer rebuild the true FM waveform. The witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.";
+  render();
+ });
+ render();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the FM synthesis engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

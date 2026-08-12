@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE CURIE LAW</title>
+<style>
+:root{
+  --am:#7fe0c0;
+  --bg:#0a1f16;
+  --bg2:#0e2b1e;
+  --panel:#0c2419;
+  --ink:#dff4ea;
+  --dim:#8fb9a8;
+  --line:#1c4433;
+  --blue:#7fb0e0;
+  --red:#e88f8f;
+  --amber:#e0c77f;
+  --lit:#7fe0a0;
+  --wall:#e88f8f;
+  --shadow:0 2px 14px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 20% -10%, #12341f 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, #0e3326 0%, transparent 55%),
+    var(--bg);
+  color:var(--ink);
+  font:15px/1.55 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1220px;margin:0 auto}
+header{margin:0 0 22px}
+h1{
+  font-size:30px;letter-spacing:.06em;margin:0 0 8px;
+  color:var(--am);text-shadow:0 0 22px rgba(127,224,192,.28);
+}
+.sub{max-width:900px;color:var(--ink);margin:0 0 10px;font-size:14.5px}
+.src{font-size:12.5px;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.08em;
+  padding:1px 7px;border-radius:4px;border:1px solid var(--line);
+  vertical-align:middle;text-transform:uppercase;font-weight:600;
+}
+.t-amber{color:var(--amber);border-color:#4a3f1c;background:rgba(224,199,127,.07)}
+.t-lit{color:var(--lit);border-color:#1f5a38;background:rgba(127,224,160,.09)}
+.t-in{color:var(--blue);border-color:#274a66;background:rgba(127,176,224,.08)}
+.t-out{color:var(--am);border-color:#1f5a4a;background:rgba(127,224,192,.09)}
+.t-wall{color:var(--wall);border-color:#5a2222;background:rgba(232,143,143,.09)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.18fr 1fr;gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  padding:7px 11px;border-radius:6px;font-weight:700;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);background:rgba(127,176,224,.06);border-color:#274a66}
+.col.red  .teamhdr{color:var(--red);background:rgba(232,143,143,.06);border-color:#5a2222}
+.col.center .teamhdr{color:var(--am);background:rgba(127,224,192,.06);border-color:#1f5a4a;text-align:center}
+
+.win{
+  position:relative;background:linear-gradient(180deg,var(--bg2),var(--panel));
+  border:1px solid var(--line);border-radius:10px;padding:13px 14px 14px;
+  box-shadow:var(--shadow);
+}
+.win h3{margin:0 0 7px;font-size:13.5px;letter-spacing:.04em;color:var(--ink)}
+.win p{margin:6px 0;font-size:13px;color:var(--dim)}
+.win .num{
+  position:absolute;top:-9px;right:-9px;width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  border:1px solid var(--line);background:var(--bg);color:var(--am);
+}
+.col.blue .num{color:var(--blue);border-color:#274a66}
+.col.red  .num{color:var(--red);border-color:#5a2222}
+.panel{border-color:#1f5a4a;background:linear-gradient(180deg,#0f3324,#0c2a1d)}
+.flow{
+  text-align:center;color:var(--am);font-size:16px;letter-spacing:.3em;
+  margin:2px 0;opacity:.75;
+}
+.eq{
+  font-size:13px;color:var(--am);background:rgba(127,224,192,.06);
+  border:1px solid var(--line);border-radius:6px;padding:7px 9px;margin:8px 0;
+  overflow-x:auto;white-space:nowrap;
+}
+.kv{font-size:12.5px;color:var(--ink);margin:3px 0}
+.kv b{color:var(--am)}
+.wall-note{color:var(--red);font-size:12.8px;border-left:2px solid #5a2222;padding-left:9px;margin:7px 0}
+.dead{color:var(--dim)}
+.dead s{color:#6b5252}
+.dead b{color:var(--am)}
+canvas{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:#08160f;margin:8px 0 2px}
+.ctrl{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--dim);margin:7px 0 2px;flex-wrap:wrap}
+.ctrl input[type=range]{flex:1;min-width:120px;accent-color:var(--am)}
+button{
+  font:inherit;font-size:12px;cursor:pointer;color:var(--ink);
+  background:#12321f;border:1px solid var(--line);border-radius:6px;padding:5px 11px;
+}
+button:hover{border-color:var(--am)}
+#tamper{color:var(--red);border-color:#5a2222}
+#restore{color:var(--lit);border-color:#1f5a38}
+.badge{
+  display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.05em;
+  padding:3px 9px;border-radius:5px;margin-top:6px;border:1px solid var(--line);
+}
+.b-ok{color:var(--lit);border-color:#1f5a38;background:rgba(127,224,160,.08)}
+.b-bad{color:var(--wall);border-color:#5a2222;background:rgba(232,143,143,.12)}
+#failb{display:none;color:var(--wall);border:1px solid #5a2222;background:rgba(232,143,143,.1);
+  padding:9px 11px;border-radius:8px;margin:10px 0;font-size:12.5px}
+footer{margin:30px auto 0;max-width:1220px;color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:880px){ .ocho{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE CURIE LAW</h1>
+  <p class="sub">A paramagnet's pull weakens as it warms. Its susceptibility falls inversely with temperature &mdash; moments straining to align against the growing thermal disorder that scatters them. Rendered, not quoted: the engine computes &chi; = C/T and the Langevin magnetization curve live.</p>
+  <p class="src"><span class="tag t-amber">source</span> Curie, P. &mdash; <a href="https://archive.org/details/propritsmagntiq00curigoog" target="_blank" rel="noopener">Propri&eacute;t&eacute;s magn&eacute;tiques des corps &agrave; diverses temp&eacute;ratures</a>, <em>Ann. Chim. Phys.</em> 7th ser., vol. 5, pp. 289&ndash;405 (1895) &middot; AMBER: pre-DOI thesis, cited by author/title/year (archive.org scan).</p>
+</header>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <h3>THE MODEL</h3>
+      <p>A paramagnet is a lattice of independent magnetic moments &mu; (unpaired spins). A field B tilts them toward alignment; temperature T shakes them back to chaos. The balance is the Langevin average.</p>
+      <div class="eq">&chi;(T) = C / T &nbsp;&middot;&nbsp; M = M<sub>sat</sub>&middot;L(&mu;B/kT), &nbsp; L(x)=coth x &minus; 1/x</div>
+      <p class="kv">Curie constant <b>C = M<sub>sat</sub>&middot;&mu; / (3k<sub>B</sub>)</b> &mdash; the small-field slope of the Langevin curve <em>is</em> C/T.</p>
+      <p class="kv">Small field: L(x) &asymp; x/3 &rArr; M &prop; B/T (linear). Large &mu;B/kT: L &rarr; 1 &rArr; M &rarr; M<sub>sat</sub> (saturation).</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>Magnetism fades with heat. Curie 1895: &chi; = C/T, inverse in temperature, moments aligning against thermal disorder (the Langevin picture).</p>
+      <p>Cool an <em>interacting</em> paramagnet far enough and the moments lock each other in &mdash; below a Curie point it becomes <b style="color:var(--am)">the-ferromagnetism</b>, its susceptibility diverging as Curie&ndash;Weiss &chi; = C/(T&minus;T<sub>c</sub>).</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check of the panel's laws. Confirms green; flips red the instant window 6 tampers with the sign of the temperature dependence.</p>
+      <span id="auditout" class="badge b-ok">witness: booting&hellip;</span>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The machine</div>
+
+    <div class="win">
+      <span class="num">4</span>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p>A field B applied to N moments at temperature T. Constants are exact: k<sub>B</sub>=1.380649&times;10<sup>&minus;23</sup> J/K, &mu;=&mu;<sub>B</sub>=e&#295;/2m<sub>e</sub>.</p>
+      <div class="ctrl">
+        <label>T (K)</label>
+        <input id="tSlide" type="range" min="5" max="600" value="120" step="1">
+        <span id="tVal" style="color:var(--am);min-width:60px">120 K</span>
+      </div>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+      <p style="color:var(--ink)">Left: moments jittering against B (hotter &rarr; more random). Right: &chi;=C/T falloff and the Langevin M&ndash;B curve, computed live.</p>
+      <canvas id="cv" width="560" height="300" aria-label="Curie susceptibility and Langevin magnetization"></canvas>
+      <p class="kv">at T=<b><span id="curT">120</span> K</b>: &chi; = C/T = <b><span id="curChi">&mdash;</span></b> &middot; M(B=2T)/M<sub>sat</sub> = <b><span id="curM">&mdash;</span></b></p>
+    </div>
+
+    <div class="flow">&#9660;</div>
+
+    <div class="win">
+      <span class="num">8</span>
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p>Proven result: susceptibility is <b style="color:var(--am)">inverse</b> in T &mdash; halve T and &chi; exactly doubles; a plot of 1/&chi; vs T is a straight line through the origin.</p>
+      <span id="litbadge" class="badge b-ok">result: pending&hellip;</span>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+      <p class="wall-note">"Curie's law is universal &mdash; every material obeys &chi;=C/T." False. It holds only for <em>non-interacting, dilute</em> moments. Real solids show exchange coupling (Curie&ndash;Weiss offset), crystal-field quenching, and Pauli paramagnetism in metals (nearly T-independent).</p>
+      <p class="wall-note">The Langevin derivation is a <span class="tag t-amber">CLASSICAL idealization</span> &mdash; moments as free classical vectors. The true answer is the quantum Brillouin function B<sub>J</sub>(x); Langevin is its J&rarr;&infin; limit. Both give the same C/T small-field law, which is why the linear regime survives.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p class="dead"><s>"Cooling a paramagnet forever grows its magnetization without bound."</s> &rarr; <b>No.</b> M saturates at M<sub>sat</sub> once &mu;B &gg; kT; only the <em>slope</em> C/T diverges as T&rarr;0.</p>
+      <p class="dead"><s>"Susceptibility grows with temperature."</s> &rarr; <b>Inverted.</b> &chi; &prop; 1/T &mdash; it <em>shrinks</em> as heat scatters the moments. (This is exactly what window 6 breaks.)</p>
+      <p class="dead"><s>"1/&chi; vs T passes through the origin for all magnets."</s> &rarr; <b>Only ideal paramagnets.</b> Ferromagnets extrapolate to +T<sub>c</sub>, antiferromagnets to &minus;&Theta;.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Planted void (disclosed): swap the law to &chi; = C&middot;T &mdash; <em>proportional</em>, not inverse &mdash; so warming a paramagnet wrongly <b style="color:var(--red)">strengthens</b> it. The witness in 7 catches it live.</p>
+      <button id="tamper">inject &chi;=C&middot;T</button>
+      <button id="restore">restore &chi;=C/T</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="failb"></div>
+
+<footer>
+  THE CURIE LAW &middot; WORLD II &middot; THE FOLD &mdash; the paramagnet whose pull dies with heat. Engine LIT: &chi;=C/T and the Langevin curve computed from constants, gated by a fail-loud headless selfcheck. Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===== ENGINE (pure logic; runs headless, no canvas / no DOM) =====
+
+// Exact physical constants (SI, CODATA-consistent).
+var e     = 1.602176634e-19;      // C
+var k_B   = 1.380649e-23;         // J/K
+var m_e   = 9.1093837015e-31;     // kg
+var hbar  = 1.054571817e-34;      // J*s
+var mu_B  = 9.2740100783e-24;     // J/T (Bohr magneton, = e*hbar/(2 m_e))
+
+// Model parameters (normalized single-moment paramagnet).
+var M_SAT = 1.0;                  // saturation magnetization (reduced units)
+var MU    = mu_B;                 // magnetic moment per site
+// Curie constant: small-field slope of the Langevin curve, C = M_sat*mu/(3 k_B).
+var C_CURIE = M_SAT * MU / (3 * k_B);
+
+// Disclosed planted void: when true, the law is corrupted to chi = C*T.
+var TAMPER = false;
+
+function assert(cond, msg){ if(!cond){ throw new Error("selfcheck: " + msg); } }
+
+// Langevin function L(x) = coth(x) - 1/x, with a series near 0 to avoid cancellation.
+function langevin(x){
+  var ax = Math.abs(x);
+  if(ax < 1e-4){ return x/3 - (x*x*x)/45; }   // L(x) = x/3 - x^3/45 + ...
+  return 1/Math.tanh(x) - 1/x;
+}
+
+// Curie-law susceptibility. Honest branch: inverse in T. Tampered branch: proportional.
+function chi(T){
+  if(TAMPER){ return C_CURIE * T; }           // WRONG (window 6): warming strengthens it
+  return C_CURIE / T;                          // Curie's law: chi = C/T
+}
+
+// Magnetization from the Langevin average at field B (tesla), temperature T (kelvin).
+function magnetization(B, T){
+  var x = MU * B / (k_B * T);
+  return M_SAT * langevin(x);
+}
+
+// Curie-Weiss susceptibility for an interacting (ferromagnetic) contrast: chi = C/(T-Tc).
+function chiCurieWeiss(T, Tc){ return C_CURIE / (T - Tc); }
+
+function selfcheck(){
+  // --- Bohr magneton definition ties e, hbar, m_e together ---
+  var muB_def = e * hbar / (2 * m_e);
+  assert(Math.abs(muB_def - mu_B) < 1e-5 * mu_B, "Bohr magneton mu_B must equal e*hbar/(2 m_e)");
+
+  // --- (1) chi = C/T is INVERSE: halve T and chi exactly doubles ---
+  var T = 300;
+  var cT  = chi(T);
+  var cT2 = chi(T/2);
+  assert(Math.abs(cT2 / cT - 2) < 1e-9, "1/T law: chi must double when T halves");
+  assert(Math.abs(chi(T) * T - C_CURIE) < 1e-9, "chi*T must equal the constant C");
+
+  // --- (2) small-field slope: M -> chi*B linear, and L(x) -> x/3 ---
+  var Bsmall = 1e-5, Ts = 200;
+  var Mlin = magnetization(Bsmall, Ts);
+  var expect = chi(Ts) * Bsmall;              // C/T * B
+  assert(Math.abs(Mlin - expect) < 1e-9, "small-field magnetization must equal chi*B");
+  var xs = MU * Bsmall / (k_B * Ts);
+  assert(Math.abs(langevin(xs) - xs/3) < 1e-9, "Langevin must be x/3 at small field");
+
+  // --- (2b) high-field saturation: L(x) -> 1, M -> M_sat ---
+  var Mhi = magnetization(1e6, 0.001);        // enormous mu*B/kT
+  assert(Math.abs(Mhi - M_SAT) < 1e-3, "magnetization must saturate at M_sat");
+
+  // --- (3) hotter randomizes: M falls as T rises at fixed field ---
+  var Bfix = 5.0;
+  var Mcold = magnetization(Bfix, 20);
+  var Mwarm = magnetization(Bfix, 400);
+  assert(Mcold > Mwarm, "magnetization must fall as temperature rises");
+
+  // --- (4) 1/chi vs T is a straight line THROUGH THE ORIGIN (ideal paramagnet) ---
+  var inv = function(t){ return 1 / chi(t); }; // = t / C
+  var t1 = 100, t2 = 500;
+  var slope = (inv(t2) - inv(t1)) / (t2 - t1);
+  var intercept = inv(t1) - slope * t1;
+  assert(Math.abs(intercept) < 1e-9, "ideal paramagnet: 1/chi line must pass through origin");
+  // Ferromagnet contrast: Curie-Weiss gives a POSITIVE-Tc offset (nonzero intercept).
+  var Tc = 100;
+  var invCW = function(t){ return 1 / chiCurieWeiss(t, Tc); };
+  var slopeCW = (invCW(t2) - invCW(t1)) / (t2 - t1);
+  var interCW = invCW(t1) - slopeCW * t1;      // = -Tc/C
+  assert(Math.abs(interCW + Tc / C_CURIE) < 1e-6 * (Tc / C_CURIE), "Curie-Weiss intercept must be -Tc/C");
+  assert(Math.abs(interCW) > 1e-30, "Curie-Weiss offset must be nonzero (unlike ideal paramagnet)");
+
+  // --- (5) TAMPER: swap to chi = C*T; the 1/T law must now BREAK, then restore ---
+  var saved = TAMPER;
+  TAMPER = true;
+  var r = chi(150) / chi(300);                  // C*150 / C*300 = 0.5, not 2
+  assert(Math.abs(r - 2) > 0.5, "TAMPER must break the 1/T law (chi=C*T)");
+  TAMPER = saved;
+  assert(Math.abs(chi(150) / chi(300) - 2) < 1e-9, "restore must return chi to C/T");
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+function boot(){
+  try{
+    var ok = selfcheck();
+    var lit = document.getElementById('litbadge');
+    lit.className = 'badge b-ok';
+    lit.textContent = 'result: chi = C/T VERIFIED (halve T -> chi x2)';
+  }catch(err){
+    var fb = document.getElementById('failb');
+    fb.style.display = 'block';
+    fb.textContent = 'SELFCHECK FAILED -> ' + err.message;
+    var lb = document.getElementById('litbadge');
+    if(lb){ lb.className='badge b-bad'; lb.textContent='result: BROKEN'; }
+    throw err;
+  }
+}
+
+// Live witness (window 7): re-run the invariant against the CURRENT tamper state.
+function refreshWitness(){
+  var w = document.getElementById('auditout');
+  var ratio = chi(150) / chi(300);              // must be 2 when honest
+  var honest = Math.abs(ratio - 2) < 1e-9;
+  if(honest && !TAMPER){
+    w.className = 'badge b-ok';
+    w.textContent = 'witness OK: halve T -> chi x2 (ratio=' + ratio.toFixed(4) + ')';
+  }else{
+    w.className = 'badge b-bad';
+    w.textContent = 'WITNESS TRIPPED: chi∝T, warming strengthens it (ratio=' + ratio.toFixed(4) + ')';
+  }
+}
+
+// Fixed-seed PRNG (mulberry32) so the moment jitter is deterministic.
+function mulberry32(a){
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+var cv, ctx, curT = 120;
+
+function draw(){
+  if(!ctx) return;
+  var W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  // ---- LEFT HALF: a lattice of moments, jitter grows with temperature ----
+  var lx0 = 12, ly0 = 20, gw = 232, gh = H - 34;
+  ctx.strokeStyle = '#123a28'; ctx.strokeRect(lx0, ly0, gw, gh);
+  ctx.fillStyle = '#7fe0c0'; ctx.font = '11px monospace';
+  ctx.fillText('MOMENTS  (B up, T scatters)', lx0+4, ly0-6);
+  var rng = mulberry32(1895); // fixed seed (Curie, 1895)
+  var cols = 8, rows = 9;
+  var disorder = Math.min(1, curT / 300);       // 0 cold (aligned) .. 1 hot (random)
+  var al = 1 - 0.85 * disorder;                 // net alignment fraction (visual)
+  for(var r=0;r<rows;r++){
+    for(var c=0;c<cols;c++){
+      var px = lx0 + 20 + c * ((gw-40)/(cols-1));
+      var py = ly0 + 18 + r * ((gh-36)/(rows-1));
+      // aligned angle = -90deg (up); disorder rotates it
+      var jitter = (rng()*2 - 1) * Math.PI * disorder;
+      var ang = -Math.PI/2 + jitter;
+      var len = 9;
+      var ex = px + Math.cos(ang)*len, ey = py + Math.sin(ang)*len;
+      ctx.strokeStyle = 'rgba(127,224,192,'+(0.35+0.55*al)+')';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke();
+      // arrowhead
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex - Math.cos(ang-0.5)*3.4, ey - Math.sin(ang-0.5)*3.4);
+      ctx.lineTo(ex - Math.cos(ang+0.5)*3.4, ey - Math.sin(ang+0.5)*3.4);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(127,224,192,'+(0.35+0.55*al)+')';
+      ctx.fill();
+    }
+  }
+
+  // ---- RIGHT HALF: chi = C/T falloff curve + marker ----
+  var rx0 = lx0 + gw + 26, ry0 = 20, rw = W - rx0 - 12, rh = (gh-16)/2;
+  ctx.strokeStyle = '#123a28'; ctx.strokeRect(rx0, ry0, rw, rh);
+  ctx.fillStyle = '#7fe0c0'; ctx.fillText('chi = C / T', rx0+4, ry0-6);
+  var Tmin = 5, Tmax = 600;
+  var chiMax = chi(Tmin);                        // largest chi (cold end)
+  ctx.strokeStyle = '#7fe0c0'; ctx.lineWidth = 1.8; ctx.beginPath();
+  for(var i=0;i<=rw;i++){
+    var Tt = Tmin + (Tmax-Tmin)*(i/rw);
+    var y = ry0 + rh - (chi(Tt)/chiMax)*(rh-8) - 4;
+    if(i===0) ctx.moveTo(rx0+i, y); else ctx.lineTo(rx0+i, y);
+  }
+  ctx.stroke();
+  // current-T marker
+  var mxi = (curT - Tmin)/(Tmax - Tmin);
+  var mX = rx0 + mxi*rw;
+  var mY = ry0 + rh - (chi(curT)/chiMax)*(rh-8) - 4;
+  ctx.strokeStyle = 'rgba(224,199,127,.7)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(mX, ry0); ctx.lineTo(mX, ry0+rh); ctx.stroke();
+  ctx.fillStyle = '#e0c77f'; ctx.beginPath(); ctx.arc(mX, mY, 3.2, 0, 7); ctx.fill();
+
+  // ---- RIGHT LOWER: Langevin M vs B at current T ----
+  var q0 = ry0 + rh + 12;
+  ctx.strokeStyle = '#123a28'; ctx.strokeRect(rx0, q0, rw, rh);
+  ctx.fillStyle = '#7fe0c0'; ctx.fillText('M(B) Langevin  @ T='+Math.round(curT)+'K', rx0+4, q0-6);
+  var Bmax = 8;
+  ctx.strokeStyle = '#7fb0e0'; ctx.lineWidth=1.8; ctx.beginPath();
+  for(var j=0;j<=rw;j++){
+    var Bb = Bmax*(j/rw);
+    var m = magnetization(Bb, curT);            // 0..1
+    var yy = q0 + rh - m*(rh-8) - 4;
+    if(j===0) ctx.moveTo(rx0+j, yy); else ctx.lineTo(rx0+j, yy);
+  }
+  ctx.stroke();
+  // saturation guide
+  ctx.strokeStyle='rgba(127,224,160,.35)'; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(rx0, q0+4); ctx.lineTo(rx0+rw, q0+4); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function updateReadout(){
+  document.getElementById('curT').textContent = Math.round(curT);
+  document.getElementById('curChi').textContent = chi(curT).toExponential(3);
+  document.getElementById('curM').textContent = magnetization(2, curT).toFixed(4);
+}
+
+function refreshAll(){ draw(); updateReadout(); refreshWitness(); }
+
+window.addEventListener('DOMContentLoaded', function(){
+  boot();
+  cv = document.getElementById('cv');
+  ctx = cv.getContext('2d');
+
+  var sl = document.getElementById('tSlide');
+  var tv = document.getElementById('tVal');
+  sl.addEventListener('input', function(){
+    curT = parseFloat(sl.value);
+    tv.textContent = Math.round(curT) + ' K';
+    refreshAll();
+  });
+
+  document.getElementById('tamper').addEventListener('click', function(){
+    TAMPER = true; refreshAll();
+  });
+  document.getElementById('restore').addEventListener('click', function(){
+    TAMPER = false; refreshAll();
+  });
+
+  refreshAll();
+});
+</script>
+</body>
+</html>

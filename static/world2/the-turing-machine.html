@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE TURING MACHINE · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fd4ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,212,255,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO — refined: blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,212,255,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,212,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.tape{display:flex;flex-wrap:wrap;gap:3px;margin:8px 0;font-size:16px;}
+.cell{min-width:24px;text-align:center;padding:5px 3px;border:1px solid var(--line);border-radius:4px;background:#0a130c;color:#c3e8ca;}
+.cell.hd{border-color:var(--am);color:var(--am);box-shadow:0 0 0 1px var(--am);font-weight:700;}
+.stat{font-size:13px;margin:6px 0;} .stat b{font-size:15px;}
+.mout{font-size:12.5px;padding:9px;background:#0a130c;border:1px solid var(--line);border-radius:6px;margin-top:6px;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+#ruleTbl tr[data-k].on td{background:rgba(127,212,255,.16);color:#eafff0;font-weight:700;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE TURING MACHINE</h1>
+ <p class="sub">A head, a tape, and a table of rules — the whole definition of computation. Turing's 1936 <b>a-machine</b> is not a metaphor: it is <b>runnable</b>. Down the center, data flows — a binary number goes <b style="color:var(--cy)">in</b> on the tape, the head scans and rewrites cell by cell, and the successor comes <b style="color:var(--gr)">out</b>, halting in an exact step count. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break the one thing that makes it a machine: determinism.</p>
+ <p class="src"><span class="tag t-amber">source</span> A. M. Turing, <i>On Computable Numbers, with an Application to the Entscheidungsproblem</i> (1936), <i>Proc. London Math. Soc.</i> ser. 2, vol. 42, pp. 230–265 — <a href="https://turingarchive.kings.cam.ac.uk/publications-lectures-and-talks-amtb/amt-b-12">turingarchive.kings.cam.ac.uk · AMT/B/12</a> <span class="tag t-amber">AMBER</span> (page images, no single canonical open PDF). Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT · BLUE TEAM · builds & defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the table of rules</h2>
+   <p>A machine <i>is</i> its transition table. δ maps <b>(state, read symbol)</b> to <b>(write, move, next state)</b>. The engine below runs this exact table — a <b>binary-increment</b> machine over the tape alphabet {0,1,_}. States: <b class="k">R</b> scan right to the end, <b class="k">C</b> carry the +1 leftward, <b class="k">H</b> halt.</p>
+   <table id="ruleTbl"><thead><tr><th>state</th><th>read</th><th>write</th><th>move</th><th>next</th></tr></thead><tbody>
+    <tr data-k="R|0"><td>R</td><td>0</td><td>0</td><td>R</td><td>R</td></tr>
+    <tr data-k="R|1"><td>R</td><td>1</td><td>1</td><td>R</td><td>R</td></tr>
+    <tr data-k="R|_"><td>R</td><td>_</td><td>_</td><td>L</td><td>C</td></tr>
+    <tr data-k="C|0"><td>C</td><td>0</td><td>1</td><td>L</td><td>H</td></tr>
+    <tr data-k="C|1"><td>C</td><td>1</td><td>0</td><td>L</td><td>C</td></tr>
+    <tr data-k="C|_"><td>C</td><td>_</td><td>1</td><td>R</td><td>H</td></tr>
+   </tbody></table>
+   <p class="small" style="margin-top:7px">Deterministic means <b>exactly one row per (state, read)</b> — six rows, six distinct keys. That is what makes δ a <i>function</i>. The row the engine is using lights up as it steps.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — computation, defined <span class="tag t-amber">AVAN</span></h2>
+   <p>This is the substrate. A finite controller plus an unbounded tape is <b>Turing-complete</b>: by the Church–Turing thesis, anything computable at all is computable here. Every complexity class (P, NP, PSPACE…) is defined as "what a Turing machine does within a resource bound."</p>
+   <p>And its own shadow: ask whether an arbitrary machine + input ever reaches <b>H</b>, and you get <a href="https://davidwise01.github.io/the-halting-problem/" style="color:var(--cy)">the halting problem</a> — undecidable, by a finite diagonal contradiction Turing drew in the same 1936 paper. This sphere is that sphere's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: rebuild the table, confirm δ is a <b>function</b> (one rule per key), re-run the increment on 0111, and re-run the busy-beaver. If red tampers, this badge is where it flips.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER · THE MACHINE · data in → panel → data out -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — a tape &amp; a start state <span class="tag t-in">in ↓</span></h2>
+   <p>Formally a machine is a 7-tuple <b>(Q, Γ, b, Σ, δ, q₀, F)</b>: states, tape alphabet, blank, input alphabet, transition, start, halts. But the <i>input</i> is small: a finite string written on an otherwise-blank, unbounded tape, plus where the head starts and in which state.</p>
+   <p>Here the input is a <b class="k">binary number</b>, most-significant bit first, head on the left bit, state <b>R</b>. Blank cells read as <span class="mut">·</span>. A <b>configuration</b> — (state, tape, head position) — is the machine's entire momentary reality; feed it to the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; write the number on the tape &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>input</label><input id="inp" value="0111" size="12" spellcheck="false"></div>
+     <div class="row"><button id="bStep">▷ step</button><button id="bRun">▶▶ run</button><button id="bReset">↺ reset</button></div>
+     <div class="row"><button data-pre="0111">0111</button><button data-pre="1011">1011</button><button data-pre="111">111</button><button id="bRand">↺ random</button></div>
+     <p class="small">δ is applied <b>write → move → transition</b>, one cell per step. Nothing is looked up — the successor is scanned out of the tape.</p>
+    </div>
+    <div class="readout">
+     <div class="stat">state <span id="mstate">—</span> &nbsp;·&nbsp; step <b id="mstep">0</b></div>
+     <div class="tape" id="tape"></div>
+     <div class="mout" id="mout"></div>
+    </div>
+   </div>
+  </div>
+  <div class="flow">▼ &nbsp; the head halts; read the tape &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the proven result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, checked: the exact <b>successor</b> of each binary input, in an exact step count — and a second, constructed machine that halts on a KNOWN step with a KNOWN tape.</p>
+   <div id="outstats"></div>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) confirms these live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT · RED TEAM · attacks & breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The tape is <b>unbounded</b> — an idealization. No physical device has infinite memory, so a real machine is only ever a finite-state approximation of this model. And the model itself has a hard ceiling: by Turing's own diagonal argument, <b>no</b> machine decides whether an arbitrary machine halts. Power is not prediction.</div>
+   <p class="small" style="margin-top:8px">The model is also silent on <i>cost</i>. It says <b>what</b> is computable, not how fast — 9 steps to increment four bits scales, but the machine says nothing about efficiency. Complexity theory is a separate storey built on this floor.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"A Turing machine is how a computer works."</s> <b>Cut.</b> Real computers are register/RAM machines; the TM is a model of <i>computability</i>, equivalent in power (Church–Turing) but not in architecture. Equivalence ≠ identity.</p>
+   <p class="grave"><s>"Turing built this machine."</s> <b>Cut.</b> The a-machine is a mathematical object in a 1936 paper. Turing later built real hardware (the Bombe; the ACE design) — not this.</p>
+   <p class="grave"><s>"The tape is infinite."</s> <b>Kept, corrected.</b> It is <i>unbounded</i>, not infinite: extendable without limit, but only finitely many cells are ever non-blank. The engine's tape is literally a sparse map.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: add a <b>second</b> rule for the pair <b>(R, 1)</b>. Now two rows share one key — δ is no longer a function, and the machine is no longer deterministic. The blue witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ add 2nd rule for (R,1)</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote"></p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE TURING MACHINE — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (a number <b style="color:var(--cy)">in</b> → the head scans → the successor <b style="color:var(--gr)">out</b>). A runnable rendering of Turing's 1936 a-machine — the engine is LIT (a real transition table simulated cell by cell, the busy-beaver BB(2) halting in its proven 6 steps, determinism self-checked and tamper-provable), the blue team witnesses, the red team attacks the one property that makes δ a function, and the graveyard + adversary carry what a single machine cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- Turing machine core (pure logic; extractable for node verification) ----
+let TAMPER=false;   // when true, adds a conflicting rule to the increment table
+const DEF_TN="Add the extra rule and the table has two rows for one key — the witness recomputes, finds δ is no longer a function, and turns red. Nothing is faked; the attack is real and it is caught.";
+
+function buildTM(rules){
+ const map=Object.create(null); let collision=null;
+ for(const r of rules){ const key=r[0]+"|"+r[1];
+  if(key in map){ if(collision===null) collision=key; }
+  else map[key]={write:r[2],move:r[3],next:r[4]}; }
+ return {map:map,collision:collision,rules:rules};
+}
+function isDeterministic(tm){ return tm.collision===null; }
+
+function incRules(){
+ const R=[
+  ["R","0","0","R","R"],
+  ["R","1","1","R","R"],
+  ["R","_","_","L","C"],
+  ["C","0","1","L","H"],
+  ["C","1","0","L","C"],
+  ["C","_","1","R","H"]
+ ];
+ if(TAMPER) R.push(["R","1","0","L","C"]); // planted void: a 2nd rule for (R,1) => not a function
+ return R;
+}
+const BB2=[
+ ["A","0","1","R","B"],
+ ["A","1","1","L","B"],
+ ["B","0","1","L","A"],
+ ["B","1","1","R","H"]
+];
+
+function simulate(tm,input,opts){
+ const blank=opts.blank, halt=opts.halt, maxSteps=opts.maxSteps||10000;
+ let state=opts.start, head=opts.head||0, steps=0;
+ const tape=new Map();
+ for(let i=0;i<input.length;i++) tape.set(i,input[i]);
+ const read=p=>tape.has(p)?tape.get(p):blank;
+ const win=opts.win||null;
+ const snap=()=>{ let s=""; for(let p=win[0];p<=win[1];p++) s+=read(p); return s; };
+ const snaps=win?[snap()]:null;
+ const trace=[];
+ while(state!==halt){
+  const sym=read(head);
+  const rule=tm.map[state+"|"+sym];
+  if(!rule) break;
+  trace.push({step:steps+1,state:state,head:head,read:sym});
+  tape.set(head,rule.write);
+  head += rule.move==="R"?1:(rule.move==="L"?-1:0);
+  state=rule.next; steps++;
+  if(win) snaps.push(snap());
+  if(steps>maxSteps) throw new Error("machine did not halt within "+maxSteps+" steps");
+ }
+ return {steps:steps,state:state,head:head,tape:tape,halted:(state===halt),snaps:snaps,trace:trace};
+}
+function tapeStr(tape,blank){
+ const ks=[...tape.keys()].filter(p=>tape.get(p)!==blank);
+ if(!ks.length) return "";
+ const lo=Math.min.apply(null,ks), hi=Math.max.apply(null,ks);
+ let s=""; for(let p=lo;p<=hi;p++){ const v=tape.has(p)?tape.get(p):blank; s+=(v===blank?"":v); } return s;
+}
+function increment(inputStr){
+ const tm=buildTM(incRules());
+ const r=simulate(tm,inputStr.split(""),{blank:"_",start:"R",halt:"H",head:0,maxSteps:1000});
+ return {out:tapeStr(r.tape,"_"),steps:r.steps,halted:r.halted};
+}
+function bb2run(){
+ const tm=buildTM(BB2);
+ const r=simulate(tm,[],{blank:"0",start:"A",halt:"H",head:0,maxSteps:1000});
+ let ones=0; r.tape.forEach(v=>{ if(v==="1") ones++; });
+ return {steps:r.steps,ones:ones,halted:r.halted};
+}
+
+// ---- fail-loud self-check (deterministic; returns true) ----
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+
+ // 1) determinism: exactly one rule per (state, read)
+ t(isDeterministic(buildTM(incRules())),"increment table must be deterministic (one rule per key)");
+ t(isDeterministic(buildTM(BB2)),"BB(2) table must be deterministic");
+
+ // 2) the increment machine produces the EXACT successor, and halts
+ const cases=[["0111","1000"],["1011","1100"],["111","1000"],["0","1"],["101","110"],["11","100"]];
+ for(let i=0;i<cases.length;i++){
+  const inp=cases[i][0], exp=cases[i][1], r=increment(inp);
+  t(r.halted,"increment must halt on "+inp);
+  t(r.out===exp,"increment("+inp+") must equal "+exp+" (got "+r.out+")");
+  t(parseInt(r.out,2)===parseInt(inp,2)+1,"increment("+inp+") must be the numeric successor");
+ }
+
+ // 3) a constructed small machine halts in a KNOWN step count with a KNOWN tape (busy-beaver BB(2))
+ const bb=bb2run();
+ t(bb.halted,"BB(2) must halt");
+ t(bb.steps===6,"BB(2) must halt in exactly 6 steps (got "+bb.steps+")");
+ t(bb.ones===4,"BB(2) must leave exactly four 1s (got "+bb.ones+")");
+
+ // 4) each step applies write-then-move: at most one tape cell changes per step
+ const tm=buildTM(incRules());
+ const r=simulate(tm,"0111".split(""),{blank:"_",start:"R",halt:"H",head:0,maxSteps:1000,win:[-2,5]});
+ t(r.steps===9,"increment(0111) must take exactly 9 steps (got "+r.steps+")");
+ t(r.snaps.length===r.steps+1,"there must be one snapshot per step");
+ for(let i=1;i<r.snaps.length;i++){
+  let d=0; for(let k=0;k<r.snaps[i].length;k++) if(r.snaps[i][k]!==r.snaps[i-1][k]) d++;
+  t(d<=1,"step "+i+" must change at most one tape cell (changed "+d+")");
+ }
+
+ // 5) the planted void: tampering makes the table non-deterministic (a known value flips)
+ const detBefore=isDeterministic(buildTM(incRules()));
+ TAMPER=true;
+ const detAfter=isDeterministic(buildTM(incRules()));
+ t(detBefore===true,"untampered table must be a function");
+ t(detAfter===false,"tamper must make the table non-deterministic (not a function)");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+
+// fixed-seed PRNG for the random-input button (keeps everything reproducible)
+let _seed=1337; function rnd(){ _seed=(_seed*1103515245+12345)&0x7fffffff; return _seed/0x7fffffff; }
+
+let IV=null;
+function ivReset(str){
+ if(!str) str="0";
+ IV={tape:new Map(),head:0,state:"R",steps:0,halted:false,input:str,lastKey:null};
+ for(let i=0;i<str.length;i++) IV.tape.set(i,str[i]);
+ renderIV();
+}
+function ivStep(){
+ if(!IV||IV.halted) return;
+ const tm=buildTM(incRules());
+ const sym=IV.tape.has(IV.head)?IV.tape.get(IV.head):"_";
+ const rule=tm.map[IV.state+"|"+sym];
+ if(!rule){ IV.halted=true; IV.lastKey=null; renderIV(); return; }
+ IV.lastKey=IV.state+"|"+sym;
+ IV.tape.set(IV.head,rule.write);
+ IV.head += rule.move==="R"?1:(rule.move==="L"?-1:0);
+ IV.state=rule.next; IV.steps++;
+ if(IV.state==="H") IV.halted=true;
+ renderIV();
+}
+function ivRun(){ let g=0; while(IV&&!IV.halted&&g<4000){ ivStep(); g++; } }
+
+function renderIV(){
+ const keys=[...IV.tape.keys()];
+ const lo=Math.min(IV.head, keys.length?Math.min.apply(null,keys):0)-1;
+ const hi=Math.max(IV.head, keys.length?Math.max.apply(null,keys):0)+1;
+ let cells="";
+ for(let p=lo;p<=hi;p++){
+  const v=IV.tape.has(p)?IV.tape.get(p):"_";
+  cells+='<span class="cell'+(p===IV.head?" hd":"")+'">'+(v==="_"?"·":v)+'</span>';
+ }
+ $("tape").innerHTML=cells;
+ $("mstate").innerHTML = IV.halted? '<b class="k">HALT</b>' : '<b style="color:var(--am)">'+IV.state+'</b>';
+ $("mstep").textContent = IV.steps;
+ if(IV.halted){
+  const out=tapeStr(IV.tape,"_");
+  const exp=(parseInt(IV.input,2)+1).toString(2);
+  const ok=out===exp;
+  $("mout").innerHTML = 'input <b>'+IV.input+'</b> = '+parseInt(IV.input,2)+' &nbsp;→&nbsp; output <b class="k">'+out+'</b> = '+parseInt(out,2)+' &nbsp;'
+   + '<span class="badge '+(ok?'pass':'failb')+'" style="padding:2px 7px;margin:0">'+(ok?'✓ successor':'✗ wrong')+'</span>'
+   + ' <span class="small">in '+IV.steps+' steps</span>';
+ } else {
+  $("mout").innerHTML='<span class="mut">running — press step or run…</span>';
+ }
+ const trs=document.querySelectorAll("#ruleTbl tr[data-k]");
+ for(let i=0;i<trs.length;i++) trs[i].classList.toggle("on", trs[i].getAttribute("data-k")===IV.lastKey);
+}
+
+function witness(){
+ const el=$("auditout");
+ const det=isDeterministic(buildTM(incRules()));
+ const inc=increment("0111"); const incOK=inc.out==="1000"&&inc.halted;
+ const bb=bb2run(); const bbOK=bb.steps===6&&bb.ones===4&&bb.halted;
+ const ok=det&&incOK&&bbOK;
+ el.innerHTML='<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — holds':'✗ WITNESS — broken')+'</span>'
+  +'<div class="small" style="margin-top:6px">δ is a function: <b style="color:'+(det?'var(--gr)':'var(--wall)')+'">'+det+'</b>'
+  +' &nbsp;·&nbsp; increment(0111)→<b style="color:'+(incOK?'var(--gr)':'var(--wall)')+'">'+inc.out+'</b>/1000'
+  +' &nbsp;·&nbsp; BB(2) <b style="color:'+(bbOK?'var(--gr)':'var(--wall)')+'">'+bb.steps+'</b>steps/6 · <b style="color:'+(bbOK?'var(--gr)':'var(--wall)')+'">'+bb.ones+'</b>ones/4'
+  +(!det?' &nbsp; — <span style="color:var(--wall)">red added a 2nd rule for (R,1)</span>':'')+'</div>';
+}
+
+function fillOut(){
+ const cs=[["0111","1000"],["1011","1100"],["111","1000"],["101","110"]];
+ let rows="";
+ for(let i=0;i<cs.length;i++){
+  const r=increment(cs[i][0]); const ok=r.out===cs[i][1];
+  rows+='<tr><td>'+cs[i][0]+'</td><td class="k">'+r.out+'</td><td>'+r.steps+'</td><td style="color:'+(ok?'var(--gr)':'var(--wall)')+'">'+(ok?'✓':'✗')+'</td></tr>';
+ }
+ const bb=bb2run();
+ $("outstats").innerHTML='<table><thead><tr><th>input</th><th>successor</th><th>steps</th><th>✓</th></tr></thead><tbody>'+rows+'</tbody></table>'
+  +'<p class="small" style="margin-top:7px">Constructed machine — the busy-beaver <b>BB(2)</b> (2 states, 2 symbols) on a blank tape: halts in exactly <b class="k">'+bb.steps+'</b> steps leaving <b class="k">'+bb.ones+'</b> ones — the proven champion (Σ(2)=4, S(2)=6, Radó 1962).</p>';
+}
+
+// ---- boot ----
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("tampernote").textContent=DEF_TN;
+ fillOut();
+ ivReset("0111");
+ $("bStep").addEventListener("click",ivStep);
+ $("bRun").addEventListener("click",ivRun);
+ $("bReset").addEventListener("click",()=>{ let s=($("inp").value||"").replace(/[^01]/g,""); if(!s)s="0"; $("inp").value=s; ivReset(s); });
+ $("inp").addEventListener("change",()=>{ let s=($("inp").value||"").replace(/[^01]/g,""); if(!s)s="0"; $("inp").value=s; ivReset(s); });
+ const pres=document.querySelectorAll("[data-pre]");
+ for(let i=0;i<pres.length;i++) pres[i].addEventListener("click",function(){ const v=this.getAttribute("data-pre"); $("inp").value=v; ivReset(v); });
+ $("bRand").addEventListener("click",()=>{ const n=3+((rnd()*4)|0); let s=""; for(let i=0;i<n;i++) s+=(rnd()<0.5?"0":"1"); if(s.length>1&&s[0]==="0") s="1"+s.slice(1); $("inp").value=s; ivReset(s); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>2nd rule added for (R,1).</b> Two rows now share one key — δ is no longer a function, so this is no longer a deterministic machine. The engine limps on by taking the first row, but the witness (window 7) recomputed and went red. The attack is real; it is caught."; witness(); renderIV(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent=DEF_TN; witness(); renderIV(); });
+ witness();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Turing engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

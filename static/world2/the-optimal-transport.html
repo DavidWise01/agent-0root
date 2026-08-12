@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE OPTIMAL TRANSPORT</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --ground:#0c1a12;
+  --ground2:#0f2317;
+  --card:#12271a;
+  --card2:#16301f;
+  --ink:#e7f3ea;
+  --dim:#9fc0ab;
+  --line:#26492f;
+  --blue:#79b8ff;
+  --red:#ff7a7a;
+  --amber:#ffcf6a;
+  --green:#8ff0a4;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(200,162,255,.10), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(121,184,255,.07), transparent 55%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:26px 18px 60px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin:0 0 22px}
+h1{
+  font-size:31px;line-height:1.08;margin:0 0 8px;letter-spacing:.5px;
+  color:#fff;font-weight:800;
+}
+h1 .dot{color:var(--am)}
+.sub{max-width:760px;color:var(--dim);margin:0 0 12px;font-size:15px}
+.sub b{color:var(--ink)}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.6px;
+  padding:2px 7px;border-radius:5px;text-transform:uppercase;white-space:nowrap;
+  border:1px solid transparent;
+}
+.t-amber{background:rgba(255,207,106,.13);color:var(--amber);border-color:rgba(255,207,106,.35)}
+.t-lit{background:rgba(143,240,164,.14);color:var(--green);border-color:rgba(143,240,164,.4)}
+.t-in{background:rgba(121,184,255,.14);color:var(--blue);border-color:rgba(121,184,255,.4)}
+.t-out{background:rgba(200,162,255,.16);color:var(--am);border-color:rgba(200,162,255,.45)}
+.t-wall{background:rgba(255,122,122,.13);color:var(--red);border-color:rgba(255,122,122,.4)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:16px;align-items:start}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;
+  padding:7px 11px;border-radius:8px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);border-color:rgba(121,184,255,.4);background:rgba(121,184,255,.06)}
+.col.center .teamhdr{color:var(--am);border-color:rgba(200,162,255,.4);background:rgba(200,162,255,.06)}
+.col.red .teamhdr{color:var(--red);border-color:rgba(255,122,122,.4);background:rgba(255,122,122,.06)}
+
+.win{
+  background:var(--card);border:1px solid var(--line);border-radius:11px;padding:13px 14px;
+  position:relative;
+}
+.win.panel{background:linear-gradient(180deg,var(--card2),var(--card));border-color:rgba(200,162,255,.32);box-shadow:0 0 0 1px rgba(200,162,255,.06),0 10px 30px rgba(0,0,0,.28)}
+.winhead{display:flex;align-items:center;gap:9px;margin:0 0 9px}
+.wn{
+  width:22px;height:22px;flex:0 0 22px;border-radius:6px;display:grid;place-items:center;
+  font-size:12px;font-weight:800;color:var(--ground);
+}
+.col.blue .wn{background:var(--blue)}
+.col.center .wn{background:var(--am)}
+.col.red .wn{background:var(--red)}
+.wtitle{font-size:13px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--ink)}
+.win p{margin:7px 0;color:var(--dim);font-size:13px}
+.win p b{color:var(--ink)}
+.win .k{color:var(--am);font-weight:700}
+.mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+
+.flow{height:20px;position:relative;margin:1px 0}
+.flow:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);
+  background:linear-gradient(180deg,var(--am),rgba(200,162,255,.15))}
+.flow:after{content:"▼";position:absolute;left:50%;bottom:-3px;transform:translateX(-50%);color:var(--am);font-size:11px}
+
+.eng{background:#0a180f;border:1px solid var(--line);border-radius:9px;padding:11px;margin-top:6px}
+.eng .row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed rgba(38,73,47,.6);font-size:12.5px}
+.eng .row:last-child{border-bottom:0}
+.eng .row .lab{color:var(--dim)}
+.eng .row .val{color:var(--ink);font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;text-align:right}
+.eng .val.ok{color:var(--green)}
+.eng .val.am{color:var(--am)}
+svg{display:block;width:100%;height:auto;margin:8px 0 2px;background:#0a180f;border:1px solid var(--line);border-radius:9px}
+
+.badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.5px;padding:5px 10px;border-radius:7px;margin-top:6px}
+.badge.lit{background:rgba(143,240,164,.14);color:var(--green);border:1px solid rgba(143,240,164,.45)}
+.badge.red{background:rgba(255,122,122,.16);color:var(--red);border:1px solid rgba(255,122,122,.5)}
+
+.wall-note{border-left:3px solid var(--red);padding-left:11px}
+.strike{text-decoration:line-through;color:var(--red);opacity:.85}
+.fix{color:var(--green)}
+button{
+  font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+  background:var(--card2);color:var(--ink);border:1px solid var(--line);
+  border-radius:8px;padding:8px 12px;margin:4px 6px 4px 0;
+}
+button:hover{border-color:var(--am)}
+button.warn{border-color:rgba(255,122,122,.5);color:var(--red)}
+button.warn:hover{background:rgba(255,122,122,.08)}
+
+#failb{display:none;background:rgba(255,122,122,.12);border:1px solid var(--red);color:var(--red);
+  padding:11px 13px;border-radius:9px;margin:14px 0;font-weight:700;font-size:13px}
+footer{margin:30px auto 0;max-width:1180px;color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+footer b{color:var(--ink)}
+.small{font-size:11.5px;color:var(--dim)}
+.plan{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--ink)}
+.plan .m{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>THE OPTIMAL TRANSPORT<span class="dot">.</span></h1>
+  <p class="sub">The cheapest way to move one pile of probability onto another. Between two discrete distributions the cost is the minimum over <b>coupling plans</b> whose rows sum to the source and columns to the target of <b>&sum; plan &times; distance</b>. On the line this collapses to a closed form: the <b>sorted matching</b>, the area between the inverse CDFs. Rendered, not quoted &mdash; the plan, its cost, and the 1&#8209;D formula are computed live.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    Monge, <i>M&eacute;moire sur la th&eacute;orie des d&eacute;blais et des remblais</i> (1781) &middot; Kantorovich, <i>On the translocation of masses</i> (1942) &middot; Villani, <i>Optimal Transport: Old and New</i> (Springer, 2009).
+    <span class="tag t-amber">amber</span> <span class="small">no stable arXiv id &mdash; cited by author / title / year.</span>
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ================= BLUE TEAM ================= -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="winhead"><span class="wn">3</span><span class="wtitle">The Model</span></div>
+      <p>Two probability piles on the line. Source <span class="k">p</span> = mass at positions with weights; target <span class="k">q</span> likewise. A <b>transport plan</b> &pi; is a nonnegative matrix: entry &pi;<sub>ij</sub> is mass shipped from p&#8209;atom&nbsp;<i>i</i> to q&#8209;atom&nbsp;<i>j</i>.</p>
+      <p>Feasible means <b>row&nbsp;sums = p</b> and <b>column&nbsp;sums = q</b> &mdash; you neither create nor destroy mass. The cost of &pi; is &sum;<sub>ij</sub> &pi;<sub>ij</sub>&middot;|x<sub>i</sub>&minus;y<sub>j</sub>|. The OT distance <b>W<sub>1</sub></b> is the minimum over all feasible &pi;.</p>
+      <p class="small">On the line, Monge's original guess is right: the optimum is the <b>monotone</b> coupling &mdash; ship in sorted order, low&#8209;to&#8209;low.</p>
+    </div>
+
+    <div class="win">
+      <div class="winhead"><span class="wn">5</span><span class="wtitle">The Lineage</span></div>
+      <p>W<sub>1</sub> is <b>distance between distributions as physical mass movement</b> &mdash; the earth&#8209;mover's distance. It is the metric a <span class="k">WGAN</span> descends and the geometry <span class="k">the&#8209;diffusion&#8209;model</span> flows along when it carries noise onto data.</p>
+      <p class="small">Neighbour sphere: <b>the&#8209;diffusion&#8209;model</b> &mdash; a diffusion is a transport map built one small optimal step at a time; here we hold still and measure the single cheapest jump.</p>
+    </div>
+
+    <div class="win">
+      <div class="winhead"><span class="wn">7</span><span class="wtitle">The Witness</span></div>
+      <p>Live re&#8209;check of the <b>reported plan</b>: are its column sums actually the target marginal? A number alone cannot tell you &mdash; the witness re&#8209;runs feasibility every time.</p>
+      <div id="auditout" class="badge lit">witness idle</div>
+      <p class="small">Press <b>tamper</b> (window&nbsp;6) and watch this flip red: the reported cost is unchanged, but it is no longer the cost of a transport.</p>
+    </div>
+  </div>
+
+  <!-- ================= CENTER ================= -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="winhead"><span class="wn">4</span><span class="wtitle">Data In</span><span class="tag t-in" style="margin-left:auto">in &darr;</span></div>
+      <p class="small">Two constructed distributions with known atoms &mdash; every quantity below is closed&#8209;form.</p>
+      <div class="eng" id="datain"></div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win panel">
+      <div class="winhead"><span class="wn">0</span><span class="wtitle">The Panel</span><span class="tag t-lit" style="margin-left:auto">lit</span></div>
+      <p class="small">Three independent computations of the same number: the <b>primal</b> monotone coupling, the <b>closed form</b> &int;|F<sub>p</sub>&minus;F<sub>q</sub>| dx, and the <b>Kantorovich dual</b> over 1&#8209;Lipschitz potentials.</p>
+      <svg id="plot" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="plan" id="planout"></div>
+      <div class="eng" id="engout"></div>
+    </div>
+
+    <div class="flow"></div>
+
+    <div class="win">
+      <div class="winhead"><span class="wn">8</span><span class="wtitle">Data Out</span><span class="tag t-out" style="margin-left:auto">out &darr;</span></div>
+      <p>Proven result: the OT distance <b>W<sub>1</sub>(p,q)</b> equals the sorted&#8209;matching area, and primal = closed&#8209;form = dual to machine precision.</p>
+      <div id="litbadge" class="badge lit">booting&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ================= RED TEAM ================= -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="winhead"><span class="wn">1</span><span class="wtitle">The Adversary</span><span class="tag t-wall" style="margin-left:auto">wall</span></div>
+      <div class="wall-note">
+        <p><b>The line is a mercy.</b> The sorted&#8209;matching closed form is <i>only</i> 1&#8209;D. In d &ge; 2 there is no sorting; the plan is a genuine linear program and the map (Brenier) is the gradient of a convex potential you must actually solve for.</p>
+        <p><b>Cost matters.</b> W<sub>1</sub> uses |x&minus;y|. Squared cost gives W<sub>2</sub>, a different geometry; the monotone map is optimal for any convex ground cost on the line, but not for non&#8209;convex costs.</p>
+        <p><b>Curse of dimension.</b> Empirical W<sub>1</sub> from n samples converges like n<sup>&minus;1/d</sup> &mdash; useless estimates in high d without entropic regularization or slicing.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="winhead"><span class="wn">2</span><span class="wtitle">The Graveyard</span></div>
+      <p class="strike">"W<sub>1</sub> = &sum;|p<sub>i</sub>&minus;q<sub>i</sub>| &mdash; just compare the weights."</p>
+      <p class="fix">&rarr; No. That is total&#8209;variation / L<sup>1</sup> on weights and <b>ignores geometry</b>. OT charges for <i>distance moved</i>; TV charges 1 for any move. They disagree the moment atoms sit at different places.</p>
+      <p class="strike">"Any plan with the right cost is a transport."</p>
+      <p class="fix">&rarr; No &mdash; see window&nbsp;6. A plan is a transport only if <b>both</b> marginals match. A cheap infeasible matrix is a fraud, not a coupling.</p>
+      <p class="strike">"The Monge map always exists."</p>
+      <p class="fix">&rarr; <span class="tag t-amber">amber</span> Monge's formulation can be infeasible (splitting an atom). Kantorovich's <i>relaxation</i> to plans always has a minimiser; that is why the LP form is the honest one.</p>
+    </div>
+
+    <div class="win">
+      <div class="winhead"><span class="wn">6</span><span class="wtitle">The Tamper</span></div>
+      <p>The disclosed planted void: report a plan whose <b>column sums do not match the target</b>, yet quote its cost as the OT distance. The reported number looks fine; the plan is not a transport at all.</p>
+      <button id="tamper" class="warn">tamper &middot; break column sums</button>
+      <button id="restore">restore</button>
+      <p class="small">The witness (window&nbsp;7) re&#8209;runs marginal feasibility and catches it live. <code>selfcheck()</code> plants and clears this same void at boot.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <b>THE OPTIMAL TRANSPORT</b> &mdash; World II &middot; THE FOLD. The engine solves the monotone coupling, integrates the CDF gap, and constructs the dual potential live; a fail&#8209;loud <code>selfcheck()</code> asserts feasibility, primal=closed&#8209;form=dual, the metric axioms, and detects the planted infeasible coupling &mdash; then restores it. Built by <b>David Lee Wise (ROOT0)</b> with AVAN.
+</footer>
+</div>
+
+<script>
+// ======== OPTIMAL TRANSPORT ENGINE (pure logic, node-extractable) ========
+var TAMPER = false;
+
+function mulberry32(a){
+  return function(){
+    a|=0; a=(a+0x6D2B79F5)|0;
+    var t=Math.imul(a^(a>>>15),1|a);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+
+function normalize(d){
+  var s=0,i; for(i=0;i<d.length;i++) s+=d[i].w;
+  var out=[]; for(i=0;i<d.length;i++) out.push({x:d[i].x,w:d[i].w/s});
+  return out;
+}
+
+// right-continuous CDF: P(X <= x)
+function cdf(d,x){
+  var s=0,i; for(i=0;i<d.length;i++){ if(d[i].x <= x+1e-12) s+=d[i].w; }
+  return s;
+}
+
+// sorted unique support positions of p union q
+function allPos(p,q){
+  var set={},i,arr=[];
+  for(i=0;i<p.length;i++) set[p[i].x]=1;
+  for(i=0;i<q.length;i++) set[q[i].x]=1;
+  for(var k in set) arr.push(parseFloat(k));
+  arr.sort(function(a,b){return a-b;});
+  return arr;
+}
+
+// PRIMAL: monotone (sorted) coupling. Optimal in 1-D for cost |x-y|.
+// Returns the plan (with i,j support indices) and its total cost.
+function sweep(p,q){
+  var ps=p.map(function(a,i){return {x:a.x,w:a.w,i:i};}).sort(function(a,b){return a.x-b.x;});
+  var qs=q.map(function(a,j){return {x:a.x,w:a.w,j:j};}).sort(function(a,b){return a.x-b.x;});
+  var i=0,j=0,ri=ps.length?ps[0].w:0,rj=qs.length?qs[0].w:0,cost=0,plan=[],EPS=1e-12;
+  while(i<ps.length && j<qs.length){
+    var m=Math.min(ri,rj);
+    if(m>0){
+      cost+=m*Math.abs(ps[i].x-qs[j].x);
+      plan.push({i:ps[i].i,j:qs[j].j,from:ps[i].x,to:qs[j].x,mass:m});
+    }
+    ri-=m; rj-=m;
+    if(ri<=EPS){ i++; if(i<ps.length) ri=ps[i].w; }
+    if(rj<=EPS){ j++; if(j<qs.length) rj=qs[j].w; }
+  }
+  return {cost:cost,plan:plan};
+}
+
+// CLOSED FORM: W1 = integral |F_p(x) - F_q(x)| dx (area between the CDFs).
+function cdfW1(p,q){
+  var xs=allPos(p,q),t=0,k;
+  for(k=0;k<xs.length-1;k++){
+    t+=Math.abs(cdf(p,xs[k])-cdf(q,xs[k]))*(xs[k+1]-xs[k]);
+  }
+  return t;
+}
+
+// DUAL: Kantorovich-Rubinstein. Optimal 1-Lipschitz potential f has slope
+// sign(F_q - F_p); dual value = E_p[f] - E_q[f], which equals cdfW1 exactly.
+function dualW1(p,q){
+  var xs=allPos(p,q),f={},k;
+  f[xs[0]]=0;
+  for(k=0;k<xs.length-1;k++){
+    var slope=Math.sign(cdf(q,xs[k])-cdf(p,xs[k]));
+    f[xs[k+1]]=f[xs[k]]+slope*(xs[k+1]-xs[k]);
+  }
+  var ep=0,eq=0,i;
+  for(i=0;i<p.length;i++) ep+=p[i].w*f[p[i].x];
+  for(i=0;i<q.length;i++) eq+=q[i].w*f[q[i].x];
+  return ep-eq;
+}
+
+// feasibility of a reported plan against marginals p,q (EXACT check)
+function feasible(p,q,plan){
+  var row=[],col=[],i;
+  for(i=0;i<p.length;i++) row.push(0);
+  for(i=0;i<q.length;i++) col.push(0);
+  for(i=0;i<plan.length;i++){ row[plan[i].i]+=plan[i].mass; col[plan[i].j]+=plan[i].mass; }
+  var rowsOK=true,colsOK=true;
+  for(i=0;i<p.length;i++) if(Math.abs(row[i]-p[i].w)>1e-9) rowsOK=false;
+  for(i=0;i<q.length;i++) if(Math.abs(col[i]-q[i].w)>1e-9) colsOK=false;
+  return {rowsOK:rowsOK,colsOK:colsOK,ok:rowsOK&&colsOK,row:row,col:col};
+}
+
+// the REPORTED plan the UI quotes. When TAMPER, corrupt a column so the
+// coupling is infeasible (column sums != target) while still quoting the cost.
+function buildReportedPlan(p,q){
+  var s=sweep(p,q);
+  var plan=s.plan.map(function(e){return {i:e.i,j:e.j,from:e.from,to:e.to,mass:e.mass};});
+  if(TAMPER && plan.length>0 && q.length>1){
+    var last=plan[plan.length-1];
+    last.j=(last.j===0)?1:0;              // ship to the WRONG target atom
+    last.to=q[last.j].x;
+  }
+  return {cost:s.cost,plan:plan};
+}
+
+// fixed-seed random discrete distribution on integer positions 0..9
+function randDist(rng){
+  var n=2+Math.floor(rng()*3),i,d=[];
+  for(i=0;i<n;i++) d.push({x:Math.floor(rng()*10),w:0.05+rng()});
+  return normalize(d);
+}
+
+// ======== FAIL-LOUD SELF CHECK (throws on any violation; returns true) ========
+function selfcheck(){
+  var EPS=1e-9;
+  var p=normalize([{x:0,w:0.5},{x:2,w:0.5}]);
+  var q=normalize([{x:1,w:0.5},{x:4,w:0.5}]);
+
+  // 1. the monotone plan is a feasible transport
+  var sp=sweep(p,q);
+  if(!feasible(p,q,sp.plan).ok) throw new Error("monotone plan infeasible");
+
+  // 2. primal cost == closed-form area, and equals the known value 1.5
+  var cf=cdfW1(p,q);
+  if(Math.abs(sp.cost-cf)>EPS) throw new Error("primal != closed form");
+  if(Math.abs(cf-1.5)>EPS) throw new Error("demo W1 != 1.5");
+
+  // 3. metric axioms on constructed atoms
+  if(Math.abs(cdfW1(p,p))>EPS) throw new Error("W1(p,p) != 0");
+  if(Math.abs(cdfW1(p,q)-cdfW1(q,p))>EPS) throw new Error("W1 not symmetric");
+  var r=normalize([{x:0,w:1}]);
+  if(cdfW1(p,r) > cdfW1(p,q)+cdfW1(q,r)+EPS) throw new Error("triangle violated");
+
+  // 4. Kantorovich duality: primal min == dual max
+  if(Math.abs(dualW1(p,q)-cf)>1e-6) throw new Error("duality gap");
+
+  // 5. fixed-seed stress: three formulas agree + metric holds on random triples
+  var rng=mulberry32(0xC8A2FF);
+  for(var t=0;t<400;t++){
+    var a=randDist(rng),b=randDist(rng),c=randDist(rng);
+    var s=sweep(a,b).cost, cc=cdfW1(a,b), dd=dualW1(a,b);
+    if(Math.abs(s-cc)>1e-9) throw new Error("rand primal != closed form");
+    if(Math.abs(dd-cc)>1e-6) throw new Error("rand dual != closed form");
+    if(Math.abs(cdfW1(a,a))>1e-9) throw new Error("rand identity");
+    if(Math.abs(cdfW1(a,b)-cdfW1(b,a))>1e-9) throw new Error("rand symmetry");
+    if(cdfW1(a,c) > cdfW1(a,b)+cdfW1(b,c)+1e-9) throw new Error("rand triangle");
+  }
+
+  // 6. planted void: an infeasible coupling reported as OT must be caught,
+  //    while its quoted cost is unchanged (a number cannot self-certify).
+  var saved=TAMPER;
+  TAMPER=true;
+  var bad=buildReportedPlan(p,q);
+  if(Math.abs(bad.cost-cf)>EPS) throw new Error("tamper should not change the quoted cost");
+  if(feasible(p,q,bad.plan).colsOK) throw new Error("tamper not detected: columns still match");
+  TAMPER=saved;
+  if(!feasible(p,q,buildReportedPlan(p,q).plan).ok) throw new Error("restore failed");
+
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var P=normalize([{x:0,w:0.5},{x:2,w:0.5}]);
+  var Q=normalize([{x:1,w:0.5},{x:4,w:0.5}]);
+
+  function fmt(d){ return d.map(function(a){return "("+a.x+", "+a.w.toFixed(2)+")";}).join("  "); }
+
+  function drawPlot(){
+    var W=300,H=150,padL=30,padB=22,padT=10,padR=10;
+    var xmin=0,xmax=5,pw=W-padL-padR,ph=H-padB-padT;
+    function sx(x){ return padL+(x-xmin)/(xmax-xmin)*pw; }
+    function sy(f){ return padT+(1-f)*ph; }
+    var svg="";
+    // axes
+    svg+='<line x1="'+padL+'" y1="'+sy(0)+'" x2="'+(W-padR)+'" y2="'+sy(0)+'" stroke="#26492f"/>';
+    svg+='<line x1="'+padL+'" y1="'+sy(0)+'" x2="'+padL+'" y2="'+sy(1)+'" stroke="#26492f"/>';
+    svg+='<text x="'+(padL-6)+'" y="'+(sy(1)+3)+'" fill="#9fc0ab" font-size="8" text-anchor="end">1</text>';
+    svg+='<text x="'+(padL-6)+'" y="'+(sy(0)+3)+'" fill="#9fc0ab" font-size="8" text-anchor="end">0</text>';
+    // shaded gap = W1 area, sampled densely
+    var N=120,k;
+    for(k=0;k<N;k++){
+      var x=xmin+(k+0.5)/N*(xmax-xmin);
+      var fp=cdf(P,x),fq=cdf(Q,x);
+      if(Math.abs(fp-fq)>1e-9){
+        svg+='<line x1="'+sx(x).toFixed(2)+'" y1="'+sy(fp).toFixed(2)+'" x2="'+sx(x).toFixed(2)+'" y2="'+sy(fq).toFixed(2)+'" stroke="rgba(200,162,255,.22)" stroke-width="'+(pw/N).toFixed(2)+'"/>';
+      }
+    }
+    // step curves
+    function step(d,color){
+      var pts="",prev=0,x;
+      for(x=xmin;x<=xmax+1e-9;x+=(xmax-xmin)/240){
+        var f=cdf(d,x);
+        pts+=sx(x).toFixed(2)+","+sy(f).toFixed(2)+" ";
+      }
+      return '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.6"/>';
+    }
+    svg+=step(P,"#c8a2ff");
+    svg+=step(Q,"#79b8ff");
+    svg+='<text x="'+(W-padR)+'" y="'+(padT+8)+'" fill="#c8a2ff" font-size="8" text-anchor="end">F_p</text>';
+    svg+='<text x="'+(W-padR)+'" y="'+(padT+18)+'" fill="#79b8ff" font-size="8" text-anchor="end">F_q</text>';
+    document.getElementById("plot").innerHTML=svg;
+  }
+
+  function render(){
+    document.getElementById("datain").innerHTML=
+      '<div class="row"><span class="lab">source p</span><span class="val am">'+fmt(P)+'</span></div>'+
+      '<div class="row"><span class="lab">target q</span><span class="val am">'+fmt(Q)+'</span></div>'+
+      '<div class="row"><span class="lab">ground cost</span><span class="val">|x &minus; y|</span></div>';
+
+    var rep=buildReportedPlan(P,Q);
+    var cf=cdfW1(P,Q), du=dualW1(P,Q), feas=feasible(P,Q,rep.plan);
+
+    var planHTML="reported plan &pi;:<br>";
+    rep.plan.forEach(function(e){
+      planHTML+='&nbsp;&nbsp;<span class="m">'+e.mass.toFixed(2)+'</span> : x='+e.from+' &rarr; y='+e.to+'<br>';
+    });
+    planHTML+='col sums = ['+feas.col.map(function(v){return v.toFixed(2);}).join(", ")+']'+
+      (feas.colsOK?' <span style="color:var(--green)">= target &check;</span>':' <span style="color:var(--red)">&ne; target &#10007; (not a transport)</span>');
+    document.getElementById("planout").innerHTML=planHTML;
+
+    document.getElementById("engout").innerHTML=
+      '<div class="row"><span class="lab">primal &mdash; monotone coupling</span><span class="val ok">'+rep.cost.toFixed(9)+'</span></div>'+
+      '<div class="row"><span class="lab">closed form &mdash; &int;|F_p&minus;F_q|dx</span><span class="val ok">'+cf.toFixed(9)+'</span></div>'+
+      '<div class="row"><span class="lab">dual &mdash; 1&#8209;Lipschitz potential</span><span class="val ok">'+du.toFixed(9)+'</span></div>'+
+      '<div class="row"><span class="lab">agreement</span><span class="val '+((Math.abs(rep.cost-cf)<1e-6&&Math.abs(du-cf)<1e-6)?'ok">primal = closed = dual':'am">MISMATCH')+'</span></div>';
+
+    witness();
+  }
+
+  function witness(){
+    var rep=buildReportedPlan(P,Q);
+    var f=feasible(P,Q,rep.plan);
+    var el=document.getElementById("auditout");
+    if(f.ok){
+      el.className="badge lit";
+      el.innerHTML="witness &check; reported plan is a valid transport &middot; W&#8321;="+rep.cost.toFixed(3);
+    }else{
+      el.className="badge red";
+      el.innerHTML="witness &#10007; column sums &ne; target &mdash; quoted cost "+rep.cost.toFixed(3)+" is NOT a transport";
+    }
+  }
+
+  // boot: fail-loud
+  try{
+    var ok=selfcheck();
+    if(ok!==true) throw new Error("selfcheck did not return true");
+    drawPlot();
+    render();
+    var lb=document.getElementById("litbadge");
+    lb.className="badge lit";
+    lb.innerHTML="LIT &middot; W&#8321;(p,q)="+cdfW1(P,Q).toFixed(3)+" &middot; primal = closed&#8209;form = dual, metric verified";
+  }catch(e){
+    var fb=document.getElementById("failb");
+    fb.style.display="block";
+    fb.textContent="SELFCHECK FAILED: "+e.message;
+    var lb2=document.getElementById("litbadge");
+    if(lb2){ lb2.className="badge red"; lb2.textContent="DEAD — selfcheck threw"; }
+    throw e;
+  }
+
+  document.getElementById("tamper").addEventListener("click",function(){ TAMPER=true; render(); });
+  document.getElementById("restore").addEventListener("click",function(){ TAMPER=false; render(); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE HISTOGRAM OF ORIENTED GRADIENTS · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff7a7a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,122,122,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,122,122,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,122,122,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;height:22px;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.canvas-wrap{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;}
+canvas{background:#050a06;border:1px solid var(--line);border-radius:5px;image-rendering:pixelated;}
+.verdict{font-size:17px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.mono{color:var(--gr);font-weight:700;}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE HISTOGRAM OF ORIENTED GRADIENTS</h1>
+ <p class="sub">Describe a shape by the histogram of its edge directions &mdash; and make it survive a change of light. Per cell, gradient <b>orientations</b> (0&ndash;180&deg;, unsigned) are binned <b>weighted by magnitude</b>; overlapping blocks are L2-normalized so a contrast change cancels; the block vectors concatenate into one descriptor. Down the center, data flows: pixels go <b style="color:var(--cy)">in</b>, the engine bins and normalizes, the descriptor comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Dalal &amp; Triggs, <i>Histograms of Oriented Gradients for Human Detection</i>, CVPR 2005, pp.886&ndash;893 &mdash; DOI <a href="https://doi.org/10.1109/CVPR.2005.177">10.1109/CVPR.2005.177</a> (INRIA Rh&ocirc;ne-Alpes). Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">&#9639; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL &mdash; bin, weight, normalize</h2>
+   <p>Correctness is not memorized; it falls out of four operations:</p>
+   <p><b class="k">G1</b> gradient at each pixel by centered differences &rarr; magnitude <b>m</b> and orientation <b>&theta;</b>. <b class="k">G2</b> orientation folded to <b>unsigned</b> [0,180&deg;): direction and its reverse are the same edge. <b class="k">G3</b> per cell, deposit each pixel's <b>m</b> into the bin of its <b>&theta;</b> &mdash; a magnitude-weighted histogram. <b class="k">G4</b> group cells into a block and <b>L2-normalize</b>: the descriptor now ignores absolute contrast.</p>
+   <p class="small">Live histogram of the panel's centre cell (9 bins &times; 20&deg;):</p>
+   <table id="binTbl"><thead><tr><th>bin</th><th>range</th><th>weight</th></tr></thead><tbody id="binBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE &mdash; gradients, binned <span class="tag t-amber">AVAN</span></h2>
+   <p>A shape as a <b>histogram of edge directions</b> &mdash; Dalal &amp; Triggs, 2005. The gradients are exactly the <a href="https://davidwise01.github.io/the-sobel/" style="color:var(--cy)">the-sobel</a> operator's <b style="color:var(--am)">g<sub>x</sub>, g<sub>y</sub></b>, only now <b>binned by angle</b> and pooled per cell instead of thresholded into an edge map.</p>
+   <p>This descriptor &mdash; fed to a linear SVM &mdash; was the state of the art in <b>pedestrian detection</b> for the decade before deep nets. Each sphere is the next one's premise: edges become orientation statistics, statistics become a detector.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run the descriptor on a fixed seeded image and its contrast-scaled copy, and confirm the normalized vectors are <b>identical</b> to 1e-9. If red skips normalization, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN &mdash; pixels to gradients <span class="tag t-in">in &#8595;</span></h2>
+   <p>An intensity image goes in. At each pixel the engine takes a <b>centered difference</b> &mdash; <b class="k">g<sub>x</sub></b> across, <b class="k">g<sub>y</sub></b> down &mdash; giving a gradient vector. From it: magnitude <b>m = &radic;(g<sub>x</sub>&sup2;+g<sub>y</sub>&sup2;)</b> (how sharp the edge) and orientation <b>&theta; = atan2(g<sub>y</sub>,g<sub>x</sub>) mod 180&deg;</b> (which way it runs).</p>
+   <p class="small">A flat region gives <b>m=0</b> and votes for nothing. Only edges speak &mdash; and each speaks in proportion to its strength. That vector field is what the panel below pools into histograms.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the pixels into the engine &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL &mdash; the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>pattern</label>
+      <select id="pat"><option value="grating">oriented grating</option><option value="texture">seeded texture</option><option value="disc">disc / radial</option></select></div>
+     <div class="row"><label>edge angle</label><input type="range" id="ang" min="0" max="170" value="30" step="10" style="flex:1"><span id="angv" class="mono">30&deg;</span></div>
+     <div class="row"><label>contrast &times;</label><input type="range" id="con" min="0.2" max="3" value="1" step="0.1" style="flex:1"><span id="conv" class="mono">1.0</span></div>
+     <p class="small" id="readmode">Move <b>contrast</b>: the raw histograms scale, but the block-normalized descriptor holds still. Move <b>angle</b>: the histogram peak walks across the bins.</p>
+     <div class="row"><button id="rand">&#8635; random</button><button id="reset">&#8594; 30&deg; ×1</button></div>
+    </div>
+    <div class="readout">
+     <div class="canvas-wrap">
+       <div><canvas id="imgC" width="128" height="128" style="width:128px;height:128px"></canvas><div class="small" style="text-align:center">image + per-cell &theta;</div></div>
+       <div><canvas id="hisC" width="150" height="90" style="width:150px;height:90px"></canvas><div class="small" style="text-align:center">centre-cell histogram</div></div>
+     </div>
+     <div class="row" style="margin-top:8px"><canvas id="desC" width="300" height="46" style="width:100%;max-width:300px;height:46px"></canvas></div>
+     <div class="small">block-normalized descriptor (144-dim)</div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Everything shown is computed live from the four operations &mdash; no bin is looked up, no descriptor cached.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits a descriptor &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT &mdash; the descriptor <span class="tag t-out">out &#8595;</span></h2>
+   <p>What the machine produces, proven: a <b class="k">144</b>-dim descriptor for a 32&times;32 image (<b>16 cells &times; 9 bins</b>), where every cell histogram <b>sums exactly</b> to that cell's total gradient magnitude, a known-angle edge lands in the <b>correct bin</b>, and the block-normalized vector is <b>invariant</b> to any positive contrast scale to 1e-9. The current form is above; the totals are the output.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms the invariance live; the red team (right) tries to make it drift.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9640;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> HOG is a <b>rigid template</b>. It fixes a cell grid over the window, so it does not model articulation, large pose change, or occlusion; it is not rotation-invariant, and detection needs an external image pyramid for scale. Learned features (R-CNN, 2014 onward) discover their own hierarchy end-to-end and dominate every HOG benchmark.</div>
+   <p class="small" style="margin-top:8px">Folding to unsigned 0&ndash;180&deg; also throws away gradient <i>sign</i> &mdash; dark-to-light and light-to-dark edges become the same &mdash; which helped pedestrians but loses information other classes need. HOG is not <i>the</i> descriptor; it is the proof that a shape can be written as an orientation histogram and searched.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"HOG is rotation-invariant."</s> <b>Cut.</b> Rotating the image shifts every orientation bin. HOG is invariant to <i>illumination / contrast</i> (via block normalization), not to rotation.</p>
+   <p class="grave"><s>"HOG is scale-invariant by itself."</s> <b>Cut.</b> The descriptor is computed at a fixed cell size; scale is handled outside, by scanning an image pyramid.</p>
+   <p class="grave"><s>"Gradients are binned signed, 0&ndash;360&deg;."</s> <b>Kept, corrected.</b> Dalal &amp; Triggs found <b>unsigned</b> 0&ndash;180&deg; with 9 bins best for people; signed bins helped some vehicle classes.</p>
+   <p class="grave"><s>"Block normalization is a nicety."</s> <b>Cut.</b> It is the whole robustness &mdash; drop it and contrast rescales the descriptor. The tamper below proves it.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER &mdash; break it</h2>
+   <p>The red team's move: <b>skip block normalization</b> &mdash; concatenate the raw cell histograms and ship those. Then a contrast change sails straight through into the descriptor. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; skip block-norm</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Skip the L2 step and multiplying the image contrast by a constant now scales the descriptor &mdash; the witness recomputes, sees the two copies disagree, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE HISTOGRAM OF ORIENTED GRADIENTS &mdash; World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (pixels <b style="color:var(--cy)">in</b> &rarr; bin + normalize &rarr; descriptor <b style="color:var(--gr)">out</b>). A runnable rendering of Dalal &amp; Triggs (CVPR 2005) &mdash; the engine is LIT (histogram bins sum exactly to cell magnitude, a known-angle edge hits the right bin, the block-normalized descriptor is contrast-invariant to 1e-9, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one rigid grid cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- HOG engine (pure; verified: 144-dim, contrast-invariant to 1e-9) ----
+const NBINS=9, BINW=180/NBINS;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function testImage(H,W,seed){const r=mulberry32(seed);const img=[];for(let y=0;y<H;y++){const row=[];for(let x=0;x<W;x++)row.push(r()*255);img.push(row);}return img;}
+function scaleImg(img,c){return img.map(row=>row.map(v=>v*c));}
+function gradients(img){const H=img.length,W=img[0].length;const gx=[],gy=[];for(let y=0;y<H;y++){gx.push(new Array(W).fill(0));gy.push(new Array(W).fill(0));}
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const xm=x>0?x-1:x,xp=x<W-1?x+1:x,ym=y>0?y-1:y,yp=y<H-1?y+1:y;
+  gx[y][x]=(img[y][xp]-img[y][xm])/((xp-xm)||1);gy[y][x]=(img[yp][x]-img[ym][x])/((yp-ym)||1);}
+ return {gx,gy};}
+function orient(gx,gy){let a=Math.atan2(gy,gx)*180/Math.PI;a=((a%180)+180)%180;return a;}
+function binOf(angle){let b=Math.floor(angle/BINW);if(b>=NBINS)b=NBINS-1;if(b<0)b=0;return b;}
+function cellHist(gx,gy,y0,x0,ch,cw){const h=new Array(NBINS).fill(0);
+ for(let y=y0;y<y0+ch;y++)for(let x=x0;x<x0+cw;x++){const m=Math.hypot(gx[y][x],gy[y][x]);if(m===0)continue;h[binOf(orient(gx[y][x],gy[y][x]))]+=m;}
+ return h;}
+function cells(img,CS){const g=gradients(img);const CH=Math.floor(img.length/CS),CW=Math.floor(img[0].length/CS);const grid=[];
+ for(let cy=0;cy<CH;cy++){const row=[];for(let cx=0;cx<CW;cx++)row.push(cellHist(g.gx,g.gy,cy*CS,cx*CS,CS,CS));grid.push(row);}return {grid,CH,CW};}
+function l2norm(v){let s=0;for(const x of v)s+=x*x;s=Math.sqrt(s);if(s===0)return v.slice();return v.map(x=>x/s);}
+function descriptor(img,CS,BS,doNorm){const g=cells(img,CS),CH=g.CH,CW=g.CW,grid=g.grid;const BH=Math.floor(CH/BS),BW=Math.floor(CW/BS);const out=[];
+ for(let by=0;by<BH;by++)for(let bx=0;bx<BW;bx++){let v=[];
+  for(let iy=0;iy<BS;iy++)for(let ix=0;ix<BS;ix++)v=v.concat(grid[by*BS+iy][bx*BS+ix]);
+  const nv=doNorm?l2norm(v):v;for(let i=0;i<nv.length;i++)out.push(nv[i]);}
+ return out;}
+let TAMPER=false;                 // when true, block normalization is skipped -> contrast invariance breaks
+function descr(img){return descriptor(img,4,2,!TAMPER);}
+// ---- fail-loud self-check (runs untampered, then proves the tamper is caught) ----
+function selfcheck(){
+ const save=TAMPER; TAMPER=false;
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const CS=4,BS=2,H=16,W=16;
+ const img=testImage(H,W,12345), g=gradients(img);
+ // 1. a cell histogram bins by angle weighted by magnitude, and its bins sum EXACTLY to the cell's total gradient magnitude
+ const hc=cellHist(g.gx,g.gy,0,0,CS,CS);
+ let binsum=0; for(let i=0;i<hc.length;i++)binsum+=hc[i];
+ let magsum=0; for(let y=0;y<CS;y++)for(let x=0;x<CS;x++)magsum+=Math.hypot(g.gx[y][x],g.gy[y][x]);
+ t(Math.abs(binsum-magsum)<1e-9,"cell histogram bins must sum to total gradient magnitude");
+ // 2. a constructed edge at a KNOWN angle deposits its weight in the CORRECT bin
+ const r90=[]; for(let y=0;y<8;y++){const row=[];for(let x=0;x<8;x++)row.push(0*x+1*y);r90.push(row);} // img=y -> gradient (0,1) -> 90deg
+ const g2=gradients(r90), rh=cellHist(g2.gx,g2.gy,2,2,4,4), e90=binOf(orient(0,1));
+ t(e90===4,"90-degree edge must map to bin 4");
+ for(let b=0;b<NBINS;b++){ if(b===e90) t(rh[b]>0,"edge weight must land in bin "+e90); else t(rh[b]===0,"no weight outside the correct bin"); }
+ const r45=[]; for(let y=0;y<8;y++){const row=[];for(let x=0;x<8;x++)row.push(1*x+1*y);r45.push(row);} // img=x+y -> gradient (1,1) -> 45deg
+ const g3=gradients(r45), h45=cellHist(g3.gx,g3.gy,2,2,4,4), b45=binOf(orient(1,1));
+ t(b45===2,"45-degree edge must map to bin 2");
+ for(let b=0;b<NBINS;b++){ if(b!==b45) t(h45[b]===0,"45-degree weight only in bin 2"); }
+ // 3. BLOCK NORMALIZATION makes the descriptor invariant to a global contrast scale (exact to 1e-9)
+ const c=7.3, d1=descriptor(img,CS,BS,true), d2=descriptor(scaleImg(img,c),CS,BS,true);
+ t(d1.length===d2.length,"descriptor lengths must match");
+ let md=0; for(let i=0;i<d1.length;i++)md=Math.max(md,Math.abs(d1[i]-d2[i]));
+ t(md<1e-9,"block-normalized descriptor must be invariant to positive contrast scaling");
+ // 4. descriptor length equals cells * bins (after block grouping)
+ const cg=cells(img,CS);
+ t(d1.length===cg.CH*cg.CW*NBINS,"descriptor length must equal cells*bins");
+ t(d1.length===144,"descriptor length must be 144 (16 cells x 9 bins)");
+ // 5. the disclosed planted void: SKIP block normalization and the same contrast scale now CHANGES the descriptor
+ TAMPER=true;
+ const e1=descr(img), e2=descr(scaleImg(img,c));
+ let tm=0; for(let i=0;i<e1.length;i++)tm=Math.max(tm,Math.abs(e1[i]-e2[i]));
+ t(tm>1e-6,"with block-normalization skipped, contrast scaling MUST change the descriptor");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const EH=32,EW=32,ECS=8,EBS=2;                 // 4x4 cells -> 144-dim, centre cell = (1,1)
+const RANGES=["0-20","20-40","40-60","60-80","80-100","100-120","120-140","140-160","160-180"];
+function buildImage(pattern,angle){
+ const th=angle*Math.PI/180, ca=Math.cos(th), sa=Math.sin(th), r=mulberry32(7), img=[];
+ for(let y=0;y<EH;y++){ const row=[]; for(let x=0;x<EW;x++){
+   let v=0;
+   if(pattern==="grating") v=127+100*Math.sin(2*Math.PI*(ca*x+sa*y)/6);
+   else if(pattern==="texture") v=r()*255;
+   else { const dx=x-15.5,dy=y-15.5; v=(dx*dx+dy*dy<95)?225:35; }
+   row.push(v);
+ } img.push(row); }
+ return img;
+}
+function drawImage(img){
+ const cv=$("imgC"), ctx=cv.getContext("2d"), px=cv.width/EW;
+ let lo=Infinity,hi=-Infinity; for(let y=0;y<EH;y++)for(let x=0;x<EW;x++){const v=img[y][x];if(v<lo)lo=v;if(v>hi)hi=v;}
+ const sp=(hi-lo)||1;
+ for(let y=0;y<EH;y++)for(let x=0;x<EW;x++){ const g=Math.round(255*(img[y][x]-lo)/sp); ctx.fillStyle="rgb("+g+","+g+","+g+")"; ctx.fillRect(x*px,y*px,px,px); }
+ // per-cell dominant orientation
+ const gr=gradients(img), CH=EH/ECS, CW=EW/ECS;
+ ctx.strokeStyle="#ff7a7a"; ctx.lineWidth=1.4;
+ for(let cy=0;cy<CH;cy++)for(let cx=0;cx<CW;cx++){
+   const h=cellHist(gr.gx,gr.gy,cy*ECS,cx*ECS,ECS,ECS);
+   let bi=0,bv=-1; for(let b=0;b<NBINS;b++)if(h[b]>bv){bv=h[b];bi=b;}
+   if(bv<=0)continue;
+   const ang=(bi+0.5)*BINW*Math.PI/180, mx=(cx+0.5)*ECS*px, my=(cy+0.5)*ECS*px, L=ECS*px*0.42;
+   ctx.beginPath(); ctx.moveTo(mx-Math.cos(ang)*L,my-Math.sin(ang)*L); ctx.lineTo(mx+Math.cos(ang)*L,my+Math.sin(ang)*L); ctx.stroke();
+ }
+}
+function drawHist(h){
+ const cv=$("hisC"), ctx=cv.getContext("2d"); ctx.clearRect(0,0,cv.width,cv.height);
+ let mx=0; for(let i=0;i<h.length;i++)if(h[i]>mx)mx=h[i]; mx=mx||1;
+ const bw=cv.width/NBINS;
+ for(let i=0;i<NBINS;i++){ const bh=(cv.height-6)*h[i]/mx; ctx.fillStyle="#ff7a7a"; ctx.fillRect(i*bw+1,cv.height-bh,bw-2,bh); }
+}
+function drawDesc(d){
+ const cv=$("desC"), ctx=cv.getContext("2d"); ctx.clearRect(0,0,cv.width,cv.height);
+ let mx=0; for(let i=0;i<d.length;i++)if(Math.abs(d[i])>mx)mx=Math.abs(d[i]); mx=mx||1;
+ const bw=cv.width/d.length;
+ for(let i=0;i<d.length;i++){ const bh=cv.height*Math.abs(d[i])/mx; ctx.fillStyle="#57e0d0"; ctx.fillRect(i*bw,cv.height-bh,Math.max(bw-0.3,0.6),bh); }
+}
+function eng(){
+ const pat=$("pat").value, angle=+$("ang").value, c=+$("con").value;
+ $("angv").textContent=angle+"°"; $("conv").textContent=c.toFixed(1);
+ const base=buildImage(pat,angle), scaled=scaleImg(base,c);
+ const dRef=descriptor(base,ECS,EBS,!TAMPER), dCur=descriptor(scaled,ECS,EBS,!TAMPER);
+ let md=0; for(let i=0;i<dRef.length;i++)md=Math.max(md,Math.abs(dRef[i]-dCur[i]));
+ const raw=descriptor(scaled,ECS,EBS,false); let rn=0; for(let i=0;i<raw.length;i++)rn+=raw[i]*raw[i]; rn=Math.sqrt(rn);
+ const gr=gradients(scaled), ch=cellHist(gr.gx,gr.gy,1*ECS,1*ECS,ECS,ECS);
+ drawImage(scaled); drawHist(ch); drawDesc(dCur);
+ // centre-cell bin table
+ $("binBody").innerHTML=ch.map((w,i)=>`<tr><td>${i}</td><td>${RANGES[i]}&deg;</td><td class="${w>0?'k':''}" style="color:${w>0?'var(--gr)':'var(--dim)'}">${w.toFixed(2)}</td></tr>`).join("");
+ const inv = md<1e-9;
+ $("verdict").textContent = inv? "CONTRAST-INVARIANT" : "DESCRIPTOR DRIFTS";
+ $("verdict").className="verdict "+(inv?"ok":"no");
+ $("reason").innerHTML = inv
+   ? `144-dim · raw block-norm &#8214;v&#8214; = <b class="mono">${rn.toFixed(2)}</b> (grows with contrast) &mdash; but normalized &Delta; vs &times;1 ref = <b class="mono">${md.toExponential(1)}</b>, unchanged.`
+   : `<b style="color:var(--wall)">normalization skipped</b> &mdash; normalized &Delta; vs &times;1 ref = <b class="mono">${md.toExponential(2)}</b>; contrast now leaks into the descriptor.`;
+}
+function audit(){
+ const el=$("auditout"), img=testImage(16,16,999), c=5.0;
+ const d1=descr(img), d2=descr(scaleImg(img,c));
+ let md=0; for(let i=0;i<d1.length;i++)md=Math.max(md,Math.abs(d1[i]-d2[i]));
+ const invariant = md<1e-9, lenOK = d1.length===144, ok = invariant && lenOK;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  + `<div class="small" style="margin-top:6px">len <b style="color:${lenOK?'var(--gr)':'var(--wall)'}">${d1.length}</b>/144 &nbsp;·&nbsp; contrast&times;5 &Delta; = <b style="color:${invariant?'var(--gr)':'var(--wall)'}">${md.toExponential(1)}</b> ${invariant?'&lt; 1e-9':'&mdash; leaked'}${TAMPER?' &nbsp; — <span style="color:var(--wall)">red skipped block-norm</span>':''}</div>`;
+}
+
+// ---- boot ----
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load — 144-dim, bins sum exact, contrast-invariant to 1e-9</span>';
+ ["pat","ang","con"].forEach(id=>$(id).addEventListener("input",()=>{eng();audit();}));
+ $("rand").addEventListener("click",()=>{ const ps=["grating","texture","disc"]; $("pat").value=ps[(Math.random()*3)|0]; $("ang").value=(((Math.random()*18)|0)*10); $("con").value=(0.3+Math.random()*2.6).toFixed(1); eng();audit(); });
+ $("reset").addEventListener("click",()=>{ $("pat").value="grating"; $("ang").value="30"; $("con").value="1"; eng();audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Block-norm skipped.</b> The raw histograms ship as the descriptor, so a contrast change now scales it &mdash; the witness (window 7) recomputed and went red. The attack is real; it is caught."; eng();audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Skip the L2 step and multiplying the image contrast by a constant now scales the descriptor — the witness recomputes, sees the two copies disagree, and turns red. Nothing is faked; the attack is real and it is caught."; eng();audit(); });
+ eng(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the HOG engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

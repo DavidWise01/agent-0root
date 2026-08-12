@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE FUNDAMENTAL MATRIX</title>
+<style>
+:root{
+  --am:#c8a2ff;
+  --ground:#08160e;
+  --ground2:#0b1d13;
+  --panel:#0e2418;
+  --ink:#dfeee4;
+  --dim:#8fb49e;
+  --line:#1c3a28;
+  --blue:#6fb4ff;
+  --bluebg:#0a1c2c;
+  --blueln:#173650;
+  --red:#ff8a8a;
+  --redbg:#2a1113;
+  --redln:#4c1f22;
+  --amber:#ffc65c;
+  --lit:#7dff9b;
+  --wall:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1100px 620px at 78% -8%, #103322 0%, rgba(16,51,34,0) 60%),
+    radial-gradient(900px 520px at 8% 108%, #0c2618 0%, rgba(12,38,24,0) 55%),
+    var(--ground);
+  color:var(--ink);
+  font:15px/1.55 "Iowan Old Style",Georgia,"Times New Roman",serif;
+  padding:26px 20px 60px;
+}
+.wrap{max-width:1200px;margin:0 auto}
+header{margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:16px}
+h1{
+  font:700 30px/1.1 "Iowan Old Style",Georgia,serif;
+  letter-spacing:.02em;margin:0 0 8px;
+  color:#fff;
+  text-shadow:0 0 24px rgba(200,162,255,.35);
+}
+h1 .accent{color:var(--am)}
+.sub{margin:0 0 10px;color:var(--dim);max-width:80ch;font-size:14.5px}
+.src{font:12.5px/1.5 ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;color:var(--dim)}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font:700 10.5px/1 ui-monospace,Menlo,Consolas,monospace;
+  letter-spacing:.09em;padding:3px 6px;border-radius:4px;vertical-align:middle;
+  border:1px solid transparent;text-transform:uppercase;
+}
+.t-amber{background:rgba(255,198,92,.12);color:var(--amber);border-color:rgba(255,198,92,.4)}
+.t-lit{background:rgba(125,255,155,.12);color:var(--lit);border-color:rgba(125,255,155,.4)}
+.t-in{background:rgba(111,180,255,.12);color:var(--blue);border-color:rgba(111,180,255,.4)}
+.t-out{background:rgba(125,255,155,.1);color:var(--lit);border-color:rgba(125,255,155,.35)}
+.t-wall{background:rgba(255,107,107,.12);color:var(--wall);border-color:rgba(255,107,107,.42)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.teamhdr{
+  font:700 12px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;
+  text-transform:uppercase;padding:8px 10px;border-radius:7px;border:1px solid var(--line);
+}
+.col.blue .teamhdr{color:var(--blue);background:var(--bluebg);border-color:var(--blueln)}
+.col.red .teamhdr{color:var(--red);background:var(--redbg);border-color:var(--redln)}
+.col.center .teamhdr{color:var(--am);background:rgba(200,162,255,.08);border-color:rgba(200,162,255,.3)}
+.teamhdr small{display:block;font-weight:400;letter-spacing:.03em;text-transform:none;color:var(--dim);margin-top:3px}
+
+.win{
+  position:relative;background:var(--ground2);border:1px solid var(--line);
+  border-radius:9px;padding:13px 13px 13px 14px;
+}
+.col.blue .win{border-left:3px solid var(--blueln)}
+.col.red .win{border-left:3px solid var(--redln)}
+.win.panel{background:var(--panel);border-color:rgba(200,162,255,.28);box-shadow:0 0 0 1px rgba(200,162,255,.05),0 8px 30px -18px rgba(200,162,255,.5)}
+.num{
+  position:absolute;top:-9px;right:-9px;width:24px;height:24px;border-radius:50%;
+  display:grid;place-items:center;font:700 12px/1 ui-monospace,Menlo,monospace;
+  background:var(--ground);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .num{color:var(--blue);border-color:var(--blueln)}
+.col.red .num{color:var(--red);border-color:var(--redln)}
+.col.center .num{color:var(--am);border-color:rgba(200,162,255,.4)}
+.win h3{margin:0 0 7px;font:700 13.5px/1.2 "Iowan Old Style",Georgia,serif;letter-spacing:.02em;color:#fff}
+.win h3 .k{font:700 10px/1 ui-monospace,Menlo,monospace;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+.win p{margin:6px 0;font-size:13px;color:var(--ink)}
+.win .muted{color:var(--dim);font-size:12.5px}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+.flow{display:flex;align-items:center;gap:8px;color:var(--am);font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;justify-content:center;padding:2px 0}
+.flow::before,.flow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(200,162,255,.5),transparent)}
+
+.wall-note{border-left:3px solid var(--wall);background:rgba(255,107,107,.05);padding:8px 10px;border-radius:5px;margin-top:6px}
+.grave{color:var(--dim);font-size:12.5px}
+.grave s{color:#c77;text-decoration-color:rgba(255,107,107,.7)}
+.grave .fix{color:var(--ink)}
+.grave li{margin:7px 0}
+
+.mat{display:inline-grid;grid-template-columns:repeat(3,1fr);gap:2px 10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+  border-left:2px solid var(--am);border-right:2px solid var(--am);padding:4px 10px;margin:6px 0;color:var(--ink)}
+.mat b{color:var(--am);font-weight:700}
+.kv{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--dim)}
+.kv b{color:var(--ink);font-weight:600}
+
+.badge{display:inline-flex;align-items:center;gap:7px;font:700 12px/1 ui-monospace,Menlo,monospace;padding:7px 10px;border-radius:6px;border:1px solid;margin-top:4px}
+.badge.ok{color:var(--lit);border-color:rgba(125,255,155,.45);background:rgba(125,255,155,.08)}
+.badge.bad{color:var(--wall);border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.09)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+
+button{
+  font:700 12px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;
+  background:var(--redbg);color:var(--red);border:1px solid var(--redln);
+  padding:8px 12px;border-radius:6px;cursor:pointer;margin:4px 6px 4px 0;
+}
+button:hover{background:rgba(255,107,107,.16)}
+button.restore{background:rgba(125,255,155,.08);color:var(--lit);border-color:rgba(125,255,155,.4)}
+button.restore:hover{background:rgba(125,255,155,.16)}
+
+canvas{width:100%;height:auto;display:block;background:#061009;border:1px solid var(--line);border-radius:7px;margin-top:8px}
+.cap{font:11px/1.4 ui-monospace,Menlo,monospace;color:var(--dim);margin-top:5px}
+
+#failb{display:none;margin:14px 0;padding:12px 14px;border:1px solid var(--wall);background:rgba(255,107,107,.1);color:var(--wall);border-radius:8px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+footer{margin-top:26px;border-top:1px solid var(--line);padding-top:14px;color:var(--dim);font-size:12.5px}
+footer b{color:var(--am)}
+.litline{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:var(--lit)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>THE FUNDAMENTAL <span class="accent">MATRIX</span></h1>
+  <p class="sub">The geometry of two eyes. A point in one image does not float free in the other &mdash; it is pinned to a single line. The fundamental matrix <b>F</b> is that pinning: for corresponding points <span class="mono">x</span> and <span class="mono">x&prime;</span>, the epipolar constraint <span class="mono">x&prime;&#7488; F x = 0</span> holds, and <span class="mono">F x</span> is the line in the second image the match must lie on. Stereo search collapses from a 2D hunt to a walk along one line. Rendered, not quoted.</p>
+  <p class="src"><span class="tag t-amber">source</span> Longuet-Higgins, H.C. (1981), <em>A computer algorithm for reconstructing a scene from two projections</em>, <a href="https://www.nature.com/articles/293133a0">Nature 293:133&ndash;135, doi:10.1038/293133a0</a> (essential matrix) &middot; Faugeras &amp; Luong (1992), the fundamental matrix for uncalibrated cameras. AMBER: primary text paywalled; the geometry below is reconstructed from a constructed camera pair, not quoted.</p>
+</header>
+
+<div id="failb"></div>
+
+<div class="ocho">
+
+  <!-- ============ BLUE TEAM ============ -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends<small>constructs F from a known camera pair and proves the epipolar geometry</small></div>
+
+    <div class="win">
+      <span class="num">3</span>
+      <h3><span class="k">win 3</span>The Model</h3>
+      <p>Two calibrated cameras (K = I). Camera 1 at the origin, <span class="mono">P&#8321; = [I | 0]</span>. Camera 2 rotated and translated, <span class="mono">P&#8322; = [R | t]</span>. A world point <span class="mono">X</span> images as the ray <span class="mono">x = X</span> in view 1 and <span class="mono">x&prime; = R&middot;X + t</span> in view 2.</p>
+      <div class="mono kv"><b>R</b> = rotation, cos&theta;=3/5, sin&theta;=4/5 about z<br><b>t</b> = (1, 1, 1)</div>
+      <p>The essential / fundamental matrix is the skew of the baseline composed with the rotation:</p>
+      <div class="mono kv"><b>F = [t]&times; R</b></div>
+      <div class="mat" id="matF"></div>
+      <p class="muted">Because <span class="mono">[t]&times;</span> is rank 2, <b>F is rank 2 by construction</b> &mdash; det F = 0. No fitting, no noise; an exact algebraic object.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">5</span>
+      <h3><span class="k">win 5</span>The Lineage</h3>
+      <p>This is the hinge of <b>two-view geometry</b>. The epipolar constraint <span class="mono">x&prime;&#7488;Fx=0</span> reduces stereo correspondence from searching a whole image to a <b>1D search along one line</b> &mdash; the basis of structure-from-motion and every multi-view reconstruction pipeline.</p>
+      <p class="muted">Neighbour in THE FOLD: the calibrated case is Longuet-Higgins&rsquo; <b>essential matrix</b> <span class="mono">E = [t]&times;R</span>; decompose E and you recover the camera motion (R, t) up to scale &mdash; the seed of visual odometry.</p>
+    </div>
+
+    <div class="win">
+      <span class="num">7</span>
+      <h3><span class="k">win 7</span>The Witness</h3>
+      <p class="muted">Live re-check. Recomputes det&nbsp;F and F&middot;e from the <em>currently active</em> F. Green confirms rank 2 with valid epipoles; flips red the instant window 6 swaps in a full-rank F.</p>
+      <div id="auditout" class="badge ok"><span class="dot"></span>witness idle</div>
+    </div>
+  </div>
+
+  <!-- ============ CENTER ============ -->
+  <div class="col center">
+    <div class="teamhdr">The Machine<small>data in &rarr; the fundamental matrix &rarr; proven result</small></div>
+
+    <div class="win">
+      <span class="num">4</span>
+      <h3><span class="k">win 4</span>Data In <span class="tag t-in">in &darr;</span></h3>
+      <p>Five 3D points, imaged in both cameras to give correspondences <span class="mono">(x, x&prime;)</span>:</p>
+      <div id="datain" class="mono kv"></div>
+    </div>
+
+    <div class="flow">&darr; F x &darr;</div>
+
+    <div class="win panel">
+      <span class="num">0</span>
+      <h3><span class="k">win 0 &middot; engine</span>The Panel <span class="tag t-lit">LIT</span></h3>
+      <p class="muted">For each match, <span class="mono">F x</span> is the epipolar line <span class="mono">l&prime;</span> in view 2 (blue). The true match <span class="mono">x&prime;</span> (violet) lands on it, and every line passes through the epipole <span class="mono">e&prime;</span> (amber) &mdash; the pencil of epipolar lines.</p>
+      <canvas id="cv" width="760" height="360"></canvas>
+      <div class="cap" id="cvcap">left: view 1 &middot; right: view 2 with epipolar lines l&prime; = F x</div>
+      <div class="mono kv" id="constraint" style="margin-top:8px"></div>
+    </div>
+
+    <div class="flow">&darr; proven &darr;</div>
+
+    <div class="win">
+      <span class="num">8</span>
+      <h3><span class="k">win 8</span>Data Out <span class="tag t-out">out &darr;</span></h3>
+      <p class="muted">Boot proof, set only after selfcheck passes:</p>
+      <div id="litbadge" class="litline">&hellip;</div>
+    </div>
+  </div>
+
+  <!-- ============ RED TEAM ============ -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks<small>names the real failure modes and plants the disclosed void</small></div>
+
+    <div class="win">
+      <span class="num">1</span>
+      <h3><span class="k">win 1</span>The Adversary</h3>
+      <div class="wall-note">
+        <p><span class="tag t-wall">WALL</span> The clean geometry assumes <b>exact, noise-free correspondences and known calibration</b>. Reality breaks each:</p>
+        <p class="muted">&bull; Real matched points carry pixel noise, so the estimated F is <b>almost never exactly rank 2</b> &mdash; you must project it back (SVD, zero the smallest singular value) or lines miss the epipole.</p>
+        <p class="muted">&bull; A <b>degenerate scene</b> &mdash; all points coplanar, or pure rotation with zero baseline &mdash; makes F unidentifiable; the 8-point solution is ambiguous.</p>
+        <p class="muted">&bull; Wrong matches (outliers) wreck a least-squares fit; robust estimation (RANSAC) is mandatory in practice.</p>
+      </div>
+    </div>
+
+    <div class="win">
+      <span class="num">2</span>
+      <h3><span class="k">win 2</span>The Graveyard</h3>
+      <ul class="grave">
+        <li><s>F tells you the depth of a point.</s> <span class="fix">No &mdash; F alone gives only the epipolar line, a 1D constraint. Depth needs the second coordinate along that line (triangulation) plus the actual camera geometry.</span></li>
+        <li><s>F is invertible / full rank.</s> <span class="fix">F is rank 2, det F = 0 always. It maps points to lines, not points to points; it has no inverse. The epipoles are its null vectors.</span></li>
+        <li><s>Any 3&times;3 matrix satisfying x&prime;&#7488;Fx&asymp;0 on a few points is a fundamental matrix.</s> <span class="fix">Without the rank-2 constraint the epipolar lines fail to meet at one epipole &mdash; exactly the void planted in window 6.</span></li>
+      </ul>
+    </div>
+
+    <div class="win">
+      <span class="num">6</span>
+      <h3><span class="k">win 6</span>The Tamper</h3>
+      <p class="muted">Disclosed planted void: skip enforcing det&nbsp;F = 0 by swapping in a <b>full-rank</b> F (add 1 to the (3,3) entry). The epipolar lines no longer share one epipole and the constraint is only approximately met. The Witness in window 7 catches it live.</p>
+      <button id="tamper">Tamper &middot; use full-rank F</button>
+      <button id="restore" class="restore">Restore rank-2 F</button>
+      <div class="mono kv" id="tampstate" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p><b>THE FUNDAMENTAL MATRIX</b> &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus. The engine computes F = [t]&times;R from a constructed camera pair and verifies the epipolar constraint, rank 2, epipolar-line membership, and null-vector epipoles &mdash; exactly, to 1e&minus;9. LIT means the numbers are live, not asserted.</p>
+  <p>Built by David Lee Wise (ROOT0) with AVAN.</p>
+</footer>
+</div>
+
+<script>
+// ---- pure two-view geometry (no DOM, no canvas) ----
+function matvec3(A,v){return [
+  A[0][0]*v[0]+A[0][1]*v[1]+A[0][2]*v[2],
+  A[1][0]*v[0]+A[1][1]*v[1]+A[1][2]*v[2],
+  A[2][0]*v[0]+A[2][1]*v[1]+A[2][2]*v[2]];}
+function matmul3(A,B){var C=[[0,0,0],[0,0,0],[0,0,0]];
+  for(var i=0;i<3;i++)for(var j=0;j<3;j++){var s=0;for(var k=0;k<3;k++)s+=A[i][k]*B[k][j];C[i][j]=s;}return C;}
+function transpose3(A){return [[A[0][0],A[1][0],A[2][0]],[A[0][1],A[1][1],A[2][1]],[A[0][2],A[1][2],A[2][2]]];}
+function det3(A){return A[0][0]*(A[1][1]*A[2][2]-A[1][2]*A[2][1])
+  -A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0])
+  +A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0]);}
+function dot3(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function skew(t){return [[0,-t[2],t[1]],[t[2],0,-t[0]],[-t[1],t[0],0]];}
+function norm3(a){return Math.sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);}
+
+// constructed camera pair: R (cos=3/5,sin=4/5 about z), baseline t
+var R=[[0.6,-0.8,0],[0.8,0.6,0],[0,0,1]];
+var T=[1,1,1];
+function fund(R,t){return matmul3(skew(t),R);}          // F = [t]x R  (rank 2 by construction)
+function fullRankF(F){var G=[F[0].slice(),F[1].slice(),F[2].slice()];G[2][2]=F[2][2]+1;return G;} // planted void: det != 0
+
+// five 3D points -> correspondences (x in view1 = X ray; x' = R X + t in view2)
+var PTS=[[0,0,5],[2,1,5],[-1,2,4],[1,-1,6],[3,2,7]];
+function corresp(X){var xp=matvec3(R,X);return {X:X.slice(),x:X.slice(),xp:[xp[0]+T[0],xp[1]+T[1],xp[2]+T[2]]};}
+
+// epipoles: right null vector e (F e = 0) and left null vector e' (e'^T F = 0)
+var eRight=matvec3(transpose3(R),T);   // = R^{-1} t
+var eLeft=T.slice();                    // camera-1 centre imaged into view 2
+
+// live tamper flag; active F depends on it
+var tampered=false;
+function activeF(){var F=fund(R,T);return tampered?fullRankF(F):F;}
+
+// fail-loud, deterministic. saves/restores tamper flag; RETURNS true
+function selfcheck(){
+  var tol=1e-9, saved=tampered;
+  tampered=false;
+  var F=activeF();
+  var pairs=PTS.map(corresp);
+  // 1. epipolar constraint x'^T F x = 0 for EVERY corresponding pair
+  for(var i=0;i<pairs.length;i++){
+    var v=dot3(pairs[i].xp,matvec3(F,pairs[i].x));
+    if(Math.abs(v)>tol) throw new Error("epipolar constraint x'TFx != 0 at pair "+i+": "+v);
+  }
+  // 2. F is rank 2 -> det F = 0
+  var d=det3(F);
+  if(Math.abs(d)>tol) throw new Error("F not rank 2, det F = "+d);
+  // 3. F x is the epipolar line l'; the true match x' lies on it, and the epipole lies on every line
+  for(var i=0;i<pairs.length;i++){
+    var line=matvec3(F,pairs[i].x);
+    if(Math.abs(dot3(pairs[i].xp,line))>tol) throw new Error("match off epipolar line at pair "+i);
+    if(Math.abs(dot3(eLeft,line))>tol) throw new Error("epipole not on epipolar line at pair "+i);
+  }
+  // 4. epipoles are the null vectors: F e = 0 and e'^T F = 0
+  if(norm3(matvec3(F,eRight))>tol) throw new Error("F e != 0 (right epipole not null vector)");
+  if(norm3(matvec3(transpose3(F),eLeft))>tol) throw new Error("e'T F != 0 (left epipole not null vector)");
+  // ---- disclosed planted void: tamper, assert a known value now DIFFERS, then restore ----
+  tampered=true;
+  var Fb=activeF();
+  if(Math.abs(det3(Fb))<=tol) throw new Error("tamper did not break rank 2 as expected");
+  var broke=false;
+  for(var i=0;i<pairs.length;i++){
+    if(Math.abs(dot3(pairs[i].xp,matvec3(Fb,pairs[i].x)))>tol){broke=true;break;}
+  }
+  if(!broke) throw new Error("tamper did not violate epipolar constraint as expected");
+  tampered=saved;   // restore
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var ok=false;
+  try{ ok=selfcheck(); }
+  catch(err){
+    var fb=document.getElementById("failb");
+    fb.style.display="block";
+    fb.textContent="SELFCHECK FAILED — "+err.message;
+    throw err;
+  }
+
+  function fmt(x){var r=Math.round(x*1e6)/1e6; if(Math.abs(r)<1e-9) r=0; return (r>=0?" ":"")+r.toFixed(2);}
+  function vfmt(v){return "("+v.map(function(a){return fmt(a).trim();}).join(", ")+")";}
+
+  var F=fund(R,T);
+  // window 3: F matrix
+  var mf=document.getElementById("matF"),html="";
+  for(var i=0;i<3;i++)for(var j=0;j<3;j++){html+="<span>"+(F[i][j]===0?"<b>0</b>":fmt(F[i][j]))+"</span>";}
+  mf.innerHTML=html;
+
+  // window 4: data in
+  var pairs=PTS.map(corresp);
+  var di=document.getElementById("datain"),s="";
+  pairs.forEach(function(p,i){
+    s+="<div><b>X"+(i+1)+"</b> "+vfmt(p.X)+" &rarr; x="+vfmt(p.x)+" &middot; x'="+vfmt(p.xp)+"</div>";
+  });
+  di.innerHTML=s;
+
+  // window 0: constraint readout
+  function constraintReport(){
+    var Fa=activeF(), lines=[];
+    var worst=0;
+    pairs.forEach(function(p,i){
+      var v=dot3(p.xp,matvec3(Fa,p.x)); if(Math.abs(v)>worst)worst=Math.abs(v);
+    });
+    document.getElementById("constraint").innerHTML=
+      "max |x'&#7488;Fx| over 5 pairs = <b style='color:"+(worst<1e-9?"var(--lit)":"var(--wall)")+"'>"+worst.toExponential(2)+"</b>"+
+      " &middot; det F = <b style='color:"+(Math.abs(det3(Fa))<1e-9?"var(--lit)":"var(--wall)")+"'>"+det3(Fa).toExponential(2)+"</b>";
+  }
+
+  // window 7: witness (live re-check of the active F)
+  function witness(){
+    var Fa=activeF();
+    var d=det3(Fa), fe=norm3(matvec3(Fa,eRight)), ft=norm3(matvec3(transpose3(Fa),eLeft));
+    var good=(Math.abs(d)<1e-9)&&(fe<1e-9)&&(ft<1e-9);
+    var b=document.getElementById("auditout");
+    b.className="badge "+(good?"ok":"bad");
+    b.innerHTML="<span class='dot'></span>"+(good
+      ? "witness OK — det F="+d.toExponential(1)+" · Fe≈0 · rank 2"
+      : "TAMPER CAUGHT — det F="+d.toExponential(2)+" ≠ 0 · |Fe|="+fe.toFixed(3)+" · rank 3");
+    document.getElementById("tampstate").innerHTML=
+      "active F is "+(tampered?"<b style='color:var(--wall)'>FULL-RANK (tampered)</b>":"<b style='color:var(--lit)'>rank-2 (genuine)</b>");
+  }
+
+  // canvas: two image planes, epipolar lines through the epipole
+  var cv=document.getElementById("cv"), ctx=cv&&cv.getContext?cv.getContext("2d"):null;
+  var W=cv?cv.width:0, H=cv?cv.height:0, halfW=W/2, cx1=halfW*0.5, cx2=halfW*1.5, cy=H/2, SC=60;
+  function proj1(p){return [cx1+(p.x[0]/p.x[2])*SC, cy-(p.x[1]/p.x[2])*SC];}
+  function proj2v(v){return [cx2+(v[0]/v[2])*SC, cy-(v[1]/v[2])*SC];}
+  function draw(){
+    if(!ctx)return;
+    ctx.clearRect(0,0,W,H);
+    // panes
+    ctx.fillStyle="#061009"; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle="#1c3a28"; ctx.lineWidth=1;
+    ctx.strokeRect(6,6,halfW-12,H-12); ctx.strokeRect(halfW+6,6,halfW-12,H-12);
+    ctx.fillStyle="#8fb49e"; ctx.font="11px ui-monospace,Menlo,monospace";
+    ctx.fillText("VIEW 1  (x)", 14, 22); ctx.fillText("VIEW 2  (x'  +  epipolar lines l'=Fx)", halfW+14, 22);
+    var Fa=activeF();
+    // epipole e' in view 2
+    var ep2=proj2v(eLeft);
+    // epipolar lines: l' = Fa x, drawn across view-2 pane
+    var cols=["#6fb4ff","#7dff9b","#ffc65c","#ff8a8a","#c8a2ff"];
+    pairs.forEach(function(p,i){
+      var l=matvec3(Fa,p.x); // a u + b v + c = 0 in normalized coords
+      // sample line at two u extents of the pane, solve for v: v=-(a u + c)/b
+      var a=l[0],b=l[1],c=l[2];
+      var pane=[halfW+8,W-8];
+      function pt(px){var u=(px-cx2)/SC; var v=(Math.abs(b)>1e-9)?-(a*u+c)/b:0; return [px, cy-v*SC];}
+      ctx.strokeStyle="rgba(111,180,255,.45)"; ctx.lineWidth=1;
+      ctx.beginPath();
+      if(Math.abs(b)>1e-9){var A=pt(pane[0]),B=pt(pane[1]);ctx.moveTo(A[0],A[1]);ctx.lineTo(B[0],B[1]);}
+      else{var uu=-c/a; var px=cx2+uu*SC; ctx.moveTo(px,8);ctx.lineTo(px,H-8);}
+      ctx.stroke();
+      // view1 point
+      var q1=proj1(p);
+      ctx.fillStyle=cols[i]; ctx.beginPath(); ctx.arc(q1[0],q1[1],4,0,7); ctx.fill();
+      // view2 true match
+      var q2=proj2v(p.xp);
+      ctx.fillStyle="#c8a2ff"; ctx.beginPath(); ctx.arc(q2[0],q2[1],4,0,7); ctx.fill();
+      ctx.strokeStyle="#c8a2ff"; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(q2[0],q2[1],6,0,7); ctx.stroke();
+    });
+    // epipole marker
+    if(ep2[0]>halfW && ep2[0]<W && ep2[1]>0 && ep2[1]<H){
+      ctx.fillStyle="#ffc65c"; ctx.beginPath(); ctx.arc(ep2[0],ep2[1],5,0,7); ctx.fill();
+      ctx.fillStyle="#ffc65c"; ctx.fillText("e'", ep2[0]+7, ep2[1]-6);
+    }
+    document.getElementById("cvcap").innerHTML = tampered
+      ? "TAMPERED: full-rank F — lines <b style='color:#ff8a8a'>no longer meet at e'</b>"
+      : "left: view 1 · right: view 2, all epipolar lines l'=Fx pass through the epipole e' (amber)";
+  }
+
+  function refresh(){ constraintReport(); witness(); draw(); }
+
+  document.getElementById("tamper").onclick=function(){ tampered=true; refresh(); };
+  document.getElementById("restore").onclick=function(){ tampered=false; refresh(); };
+
+  // window 8: boot proof
+  document.getElementById("litbadge").innerHTML=
+    "x'&#7488;Fx = 0 for all 5 pairs · det F = 0 · rank 2 · F e = 0 · e'&#7488;F = 0 &nbsp;<span style='color:var(--lit)'>— LIT</span>";
+
+  refresh();
+})();
+</script>
+</body>
+</html>

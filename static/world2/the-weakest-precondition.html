@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE WEAKEST PRECONDITION · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:16px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.grid td{font-size:11px;padding:5px 3px;} .grid td.on{background:rgba(57,252,107,.16);color:var(--gr);font-weight:700;} .grid td.off{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.calc{font-size:11.5px;line-height:1.7;margin-top:6px;padding:8px;background:#0a130c;border:1px solid var(--line);border-radius:6px;color:#bfe6c8;white-space:pre-wrap;}
+.calc .hl{color:var(--am);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE WEAKEST PRECONDITION</h1>
+ <p class="sub">Verification, run backward, as a calculation. Given a program <b>C</b> and a goal <b class="k">Q</b>, the predicate transformer <b>wp(C, Q)</b> returns the <i>weakest</i> assertion P for which <b>{P} C {Q}</b> holds — the exact set of start states from which C is guaranteed to land in Q. No search, no guessing: you push Q back through the program, one construct at a time. Down the center, data flows: the goal goes <b style="color:var(--cy)">in</b>, wp calculates backward, the precondition comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends; the <b style="color:var(--red)">red team</b> attacks.</p>
+ <p class="src"><span class="tag t-amber">source</span> E. W. Dijkstra, <i>Guarded Commands, Nondeterminacy and Formal Derivation of Programs</i>, CACM <b>18</b>(8):453–457 (1975) — <a href="https://dl.acm.org/doi/10.1145/360933.360975">doi:10.1145/360933.360975</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the transformer</h2>
+   <p>wp is defined by one rule per construct. Each is a mechanical rewrite on predicates — no state is ever run forward:</p>
+   <table>
+    <thead><tr><th>construct</th><th>wp(C, Q)</th></tr></thead>
+    <tbody>
+     <tr><td>skip</td><td class="k">Q</td></tr>
+     <tr><td>x := e</td><td class="k">Q[x := e]</td></tr>
+     <tr><td>C₁ ; C₂</td><td class="k">wp(C₁, wp(C₂, Q))</td></tr>
+     <tr><td>if b then C₁ else C₂</td><td class="k">(b ∧ wp(C₁,Q)) ∨ (¬b ∧ wp(C₂,Q))</td></tr>
+    </tbody>
+   </table>
+   <p class="small" style="margin-top:8px">Assignment is a <b>substitution</b>. Sequence is <b>composition, right first</b>. The conditional <b>splits on the guard</b>. Read bottom-up, these are the whole engine — verified exhaustively over a 9-state space, never looked up.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — from Hoare's axioms <span class="tag t-amber">AVAN</span></h2>
+   <p>A triple <b>{P} C {Q}</b> (<a href="https://davidwise01.github.io/the-hoare-logic/" style="color:var(--cy)">the-hoare-logic</a>) says nothing about <i>how weak</i> P can be. Dijkstra makes the answer canonical:</p>
+   <p><b>{P} C {Q}</b> is valid <b>if and only if</b> P ⇒ wp(C, Q). So wp(C,Q) is the single <b>weakest</b> — largest — precondition, and every valid P is one of its subsets. Hoare's proof rules become a <b>backward calculation</b>: the weakest assumption that still guarantees the goal.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: over <b>all 4 programs × 4 goals</b>, confirm the syntactic wp equals the true semantic preimage (states that actually reach Q). If red tampers with the sequence rule, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · goal in → panel → precondition out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the goal &amp; the program <span class="tag t-in">in ↓</span></h2>
+   <p>The state space is finite and total: two variables <b class="S" style="color:var(--cy)">x</b>, <b class="S" style="color:var(--cy)">y</b> ∈ {0,1,2}, arithmetic mod 3 — exactly <b class="k">9</b> states. A predicate is just the <b>set</b> of states that satisfy it. A program is one of:</p>
+   <table><thead><tr><th>C</th><th>means</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>x := e</td><td>set x to e (mod 3)</td></tr>
+     <tr><td>C₁ ; C₂</td><td>do C₁, then C₂</td></tr>
+     <tr><td>if b …</td><td>branch on guard b</td></tr>
+    </tbody></table>
+   <p class="small">Pick a <b>goal Q</b> and a <b>program C</b> below; the panel pushes Q backward and hands you the precondition. Loop-free by construction, so every claim is exhaustively decidable.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the goal into the transformer &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — wp, backward <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>program C</label>
+      <select id="prog">
+       <option value="0">x := x+1</option>
+       <option value="1">x := x·2</option>
+       <option value="2" selected>x := x+1 ; x := x·2</option>
+       <option value="3">if x=0 then y:=1 else y:=2</option>
+      </select></div>
+     <div class="row"><label>goal Q</label>
+      <select id="goal">
+       <option value="0" selected>x = 0</option>
+       <option value="1">x = 1</option>
+       <option value="2">y = 1</option>
+       <option value="3">x &lt; 2</option>
+      </select></div>
+     <div class="row"><button id="ex">→ order-sensitive example</button></div>
+     <p class="small">Change program or goal — wp is computed from the four rules on the spot. The backward calculation is shown; nothing is table-lookup.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+     <table class="grid"><thead><tr><th>x\y</th><th>0</th><th>1</th><th>2</th></tr></thead><tbody id="gridBody"></tbody></table>
+     <div class="calc" id="calc"></div>
+    </div>
+   </div>
+  </div>
+  <div class="flow">▼ &nbsp; the transformer emits the weakest precondition &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the precondition <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves: for every program/goal here, the syntactic <b>wp(C,Q)</b> equals the exact set of start states from which C reaches Q — and it is the <b>largest</b> such set, so it is genuinely <b>weakest</b>. The current wp is above; the fact that it is sound and weakest is the output.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms this live over all cases; the red team (right) tries to make wp lie.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> There is no wp rule for a <b>loop</b> as a finite rewrite. wp(while, Q) is a fixpoint — you must supply a loop <b>invariant</b>, and finding one for an arbitrary program is <b>undecidable</b> (it would decide halting). This instrument is deliberately loop-free on 9 states so set-equality is exhaustively checkable.</div>
+   <p class="small" style="margin-top:8px">Two more honest edges: this is <b>total-correctness</b> wp (it demands termination — the weaker <i>wlp</i> does not); and for <b>demonic nondeterminism</b>, wp takes the conjunction over <i>all</i> outcomes, not a lucky one. Over an infinite state space none of these sets can be verified by enumeration — the exhaustive checks here are a courtesy of the finite domain, not a general proof.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"wp is just running the program backward."</s> <b>Cut.</b> It transforms <i>predicates</i> (sets of states), not single states; a program need not be invertible. wp(x:=0, x=0) is <b>true</b> — every state qualifies — though x:=0 is not a bijection.</p>
+   <p class="grave"><s>"For a sequence, take the union of the two preconditions."</s> <b>Cut.</b> It is functional <b>composition, right operand first</b>: wp(C₁, wp(C₂, Q)). Reversing the order (window 6) yields a different, wrong set.</p>
+   <p class="grave"><s>"wp and Hoare logic are rival methods."</s> <b>Kept, corrected.</b> {P}C{Q} is valid iff P ⇒ wp(C,Q); wp is Hoare's calculus turned mechanical, the weakest P its canonical witness.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: compute the sequence rule in the <b>wrong order</b> — wp(C₂, wp(C₁, Q)) instead of wp(C₁, wp(C₂, Q)). For an order-sensitive program the result is no longer the weakest precondition. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ swap the sequence rule</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Swap the order and wp(x:=x+1 ; x:=x·2, x=0) reports the wrong set — x=1 instead of the true x=2. The witness recomputes, disagrees with the semantic preimage, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE WEAKEST PRECONDITION — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (goal <b style="color:var(--cy)">in</b> → backward calculation → precondition <b style="color:var(--gr)">out</b>). A runnable rendering of Dijkstra's predicate transformer from CACM 1975 — the engine is LIT (real wp over a 9-state space, syntactic wp checked equal to the semantic preimage over every program and goal, weakest-ness verified, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a finite calculus cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// the engine: the predicate transformer wp over a finite state space (x,y in {0,1,2}, arithmetic mod 3)
+const N=3, NST=N*N, FULL=(1<<NST)-1;
+const stateOf=i=>({x:(i/N|0)%N, y:i%N});
+// expressions: ["v",name] ["c",k] ["+",a,b] ["*",a,b]  — all arithmetic in Z/3
+function evalE(e,s){
+ switch(e[0]){
+  case "v": return s[e[1]];
+  case "c": return ((e[1]%N)+N)%N;
+  case "+": return (evalE(e[1],s)+evalE(e[2],s))%N;
+  case "*": return (evalE(e[1],s)*evalE(e[2],s))%N;
+ }
+ throw new Error("bad expr "+e[0]);
+}
+function substE(e,v,r){
+ switch(e[0]){
+  case "v": return e[1]===v? r : e;
+  case "c": return e;
+  case "+": return ["+",substE(e[1],v,r),substE(e[2],v,r)];
+  case "*": return ["*",substE(e[1],v,r),substE(e[2],v,r)];
+ }
+ throw new Error("bad expr "+e[0]);
+}
+// predicates: ["T"] ["F"] ["eq",a,b] ["lt",a,b] ["le",a,b] ["and",p,q] ["or",p,q] ["not",p]
+function evalP(p,s){
+ switch(p[0]){
+  case "T": return true;
+  case "F": return false;
+  case "eq": return evalE(p[1],s)===evalE(p[2],s);
+  case "lt": return evalE(p[1],s)<evalE(p[2],s);
+  case "le": return evalE(p[1],s)<=evalE(p[2],s);
+  case "and": return evalP(p[1],s)&&evalP(p[2],s);
+  case "or": return evalP(p[1],s)||evalP(p[2],s);
+  case "not": return !evalP(p[1],s);
+ }
+ throw new Error("bad pred "+p[0]);
+}
+// syntactic substitution Q[v:=r] — the substitution lemma is what makes assignment-wp exact
+function substP(p,v,r){
+ switch(p[0]){
+  case "T": case "F": return p;
+  case "eq": case "lt": case "le": return [p[0],substE(p[1],v,r),substE(p[2],v,r)];
+  case "and": case "or": return [p[0],substP(p[1],v,r),substP(p[2],v,r)];
+  case "not": return ["not",substP(p[1],v,r)];
+ }
+ throw new Error("bad pred "+p[0]);
+}
+// commands: ["skip"] ["asg",var,expr] ["seq",c1,c2] ["if",guard,c1,c2]  — deterministic, total
+function exec(c,s){
+ switch(c[0]){
+  case "skip": return s;
+  case "asg": { const t={x:s.x,y:s.y}; t[c[1]]=evalE(c[2],s); return t; }
+  case "seq": return exec(c[2],exec(c[1],s));
+  case "if": return evalP(c[1],s)? exec(c[2],s): exec(c[3],s);
+ }
+ throw new Error("bad cmd "+c[0]);
+}
+let TAMPER=false;  // window 6: when true, the sequence rule composes in the WRONG order
+// the predicate transformer — Dijkstra's rules, one per construct
+function wp(c,Q){
+ switch(c[0]){
+  case "skip": return Q;
+  case "asg": return substP(Q,c[1],c[2]);                         // Q[x := e]
+  case "seq": return TAMPER? wp(c[2],wp(c[1],Q)) : wp(c[1],wp(c[2],Q));
+  case "if": return ["or",["and",c[1],wp(c[2],Q)],["and",["not",c[1]],wp(c[3],Q)]];
+ }
+ throw new Error("bad cmd "+c[0]);
+}
+// a predicate as a 9-bit mask of the states satisfying it (exact set equality via ===)
+function maskP(p){ let m=0; for(let i=0;i<NST;i++) if(evalP(p,stateOf(i))) m|=1<<i; return m; }
+// the true semantic weakest precondition: states from which c is guaranteed to reach Q
+function wpSem(c,Q){ let m=0; for(let i=0;i<NST;i++) if(evalP(Q,exec(c,stateOf(i)))) m|=1<<i; return m; }
+// {P} c {Q} valid: every P-state lands in Q
+function valid(P,c,Q){ for(let i=0;i<NST;i++){ const s=stateOf(i); if(evalP(P,s)&&!evalP(Q,exec(c,s))) return false; } return true; }
+function subset(a,b){ return (a & ~b & FULL)===0; }
+// constructed terms
+const E_x1=["+",["v","x"],["c",1]];
+const E_x2=["*",["v","x"],["c",2]];
+const A1=["asg","x",E_x1];              // x := x+1
+const A2=["asg","x",E_x2];              // x := x*2
+const SEQ=["seq",A1,A2];                // x := x+1 ; x := x*2  (order-sensitive)
+const B0=["eq",["v","x"],["c",0]];
+const IF=["if",B0,["asg","y",["c",1]],["asg","y",["c",2]]];
+const Q0=["eq",["v","x"],["c",0]];
+const Q1=["eq",["v","x"],["c",1]];
+const QY1=["eq",["v","y"],["c",1]];
+const QLT=["lt",["v","x"],["c",2]];
+const X2=["eq",["v","x"],["c",2]];
+// fail-loud self-check (runs untampered, saves/restores the tamper flag, returns true)
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ // (1) assignment: wp(x:=e, Q) = Q[x:=e] EXACTLY = the states from which the assignment reaches Q
+ for(const Q of [Q0,Q1,QLT]){
+   t(maskP(wp(A1,Q))===wpSem(A1,Q),"assignment wp must equal preimage (x:=x+1)");
+   t(maskP(wp(A2,Q))===wpSem(A2,Q),"assignment wp must equal preimage (x:=x*2)");
+ }
+ // (2) sequence: wp(C1;C2,Q) = wp(C1, wp(C2, Q)); the state set equals the true preimage
+ for(const Q of [Q0,Q1,QLT]){
+   t(maskP(wp(SEQ,Q))===maskP(wp(A1,wp(A2,Q))),"seq wp must equal wp(C1,wp(C2,Q))");
+   t(maskP(wp(SEQ,Q))===wpSem(SEQ,Q),"seq wp must equal the semantic preimage");
+ }
+ t(wpSem(SEQ,Q0)===maskP(X2),"wp(x:=x+1;x:=x*2, x=0) must hold exactly at x=2");
+ // (3) Hoare triple valid  <=>  P implies wp(C,Q); and wp is the WEAKEST (largest state set)
+ const Pgood=["and",["eq",["v","x"],["c",0]],["eq",["v","y"],["c",0]]];  // x=0 and y=0
+ const Pbad =["eq",["v","x"],["c",1]];                                   // x=1
+ const WP=wpSem(A1,Q1);                                                  // = x=0
+ t(valid(Pgood,A1,Q1)===subset(maskP(Pgood),WP),"valid iff P implies wp (valid case)");
+ t(valid(Pbad ,A1,Q1)===subset(maskP(Pbad ),WP),"valid iff P implies wp (invalid case)");
+ t(valid(Pgood,A1,Q1),"the good triple must be valid");
+ t(!valid(Pbad,A1,Q1),"the bad triple must be invalid");
+ t(subset(maskP(Pgood),WP) && maskP(Pgood)!==WP,"P must be a STRICT subset — wp is strictly weaker");
+ // maximality: wp is EXACTLY the reaching set, so no state can be added
+ for(let i=0;i<NST;i++){ const s=stateOf(i); const inWP=((WP>>i)&1)===1; t(inWP===evalP(Q1,exec(A1,s)),"wp must equal the exact reaching set (maximal)"); }
+ // (4) if-then-else splits on the guard
+ for(const Q of [Q0,QY1,QLT]){
+   const split=["or",["and",B0,wp(IF[2],Q)],["and",["not",B0],wp(IF[3],Q)]];
+   t(maskP(wp(IF,Q))===wpSem(IF,Q),"if wp must equal the preimage");
+   t(maskP(wp(IF,Q))===maskP(split),"if wp must split on the guard");
+ }
+ // (5) TAMPER (window 6): the wrong-order wp is NOT the weakest precondition — a known value now differs
+ TAMPER=true;
+ t(maskP(wp(SEQ,Q0))!==wpSem(SEQ,Q0),"tamper: wrong-order wp must differ from the truth");
+ t(maskP(wp(SEQ,Q0))===maskP(Q1),"tamper: wrong-order gives x=1, not the true x=2");
+ t(!subset(wpSem(SEQ,Q0),maskP(wp(SEQ,Q0))),"tamper: the true weakest is no longer implied by the wrong wp");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const PROGS=[["x := x+1",A1],["x := x·2",A2],["x := x+1 ; x := x·2",SEQ],["if x=0 then y:=1 else y:=2",IF]];
+const QSET=[["x = 0",Q0],["x = 1",Q1],["y = 1",QY1],["x < 2",QLT]];
+function prettyE(e){
+ switch(e[0]){
+  case "v": return e[1];
+  case "c": return String(((e[1]%N)+N)%N);
+  case "+": return "("+prettyE(e[1])+"+"+prettyE(e[2])+")";
+  case "*": return "("+prettyE(e[1])+"·"+prettyE(e[2])+")";
+ }
+}
+function prettyP(p){
+ switch(p[0]){
+  case "T": return "true";
+  case "F": return "false";
+  case "eq": return prettyE(p[1])+"="+prettyE(p[2]);
+  case "lt": return prettyE(p[1])+"<"+prettyE(p[2]);
+  case "le": return prettyE(p[1])+"≤"+prettyE(p[2]);
+  case "and": return "("+prettyP(p[1])+" ∧ "+prettyP(p[2])+")";
+  case "or": return "("+prettyP(p[1])+" ∨ "+prettyP(p[2])+")";
+  case "not": return "¬"+prettyP(p[1]);
+ }
+}
+function prettyC(c){
+ switch(c[0]){
+  case "skip": return "skip";
+  case "asg": return c[1]+" := "+prettyE(c[2]);
+  case "seq": return prettyC(c[1])+" ; "+prettyC(c[2]);
+  case "if": return "if "+prettyP(c[1])+" then "+prettyC(c[2])+" else "+prettyC(c[3]);
+ }
+}
+function trace(c,Q){
+ const out=[];
+ function rec(c,Q){
+  switch(c[0]){
+   case "skip": out.push("wp(skip, "+prettyP(Q)+") = "+prettyP(Q)); return Q;
+   case "asg": { const w=substP(Q,c[1],c[2]); out.push("wp("+prettyC(c)+", "+prettyP(Q)+")  =  "+prettyP(Q)+"["+c[1]+":="+prettyE(c[2])+"]  =  "+prettyP(w)); return w; }
+   case "seq":
+     if(TAMPER){ const wa=wp(c[1],Q); out.push("[WRONG ORDER] wp("+prettyC(c[1])+", "+prettyP(Q)+") = "+prettyP(wa)); const wb=wp(c[2],wa); out.push("[WRONG ORDER] wp("+prettyC(c[2])+", ↑) = "+prettyP(wb)); return wb; }
+     else { const wb=wp(c[2],Q); out.push("wp("+prettyC(c[2])+", "+prettyP(Q)+") = "+prettyP(wb)); const wa=wp(c[1],wb); out.push("wp("+prettyC(c[1])+", ↑) = "+prettyP(wa)); return wa; }
+   case "if": { const w=wp(c,Q); out.push("wp(if b …, "+prettyP(Q)+") = (b ∧ wp(then,Q)) ∨ (¬b ∧ wp(else,Q)) = "+prettyP(w)); return w; }
+  }
+ }
+ rec(c,Q); return out;
+}
+function cur(){ return { c:PROGS[+$("prog").value][1], Q:QSET[+$("goal").value][1], cn:PROGS[+$("prog").value][0], qn:QSET[+$("goal").value][0] }; }
+function render(){
+ const {c,Q,cn,qn}=cur();
+ const W=wp(c,Q), wm=maskP(W), sem=wpSem(c,Q), ok=(wm===sem);
+ $("sent").innerHTML = "program <b class=\"S\">C</b> : "+cn+"<br>goal <b class=\"P\">Q</b> : "+qn;
+ $("verdict").innerHTML = "wp(C, Q) = <b>"+prettyP(W)+"</b>";
+ $("verdict").className = "verdict "+(ok?"ok":"no");
+ const states=[]; for(let i=0;i<NST;i++) if((wm>>i)&1){ const s=stateOf(i); states.push("("+s.x+","+s.y+")"); }
+ $("reason").innerHTML = ok
+   ? "holds in <b>"+states.length+"</b> of 9 states: "+(states.length?states.join(" "):"— none —")
+   : "<b style=\"color:var(--wall)\">wrong-order wp:</b> "+states.length+" states — does NOT match the "+bits(sem)+"-state preimage";
+ // grid
+ let rows="";
+ for(let x=0;x<N;x++){ rows+="<tr><th>"+x+"</th>"; for(let y=0;y<N;y++){ const on=(wm>>(x*N+y))&1; rows+="<td class=\""+(on?"on":"off")+"\">"+(on?"●":"·")+"</td>"; } rows+="</tr>"; }
+ $("gridBody").innerHTML=rows;
+ // backward calculation
+ $("calc").textContent = "backward calculation (read top to bottom):\n"+trace(c,Q).join("\n");
+ audit();
+}
+function bits(m){ let n=0; for(let i=0;i<NST;i++) if((m>>i)&1) n++; return n; }
+function audit(){
+ const el=$("auditout");
+ let pass=0,tot=0,bad=[];
+ for(const [pn,c] of PROGS) for(const [qn,q] of QSET){ tot++; if(maskP(wp(c,q))===wpSem(c,q)) pass++; else bad.push(pn+" / "+qn); }
+ // also re-confirm the Hoare iff and the weakest property, untamperable checks
+ const hoare = valid(["and",["eq",["v","x"],["c",0]],["eq",["v","y"],["c",0]]],A1,Q1)===subset(maskP(["and",["eq",["v","x"],["c",0]],["eq",["v","y"],["c",0]]]),wpSem(A1,Q1));
+ const ok = pass===tot && hoare;
+ el.innerHTML = "<span class=\"badge "+(ok?"pass":"failb")+"\">"+(ok?"✓ WITNESS — wp is sound":"✗ WITNESS — wp is lying")+"</span>"
+  + "<div class=\"small\" style=\"margin-top:6px\">syntactic wp = semantic preimage: <b style=\"color:"+(pass===tot?"var(--gr)":"var(--wall)")+"\">"+pass+"</b>/"+tot+" cases &nbsp;·&nbsp; Hoare iff: <b style=\"color:"+(hoare?"var(--gr)":"var(--wall)")+"\">"+(hoare?"holds":"broken")+"</b>"
+  + (bad.length? " &nbsp; — <span style=\"color:var(--wall)\">broken: "+bad.join(", ")+"</span>":"")
+  + (TAMPER? " &nbsp; — <span style=\"color:var(--wall)\">red swapped the sequence rule</span>":"")+"</div>";
+}
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML="<span class=\"badge pass\">✓ LIT · self-check passed on load</span>";
+ ["prog","goal"].forEach(id=>$(id).addEventListener("change",render));
+ $("ex").addEventListener("click",()=>{ $("prog").value="2"; $("goal").value="0"; render(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style=\"color:var(--wall)\">Sequence rule swapped.</b> wp now composes C₂ before C₁, so wp(x:=x+1 ; x:=x·2, x=0) reports <b>x=1</b> — the true weakest is <b>x=2</b>. The witness (window 7) recomputed and went red. The attack is real; it is caught."; render(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Swap the order and wp(x:=x+1 ; x:=x·2, x=0) reports the wrong set — x=1 instead of the true x=2. The witness recomputes, disagrees with the semantic preimage, and turns red. Nothing is faked; the attack is real and it is caught."; render(); });
+ render();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the weakest-precondition engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

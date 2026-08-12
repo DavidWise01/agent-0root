@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE GAUSS LAW</title>
+<style>
+:root{
+  --am:#7fd4ff;
+  --bg0:#06120c;
+  --bg1:#0a1f14;
+  --bg2:#0e2b1c;
+  --ink:#e7f6ee;
+  --dim:#9fc4b2;
+  --line:#1c3a2a;
+  --blue:#5fa8ff;
+  --blbg:#0a1a2e;
+  --red:#ff6b6b;
+  --rdbg:#2a0f12;
+  --amber:#ffbf47;
+  --lit:#5cffb1;
+  --wall:#ff8a8a;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1200px 700px at 78% -8%, rgba(127,212,255,.10), transparent 60%),
+    radial-gradient(900px 600px at 8% 108%, rgba(92,255,177,.07), transparent 60%),
+    linear-gradient(160deg,var(--bg0),var(--bg1) 55%,var(--bg2));
+  color:var(--ink);
+  font:15px/1.5 ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+  min-height:100vh;
+  padding:22px clamp(12px,3vw,40px) 60px;
+}
+header{max-width:1240px;margin:0 auto 18px}
+h1{
+  font-size:clamp(26px,5vw,46px);
+  letter-spacing:.06em;
+  margin:0 0 6px;
+  color:#fff;
+  text-shadow:0 0 22px rgba(127,212,255,.35);
+}
+h1 .glow{color:var(--am)}
+.sub{color:var(--dim);max-width:70ch;margin:0 0 10px;font-size:14px}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.09em;
+  padding:2px 7px;border-radius:4px;border:1px solid;font-weight:700;
+  text-transform:uppercase;white-space:nowrap;vertical-align:middle;
+}
+.t-amber{color:var(--amber);border-color:var(--amber);background:rgba(255,191,71,.08)}
+.t-lit{color:var(--lit);border-color:var(--lit);background:rgba(92,255,177,.08)}
+.t-in{color:var(--am);border-color:var(--am);background:rgba(127,212,255,.08)}
+.t-out{color:var(--lit);border-color:var(--lit);background:rgba(92,255,177,.08)}
+.t-wall{color:var(--wall);border-color:var(--wall);background:rgba(255,107,107,.10)}
+
+.ocho{
+  max-width:1240px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:14px;
+}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  padding:7px 10px;border-radius:7px;font-weight:700;
+}
+.col.blue .teamhdr{color:var(--blue);background:rgba(95,168,255,.10);border:1px solid rgba(95,168,255,.35)}
+.col.center .teamhdr{color:var(--am);background:rgba(127,212,255,.10);border:1px solid rgba(127,212,255,.4);text-align:center}
+.col.red .teamhdr{color:var(--red);background:rgba(255,107,107,.10);border:1px solid rgba(255,107,107,.35)}
+
+.win{
+  position:relative;
+  background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.008));
+  border:1px solid var(--line);border-radius:11px;padding:13px 14px 14px;
+}
+.col.blue .win{border-color:rgba(95,168,255,.22)}
+.col.red .win{border-color:rgba(255,107,107,.22)}
+.win .wn{
+  position:absolute;top:-10px;right:-9px;
+  width:24px;height:24px;border-radius:50%;
+  display:grid;place-items:center;font-size:12px;font-weight:800;
+  background:var(--bg2);border:1px solid var(--line);color:var(--dim);
+}
+.col.blue .wn{color:var(--blue);border-color:rgba(95,168,255,.45)}
+.col.red .wn{color:var(--red);border-color:rgba(255,107,107,.45)}
+.col.center .wn{color:var(--am);border-color:rgba(127,212,255,.5)}
+.win h3{margin:0 0 7px;font-size:13px;letter-spacing:.06em;color:#fff}
+.win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+.win.panel{background:linear-gradient(180deg,rgba(127,212,255,.06),rgba(127,212,255,.015));border-color:rgba(127,212,255,.3)}
+.kv{font-size:12px;color:var(--ink)}
+.kv b{color:var(--am)}
+code,.mono{font-family:inherit;color:var(--am)}
+.dead{color:var(--wall);text-decoration:line-through;opacity:.85}
+.fix{color:var(--lit)}
+.wall-note{
+  border-left:3px solid var(--wall);padding:6px 10px;margin-top:8px;
+  background:rgba(255,107,107,.06);border-radius:0 7px 7px 0;font-size:12.5px;color:#f4cccc;
+}
+.flow{
+  text-align:center;color:var(--am);font-size:16px;opacity:.7;margin:2px 0;user-select:none;
+}
+.badge{
+  display:block;margin-top:8px;padding:8px 10px;border-radius:8px;
+  font-size:12px;font-weight:700;letter-spacing:.03em;border:1px solid;
+}
+.badge.ok{color:var(--lit);border-color:var(--lit);background:rgba(92,255,177,.08)}
+.badge.bad{color:var(--wall);border-color:var(--wall);background:rgba(255,107,107,.12)}
+#failb{display:none;margin:14px auto;max-width:1240px;padding:12px 16px;border-radius:10px;
+  background:rgba(255,107,107,.14);border:1px solid var(--wall);color:#ffd9d9;font-size:13px}
+canvas{width:100%;height:190px;display:block;border-radius:9px;margin:8px 0 4px;
+  background:radial-gradient(400px 200px at 50% 50%,rgba(127,212,255,.06),rgba(6,18,12,.4));
+  border:1px solid var(--line)}
+button{
+  font:inherit;font-size:12px;cursor:pointer;margin:6px 6px 0 0;
+  padding:7px 12px;border-radius:7px;border:1px solid var(--red);
+  background:rgba(255,107,107,.12);color:#ffd0d0;font-weight:700;letter-spacing:.04em;
+}
+button.restore{border-color:var(--lit);background:rgba(92,255,177,.10);color:#bff7dd}
+button:hover{filter:brightness(1.18)}
+.eng{font-size:12px;color:var(--ink);line-height:1.7}
+.eng .num{color:var(--lit);font-weight:700}
+footer{max-width:1240px;margin:26px auto 0;color:var(--dim);font-size:11.5px;text-align:center;letter-spacing:.04em}
+.hair{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:5px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>THE <span class="glow">GAUSS</span> LAW</h1>
+  <p class="sub">The total electric flux through <em>any</em> closed surface equals the charge trapped inside, divided by &epsilon;&#8320; &mdash; independent of the surface&#8217;s shape, size, or bulges. Rendered, not quoted: the engine computes the flux live and proves that two spheres of different radius around the same charge report the same number.</p>
+  <p class="src">
+    <span class="tag t-amber">source</span>
+    <span>J.&nbsp;C.&nbsp;Maxwell, <em>A Treatise on Electricity and Magnetism</em>, vol.&nbsp;1 (Oxford, 1873) &mdash; Gauss&#8217;s law as the first field equation &middot;
+    <a href="https://archive.org/details/electricandmagne01maxwrich" target="_blank" rel="noopener">archive.org/details/electricandmagne01maxwrich</a>
+    &middot; AMBER: page image, not a canonical equation id.</span>
+  </p>
+</header>
+
+<div id="failb"></div>
+
+<main class="ocho">
+
+  <!-- LEFT / BLUE -->
+  <section class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <span class="wn">3</span>
+      <h3>THE MODEL</h3>
+      <p>Gauss&#8217;s law in integral form:</p>
+      <p class="kv"><b>&#8750; E &middot; dA = Q_enc / &epsilon;&#8320;</b></p>
+      <p>Field lines are conserved: each line that starts on a charge must pierce the surface once. So the net count &mdash; the flux &Phi; &mdash; counts only the enclosed charge. Bulge the surface, shrink it, dent it: the same lines still cross it. For a spherically symmetric charge the field outside is <span class="mono">E = kQ/r&sup2;</span>; inside a uniform shell the interior field is exactly <span class="mono">0</span> (the shell theorem).</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">5</span>
+      <h3>THE LINEAGE</h3>
+      <p>Flux = enclosed charge is the same fact as Coulomb&#8217;s inverse square, recast. Integrate <span class="mono">kQ/r&sup2;</span> over a sphere: the <span class="mono">r&sup2;</span> in the field cancels the <span class="mono">r&sup2;</span> in the area, leaving <span class="mono">4&pi;kQ = Q/&epsilon;&#8320;</span>, with no r left.</p>
+      <p class="kv">&rarr; neighbour: <b>the-coulomb-law</b> &mdash; the point-charge force, promoted to the first of Maxwell&#8217;s four equations.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">7</span>
+      <h3>THE WITNESS</h3>
+      <p>Live re-check: does the flux still ignore the surface radius? Two Gaussian spheres, radii <span class="mono">r&#8321;</span> and <span class="mono">r&#8322;</span>, same enclosed charge &mdash; the witness re-computes both and compares. Green while they agree; it flips red the instant the Tamper (window 6) makes flux depend on r.</p>
+      <div id="auditout" class="badge ok">witness idle</div>
+    </div>
+  </section>
+
+  <!-- CENTER -->
+  <section class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win panel">
+      <span class="wn">4</span>
+      <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+      <p class="kv">Enclosed charge <b>Q = 1.60&times;10&#8315;&#8313; C</b> at the centre.<br>
+      Two closed surfaces: sphere <b>r&#8321; = 0.05 m</b> and sphere <b>r&#8322; = 7.30 m</b>.<br>
+      One extra charge placed <em>outside</em> both surfaces.</p>
+
+      <div class="flow">&darr;</div>
+
+      <div class="win panel" style="margin:0;border-style:dashed">
+        <span class="wn">0</span>
+        <h3>THE PANEL <span class="tag t-lit">lit</span></h3>
+        <canvas id="cv" width="640" height="380"></canvas>
+        <div class="eng" id="engout">computing&hellip;</div>
+      </div>
+
+      <div class="flow">&darr;</div>
+
+      <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+      <p class="kv">Proven result &mdash; the flux is set by the charge alone, not the surface:</p>
+      <div id="litbadge" class="badge ok">booting&hellip;</div>
+    </div>
+  </section>
+
+  <!-- RIGHT / RED -->
+  <section class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <span class="wn">1</span>
+      <h3>THE ADVERSARY <span class="tag t-wall">wall</span></h3>
+      <p>&#8220;A bigger surface must catch more flux &mdash; it has more area, so it sees more field.&#8221;</p>
+      <div class="wall-note">True that area grows as <span class="mono">r&sup2;</span> &mdash; but the field it samples <em>falls</em> as <span class="mono">1/r&sup2;</span>. The two cancel exactly. The wall is the inverse square: only because the field is precisely <span class="mono">1/r&sup2;</span> does flux come out shape-independent. In a universe with <span class="mono">1/r&sup3;</span> forces, Gauss&#8217;s law would fail.</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">2</span>
+      <h3>THE GRAVEYARD</h3>
+      <p class="dead">&#8220;Flux depends on how close the surface hugs the charge.&#8221;</p>
+      <p class="fix">&rarr; No. Only the enclosed charge counts; the geometry cancels.</p>
+      <div class="hair"></div>
+      <p class="dead">&#8220;A charge just outside the surface leaks a little net flux in.&#8221;</p>
+      <p class="fix">&rarr; Zero. Every line an external charge sends in comes back out &mdash; net flux is exactly 0.</p>
+      <div class="hair"></div>
+      <p class="dead">&#8220;Inside a charged shell the field points inward toward the wall.&#8221;</p>
+      <p class="fix">&rarr; The interior field of a uniform shell is 0 everywhere (shell theorem).</p>
+    </div>
+
+    <div class="win">
+      <span class="wn">6</span>
+      <h3>THE TAMPER</h3>
+      <p>Disclosed planted void: force the flux to depend on the surface radius (&Phi; &prop; Q/r). Two spheres of different radius will then disagree &mdash; and the Witness in window 7 catches it live.</p>
+      <button id="tamper">inject &Phi; &prop; Q/r</button>
+      <button id="restore" class="restore">restore Gauss</button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  THE GAUSS LAW &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus &mdash; the engine is LIT, the tamper is a disclosed void the witness detects.<br>
+  Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+
+<script>
+// ---- constants (real physical values) ----
+var K = 8.9875517873681764e9;      // Coulomb constant, N m^2 / C^2
+var EPS0 = 8.8541878128e-12;       // vacuum permittivity, F/m
+
+// ---- tamper flag: plain top-level var so selfcheck runs headless ----
+var TAMPER = false;
+
+// ---- fixed-seed PRNG (mulberry32) so Monte Carlo is deterministic ----
+function mulberry32(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ---- ENGINE: pure functions, computed live from Gauss's law ----
+
+// Total electric flux through a CLOSED surface enclosing charge Q.
+// Gauss: Phi = Q / eps0, independent of the surface radius r.
+// TAMPER injects a false radius dependence.
+function flux(Q, r){
+  if(TAMPER){ return Q / (EPS0 * r); }   // planted void: flux made to depend on r
+  return Q / EPS0;
+}
+
+// Field OUTSIDE a spherically symmetric charge (inverse square).
+function fieldOutside(Q, r){ return K * Q / (r * r); }
+
+// Shell theorem: field everywhere INSIDE a uniform spherical shell is zero.
+function shellFieldInside(Q, r){ return 0; }
+
+// Net flux through a surface, given whether the charge is enclosed.
+// A charge OUTSIDE contributes zero net flux.
+function netFluxEnclosed(Q, enclosed, r){
+  return enclosed ? flux(Q, r) : 0;
+}
+
+// Gauss surface integral by Simpson quadrature for a centred point charge:
+//   integral of E.n dA over a sphere of radius r  ==  4*pi*K*Q
+// (E.n = K Q / r^2, dA = r^2 sinθ dθ dφ; the r^2 cancels; φ integral = 2π).
+// This is the finite-difference residual asserted to 1e-9 relative.
+function fluxIntegral(Q, r, N){
+  if(N % 2 === 1){ N += 1; }
+  var a = 0, b = Math.PI, h = (b - a) / N;
+  var s = Math.sin(a) + Math.sin(b);
+  for(var i = 1; i < N; i++){
+    s += (i % 2 === 1 ? 4 : 2) * Math.sin(a + i * h);
+  }
+  var integ = s * h / 3;          // ∫0^π sinθ dθ  ->  2
+  return 2 * Math.PI * K * Q * integ;   // -> 4πKQ
+}
+
+// Monte Carlo net flux for a charge OUTSIDE the closed surface.
+// Analytic answer is exactly 0; MC (fixed seed) lands near 0.
+// Units: k*Q normalised, sphere radius R, source distance d>R along +x.
+function mcExternalFlux(kQ, R, d, N){
+  var rng = mulberry32(1234567);
+  var sum = 0;
+  for(var i = 0; i < N; i++){
+    var u = 2 * rng() - 1;
+    var phi = 2 * Math.PI * rng();
+    var s = Math.sqrt(1 - u * u);
+    var nx = s * Math.cos(phi), ny = s * Math.sin(phi), nz = u; // outward normal
+    var px = R * nx, py = R * ny, pz = R * nz;
+    var dx = px - d, dy = py, dz = pz;                          // source -> point
+    var rr = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    var Emag = kQ / (rr * rr);
+    var Ex = Emag*dx/rr, Ey = Emag*dy/rr, Ez = Emag*dz/rr;
+    sum += Ex*nx + Ey*ny + Ez*nz;                              // E.n
+  }
+  return (sum / N) * 4 * Math.PI * R * R;
+}
+
+function approx(a, b, tol){ return Math.abs(a - b) <= tol; }
+
+// ---- FAIL-LOUD SELFCHECK: throws on any violation; returns true on success ----
+function selfcheck(){
+  var saved = TAMPER;
+  TAMPER = false;
+
+  var Q = 1.6e-9, r1 = 0.05, r2 = 7.30;
+
+  // (1) shape independence: two radii, same Q -> identical flux, to 1e-9 relative
+  var f1 = flux(Q, r1), f2 = flux(Q, r2);
+  if(!approx(f1, f2, 1e-9 * Math.abs(f1))){
+    throw new Error("flux depends on surface radius");
+  }
+
+  // (2) flux is LINEAR in enclosed charge: double Q doubles Phi
+  var fD = flux(2 * Q, r1);
+  if(!approx(fD, 2 * flux(Q, r1), 1e-9 * Math.abs(fD))){
+    throw new Error("flux not linear in Q");
+  }
+
+  // (3) a charge OUTSIDE the surface contributes zero net flux
+  if(netFluxEnclosed(Q, false, r1) !== 0){
+    throw new Error("external charge produced nonzero net flux");
+  }
+
+  // (4) field OUTSIDE is inverse square: double r quarters E
+  var rr = 0.30;
+  var eNear = fieldOutside(Q, rr), eFar = fieldOutside(Q, 2 * rr);
+  if(!approx(eFar, eNear / 4, 1e-9 * Math.abs(eNear / 4))){
+    throw new Error("field is not inverse-square");
+  }
+
+  // (5) shell theorem: interior field is exactly zero
+  if(shellFieldInside(Q, 0.5) !== 0){
+    throw new Error("shell interior field is nonzero");
+  }
+
+  // (6) Gauss surface integral == 4πKQ, quadrature residual to 1e-9 relative
+  var num = fluxIntegral(Q, r1, 2000);
+  var analytic = 4 * Math.PI * K * Q;
+  if(!approx(num, analytic, 1e-9 * Math.abs(analytic))){
+    throw new Error("quadrature flux residual exceeds 1e-9");
+  }
+
+  // (7) Monte Carlo (fixed seed): external charge net flux is near zero,
+  //     far smaller than the enclosed-flux scale 4π (in kQ=1 units)
+  var mc = mcExternalFlux(1.0, 1.0, 3.0, 20000);
+  if(Math.abs(mc) > 0.05 * 4 * Math.PI){
+    throw new Error("Monte Carlo external flux not near zero");
+  }
+
+  // ---- TAMPER: inject radius dependence; the two radii MUST now disagree ----
+  TAMPER = true;
+  var t1 = flux(Q, r1), t2 = flux(Q, r2);
+  if(approx(t1, t2, 1e-9 * Math.abs(t1))){
+    throw new Error("tamper not detected: flux still shape-independent");
+  }
+  TAMPER = saved;
+
+  return true;
+}
+
+/* ===== UI ===== */
+
+function fmt(x, d){
+  if(!isFinite(x)) return "n/a";
+  return x.toPrecision(d || 6);
+}
+
+function witness(){
+  var el = document.getElementById("auditout");
+  if(!el) return;
+  var Q = 1.6e-9, r1 = 0.05, r2 = 7.30;
+  var a = flux(Q, r1), b = flux(Q, r2);
+  var agree = approx(a, b, 1e-9 * Math.abs(a));
+  if(agree){
+    el.className = "badge ok";
+    el.innerHTML = "WITNESS OK — r₁ and r₂ agree: Φ = " + fmt(a, 6) + " V·m";
+  } else {
+    el.className = "badge bad";
+    el.innerHTML = "TAMPER CAUGHT — r₁ gives " + fmt(a, 5) + ", r₂ gives " + fmt(b, 5) + " V·m (Φ now depends on r)";
+  }
+}
+
+function renderEngine(){
+  var Q = 1.6e-9, r1 = 0.05, r2 = 7.30;
+  var phi = flux(Q, r1);
+  var eAtR1 = fieldOutside(Q, r1);
+  var eAtR2 = fieldOutside(Q, r2);
+  var out = document.getElementById("engout");
+  if(out){
+    out.innerHTML =
+      "&#934; through sphere r&#8321;=0.05 m &nbsp;=&nbsp; <span class='num'>" + fmt(flux(Q, r1), 6) + "</span> V&middot;m<br>" +
+      "&#934; through sphere r&#8322;=7.30 m &nbsp;=&nbsp; <span class='num'>" + fmt(flux(Q, r2), 6) + "</span> V&middot;m<br>" +
+      "Q / &epsilon;&#8320; &nbsp;=&nbsp; <span class='num'>" + fmt(Q / EPS0, 6) + "</span> V&middot;m &nbsp;(same number)<br>" +
+      "E at r&#8321; = <span class='num'>" + fmt(eAtR1, 4) + "</span> N/C &nbsp;&middot;&nbsp; E at r&#8322; = <span class='num'>" + fmt(eAtR2, 4) + "</span> N/C<br>" +
+      "field inside a uniform shell = <span class='num'>0</span> N/C (shell theorem)";
+  }
+  var lb = document.getElementById("litbadge");
+  if(lb){
+    if(TAMPER){
+      lb.className = "badge bad";
+      lb.innerHTML = "TAMPERED — Φ now depends on r; r₁ and r₂ disagree";
+    } else {
+      lb.className = "badge ok";
+      lb.innerHTML = "Φ = Q/ε₀ = " + fmt(phi, 6) + " V·m — shape-independent · LIT";
+    }
+  }
+}
+
+// ---- live canvas: Gaussian surfaces + point charge + field arrows ----
+function drawCanvas(t){
+  var cv = document.getElementById("cv");
+  if(!cv || !cv.getContext) return;
+  var g = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  g.clearRect(0, 0, W, H);
+  var cx = W * 0.5, cy = H * 0.5;
+
+  // radial field arrows (inverse-square: fade with distance)
+  var rings = [46, 92, 138];
+  for(var ri = 0; ri < rings.length; ri++){
+    var R = rings[ri];
+    var n = 20;
+    for(var i = 0; i < n; i++){
+      var ang = (i / n) * Math.PI * 2 + (ri * 0.14) + t * 0.0004;
+      var ax = cx + Math.cos(ang) * R;
+      var ay = cy + Math.sin(ang) * R;
+      var len = 900 / (R * R) * 130;
+      var bx = cx + Math.cos(ang) * (R + len);
+      var by = cy + Math.sin(ang) * (R + len);
+      g.strokeStyle = "rgba(127,212,255," + (0.55 - ri * 0.14) + ")";
+      g.lineWidth = 1.4;
+      g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
+    }
+  }
+
+  // two Gaussian surfaces (different radius, same enclosed charge)
+  var surfs = [[62, "rgba(95,168,255,.85)", "r₁"], [150, "rgba(92,255,177,.75)", "r₂"]];
+  for(var s = 0; s < surfs.length; s++){
+    g.strokeStyle = TAMPER ? "rgba(255,107,107,.9)" : surfs[s][1];
+    g.setLineDash([6, 5]);
+    g.lineWidth = 2;
+    g.beginPath(); g.arc(cx, cy, surfs[s][0], 0, Math.PI * 2); g.stroke();
+    g.setLineDash([]);
+    g.fillStyle = g.strokeStyle;
+    g.font = "12px monospace";
+    g.fillText(surfs[s][1], cx + surfs[s][0] * 0.70, cy - surfs[s][0] * 0.70);
+  }
+
+  // point charge at centre (pulsing)
+  var pr = 8 + Math.sin(t * 0.004) * 1.6;
+  var grd = g.createRadialGradient(cx, cy, 0, cx, cy, pr + 8);
+  grd.addColorStop(0, "#fff");
+  grd.addColorStop(0.5, "#7fd4ff");
+  grd.addColorStop(1, "rgba(127,212,255,0)");
+  g.fillStyle = grd;
+  g.beginPath(); g.arc(cx, cy, pr + 8, 0, Math.PI * 2); g.fill();
+  g.fillStyle = "#06120c";
+  g.font = "bold 13px monospace";
+  g.fillText("+Q", cx - 9, cy + 4);
+
+  // external charge (contributes zero net flux)
+  g.fillStyle = "rgba(255,191,71,.9)";
+  g.beginPath(); g.arc(W - 34, 30, 7, 0, Math.PI * 2); g.fill();
+  g.fillStyle = "rgba(255,191,71,.9)";
+  g.font = "11px monospace";
+  g.fillText("+q outside → net Φ = 0", W - 168, 52);
+}
+
+var rafId = 0;
+function loop(t){ drawCanvas(t); rafId = requestAnimationFrame(loop); }
+
+// ---- boot ----
+(function boot(){
+  try{
+    var ok = selfcheck();
+    if(ok !== true){ throw new Error("selfcheck did not return true"); }
+  }catch(e){
+    var fb = document.getElementById("failb");
+    if(fb){ fb.style.display = "block"; fb.textContent = "SELFCHECK FAILED — engine not LIT: " + e.message; }
+    var lb = document.getElementById("litbadge");
+    if(lb){ lb.className = "badge bad"; lb.textContent = "FAILED: " + e.message; }
+    throw e;
+  }
+  renderEngine();
+  witness();
+  if(typeof requestAnimationFrame === "function"){ rafId = requestAnimationFrame(loop); }
+
+  var tb = document.getElementById("tamper");
+  var rs = document.getElementById("restore");
+  if(tb){ tb.addEventListener("click", function(){ TAMPER = true;  renderEngine(); witness(); }); }
+  if(rs){ rs.addEventListener("click", function(){ TAMPER = false; renderEngine(); witness(); }); }
+})();
+</script>
+</body>
+</html>

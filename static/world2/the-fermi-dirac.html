@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE FERMI-DIRAC DISTRIBUTION</title>
+<style>
+  :root{
+    --am:#ffb0d0;
+    --bg:#08130d;
+    --bg2:#0c1c13;
+    --ink:#dff3e6;
+    --dim:#8fb59d;
+    --line:#1c3527;
+    --blue:#7fb0ff;
+    --blueln:#20344f;
+    --red:#ff8a8a;
+    --redln:#4a2323;
+    --amber:#ffcf6b;
+    --lit:#7dffb0;
+    --wall:#ff6d6d;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #10241a 0%, transparent 60%),
+      linear-gradient(180deg,#08130d 0%, #060f0a 100%);
+    color:var(--ink);
+    font-family:var(--mono);
+    line-height:1.5;
+    padding:26px 20px 60px;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+  header{margin:0 0 22px}
+  h1{
+    font-size:clamp(21px,3.4vw,34px);
+    letter-spacing:.5px;margin:0 0 8px;
+    color:#fff;
+    text-shadow:0 0 22px rgba(255,176,208,.35);
+  }
+  h1 .k{color:var(--am)}
+  .sub{color:var(--dim);max-width:78ch;margin:0 0 10px;font-size:14px}
+  .src{font-size:12px;color:var(--dim);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+  .tag{
+    display:inline-block;font-size:10.5px;letter-spacing:.6px;
+    padding:2px 7px;border-radius:999px;border:1px solid currentColor;
+    text-transform:uppercase;font-weight:700;white-space:nowrap;
+  }
+  .t-amber{color:var(--amber)}
+  .t-lit{color:var(--lit)}
+  .t-in{color:var(--blue)}
+  .t-out{color:var(--am)}
+  .t-wall{color:var(--wall)}
+
+  .ocho{
+    display:grid;
+    grid-template-columns:1fr 1.12fr 1fr;
+    gap:16px;align-items:start;
+  }
+  @media(max-width:880px){ .ocho{grid-template-columns:1fr} }
+
+  .col{display:flex;flex-direction:column;gap:14px}
+  .teamhdr{
+    font-size:12px;letter-spacing:1.2px;text-transform:uppercase;
+    font-weight:700;padding:7px 10px;border-radius:8px;border:1px solid var(--line);
+    background:rgba(255,255,255,.02);
+  }
+  .col.blue .teamhdr{color:var(--blue);border-color:var(--blueln)}
+  .col.red .teamhdr{color:var(--red);border-color:var(--redln)}
+  .col.center .teamhdr{color:var(--am);border-color:#3a2230;text-align:center}
+
+  .win{
+    position:relative;border:1px solid var(--line);border-radius:12px;
+    background:linear-gradient(180deg,var(--bg2),var(--bg));
+    padding:13px 13px 14px;
+  }
+  .win h3{
+    margin:0 0 7px;font-size:13px;letter-spacing:.4px;color:#eafff2;
+    display:flex;align-items:center;gap:8px;
+  }
+  .win p{margin:6px 0;font-size:12.5px;color:var(--dim)}
+  .win .num{
+    position:absolute;top:-10px;right:-10px;width:26px;height:26px;border-radius:50%;
+    display:grid;place-items:center;font-size:12px;font-weight:800;
+    background:#0b1912;border:1px solid var(--line);color:var(--dim);
+  }
+  .col.blue .win{border-color:var(--blueln)}
+  .col.blue .win .num{border-color:var(--blueln);color:var(--blue)}
+  .col.red .win{border-color:var(--redln)}
+  .col.red .win .num{border-color:var(--redln);color:var(--red)}
+  .col.center .win.panel{border-color:#3a2230}
+  .col.center .win.panel .num{border-color:#3a2230;color:var(--am)}
+
+  .flow{
+    text-align:center;color:var(--dim);font-size:16px;line-height:1;
+    margin:2px 0;opacity:.7;
+  }
+
+  code,.mono{font-family:var(--mono)}
+  .eq{
+    display:block;background:#06110b;border:1px solid var(--line);border-radius:8px;
+    padding:9px 10px;margin:8px 0;font-size:12.5px;color:#cfeede;overflow-x:auto;
+  }
+  .eq b{color:var(--am)}
+  .strike{color:#7f9a89}
+  .strike s{color:#c98a8a}
+  .wall-note{
+    border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,109,109,.05);
+    border-radius:0 8px 8px 0;font-size:12.5px;color:#e9c9c9;margin:8px 0;
+  }
+  .grave{font-size:12.5px;margin:8px 0}
+  .grave .fix{color:var(--lit)}
+
+  canvas{width:100%;height:auto;display:block;background:#050d09;border:1px solid var(--line);border-radius:8px}
+  .ctrls{display:flex;flex-direction:column;gap:8px;margin-top:10px;font-size:12px;color:var(--dim)}
+  .ctrls label{display:flex;align-items:center;gap:9px}
+  .ctrls input[type=range]{flex:1;accent-color:var(--am)}
+  .ctrls .val{color:var(--am);min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
+    padding:5px 11px;border-radius:999px;border:1px solid currentColor;margin-top:9px;
+  }
+  .badge .dot{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor}
+  #auditout{color:var(--lit)}
+  #auditout.bad{color:var(--wall)}
+  #litbadge{color:var(--lit)}
+  #failb{display:none;color:var(--wall);border:1px solid var(--wall);border-radius:8px;padding:9px 11px;margin-top:9px;font-size:12px}
+
+  .btn{
+    font-family:var(--mono);font-size:12px;cursor:pointer;color:var(--ink);
+    background:#0b1912;border:1px solid var(--line);border-radius:8px;padding:7px 12px;
+  }
+  .btn:hover{border-color:var(--am)}
+  .btn.warn{border-color:var(--redln);color:var(--red)}
+  .btn.warn:hover{border-color:var(--wall)}
+  .rowbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+  .readout{font-size:12px;color:var(--dim);margin-top:8px}
+  .readout b{color:var(--am);font-variant-numeric:tabular-nums}
+
+  footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--dim);text-align:center}
+  footer .k{color:var(--am)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>THE <span class="k">FERMI-DIRAC</span> DISTRIBUTION</h1>
+    <p class="sub">How identical fermions fill quantum states when no two may share one. The occupation of a state at energy E is <b>n = 1/(e^((E&minus;&mu;)/kT) + 1)</b> &mdash; capped at one particle per state by the Pauli exclusion principle. Rendered, not quoted: the curve below is computed live, its four defining properties asserted at boot.</p>
+    <p class="src">
+      <span class="tag t-amber">source</span>
+      E. Fermi, <em>Zur Quantelung des idealen einatomigen Gases</em>, Zeitschrift f&uuml;r Physik <b>36</b> (1926) 902;
+      P. A. M. Dirac, <em>On the Theory of Quantum Mechanics</em>, Proc. R. Soc. London <b>A112</b> (1926) 661.
+      <a href="https://en.wikipedia.org/wiki/Fermi%E2%80%93Dirac_statistics" target="_blank" rel="noopener">overview</a>
+      <span class="tag t-amber">no stable open scan &mdash; cited by journal / year</span>
+    </p>
+  </header>
+
+  <div class="ocho">
+
+    <!-- ===================== BLUE TEAM ===================== -->
+    <section class="col blue">
+      <div class="teamhdr">Blue team &middot; builds &amp; defends</div>
+
+      <div class="win">
+        <span class="num">3</span>
+        <h3>THE MODEL</h3>
+        <p>A single quantum state of energy E, in contact with a reservoir at temperature T and chemical potential &mu; (the Fermi level). Because fermions obey Pauli exclusion, that state holds either <b>0 or 1</b> particle &mdash; its <em>average</em> occupation is a number in [0,1].</p>
+        <span class="eq">n(E) = 1 / ( e^{(E&minus;&mu;)/kT} + 1 )</span>
+        <p>The lone <b>+1</b> in the denominator is the whole story. Bose&ndash;Einstein statistics put a &minus;1 there (unbounded occupation); Maxwell&ndash;Boltzmann drops it entirely (classical). The +1 is what makes matter take up space. Natural units: <b>k = 1</b>, energies measured in the same units as T.</p>
+      </div>
+
+      <div class="win">
+        <span class="num">5</span>
+        <h3>THE LINEAGE</h3>
+        <p>No two fermions alike &mdash; Fermi&ndash;Dirac statistics, 1926, derived independently by Fermi (Feb) and Dirac (Aug). The <b>1/(e+1)</b> occupation is the exclusion-principle sibling of <span class="k" style="color:var(--am)">the-boltzmann-distribution</span>: at high energy (E&minus;&mu; &raquo; kT) the +1 becomes negligible and n &rarr; e<sup>&minus;(E&minus;&mu;)/kT</sup>, the Boltzmann tail. The step at the Fermi level explains why metals conduct, why white dwarfs resist collapse, and why atoms have shells.</p>
+      </div>
+
+      <div class="win">
+        <span class="num">7</span>
+        <h3>THE WITNESS</h3>
+        <p>Re-runs the full self-check against the live engine on demand, including the planted tamper in window 6. Green = every closed-form property holds; flips red if the occupation ever leaves [0,1].</p>
+        <span id="auditout" class="badge"><span class="dot"></span><span>witness idle</span></span>
+        <div class="rowbtn"><button class="btn" id="recheck">re-run witness</button></div>
+      </div>
+    </section>
+
+    <!-- ===================== CENTER ===================== -->
+    <section class="col center">
+      <div class="teamhdr">The machine</div>
+
+      <div class="win">
+        <span class="num">4</span>
+        <h3>DATA IN <span class="tag t-in">in &darr;</span></h3>
+        <p>A sweep of energies E across the Fermi level, plus the reservoir temperature T and Fermi level &mu;. Drag the sliders &mdash; the engine recomputes n(E) for every energy.</p>
+        <div class="ctrls">
+          <label>T <input type="range" id="Tsl" min="0" max="3" step="0.01" value="0.6"><span class="val" id="Tval">0.60</span></label>
+          <label>&mu; <input type="range" id="Msl" min="-2" max="2" step="0.01" value="0.00"><span class="val" id="Mval">0.00</span></label>
+        </div>
+      </div>
+
+      <div class="flow">&#9663;</div>
+
+      <div class="win panel">
+        <span class="num">0</span>
+        <h3>THE PANEL <span class="tag t-lit">LIT</span></h3>
+        <canvas id="cv" width="520" height="330"></canvas>
+        <div class="readout">
+          n at E=&mu;: <b id="rHalf">0.500</b> &middot; n at E=&mu;+kT: <b id="rTail">0.269</b> &middot; classical tail at E=&mu;+5kT: <b id="rCl">0.0067</b>
+        </div>
+        <p style="font-size:11.5px;margin-top:8px">Dashed white = the T=0 step (all states below &mu; full, all above empty). The pink curve is n(E) at the chosen T; every temperature crosses <b>exactly 1/2</b> at E=&mu;.</p>
+        <span id="litbadge" class="badge"><span class="dot"></span><span>booting&hellip;</span></span>
+        <div id="failb"></div>
+      </div>
+
+      <div class="flow">&#9663;</div>
+
+      <div class="win">
+        <span class="num">8</span>
+        <h3>DATA OUT <span class="tag t-out">out &darr;</span></h3>
+        <p>Proven, live: <b>0 &le; n(E) &le; 1</b> for all E,T (Pauli); a <b>step at T=0</b>; <b>n(&mu;)=1/2</b> exactly for every T&gt;0; and the <b>Boltzmann tail</b> e<sup>&minus;(E&minus;&mu;)/kT</sup> recovered when E&minus;&mu; &raquo; kT. Four asserts, checked to 1e&minus;9 at boot.</p>
+      </div>
+    </section>
+
+    <!-- ===================== RED TEAM ===================== -->
+    <section class="col red">
+      <div class="teamhdr">Red team &middot; attacks &amp; breaks</div>
+
+      <div class="win">
+        <span class="num">1</span>
+        <h3>THE ADVERSARY <span class="tag t-wall">WALL</span></h3>
+        <div class="wall-note">"Occupation is just a probability &mdash; it can be anything from 0 up. Why cap it at 1? Let states hold as many particles as they like near the Fermi level; the math is smoother without the +1."</div>
+        <p>That is precisely Bose&ndash;Einstein statistics, and it is <b>wrong for fermions</b>. Remove the +1 (or flip it to &minus;1) and the occupation <em>diverges</em> as E&rarr;&mu; &mdash; a single electron state holding a million electrons. The Pauli exclusion principle is the physical wall: measured electron heat capacity, degeneracy pressure, and the periodic table all demand n&le;1. Window 6 performs exactly this attack; window 7 catches it.</p>
+      </div>
+
+      <div class="win">
+        <span class="num">2</span>
+        <h3>THE GRAVEYARD</h3>
+        <p class="grave strike"><s>"At T=0 the distribution is smooth."</s><br><span class="fix">&rarr; Correction: at T=0 it is a hard <b>step</b> &mdash; n=1 for E&lt;&mu;, n=0 for E&gt;&mu;. Smoothing only appears at T&gt;0, over a width ~kT.</span></p>
+        <p class="grave strike"><s>"The Fermi level is where n=1."</s><br><span class="fix">&rarr; Correction: E=&mu; is where n=<b>1/2</b>, for every T&gt;0. That half-filling <em>defines</em> the chemical potential.</span></p>
+        <p class="grave strike"><s>"Fermi&ndash;Dirac and Boltzmann never agree."</s><br><span class="fix">&rarr; Correction (AMBER, limit): for E&minus;&mu; &raquo; kT they <b>do</b> &mdash; the +1 is negligible and FD collapses to the classical tail. They differ only near and below &mu;.</span></p>
+      </div>
+
+      <div class="win">
+        <span class="num">6</span>
+        <h3>THE TAMPER</h3>
+        <p>The disclosed planted void. Pressing <b>tamper</b> flips the denominator sign from <b>+1</b> (Fermi&ndash;Dirac) to <b>&minus;1</b> (Bose&ndash;Einstein). The occupation then diverges and <b>exceeds 1</b> near E=&mu; &mdash; Pauli is violated. The witness in window 7 detects it live.</p>
+        <div class="rowbtn">
+          <button class="btn warn" id="tamper">tamper &rarr; &minus;1 sign</button>
+          <button class="btn" id="restore">restore +1</button>
+        </div>
+        <div class="readout">denominator sign: <b id="signout">+1 (Fermi&ndash;Dirac)</b></div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    THE FOLD &middot; WORLD II &middot; <span class="k">the-fermi-dirac</span> &middot; occupation computed live in natural units (k=1); source cited, not quoted. &mdash; David Lee Wise (<span class="k">ROOT0</span>) with AVAN.
+  </footer>
+</div>
+
+<script>
+// ============================================================
+//  ENGINE + SELFCHECK  (pure logic, extractable for node verify)
+//  Fermi-Dirac occupation in natural units: k = 1.
+//  n(E) = 1 / ( exp((E - mu)/T) + STAT ),  STAT = +1 for fermions.
+// ============================================================
+
+// Global denominator-sign state. +1 = Fermi-Dirac (correct).
+// The tamper flips it to -1 (Bose-Einstein), which the witness catches.
+var STAT = 1;
+
+// Fixed-seed PRNG so the self-check is deterministic.
+function mulberry32(a){
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Occupation at T > 0. Uses the current STAT sign.
+function occ(E, mu, T){
+  return 1 / (Math.exp((E - mu) / T) + STAT);
+}
+
+// The T = 0 limit is a hard step (independent of STAT for fermions):
+// filled below the Fermi level, empty above, one-half exactly at it.
+function step0(E, mu){
+  if (E < mu) return 1;
+  if (E > mu) return 0;
+  return 0.5;
+}
+
+// Classical Maxwell-Boltzmann tail (the E - mu >> T limit).
+function boltzTail(E, mu, T){
+  return Math.exp(-(E - mu) / T);
+}
+
+// Fail-loud self-check. THROWS on any violation; RETURNS true on success.
+function selfcheck(){
+  var rng = mulberry32(0x0FE241D);   // fixed seed
+  var i, E, mu, T, n;
+
+  // Save the sign so we can plant + heal the tamper without side effects.
+  var SAVED = STAT;
+  STAT = 1;   // enforce true Fermi-Dirac for the honest checks
+
+  // (1) PAULI: 0 <= n(E) <= 1 for all E, T > 0. Fermions cap at one per state,
+  //     unlike Bose-Einstein or Maxwell-Boltzmann whose occupations are unbounded.
+  for (i = 0; i < 4000; i++){
+    mu = (rng() * 6) - 3;
+    T  = 0.02 + rng() * 4;
+    E  = mu + (rng() * 20 - 10);         // energies straddling the Fermi level
+    n  = occ(E, mu, T);
+    if (!(n >= 0 && n <= 1)){
+      throw new Error("Pauli violated: n=" + n + " at E-mu=" + (E - mu) + ", T=" + T);
+    }
+  }
+
+  // (2) T = 0 STEP: every state below mu filled (n=1), every state above empty (n=0).
+  for (i = 0; i < 500; i++){
+    mu = (rng() * 4) - 2;
+    E  = mu - (0.001 + rng() * 5);       // strictly below
+    if (step0(E, mu) !== 1) throw new Error("T=0 below-mu not filled at E=" + E);
+    E  = mu + (0.001 + rng() * 5);       // strictly above
+    if (step0(E, mu) !== 0) throw new Error("T=0 above-mu not empty at E=" + E);
+  }
+  if (step0(0, 0) !== 0.5) throw new Error("T=0 at E=mu not one-half");
+
+  // (3) FERMI LEVEL: n(E=mu) = 1/2 EXACTLY for all T > 0.
+  for (i = 0; i < 500; i++){
+    mu = (rng() * 6) - 3;
+    T  = 0.001 + rng() * 6;
+    n  = occ(mu, mu, T);
+    if (Math.abs(n - 0.5) > 1e-12){
+      throw new Error("n(mu) != 1/2: got " + n + " at T=" + T);
+    }
+  }
+
+  // (4) CLASSICAL LIMIT: for E - mu >> kT, n -> exp(-(E-mu)/T) (Boltzmann tail).
+  //     Error is O(e^{-2x}); at x >= 12 it is below 1e-9.
+  for (i = 0; i < 500; i++){
+    mu = (rng() * 4) - 2;
+    T  = 0.1 + rng() * 2;
+    var x = 12 + rng() * 20;             // (E - mu)/T, comfortably large
+    E  = mu + x * T;
+    n  = occ(E, mu, T);
+    if (Math.abs(n - boltzTail(E, mu, T)) > 1e-9){
+      throw new Error("Boltzmann-tail limit failed: dn=" + Math.abs(n - boltzTail(E, mu, T)));
+    }
+  }
+
+  // ---- PLANTED VOID (disclosed) ----------------------------------------
+  // Flip the sign to -1 (Bose-Einstein). Near E = mu the occupation must now
+  // DIVERGE and EXCEED 1, so the Pauli check of step (1) would fail. Assert
+  // the known-bad value differs, then restore. This is exactly window 6.
+  STAT = -1;
+  var Ebad = 0.01, mubad = 0, Tbad = 1;          // (E-mu)/T = 0.01
+  var nbad = occ(Ebad, mubad, Tbad);             // ~ 1/(e^0.01 - 1) ~ 99.5
+  if (!(nbad > 1)){
+    throw new Error("tamper inert: Bose sign did not break Pauli (n=" + nbad + ")");
+  }
+  STAT = 1;
+  if (Math.abs(occ(0.01, 0, 1) - 1 / (Math.exp(0.01) + 1)) > 1e-15){
+    throw new Error("restore failed: sign not healed");
+  }
+  // ---------------------------------------------------------------------
+
+  STAT = SAVED;   // leave the live sign exactly as the UI had it
+  return true;
+}
+
+/* ===== UI ===== */
+
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var Tsl = document.getElementById('Tsl');
+var Msl = document.getElementById('Msl');
+var Tval = document.getElementById('Tval');
+var Mval = document.getElementById('Mval');
+
+function draw(){
+  var T = parseFloat(Tsl.value);
+  var mu = parseFloat(Msl.value);
+  Tval.textContent = T.toFixed(2);
+  Mval.textContent = mu.toFixed(2);
+
+  var W = cv.width, H = cv.height;
+  var padL = 40, padR = 14, padT = 14, padB = 26;
+  var Emin = mu - 4, Emax = mu + 4;
+  ctx.clearRect(0, 0, W, H);
+
+  function px(E){ return padL + (E - Emin) / (Emax - Emin) * (W - padL - padR); }
+  function py(n){ return padT + (1 - n) * (H - padT - padB); }
+
+  // grid + axes
+  ctx.strokeStyle = '#12271b'; ctx.lineWidth = 1;
+  var g;
+  for (g = 0; g <= 1.0001; g += 0.25){
+    ctx.beginPath(); ctx.moveTo(padL, py(g)); ctx.lineTo(W - padR, py(g)); ctx.stroke();
+  }
+  ctx.strokeStyle = '#1c3527';
+  ctx.beginPath(); ctx.moveTo(padL, py(0)); ctx.lineTo(W - padR, py(0)); ctx.stroke();
+
+  // Fermi level marker
+  ctx.strokeStyle = 'rgba(255,176,208,.35)'; ctx.setLineDash([3, 4]);
+  ctx.beginPath(); ctx.moveTo(px(mu), padT); ctx.lineTo(px(mu), py(0)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // T = 0 step (dashed white)
+  ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(px(Emin), py(1));
+  ctx.lineTo(px(mu),   py(1));
+  ctx.lineTo(px(mu),   py(0));
+  ctx.lineTo(px(Emax), py(0));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ghost curves at a few other temperatures (context)
+  var ghosts = [0.15, 1.2];
+  ctx.lineWidth = 1;
+  ghosts.forEach(function(tg){
+    ctx.strokeStyle = 'rgba(127,176,255,.35)';
+    ctx.beginPath();
+    for (var k = 0; k <= 300; k++){
+      var E = Emin + (Emax - Emin) * k / 300;
+      var n = (tg <= 0) ? step0(E, mu) : occ(E, mu, tg);
+      if (k === 0) ctx.moveTo(px(E), py(n)); else ctx.lineTo(px(E), py(n));
+    }
+    ctx.stroke();
+  });
+
+  // live curve at chosen T (pink, thick)
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--am').trim() || '#ffb0d0';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  for (var k = 0; k <= 400; k++){
+    var E = Emin + (Emax - Emin) * k / 400;
+    var n = (T <= 0) ? step0(E, mu) : occ(E, mu, T);
+    if (k === 0) ctx.moveTo(px(E), py(n)); else ctx.lineTo(px(E), py(n));
+  }
+  ctx.stroke();
+
+  // half-filling dot at E = mu
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(px(mu), py(T <= 0 ? 0.5 : occ(mu, mu, T)), 3.2, 0, 7); ctx.fill();
+
+  // labels
+  ctx.fillStyle = '#8fb59d'; ctx.font = '10px monospace';
+  ctx.fillText('n', 6, py(0.5)); ctx.fillText('1', padL - 12, py(1) + 3);
+  ctx.fillText('0', padL - 12, py(0) + 3);
+  ctx.fillText('E', W - padR - 8, py(0) + 18);
+  ctx.fillText('mu', px(mu) - 6, py(0) + 18);
+
+  // readouts
+  document.getElementById('rHalf').textContent = (T <= 0 ? 0.5 : occ(mu, mu, T)).toFixed(3);
+  document.getElementById('rTail').textContent = (T <= 0 ? 0 : occ(mu + T, mu, T)).toFixed(3);
+  document.getElementById('rCl').textContent   = (T <= 0 ? 0 : occ(mu + 5 * T, mu, T)).toFixed(4);
+}
+
+Tsl.addEventListener('input', draw);
+Msl.addEventListener('input', draw);
+
+// tamper / restore (window 6) + sign readout
+var signout = document.getElementById('signout');
+function refreshSign(){
+  signout.textContent = (STAT === 1) ? '+1 (Fermi-Dirac)' : '-1 (Bose-Einstein) -- Pauli broken';
+  signout.style.color = (STAT === 1) ? 'var(--am)' : 'var(--wall)';
+}
+document.getElementById('tamper').addEventListener('click', function(){
+  STAT = -1; refreshSign(); draw(); runWitness();
+});
+document.getElementById('restore').addEventListener('click', function(){
+  STAT = 1; refreshSign(); draw(); runWitness();
+});
+
+// witness (window 7): re-run selfcheck AND flag a live-tampered sign
+var auditout = document.getElementById('auditout');
+function runWitness(){
+  var live = STAT;                 // check the live sign the UI currently holds
+  var ok = true, msg = '';
+  try {
+    selfcheck();                   // saves/restores STAT internally
+    if (live !== 1){
+      // the honest checks pass, but the LIVE engine is tampered: witness must flag it
+      var probe = 1 / (Math.exp(0.01) + live);   // near E=mu with live sign
+      if (probe > 1){ ok = false; msg = 'TAMPER: n=' + probe.toFixed(1) + ' > 1'; }
+    }
+  } catch(e){ ok = false; msg = e.message; }
+
+  if (ok){
+    auditout.classList.remove('bad');
+    auditout.innerHTML = '<span class="dot"></span><span>witness OK -- n in [0,1], step at T=0, n(mu)=1/2, Boltzmann tail</span>';
+  } else {
+    auditout.classList.add('bad');
+    auditout.innerHTML = '<span class="dot"></span><span>witness CAUGHT it -- ' + msg + '</span>';
+  }
+}
+document.getElementById('recheck').addEventListener('click', runWitness);
+
+// boot: fail-loud gate, then light the panel
+var litbadge = document.getElementById('litbadge');
+try {
+  var pass = selfcheck();
+  if (pass !== true) throw new Error('selfcheck did not return true');
+  litbadge.innerHTML = '<span class="dot"></span><span>LIT -- 4 closed-form asserts pass (k=1 units)</span>';
+  refreshSign();
+  draw();
+  runWitness();
+} catch(err){
+  var fb = document.getElementById('failb');
+  fb.style.display = 'block';
+  fb.textContent = 'SELFCHECK FAILED: ' + err.message;
+  litbadge.classList.add('bad');
+  litbadge.innerHTML = '<span class="dot"></span><span>DEAD -- selfcheck threw</span>';
+  litbadge.style.color = 'var(--wall)';
+  throw err;   // rethrow: fail loud
+}
+</script>
+</body>
+</html>

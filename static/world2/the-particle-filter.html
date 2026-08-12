@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PARTICLE FILTER · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#0a0710; --bg2:#120c1a; --ink:#d7cdf0; --dim:#8a7ea8; --line:#33264a;
+ --am:#c0b0ff; --gr:#8affc0; --lit:#8affc0; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#7fe6ff;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(192,176,255,.08),transparent 52%),radial-gradient(circle at 90% 100%,rgba(127,230,255,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(192,176,255,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(192,176,255,.06);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#cfc4ea;} .win b{color:#f0eaff;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(192,176,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#150e22;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#180f2b;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:86px;}
+input[type=range]{flex:1;min-width:120px;padding:0;accent-color:var(--am);background:transparent;border:none;}
+canvas{width:100%;height:150px;display:block;background:#0a0714;border:1px solid var(--line);border-radius:6px;margin-top:8px;}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;color:var(--gr);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+.kv{font-size:12.5px;margin:3px 0;color:#cfc4ea;} .kv b{color:#f0eaff;} .kv .n{color:var(--gr);font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(138,255,192,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#a89ac0;font-size:12px;} .grave s{color:#6f6383;} .grave b{color:#cbb9ee;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE PARTICLE FILTER</h1>
+ <p class="sub">Do not carry a single guess — carry a <b>cloud</b> of them. Each particle is a hypothesis about the hidden state; each is <b style="color:var(--cy)">weighted</b> by how well it explains the evidence, then the cloud is <b>resampled</b> so good guesses breed and bad ones die. The weighted mean is the estimate. It is Monte-Carlo turned into a filter — and it holds shapes the <a href="https://davidwise01.github.io/the-kalman-filter/" style="color:var(--cy)">Kalman</a> family cannot: <b class="k">two peaks at once</b>. Down the center the belief goes <b style="color:var(--cy)">in</b>, the engine predicts-weights-resamples, the estimate comes <b style="color:var(--gr)">out</b>. <b style="color:var(--blue)">Blue</b> builds it; <b style="color:var(--red)">red</b> breaks it.</p>
+ <p class="src"><span class="tag t-amber">source</span> Gordon, Salmond &amp; Smith, <i>Novel approach to nonlinear/non-Gaussian Bayesian state estimation</i>, IEE Proc. F <b>140</b>(2):107–113 (1993) — <a href="https://doi.org/10.1049/ip-f-2.1993.0015">doi:10.1049/ip-f-2.1993.0015</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — predict · weight · resample</h2>
+   <p>A belief is a set of <b>N</b> weighted particles <span class="mut">{xⁱ, wⁱ}</span> approximating the posterior p(x|z). One recursion:</p>
+   <p><b class="k">1 PREDICT</b> push each particle through the motion / prior model. <b class="k">2 WEIGHT</b> wⁱ ∝ likelihood of the measurement given xⁱ. <b class="k">3 RESAMPLE</b> draw N new particles ∝ weight — high-weight breed, low-weight die. The <b>weighted mean</b> Σ wⁱxⁱ is the estimate.</p>
+   <p class="small">Live on the current cloud:</p>
+   <div class="kv" id="modelLive"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — Monte-Carlo, made recursive <span class="tag t-amber">AVAN</span></h2>
+   <p><a href="https://davidwise01.github.io/the-monte-carlo/" style="color:var(--cy)">The Monte-Carlo</a> method — approximate an integral by a population of samples — turned into a <b>filter</b>: a population of hypotheses reweighted by evidence, step after step. That is the particle filter.</p>
+   <p>Where the <a href="https://davidwise01.github.io/the-kalman-filter/" style="color:var(--cy)">Kalman</a> family carries one Gaussian and the <a href="https://davidwise01.github.io/the-extended-kalman-filter/" style="color:var(--cy)">extended Kalman filter</a> linearises to keep it, the particle cloud needs no linearity and <b>no single peak</b>. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-run the four engine guarantees — convergence, normalized weights, offspring ∝ weight, two surviving modes. If red tampers, this badge flips.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — belief &amp; evidence <span class="tag t-in">in ↓</span></h2>
+   <p>Two things enter. The <b style="color:var(--cy)">prior belief</b> — here a broad Gaussian over the hidden position x — sampled as a particle cloud. And one <b style="color:var(--am)">measurement z</b>. Two sensor models are offered:</p>
+   <table><thead><tr><th>mode</th><th>sensor</th><th>posterior</th></tr></thead>
+    <tbody>
+     <tr><td>LINEAR</td><td>z = x + noise</td><td>one Gaussian (closed-form)</td></tr>
+     <tr><td>BEACON</td><td>z = |x| + noise</td><td>two modes at ±z</td></tr>
+    </tbody></table>
+   <p class="small">LINEAR is the case where the exact answer is known on paper, so the filter can be graded against truth. BEACON is the case a single Gaussian cannot hold — the reason the cloud exists. Feed either into the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; sample the cloud, feed the measurement &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>sensor</label>
+      <span class="toggle"><button id="tLin" class="on">LINEAR</button><button id="tBea">BEACON</button></span></div>
+     <div class="row"><label>measure z</label><input type="range" id="z" min="0" max="6" step="0.1" value="3"><span id="zv" class="mut">3.0</span></div>
+     <div class="row"><label>particles N</label><input type="range" id="np" min="50" max="2000" step="50" value="500"><span id="npv" class="mut">500</span></div>
+     <div class="row"><button id="draw">↺ new draw</button><button id="resample">▶ resample</button></div>
+     <p class="small" id="stepnote">Weighted cloud shown. Hit <b>resample</b> to redraw N particles ∝ weight — watch the survivors concentrate.</p>
+    </div>
+    <div class="readout">
+     <div class="verdict" id="estv"></div>
+     <div class="moodname" id="refv"></div>
+     <div class="reason" id="reasonv"></div>
+    </div>
+   </div>
+   <canvas id="cv" width="600" height="150"></canvas>
+   <p class="small" style="margin-top:6px">Dot height &amp; brightness = weight. <span style="color:var(--gr)">green ▲</span> = filter estimate · <span style="color:var(--am)">amber ▮</span> = reference (true posterior mean, or the two modes). Every number is computed on the spot from a fixed-seed cloud — nothing looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the weighted mean is the estimate &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the estimate <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves: on the LINEAR model the weighted estimate <b>converges to the closed-form posterior mean</b> as N grows (RMS error falls like 1/√N); on the BEACON model it holds <b class="k">both</b> modes at ±z where a single Gaussian sits in the trough. Weights are non-negative and sum to <b class="k">1</b>; resampling breeds high weight and kills low.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) confirms these live; the red team (right) tries to make them false.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The particle filter is beaten by <b>dimension</b>. The particles needed to cover the state grow roughly exponentially with its dimension; in high dimensions nearly all weight collapses onto a single particle (<b>weight degeneracy</b>), and resampling then discards diversity (<b>sample impoverishment</b>). It is Monte-Carlo: the estimate is stochastic and exact only as N→∞.</div>
+   <p class="small" style="margin-top:8px">For a linear-Gaussian system this whole machine is overkill — the <a href="https://davidwise01.github.io/the-kalman-filter/" style="color:var(--cy)">Kalman filter</a> gives the exact posterior in a few multiplies. The particle filter earns its cost only where linearity or unimodality fail.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"More particles are always better."</s> <b>Cut.</b> Cost is linear in N but error falls only as 1/√N — halving it costs 4× the particles. Resampling every step can hurt; resample only on low effective sample size.</p>
+   <p class="grave"><s>"The particle filter is the optimal filter."</s> <b>Cut.</b> It is a <i>consistent approximation</i>. Only in the linear-Gaussian case does an exact optimal filter exist in closed form — the Kalman filter — and there the PF merely approaches it.</p>
+   <p class="grave"><s>"Resampling adds information."</s> <b>Kept, corrected.</b> It adds none. It reallocates a fixed sample budget toward high-likelihood regions — trading estimator variance now for particle diversity later.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>skip the measurement weighting</b> — give every particle equal weight, so the filter ignores the sensor and the estimate stays stuck at the prior mean. The blue witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ skip weighting</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Ignore the measurement and the estimate collapses to the prior mean (~0) instead of the posterior — the converges-to-posterior check fails, the witness recomputes and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE PARTICLE FILTER — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (belief <b style="color:var(--cy)">in</b> → predict·weight·resample → estimate <b style="color:var(--gr)">out</b>). A runnable rendering of Gordon, Salmond &amp; Smith (1993) — the engine is LIT (weighted estimate converges to the closed-form posterior on a fixed seed, weights normalize, offspring ∝ weight, two modes survive, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single frame cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---- fixed-seed PRNG + gaussian (deterministic self-check) ----
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function gauss(rng){ let u=0,v=0; while(u===0)u=rng(); while(v===0)v=rng(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+// ---- constants of the two constructed problems ----
+const PRIOR={mu:0,sd:2};          // linear-Gaussian prior N(0,4)
+const LIN_SR=1;                   // measurement noise sd for z = x + noise
+const BEACON={priorSd:5, sr:0.7}; // multimodal: z = |x| + noise
+
+let SKIP_WEIGHTS=false;           // TAMPER flag: skip measurement weighting
+
+// closed-form Gaussian posterior: prior N(mu0,s0^2), one linear meas z with var sr^2
+function posteriorLinear(z,mu0,s0,sr){
+  mu0=(mu0===undefined?PRIOR.mu:mu0); s0=(s0===undefined?PRIOR.sd:s0); sr=(sr===undefined?LIN_SR:sr);
+  const p=1/(s0*s0)+1/(sr*sr);
+  return {mean:(mu0/(s0*s0)+z/(sr*sr))/p, sd:Math.sqrt(1/p)};
+}
+// bootstrap filter, LINEAR model: sample prior, weight by N(z; x, sr^2), normalize
+function pfLinear(N,seed,z){
+  const rng=mulberry32(seed>>>0); const xs=new Float64Array(N), w=new Float64Array(N); let sum=0;
+  for(let i=0;i<N;i++) xs[i]=PRIOR.mu+PRIOR.sd*gauss(rng);
+  for(let i=0;i<N;i++){ if(SKIP_WEIGHTS){ w[i]=1; } else { const d=z-xs[i]; w[i]=Math.exp(-d*d/(2*LIN_SR*LIN_SR)); } sum+=w[i]; }
+  let est=0; for(let i=0;i<N;i++){ w[i]/=sum; est+=w[i]*xs[i]; }
+  return {xs:xs,w:w,est:est};
+}
+function pfLinearEst(N,seed,z){ return pfLinear(N,seed,z).est; }
+function rmsErrLinear(N,seeds,z){ const m=posteriorLinear(z).mean; let se=0; for(let k=0;k<seeds.length;k++){ const e=pfLinearEst(N,seeds[k],z)-m; se+=e*e; } return Math.sqrt(se/seeds.length); }
+
+// bootstrap filter, BEACON model: z = |x| + noise -> bimodal posterior at +/- z
+function pfBeacon(N,seed,z){
+  const rng=mulberry32(seed>>>0); const xs=new Float64Array(N), w=new Float64Array(N); let sum=0;
+  for(let i=0;i<N;i++) xs[i]=BEACON.priorSd*gauss(rng);
+  for(let i=0;i<N;i++){ if(SKIP_WEIGHTS){ w[i]=1; } else { const d=z-Math.abs(xs[i]); w[i]=Math.exp(-d*d/(2*BEACON.sr*BEACON.sr)); } sum+=w[i]; }
+  let est=0; for(let i=0;i<N;i++){ w[i]/=sum; est+=w[i]*xs[i]; }
+  return {xs:xs,w:w,est:est};
+}
+
+// systematic resampling: offspring counts for normalized weights w and offset u0 in [0,1/N)
+function systematicOffspring(w,u0){
+  const N=w.length; const counts=new Array(N).fill(0); let c=w[0], i=0;
+  for(let j=0;j<N;j++){ const u=u0+j/N; while(u>c && i<N-1){ i++; c+=w[i]; } counts[i]++; }
+  return counts;
+}
+function avgOffspring(w,T,seed){
+  const N=w.length; const rng=mulberry32(seed>>>0); const acc=new Array(N).fill(0);
+  for(let t=0;t<T;t++){ const u0=rng()/N; const c=systematicOffspring(w,u0); for(let i=0;i<N;i++) acc[i]+=c[i]; }
+  return acc.map(function(x){ return x/T; });
+}
+// resample a cloud once (systematic) using a seeded offset -> new equal-weight particle positions
+function resampleCloud(xs,w,seed){
+  const N=w.length; const rng=mulberry32(seed>>>0); const u0=rng()/N; const c=systematicOffspring(w,u0);
+  const out=[]; for(let i=0;i<N;i++){ for(let k=0;k<c[i];k++) out.push(xs[i]); }
+  return out;
+}
+function ess(w){ let s=0; for(let i=0;i<w.length;i++) s+=w[i]*w[i]; return 1/s; }
+
+// ---- fail-loud self-check (runs untampered, then plants + catches the tamper) ----
+function selfcheck(){
+  const t=function(c,m){ if(!c) throw new Error(m); };
+  const save=SKIP_WEIGHTS; SKIP_WEIGHTS=false;
+  // 1. closed-form posterior mean is exactly 2.4 for z=3
+  const post=posteriorLinear(3);
+  t(Math.abs(post.mean-2.4)<1e-9,"closed-form posterior mean must be 2.4 for z=3");
+  // 2. weighted estimate converges to the posterior mean as N grows (fixed seeds, robust property)
+  const seeds=[]; for(let i=0;i<24;i++) seeds.push(1000+i);
+  const eSmall=rmsErrLinear(40,seeds,3), eLarge=rmsErrLinear(4000,seeds,3);
+  t(eLarge<eSmall,"Monte-Carlo error must shrink as the particle count grows");
+  t(Math.abs(pfLinearEst(40000,7,3)-post.mean)<0.05,"large-N estimate must reach the closed-form posterior mean");
+  // 3. weights non-negative and normalize to 1
+  const lin=pfLinear(3000,42,3); let sw=0,mn=1; for(let i=0;i<lin.w.length;i++){ sw+=lin.w[i]; if(lin.w[i]<mn) mn=lin.w[i]; }
+  t(mn>=0,"weights must be non-negative"); t(Math.abs(sw-1)<1e-9,"weights must normalize to 1");
+  // 4. resampling: expected offspring proportional to weight; a zero-weight particle is killed
+  const wv=[0.5,0.3,0.15,0.05], av=avgOffspring(wv,4000,99);
+  for(let i=0;i<4;i++) t(Math.abs(av[i]-4*wv[i])<0.03,"expected offspring must be proportional to weight");
+  t(av[0]>av[1]&&av[1]>av[2]&&av[2]>av[3],"high weight must breed more offspring than low weight");
+  const az=avgOffspring([0.6,0.4,0.0],4000,7); t(az[2]<0.02,"a zero-weight particle must be killed");
+  // 5. multimodal posterior: two surviving modes near +/-z; the mean sits in the trough a single Gaussian would peak in
+  const bc=pfBeacon(5000,123,3); let L=0,R=0,Lc=0,Rc=0,mean=0;
+  for(let i=0;i<bc.xs.length;i++){ mean+=bc.w[i]*bc.xs[i]; if(bc.xs[i]<-1){ L+=bc.w[i]; Lc+=bc.w[i]*bc.xs[i]; } if(bc.xs[i]>1){ R+=bc.w[i]; Rc+=bc.w[i]*bc.xs[i]; } }
+  t(L>0.2&&R>0.2,"both modes must survive"); t(Math.abs(Lc/L+3)<0.6&&Math.abs(Rc/R-3)<0.6,"the two modes must sit near +/-3");
+  t(Math.abs(mean)<0.5,"the bimodal mean sits in the trough where a single Gaussian would peak");
+  // 6. TAMPER (window 6): skip the measurement weighting -> estimate ignores the sensor and collapses to the prior mean; the converges check now fails
+  SKIP_WEIGHTS=true; const bad=pfLinearEst(40000,7,3);
+  t(Math.abs(bad-post.mean)>1.0,"tamper must break the converges-to-posterior property");
+  t(Math.abs(bad-PRIOR.mu)<0.2,"the tampered estimate collapses to the prior mean");
+  SKIP_WEIGHTS=false;
+  SKIP_WEIGHTS=save; return true;
+}
+
+/* ===== UI ===== */
+const $=function(id){ return document.getElementById(id); };
+let MODE="lin", SEED=7, showResampled=false;
+function zval(){ return +$("z").value; }
+function nval(){ return +$("np").value; }
+
+function currentCloud(){
+  const N=nval(), z=zval();
+  return MODE==="lin" ? pfLinear(N,SEED,z) : pfBeacon(N,SEED,z);
+}
+function draw(){
+  const cl=currentCloud(), z=zval();
+  const cv=$("cv"), dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=150;
+  cv.width=W*dpr; cv.height=H*dpr; const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+  const xmin=-12,xmax=12, sx=function(x){ return (x-xmin)/(xmax-xmin)*W; };
+  // axis
+  g.strokeStyle="#33264a"; g.lineWidth=1; g.beginPath(); g.moveTo(0,H-18); g.lineTo(W,H-18); g.stroke();
+  g.fillStyle="#8a7ea8"; g.font="10px monospace";
+  for(let x=-12;x<=12;x+=4){ g.fillText(String(x),sx(x)+2,H-6); g.beginPath(); g.moveTo(sx(x),H-22); g.lineTo(sx(x),H-14); g.stroke(); }
+  if(showResampled){
+    const rs=resampleCloud(cl.xs,cl.w,SEED+9999);
+    g.fillStyle="rgba(138,255,192,0.55)";
+    for(let i=0;i<rs.length;i++){ const px=sx(rs[i]); const py=18+((i*97)%100); g.fillRect(px,py,1.6,1.6); }
+  } else {
+    let wmax=0; for(let i=0;i<cl.w.length;i++) if(cl.w[i]>wmax) wmax=cl.w[i];
+    for(let i=0;i<cl.xs.length;i++){
+      const px=sx(cl.xs[i]); const wr=wmax>0?cl.w[i]/wmax:0; const h=4+wr*100;
+      g.fillStyle="rgba(192,176,255,"+(0.12+0.8*wr)+")";
+      g.fillRect(px,(H-22)-h,1.8,h);
+    }
+  }
+  // reference marks (amber)
+  g.fillStyle="var(--am)"; g.fillStyle="#c0b0ff";
+  function markAmber(x){ g.fillStyle="#c0b0ff"; g.fillRect(sx(x)-1.5,0,3,H-22); }
+  if(MODE==="lin"){ markAmber(posteriorLinear(z).mean); }
+  else { markAmber(z); markAmber(-z); }
+  // estimate mark (green triangle)
+  const ex=sx(cl.est); g.fillStyle="#8affc0"; g.beginPath(); g.moveTo(ex,2); g.lineTo(ex-5,12); g.lineTo(ex+5,12); g.closePath(); g.fill();
+  return cl;
+}
+function render(){
+  const cl=draw(), z=zval(), N=nval();
+  const E=ess(cl.w);
+  $("estv").textContent="estimate  x̂ = "+cl.est.toFixed(3);
+  if(MODE==="lin"){
+    const p=posteriorLinear(z);
+    $("refv").innerHTML="true posterior mean = <b>"+p.mean.toFixed(3)+"</b> &nbsp;·&nbsp; sd "+p.sd.toFixed(3);
+    $("reasonv").textContent="error |x̂ − μ| = "+Math.abs(cl.est-p.mean).toFixed(3)+"  ·  ESS "+E.toFixed(0)+" / "+N+"  ·  raise N to shrink the error";
+  } else {
+    let L=0,R=0,Lc=0,Rc=0; for(let i=0;i<cl.xs.length;i++){ if(cl.xs[i]<-1){ L+=cl.w[i]; Lc+=cl.w[i]*cl.xs[i]; } if(cl.xs[i]>1){ R+=cl.w[i]; Rc+=cl.w[i]*cl.xs[i]; } }
+    $("refv").innerHTML="two modes ≈ <b>"+(L>0?(Lc/L).toFixed(2):"—")+"</b> and <b>"+(R>0?(Rc/R).toFixed(2):"—")+"</b>  (mass "+(L*100).toFixed(0)+"% / "+(R*100).toFixed(0)+"%)";
+    $("reasonv").textContent="x̂ = "+cl.est.toFixed(2)+" sits in the trough between the modes — a single Gaussian would peak there and be wrong. ESS "+E.toFixed(0)+" / "+N;
+  }
+  $("modelLive").innerHTML="ESS <span class='n'>"+E.toFixed(0)+"</span> / "+N+" particles &nbsp;·&nbsp; Σwⁱ = <span class='n'>"+(function(){ let s=0; for(let i=0;i<cl.w.length;i++) s+=cl.w[i]; return s.toFixed(6); })()+"</span> &nbsp;·&nbsp; x̂ = <span class='n'>"+cl.est.toFixed(3)+"</span>";
+  audit();
+}
+function setMode(m){ MODE=m; $("tLin").classList.toggle("on",m==="lin"); $("tBea").classList.toggle("on",m==="bea");
+  $("stepnote").innerHTML = m==="lin" ? "LINEAR: sensor z = x + noise; the true posterior mean is known on paper. Raise N and watch x̂ close on it." : "BEACON: sensor z = |x| + noise; two answers ±z. The cloud holds both — a single Gaussian cannot.";
+  showResampled=false; render();
+}
+function audit(){
+  const el=$("auditout");
+  const save=SKIP_WEIGHTS;
+  // recompute the four guarantees live at the current tamper state
+  SKIP_WEIGHTS=save;
+  const post=posteriorLinear(3).mean;
+  const conv = Math.abs(pfLinearEst(20000,7,3)-post) < 0.06;      // breaks under tamper
+  const lin=pfLinear(2000,42,3); let sw=0,mn=1; for(let i=0;i<lin.w.length;i++){ sw+=lin.w[i]; if(lin.w[i]<mn) mn=lin.w[i]; }
+  const norm = Math.abs(sw-1)<1e-9 && mn>=0;
+  const av=avgOffspring([0.5,0.3,0.15,0.05],2000,99); const off = Math.abs(av[0]-2)<0.06 && av[0]>av[3];
+  const bc=pfBeacon(4000,123,3); let L=0,R=0; for(let i=0;i<bc.xs.length;i++){ if(bc.xs[i]<-1)L+=bc.w[i]; if(bc.xs[i]>1)R+=bc.w[i]; } const modes = (L>0.2&&R>0.2) || SKIP_WEIGHTS===true ? (L>0.2&&R>0.2) : false;
+  const ok = conv && norm && off && (L>0.2&&R>0.2);
+  el.innerHTML = "<span class='badge "+(ok?"pass":"failb")+"'>"+(ok?"✓ WITNESS — holds":"✗ WITNESS — broken")+"</span>"
+   + "<div class='small' style='margin-top:6px'>converges→posterior <b style='color:"+(conv?"var(--gr)":"var(--wall)")+"'>"+(conv?"yes":"NO")+"</b> &nbsp;·&nbsp; weights Σ=1,≥0 <b style='color:"+(norm?"var(--gr)":"var(--wall)")+"'>"+(norm?"yes":"NO")+"</b> &nbsp;·&nbsp; offspring∝weight <b style='color:"+(off?"var(--gr)":"var(--wall)")+"'>"+(off?"yes":"NO")+"</b> &nbsp;·&nbsp; two modes <b style='color:"+((L>0.2&&R>0.2)?"var(--gr)":"var(--wall)")+"'>"+((L>0.2&&R>0.2)?"yes":"NO")+"</b>"+(SKIP_WEIGHTS?" &nbsp; — <span style='color:var(--wall)'>red skipped weighting</span>":"")+"</div>";
+}
+
+// ---- boot ----
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("z").addEventListener("input",function(){ $("zv").textContent=zval().toFixed(1); showResampled=false; render(); });
+ $("np").addEventListener("input",function(){ $("npv").textContent=String(nval()); showResampled=false; render(); });
+ $("tLin").addEventListener("click",function(){ setMode("lin"); });
+ $("tBea").addEventListener("click",function(){ setMode("bea"); });
+ $("draw").addEventListener("click",function(){ SEED=(SEED*1664525+1013904223)>>>0; showResampled=false; render(); });
+ $("resample").addEventListener("click",function(){ showResampled=!showResampled; $("stepnote").innerHTML= showResampled ? "<b style='color:var(--gr)'>Resampled.</b> N equal-weight survivors, drawn ∝ weight — high-weight particles multiplied, low-weight ones gone." : "Weighted cloud shown. Hit <b>resample</b> to redraw N particles ∝ weight."; draw(); });
+ $("tamper").addEventListener("click",function(){ SKIP_WEIGHTS=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Weighting skipped.</b> Every particle now equal — the sensor is ignored, x̂ collapses toward the prior mean (~0). The witness (window 7) recomputed and went red. The attack is real; it is caught."; showResampled=false; render(); });
+ $("restore").addEventListener("click",function(){ SKIP_WEIGHTS=false; $("tampernote").textContent="Ignore the measurement and the estimate collapses to the prior mean (~0) instead of the posterior — the converges-to-posterior check fails, the witness recomputes and turns red. Nothing is faked; the attack is real and it is caught."; showResampled=false; render(); });
+ $("zv").textContent=zval().toFixed(1); $("npv").textContent=String(nval());
+ setMode("lin");
+ window.addEventListener("resize",draw);
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the particle-filter engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

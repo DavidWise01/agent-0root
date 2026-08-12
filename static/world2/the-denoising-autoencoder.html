@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE DENOISING AUTOENCODER · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ffb0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,176,208,.06),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,176,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,176,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;accent-color:var(--am);vertical-align:middle;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:96px;}
+canvas{background:#081008;border:1px solid var(--line);border-radius:6px;display:block;width:100%;max-width:100%;height:auto;margin:4px 0;}
+.stat{font-size:12px;line-height:1.85;background:#0a130c;border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:6px 0;}
+.stat b{color:#eafff0;} .stat .g{color:var(--gr);} .stat .a{color:var(--am);} .stat .c{color:var(--cy);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">&#9668; WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> &#9474; the machine &#9474; <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE DENOISING AUTOENCODER</h1>
+ <p class="sub">Corrupt the data, then learn to un-corrupt it. Vincent's 2008 move looks like a trick and turns out to be a theorem: the <b>best</b> reconstructor of a noised point is the posterior mean <b class="k">E[x | x&#771;]</b>, and its correction vector <b>r*(x&#771;) &minus; x&#771;</b> is exactly <b class="k">&sigma;&sup2;&nbsp;&nabla;log&nbsp;p(x&#771;)</b> &mdash; it points back up the density, toward where the data lives. Down the center: clean points go <b style="color:var(--cy)">in</b>, get noised, the optimal map pulls them <b style="color:var(--gr)">out</b> onto the manifold. The <b style="color:var(--blue)">blue team</b> proves the map is the score; the <b style="color:var(--red)">red team</b> trains it at zero noise so it learns nothing.</p>
+ <p class="src"><span class="tag t-amber">source</span> Vincent, Larochelle, Bengio &amp; Manzagol, <i>Extracting and Composing Robust Features with Denoising Autoencoders</i>, ICML 2008, 1096&ndash;1103 &mdash; <a href="https://doi.org/10.1145/1390156.1390294">doi:10.1145/1390156.1390294</a> (no stable arXiv id; DOI cited, marked <b style="color:var(--amber)">AMBER</b>). The score identity is Vincent 2011 &amp; Alain&ndash;Bengio 2014. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">&#9703; blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the posterior mean</h2>
+   <p>Data is Gaussian, <b class="k">x &sim; N(&mu;, &sigma;<sub>d</sub>&sup2;)</b>; corruption adds independent noise, <b class="k">x&#771; = x + &epsilon;</b>, <b class="k">&epsilon; &sim; N(0, &sigma;<sub>n</sub>&sup2;)</b>. The reconstructor that minimizes <b>E&#8741;r(x&#771;)&minus;x&#8741;&sup2;</b> is not learned by luck &mdash; it is the conditional mean, and for Gaussians it is closed-form:</p>
+   <p style="text-align:center"><b class="k">r*(x&#771;) = a&nbsp;x&#771; + (1&minus;a)&mu;</b>, &nbsp; <b class="k">a = &sigma;<sub>d</sub>&sup2; / (&sigma;<sub>d</sub>&sup2;+&sigma;<sub>n</sub>&sup2;)</b></p>
+   <p>A precision-weighted average of the noisy point and the prior mean. The map is a <b>contraction</b> toward the data (slope <b>a &lt; 1</b>), and its Bayes risk is exactly <b class="k">a&nbsp;&sigma;<sub>n</sub>&sup2;</b> per coordinate.</p>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the score in disguise <span class="tag t-amber">AVAN</span></h2>
+   <p>Subtract the input from the reconstruction and something familiar appears:</p>
+   <p style="text-align:center"><b class="k">r*(x&#771;) &minus; x&#771; = &sigma;<sub>n</sub>&sup2; &nabla;log p(x&#771;)</b></p>
+   <p>The correction is the <b>score</b> of the corrupted density, scaled by the noise variance &mdash; Vincent (2011), Alain&ndash;Bengio (2014). A denoiser is a score estimator. Scale it across many noise levels and you have <a href="https://davidwise01.github.io/the-score-matching/" style="color:var(--cy)">the-score-matching</a>, which <a href="https://davidwise01.github.io/the-diffusion-model/" style="color:var(--cy)">the-diffusion-model</a> ran with. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive the correction field from the current controls and confirm <b>r*&minus;x&#771; = &sigma;<sub>n</sub>&sup2;&nabla;log p</b> to machine precision at sample points. If red trains at zero noise, the field collapses and this badge turns red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">&#9660; the machine &#9660;</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — clean &amp; corrupted <span class="tag t-in">in &darr;</span></h2>
+   <p>Two isotropic Gaussians in the plane, mean at the origin. <b style="color:var(--gr)">Clean</b> points are drawn from the data density <b class="k">N(0,&sigma;<sub>d</sub>&sup2;I)</b>; each is then kicked by fresh noise <b class="k">N(0,&sigma;<sub>n</sub>&sup2;I)</b> to give a <b style="color:#8fae97">corrupted</b> point off the manifold. Every sample uses a <b>fixed-seed PRNG</b>, so the picture is deterministic and the self-check reproducible.</p>
+   <p class="small">The task the machine is handed: given only a corrupted point, name the clean one it most likely came from.</p>
+  </div>
+  <div class="flow">&#9660; &nbsp; feed the corrupted cloud into the engine &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">0</span><h2>&#9635; THE PANEL — the reconstruction field <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <canvas id="cv" width="380" height="300"></canvas>
+     <div class="row"><label>data &sigma;<sub>d</sub></label><input type="range" id="sd" min="0.4" max="2" step="0.05" value="1"><span id="sdV" class="mut"></span></div>
+     <div class="row"><label>corruption &sigma;<sub>n</sub></label><input type="range" id="sn" min="0" max="3" step="0.05" value="1"><span id="snV" class="mut"></span></div>
+     <div class="row"><button id="onmanifold">&rarr; &sigma;<sub>n</sub> = 0 (on manifold)</button><button id="reset">&#8635; reset</button></div>
+     <p class="small">Pink arrows are the correction <b>r*(x&#771;)&minus;x&#771;</b> at grid points &mdash; every one points inward, up the density, toward the clean cloud. Drop &sigma;<sub>n</sub> to 0 and the arrows vanish: on the manifold the optimal map is the <b>identity</b>.</p>
+    </div>
+    <div class="readout">
+     <div class="stat" id="stat"></div>
+     <p class="small">Every number is computed live from the two &sigma; values &mdash; contraction <b>a</b>, Bayes risk <b>a&sigma;<sub>n</sub>&sup2;</b>, and the max mismatch between the correction and <b>&sigma;<sub>n</sub>&sup2;&nabla;log p</b> across the grid. Nothing is looked up.</p>
+    </div>
+   </div>
+  </div>
+  <div class="flow">&#9660; &nbsp; the engine emits denoised points + a proof &nbsp; &#9660;</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out &darr;</span></h2>
+   <p>What the machine produces, proven: the optimal denoiser is the posterior mean (checked against numeric integration to <b class="k">&lt;1e&minus;4</b>), its correction equals the score exactly (<b class="k">&lt;1e&minus;9</b>), it is the <b>identity</b> at zero noise, it strictly beats the do-nothing map in Monte-Carlo MSE, and larger corruption forces a <b>smoother</b> (more contractive) map that keeps only coarse structure.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-derives the score identity live; the red team (right) tries to make the field lie.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks &#9704;</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The clean closed form is a <b>Gaussian conceit</b>. Real data is not one Gaussian, and then <b>E[x|x&#771;]</b> has no formula &mdash; it is a hard non-linear map you must actually learn, and the training network can under-fit it, memorize, or collapse to the mean.</div>
+   <p class="small" style="margin-top:8px">The score identity is <b>exact only in expectation</b> and cleanest for small &sigma;; a single fixed noise level sees the density through one blur and misses fine structure &mdash; the reason diffusion needs a <i>ladder</i> of noise scales, not one denoiser. And a denoiser trained on the wrong noise level is confidently wrong.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"An autoencoder just learns to copy its input."</s> <b>Cut.</b> A plain autoencoder can; a <i>denoising</i> one cannot &mdash; the corruption forbids the identity and forces it to model where the data lives.</p>
+   <p class="grave"><s>"The denoiser removes the noise it was given."</s> <b>Corrected.</b> It cannot recover the specific &epsilon;; it returns the <b>mean</b> of all clean points that could have produced x&#771; &mdash; the manifold projection, not the inverse of one draw.</p>
+   <p class="grave"><s>"Bigger corruption is strictly better regularization."</s> <b>Cut.</b> Bigger &sigma;<sub>n</sub> smooths <i>more</i> (a&rarr;0, map&rarr;constant mean); past a point it erases the very structure you wanted &mdash; a bias&ndash;variance knob, not a free lunch.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>train the denoiser at zero corruption</b>. Then its optimal map is the plain identity &mdash; it reconstructs perfectly on clean data and learns <b>nothing</b> about the manifold: <b>r&minus;x&#771; = 0</b>, no score, no inward field.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">&#9888; train at &sigma;<sub>train</sub> = 0</button><button id="restore">&#8635; restore</button></div>
+   <p class="small" id="tampernote">Set the training noise to zero and the arrows collapse to nothing. The witness (window 7) re-derives the score identity, finds r&minus;x&#771; = 0 &ne; &sigma;<sub>n</sub>&sup2;&nabla;log p, and turns red. The attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE DENOISING AUTOENCODER — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (clean points <b style="color:var(--cy)">in</b> &rarr; corrupt &rarr; optimal reconstruction <b style="color:var(--gr)">out</b>). A runnable rendering of Vincent et al. (ICML 2008): the engine is LIT (posterior mean vs numeric integration &lt;1e&minus;4, the Vincent&ndash;Alain&ndash;Bengio score identity to 1e&minus;9, identity-on-manifold, Monte-Carlo optimality, tamper-provable), the blue team witnesses, the red team trains at zero noise, and the graveyard + adversary carry what a single Gaussian and a single noise level cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* the engine — denoising autoencoder as posterior mean = scaled score (all closed-form) */
+const MU = 0;                     // data mean per coordinate (isotropic; 1-D closed forms apply per axis)
+let TAMPER = false;               // when true the denoiser is TRAINED at zero corruption -> plain identity
+
+// contraction coefficient a = sd^2 / (sd^2 + s^2)
+function coeff(sd, s){ return (sd*sd) / (sd*sd + s*s); }
+// training noise the denoiser actually used (0 under tamper -> learns the identity)
+function trainSigma(sn){ return TAMPER ? 0 : sn; }
+// optimal reconstructor (posterior mean) trained at level sTrain, evaluated at xt
+function denoise(xt, sd, sTrain, mu){ const a = coeff(sd, sTrain); return a*xt + (1-a)*mu; }
+// score of the corrupted marginal N(mu, sd^2 + sn^2):  grad log p(xt) = -(xt-mu)/(sd^2+sn^2)
+function scoreCorr(xt, sd, sn, mu){ return -(xt - mu) / (sd*sd + sn*sn); }
+
+// independent check: posterior mean by grid integration of p(x)*N(xt;x,sn^2)
+function numPostMean(xt, sd, sn, mu){
+ let num = 0, den = 0;
+ const N = 6000, lo = mu - 9*sd - 9*sn, hi = mu + 9*sd + 9*sn, dx = (hi - lo) / N;
+ for(let i = 0; i <= N; i++){
+  const x = lo + i*dx;
+  const prior = Math.exp(-(x-mu)*(x-mu) / (2*sd*sd));
+  const lik   = Math.exp(-(xt-x)*(xt-x) / (2*sn*sn));
+  const w = prior*lik; num += x*w; den += w;
+ }
+ return num / den;
+}
+
+// fixed-seed PRNG (LCG) + Box-Muller Gaussian -> deterministic sampling
+function mkRng(seed){ let s = seed >>> 0; return () => { s = (1664525*s + 1013904223) >>> 0; return (s + 0.5) / 4294967296; }; }
+function gauss(rng){ let u = rng(), v = rng(); if(u < 1e-12) u = 1e-12; return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v); }
+
+// fail-loud self-check (runs untampered, then plants + catches the tamper, then restores)
+function selfcheck(){
+ const t = (c, m) => { if(!c) throw new Error(m); };
+ const save = TAMPER; TAMPER = false;
+ const mu = MU;
+
+ // (1) closed-form posterior mean == numeric integration
+ for(const sd of [0.8, 1.3]) for(const sn of [0.5, 1.0, 2.0]) for(const xt of [-2, -0.5, 1.7, 3]){
+  const cf = denoise(xt, sd, sn, mu), num = numPostMean(xt, sd, sn, mu);
+  t(Math.abs(cf - num) < 1e-4, "posterior mean != numeric integration: d=" + (cf - num));
+ }
+ // (2) Vincent / Alain-Bengio identity, EXACT for Gaussians:  r*-xt == sn^2 * score
+ for(const sd of [0.8, 1.3]) for(const sn of [0.5, 1.0, 2.0]) for(const xt of [-2, -0.5, 1.7, 3]){
+  const res = denoise(xt, sd, sn, mu) - xt;
+  const sc  = sn*sn * scoreCorr(xt, sd, sn, mu);
+  t(Math.abs(res - sc) < 1e-9, "correction != sigma^2 * score: d=" + (res - sc));
+ }
+ // (3) the correction points toward mu (higher density); shrink ratio == 1-a in (0,1)
+ for(const sd of [0.8, 1.3]) for(const sn of [0.5, 2.0]) for(const xt of [-2, 1.7, 3]){
+  const res = denoise(xt, sd, sn, mu) - xt, toward = mu - xt, a = coeff(sd, sn);
+  t(res*toward > 0, "correction must point toward the data mean");
+  t(Math.abs(Math.abs(res/toward) - (1 - a)) < 1e-12, "shrink ratio must equal 1-a");
+  t((1 - a) > 0 && (1 - a) < 1, "shrink factor must lie in (0,1)");
+ }
+ // (4) identity on the manifold: sn=0 -> a=1 -> map is exact identity, correction 0
+ for(const sd of [0.8, 1.3]) for(const xt of [-2, 1.7, 3]){
+  t(coeff(sd, 0) === 1, "a must be exactly 1 at zero noise");
+  t(denoise(xt, sd, 0, mu) - xt === 0, "map must be the identity at zero noise");
+ }
+ // (5) larger corruption -> smoother map: a strictly decreasing; slope of the map == a
+ { const sdF = 1.0, sns = [0.25, 0.5, 1, 2, 4]; let prev = Infinity;
+  for(const sn of sns){ const a = coeff(sdF, sn); t(a < prev, "a must strictly decrease with noise"); prev = a; }
+  t(coeff(sdF, 8) < coeff(sdF, 0.25), "large noise must give a coarse (small-a) map");
+  const sn = 1.5, a = coeff(sdF, sn);
+  const slope = (denoise(2, sdF, sn, mu) - denoise(1, sdF, sn, mu)) / (2 - 1);
+  t(Math.abs(slope - a) < 1e-12, "map slope must equal a");
+ }
+ // (6) Monte Carlo (fixed seed): empirical MMSE == a*sn^2, and denoiser beats the identity
+ { const sd = 1.0, sn = 1.0, a = coeff(sd, sn), rng = mkRng(12345), N = 40000;
+  let seD = 0, seI = 0;
+  for(let i = 0; i < N; i++){
+   const x = mu + sd*gauss(rng), xt = x + sn*gauss(rng);
+   const r = denoise(xt, sd, sn, mu);
+   seD += (r - x)*(r - x); seI += (xt - x)*(xt - x);
+  }
+  const mmse = seD/N, idmse = seI/N;
+  t(Math.abs(mmse - a*sn*sn) < 0.03, "empirical MMSE != a*sn^2: d=" + (mmse - a*sn*sn));
+  t(mmse < idmse, "denoiser must strictly beat the identity map");
+ }
+ // (7) TAMPER (the disclosed planted void): train at zero corruption -> plain identity,
+ //     so a known value now differs -- correction is 0, the score identity breaks. Witness catches it.
+ TAMPER = true;
+ { const sd = 1.0, sn = 1.2, xt = 2.5;
+  const res = denoise(xt, sd, trainSigma(sn), mu) - xt;      // trainSigma()==0 under tamper
+  t(res === 0, "tampered (zero-train) map must be the plain identity");
+  const sc = sn*sn * scoreCorr(xt, sd, sn, mu);
+  t(Math.abs(res - sc) > 1e-6, "TAMPER must break the score identity (known value must now differ)");
+ }
+ TAMPER = save;
+ return true;
+}
+/* ===== UI ===== */
+const $ = id => document.getElementById(id);
+
+function fieldMismatch(sd, sn){
+ // max |correction - sn^2*score| over grid points, using the (possibly tampered) denoiser vs the true corrupted density
+ const pts = [-3, -2, -1, -0.4, 0.6, 1.5, 2.4, 3.2]; let mx = 0;
+ for(const xt of pts){
+  const res = denoise(xt, sd, trainSigma(sn), MU) - xt;
+  const sc  = sn*sn * scoreCorr(xt, sd, sn, MU);
+  mx = Math.max(mx, Math.abs(res - sc));
+ }
+ return mx;
+}
+
+function draw(){
+ const sd = +$("sd").value, sn = +$("sn").value;
+ const aTrue = coeff(sd, sn);                 // honest coefficient for this noise level
+ const aUsed = coeff(sd, trainSigma(sn));     // what the (possibly tampered) denoiser uses
+ $("sdV").textContent = sd.toFixed(2);
+ $("snV").textContent = sn.toFixed(2);
+
+ const cv = $("cv"), g = cv.getContext("2d"), W = cv.width, H = cv.height;
+ const D = Math.max(4, 2.6*sd + 2.2*sn);      // domain half-width, keeps the cloud in frame
+ const mapx = x => W/2 + (x / D) * (W/2 * 0.9);
+ const mapy = y => H/2 - (y / D) * (H/2 * 0.9);
+
+ g.clearRect(0, 0, W, H);
+ // grid
+ g.strokeStyle = "#132318"; g.lineWidth = 1;
+ for(let i = -3; i <= 3; i++){ g.beginPath(); g.moveTo(mapx(i*D/3), 0); g.lineTo(mapx(i*D/3), H); g.stroke();
+  g.beginPath(); g.moveTo(0, mapy(i*D/3)); g.lineTo(W, mapy(i*D/3)); g.stroke(); }
+
+ // fixed-seed clean + corrupted samples
+ const rng = mkRng(777), NP = 120;
+ for(let i = 0; i < NP; i++){
+  const cx = MU + sd*gauss(rng), cy = MU + sd*gauss(rng);
+  const nx = cx + sn*gauss(rng), ny = cy + sn*gauss(rng);
+  g.strokeStyle = "rgba(120,150,128,.30)"; g.beginPath(); g.moveTo(mapx(cx), mapy(cy)); g.lineTo(mapx(nx), mapy(ny)); g.stroke();
+  g.fillStyle = "rgba(143,174,151,.85)"; g.beginPath(); g.arc(mapx(nx), mapy(ny), 1.7, 0, 6.29); g.fill(); // corrupted
+  g.fillStyle = "rgba(57,252,107,.95)";  g.beginPath(); g.arc(mapx(cx), mapy(cy), 1.7, 0, 6.29); g.fill(); // clean
+ }
+
+ // reconstruction field: arrows from grid xt -> r*(xt), i.e. correction (aUsed-1)*xt toward mu
+ g.strokeStyle = "#ffb0d0"; g.fillStyle = "#ffb0d0"; g.lineWidth = 1.2;
+ const GN = 6;
+ for(let ix = 0; ix <= GN; ix++) for(let iy = 0; iy <= GN; iy++){
+  const xt = -D*0.82 + (2*D*0.82)*ix/GN, yt = -D*0.82 + (2*D*0.82)*iy/GN;
+  const rx = denoise(xt, sd, trainSigma(sn), MU), ry = denoise(yt, sd, trainSigma(sn), MU);
+  const x0 = mapx(xt), y0 = mapy(yt), x1 = mapx(rx), y1 = mapy(ry);
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
+  if(len < 1.2) continue;                       // zero-length under tamper -> nothing drawn
+  g.globalAlpha = 0.85; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  const ah = 4, ang = Math.atan2(dy, dx);
+  g.beginPath(); g.moveTo(x1, y1);
+  g.lineTo(x1 - ah*Math.cos(ang - 0.4), y1 - ah*Math.sin(ang - 0.4));
+  g.lineTo(x1 - ah*Math.cos(ang + 0.4), y1 - ah*Math.sin(ang + 0.4));
+  g.closePath(); g.fill(); g.globalAlpha = 1;
+ }
+ // data mean marker
+ g.strokeStyle = "#eafff0"; g.beginPath(); g.arc(mapx(MU), mapy(MU), 3, 0, 6.29); g.stroke();
+
+ // readout
+ const mm = fieldMismatch(sd, sn);
+ const mmse = aUsed * sn * sn;                  // Bayes risk of the map actually in use
+ const idOnly = (sn === 0);
+ const scoreOk = mm < 1e-9;
+ $("stat").innerHTML =
+  "<b>contraction</b> a = <span class='a'>" + aUsed.toFixed(4) + "</span>" + (TAMPER ? " <span style='color:var(--wall)'>(trained at &sigma;=0)</span>" : "") + "<br>" +
+  "<b>shrink</b> 1&minus;a = <span class='c'>" + (1 - aUsed).toFixed(4) + "</span> &nbsp; toward the mean<br>" +
+  "<b>Bayes risk</b> a&sigma;<sub>n</sub>&sup2; = <span class='g'>" + mmse.toFixed(4) + "</span> &nbsp;(&lt; &sigma;<sub>n</sub>&sup2; = " + (sn*sn).toFixed(4) + ")<br>" +
+  "<b>identity map?</b> " + (idOnly || TAMPER ? "<span class='g'>yes</span> &mdash; " + (TAMPER ? "no manifold learned" : "on the manifold") : "<span class='mut'>no &mdash; contracts inward</span>") + "<br>" +
+  "<b>r*&minus;x&#771; = &sigma;<sub>n</sub>&sup2;&nabla;log p ?</b> " +
+  (scoreOk ? "<span class='g'>&#10003; max&Delta; " + mm.toExponential(1) + "</span>" : "<span style='color:var(--wall)'>&#10007; broken, max&Delta; " + mm.toFixed(3) + "</span>");
+}
+
+function audit(){
+ const sd = +$("sd").value, sn = +$("sn").value;
+ const mm = fieldMismatch(sd, sn);
+ const ok = mm < 1e-9;                          // the score identity must hold at the sample points
+ $("auditout").innerHTML =
+  "<span class='badge " + (ok ? "pass" : "failb") + "'>" + (ok ? "&#10003; WITNESS — score identity holds" : "&#10007; WITNESS — field is lying") + "</span>" +
+  "<div class='small' style='margin-top:6px'>max &#8741;(r*&minus;x&#771;) &minus; &sigma;<sub>n</sub>&sup2;&nabla;log p&#8741; = <b style='color:" + (ok ? "var(--gr)" : "var(--wall)") + "'>" + (ok ? mm.toExponential(1) : mm.toFixed(3)) + "</b>" +
+  (TAMPER ? " &nbsp; — <span style='color:var(--wall)'>red trained at &sigma;=0: r&minus;x&#771; = 0, no score</span>" : "") + "</div>";
+}
+
+function refresh(){ draw(); audit(); }
+
+/* boot */
+try{
+ selfcheck();
+ $("litbadge").innerHTML = '<span class="badge pass">&#10003; LIT · self-check passed on load</span>';
+ ["sd","sn"].forEach(id => $(id).addEventListener("input", refresh));
+ $("onmanifold").addEventListener("click", () => { $("sn").value = "0"; refresh(); });
+ $("reset").addEventListener("click", () => { TAMPER = false; $("sd").value = "1"; $("sn").value = "1";
+  $("tampernote").innerHTML = "Set the training noise to zero and the arrows collapse to nothing. The witness (window 7) re-derives the score identity, finds r&minus;x&#771; = 0 &ne; &sigma;<sub>n</sub>&sup2;&nabla;log p, and turns red. The attack is real and it is caught."; refresh(); });
+ $("tamper").addEventListener("click", () => { TAMPER = true;
+  $("tampernote").innerHTML = "<b style='color:var(--wall)'>Trained at &sigma; = 0.</b> The optimal map is now the plain identity &mdash; r&minus;x&#771; = 0 everywhere, the correction field is gone, and the witness (window 7) recomputed and went red. The denoiser learned nothing about the manifold. The attack is real; it is caught."; refresh(); });
+ $("restore").addEventListener("click", () => { TAMPER = false;
+  $("tampernote").innerHTML = "Set the training noise to zero and the arrows collapse to nothing. The witness (window 7) re-derives the score identity, finds r&minus;x&#771; = 0 &ne; &sigma;<sub>n</sub>&sup2;&nabla;log p, and turns red. The attack is real and it is caught."; refresh(); });
+ refresh();
+}catch(e){
+ const fb = $("failb"); fb.style.display = "block"; fb.textContent = "FAIL-LOUD — the denoising-autoencoder engine did not check out: " + e.message; throw e;
+}
+</script>
+</body></html>

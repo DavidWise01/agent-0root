@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE BIQUAD FILTER · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#ff7a7a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(255,122,122,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* THE OCHO layout - blue team | the machine | red team */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(255,122,122,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(255,122,122,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;height:22px;accent-color:var(--am);cursor:pointer;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;overflow-x:auto;}
+.sent .b{color:var(--am);} .sent .a{color:var(--cy);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:12.5px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.canvwrap{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;overflow-x:auto;}
+.canvbox{text-align:center;} canvas{background:#0a130c;border:1px solid var(--line);border-radius:6px;display:block;}
+.cap{font-size:10px;color:var(--dim);margin-top:3px;letter-spacing:1px;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+.mono{font-size:11.5px;color:#c3e8ca;line-height:1.7;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE BIQUAD FILTER</h1>
+ <p class="sub">Two poles and two zeros — the smallest filter that can resonate, and the one that, cascaded, shapes almost all digital sound. Its transfer function is <b>H(z) = (b0 + b1 z⁻¹ + b2 z⁻²) / (1 + a1 z⁻¹ + a2 z⁻²)</b>. Down the center, signal flows: coefficients go <b style="color:var(--cy)">in</b>, the engine places the poles and zeros, and a proven response — stable or not — comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it by pushing a pole outside the unit circle.</p>
+ <p class="src"><span class="tag t-amber">source</span> R. Bristow-Johnson, "Cookbook formulae for audio EQ biquad filter coefficients" (web memo, c.1994; W3C copy) — and A. Oppenheim &amp; R. Schafer, <i>Discrete-Time Signal Processing</i> (Prentice-Hall, 1975/1989), §6, direct-form structures. <a href="https://www.w3.org/2011/audio/audio-eq-cookbook.html">w3.org/2011/audio/audio-eq-cookbook.html</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT - BLUE TEAM - builds and defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — poles, zeros, the difference equation</h2>
+   <p>The biquad is a <b>second-order IIR</b> filter. Multiply top and bottom of H(z) by z², and it is a ratio of two quadratics: the <b style="color:var(--blue)">zeros</b> are the roots of the numerator <span class="k">b0 z² + b1 z + b2</span>, the <b style="color:var(--red)">poles</b> the roots of the denominator <span class="k">z² + a1 z + a2</span>.</p>
+   <p>It runs as one line of arithmetic per sample — the <b>difference equation</b>:</p>
+   <p class="mono">y[n] = b0·x[n] + b1·x[n-1] + b2·x[n-2]<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;− a1·y[n-1] − a2·y[n-2]</p>
+   <p class="small">The selfcheck proves four things about it live — <b>stability from the pole radii</b>, that the coefficients realize a low-pass shape, that a pole near the unit circle makes a resonant peak, and that this recurrence reproduces H(z) exactly. Current filter:</p>
+   <div id="modellive" class="small"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the workhorse <span class="tag t-amber">AVAN</span></h2>
+   <p>The biquad is the <b>atom of audio DSP</b>. Two poles, two zeros — too few to be a sharp filter alone, so you <b>cascade</b> them: a graphic or parametric equalizer is a chain of biquads, each shaping one band.</p>
+   <p>Its cousin is <a href="https://davidwise01.github.io/the-comb-filter/" style="color:var(--cy)">the-comb-filter</a> — the same idea of feedback and feedforward, but spread across a <i>long</i> delay so the zeros comb the spectrum at regular intervals. The biquad is the <b>local resonator</b>; the comb is the <b>delayed echo</b>. Every reverb is both, stacked. One sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute the <b>canonical pole radius</b> and the low-pass DC/Nyquist invariants on every interaction, and confirm the pole stays <b>inside</b> the unit circle. If red pushes it out (window 6), this badge is where it turns red.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER - THE MACHINE - in / panel / out -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the coefficients <span class="tag t-in">in ↓</span></h2>
+   <p>A biquad is <b>five numbers</b>: <b class="k">b0, b1, b2</b> (the feed-forward, which place the zeros) and <b class="k">a1, a2</b> (the feedback, which place the poles; a0 is normalized to 1). You do not usually type them — you name a <b>shape</b> (low-pass, high-pass, band-pass), a <b style="color:var(--cy)">cutoff</b> f₀/f<sub>s</sub>, and a <b style="color:var(--cy)">Q</b>, and the cookbook maps them to the five coefficients through the bilinear transform.</p>
+   <p class="small">Pick a shape and drag the sliders below — those three inputs are what you feed the engine.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the coefficients into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>shape</label>
+      <select id="type"><option value="LP">low-pass</option><option value="HP">high-pass</option><option value="BP">band-pass</option></select></div>
+     <div class="row"><label>cutoff f₀/f<sub>s</sub></label><input type="range" id="f0" min="0.01" max="0.49" step="0.001" value="0.1" style="flex:1;min-width:110px"><span id="f0v" class="k">0.100</span></div>
+     <div class="row"><label>Q</label><input type="range" id="q" min="0.2" max="12" step="0.05" value="0.707" style="flex:1;min-width:110px"><span id="qv" class="k">0.71</span></div>
+     <div class="row"><button id="play">▶ play (filtered noise)</button></div>
+     <div class="row"><button id="rand">↺ random</button><button id="reset">→ default LP</button></div>
+     <p class="small" id="playnote">Web Audio runs real white noise through this exact biquad (IIRFilterNode). An unstable filter is refused — it would only produce a blow-up.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="poles"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <div class="canvwrap">
+    <div class="canvbox"><canvas id="zc" width="270" height="240"></canvas><div class="cap">Z-PLANE · <span style="color:var(--red)">× poles</span> · <span style="color:var(--blue)">○ zeros</span> · <span style="color:var(--cy)">unit circle</span></div></div>
+    <div class="canvbox"><canvas id="hc" width="300" height="200"></canvas><div class="cap">|H(e<sup>jω</sup>)| in dB · DC ← ω → Nyquist</div></div>
+   </div>
+   <p class="small" style="margin-top:6px">Change any control — the coefficients, poles, zeros, response and stability are computed from H(z) on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits poles, zeros &amp; a verdict &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves, live: the filter is <b>STABLE if and only if both poles lie strictly inside the unit circle</b> (|z| &lt; 1, read off the denominator roots exactly); a constructed low-pass <b>passes DC at unit gain</b> and <b>drives Nyquist to zero</b>; a pole at radius 0.99 and angle ω₀ makes the response <b>peak at ω₀</b>; and the sample-by-sample recurrence reproduces H(z) to <b class="k">1e-9</b>. Verdict for the current filter is above.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms the pole stays inside; the red team (right) tries to shove it out.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT - RED TEAM - attacks and breaks -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> A biquad is only <b>second order</b>. It cannot realize a brickwall or a linear-phase response — that needs many biquads cascaded, and every extra section adds phase shift and numerical noise. It is strictly <b>LTI</b>: no time-varying, no nonlinear behavior lives here.</div>
+   <p class="small" style="margin-top:8px">Worse, in fixed-point the danger is <b>coefficient quantization</b>: a pole designed at |z| = 0.9998 can round to |z| &gt; 1 and the filter explodes. "Stable" is a property of the <i>ideal</i> coefficients; the shipped ones are quantized — which is why the panel lets you watch the pole radius, and why the tamper below is not a fantasy.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Stability depends on the zeros too."</s> <b>Cut.</b> Stability depends only on the <b>poles</b> (the denominator). Zeros set the shape and the phase; they never move the stability boundary. Minimum-phase is a zero question, stability a pole question.</p>
+   <p class="grave"><s>"A higher-order filter is always better."</s> <b>Cut.</b> A single high-order polynomial is numerically ill-conditioned; the whole reason to cascade <b>biquads</b> is that 2nd-order sections keep the coefficients well-behaved.</p>
+   <p class="grave"><s>"Direct Form II is the best structure."</s> <b>Kept, corrected.</b> Plain DF-II shares delays but its internal state can overflow; <b>DF-II transposed</b> has better rounding noise. Same H(z), different arithmetic.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: push the canonical pole from radius 0.9 out to <b>1.06 — outside the unit circle</b>. The impulse response then grows without bound: a bounded input yields an unbounded output. The blue team's witness (window 7) is watching the radius.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ push pole to |z| = 1.06</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Move the pole outside and the filter is no longer stable — the witness recomputes the pole radius, sees |z| &gt; 1, and turns red. Nothing is faked; the instability is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE BIQUAD FILTER — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a signal pipeline down the center (coefficients <b style="color:var(--cy)">in</b> → poles/zeros → response <b style="color:var(--gr)">out</b>). A runnable rendering of the second-order IIR filter from the Bristow-Johnson EQ cookbook and Oppenheim &amp; Schafer — the engine is LIT (stability from exact pole radii, low-pass DC/Nyquist gains proven, resonant-peak location verified, difference equation reconciled with H(z) to 1e-9, and the out-of-circle pole provably caught), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single 2nd-order section cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ===== the engine (pure logic; selfcheck runs headless with no canvas/audio/DOM) =====
+
+// roots of z^2 + a1 z + a2  -> the two poles
+function polesOf(a1,a2){
+ const d=a1*a1-4*a2;
+ if(d>=0){ const s=Math.sqrt(d); return [{re:(-a1+s)/2,im:0},{re:(-a1-s)/2,im:0}]; }
+ const s=Math.sqrt(-d); return [{re:-a1/2,im:s/2},{re:-a1/2,im:-s/2}];
+}
+const cmag=p=>Math.hypot(p.re,p.im);
+
+// STABLE iff BOTH poles strictly inside the unit circle
+function isStable(a1,a2){ const p=polesOf(a1,a2); return cmag(p[0])<1 && cmag(p[1])<1; }
+
+// roots of A z^2 + B z + C  (the zeros; A may differ from 1)
+function quadRoots(A,B,C){
+ if(Math.abs(A)<1e-15){ if(Math.abs(B)<1e-15) return []; return [{re:-C/B,im:0}]; }
+ const d=B*B-4*A*C;
+ if(d>=0){ const s=Math.sqrt(d); return [{re:(-B+s)/(2*A),im:0},{re:(-B-s)/(2*A),im:0}]; }
+ const s=Math.sqrt(-d); return [{re:-B/(2*A),im:s/(2*A)},{re:-B/(2*A),im:-s/(2*A)}];
+}
+
+// |H(e^jw)| from the five coefficients, evaluated on the unit circle
+function Hmag(c,w){
+ const c1=Math.cos(w), s1=Math.sin(w), c2=Math.cos(2*w), s2=Math.sin(2*w);
+ const nr=c.b0 + c.b1*c1 + c.b2*c2, ni=-(c.b1*s1 + c.b2*s2);
+ const dr=1 + c.a1*c1 + c.a2*c2, di=-(c.a1*s1 + c.a2*s2);
+ return Math.hypot(nr,ni)/Math.hypot(dr,di);
+}
+
+// Bristow-Johnson cookbook: shape + cutoff + Q -> normalized biquad
+function cook(type,f0fs,Q){
+ const w0=2*Math.PI*f0fs, cs=Math.cos(w0), sn=Math.sin(w0), al=sn/(2*Q);
+ const a0=1+al, a1=-2*cs, a2=1-al;
+ let b0,b1,b2;
+ if(type==='LP'){ b0=(1-cs)/2; b1=1-cs; b2=(1-cs)/2; }
+ else if(type==='HP'){ b0=(1+cs)/2; b1=-(1+cs); b2=(1+cs)/2; }
+ else { b0=al; b1=0; b2=-al; } // band-pass, constant 0 dB peak
+ return {b0:b0/a0,b1:b1/a0,b2:b2/a0,a1:a1/a0,a2:a2/a0};
+}
+
+// Direct Form I: the difference equation, sample by sample
+function filterDF1(c,x){
+ const y=new Array(x.length); let x1=0,x2=0,y1=0,y2=0;
+ for(let n=0;n<x.length;n++){
+  const yn=c.b0*x[n]+c.b1*x1+c.b2*x2 - c.a1*y1 - c.a2*y2;
+  y[n]=yn; x2=x1; x1=x[n]; y2=y1; y1=yn;
+ }
+ return y;
+}
+function impulse(N){ const x=new Array(N).fill(0); x[0]=1; return x; }
+
+// magnitude of the DFT sum of an impulse response at frequency w
+function Hdft(h,w){ let re=0,im=0; for(let n=0;n<h.length;n++){ re+=h[n]*Math.cos(w*n); im-=h[n]*Math.sin(w*n); } return Math.hypot(re,im); }
+
+// scan |H| over [0,pi], return the peak location and value
+function peakW(c,N){ let bw=0,bm=-1; for(let i=0;i<=N;i++){ const w=Math.PI*i/N; const m=Hmag(c,w); if(m>bm){bm=m;bw=w;} } return {w:bw,mag:bm}; }
+
+// the canonical filter the witness watches; TAMPER pushes its pole outside the unit circle
+const DEMO_W0=Math.PI/3;
+let TAMPER=false;
+function demoCoef(){ const r=TAMPER?1.06:0.9; return {b0:1,b1:0,b2:0,a1:-2*r*Math.cos(DEMO_W0),a2:r*r}; }
+
+// fixed-seed PRNG (mulberry32) so anything random stays deterministic
+let SEED=0x1a2b3c;
+function rng(){ SEED|=0; SEED=SEED+0x6D2B79F5|0; let t=Math.imul(SEED^SEED>>>15,1|SEED); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }
+
+// ===== fail-loud self-check (throws on any violation; returns true) =====
+function selfcheck(){
+ const t=(cond,m)=>{ if(!cond) throw new Error(m); };
+ const ap=(x,y,tol,m)=>{ if(Math.abs(x-y)>tol) throw new Error(m+" (got "+x+" vs "+y+")"); };
+ const save=TAMPER; TAMPER=false;
+
+ // 1. STABILITY read exactly off the denominator roots
+ t(isStable(-1.0,0.5),"complex poles with |z|=sqrt(0.5) are inside -> stable");
+ ap(cmag(polesOf(-1.0,0.5)[0]),Math.sqrt(0.5),1e-12,"complex pole magnitude equals sqrt(a2)");
+ t(isStable(-0.5,-0.06),"real poles 0.6 and -0.1 are inside -> stable");
+ { const p=polesOf(-0.5,-0.06); ap(p[0].re*p[1].re,-0.06,1e-12,"product of real poles equals a2"); ap(p[0].re+p[1].re,0.5,1e-12,"sum of real poles equals -a1"); }
+ t(!isStable(-1.06,1.06*1.06),"complex pole with |z|=1.06 is outside -> unstable");
+ t(!isStable(-2.5,1.0),"real pole with |z|=2 is outside -> unstable");
+
+ // 2. a constructed LOW-PASS realizes the low-pass shape from its coefficients
+ const lp=cook('LP',0.1,Math.SQRT1_2);
+ ap(Hmag(lp,0),1,1e-9,"low-pass passes DC at unit gain");
+ ap(Hmag(lp,Math.PI),0,1e-9,"low-pass drives Nyquist to zero");
+ t(Hmag(lp,0)>Hmag(lp,Math.PI),"low-pass: DC gain exceeds Nyquist gain");
+ t(Hmag(lp,0.2)>Hmag(lp,2.0),"low-pass: a low band passes, a high band is cut");
+ t(isStable(lp.a1,lp.a2),"the constructed low-pass is stable");
+ // and its high-pass mirror
+ const hp=cook('HP',0.1,Math.SQRT1_2);
+ ap(Hmag(hp,0),0,1e-9,"high-pass blocks DC");
+ ap(Hmag(hp,Math.PI),1,1e-9,"high-pass passes Nyquist");
+
+ // 3. a POLE near the unit circle at angle w0 produces a resonant PEAK at that frequency
+ const R=0.99, W0=Math.PI/3;
+ const res={b0:1,b1:0,b2:0,a1:-2*R*Math.cos(W0),a2:R*R};
+ t(isStable(res.a1,res.a2),"the resonator (r=0.99) is still stable");
+ const cospk=(1+R*R)/(2*R)*Math.cos(W0);          // exact peak-frequency cosine
+ t(Math.abs(cospk)<=1,"the analytic peak cosine is a valid cosine");
+ const wAnalytic=Math.acos(cospk);
+ const N=20000, pk=peakW(res,N), step=Math.PI/N;
+ ap(pk.w,wAnalytic,3*step,"the scanned resonant peak matches the analytic pole-angle peak");
+ t(Math.abs(wAnalytic-W0)<0.01,"for r near 1 the peak sits essentially at the pole angle w0");
+
+ // 4. the DIFFERENCE EQUATION reproduces H(z): DFT of its impulse response equals |H(e^jw)|
+ const h=filterDF1(lp,impulse(512));
+ for(const w of [0.2,0.5,1.0,2.0,3.0]) ap(Hdft(h,w),Hmag(lp,w),1e-9,"impulse-response DFT equals H(e^jw) at w="+w);
+
+ // untampered canonical filter is bounded and stable
+ { const hd=filterDF1(demoCoef(),impulse(300)); let mx=0; for(const v of hd) mx=Math.max(mx,Math.abs(v));
+   t(mx<10,"untampered canonical impulse response is bounded"); t(isStable(demoCoef().a1,demoCoef().a2),"untampered canonical filter is stable"); }
+
+ // ===== the planted void: push a POLE OUTSIDE the unit circle =====
+ TAMPER=true;
+ t(!isStable(demoCoef().a1,demoCoef().a2),"TAMPER moves the pole outside the unit circle -> unstable");
+ ap(cmag(polesOf(demoCoef().a1,demoCoef().a2)[0]),1.06,1e-9,"the tampered pole radius is 1.06 > 1");
+ { const hd=filterDF1(demoCoef(),impulse(300)); let mx=0; for(const v of hd) mx=Math.max(mx,Math.abs(v));
+   t(mx>1e3,"tampered: a bounded impulse yields an unbounded (growing) output"); }
+ TAMPER=save;   // restore
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const f=x=>{ const v=+x; if(!isFinite(v)) return "—"; if(Math.abs(v)>=1e4) return v.toExponential(2); return v.toFixed(4); };
+
+function currentCoef(){ return cook($('type').value, +$('f0').value, +$('q').value); }
+const TYPENAME={LP:'low-pass',HP:'high-pass',BP:'band-pass'};
+
+function drawZ(P,Z){
+ const cv=$('zc'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+ g.clearRect(0,0,W,H);
+ const cx=W/2,cy=H/2,sc=Math.min(W,H)*0.36;
+ g.strokeStyle='#20402a';g.lineWidth=1;
+ g.beginPath();g.moveTo(0,cy);g.lineTo(W,cy);g.moveTo(cx,0);g.lineTo(cx,H);g.stroke();
+ g.strokeStyle='#57e0d0';g.lineWidth=1.5;g.beginPath();g.arc(cx,cy,sc,0,2*Math.PI);g.stroke();
+ const map=p=>[cx+p.re*sc,cy-p.im*sc];
+ g.strokeStyle='#6cc6ff';g.lineWidth=2;
+ Z.forEach(z=>{const[x,y]=map(z);g.beginPath();g.arc(x,y,6,0,2*Math.PI);g.stroke();});
+ g.lineWidth=2.4;
+ P.forEach(p=>{const[x,y]=map(p);g.strokeStyle=cmag(p)<1?'#ff7a7a':'#ffcf4d';g.beginPath();g.moveTo(x-6,y-6);g.lineTo(x+6,y+6);g.moveTo(x+6,y-6);g.lineTo(x-6,y+6);g.stroke();});
+}
+function drawH(c){
+ const cv=$('hc'),g=cv.getContext('2d'),W=cv.width,H=cv.height;
+ g.clearRect(0,0,W,H);
+ const dbMin=-48,dbMax=24, y=db=>H-(db-dbMin)/(dbMax-dbMin)*H;
+ g.strokeStyle='#20402a';g.lineWidth=1;g.fillStyle='#5f8a68';g.font='9px monospace';
+ [24,12,0,-12,-24,-36].forEach(db=>{const yy=y(db);g.beginPath();g.moveTo(0,yy);g.lineTo(W,yy);g.stroke();g.fillText(db+'dB',2,yy-2);});
+ g.strokeStyle='#39fc6b';g.lineWidth=2;g.beginPath();
+ for(let i=0;i<=W;i++){ const w=Math.PI*i/W; let db=20*Math.log10(Math.max(Hmag(c,w),1e-6)); db=Math.max(dbMin,Math.min(dbMax,db)); const yy=y(db); if(i===0)g.moveTo(i,yy);else g.lineTo(i,yy); }
+ g.stroke();
+}
+
+function render(){
+ $('f0v').textContent=(+$('f0').value).toFixed(3);
+ $('qv').textContent=(+$('q').value).toFixed(2);
+ const c=currentCoef();
+ const P=polesOf(c.a1,c.a2), Z=quadRoots(c.b0,c.b1,c.b2), stable=isStable(c.a1,c.a2);
+ const pk=peakW(c,4096);
+ $('sent').innerHTML='H(z) = <span class="b">'+f(c.b0)+' + '+f(c.b1)+' z⁻¹ + '+f(c.b2)+' z⁻²</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;÷ <span class="a">1 + '+f(c.a1)+' z⁻¹ + '+f(c.a2)+' z⁻²</span>';
+ $('verdict').textContent=stable?'STABLE':'UNSTABLE';
+ $('verdict').className='verdict '+(stable?'ok':'no');
+ const pl=P.map(p=>'|z| = <b>'+f(cmag(p))+'</b> at '+f(p.re)+(p.im>=0?' + ':' − ')+f(Math.abs(p.im))+'j').join('<br>');
+ $('poles').innerHTML=pl;
+ $('reason').innerHTML=stable
+  ? 'both poles inside the unit circle · peak at ω/π = <b>'+f(pk.w/Math.PI)+'</b> ('+f(pk.mag)+'×)'
+  : 'a pole escaped the unit circle — the impulse response would grow without bound';
+ drawZ(P,Z); drawH(c);
+ $('modellive').innerHTML=TYPENAME[$('type').value]+' · poles at |z| = <b class="k">'+f(cmag(P[0]))+'</b>, <b class="k">'+f(cmag(P[1]))+'</b> · '+(stable?'<span class="k">inside — stable</span>':'<span style="color:var(--wall)">outside — unstable</span>');
+}
+
+function witness(){
+ const c=demoCoef();
+ const pm=cmag(polesOf(c.a1,c.a2)[0]);
+ const st=isStable(c.a1,c.a2);
+ const hd=filterDF1(c,impulse(120)); let mx=0; for(const v of hd) mx=Math.max(mx,Math.abs(v));
+ const lp=cook('LP',0.1,Math.SQRT1_2);
+ const inv=Math.abs(Hmag(lp,0)-1)<1e-9 && Hmag(lp,Math.PI)<1e-9;
+ const ok=st && inv && !TAMPER;
+ $('auditout').innerHTML='<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — pole inside, stable':'✗ WITNESS — pole outside the unit circle')+'</span>'
+  +'<div class="small" style="margin-top:6px">canonical pole |z| = <b style="color:'+(pm<1?'var(--gr)':'var(--wall)')+'">'+f(pm)+'</b> '+(pm<1?'&lt; 1 (inside)':'&gt; 1 (OUTSIDE)')
+  +' · impulse peak over 120 taps = <b style="color:'+(mx<10?'var(--gr)':'var(--wall)')+'">'+(mx<1e4?f(mx):mx.toExponential(2))+'</b>'
+  +' · LP DC/Nyquist invariants '+(inv?'hold':'broken')+(TAMPER?' · <span style="color:var(--wall)">red pushed the pole out</span>':'')+'</div>';
+}
+
+function playNoise(){
+ const c=currentCoef();
+ if(!isStable(c.a1,c.a2)){ $('playnote').innerHTML='<b style="color:var(--wall)">Refused.</b> This filter is unstable — playing it would only produce an unbounded blow-up.'; return; }
+ try{
+  const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+  const ctx=new AC(), dur=1.2, sr=ctx.sampleRate, buf=ctx.createBuffer(1,Math.floor(sr*dur),sr), d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(rng()*2-1)*0.5;
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const iir=ctx.createIIRFilter([c.b0,c.b1,c.b2],[1,c.a1,c.a2]);
+  const g=ctx.createGain(); g.gain.value=0.7;
+  src.connect(iir).connect(g).connect(ctx.destination); src.start();
+  src.onended=()=>{ try{ctx.close();}catch(e){} };
+  $('playnote').textContent='Playing '+dur.toFixed(1)+'s of white noise through the '+TYPENAME[$('type').value]+' biquad.';
+ }catch(e){ $('playnote').textContent='Audio unavailable in this context — the filter math still runs.'; }
+}
+
+// ===== boot =====
+try{
+ selfcheck();
+ $('litbadge').innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $('type').addEventListener('change',()=>{render();witness();});
+ $('f0').addEventListener('input',()=>{render();witness();});
+ $('q').addEventListener('input',()=>{render();witness();});
+ $('play').addEventListener('click',playNoise);
+ $('rand').addEventListener('click',()=>{ const ts=['LP','HP','BP']; $('type').value=ts[Math.floor(rng()*3)]; $('f0').value=(0.02+rng()*0.42).toFixed(3); $('q').value=(0.4+rng()*8).toFixed(2); render();witness(); });
+ $('reset').addEventListener('click',()=>{ $('type').value='LP'; $('f0').value='0.1'; $('q').value='0.707'; render();witness(); });
+ $('tamper').addEventListener('click',()=>{ TAMPER=true; $('tampernote').innerHTML="<b style='color:var(--wall)'>Pole pushed to |z| = 1.06.</b> It now sits outside the unit circle — the impulse response grows without bound. The witness (window 7) recomputed the radius and went red. The instability is real; it is caught."; witness(); });
+ $('restore').addEventListener('click',()=>{ TAMPER=false; $('tampernote').textContent="Move the pole outside and the filter is no longer stable — the witness recomputes the pole radius, sees |z| > 1, and turns red. Nothing is faked; the instability is real and it is caught."; witness(); });
+ render(); witness();
+}catch(e){
+ const fb=$('failb'); fb.style.display='block'; fb.textContent='FAIL-LOUD — the biquad engine did not check out: '+e.message; throw e;
+}
+</script>
+</body></html>

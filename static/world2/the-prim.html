@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PRIM · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee0d0; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,208,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,208,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,208,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+svg#graph{width:100%;height:auto;background:#0a130c;border:1px solid var(--line);border-radius:6px;margin:6px 0;}
+#graph line{stroke-linecap:round;}
+.edim{stroke:#20402a;stroke-width:2;}
+.ecand{stroke:var(--cy);stroke-dasharray:4 3;stroke-width:2.5;}
+.echosen{stroke:var(--gr);stroke-width:5;}
+.etree{stroke:var(--am);stroke-width:4.5;}
+.wbg{fill:#0a130c;stroke:var(--line);}
+.wt{fill:#c3e8ca;font-size:10px;text-anchor:middle;}
+.nin{fill:rgba(158,224,208,.20);stroke:var(--am);stroke-width:2;}
+.nout{fill:#0a130c;stroke:var(--dim);stroke-width:1.5;}
+.nl{fill:#eafff0;font-size:12px;font-weight:700;text-anchor:middle;}
+.sent{font-size:12.5px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.verdict{font-size:17px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE PRIM</h1>
+ <p class="sub">The cheapest network that connects everything. Start at one vertex, and forever add the single <b>cheapest edge that leaves the tree you have</b>. No backtracking, no global search — a local greedy grab, repeated, provably lands on the <b>minimum spanning tree</b>. Down the center, data flows: a weighted graph goes <b style="color:var(--cy)">in</b>, the tree grows edge by edge, the minimum comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> R. C. Prim, <i>Shortest Connection Networks And Some Generalizations</i>, Bell System Tech. J. <b>36</b> (1957) 1389–1401 — <a href="https://archive.org/details/bstj36-6-1389">archive.org/details/bstj36-6-1389</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — grow by the cut</h2>
+   <p>One invariant runs the whole algorithm — the <b>cut property</b>: pick any way of splitting the vertices into "in the tree" and "not yet", and the <b>cheapest edge that straddles that split</b> is always safe to add. Prim just applies it repeatedly, seed outward.</p>
+   <p class="small">Live state of the current run — edges added, and the frontier the cut property is choosing across:</p>
+   <table id="modelTbl"><thead><tr><th>step</th><th>edge added</th><th>weight</th></tr></thead><tbody id="modelBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the cut property <span class="tag t-amber">AVAN</span></h2>
+   <p>Prim (1957) grows <b>one</b> tree by always taking the cheapest edge across the cut between grown and ungrown. <a href="https://davidwise01.github.io/the-union-find/" style="color:var(--cy)">Kruskal</a> sorts <b>all</b> edges and greedily merges forests, refusing any that closes a cycle. Two strategies, one theorem — both are the cut property in disguise, and on distinct weights they land on the <b>same</b> tree.</p>
+   <p>The idea is older than the name: Vojtěch <b>Jarník</b> published it in 1930; Prim rediscovered it in 1957; Dijkstra again in 1959. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute the tree and compare its weight against the <b>brute-force minimum over every spanning tree</b>, and against Kruskal. If red switches the greed to MAX, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the weighted graph <span class="tag t-in">in ↓</span></h2>
+   <p>A small <b>constructed</b> graph: 5 vertices (A–E), 7 undirected edges, all weights <b>distinct</b> so the minimum spanning tree is unique. This is what feeds the panel below.</p>
+   <table><thead><tr><th>edge</th><th>weight</th><th>edge</th><th>weight</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>B — C</td><td class="k">1</td><td>B — D</td><td class="k">4</td></tr>
+     <tr><td>A — B</td><td class="k">2</td><td>C — D</td><td class="k">5</td></tr>
+     <tr><td>A — C</td><td class="k">3</td><td>C — E</td><td class="k">6</td></tr>
+     <tr><td>D — E</td><td class="k">7</td><td></td><td></td></tr>
+    </tbody></table>
+   <p class="small">Connected, so a spanning tree exists; distinct weights, so exactly one is minimum. That is the whole input — no hidden numbers.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the graph into the engine &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>seed</label>
+      <select id="seed"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option><option value="4">E</option></select></div>
+     <div class="row"><button id="step">▸ step</button><button id="run">⏩ run to tree</button><button id="reset">↺ reset</button></div>
+     <p class="small">Each step, the engine scans the frontier and grabs the <b>cheapest leaving edge</b> — dashed cyan are candidates, green is the one chosen, teal are locked into the tree.</p>
+     <svg id="graph" viewBox="0 0 340 300" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change the seed — the tree may grow in a different <i>order</i>, but the final tree and its weight are computed from the graph on the spot, and they never change.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits the minimum &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the minimum tree <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: a <b>spanning tree</b> — connected, exactly <b class="k">4</b> edges (|V|−1), acyclic — of <b>minimum</b> total weight <b class="k">13</b>, matching the brute-force minimum over <b>all</b> spanning trees of this graph. Prim and Kruskal agree to the number.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) confirms this against brute force live; the red team (right) tries to make it lie.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Greedy works here only because the MST sits on a <b>matroid</b> — the cut property makes each local grab globally safe. Change the objective and greed collapses: the <b>Steiner tree</b> (allowed to add extra junction points) is NP-hard; the <b>minimum-latency / shortest-path tree</b> is a different tree entirely; "connect everyone while bounding the longest hop" is not what Prim minimizes.</div>
+   <p class="small" style="margin-top:8px">Prim answers exactly one question — least <i>total</i> edge weight to connect a fixed vertex set — and answers it perfectly. Ask a neighbouring question and the same greed gives a confidently wrong tree.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Prim finds the shortest path between two nodes."</s> <b>Cut.</b> That is Dijkstra. Prim minimizes the whole tree's weight; the tree path between two vertices can be far longer than their true shortest path.</p>
+   <p class="grave"><s>"Prim invented the algorithm."</s> <b>Kept, corrected.</b> Jarník published it in 1930, Prim in 1957, Dijkstra in 1959 — it is fairly the <b>Jarník–Prim</b> algorithm.</p>
+   <p class="grave"><s>"The minimum spanning tree is unique."</s> <b>Cut.</b> Only when edge weights are <i>distinct</i>. Ties allow several MSTs of equal weight — this graph is built with distinct weights precisely so the answer is one tree.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: flip the greed. Instead of the cheapest leaving edge, add the <b>most expensive</b> one each step — still a spanning tree, but now the <b>maximum</b>. The blue team's witness (window 7) is watching the weight.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ grow by MAX edge</button><button id="restore">↺ restore MIN</button></div>
+   <p class="small" id="tampernote">Switch to the maximum leaving edge and the tree's weight climbs to 20 — above the true minimum of 13. The witness recomputes against brute force, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE PRIM — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (graph <b style="color:var(--cy)">in</b> → engine → minimum <b style="color:var(--gr)">out</b>). A runnable rendering of Prim's 1957 Bell System paper from archive.org — the engine is LIT (the tree is grown live, its weight checked against brute force over every spanning tree, Prim = Kruskal, cut &amp; cycle properties self-verified, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what a single greedy rule cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* ===== the engine (verified: MST weight 13, exact vs brute force over all spanning trees) ===== */
+const V=5;
+const VL=["A","B","C","D","E"];
+const POS=[[55,55],[258,58],[150,150],[300,198],[70,255]];
+const EDGES=[[0,1,2],[0,2,3],[1,2,1],[1,3,4],[2,3,5],[2,4,6],[3,4,7]];
+let TAMPER=false;   // when true the greed flips to MAX — the witness must catch the heavier tree
+
+const edgeKey=e=>Math.min(e[0],e[1])+"-"+Math.max(e[0],e[1]);
+
+function prim(seed,maximize){
+ const inTree=new Array(V).fill(false); inTree[seed]=true;
+ const edges=[]; let total=0;
+ for(let it=0;it<V-1;it++){
+  let best=null;
+  for(const e of EDGES){ const [a,b,w]=e;
+   if(inTree[a]!==inTree[b]){ if(best===null||(maximize? w>best[2] : w<best[2])) best=e; } }
+  if(best===null) break;
+  inTree[ inTree[best[0]]? best[1] : best[0] ]=true;
+  edges.push(best); total+=best[2];
+ }
+ return {edges,total,complete:edges.length===V-1};
+}
+
+function kruskal(maximize){
+ const es=EDGES.slice().sort((x,y)=> maximize? y[2]-x[2] : x[2]-y[2]);
+ const par=[...Array(V).keys()];
+ const find=x=>{ while(par[x]!==x){ par[x]=par[par[x]]; x=par[x]; } return x; };
+ let total=0; const edges=[];
+ for(const e of es){ const ra=find(e[0]),rb=find(e[1]); if(ra!==rb){ par[ra]=rb; total+=e[2]; edges.push(e); } }
+ return {edges,total};
+}
+
+function isSpanTree(edges){
+ if(edges.length!==V-1) return false;
+ const par=[...Array(V).keys()];
+ const find=x=>{ while(par[x]!==x){ par[x]=par[par[x]]; x=par[x]; } return x; };
+ let comp=V;
+ for(const e of edges){ const ra=find(e[0]),rb=find(e[1]); if(ra===rb) return false; par[ra]=rb; comp--; }
+ return comp===1;
+}
+
+function popcount(x){ let c=0; while(x){ c+=x&1; x>>>=1; } return c; }
+
+function bruteMinSpanTree(){
+ const m=EDGES.length; let min=Infinity,count=0;
+ for(let mask=0;mask<(1<<m);mask++){
+  if(popcount(mask)!==V-1) continue;
+  const sub=[]; for(let i=0;i<m;i++) if(mask&(1<<i)) sub.push(EDGES[i]);
+  if(isSpanTree(sub)){ count++; const w=sub.reduce((s,e)=>s+e[2],0); if(w<min) min=w; }
+ }
+ return {min,count};
+}
+
+function mstSet(){ const {edges}=kruskal(false); return new Set(edges.map(edgeKey)); }
+
+function edgesCrossing(smask){
+ const cross=[];
+ for(const e of EDGES){ const ain=(smask>>e[0])&1, bin=(smask>>e[1])&1; if(ain!==bin) cross.push(e); }
+ return cross;
+}
+
+// reachable from u to v using only edges strictly lighter than w — the cycle-property test
+function reachLighter(u,v,w){
+ const adj=Array.from({length:V},()=>[]);
+ for(const e of EDGES) if(e[2]<w){ adj[e[0]].push(e[1]); adj[e[1]].push(e[0]); }
+ const vis=new Array(V).fill(false); vis[u]=true; const q=[u];
+ while(q.length){ const x=q.shift(); if(x===v) return true; for(const y of adj[x]) if(!vis[y]){ vis[y]=true; q.push(y); } }
+ return false;
+}
+
+/* ===== fail-loud self-check (runs untampered, restores the flag, returns true) ===== */
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const bm=bruteMinSpanTree();
+ t(bm.count>0,"the graph must have at least one spanning tree");
+ t(bm.min===13,"brute-force minimum spanning-tree weight must be 13");
+ // Prim from every seed is a minimum spanning tree
+ for(let s=0;s<V;s++){ const p=prim(s,false);
+  t(p.complete,"Prim from "+VL[s]+" must complete a spanning tree");
+  t(p.edges.length===V-1,"Prim tree from "+VL[s]+" must have |V|-1 edges");
+  t(isSpanTree(p.edges),"Prim result from "+VL[s]+" must be connected and acyclic");
+  t(p.total===bm.min,"Prim from "+VL[s]+" must equal the brute-force minimum");
+ }
+ // Prim and Kruskal agree, on total and (distinct weights) on the exact edge set
+ const kr=kruskal(false);
+ t(kr.total===bm.min,"Kruskal total must equal the brute-force minimum");
+ const ps=new Set(prim(0,false).edges.map(edgeKey)), ks=new Set(kr.edges.map(edgeKey));
+ t(ps.size===ks.size,"Prim and Kruskal must select the same number of edges");
+ for(const k of ps) t(ks.has(k),"Prim and Kruskal must select the same edge: "+k);
+ // CUT PROPERTY — on every cut, the min-weight crossing edge is in the MST
+ const M=mstSet();
+ for(let smask=1;smask<(1<<V)-1;smask++){
+  const cross=edgesCrossing(smask); if(cross.length===0) continue;
+  let lo=cross[0]; for(const e of cross) if(e[2]<lo[2]) lo=e;
+  t(M.has(edgeKey(lo)),"cut property: cheapest edge across cut "+smask+" must be in the MST");
+ }
+ // CYCLE PROPERTY — an edge is in NO MST exactly when a strictly-lighter path already joins its ends
+ for(const e of EDGES){
+  const lighterPath=reachLighter(e[0],e[1],e[2]);
+  t(lighterPath === !M.has(edgeKey(e)),"cycle property failed for edge "+edgeKey(e));
+ }
+ // TAMPER — flip greed to MAX; the tree is still spanning but heavier than the minimum
+ TAMPER=true;
+ const tam=prim(0,true);
+ t(isSpanTree(tam.edges),"tampered (MAX) result is still a spanning tree");
+ t(tam.total>bm.min,"tampered MAX tree weight must exceed the minimum");
+ t(tam.total===20,"tampered MAX spanning-tree weight is 20");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const BRUTE=bruteMinSpanTree();
+let SEED=0, PLAN=prim(0,false), stepIdx=0;
+
+function rebuild(){ SEED=+$("seed").value; PLAN=prim(SEED,TAMPER); stepIdx=0; }
+
+function inTreeAfter(k){
+ const s=new Set([SEED]);
+ for(let i=0;i<k;i++){ s.add(PLAN.edges[i][0]); s.add(PLAN.edges[i][1]); }
+ return s;
+}
+
+function drawGraph(){
+ const shown=PLAN.edges.slice(0,stepIdx);
+ const shownKeys=new Set(shown.map(edgeKey));
+ const inTree=inTreeAfter(stepIdx);
+ const crossing=EDGES.filter(e=> inTree.has(e[0])!==inTree.has(e[1]));
+ const chosen=stepIdx<PLAN.edges.length? PLAN.edges[stepIdx] : null;
+ const chosenKey=chosen? edgeKey(chosen):"";
+ let s="";
+ for(const e of EDGES){ const [a,b,w]=e; const [x1,y1]=POS[a],[x2,y2]=POS[b];
+  let cls="edim";
+  if(shownKeys.has(edgeKey(e))) cls="etree";
+  else if(edgeKey(e)===chosenKey) cls="echosen";
+  else if(crossing.indexOf(e)>=0) cls="ecand";
+  s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" class="'+cls+'"/>';
+  const mx=(x1+x2)/2,my=(y1+y2)/2;
+  s+='<circle cx="'+mx+'" cy="'+my+'" r="9" class="wbg"/><text x="'+mx+'" y="'+(my+3.5)+'" class="wt">'+w+'</text>';
+ }
+ for(let i=0;i<V;i++){ const [x,y]=POS[i]; const it=inTree.has(i);
+  s+='<circle cx="'+x+'" cy="'+y+'" r="15" class="'+(it?"nin":"nout")+'"/><text x="'+x+'" y="'+(y+4)+'" class="nl">'+VL[i]+'</text>';
+ }
+ $("graph").innerHTML=s;
+}
+
+function renderModel(){
+ const shown=PLAN.edges.slice(0,stepIdx);
+ $("modelBody").innerHTML = shown.length===0
+  ? '<tr><td colspan="3" class="mut">seed '+VL[SEED]+' — press step</td></tr>'
+  : shown.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+VL[e[0]]+' — '+VL[e[1]]+'</td><td class="k">'+e[2]+'</td></tr>').join("");
+}
+
+function renderReadout(){
+ const shown=PLAN.edges.slice(0,stepIdx);
+ const run=shown.reduce((s,e)=>s+e[2],0);
+ const list = shown.length? shown.map(e=>VL[e[0]]+"–"+VL[e[1]]+" ("+e[2]+")").join(" &nbsp;+&nbsp; ") : '<span class="mut">tree = { '+VL[SEED]+' }</span>';
+ $("sent").innerHTML = '<b>seed</b> '+VL[SEED]+' &nbsp;·&nbsp; '+(TAMPER?'<b style="color:var(--wall)">greed: MAX</b>':'<b>greed: MIN</b>')
+  +'<br>'+list+'<br><b>running weight:</b> <span class="k">'+run+'</span>';
+ const done=stepIdx>=PLAN.edges.length;
+ if(!done){ $("verdict").textContent="GROWING…"; $("verdict").className="verdict";
+  $("reason").textContent="the next cheapest leaving edge is highlighted green on the frontier"; return; }
+ if(TAMPER){ $("verdict").textContent="MAX TREE · weight "+run; $("verdict").className="verdict no";
+  $("reason").textContent="spanning, but weight "+run+" > minimum "+BRUTE.min+" — not the MST (window 7 catches this)"; }
+ else { $("verdict").textContent="MST · weight "+run; $("verdict").className="verdict ok";
+  $("reason").textContent="weight "+run+" = brute-force minimum over all "+BRUTE.count+" spanning trees"; }
+}
+
+function render(){ drawGraph(); renderModel(); renderReadout(); }
+
+function audit(){
+ const bm=BRUTE, kr=kruskal(false), pr=prim(SEED,TAMPER);
+ const spanning=isSpanTree(pr.edges);
+ const isMin=pr.total===bm.min;
+ const primEqKruskal=kr.total===bm.min;
+ const ok=spanning && isMin && primEqKruskal;
+ $("auditout").innerHTML =
+  '<span class="badge '+(ok?"pass":"failb")+'">'+(ok?"✓ WITNESS — holds":"✗ WITNESS — broken")+'</span>'
+  +'<div class="small" style="margin-top:6px">Prim weight: <b style="color:'+(isMin?"var(--gr)":"var(--wall)")+'">'+pr.total+'</b>/'+bm.min
+  +' &nbsp;·&nbsp; spanning tree: <b style="color:'+(spanning?"var(--gr)":"var(--wall)")+'">'+(spanning?"yes":"no")+'</b>'
+  +' &nbsp;·&nbsp; Kruskal: <b style="color:var(--gr)">'+kr.total+'</b> &nbsp;·&nbsp; brute-force min over '+bm.count+' trees: <b style="color:var(--gr)">'+bm.min+'</b>'
+  +(TAMPER?' &nbsp; — <span style="color:var(--wall)">red flipped greed to MAX</span>':'')+'</div>';
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ rebuild(); render(); audit();
+ $("seed").addEventListener("change",()=>{ rebuild(); render(); audit(); });
+ $("step").addEventListener("click",()=>{ if(stepIdx<PLAN.edges.length) stepIdx++; render(); });
+ $("run").addEventListener("click",()=>{ stepIdx=PLAN.edges.length; render(); });
+ $("reset").addEventListener("click",()=>{ stepIdx=0; render(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; rebuild();
+  $("tampernote").innerHTML="<b style='color:var(--wall)'>Greed flipped to MAX.</b> Each step now grabs the most expensive leaving edge; the tree weight is 20, above the true minimum 13. The witness (window 7) recomputed against brute force and went red. The attack is real; it is caught.";
+  render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; rebuild();
+  $("tampernote").textContent="Switch to the maximum leaving edge and the tree's weight climbs to 20 — above the true minimum of 13. The witness recomputes against brute force, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.";
+  render(); audit(); });
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Prim engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

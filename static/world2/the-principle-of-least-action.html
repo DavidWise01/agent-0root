@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PRINCIPLE OF LEAST ACTION</title>
+<style>
+:root{
+  --am:#ff7a7a;
+  --bg:#0a140e;
+  --bg2:#0d1b13;
+  --panel:#0f2016;
+  --ink:#e7f3ea;
+  --dim:#9fc4ac;
+  --line:#1f3a2a;
+  --blue:#6fb7ff;
+  --red:#ff8a8a;
+  --lit:#7dff9e;
+  --amber:#ffc861;
+  --wall:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:
+  radial-gradient(1200px 700px at 78% -8%, #10281a 0%, rgba(16,40,26,0) 60%),
+  radial-gradient(1000px 600px at 8% 108%, #0f241a 0%, rgba(15,36,26,0) 55%),
+  var(--bg);
+  color:var(--ink);
+  font:15px/1.5 "Iosevka","SFMono-Regular",ui-monospace,"Cascadia Code","Consolas",monospace;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 18px 60px}
+header{border:1px solid var(--line);border-radius:14px;padding:20px 22px;
+  background:linear-gradient(180deg,var(--bg2),var(--bg));position:relative;overflow:hidden}
+header:before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,122,122,0.10),rgba(255,122,122,0) 40%)}
+h1{margin:0 0 6px;font-size:26px;letter-spacing:.5px;color:#fff;
+  text-shadow:0 0 22px rgba(255,122,122,.35)}
+h1 .dot{color:var(--am)}
+.sub{margin:2px 0 12px;color:var(--dim);max-width:74ch}
+.src{font-size:12.5px;color:var(--dim);display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.src a{color:var(--am);text-decoration:none;border-bottom:1px dotted var(--am)}
+.rendered{margin-left:auto;color:#6f8f7c;font-style:italic}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.6px;
+  padding:2px 7px;border-radius:999px;text-transform:uppercase;vertical-align:middle}
+.t-amber{background:rgba(255,200,97,.14);color:var(--amber);border:1px solid rgba(255,200,97,.4)}
+.t-lit{background:rgba(125,255,158,.13);color:var(--lit);border:1px solid rgba(125,255,158,.4)}
+.t-in{background:rgba(111,183,255,.13);color:var(--blue);border:1px solid rgba(111,183,255,.4)}
+.t-out{background:rgba(255,122,122,.14);color:var(--am);border:1px solid rgba(255,122,122,.42)}
+.t-wall{background:rgba(255,107,107,.14);color:var(--wall);border:1px solid rgba(255,107,107,.45)}
+
+.ocho{display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:16px;margin-top:18px}
+@media(max-width:880px){.ocho{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px}
+.teamhdr{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  padding:8px 12px;border-radius:10px;border:1px solid var(--line)}
+.col.blue .teamhdr{color:var(--blue);background:rgba(111,183,255,.07);border-color:rgba(111,183,255,.28)}
+.col.red .teamhdr{color:var(--red);background:rgba(255,138,138,.07);border-color:rgba(255,138,138,.28)}
+.col.center .teamhdr{color:var(--am);background:rgba(255,122,122,.07);border-color:rgba(255,122,122,.28);text-align:center}
+
+.win{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel),var(--bg2));overflow:hidden}
+.col.blue .win{border-color:rgba(111,183,255,.20)}
+.col.red .win{border-color:rgba(255,138,138,.20)}
+.win.panel{border-color:rgba(255,122,122,.5);box-shadow:0 0 30px rgba(255,122,122,.12)}
+.wh{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.015)}
+.wn{flex:0 0 auto;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
+  font-size:12px;font-weight:800;color:var(--bg);background:var(--dim)}
+.col.blue .wn{background:var(--blue)}
+.col.red .wn{background:var(--red)}
+.win.panel .wn{background:var(--am)}
+.wt{font-size:12.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#dcefe2}
+.wb{padding:12px 13px;font-size:13px;color:var(--dim)}
+.wb b{color:var(--ink)}
+.wb code,.mono{font-family:inherit;color:#cfe9d8;background:rgba(255,255,255,.04);
+  padding:1px 5px;border-radius:5px}
+.eq{color:#e9f7ee;background:rgba(255,122,122,.06);border:1px solid rgba(255,122,122,.18);
+  border-radius:8px;padding:8px 10px;margin:8px 0;font-size:13px;overflow-x:auto}
+
+.flow{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--am);
+  font-size:11px;letter-spacing:2px;padding:2px 0}
+.flow:before,.flow:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(255,122,122,.5),transparent)}
+
+canvas{width:100%;height:200px;display:block;border:1px solid var(--line);border-radius:9px;
+  background:radial-gradient(600px 300px at 50% 0%,#0e2016,#08120c)}
+.read{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:10px;font-size:12.5px}
+.read div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line);padding:2px 0}
+.read span{color:#bfe4cd}
+.k{color:var(--dim)}
+
+.badge{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:9px;
+  font-size:12.5px;font-weight:700;border:1px solid}
+.badge.ok{color:var(--lit);border-color:rgba(125,255,158,.45);background:rgba(125,255,158,.08)}
+.badge.bad{color:var(--wall);border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.1)}
+.blip{width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor}
+
+.wall-note{border-left:3px solid var(--wall);padding:6px 0 6px 11px;margin:8px 0;color:#e9cfcf}
+.grave{margin:7px 0;padding-left:2px}
+.grave s{color:#8a5a5a}
+.grave .fix{color:var(--lit)}
+.grave .fix:before{content:"↳ ";color:var(--am)}
+
+button{font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink);
+  background:linear-gradient(180deg,#17301f,#102117);border:1px solid var(--line);
+  border-radius:8px;padding:8px 12px;margin:4px 6px 4px 0}
+button:hover{border-color:var(--am);color:#fff}
+button.warn{border-color:rgba(255,107,107,.5);color:var(--red)}
+button.warn:hover{background:rgba(255,107,107,.12)}
+
+#failb{display:none;margin:14px 0;padding:12px 14px;border:1px solid var(--wall);
+  border-radius:10px;background:rgba(255,107,107,.1);color:#ffd3d3;font-size:13px}
+footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);
+  color:#6f8f7c;font-size:12px;text-align:center}
+.legend{color:#7fa08c;font-size:11.5px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>THE PRINCIPLE OF LEAST ACTION<span class="dot"> ·</span></h1>
+  <div class="sub">Of all conceivable paths between two fixed events, nature takes the one whose <b>action</b>
+    <span class="mono">S = &#8747; L dt</span> is <b>stationary</b> (&#948;S = 0). Fix the endpoints, wiggle the path,
+    and the action rises — the physical trajectory sits at the bottom of that valley, and Newton's laws fall out of it.</div>
+  <div class="src">
+    <span class="tag t-amber">source</span>
+    <span>Maupertuis, <i>&laquo;Accord de diff&eacute;rentes lois de la nature&raquo;</i> (1744); Euler, <i>Methodus inveniendi&hellip;</i> Additamentum II (1744);
+      Hamilton, <a href="https://www.maths.tcd.ie/pub/HistMath/People/Hamilton/Dynamics/" target="_blank" rel="noopener">&ldquo;On a General Method in Dynamics&rdquo;</a>, Phil. Trans. R. Soc. (1834).</span>
+    <span class="rendered">Rendered, not quoted.</span>
+  </div>
+  <div id="failb"></div>
+</header>
+
+<div class="ocho">
+
+  <!-- LEFT: BLUE TEAM -->
+  <div class="col blue">
+    <div class="teamhdr">Blue Team &middot; builds &amp; defends</div>
+
+    <div class="win">
+      <div class="wh"><span class="wn">3</span><span class="wt">The Model</span></div>
+      <div class="wb">
+        A path is a function <code>x(t)</code> on <code>[t&#8320;,t&#8321;]</code> with the endpoints pinned.
+        Its <b>action</b> is the time-integral of the Lagrangian <code>L = T &minus; V</code>:
+        <div class="eq">S[x] = &#8747; ( &frac12; m &#7819;&sup2; &minus; V(x) ) dt</div>
+        We discretize into N segments (natural units <code>m=1</code>), so
+        <code>S = &#931;&nbsp;&frac12;(&#916;x/&#916;t)&sup2;&#916;t &minus; &#931;&nbsp;V&#772;&#916;t</code>.
+        The engine solves for the path where the gradient of S vanishes at every interior node — that is the extremal.
+        Two systems: the <b>free particle</b> (<code>V=0</code>) and the <b>harmonic oscillator</b> (<code>V=&frac12;kx&sup2;, k=1</code>,
+        over t&isin;[0,1] &lt; &frac12; period, so the extremum is a genuine minimum).
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wh"><span class="wn">5</span><span class="wt">The Lineage</span></div>
+      <div class="wb">
+        &#948;S = 0 is not a new law — it is <i>the</i> law, restated as geometry. Setting the variation to zero
+        yields the <b>Euler&ndash;Lagrange equation</b> <code>d/dt(&part;L/&part;&#7819;) &minus; &part;L/&part;x = 0</code>,
+        which for <code>L = T&minus;V</code> is exactly <code>m&#7821; = &minus;V&#8242;(x)</code> — Newton's <code>F = ma</code>.
+        This sphere is the variational root feeding <b>the-lagrangian</b>: the panel proves numerically that the
+        stationary path satisfies E&ndash;L node by node (<code>a&#7522; = &minus;V&#8242;(x&#7522;)</code> to 1e&minus;9).
+        <div class="legend">Maupertuis &rarr; Euler &rarr; Hamilton: one principle, all of mechanics.</div>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wh"><span class="wn">7</span><span class="wt">The Witness</span></div>
+      <div class="wb">
+        Live re-check of the claim &ldquo;the declared path is the physical one.&rdquo; It recomputes the gradient of S
+        on the currently-declared path and compares its action to the true extremal. If a neighbour has lower action,
+        the claim is false and this badge flips red.
+        <div style="margin-top:9px"><span class="badge ok" id="auditout"><span class="blip"></span>&hellip;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: THE MACHINE -->
+  <div class="col center">
+    <div class="teamhdr">The Machine</div>
+
+    <div class="win">
+      <div class="wh"><span class="wn">4</span><span class="wt">Data In</span> <span class="tag t-in" style="margin-left:auto">in &darr;</span></div>
+      <div class="wb">
+        <div class="read">
+          <div><span class="k">endpoints x&#8320;,x&#8321;</span><span>1.0 &rarr; 0.3</span></div>
+          <div><span class="k">interval t</span><span>0 &rarr; 1</span></div>
+          <div><span class="k">segments N</span><span>40</span></div>
+          <div><span class="k">step &#916;t</span><span>0.025</span></div>
+          <div><span class="k">potential V</span><span>&frac12;kx&sup2;, k=1</span></div>
+          <div><span class="k">free-particle V</span><span>0</span></div>
+        </div>
+        Endpoints fixed; the path between them is the unknown.
+      </div>
+    </div>
+
+    <div class="flow">&#9660; SOLVE &#948;S=0 &#9660;</div>
+
+    <div class="win panel">
+      <div class="wh"><span class="wn">0</span><span class="wt">The Panel</span> <span class="tag t-lit" style="margin-left:auto">LIT</span></div>
+      <div class="wb">
+        <canvas id="cv" width="520" height="200"></canvas>
+        <div class="read">
+          <div><span class="k">S(extremal)</span><span id="Sext">&mdash;</span></div>
+          <div><span class="k">&#8711;S norm</span><span id="Gext">&mdash;</span></div>
+          <div><span class="k">best wiggle S</span><span id="Swig">&mdash;</span></div>
+          <div><span class="k">E&ndash;L residual</span><span id="Eel">&mdash;</span></div>
+        </div>
+        <div class="legend">Accent curve = extremal (physical) path &middot; faint curves = endpoint-fixed wiggles, all with higher action.</div>
+      </div>
+    </div>
+
+    <div class="flow">&#9660; PROVEN &#9660;</div>
+
+    <div class="win">
+      <div class="wh"><span class="wn">8</span><span class="wt">Data Out</span> <span class="tag t-out" style="margin-left:auto">out &darr;</span></div>
+      <div class="wb">
+        The stationary path minimizes S among all endpoint-fixed neighbours and satisfies Euler&ndash;Lagrange exactly.
+        <div style="margin-top:9px"><span class="badge ok" id="litbadge"><span class="blip"></span>&hellip;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: RED TEAM -->
+  <div class="col red">
+    <div class="teamhdr">Red Team &middot; attacks &amp; breaks</div>
+
+    <div class="win">
+      <div class="wh"><span class="wn">1</span><span class="wt">The Adversary</span> <span class="tag t-wall" style="margin-left:auto">WALL</span></div>
+      <div class="wb">
+        <div class="wall-note">&ldquo;Least&rdquo; overstates it. The path is <b>stationary</b>, not always minimal. Past a
+          conjugate point — for the oscillator, beyond half a period — the classical path becomes a <b>saddle</b> of S,
+          and cheaper neighbours exist. The panel deliberately stays under half a period so the extremum is a true minimum.</div>
+        <div class="wall-note">It is a <b>boundary-value</b> problem, not an initial-value one: fixing two endpoints can admit
+          zero, one, or many extremals. It does not mean a particle &ldquo;sniffs out&rdquo; the future.</div>
+        <div class="wall-note">Discretization is not free — coarse N inflates S by O(&#916;t&sup2;). Comparisons here use a fixed
+          N and identical grids, so the wiggle margins are real, not artifacts of the mesh.</div>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wh"><span class="wn">2</span><span class="wt">The Graveyard</span></div>
+      <div class="wb">
+        <div class="grave"><s>Nature always <b>minimizes</b> action.</s><div class="fix">Nature makes it <b>stationary</b> (&#948;S=0); minima, maxima, and saddles all qualify.</div></div>
+        <div class="grave"><s>The particle tries every path and picks the cheapest.</s><div class="fix">The stationarity condition is local and equivalent to Newton's law — no teleology, no global search.</div></div>
+        <div class="grave"><s>Least action is a separate axiom on top of F=ma.</s><div class="fix">It is <i>equivalent</i> to F=ma via Euler&ndash;Lagrange, not additional to it.</div></div>
+        <div class="grave"><s>Any wiggled path with the same endpoints is &ldquo;close enough&rdquo; to physical.</s><div class="fix">Only the extremal has &#8711;S=0; every wiggle raises S — that is exactly what the tamper proves.</div></div>
+      </div>
+    </div>
+
+    <div class="win">
+      <div class="wh"><span class="wn">6</span><span class="wt">The Tamper</span></div>
+      <div class="wb">
+        <b>Disclosed planted void.</b> Press tamper to declare a <i>wiggled, non-extremal</i> path as &ldquo;the physical one.&rdquo;
+        Its action is no longer stationary — the true extremal, a nearby path, has strictly lower S — so the Witness (7) catches it live.
+        <div style="margin-top:8px">
+          <button class="warn" id="tamper">Declare wiggled path physical</button>
+          <button id="restore">Restore extremal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  THE PRINCIPLE OF LEAST ACTION &middot; WORLD II &middot; THE FOLD &middot; ud0 corpus &middot;
+  the engine is LIT: it computes the action and its extremal live, and the selfcheck throws on any violation.<br>
+  Built by David Lee Wise (ROOT0) with AVAN.
+</footer>
+</div>
+
+<script>
+// ===== engine: pure logic, extractable, runs headless (no canvas/DOM) =====
+var TAMPER=false;
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+function Vpot(xi,k){return 0.5*k*xi*xi;}
+
+function actionOf(x,dt,k){
+  var S=0;
+  for(var i=0;i<x.length-1;i++){
+    var v=(x[i+1]-x[i])/dt;
+    S += 0.5*v*v*dt;
+    S -= 0.5*(Vpot(x[i],k)+Vpot(x[i+1],k))*dt;
+  }
+  return S;
+}
+
+function actionGrad(x,dt,k){
+  var g=new Array(x.length).fill(0);
+  for(var j=1;j<x.length-1;j++){
+    g[j] = -((x[j+1]-2*x[j]+x[j-1])/dt) - k*x[j]*dt;
+  }
+  return g;
+}
+function gradNorm(x,dt,k){
+  var g=actionGrad(x,dt,k),s=0;
+  for(var j=1;j<x.length-1;j++) s+=g[j]*g[j];
+  return Math.sqrt(s);
+}
+
+// solve for the path with grad(S)=0 (fixed endpoints) via a tridiagonal system
+function extremalPath(x0,xN,N,dt,k){
+  var M=N-1;
+  var d=-(2-k*dt*dt);
+  var a=[],b=[],c=[],r=[];
+  for(var m=0;m<M;m++){a[m]=1;b[m]=d;c[m]=1;r[m]=0;}
+  r[0]=-x0; r[M-1]=-xN;
+  a[0]=0; c[M-1]=0;
+  for(var m1=1;m1<M;m1++){
+    var w=a[m1]/b[m1-1];
+    b[m1]=b[m1]-w*c[m1-1];
+    r[m1]=r[m1]-w*r[m1-1];
+  }
+  var u=new Array(M);
+  u[M-1]=r[M-1]/b[M-1];
+  for(var m2=M-2;m2>=0;m2--) u[m2]=(r[m2]-c[m2]*u[m2+1])/b[m2];
+  var x=new Array(N+1);
+  x[0]=x0; x[N]=xN;
+  for(var m3=0;m3<M;m3++) x[m3+1]=u[m3];
+  return x;
+}
+
+// endpoint-preserving deterministic perturbation
+function wiggled(x,eps,mode){
+  var N=x.length-1, y=x.slice();
+  for(var i=1;i<N;i++) y[i]=x[i]+eps*Math.sin(mode*Math.PI*i/N);
+  return y;
+}
+
+// the path the UI declares "physical" — tampered version is a non-extremal wiggle
+function declaredPhysical(xextremal){
+  if(TAMPER) return wiggled(xextremal,0.12,2);
+  return xextremal;
+}
+
+// live witness: is the declared path actually the stationary (physical) one?
+function witnessCheck(){
+  var N=40,dt=1/N,k=1;
+  var xh=extremalPath(1,0.3,N,dt,k);
+  var declared=declaredPhysical(xh);
+  var gn=gradNorm(declared,dt,k);
+  var S=actionOf(declared,dt,k);
+  var Sref=actionOf(xh,dt,k);
+  var ok=(gn<1e-6)&&!(S>Sref+1e-9);
+  return {ok:ok,grad:gn,S:S,Sref:Sref};
+}
+
+// fail-loud: throws on any violation, returns true on success
+function selfcheck(){
+  var N=40, dt=1/N, TOL=1e-6;
+
+  // free particle: straight-line path minimizes S among endpoint-fixed wiggles
+  var xf=extremalPath(0,2,N,dt,0);
+  for(var i=0;i<=N;i++){
+    var lin=0+2*i/N;
+    if(Math.abs(xf[i]-lin)>1e-9) throw new Error("free extremal not straight");
+  }
+  var Sf=actionOf(xf,dt,0);
+  if(gradNorm(xf,dt,0)>1e-9) throw new Error("free path not stationary");
+  var modes=[1,2,3], epss=[0.05,0.1,-0.08];
+  for(var a=0;a<modes.length;a++){
+    for(var b=0;b<epss.length;b++){
+      if(!(actionOf(wiggled(xf,epss[b],modes[a]),dt,0) > Sf+TOL)) throw new Error("free: wiggle not higher action");
+    }
+  }
+
+  // harmonic oscillator: classical path minimizes S among endpoint-fixed wiggles
+  var k=1;
+  var xh=extremalPath(1,0.3,N,dt,k);
+  var Sh=actionOf(xh,dt,k);
+  if(gradNorm(xh,dt,k)>1e-9) throw new Error("harmonic path not stationary");
+  for(var a2=0;a2<modes.length;a2++){
+    for(var b2=0;b2<epss.length;b2++){
+      if(!(actionOf(wiggled(xh,epss[b2],modes[a2]),dt,k) > Sh+TOL)) throw new Error("harmonic: wiggle not higher action");
+    }
+  }
+
+  // delta S = 0  is equivalent to  Euler-Lagrange (discrete: a = -V'(x))
+  for(var j=1;j<N;j++){
+    var acc=(xh[j+1]-2*xh[j]+xh[j-1])/(dt*dt);
+    var force=-k*xh[j];
+    if(Math.abs(acc-force)>1e-9) throw new Error("EL not satisfied at extremal");
+  }
+  for(var j2=1;j2<N;j2++){
+    var acc0=(xf[j2+1]-2*xf[j2]+xf[j2-1])/(dt*dt);
+    if(Math.abs(acc0)>1e-9) throw new Error("free EL (acc=0) fails");
+  }
+
+  // action is additive along a path: S[a,c] = S[a,b] + S[b,c]
+  var xc=extremalPath(1,0.3,N,dt,1);
+  var split=20;
+  var left=xc.slice(0,split+1), right=xc.slice(split);
+  var Swhole=actionOf(xc,dt,1);
+  var Ssplit=actionOf(left,dt,1)+actionOf(right,dt,1);
+  if(Math.abs(Swhole-Ssplit)>1e-12) throw new Error("action not additive");
+
+  // TAMPER (disclosed planted void): claim a wiggled path is physical -> not stationary
+  var saved=TAMPER;
+  if(gradNorm(declaredPhysical(xh),dt,k)>1e-9) throw new Error("declared not stationary (pre-tamper)");
+  TAMPER=true;
+  var bad=declaredPhysical(xh);
+  if(gradNorm(bad,dt,k)<1e-3) throw new Error("tamper undetected: bad path looks stationary");
+  if(!(actionOf(bad,dt,k) > Sh+TOL)) throw new Error("tamper undetected: extremal not lower");
+  TAMPER=saved;
+  if(gradNorm(declaredPhysical(xh),dt,k)>1e-9) throw new Error("restore failed");
+
+  return true;
+}
+
+/* ===== UI ===== */
+(function(){
+  var N=40, dt=1/N, k=1;
+
+  function boot(){
+    try{
+      var ok=selfcheck();
+      if(ok!==true) throw new Error("selfcheck did not return true");
+    }catch(e){
+      var fb=document.getElementById("failb");
+      fb.style.display="block";
+      fb.textContent="SELFCHECK FAILED — "+e.message;
+      var lb=document.getElementById("litbadge");
+      lb.className="badge bad"; lb.innerHTML='<span class="blip"></span>ENGINE DARK';
+      throw e;
+    }
+
+    var xh=extremalPath(1,0.3,N,dt,k);
+    var Sh=actionOf(xh,dt,k);
+    var gn=gradNorm(xh,dt,k);
+    var Swig=actionOf(wiggled(xh,0.1,1),dt,k);
+    var elres=0;
+    for(var j=1;j<N;j++){
+      var r=Math.abs((xh[j+1]-2*xh[j]+xh[j-1])/(dt*dt) - (-k*xh[j]));
+      if(r>elres) elres=r;
+    }
+
+    setText("Sext", Sh.toFixed(6));
+    setText("Gext", gn.toExponential(2));
+    setText("Swig", Swig.toFixed(6));
+    setText("Eel", elres.toExponential(2));
+
+    var lb=document.getElementById("litbadge");
+    lb.className="badge ok";
+    lb.innerHTML='<span class="blip"></span>S* = '+Sh.toFixed(4)+'  ·  δS = 0  ·  LIT';
+
+    draw(xh);
+    refreshWitness();
+  }
+
+  function setText(id,t){var el=document.getElementById(id); if(el) el.textContent=t;}
+
+  function refreshWitness(){
+    var w=witnessCheck();
+    var el=document.getElementById("auditout");
+    if(w.ok){
+      el.className="badge ok";
+      el.innerHTML='<span class="blip"></span>VERIFIED · declared path is stationary (∇S='+w.grad.toExponential(1)+')';
+    }else{
+      el.className="badge bad";
+      el.innerHTML='<span class="blip"></span>TAMPER CAUGHT · not stationary (∇S='+w.grad.toFixed(3)+', a lower-action path exists)';
+    }
+    var xh=extremalPath(1,0.3,N,dt,k);
+    draw(xh);
+  }
+
+  var rng=mulberry32(0x1EA57);
+  var wigParams=[];
+  for(var q=0;q<5;q++) wigParams.push({eps:(rng()*0.5+0.15)*(q%2?1:-1), mode:1+(q%3)});
+
+  function draw(xh){
+    var cv=document.getElementById("cv"); if(!cv) return;
+    var ctx=cv.getContext("2d");
+    var W=cv.width, H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    var pad=16;
+    var allx=xh.slice();
+    var declared=declaredPhysical(xh);
+    var lo=Math.min.apply(null,allx.concat(declared))-0.35;
+    var hi=Math.max.apply(null,allx.concat(declared))+0.35;
+    function px(i){return pad + (W-2*pad)*(i/N);}
+    function py(v){return H-pad - (H-2*pad)*((v-lo)/(hi-lo));}
+
+    // grid
+    ctx.strokeStyle="rgba(120,180,150,.12)"; ctx.lineWidth=1;
+    for(var g=0;g<=4;g++){var yy=pad+(H-2*pad)*g/4; ctx.beginPath();ctx.moveTo(pad,yy);ctx.lineTo(W-pad,yy);ctx.stroke();}
+
+    // faint wiggled comparison paths (all higher action)
+    ctx.strokeStyle="rgba(159,196,172,.28)"; ctx.lineWidth=1;
+    for(var p=0;p<wigParams.length;p++){
+      var wp=wiggled(xh,wigParams[p].eps,wigParams[p].mode);
+      ctx.beginPath();
+      for(var i=0;i<=N;i++){ var X=px(i),Y=py(wp[i]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}
+      ctx.stroke();
+    }
+
+    // extremal (physical) path
+    ctx.strokeStyle="#ff7a7a"; ctx.lineWidth=2.4;
+    ctx.shadowColor="rgba(255,122,122,.6)"; ctx.shadowBlur=8;
+    ctx.beginPath();
+    for(var i2=0;i2<=N;i2++){ var X2=px(i2),Y2=py(xh[i2]); i2?ctx.lineTo(X2,Y2):ctx.moveTo(X2,Y2);}
+    ctx.stroke();
+    ctx.shadowBlur=0;
+
+    // declared path when tampered: draw as warning
+    if(TAMPER){
+      ctx.strokeStyle="#ffc861"; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+      ctx.beginPath();
+      for(var i3=0;i3<=N;i3++){ var X3=px(i3),Y3=py(declared[i3]); i3?ctx.lineTo(X3,Y3):ctx.moveTo(X3,Y3);}
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    // endpoints
+    ctx.fillStyle="#e7f3ea";
+    [[0,xh[0]],[N,xh[N]]].forEach(function(e){ ctx.beginPath(); ctx.arc(px(e[0]),py(e[1]),3.5,0,7); ctx.fill();});
+  }
+
+  document.getElementById("tamper").addEventListener("click",function(){ TAMPER=true; refreshWitness(); });
+  document.getElementById("restore").addEventListener("click",function(){ TAMPER=false; refreshWitness(); });
+
+  boot();
+})();
+</script>
+</body>
+</html>

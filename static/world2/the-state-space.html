@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE STATE SPACE · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#7fd4ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(127,212,255,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(127,212,255,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(127,212,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+input[type=number]{width:74px;} input[type=range]{padding:0;width:130px;accent-color:var(--am);vertical-align:middle;}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:220px;} .readout{flex:1;min-width:238px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:92px;}
+.sent{font-size:13.5px;line-height:1.9;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:19px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.mat{width:auto;margin:6px 0;} .mat td{padding:3px 9px;color:var(--gr);font-weight:700;}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE STATE SPACE</h1>
+ <p class="sub">Kalman rewrote a system as a single first-order vector ODE — <span class="M" style="color:var(--am)">ẋ</span> = A<b style="color:var(--cy)">x</b> + B<i>u</i>, y = C<b style="color:var(--cy)">x</b> + D<i>u</i> — and the whole future became one object: the <b>state</b>. Down the center the state flows: the system goes <b style="color:var(--cy)">in</b>, the engine propagates it with <b>e<sup>At</sup></b>, the modes and transfer function come <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> builds and defends it; the <b style="color:var(--red)">red team</b> tries to break it.</p>
+ <p class="src"><span class="tag t-amber">source</span> R. E. Kalman, <i>On the General Theory of Control Systems</i>, Proc. First IFAC Congress (Moscow, 1960), Butterworths, London, pp. 481–492 — where <b>&ldquo;controllability&rdquo;</b> and <b>&ldquo;observability&rdquo;</b> are named. <a href="https://www.sciencedirect.com/science/article/pii/S1474667017700948">IFAC Proceedings reprint</a> (paywalled). Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — a first-order flow</h2>
+   <p>One 2×2 companion of the physics <b>x&#775; = A x</b>, with a known spectrum:</p>
+   <table class="mat"><tr><td>0</td><td>−1</td></tr><tr><td>2</td><td>−3</td></tr></table>
+   <p class="small">trace = −3 = λ₁+λ₂, det = 2 = λ₁λ₂ &nbsp;⟹&nbsp; eigenvalues <b class="k">λ = −1, −2</b> (both Re&lt;0). The solution operator is the matrix exponential <b>e<sup>At</sup> = V diag(e<sup>λt</sup>) V⁻¹</b>; its columns are the natural <b>modes</b>.</p>
+   <p class="small">Live modes at the panel's t:</p>
+   <div id="modes" class="small"></div>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the object beneath <span class="tag t-amber">AVAN</span></h2>
+   <p>Reduce a system to its <b>state</b> and a first-order ODE and you get the continuous-time cousin of <a href="https://davidwise01.github.io/the-markov-chain/" style="color:var(--cy)">the-markov-chain</a>: there a stochastic matrix steps the distribution; here <b>e<sup>At</sup></b> steps the state, and A is the generator.</p>
+   <p>This same (A,B,C) is what <b>the-controllability</b> (can B steer every state?), <b>the-observability</b> (can C see every state?), and <b>the-kalman-filter</b> all act on. The state space is the stage; they are the plays. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: recompute <b>e<sup>At</sup></b> from scaling-and-squaring and re-test the semigroup law <b>e<sup>A(t+s)</sup> = e<sup>At</sup>e<sup>As</sup></b>, the match to the eigendecomposition, and the known spectrum. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · state in → panel → modes out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the realization <span class="tag t-in">in ↓</span></h2>
+   <p>An <b>LTI</b> system is four matrices and a start point. Here, constructed so every answer is closed-form checkable:</p>
+   <table><thead><tr><th></th><th>value</th><th>role</th></tr></thead>
+    <tbody>
+     <tr><td><b class="M" style="color:var(--am)">A</b></td><td>[[0,−1],[2,−3]]</td><td>dynamics (2×2)</td></tr>
+     <tr><td><b>B</b></td><td>[1, 0]ᵀ</td><td>input map</td></tr>
+     <tr><td><b>C</b></td><td>[1, 0]</td><td>output map</td></tr>
+     <tr><td><b>D</b></td><td>0</td><td>feedthrough</td></tr>
+     <tr><td><b class="S" style="color:var(--cy)">x₀</b></td><td>editable</td><td>initial state</td></tr>
+    </tbody></table>
+   <p class="small">The free response is <b>x(t) = e<sup>At</sup>x₀</b>; the input-output law is <b>H(s) = C(sI−A)⁻¹B + D</b>. Feed t and a test s into the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; propagate the state through e<sup>At</sup> &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="sent" id="sent"></div>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>time t</label><input type="range" id="trng" min="0" max="4" step="0.05" value="0.7"><input type="number" id="tval" min="0" max="20" step="0.05" value="0.7"></div>
+     <div class="row"><label>x₀</label><input type="number" id="x0a" step="0.5" value="3"><input type="number" id="x0b" step="0.5" value="-2"></div>
+     <div class="row"><label>test s (real)</label><input type="range" id="srng" min="0.05" max="4" step="0.05" value="0.5"><input type="number" id="sval" step="0.05" value="0.5"></div>
+     <div class="row"><button id="ident">→ t = 0 (identity)</button><button id="rand">↺ random</button></div>
+     <p class="small" id="readmode">e<sup>At</sup> is computed live by scaling-and-squaring the Taylor series — never a stored formula. Both eigenvalues are negative, so every trajectory falls to the origin.</p>
+    </div>
+    <div class="readout">
+     <div class="small mut">e<sup>At</sup> =</div>
+     <table class="mat" id="expmTbl"></table>
+     <div class="small" id="xt" style="margin:4px 0"></div>
+     <div class="small" id="hval" style="margin:4px 0"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Change t, x₀ or s — the exponential, the trajectory and H(s) are computed on the spot, never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits modes &amp; transfer function &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the proven result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven closed-form to 1e-9: spectrum <b class="k">λ = −1, −2</b>; the system is <b>controllable</b> and <b>observable</b> (both rank 2); the transfer function is <b class="k">H(s) = (s+3)/((s+1)(s+2))</b>; and since every eigenvalue has negative real part, the zero-input response <b>decays to 0</b>. The current e<sup>At</sup> and x(t) are above.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-checks e<sup>At</sup> live; the red team (right) tries to make it wrong.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> The state is <b>not unique</b>. Any invertible T gives a similar realization (T A T⁻¹, T B, C T⁻¹) with the <i>same</i> input-output map — so the numbers in A carry no physical meaning by themselves. Only the <b>eigenvalues</b> and the transfer function are invariant.</div>
+   <p class="small" style="margin-top:8px">And LTI is an <b>assumption</b>: real plants are nonlinear, time-varying, and infinite-dimensional (PDEs, delays). e<sup>At</sup> is exact only for the linearization. A minimal realization also requires controllability <i>and</i> observability together — miss either and the state space hides modes the transfer function can never show.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>&ldquo;e<sup>At</sup> ≈ I + At.&rdquo;</s> <b>Cut.</b> That is the first-order term only; it breaks the semigroup law for any nonzero t,s. The engine sums the scaled series and squares back — exact to machine precision. (This is exactly what the TAMPER plants.)</p>
+   <p class="grave"><s>&ldquo;Kalman invented state space.&rdquo;</s> <b>Cut.</b> State variables are Poincaré-old; Kalman's 1960 move was to make <b>controllability &amp; observability</b> the questions — and to give them a rank test.</p>
+   <p class="grave"><s>&ldquo;Negative determinant ⟹ unstable.&rdquo;</s> <b>Kept, corrected.</b> Stability is the <i>eigenvalues'</i> real parts, not det(A). Here det = +2 and the system is stable because λ = −1,−2.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: replace the exponential with its first-order stub <b>e<sup>At</sup> → I + A t</b>. The zero-input curve still looks plausible for small t — but the semigroup law now fails. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ approximate e<sup>At</sup> ≈ I+At</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Swap in I+At and e<sup>A(t+s)</sup> no longer equals e<sup>At</sup>e<sup>As</sup> — the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE STATE SPACE — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with the state pipeline down the center (realization <b style="color:var(--cy)">in</b> → e<sup>At</sup> → modes &amp; H(s) <b style="color:var(--gr)">out</b>). A runnable rendering of Kalman's 1960 IFAC paper — the engine is LIT (e<sup>At</sup> from live scaling-and-squaring, spectrum / ranks / transfer function self-checked to 1e-9, tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one realization cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// the LTI realization — 2x2 A with known spectrum {-1,-2}, and its eigen-data
+const A=[[0,-1],[2,-3]];
+const V=[[1,1],[1,2]], Vi=[[2,-1],[-1,1]], LAM=[-1,-2];
+const Bv=[1,0], Cv=[1,0], D=0;
+const I2=[[1,0],[0,1]];
+let TAMPER=false;   // when true, e^{At} is faked as I+At — the witness must catch it
+// 2x2 linear-algebra kit
+const mmul=(P,Q)=>[[P[0][0]*Q[0][0]+P[0][1]*Q[1][0], P[0][0]*Q[0][1]+P[0][1]*Q[1][1]],[P[1][0]*Q[0][0]+P[1][1]*Q[1][0], P[1][0]*Q[0][1]+P[1][1]*Q[1][1]]];
+const scale=(M,k)=>[[M[0][0]*k,M[0][1]*k],[M[1][0]*k,M[1][1]*k]];
+const madd=(P,Q)=>[[P[0][0]+Q[0][0],P[0][1]+Q[0][1]],[P[1][0]+Q[1][0],P[1][1]+Q[1][1]]];
+const msub=(P,Q)=>[[P[0][0]-Q[0][0],P[0][1]-Q[0][1]],[P[1][0]-Q[1][0],P[1][1]-Q[1][1]]];
+const maxAbs=M=>Math.max(Math.abs(M[0][0]),Math.abs(M[0][1]),Math.abs(M[1][0]),Math.abs(M[1][1]));
+const matvec=(M,v)=>[M[0][0]*v[0]+M[0][1]*v[1], M[1][0]*v[0]+M[1][1]*v[1]];
+const inv2=M=>{const d=M[0][0]*M[1][1]-M[0][1]*M[1][0];return [[M[1][1]/d,-M[0][1]/d],[-M[1][0]/d,M[0][0]/d]];};
+const eig2=M=>{const tr=M[0][0]+M[1][1],dt=M[0][0]*M[1][1]-M[0][1]*M[1][0],dc=Math.sqrt(tr*tr-4*dt);return [(tr-dc)/2,(tr+dc)/2];};
+const rank2=M=>{const d=Math.abs(M[0][0]*M[1][1]-M[0][1]*M[1][0]);if(d>1e-9)return 2;if(maxAbs(M)>1e-9)return 1;return 0;};
+// the engine: e^{At} by scaling-and-squaring the Taylor series (real, live)
+function expm(M,t){
+ const At=scale(M,t);
+ if(TAMPER) return madd(I2,At);            // planted void: first-order stub
+ let s=0,nrm=maxAbs(At);
+ while(nrm>0.5){nrm/=2;s++;}
+ const B=scale(At,1/Math.pow(2,s));
+ let term=I2,sum=I2;
+ for(let k=1;k<=18;k++){term=scale(mmul(term,B),1/k);sum=madd(sum,term);}
+ let R=sum;
+ for(let i=0;i<s;i++)R=mmul(R,R);
+ return R;
+}
+// closed-form reference e^{At} for THIS A, via eigendecomposition — the check target
+function expmCF(t){const a=Math.exp(-t),b=Math.exp(-2*t);return [[2*a-b,-a+b],[2*a-2*b,-a+2*b]];}
+// transfer function H(s)=C(sI-A)^{-1}B+D, two independent ways
+const Hres=s=>inv2(msub(scale(I2,s),A))[0][0]+D;                       // via resolvent inverse
+function Hpf(s){const d0=1/(s-LAM[0]),d1=1/(s-LAM[1]);const R2=mmul(mmul(V,[[d0,0],[0,d1]]),Vi);return R2[0][0]+D;} // via partial fractions
+// controllability [B AB] and observability [C;CA]
+const ctrb=()=>{const ab=matvec(A,Bv);return [[Bv[0],ab[0]],[Bv[1],ab[1]]];};
+const obsv=()=>{const ca=[Cv[0]*A[0][0]+Cv[1]*A[1][0],Cv[0]*A[0][1]+Cv[1]*A[1][1]];return [[Cv[0],Cv[1]],[ca[0],ca[1]]];};
+const approx=(x,y,e)=>Math.abs(x-y)<e;
+const matClose=(P,Q,e)=>maxAbs(msub(P,Q))<e;
+// fail-loud self-check — throws on any violation, runs untampered, RETURNS true
+function selfcheck(){
+ const t=(c,m)=>{if(!c)throw new Error(m);};
+ const save=TAMPER; TAMPER=false;
+ const ev=eig2(A);
+ t(approx(ev[0],-2,1e-9)&&approx(ev[1],-1,1e-9),"spectrum must be {-1,-2}");
+ t(matClose(expm(A,0),I2,1e-9),"e^{A*0} must equal I");
+ for(const tt of [0.3,0.7,1.5,3.0]) t(matClose(expm(A,tt),expmCF(tt),1e-9),"e^{At} must match eigendecomposition at t="+tt);
+ const tt=0.7,h=1e-4;
+ const num=scale(msub(expm(A,tt+h),expm(A,tt-h)),1/(2*h));
+ t(matClose(num,mmul(A,expm(A,tt)),1e-6),"d/dt e^{At} must equal A e^{At}");
+ const p=1.1,q=0.6;
+ t(matClose(expm(A,p+q),mmul(expm(A,p),expm(A,q)),1e-9),"semigroup e^{A(t+s)}=e^{At}e^{As}");
+ t(Math.hypot(...matvec(expm(A,25),[3,-2]))<1e-6,"stable: zero-input response must decay to 0");
+ const Au=[[0,1],[-2,3]];                                   // eigenvalues +1,+2
+ const evu=eig2(Au);
+ t(approx(evu[0],1,1e-9)&&approx(evu[1],2,1e-9),"Au spectrum must be {+1,+2}");
+ t(Math.hypot(...matvec(expm(Au,25),[1,1]))>1e3,"unstable: response must grow (decay iff Re<0)");
+ t(rank2(ctrb())===2,"system must be controllable (rank 2)");
+ t(rank2(obsv())===2,"system must be observable (rank 2)");
+ const sv=0.5, R=inv2(msub(scale(I2,sv),A));
+ t(matClose(mmul(msub(scale(I2,sv),A),R),I2,1e-9),"resolvent: (sI-A)(sI-A)^{-1}=I");
+ t(Math.abs(Hres(sv)-Hpf(sv))<1e-9,"H(s) resolvent must match partial-fraction");
+ t(Math.abs(Hres(sv)-(sv+3)/((sv+1)*(sv+2)))<1e-9,"H(s) must equal (s+3)/((s+1)(s+2))");
+ TAMPER=true;                                               // the disclosed tamper
+ t(!matClose(expm(A,p+q),mmul(expm(A,p),expm(A,q)),1e-6),"tamper (I+At) must break the semigroup property");
+ TAMPER=save;
+ return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+const fmt=x=>{if(Math.abs(x)<5e-5)return "0";const r=Math.round(x*10000)/10000;return (Object.is(r,-0)?0:r).toString();};
+const mat2html=M=>`<tr><td>${fmt(M[0][0])}</td><td>${fmt(M[0][1])}</td></tr><tr><td>${fmt(M[1][0])}</td><td>${fmt(M[1][1])}</td></tr>`;
+function render(){
+ const t=+$("tval").value, s=+$("sval").value, x0=[+$("x0a").value,+$("x0b").value];
+ const E=expm(A,t), xt=matvec(E,x0), nrm=Math.hypot(xt[0],xt[1]);
+ $("sent").innerHTML='<span class="M">ẋ</span> = A<span class="S">x</span> + B u,&nbsp; y = C<span class="S">x</span> + D u &nbsp;·&nbsp; <span class="S">x</span>(t) = e<sup>At</sup><span class="S">x₀</span>';
+ $("expmTbl").innerHTML=mat2html(E);
+ $("xt").innerHTML=`x(${fmt(t)}) = [ <b class="k">${fmt(xt[0])}</b>, <b class="k">${fmt(xt[1])}</b> ]ᵀ &nbsp; ‖x‖=<b>${fmt(nrm)}</b>`;
+ $("hval").innerHTML=`H(${fmt(s)}) = <b class="k">${fmt(Hres(s))}</b> <span class="mut">= (s+3)/((s+1)(s+2))</span>`;
+ $("modes").innerHTML=`λ=−1 → e<sup>−t</sup> = <b class="k">${fmt(Math.exp(-t))}</b> &nbsp;·&nbsp; λ=−2 → e<sup>−2t</sup> = <b class="k">${fmt(Math.exp(-2*t))}</b>`;
+ const ev=eig2(A), stable=ev[1]<0;
+ $("verdict").textContent=stable?"STABLE — free response decays":"UNSTABLE";
+ $("verdict").className="verdict "+(stable?"ok":"no");
+ $("moodname").innerHTML=`eigenvalues λ = <b>${fmt(ev[0])}, ${fmt(ev[1])}</b> · both Re&lt;0`;
+ $("reason").innerHTML= nrm<1e-3? `‖x(${fmt(t)})‖ ≈ 0 — the state has fallen to the origin.` : `the two modes e<sup>−t</sup>, e<sup>−2t</sup> pull the state toward 0.`;
+}
+function audit(){
+ const el=$("auditout"), p=1.1, q=0.6;
+ const sg=maxAbs(msub(expm(A,p+q),mmul(expm(A,p),expm(A,q))));
+ const cf=maxAbs(msub(expm(A,0.9),expmCF(0.9)));
+ const ev=eig2(A);
+ const ok = sg<1e-6 && cf<1e-9 && approx(ev[0],-2,1e-9);
+ el.innerHTML=`<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — holds':'✗ WITNESS — broken'}</span>`
+  +`<div class="small" style="margin-top:6px">semigroup residual: <b style="color:${sg<1e-6?'var(--gr)':'var(--wall)'}">${sg<1e-6?'&lt;1e-6':sg.toExponential(2)}</b> &nbsp;·&nbsp; vs eigendecomp: <b style="color:${cf<1e-9?'var(--gr)':'var(--wall)'}">${cf<1e-9?'&lt;1e-9':cf.toExponential(2)}</b> &nbsp;·&nbsp; spectrum {${fmt(ev[0])},${fmt(ev[1])}}${TAMPER?' &nbsp;— <span style="color:var(--wall)">red faked e<sup>At</sup>≈I+At</span>':''}</div>`;
+}
+// deterministic fixed-seed PRNG for the random button (UI only)
+let _seed=20250811;
+const rnd=()=>{_seed=(_seed*1103515245+12345)&0x7fffffff;return _seed/0x7fffffff;};
+function syncFromRange(){$("tval").value=$("trng").value;$("sval").value=$("srng").value;}
+function clampRanges(){const t=+$("tval").value,s=+$("sval").value;if(t>=0&&t<=4)$("trng").value=t;if(s>=0.05&&s<=4)$("srng").value=s;}
+// boot
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("trng").addEventListener("input",()=>{syncFromRange();render();});
+ $("srng").addEventListener("input",()=>{syncFromRange();render();});
+ ["tval","sval","x0a","x0b"].forEach(id=>$(id).addEventListener("input",()=>{clampRanges();render();}));
+ $("ident").addEventListener("click",()=>{$("tval").value="0";$("trng").value="0";render();});
+ $("rand").addEventListener("click",()=>{const t=(rnd()*4).toFixed(2),s=(0.1+rnd()*3).toFixed(2);$("tval").value=t;$("trng").value=t;$("sval").value=s;$("srng").value=s;render();});
+ $("tamper").addEventListener("click",()=>{TAMPER=true;$("tampernote").innerHTML="<b style='color:var(--wall)'>e<sup>At</sup> faked as I+At.</b> The trajectory still moves, but the witness (window 7) recomputed the semigroup residual, found it large, and went red. The attack is real; it is caught.";render();audit();});
+ $("restore").addEventListener("click",()=>{TAMPER=false;$("tampernote").innerHTML="Swap in I+At and e<sup>A(t+s)</sup> no longer equals e<sup>At</sup>e<sup>As</sup> — the witness recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.";render();audit();});
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the state-space engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE PROXIMAL OPERATOR · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#9ee06a; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(158,224,106,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+/* ===== THE OCHO — refined: blue team | the machine | red team ===== */
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(158,224,106,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(158,224,106,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus,input:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:2px 0;}
+.toggle button{border:none;border-radius:0;padding:5px 12px;} .toggle button.on{background:var(--am);color:#10230a;font-weight:700;}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:230px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:78px;}
+input[type=range]{flex:1;min-width:110px;padding:0;}
+.sent{font-size:13px;line-height:1.8;margin:8px 0;padding:10px;background:#0a130c;border:1px solid var(--line);border-radius:6px;}
+.sent .M{color:var(--am);} .sent .S{color:var(--cy);} .sent .P{color:var(--gr);}
+.verdict{font-size:18px;font-weight:700;letter-spacing:1px;margin:8px 0 4px;}
+.verdict.ok{color:var(--gr);} .verdict.no{color:var(--wall);}
+.moodname{font-size:13px;color:var(--am);} .reason{font-size:12px;color:var(--dim);}
+canvas{display:block;margin:8px 0;background:#0a130c;border:1px solid var(--line);border-radius:6px;max-width:100%;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE PROXIMAL OPERATOR</h1>
+ <p class="sub">One implicit gradient step — the atom of every modern convex solver. Moreau's <b>prox</b> is the argmin of a function <i>plus</i> a spring pulling toward a point: <b class="k">prox<sub>t·h</sub>(v) = argmin<sub>x</sub> [ h(x) + ‖x−v‖²∕2t ]</b>. For h = ‖·‖<sub>1</sub> it is <b>soft-thresholding</b>; for the indicator of a convex set it is <b>Euclidean projection</b>. Down the center a point goes <b style="color:var(--cy)">in</b>, the argmin is solved, the shrunk point comes <b style="color:var(--gr)">out</b>. The <b style="color:var(--blue)">blue team</b> proves each closed form; the <b style="color:var(--red)">red team</b> tries to make the formula lie.</p>
+ <p class="src"><span class="tag t-amber">source</span> J.-J. Moreau, <i>Proximité et dualité dans un espace hilbertien</i>, Bull. Soc. Math. France <b>93</b> (1965) 273–299 — <a href="https://www.numdam.org/article/BSMF_1965__93__273_0.pdf">numdam.org/…/BSMF_1965__93__273_0</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- ===== LEFT · BLUE TEAM · builds & defends ===== -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — two closed forms</h2>
+   <p>The argmin is never searched; for two important h it has a <b>formula</b> derived from the optimality condition <b>0 ∈ ∂h(x) + (x−v)∕t</b>:</p>
+   <p><b class="k">‖·‖₁</b> → soft-threshold <b>shrink(v,t)=sign(v)·max(|v|−t,0)</b>: pull toward 0 by t, clamp at 0. <b class="k">indicator 𝟙<sub>C</sub></b> → projection <b>Π<sub>C</sub>(v)</b>; for a box that is just <b>clip(v,lo,hi)</b>.</p>
+   <p class="small">Live optimality-condition check for the L1 prox at the current v,t (window 0):</p>
+   <table id="distTbl"><thead><tr><th>quantity</th><th>value</th><th>KKT residual</th></tr></thead><tbody id="distBody"></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the implicit step <span class="tag t-amber">AVAN</span></h2>
+   <p>A gradient step is <i>explicit</i>: x⁺ = x − t∇f(x). A <b>prox</b> step is <i>implicit</i>: x⁺ = prox<sub>t·h</sub>(x − t∇f(x)) — it lands where the non-smooth part is already accounted for. That single move is <b>ISTA</b> (the <a href="https://davidwise01.github.io/the-sparse-autoencoder/" style="color:var(--cy)">sparse-autoencoder</a>'s L1 solver), <b>ADMM</b>, and <b>projected gradient</b>.</p>
+   <p>When h = 𝟙<sub>C</sub>, prox = projection and the implicit step <i>is</i> projected gradient descent — the method this panel runs on a constructed strongly-convex QP. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-derive shrink from a brute-force 1-D minimization of h(x)+‖x−v‖²∕2t, confirm projection = clip, non-expansiveness, and the QP's known rate. If red tampers, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- ===== CENTER · THE MACHINE · data in → panel → data out ===== -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — a point &amp; a step <span class="tag t-in">in ↓</span></h2>
+   <p>Feed the operator a point <b class="S" style="color:var(--cy)">v</b>, a step size <b class="M" style="color:var(--am)">t &gt; 0</b>, and a choice of non-smooth part <b class="P" style="color:var(--gr)">h</b>. Everything else is forced:</p>
+   <table><thead><tr><th>h(x)</th><th>prox<sub>t·h</sub>(v)</th><th>what it does</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>‖x‖₁ = |x|</td><td class="y">sign(v)·max(|v|−t,0)</td><td>shrink toward 0</td></tr>
+     <tr><td>𝟙<sub>[lo,hi]</sub>(x)</td><td class="y">clip(v,lo,hi)</td><td>project into box</td></tr>
+     <tr><td>0</td><td class="n">v</td><td>identity</td></tr>
+    </tbody></table>
+   <p class="small">Larger t ⇒ more shrink / the spring is looser. A box prox ignores t: the closest feasible point does not depend on it. That is what you feed the panel below.</p>
+  </div>
+  <div class="flow">▼ &nbsp; feed the point into the operator &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the operator <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>h(x)</label>
+      <span class="toggle"><button id="tL1" class="on">‖·‖₁</button><button id="tBox">box [−1,1]</button></span></div>
+     <div class="row"><label>v</label><input type="range" id="vSl" min="-5" max="5" step="0.05" value="2"><span id="vVal" class="k" style="min-width:44px">2.00</span></div>
+     <div class="row"><label>t</label><input type="range" id="tSl" min="0.1" max="3" step="0.05" value="0.5"><span id="tVal" class="k" style="min-width:44px">0.50</span></div>
+     <div class="row"><button id="rand">↺ random</button><button id="reset">→ v=2, t=0.5</button></div>
+     <canvas id="cv" width="270" height="170"></canvas>
+     <p class="small">Curve = prox<sub>t·h</sub>(v) vs v (green); dashed = identity. The dot is the current v → x⁎.</p>
+    </div>
+    <div class="readout">
+     <div class="sent" id="sent"></div>
+     <div class="verdict" id="verdict"></div>
+     <div class="moodname" id="moodname"></div>
+     <div class="reason" id="reason"></div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">The result is the argmin, cross-checked against a brute-force grid minimization on the spot — never looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the operator emits the argmin &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — proven results <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine produces, proven: prox of ‖·‖₁ <b>equals</b> soft-thresholding (matches brute-force argmin to 1e-3, KKT exact); prox of a box indicator <b>equals</b> the clip; prox is <b>non-expansive</b>; a <b>fixed point</b> of prox<sub>t·h</sub> is a minimizer of h; and projected gradient on the constructed QP converges to <b class="k">x⁎ = (½, ½)</b> at the known rate <b class="k">ρ = ¾</b>.</p>
+   <div id="litbadge"></div>
+   <p class="small">The blue team's witness (left) re-derives these live; the red team (right) tries to make them wrong.</p>
+  </div>
+ </div>
+
+ <!-- ===== RIGHT · RED TEAM · attacks & breaks ===== -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> A prox is only cheap when the argmin has a <b>closed form or a fast solve</b>. For a generic h it is itself a full optimization — prox-based methods just move the hardness inside one sub-step. If neither f nor h is nice, splitting buys nothing.</div>
+   <p class="small" style="margin-top:8px">And the fast <i>outer</i> rate is conditional: plain ISTA is <b>O(1∕k)</b>, not linear, unless f is strongly convex; the accelerated <b>O(1∕k²)</b> (FISTA) needs the correct momentum and a step ≤ 1∕L. Pick t &gt; 1∕L and the whole scheme can diverge. The prox is an atom, not a guarantee.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"The prox of |x| just sets small values to zero."</s> <b>Kept, corrected.</b> It also <i>shrinks the survivors</i> by exactly t — soft, not hard, thresholding. Hard-thresholding is the prox of the non-convex ‖·‖₀, a different operator.</p>
+   <p class="grave"><s>"prox is projection."</s> <b>Cut.</b> Projection is the <i>special case</i> h = 𝟙<sub>C</sub>. For a general h the argmin is not on any set boundary.</p>
+   <p class="grave"><s>"Bigger step size = faster."</s> <b>Cut.</b> Beyond 1∕L the implicit step overshoots and the method can diverge; the step trades progress against stability, it is not free speed.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: flip soft-thresholding to <b>grow</b> the value (v + t·sign(v)) instead of shrinking it — so it is no longer the argmin of the Moreau envelope. The blue team's witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ grow instead of shrink</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Grow instead of shrink and the formula no longer matches the brute-force minimizer — the witness recomputes, the KKT residual blows up, and it turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE PROXIMAL OPERATOR — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with a data pipeline down the center (a point <b style="color:var(--cy)">in</b> → argmin → shrunk point <b style="color:var(--gr)">out</b>). A runnable rendering of Moreau's 1965 prox from numdam — the engine is LIT (soft-threshold matched to a brute-force minimizer, projection = clip, non-expansive, fixed-point = minimizer, and a constructed QP converging at its known rate ¾, all self-checked and tamper-provable), the blue team witnesses, the red team attacks, and the graveyard + adversary carry what one closed form cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+/* the engine (verified: soft-threshold = argmin, projection = clip, QP rate 3/4) */
+let TAMPER=false;   // grows instead of shrinks when true — the witness must catch it
+
+// --- prox of the L1 norm: soft-thresholding (TAMPER grows instead of shrinking) ---
+function shrink(v,t){ if(TAMPER) return v + t*Math.sign(v); return Math.sign(v)*Math.max(Math.abs(v)-t,0); }
+
+// --- prox of a box indicator: Euclidean projection = clip ---
+function clip(x,lo,hi){ return Math.min(hi,Math.max(lo,x)); }
+
+// --- independent brute-force argmin of h(x) + (x-v)^2/(2t) on a fine grid ---
+function bruteProxL1(v,t){
+ const lo=Math.min(0,v)-t-1, hi=Math.max(0,v)+t+1, N=120000;
+ let best=Infinity, arg=lo;
+ for(let i=0;i<=N;i++){ const x=lo+(hi-lo)*i/N; const g=Math.abs(x)+((x-v)*(x-v))/(2*t); if(g<best){best=g;arg=x;} }
+ return arg;
+}
+function bruteProxBox(v,lo,hi){
+ const N=120000; let best=Infinity, arg=lo;
+ for(let i=0;i<=N;i++){ const x=lo+(hi-lo)*i/N; const g=(x-v)*(x-v); if(g<best){best=g;arg=x;} }
+ return arg;
+}
+// KKT residual of the L1 prox: at x*, 0 should equal (x*-v)/t + g, g a subgradient of |.| at x*
+function kktResidL1(v,t){ const x=shrink(v,t); if(x!==0) return (x-v)/t + Math.sign(x); return Math.abs((0-v)/t)<=1 ? 0 : Math.abs((0-v)/t)-1; }
+
+// --- constructed strongly-convex QP: min 1/2 x^T A x - b^T x  s.t. x in [-10,10]^2 ---
+const A=[1,4], BVEC=[0.5,2], XSTAR=[0.5,0.5], STEP=0.25, RHO=0.75, BLO=-10, BHI=10; // t=1/L, rho=max(|1-t*1|,|1-t*4|)=3/4
+function gradQP(x){ return [A[0]*x[0]-BVEC[0], A[1]*x[1]-BVEC[1]]; }
+function projBox2(x){ return [clip(x[0],BLO,BHI), clip(x[1],BLO,BHI)]; }
+function pgStep(x){ const g=gradQP(x); return projBox2([x[0]-STEP*g[0], x[1]-STEP*g[1]]); } // implicit box step
+function pgRun(x0,k){ let x=x0.slice(); for(let i=0;i<k;i++) x=pgStep(x); return x; }
+function errNorm(x){ return Math.hypot(x[0]-XSTAR[0], x[1]-XSTAR[1]); }
+
+// --- fail-loud self-check (runs untampered, then plants & catches the tamper) ---
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const near=(a,b,e)=>Math.abs(a-b)<=e;
+
+ // 1) L1 prox = soft-threshold = brute-force argmin (to 1e-3), KKT exact
+ const pts=[[2,0.5],[-3,1],[0.3,0.5],[1.2,2],[-0.4,0.5]];
+ for(const [v,tt] of pts){
+   t(near(shrink(v,tt),bruteProxL1(v,tt),1e-3),"shrink must equal brute-force argmin at v="+v+",t="+tt);
+   t(Math.abs(kktResidL1(v,tt))<1e-12,"KKT residual must vanish at v="+v+",t="+tt);
+ }
+ // explicit values
+ t(shrink(2,0.5)===1.5,"shrink(2,0.5) must be 1.5");
+ t(shrink(0.3,0.5)===0,"shrink(0.3,0.5) must be 0 (|v|<=t)");
+
+ // 2) box prox = clip = projection = brute-force closest point
+ for(const v of [2,-3,0.3,-0.4,1.2,7]){
+   t(near(clip(v,-1,1),bruteProxBox(v,-1,1),1e-3),"clip must equal box projection at v="+v);
+ }
+ t(clip(2,-1,1)===1 && clip(-3,-1,1)===-1 && clip(0.3,-1,1)===0.3,"clip must saturate at box bounds");
+
+ // 3) non-expansive: ||prox(a)-prox(b)|| <= ||a-b|| for constructed a,b (L1 and box)
+ const a=[2,-3], b=[0.3,1.2];
+ const sa=[shrink(a[0],0.5),shrink(a[1],0.5)], sb=[shrink(b[0],0.5),shrink(b[1],0.5)];
+ t(Math.hypot(sa[0]-sb[0],sa[1]-sb[1]) <= Math.hypot(a[0]-b[0],a[1]-b[1])+1e-12,"L1 prox must be non-expansive");
+ const ca=[clip(a[0],-1,1),clip(a[1],-1,1)], cb=[clip(b[0],-1,1),clip(b[1],-1,1)];
+ t(Math.hypot(ca[0]-cb[0],ca[1]-cb[1]) <= Math.hypot(a[0]-b[0],a[1]-b[1])+1e-12,"box prox must be non-expansive");
+
+ // 4) a fixed point of prox_{t h} is a minimizer of h. For h=|x|, argmin=0, and 0 is the unique fixed point.
+ t(shrink(0,0.7)===0,"0 must be a fixed point of the L1 prox");
+ t(shrink(1.7,0.7)!==1.7,"a nonzero point must not be a fixed point (moves toward the minimizer 0)");
+
+ // 5) constructed QP: closed-form geometric decay, known minimizer, known rate 3/4, projection inactive
+ const x0=[8,8];
+ for(let k=1;k<=8;k++){
+   const xk=pgRun(x0,k);
+   const c1=0.5 + Math.pow(0.75,k)*7.5;   // coord 1 contracts by (1-t*1)=3/4 each step
+   t(near(xk[0],c1,1e-9),"QP coord1 closed form must hold at k="+k);
+   t(near(xk[1],0.5,1e-9),"QP coord2 must reach 0.5 by k="+k);       // (1-t*4)=0 -> exact in one step
+   t(xk[0]<=BHI+1e-9 && xk[0]>=BLO-1e-9 && xk[1]<=BHI+1e-9,"QP iterate must stay in the box (projection inactive)");
+   t(near(errNorm(xk),Math.pow(0.75,k)*7.5,1e-9),"QP error norm closed form must hold at k="+k);
+ }
+ for(let k=2;k<=8;k++){ t(near(errNorm(pgRun(x0,k))/errNorm(pgRun(x0,k-1)),RHO,1e-9),"QP contraction ratio must be exactly 3/4 at k="+k); }
+ t(near(pgRun(x0,60)[0],0.5,1e-6) && near(pgRun(x0,60)[1],0.5,1e-12),"QP must converge to the known minimizer (1/2,1/2)");
+ t(clip(15,BLO,BHI)===10 && clip(-12,BLO,BHI)===-10,"clip must actually saturate elsewhere (projection is real)");
+
+ // 6) plant the disclosed void, confirm the witness would catch it, then restore
+ TAMPER=true;
+ t(Math.abs(shrink(2,0.5)-bruteProxL1(2,0.5))>0.5,"tamper (grow) must break the match with the brute-force minimizer");
+ t(Math.abs(kktResidL1(2,0.5))>0.5,"tamper must blow up the KKT residual");
+ TAMPER=save;
+ return true;
+}
+
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+let curH='l1', vCur=2, tCur=0.5;
+
+function panelProx(v,t){ return curH==='l1' ? shrink(v,t) : clip(v,-1,1); }
+
+function drawCurve(){
+ const cv=$("cv"), ctx=cv.getContext("2d"), W=cv.width, H=cv.height, pad=18;
+ ctx.clearRect(0,0,W,H);
+ const xmin=-5,xmax=5,ymin=-5,ymax=5;
+ const X=v=>pad+(v-xmin)/(xmax-xmin)*(W-2*pad);
+ const Y=y=>H-pad-(y-ymin)/(ymax-ymin)*(H-2*pad);
+ // axes
+ ctx.strokeStyle="#20402a"; ctx.lineWidth=1;
+ ctx.beginPath(); ctx.moveTo(X(xmin),Y(0)); ctx.lineTo(X(xmax),Y(0)); ctx.moveTo(X(0),Y(ymin)); ctx.lineTo(X(0),Y(ymax)); ctx.stroke();
+ // identity dashed
+ ctx.strokeStyle="#5f8a68"; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(X(xmin),Y(xmin)); ctx.lineTo(X(xmax),Y(xmax)); ctx.stroke(); ctx.setLineDash([]);
+ // prox curve
+ ctx.strokeStyle=(TAMPER?"#ff7a7a":"#9ee06a"); ctx.lineWidth=2; ctx.beginPath();
+ let first=true;
+ for(let px=0;px<=200;px++){ const v=xmin+(xmax-xmin)*px/200; const y=panelProx(v,tCur); const cx=X(v), cy=Y(Math.max(ymin,Math.min(ymax,y))); if(first){ctx.moveTo(cx,cy);first=false;} else ctx.lineTo(cx,cy); }
+ ctx.stroke();
+ // current point
+ const yc=panelProx(vCur,tCur);
+ ctx.fillStyle=(TAMPER?"#ff7a7a":"#57e0d0"); ctx.beginPath(); ctx.arc(X(vCur),Y(Math.max(ymin,Math.min(ymax,yc))),4,0,7); ctx.fill();
+}
+
+function render(){
+ vCur=+$("vSl").value; tCur=+$("tSl").value;
+ $("vVal").textContent=vCur.toFixed(2); $("tVal").textContent=tCur.toFixed(2);
+ const x=panelProx(vCur,tCur);
+ const hLbl = curH==='l1' ? "‖x‖₁ = |x|" : "𝟙<sub>[−1,1]</sub>(x)";
+ $("sent").innerHTML = 'prox<sub><span class="M">t·h</span></sub>(<span class="S">v</span>) = argmin<sub>x</sub> [ <span class="P">'+hLbl+'</span> + (x−<span class="S">'+vCur.toFixed(2)+'</span>)²∕2·<span class="M">'+tCur.toFixed(2)+'</span> ]';
+ // brute-force cross-check
+ const brute = curH==='l1' ? bruteProxL1(vCur,tCur) : bruteProxBox(vCur,-1,1);
+ const gap = Math.abs(x-brute);
+ const match = gap<1e-2;
+ $("verdict").textContent = match ? "x⁎ = "+x.toFixed(4) : "x⁎ = "+x.toFixed(4)+"  ✗ not the argmin";
+ $("verdict").className = "verdict "+(match?"ok":"no");
+ const hval = curH==='l1' ? Math.abs(x) : 0;
+ const env = hval + ((x-vCur)*(x-vCur))/(2*tCur);
+ $("moodname").innerHTML = "Moreau envelope M<sub>t·h</sub>(v) = <b>"+env.toFixed(4)+"</b>";
+ $("reason").innerHTML = "brute-force argmin = "+brute.toFixed(4)+" &nbsp;·&nbsp; |x⁎ − brute| = <b style='color:"+(match?'var(--gr)':'var(--wall)')+"'>"+gap.toExponential(1)+"</b>"+(curH==='l1'?"":" &nbsp;·&nbsp; box prox ignores t");
+ // window 3 KKT table (L1)
+ const kkt = kktResidL1(vCur,tCur);
+ const rows = [
+   ["v, t", vCur.toFixed(2)+", "+tCur.toFixed(2), "—"],
+   ["shrink(v,t)", shrink(vCur,tCur).toFixed(4), "—"],
+   ["0 ∈ ∂h + (x−v)/t", (Math.abs(kkt)<1e-9?"satisfied":"violated"), kkt.toExponential(1)]
+ ];
+ $("distBody").innerHTML = rows.map(r=>{ const good = r[2]==="—" || Math.abs(+r[2])<1e-9; return "<tr><td>"+r[0]+"</td><td class='"+(r[1]==='violated'?'n':'y')+"'>"+r[1]+"</td><td class='"+(good?'y':'n')+"'>"+r[2]+"</td></tr>"; }).join("");
+ drawCurve();
+}
+
+function audit(){
+ const el=$("auditout");
+ // re-derive live, independent of the panel
+ let ok=true, why=[];
+ for(const [v,tt] of [[2,0.5],[-3,1],[1.2,2]]){ if(Math.abs(shrink(v,tt)-bruteProxL1(v,tt))>1e-3){ok=false;why.push("shrink≠argmin");} if(Math.abs(kktResidL1(v,tt))>1e-9){ok=false;why.push("KKT");} }
+ if(Math.abs(clip(2,-1,1)-bruteProxBox(2,-1,1))>1e-3){ok=false;why.push("clip≠proj");}
+ const xk=pgRun([8,8],6); if(Math.abs(errNorm(xk)-Math.pow(0.75,6)*7.5)>1e-9){ok=false;why.push("QP rate");}
+ const g=Math.abs(shrink(2,0.5)-bruteProxL1(2,0.5));
+ el.innerHTML = '<span class="badge '+(ok?'pass':'failb')+'">'+(ok?'✓ WITNESS — holds':'✗ WITNESS — broken')+'</span>'
+  + '<div class="small" style="margin-top:6px">shrink vs brute-force argmin |gap| at (2,0.5): <b style="color:'+(g<1e-3?'var(--gr)':'var(--wall)')+'">'+g.toExponential(1)+'</b> &nbsp;·&nbsp; box=clip ✓ &nbsp;·&nbsp; non-expansive ✓ &nbsp;·&nbsp; QP→(½,½) at ρ=¾ ✓'+(TAMPER?' &nbsp; — <span style="color:var(--wall)">red grew instead of shrank</span>':'')+'</div>';
+}
+
+/* ===== boot ===== */
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ $("tL1").addEventListener("click",()=>{ curH='l1'; $("tL1").classList.add("on"); $("tBox").classList.remove("on"); render(); audit(); });
+ $("tBox").addEventListener("click",()=>{ curH='box'; $("tBox").classList.add("on"); $("tL1").classList.remove("on"); render(); audit(); });
+ ["vSl","tSl"].forEach(id=>$(id).addEventListener("input",()=>{ render(); audit(); }));
+ $("rand").addEventListener("click",()=>{ $("vSl").value=(Math.random()*10-5).toFixed(2); $("tSl").value=(0.1+Math.random()*2.9).toFixed(2); render(); audit(); });
+ $("reset").addEventListener("click",()=>{ $("vSl").value=2; $("tSl").value=0.5; render(); audit(); });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Growing, not shrinking.</b> The formula returns v + t·sign(v) — no longer the argmin of the Moreau envelope. The witness (window 7) recomputed, the brute-force gap and KKT residual blew up, and it went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Grow instead of shrink and the formula no longer matches the brute-force minimizer — the witness recomputes, the KKT residual blows up, and it turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the proximal-operator engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>

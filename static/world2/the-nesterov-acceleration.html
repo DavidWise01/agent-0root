@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE NESTEROV ACCELERATION · WORLD II — THE FOLD · THE OCHO</title>
+<style>
+:root{ --bg:#070d09; --bg2:#0c150e; --ink:#a8e6b4; --dim:#5f8a68; --line:#20402a;
+ --am:#c0b0ff; --gr:#39fc6b; --lit:#39fc6b; --amber:#ffcf4d; --wall:#ff6b6b; --cy:#57e0d0;
+ --blue:#6cc6ff; --red:#ff7a7a; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;line-height:1.5;max-width:1160px;margin:0 auto;padding:16px 16px 60px;font-size:14px;
+ background-image:radial-gradient(circle at 12% 0,rgba(108,198,255,.06),transparent 52%),radial-gradient(circle at 90% 100%,rgba(255,122,122,.06),transparent 52%);}
+a{color:var(--am);}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.top a{color:var(--gr);text-decoration:none;} .top a:hover{color:var(--am);}
+header{border:2px solid var(--am);border-radius:8px;padding:14px 16px;margin:12px 0;background:linear-gradient(180deg,rgba(192,176,255,.05),transparent);}
+h1{font-size:23px;letter-spacing:3px;color:var(--am);}
+.sub{color:var(--dim);font-size:12.5px;margin-top:6px;}
+.src{font-size:12px;color:var(--dim);margin-top:6px;} .src a{color:var(--cy);}
+.fail{display:none;background:var(--wall);color:#210606;padding:11px 14px;border-radius:6px;font-weight:700;margin:10px 0;}
+.ocho{display:grid;grid-template-columns:0.85fr 1.7fr 0.85fr;gap:12px;margin-top:12px;align-items:start;}
+.col{display:flex;flex-direction:column;gap:12px;}
+.teamhdr{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;text-align:center;padding:7px;border-radius:6px;}
+.blue .teamhdr{color:var(--blue);border:1px solid #2b5a80;background:rgba(108,198,255,.07);}
+.red .teamhdr{color:var(--red);border:1px solid #6b2b2b;background:rgba(255,122,122,.07);}
+.center .teamhdr{color:var(--am);border:1px solid var(--line);background:rgba(192,176,255,.05);}
+.win{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:14px;position:relative;overflow:hidden;}
+.win .no{position:absolute;top:7px;right:10px;font-size:24px;font-weight:700;color:var(--line);}
+.win h2{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--am);border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:9px;padding-right:30px;}
+.win p{font-size:12.5px;margin-bottom:8px;color:#c3e8ca;} .win b{color:#eafff0;} .win .k{color:var(--gr);}
+.win.blue{border-left:3px solid var(--blue);} .win.blue h2{color:var(--blue);} .win.blue .no{color:#1d3346;}
+.win.red{border-right:3px solid var(--red);} .win.red h2{color:var(--red);} .win.red .no{color:#3a1d1d;}
+.win.panel{border:1px solid var(--am);box-shadow:0 0 0 1px rgba(192,176,255,.15);}
+.flow{text-align:center;color:var(--am);font-size:15px;line-height:1;margin:-3px 0 -3px;opacity:.7;}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:1px 6px;border:1px solid;border-radius:3px;margin-left:4px;}
+.t-lit{color:var(--lit);border-color:var(--lit);} .t-amber{color:var(--amber);border-color:var(--amber);} .t-wall{color:var(--wall);border-color:var(--wall);}
+.t-in{color:var(--cy);border-color:var(--cy);} .t-out{color:var(--gr);border-color:var(--gr);}
+select,button,input[type=range]{font-family:inherit;font-size:12.5px;background:#0a130c;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 8px;}
+select:focus{outline:1px solid var(--am);}
+button{cursor:pointer;} button:hover{border-color:var(--am);color:var(--am);}
+.win.red button:hover{border-color:var(--red);color:var(--red);}
+input[type=range]{padding:0;height:22px;accent-color:var(--am);}
+.engine{display:flex;gap:16px;flex-wrap:wrap;}
+.controls{flex:1;min-width:210px;} .readout{flex:1;min-width:250px;}
+.row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px;flex-wrap:wrap;} .row label{color:var(--dim);min-width:82px;}
+.chk{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dim);}
+canvas{width:100%;height:auto;background:#08110b;border:1px solid var(--line);border-radius:6px;display:block;margin-top:4px;}
+.verdict{font-size:15px;font-weight:700;letter-spacing:.5px;margin:8px 0 4px;color:var(--am);}
+.reason{font-size:12px;color:var(--dim);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px;} th,td{border:1px solid var(--line);padding:3px 5px;text-align:center;} th{color:var(--dim);}
+.dist .y{color:var(--gr);font-weight:700;} .dist .n{color:var(--dim);}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 11px;border-radius:5px;margin:6px 6px 0 0;}
+.badge.pass{background:rgba(57,252,107,.14);color:var(--lit);border:1px solid var(--lit);}
+.badge.failb{background:rgba(255,107,107,.16);color:var(--wall);border:1px solid var(--wall);}
+.small{font-size:11.5px;color:var(--dim);} .mut{color:var(--dim);}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:6px;}
+.leg i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:4px;}
+.grave{color:#8aa;font-size:12px;} .grave s{color:#6b7d6f;} .grave b{color:#b7d3bd;}
+footer{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);color:var(--dim);font-size:11.5px;line-height:1.7;}
+.wall-note{border-left:3px solid var(--wall);padding:6px 10px;background:rgba(255,107,107,.05);font-size:12px;margin-top:6px;}
+@media(max-width:880px){.ocho{grid-template-columns:1fr;}}
+</style></head>
+<body>
+<div class="fail" id="failb"></div>
+<div class="top"><a href="https://davidwise01.github.io/ud0/world2/">◄ WORLD II · THE FOLD</a><span>THE OCHO · <b style="color:var(--blue)">blue builds</b> │ the machine │ <b style="color:var(--red)">red breaks</b></span></div>
+
+<header>
+ <h1>THE NESTEROV ACCELERATION</h1>
+ <p class="sub">Plain gradient descent crawls at <b class="k">O(1/k)</b>. Add a <b>look-ahead</b> — take the gradient not where you are but where momentum is about to carry you — and the error collapses at <b style="color:var(--am)">O(1/k²)</b>. On the constructed quadratic below, that is <b>87 steps</b> to a tolerance plain descent needs <b>1091</b> for. And it is not just fast: it is <i>provably the fastest a first-order method can be</i> — it touches the theoretical floor. The <b style="color:var(--blue)">blue team</b> builds and witnesses it live; the <b style="color:var(--red)">red team</b> pulls the look-ahead out and watches the acceleration die.</p>
+ <p class="src"><span class="tag t-amber">source</span> Yu. Nesterov, <i>A method for solving the convex programming problem with convergence rate O(1/k²)</i>, Soviet Math. Dokl. <b>27</b>(2), 372–376 (1983) — no stable open link (AMBER). Constant-step realization &amp; the 2L·R²/(k+1)² bound: Beck &amp; Teboulle, FISTA, <a href="https://epubs.siam.org/doi/10.1137/080716542">SIAM J. Imaging Sci. 2(1) 183–202 (2009)</a>. Rendered, not quoted.</p>
+</header>
+
+<div class="ocho">
+
+ <!-- LEFT - BLUE TEAM - builds and defends -->
+ <div class="col blue">
+  <div class="teamhdr">◧ blue team · builds &amp; defends</div>
+
+  <div class="win blue"><span class="no">3</span><h2>THE MODEL — the look-ahead</h2>
+   <p>Three lines. On an <b>L-smooth convex</b> f, with step <b class="k">1/L</b> and the momentum sequence t<sub>k+1</sub>=(1+√(1+4t<sub>k</sub>²))/2:</p>
+   <p style="font-size:12px;background:#0a130c;border:1px solid var(--line);border-radius:6px;padding:8px">
+    <b class="k">y</b><sub>k</sub> = x<sub>k</sub> + <span style="color:var(--am)">β<sub>k</sub></span>(x<sub>k</sub>−x<sub>k−1</sub>) &nbsp;<span class="mut">← look ahead</span><br>
+    x<sub>k+1</sub> = <b class="k">y</b><sub>k</sub> − (1/L)∇f(<b class="k">y</b><sub>k</sub>) &nbsp;<span class="mut">← gradient at the look-ahead</span></p>
+   <p>The single idea: <b>∇f is sampled at y, not x.</b> That one move buys the whole speed-up and its guarantee f(x<sub>k</sub>)−f* ≤ 2L·R²/(k+1)². Live on the current problem:</p>
+   <table id="modelTbl"><tbody></tbody></table>
+  </div>
+
+  <div class="win blue"><span class="no">5</span><h2>THE LINEAGE — the ceiling <span class="tag t-amber">AVAN</span></h2>
+   <p><a href="https://davidwise01.github.io/the-momentum/" style="color:var(--cy)">the-momentum</a> gave gradient descent a memory — a heavy ball that rolls through small bumps. Nesterov keeps the ball but <b>peeks forward</b> before choosing its push.</p>
+   <p>That peek is not one optimizer among many: it hits the <b>first-order lower bound</b> Ω(1/k²) (Nesterov). No method that sees only gradients can beat it. Every accelerated optimizer after it — FISTA, Adam's momentum, the schedules in deep-net training — aims at <i>this</i> ceiling. Each sphere is the next one's premise.</p>
+  </div>
+
+  <div class="win blue"><span class="no">7</span><h2>THE WITNESS <span class="tag t-lit">live</span></h2>
+   <p>The blue team's live check: re-simulate NAG and GD on the fixed problem and confirm — NAG stays under the 1/k² bound at <b>every</b> step, halves error ~¼ per doubling, and beats GD to tolerance. If red pulls the look-ahead, this badge is where it shows.</p>
+   <div id="auditout"></div>
+  </div>
+ </div>
+
+ <!-- CENTER - THE MACHINE -->
+ <div class="col center">
+  <div class="teamhdr">▼ the machine ▼</div>
+
+  <div class="win panel"><span class="no">4</span><h2>DATA IN — the problem <span class="tag t-in">in ↓</span></h2>
+   <p>A <b>constructed, strictly-convex quadratic</b> with a closed-form answer — so every optimum and rate is checkable to 1e-9, no fitting:</p>
+   <p style="font-size:12px;background:#0a130c;border:1px solid var(--line);border-radius:6px;padding:8px">
+    f(x) = ½ Σ<sub>i</sub> λ<sub>i</sub> x<sub>i</sub>² , &nbsp; λ<sub>i</sub> log-spaced in [μ, L] , &nbsp; L=1<br>
+    minimizer <b class="k">x* = 0</b> , &nbsp; f* = 0 , &nbsp; x<sub>0</sub> = (1,…,1), &nbsp; R² = ‖x<sub>0</sub>−x*‖²</p>
+   <table><thead><tr><th>ingredient</th><th>role</th></tr></thead>
+    <tbody class="dist">
+     <tr><td>L (smoothness)</td><td class="n">sets the safe step 1/L</td></tr>
+     <tr><td>μ (curvature)</td><td class="n">κ=L/μ sets how long the 1/k² regime lasts</td></tr>
+     <tr><td>x* = 0, f* = 0</td><td class="y">known — the gap f(x<sub>k</sub>)−f* is exact</td></tr>
+     <tr><td>β<sub>k</sub> = (t<sub>k</sub>−1)/t<sub>k+1</sub></td><td class="n">the look-ahead weight</td></tr>
+    </tbody></table>
+   <p class="small">Feed these to the engine below and watch two error curves race on a log axis.</p>
+  </div>
+  <div class="flow">▼ &nbsp; run both methods on the same problem &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">0</span><h2>▣ THE PANEL — the engine <span class="tag t-lit">LIT</span></h2>
+   <div class="engine">
+    <div class="controls">
+     <div class="row"><label>condition κ</label>
+      <select id="kappa"><option value="0.01">κ = 100 &nbsp;(μ=1e-2)</option><option value="0.001">κ = 1,000 &nbsp;(μ=1e-3)</option><option value="0.0001" selected>κ = 10,000 &nbsp;(μ=1e-4)</option></select></div>
+     <div class="row"><label>iterations</label><input type="range" id="iters" min="40" max="300" value="200" style="flex:1;min-width:120px"><span id="itersv" style="color:var(--am);min-width:34px">200</span></div>
+     <div class="row"><label class="chk"><input type="checkbox" id="showgd" checked> plot gradient descent</label></div>
+     <div class="row"><label class="chk"><input type="checkbox" id="showbnd" checked> plot the 1/k² and 1/k bounds</label></div>
+     <div class="row"><button id="reset">↺ reset problem</button></div>
+     <div class="verdict" id="verdict">NAG — accelerated</div>
+     <div class="reason" id="reason"></div>
+    </div>
+    <div class="readout">
+     <canvas id="plot" width="440" height="300"></canvas>
+     <div class="leg">
+      <span><i style="background:var(--am)"></i>NAG (look-ahead)</span>
+      <span><i style="background:var(--red)"></i>gradient descent</span>
+      <span><i style="background:#3a5"></i>1/k² &amp; 1/k bounds</span>
+     </div>
+    </div>
+   </div>
+   <p class="small" style="margin-top:6px">Both curves are simulated live from the same x<sub>0</sub> and step 1/L — the only difference is <i>where the gradient is sampled</i>. Nothing is looked up.</p>
+  </div>
+  <div class="flow">▼ &nbsp; the engine emits a proven result &nbsp; ▼</div>
+
+  <div class="win panel"><span class="no">8</span><h2>DATA OUT — the result <span class="tag t-out">out ↓</span></h2>
+   <p>What the machine proves on the default problem (κ=10⁴), each number recomputed, not asserted from memory:</p>
+   <table><tbody class="dist" id="outTbl"></tbody></table>
+   <div id="litbadge"></div>
+   <p class="small">The blue witness (left) re-verifies these live; the red team (right) tries to make them false.</p>
+  </div>
+ </div>
+
+ <!-- RIGHT - RED TEAM -->
+ <div class="col red">
+  <div class="teamhdr">red team · attacks &amp; breaks ◨</div>
+
+  <div class="win red"><span class="no">1</span><h2>THE ADVERSARY</h2>
+   <div class="wall-note"><span class="tag t-wall">WALL</span> Acceleration is <b>not</b> a free lunch. The O(1/k²) rate needs convexity, L-smoothness, and a <b>known L</b> — overestimate L and you slow down; underestimate it and you diverge. The curve is <b>non-monotone</b>: NAG overshoots and the error can rise before it falls. And on a <i>strongly</i>-convex problem this very t<sub>k</sub> schedule is <b>not</b> optimal — a fixed momentum β=(√κ−1)/(√κ+1) is.</div>
+   <p class="small" style="margin-top:8px">Sharper still: on a pure <b>quadratic</b>, plain heavy-ball momentum <i>also</i> accelerates — the look-ahead's necessity only bites on general convex f (see graveyard). This instrument uses a quadratic for exactness, so it demonstrates the ceiling by <b>removing acceleration entirely</b>, which is the honest, provable break.</p>
+  </div>
+
+  <div class="win red"><span class="no">2</span><h2>THE GRAVEYARD</h2>
+   <p class="grave"><s>"Acceleration beats the limit — free speed."</s> <b>Cut.</b> It <i>matches</i> the Ω(1/k²) first-order lower bound; you cannot do better with gradients alone (Nesterov). Optimal, not miraculous.</p>
+   <p class="grave"><s>"NAG is faster because it takes bigger steps."</s> <b>Cut.</b> Same step 1/L as GD — the speed is entirely the look-ahead, not the step size. The engine holds the step fixed to prove it.</p>
+   <p class="grave"><s>"Momentum always helps and always converges."</s> <b>Kept, corrected.</b> Heavy-ball momentum can <b>diverge</b> on some convex functions (Lessard, Recht &amp; Packard, 2016). NAG's look-ahead is the fix that keeps the guarantee.</p>
+  </div>
+
+  <div class="win red"><span class="no">6</span><h2>THE TAMPER — break it</h2>
+   <p>The red team's move: <b>pull out the look-ahead</b> — sample ∇f at x instead of y, dropping the extrapolation. The method degenerates to plain gradient descent; the O(1/k²) acceleration is lost and the error falls back to O(1/k). The blue witness (window 7) is watching.</p>
+   <div class="row" style="margin-top:6px"><button id="tamper">⚠ remove the look-ahead</button><button id="restore">↺ restore</button></div>
+   <p class="small" id="tampernote">Remove the look-ahead and NAG's curve drops onto GD's, breaching the 1/k² bound the witness checks — it recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught.</p>
+  </div>
+ </div>
+
+</div>
+
+<footer id="foot">THE NESTEROV ACCELERATION — World II · THE FOLD, in the refined <b>OCHO</b>: a red-team / blue-team instrument with the data pipeline down the center (problem <b style="color:var(--cy)">in</b> → two methods race → proven result <b style="color:var(--gr)">out</b>). A runnable rendering of Nesterov's 1983 accelerated gradient method on a constructed convex quadratic — the engine is LIT (both trajectories simulated live, the 2L·R²/(k+1)² guarantee self-checked at every step, the look-ahead's necessity tamper-provable), the blue team witnesses, the red team pulls the look-ahead, and the graveyard + adversary carry what a single quadratic cannot. David Lee Wise (ROOT0) with AVAN.</footer>
+
+<script>
+"use strict";
+// ---------- the engine: NAG vs GD on a constructed strictly-convex quadratic ----------
+// f(x) = 0.5 * sum_i lam_i x_i^2 ,  minimizer x*=0 , f*=0 , L=1 , mu tunable
+function makeProblem(mu){
+ const n=50,lam=new Array(n),x0=new Array(n),L=1;
+ for(let i=0;i<n;i++){ const t=i/(n-1); lam[i]=Math.exp(Math.log(mu)+t*(Math.log(L)-Math.log(mu))); x0[i]=1; }
+ const R2=x0.reduce((a,v)=>a+v*v,0);
+ return {n,lam,L,mu,x0,R2};
+}
+function fval(P,x){ let s=0; for(let i=0;i<P.n;i++) s+=0.5*P.lam[i]*x[i]*x[i]; return s; }
+function grad(P,x){ const g=new Array(P.n); for(let i=0;i<P.n;i++) g[i]=P.lam[i]*x[i]; return g; }
+let TAMPER=false;   // removes the look-ahead -> collapses NAG to gradient descent; the witness must catch it
+// NAG uses the look-ahead point y; when TAMPER (or method 'gd') the gradient is taken at x and there is no extrapolation
+function trajectory(P,method,K){
+ const collapse=(method==="gd")||(method==="nag"&&TAMPER);
+ let x=P.x0.slice(),y=P.x0.slice(),t=1; const err=[fval(P,x)];
+ for(let k=0;k<K;k++){
+  if(collapse){ const g=grad(P,x); const xn=new Array(P.n); for(let i=0;i<P.n;i++) xn[i]=x[i]-g[i]/P.L; x=xn; y=xn; }
+  else{ const g=grad(P,y); const xn=new Array(P.n); for(let i=0;i<P.n;i++) xn[i]=y[i]-g[i]/P.L;
+        const tn=(1+Math.sqrt(1+4*t*t))/2; const b=(t-1)/tn; const yn=new Array(P.n);
+        for(let i=0;i<P.n;i++) yn[i]=xn[i]+b*(xn[i]-x[i]); x=xn; y=yn; t=tn; }
+  err.push(fval(P,x));
+ }
+ return err;
+}
+function nagBound(P,k){ return 2*P.L*P.R2/((k+1)*(k+1)); }   // Nesterov / FISTA guarantee
+function gdBound(P,k){ return P.L*P.R2/(2*k); }               // plain gradient descent guarantee
+function itersTo(err,eps){ for(let k=0;k<err.length;k++) if(err[k]<=eps) return k; return -1; }
+function ratioAt(err,k){ return err[2*k]/err[k]; }            // error decay per doubling: ~1/4 (NAG) vs ~1/2 (GD)
+function lookaheadGap(P,steps){                               // ||y_k - x_k|| after a few steps: proves gradient is sampled off-iterate
+ let x=P.x0.slice(),y=P.x0.slice(),t=1;
+ for(let k=0;k<steps;k++){ const g=grad(P,y); const xn=new Array(P.n); for(let i=0;i<P.n;i++) xn[i]=y[i]-g[i]/P.L;
+  const tn=(1+Math.sqrt(1+4*t*t))/2; const b=(t-1)/tn; const yn=new Array(P.n);
+  for(let i=0;i<P.n;i++) yn[i]=xn[i]+b*(xn[i]-x[i]); x=xn; y=yn; t=tn; }
+ let s=0; for(let i=0;i<P.n;i++) s+=(y[i]-x[i])*(y[i]-x[i]); return Math.sqrt(s);
+}
+// ---------- fail-loud self-check (deterministic; runs untampered, then plants the disclosed void) ----------
+function selfcheck(){
+ const t=(c,m)=>{ if(!c) throw new Error(m); };
+ const save=TAMPER; TAMPER=false;
+ const P=makeProblem(1e-4), K=300;
+ const en=trajectory(P,"nag",K), eg=trajectory(P,"gd",K);
+ // 1) NAG obeys the optimal O(1/k^2) guarantee at EVERY iterate
+ for(let k=1;k<=K;k++) t(en[k] <= nagBound(P,k)*(1+1e-9), "NAG must stay under 2L R^2/(k+1)^2 at k="+k);
+ // 2) quadratic rate: error(2k)/error(k) -> ~1/4 for NAG (O(1/k^2)), ~1/2 for GD (O(1/k))
+ const rn=ratioAt(en,30), rg=ratioAt(eg,30);
+ t(rn>0.15 && rn<0.35, "NAG must quarter its error per doubling (O(1/k^2)); got "+rn);
+ t(rg>0.45 && rg<0.55, "GD must only halve its error per doubling (O(1/k)); got "+rg);
+ // 3) strictly faster: NAG reaches tolerance in far fewer steps than GD
+ const eN=trajectory(P,"nag",2000), eG=trajectory(P,"gd",2000);
+ const iN=itersTo(eN,1e-3), iG=itersTo(eG,1e-3);
+ t(iN>0 && iG>0 && iN*2 < iG, "NAG must reach tol in fewer steps than GD; NAG="+iN+" GD="+iG);
+ // 4) the gradient is evaluated at the LOOK-AHEAD y != x (nonzero extrapolation)
+ t(lookaheadGap(P,3) > 1e-9, "NAG must sample the gradient at the look-ahead y, not x");
+ // 5) optimal: the guarantee scales as 1/k^2 (matches the first-order lower bound order)
+ t(Math.abs(nagBound(P,60)/nagBound(P,30) - 0.25) < 0.02, "NAG guarantee must scale as 1/k^2 (optimal order)");
+ // ---- planted void: pull out the look-ahead; the witness must see the acceleration die ----
+ TAMPER=true;
+ const et=trajectory(P,"nag",K);
+ let broke=false; for(let k=1;k<=K;k++) if(et[k] > nagBound(P,k)*(1+1e-9)) broke=true;
+ t(broke, "removing the look-ahead must breach the O(1/k^2) bound (witness catches it)");
+ t(ratioAt(et,30) > 0.45, "with the look-ahead gone the rate must fall back to O(1/k)");
+ TAMPER=save; return true;
+}
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
+function curProblem(){ return makeProblem(parseFloat($("kappa").value)); }
+function fmt(x){ if(x===0) return "0"; const e=Math.floor(Math.log10(Math.abs(x))); if(e>=-1&&e<=4) return (Math.abs(x)>=100?Math.round(x):x.toPrecision(3)).toString(); return x.toExponential(2); }
+
+function drawPlot(P,K){
+ const cv=$("plot"), ctx=cv.getContext("2d"), W=cv.width, H=cv.height;
+ ctx.clearRect(0,0,W,H);
+ const padL=46,padB=24,padT=10,padR=10, pw=W-padL-padR, ph=H-padT-padB;
+ const en=trajectory(P,"nag",K), eg=trajectory(P,"gd",K);
+ const ymax=Math.max(en[0],eg[0]), ymin=1e-8;
+ const lyMax=Math.log10(ymax), lyMin=Math.log10(ymin);
+ const X=k=>padL+(k/K)*pw;
+ const Y=v=>{ const lv=Math.log10(Math.max(v,ymin)); return padT+(1-(lv-lyMin)/(lyMax-lyMin))*ph; };
+ // gridlines (decades)
+ ctx.strokeStyle="#16301d"; ctx.fillStyle="#4d7357"; ctx.font="9px monospace"; ctx.lineWidth=1;
+ for(let e=Math.ceil(lyMin);e<=Math.floor(lyMax);e++){ const yy=Y(Math.pow(10,e)); ctx.beginPath(); ctx.moveTo(padL,yy); ctx.lineTo(W-padR,yy); ctx.stroke(); ctx.fillText("1e"+e,4,yy+3); }
+ // axes
+ ctx.strokeStyle="#2c5238"; ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+ph); ctx.lineTo(W-padR,padT+ph); ctx.stroke();
+ ctx.fillStyle="#4d7357"; ctx.fillText("iteration k",W-72,H-6); ctx.fillText("0",padL-3,H-12); ctx.fillText(""+K,W-padR-14,H-12);
+ ctx.save(); ctx.translate(11,padT+ph/2); ctx.rotate(-Math.PI/2); ctx.fillText("f(x_k) - f*",-26,0); ctx.restore();
+ const line=(err,col,w)=>{ ctx.strokeStyle=col; ctx.lineWidth=w; ctx.beginPath(); for(let k=0;k<=K;k++){ const xx=X(k),yy=Y(err[k]); if(k===0)ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);} ctx.stroke(); };
+ // bounds
+ if($("showbnd").checked){
+  const nb=[],gb=[]; for(let k=0;k<=K;k++){ nb.push(k===0?ymax:nagBound(P,k)); gb.push(k===0?ymax:gdBound(P,Math.max(k,1))); }
+  ctx.setLineDash([4,3]); line(nb,"#2f6a44",1); line(gb,"#274d59",1); ctx.setLineDash([]);
+ }
+ if($("showgd").checked) line(eg,"#ff7a7a",1.6);
+ line(en, TAMPER? "#ff9a5a":"#c0b0ff", 2.2);
+ return {en,eg};
+}
+
+function renderModelTable(P,K){
+ const en=trajectory(P,"nag",K);
+ const kk=Math.min(100,K);
+ const rows=[
+  ["condition κ = L/μ", fmt(P.L/P.mu)],
+  ["L (step = 1/L)", fmt(P.L)+"  (step "+fmt(1/P.L)+")"],
+  ["R² = ‖x₀−x*‖²", fmt(P.R2)],
+  ["guarantee 2L·R²/(k+1)² @k="+kk, fmt(nagBound(P,kk))],
+  ["actual f(x_"+kk+")−f*", fmt(en[kk])],
+ ];
+ $("modelTbl").querySelector("tbody").innerHTML = rows.map(r=>`<tr><td style="text-align:left;color:var(--dim)">${r[0]}</td><td class="k">${r[1]}</td></tr>`).join("");
+}
+
+function renderOut(){
+ const P=makeProblem(1e-4);
+ const eN=trajectory(P,"nag",2000), eG=trajectory(P,"gd",2000);
+ const iN=itersTo(eN,1e-3), iG=itersTo(eG,1e-3);
+ const rn=ratioAt(trajectory(P,"nag",300),30), rg=ratioAt(trajectory(P,"gd",300),30);
+ const rows=[
+  ["steps to reach f−f* ≤ 1e-3", `NAG <b class="k">${iN}</b>  vs  GD <b style="color:var(--red)">${iG}</b>`, true],
+  ["error decay per doubling", `NAG <b class="k">${rn.toFixed(3)}</b> (≈¼)  vs  GD <b style="color:var(--red)">${rg.toFixed(3)}</b> (≈½)`, true],
+  ["stays under 2L·R²/(k+1)²", `every one of 300 steps ✓`, true],
+  ["matches Ω(1/k²) lower bound", `optimal — no first-order method is faster`, true],
+ ];
+ $("outTbl").innerHTML = rows.map(r=>`<tr><td style="text-align:left">${r[0]}</td><td class="${r[2]?'y':'n'}" style="text-align:left">${r[1]}</td></tr>`).join("");
+}
+
+function render(){
+ const P=curProblem(), K=parseInt($("iters").value,10);
+ $("itersv").textContent=K;
+ const {en,eg}=drawPlot(P,K);
+ renderModelTable(P,K);
+ const iN=itersTo(trajectory(P,"nag",4000),1e-3), iG=itersTo(trajectory(P,"gd",4000),1e-3);
+ $("verdict").textContent = TAMPER? "look-ahead removed — collapsed to gradient descent" : "NAG — accelerated";
+ $("verdict").style.color = TAMPER? "var(--wall)":"var(--am)";
+ const rn=ratioAt(en,Math.min(30,(K/2)|0)), rg=ratioAt(eg,Math.min(30,(K/2)|0));
+ $("reason").innerHTML = TAMPER
+  ? `error now decays ~${rn.toFixed(2)} per doubling — the same O(1/k) as GD; the 1/k² curve is gone.`
+  : `NAG quarters error per doubling (~${rn.toFixed(2)}); GD only halves (~${rg.toFixed(2)}). Reaches 1e-3 in ${iN>0?iN:'>K'} vs ${iG>0?iG:'many'} steps.`;
+}
+
+function audit(){
+ const el=$("auditout"), P=makeProblem(1e-4), K=300;
+ const en=trajectory(P,"nag",K), eg=trajectory(P,"gd",K);
+ let under=true; for(let k=1;k<=K;k++) if(en[k]>nagBound(P,k)*(1+1e-9)) under=false;
+ const rn=ratioAt(en,30), rg=ratioAt(eg,30);
+ const eN=trajectory(P,"nag",2000), eG=trajectory(P,"gd",2000);
+ const iN=itersTo(eN,1e-3), iG=itersTo(eG,1e-3);
+ const ok = under && rn>0.15 && rn<0.35 && iN>0 && iG>0 && iN*2<iG;
+ el.innerHTML = `<span class="badge ${ok?'pass':'failb'}">${ok?'✓ WITNESS — acceleration holds':'✗ WITNESS — acceleration broken'}</span>`
+  + `<div class="small" style="margin-top:6px">under 1/k² bound: <b style="color:${under?'var(--gr)':'var(--wall)'}">${under?'yes':'NO'}</b> &nbsp;·&nbsp; decay/doubling NAG <b style="color:${(rn>0.15&&rn<0.35)?'var(--gr)':'var(--wall)'}">${rn.toFixed(3)}</b> vs GD ${rg.toFixed(3)} &nbsp;·&nbsp; steps→1e-3 NAG <b style="color:${(iN*2<iG&&iN>0)?'var(--gr)':'var(--wall)'}">${iN}</b> vs GD ${iG}${TAMPER?' &nbsp; — <span style="color:var(--wall)">red pulled the look-ahead</span>':''}</div>`;
+}
+
+// ---------- boot ----------
+try{
+ selfcheck();
+ $("litbadge").innerHTML='<span class="badge pass">✓ LIT · self-check passed on load</span>';
+ renderOut();
+ ["kappa","iters","showgd","showbnd"].forEach(id=>$(id).addEventListener("input",()=>{render();}));
+ $("reset").addEventListener("click",()=>{ TAMPER=false; $("kappa").value="0.0001"; $("iters").value="200"; render(); audit(); $("tampernote").textContent="Remove the look-ahead and NAG's curve drops onto GD's, breaching the 1/k² bound the witness checks — it recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught."; });
+ $("tamper").addEventListener("click",()=>{ TAMPER=true; $("tampernote").innerHTML="<b style='color:var(--wall)'>Look-ahead removed.</b> The gradient is now sampled at x with no extrapolation — the method is plain gradient descent. NAG's curve fell onto GD's, breached the 1/k² bound, and the witness (window 7) went red. The attack is real; it is caught."; render(); audit(); });
+ $("restore").addEventListener("click",()=>{ TAMPER=false; $("tampernote").textContent="Remove the look-ahead and NAG's curve drops onto GD's, breaching the 1/k² bound the witness checks — it recomputes, disagrees, and turns red. Nothing is faked; the attack is real and it is caught."; render(); audit(); });
+ render(); audit();
+}catch(e){
+ const fb=$("failb"); fb.style.display="block"; fb.textContent="FAIL-LOUD — the Nesterov engine did not check out: "+e.message; throw e;
+}
+</script>
+</body></html>
